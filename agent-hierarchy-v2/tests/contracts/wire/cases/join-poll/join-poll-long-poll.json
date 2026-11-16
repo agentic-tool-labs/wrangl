@@ -1,0 +1,50 @@
+{
+  "kind": "wire",
+  "id": "join-poll-long-poll",
+  "about": "wait=1 on a pending join returns pending after the wait",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "wait": "1",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/join/{{id}}",
+    "before": [
+      {
+        "method": "POST",
+        "path": "/v1/join",
+        "body": {
+          "team": "tm",
+          "harness": "custom-x",
+          "session_id": "s-custom",
+          "why": "to help",
+          "cwd": "<ROOT:proj>",
+          "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+        },
+        "capture": {
+          "id": "json.join_id"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "join_id": "<MSGID:1>",
+      "status": "pending"
+    }
+  },
+  "mutant": "a long-poll that returns at once",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:05.390Z"
+  }
+}

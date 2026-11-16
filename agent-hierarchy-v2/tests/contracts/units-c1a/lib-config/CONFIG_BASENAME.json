@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "CONFIG_BASENAME",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "agent-hierarchy.json"
+    }
+  ]
+}

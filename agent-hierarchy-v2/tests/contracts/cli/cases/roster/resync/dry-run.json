@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "dry-run",
+  "about": "resync --dry-run reads the topology and rewrites nothing",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "resync",
+      "--dry-run"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"resynced\": false,\n  \"reason\": \"no active team\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a dry run that rewrites the team file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.051Z"
+  }
+}

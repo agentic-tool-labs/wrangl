@@ -1,0 +1,81 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "etaOf",
+  "cases": [
+    {
+      "id": "case-0-small",
+      "args": [
+        "small"
+      ],
+      "expect": "small"
+    },
+    {
+      "id": "case-1-medium",
+      "args": [
+        "medium"
+      ],
+      "expect": "medium"
+    },
+    {
+      "id": "case-2-large",
+      "args": [
+        "large"
+      ],
+      "expect": "large"
+    },
+    {
+      "id": "case-3-huge",
+      "args": [
+        "huge"
+      ],
+      "expect": "small"
+    },
+    {
+      "id": "case-4-MEDIUM",
+      "args": [
+        "MEDIUM"
+      ],
+      "expect": "small"
+    },
+    {
+      "id": "case-5-",
+      "args": [
+        ""
+      ],
+      "expect": "medium"
+    },
+    {
+      "id": "case-6-null",
+      "args": [
+        null
+      ],
+      "expect": "medium"
+    },
+    {
+      "id": "case-7-undefine",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "medium"
+    },
+    {
+      "id": "case-8-5",
+      "args": [
+        5
+      ],
+      "expect": "small"
+    },
+    {
+      "id": "case-9-small",
+      "args": [
+        [
+          "small"
+        ]
+      ],
+      "expect": "small"
+    }
+  ]
+}

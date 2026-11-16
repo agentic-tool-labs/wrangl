@@ -1,0 +1,150 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "clearActivity",
+  "cases": [
+    {
+      "id": "removes-the-record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": null
+      },
+      "expect": true
+    },
+    {
+      "id": "missing-record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sB.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sB.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-records-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n",
+        "repo/.claude/hierarchy/activity/sB.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sB.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "no-activity-dir",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "invalid-subject",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "a/b"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-subject",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "no-dir",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-dir",
+      "args": [
+        "",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "activity-dir-is-a-link",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "elsewhere/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}"
+      },
+      "links": {
+        "repo/.claude/hierarchy/activity": "$ROOT/elsewhere"
+      },
+      "expectFiles": {
+        "elsewhere/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}"
+      },
+      "expect": false
+    },
+    {
+      "id": "directory-named-like-a-record-is-not-removed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "d"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/d.json/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/d.json/.keep": ""
+      },
+      "expect": false
+    }
+  ]
+}

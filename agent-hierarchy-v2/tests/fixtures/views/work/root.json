@@ -1,0 +1,49 @@
+{
+ "view_schema": 1,
+ "kind": "root",
+ "id": "",
+ "path": "/",
+ "breadcrumb": [
+  {
+   "kind": "root",
+   "id": "",
+   "label": "ah",
+   "path": "/"
+  }
+ ],
+ "children": [
+  {
+   "kind": "orchestrator",
+   "id": "<oid>",
+   "label": "repoW · pid <LIVEPID>",
+   "path": "/o/<oid>",
+   "state": "live",
+   "dir": "<ROOT>/repoW/.claude/hierarchy",
+   "summary": {
+    "teams": 2,
+    "members": 6,
+    "live": 0,
+    "working": 0,
+    "blocked": 0,
+    "owed": 0,
+    "ctx_high": 0,
+    "overdue": 0,
+    "joins_pending": 2,
+    "streams_stuck": 1
+   }
+  }
+ ],
+ "summary": {
+  "teams": 2,
+  "members": 6,
+  "live": 0,
+  "working": 0,
+  "blocked": 0,
+  "owed": 0,
+  "ctx_high": 0,
+  "overdue": 0,
+  "joins_pending": 2,
+  "streams_stuck": 1
+ },
+ "body": {}
+}

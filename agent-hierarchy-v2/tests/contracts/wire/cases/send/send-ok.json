@@ -1,0 +1,47 @@
+{
+  "kind": "wire",
+  "id": "send-ok",
+  "about": "a send to a team member is accepted",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "to": "tm-implementor@tm",
+      "text": "hello",
+      "id": "e-1",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/send"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "address": "tm-implementor@tm",
+      "carrier": "prompt",
+      "delivery": "fallback",
+      "entry": {
+        "created": "<ISO:1>",
+        "from": "orchestrator@tm",
+        "id": "e-1",
+        "kind": "note",
+        "route": "fallback",
+        "text": "hello",
+        "to": "tm-implementor@tm",
+        "v": 1
+      },
+      "receiver_unregistered": true
+    }
+  },
+  "mutant": "an accepted send that writes no entry",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:08.443Z"
+  }
+}

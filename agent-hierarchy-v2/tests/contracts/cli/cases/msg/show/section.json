@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "section",
+  "about": "show prints a message found by id, its frontmatter and only the named section",
+  "tree": "cli-msgs",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "show",
+      "20260101-000000-aaaa",
+      "request",
+      "--section",
+      "1"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "---\nid: <MSGID:1>\ntype: request\nto: implementor\nfrom: orchestrator\nslug: sample-a\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: <ISOL:1>\n---\n## [1] goal\n- none\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a show that prints every section, or the wrong message",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-30T00:00:00.000Z",
+    "note": "recorded by rerecord.mjs from the native binary"
+  }
+}

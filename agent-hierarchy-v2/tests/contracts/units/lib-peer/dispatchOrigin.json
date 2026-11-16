@@ -1,0 +1,217 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "dispatchOrigin",
+  "cases": [
+    {
+      "id": "earliest-row-wins",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "2026-06-01T09:00:00.000Z"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:51:40.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:55:00.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            "2026-06-01T11:51:40.000Z"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "no-rows-is-null",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "2026-06-01T09:00:00.000Z"
+          }
+        ]
+      ],
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rows-without-parseable-created-fall-back-to-the-requests",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "2026-06-01T09:00:00.000Z"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"never\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            "2026-06-01T09:00:00.000Z"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "request-without-created",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"never\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "id": "request-without-created-and-no-rows",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa"
+          }
+        ]
+      ],
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "id": "other-requests-rows-ignored",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "x"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000002-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "id": "two-requests",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "a"
+          },
+          {
+            "id": "20260601-000002-aaaa",
+            "created": "b"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000002-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:59:10.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            "2026-06-01T11:58:20.000Z"
+          ],
+          [
+            "20260601-000002-aaaa",
+            "2026-06-01T11:59:10.000Z"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "rows-from-any-session",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "a"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"other\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            "2026-06-01T11:58:20.000Z"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "non-dispatch-rows-ignored",
+      "args": [
+        [
+          {
+            "id": "20260601-000001-aaaa",
+            "created": "a"
+          }
+        ]
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"seen\",\"request_id\":\"20260601-000001-aaaa\",\"created\":\"2026-06-01T11:59:59.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "20260601-000001-aaaa",
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-requests",
+      "args": [
+        []
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n"
+      },
+      "expect": {
+        "$map": []
+      }
+    }
+  ]
+}

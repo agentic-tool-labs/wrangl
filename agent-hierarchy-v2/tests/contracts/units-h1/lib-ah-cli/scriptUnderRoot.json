@@ -1,0 +1,254 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "scriptUnderRoot",
+  "cases": [
+    {
+      "id": "own-root-roster",
+      "args": [
+        "$ROOT/plugin/hooks/roster.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    },
+    {
+      "id": "own-root-msg",
+      "args": [
+        "$ROOT/plugin/hooks/msg.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    },
+    {
+      "id": "own-root-ahd-ctl",
+      "args": [
+        "$ROOT/plugin/hooks/ahd-ctl.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    },
+    {
+      "id": "sibling-version",
+      "args": [
+        "$ROOT/cache/1.0/hooks/roster.mjs",
+        "$ROOT/cache/2.0"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    },
+    {
+      "id": "different-parent",
+      "args": [
+        "$ROOT/elsewhere/2.0/hooks/roster.mjs",
+        "$ROOT/cache/2.0"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-script-name",
+      "args": [
+        "$ROOT/plugin/hooks/other.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "nested-under-hooks",
+      "args": [
+        "$ROOT/plugin/hooks/sub/roster.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "missing-script",
+      "args": [
+        "$ROOT/plugin/hooks/gone.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "missing-root",
+      "args": [
+        "$ROOT/plugin/hooks/roster.mjs",
+        "$ROOT/nowhere"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "sibling-of-root-itself",
+      "args": [
+        "$ROOT/plugin2/hooks/roster.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    },
+    {
+      "id": "script-not-string",
+      "args": [
+        null,
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "root-not-string",
+      "args": [
+        "$ROOT/plugin/hooks/roster.mjs",
+        null
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": false
+    },
+    {
+      "id": "dot-dot-path",
+      "args": [
+        "$ROOT/plugin/hooks/../hooks/roster.mjs",
+        "$ROOT/plugin"
+      ],
+      "files": {
+        "plugin/hooks/roster.mjs": "//",
+        "plugin/hooks/msg.mjs": "//",
+        "plugin/hooks/ahd-ctl.mjs": "//",
+        "plugin/hooks/other.mjs": "//",
+        "plugin/hooks/sub/roster.mjs": "//",
+        "cache/1.0/hooks/roster.mjs": "//",
+        "cache/2.0/hooks/roster.mjs": "//",
+        "elsewhere/2.0/hooks/roster.mjs": "//",
+        "plugin2/hooks/roster.mjs": "//"
+      },
+      "expect": true
+    }
+  ]
+}

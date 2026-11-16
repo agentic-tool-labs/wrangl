@@ -1,0 +1,12 @@
+{
+  "lib": "lib-context",
+  "module": "hooks/lib-context.mjs",
+  "fn": "TAIL_BYTES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 262144
+    }
+  ]
+}

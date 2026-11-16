@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "usage-missing-value",
+  "about": "an option without its value",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd"
+    ],
+    "stdin": null
+  },
+  "mutant": "the usage error text drifted",
+  "expect": {
+    "stdout": "{\"error\":\"usage: Option '--cwd <value>' argument missing\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:34.356Z"
+  }
+}

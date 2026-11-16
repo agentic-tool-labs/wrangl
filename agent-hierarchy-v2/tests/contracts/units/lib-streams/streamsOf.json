@@ -1,0 +1,67 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamsOf",
+  "cases": [
+    {
+      "id": "object",
+      "args": [
+        {
+          "streams": {
+            "a": {
+              "state": "open"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "a": {
+          "state": "open"
+        }
+      }
+    },
+    {
+      "id": "no-streams",
+      "args": [
+        {
+          "members": []
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "id": "null-team",
+      "args": [
+        null
+      ],
+      "expect": {}
+    },
+    {
+      "id": "array-streams",
+      "args": [
+        {
+          "streams": []
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "id": "string-streams",
+      "args": [
+        {
+          "streams": "x"
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "id": "null-streams",
+      "args": [
+        {
+          "streams": null
+        }
+      ],
+      "expect": {}
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "followUpRule",
+  "cases": [
+    {
+      "id": "needs-intent-with-id",
+      "args": [
+        "NEEDS-INTENT",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "This report says NEEDS-INTENT: supply the intent and re-dispatch as a new request (--parent 20260601-000001-aaaa); it is not a review round-trip."
+    },
+    {
+      "id": "needs-intent-without-id",
+      "args": [
+        "NEEDS-INTENT"
+      ],
+      "expect": "This report says NEEDS-INTENT: supply the intent and re-dispatch as a new request (--parent <id>); it is not a review round-trip."
+    },
+    {
+      "id": "blocked-with-id",
+      "args": [
+        "BLOCKED",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "This report says BLOCKED: answer it with a new request (--parent 20260601-000001-aaaa), never by re-sending the old one."
+    },
+    {
+      "id": "needs-decision-null-id",
+      "args": [
+        "NEEDS-DECISION",
+        null
+      ],
+      "expect": "This report says NEEDS-DECISION: answer it with a new request (--parent <id>), never by re-sending the old one."
+    },
+    {
+      "id": "unknown-status",
+      "args": [
+        "WHATEVER",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "This report says WHATEVER: answer it with a new request (--parent 20260601-000001-aaaa), never by re-sending the old one."
+    },
+    {
+      "id": "undefined-status",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        "20260601-000001-aaaa"
+      ],
+      "expect": "This report says undefined: answer it with a new request (--parent 20260601-000001-aaaa), never by re-sending the old one."
+    }
+  ]
+}

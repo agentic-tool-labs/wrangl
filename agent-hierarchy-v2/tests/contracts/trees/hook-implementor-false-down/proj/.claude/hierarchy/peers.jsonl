@@ -1,0 +1,2 @@
+{"type": "peer", "status": "up", "role": "implementor", "session_id": "sess-contract", "pid": 999999, "ppid": 999999, "cwd": "<ROOT:proj>", "ts": "2026-01-01T00:00:00.000Z"}
+{"type": "peer", "status": "down", "role": "implementor", "session_id": "sess-contract", "pid": 999999, "cwd": "<ROOT:proj>", "ts": "2026-01-01T00:01:00.000Z"}

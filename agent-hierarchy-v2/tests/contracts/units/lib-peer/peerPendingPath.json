@@ -1,0 +1,20 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "peerPendingPath",
+  "cases": [
+    {
+      "id": "under-home",
+      "args": [],
+      "expect": "$ROOT/home/.claude/agent-hierarchy.peer-pending.jsonl"
+    },
+    {
+      "id": "home-from-env",
+      "args": [],
+      "env": {
+        "HOME": "$ROOT/other-home"
+      },
+      "expect": "$ROOT/other-home/.claude/agent-hierarchy.peer-pending.jsonl"
+    }
+  ]
+}

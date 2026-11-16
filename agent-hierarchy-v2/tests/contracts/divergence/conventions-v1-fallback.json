@@ -1,0 +1,18 @@
+{
+  "about": "Divergence of ah2 from the recorded Node traces where a repository has no committed ah2 conventions file: ah2 then reads ah v1's .claude/ah-conventions.json, read-only, from the same ref, so a repository that opted in under v1 keeps its push rules. The recorded git log has one `cat-file -e <ref>:<conventions path>` probe; the native one has that probe of the ah2 path followed by a probe of v1's path.",
+  "ruling": "0118 R5 (Orchestrator, 2026-10-12): keep the fallback; the extra probe is a named divergence, not a failure",
+  "divergences": [
+    {
+      "id": "CV-1",
+      "about": "git.log trace: an absent ah2 conventions blob is followed by a `cat-file -e <ref>:.claude/ah-conventions.json` probe. A recorded trace whose probe found nothing and which has no blob read after it gains that line when the case is loaded (tests/contract-tools/lib-case.mjs withV1ConventionsFallback); a recorded trace that read the blob is unchanged, because the fallback is not consulted when the ah2 file exists.",
+      "rowsExercisingNode": [
+        "cli/issue-intake/conventions-absent"
+      ],
+      "pinnedBy": [
+        "Ah.Config.Tests ConventionsFallbackTests (ah2 only, v1 only, both, neither, malformed ah2 with a valid v1 file, home repository)",
+        "Ah.Config.Tests ConfigUnitTableTests lib-conventions/loadConventions (the recorded git log is compared without the v1 probe line)"
+      ],
+      "ruling": "accepted"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "reportStatus",
+  "cases": [
+    {
+      "id": "reported",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": "reported"
+    },
+    {
+      "id": "skeleton-is-no-report",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: \n- [2] changes: \n- [3] evidence: \n- [4] gaps: \n- [5] open_questions: \n\n## [1] status\n- none\n\n## [2] changes\n- none\n\n## [3] evidence\n- none\n\n## [4] gaps\n- none\n\n## [5] open_questions\n- none\n"
+      },
+      "expect": "no-report"
+    },
+    {
+      "id": "one-authored-line-is-a-report",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: \n- [2] changes: \n- [3] evidence: \n- [4] gaps: \n- [5] open_questions: \n\n## [1] status\n- none\n\n## [2] changes\n- none\n\n## [3] evidence\n- none\n\n## [4] gaps\n- none\n\n## [5] open_questions\n- none\n\nnote\n"
+      },
+      "expect": "reported"
+    },
+    {
+      "id": "missing-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "no-report"
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "text"
+      },
+      "expect": "malformed-report"
+    },
+    {
+      "id": "wrong-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000002-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": "malformed-report"
+    },
+    {
+      "id": "empty-body",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n"
+      },
+      "expect": "no-report"
+    },
+    {
+      "id": "bullet-with-text-after-colon",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n"
+      },
+      "expect": "reported"
+    },
+    {
+      "id": "heading-only-body",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n## [1] status\n"
+      },
+      "expect": "no-report"
+    },
+    {
+      "id": "none-bullet-only",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n- none\n-  none\n"
+      },
+      "expect": "no-report"
+    }
+  ]
+}

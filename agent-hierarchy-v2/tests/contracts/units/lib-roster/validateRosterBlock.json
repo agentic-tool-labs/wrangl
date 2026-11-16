@@ -1,0 +1,288 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "validateRosterBlock",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "not-object",
+      "args": [
+        null
+      ],
+      "expect": [
+        "roster must be an object"
+      ]
+    },
+    {
+      "id": "array",
+      "args": [
+        []
+      ],
+      "expect": [
+        "roster must be an object"
+      ]
+    },
+    {
+      "id": "string",
+      "args": [
+        "x"
+      ],
+      "expect": [
+        "roster must be an object"
+      ]
+    },
+    {
+      "id": "no-route",
+      "args": [
+        {
+          "members": []
+        }
+      ],
+      "expect": [
+        "roster.route is required and must be one of peer, subagent, pane, got undefined"
+      ]
+    },
+    {
+      "id": "route-mail-rejected",
+      "args": [
+        {
+          "route": "mail",
+          "members": []
+        }
+      ],
+      "expect": [
+        "roster.route is required and must be one of peer, subagent, pane, got \"mail\""
+      ]
+    },
+    {
+      "id": "route-invalid",
+      "args": [
+        {
+          "route": "carrier",
+          "members": []
+        }
+      ],
+      "expect": [
+        "roster.route is required and must be one of peer, subagent, pane, got \"carrier\""
+      ]
+    },
+    {
+      "id": "members-missing",
+      "args": [
+        {
+          "route": "peer"
+        }
+      ],
+      "expect": [
+        "roster.members must be an array"
+      ]
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        {
+          "route": "peer",
+          "members": {}
+        }
+      ],
+      "expect": [
+        "roster.members must be an array"
+      ]
+    },
+    {
+      "id": "orchestrator-member",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "orchestrator"
+            },
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "expect": [
+        "member 0: role \"orchestrator\" is not a roster member — the Orchestrator is whatever session runs /wrangl:agent-team create"
+      ]
+    },
+    {
+      "id": "member-inherits-block-route",
+      "args": [
+        {
+          "route": "pane",
+          "members": [
+            {
+              "role": "implementor",
+              "kind": "codex"
+            }
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "member-own-route-wins",
+      "args": [
+        {
+          "route": "pane",
+          "members": [
+            {
+              "role": "implementor",
+              "kind": "codex",
+              "route": "peer"
+            }
+          ]
+        }
+      ],
+      "expect": [
+        "member 0: route must be \"pane\" for kind \"codex\" (a non-claude agent is reached through its Herdr pane, not SendMessage or the Agent tool), got \"peer\""
+      ]
+    },
+    {
+      "id": "member-falsy-route-inherits",
+      "args": [
+        {
+          "route": "pane",
+          "members": [
+            {
+              "role": "implementor",
+              "kind": "codex",
+              "route": ""
+            }
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "claude-member-on-pane-block-fine",
+      "args": [
+        {
+          "route": "pane",
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "non-object-members",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            null,
+            5,
+            "x",
+            []
+          ]
+        }
+      ],
+      "expect": [
+        "member 0: role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got undefined",
+        "member 1: role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got undefined",
+        "member 2: role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got undefined",
+        "member 3: role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got undefined"
+      ]
+    },
+    {
+      "id": "errors-prefixed-with-index",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "wizard"
+            },
+            {
+              "role": "reviewer",
+              "model": "haiku"
+            }
+          ]
+        }
+      ],
+      "expect": [
+        "member 1: role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got \"wizard\"",
+        "member 2: model \"haiku\" is not valid for role \"reviewer\" (allowed: opus, sonnet, fable, inherit)"
+      ]
+    },
+    {
+      "id": "custom-roles",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "ui-dev"
+            },
+            {
+              "role": "scribe",
+              "route": "subagent"
+            }
+          ]
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "block-mail-route-with-custom-member",
+      "args": [
+        {
+          "route": "mail",
+          "members": [
+            {
+              "role": "implementor",
+              "kind": "custom",
+              "harness": "my-agent"
+            }
+          ]
+        }
+      ],
+      "expect": [
+        "roster.route is required and must be one of peer, subagent, pane, got \"mail\"",
+        "member 0: kind \"custom\" is a team-file row admitted with spawn-ad-hoc, not a member a roster defines"
+      ]
+    }
+  ]
+}

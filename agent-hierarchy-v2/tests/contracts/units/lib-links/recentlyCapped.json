@@ -1,0 +1,269 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "recentlyCapped",
+  "cases": [
+    {
+      "id": "within-grace",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "task": "20260101-000000-aa11",
+        "task_home": "$ROOT/h",
+        "peers": [
+          "b@fx"
+        ],
+        "direction": "both",
+        "requester": "a@fx",
+        "granted_by": "orchestrator",
+        "granted_at": "2026-01-01T00:00:00.000Z",
+        "limits": {
+          "messages": 3,
+          "minutes": 30
+        },
+        "used": 3,
+        "extensions": 0,
+        "state": "expired",
+        "end_reason": "message_cap",
+        "ended_at": "2026-01-01T00:08:00.000Z"
+      }
+    },
+    {
+      "id": "past-grace",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767227400000
+      ],
+      "now": "2026-01-01T00:30:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "exactly-at-grace",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226680000
+      ],
+      "now": "2026-01-01T00:18:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "task": "20260101-000000-aa11",
+        "task_home": "$ROOT/h",
+        "peers": [
+          "b@fx"
+        ],
+        "direction": "both",
+        "requester": "a@fx",
+        "granted_by": "orchestrator",
+        "granted_at": "2026-01-01T00:00:00.000Z",
+        "limits": {
+          "messages": 3,
+          "minutes": 30
+        },
+        "used": 3,
+        "extensions": 0,
+        "state": "expired",
+        "end_reason": "message_cap",
+        "ended_at": "2026-01-01T00:08:00.000Z"
+      }
+    },
+    {
+      "id": "ended-by-time-not-capped",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"time\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-covering",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "z@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "most-recent-wins",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"old\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:02:00.000Z\"},{\"id\":\"new\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:09:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "new",
+        "task": "20260101-000000-aa11",
+        "task_home": "$ROOT/h",
+        "peers": [
+          "b@fx"
+        ],
+        "direction": "both",
+        "requester": "a@fx",
+        "granted_by": "orchestrator",
+        "granted_at": "2026-01-01T00:00:00.000Z",
+        "limits": {
+          "messages": 3,
+          "minutes": 30
+        },
+        "used": 3,
+        "extensions": 0,
+        "state": "expired",
+        "end_reason": "message_cap",
+        "ended_at": "2026-01-01T00:09:00.000Z"
+      }
+    },
+    {
+      "id": "falls-back-to-granted-at-without-ended-at",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "task": "20260101-000000-aa11",
+        "task_home": "$ROOT/h",
+        "peers": [
+          "b@fx"
+        ],
+        "direction": "both",
+        "requester": "a@fx",
+        "granted_by": "orchestrator",
+        "granted_at": "2026-01-01T00:00:00.000Z",
+        "limits": {
+          "messages": 3,
+          "minutes": 30
+        },
+        "used": 3,
+        "extensions": 0,
+        "state": "expired",
+        "end_reason": "message_cap"
+      }
+    },
+    {
+      "id": "grace-from-env",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "env": {
+        "AH_LINK_LIMITS": "{\"extendGraceMs\":1000}"
+      },
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "active-capped-by-judging-is-found",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\",\"last_used_at\":\"2026-01-01T00:09:00.000Z\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "task": "20260101-000000-aa11",
+        "task_home": "$ROOT/h",
+        "peers": [
+          "b@fx"
+        ],
+        "direction": "both",
+        "requester": "a@fx",
+        "granted_by": "orchestrator",
+        "granted_at": "2026-01-01T00:00:00.000Z",
+        "limits": {
+          "messages": 3,
+          "minutes": 30
+        },
+        "used": 3,
+        "extensions": 0,
+        "state": "expired",
+        "last_used_at": "2026-01-01T00:09:00.000Z",
+        "ended_at": "2026-01-01T00:09:00.000Z",
+        "end_reason": "message_cap"
+      }
+    }
+  ]
+}

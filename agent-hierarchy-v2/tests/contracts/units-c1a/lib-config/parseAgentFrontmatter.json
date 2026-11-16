@@ -1,0 +1,469 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "parseAgentFrontmatter",
+  "cases": [
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "just text\n"
+      ],
+      "expect": {
+        "frontmatter": false,
+        "name": null,
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "unterminated",
+      "args": [
+        "---\nname: a\n"
+      ],
+      "expect": {
+        "frontmatter": false,
+        "name": null,
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "basic",
+      "args": [
+        "---\nname: a\ndescription: Does things.\nmodel: opus\ntools: Read, Grep\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": "Does things.",
+        "model": "opus",
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "crlf",
+      "args": [
+        "---\r\nname: a\r\ntools: Read\r\n---\r\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "flow-list",
+      "args": [
+        "---\nname: a\ntools: [Read, Grep]\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "flow-list-empty",
+      "args": [
+        "---\nname: a\ntools: []\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "flow-unterminated",
+      "args": [
+        "---\nname: a\ntools: [Read, Grep\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": [
+          "tools"
+        ]
+      }
+    },
+    {
+      "id": "block-list",
+      "args": [
+        "---\nname: a\ntools:\n  - Read\n  - Grep\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "block-list-unindented-dash",
+      "args": [
+        "---\nname: a\ntools:\n- Read\n- Grep\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "quoted-csv",
+      "args": [
+        "---\nname: a\ntools: \"Read, Grep\"\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "tool-with-scope",
+      "args": [
+        "---\nname: a\ntools: Read, Bash(git:*)\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read",
+          "Bash(git:*)"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "tool-star",
+      "args": [
+        "---\nname: a\ntools: *\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "*"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "tool-bad-token",
+      "args": [
+        "---\nname: a\ntools: Read, bad token\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": [
+          "tools"
+        ]
+      }
+    },
+    {
+      "id": "tools-empty",
+      "args": [
+        "---\nname: a\ntools:\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": [
+          "tools"
+        ]
+      }
+    },
+    {
+      "id": "disallowed",
+      "args": [
+        "---\nname: a\ntools: Read\ndisallowedTools: Edit, Write\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read"
+        ],
+        "disallowedTools": [
+          "Edit",
+          "Write"
+        ],
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "description-literal",
+      "args": [
+        "---\nname: a\ndescription: |\n  first line\n  second line\n\nname2: x\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": "first line\nsecond line",
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "description-folded",
+      "args": [
+        "---\nname: a\ndescription: >\n  first line\n  second line\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": "first line second line",
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "description-multiline-plain",
+      "args": [
+        "---\nname: a\ndescription: starts here\n  and continues\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": "starts here and continues",
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "description-quoted",
+      "args": [
+        "---\nname: a\ndescription: \"Quoted \\\"x\\\" text\\nline\"\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": "Quoted \"x\" text\nline",
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "model-with-space",
+      "args": [
+        "---\nname: a\nmodel: two words\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": [
+          "model"
+        ]
+      }
+    },
+    {
+      "id": "model-flow",
+      "args": [
+        "---\nname: a\nmodel: [opus]\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": [
+          "model"
+        ]
+      }
+    },
+    {
+      "id": "name-quoted",
+      "args": [
+        "---\nname: 'a'\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "no-space-after-colon",
+      "args": [
+        "---\nname:a\nmodel: opus\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": null,
+        "description": null,
+        "model": "opus",
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "unknown-keys-ignored",
+      "args": [
+        "---\nname: a\ncolor: red\ntools: Read\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": [
+          "Read"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "blank-lines-in-continuation",
+      "args": [
+        "---\nname: a\ntools:\n  - Read\n\n  - Grep\nmodel: opus\n---\nbody\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": "opus",
+        "tools": [
+          "Read",
+          "Grep"
+        ],
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "dashes-in-body",
+      "args": [
+        "---\nname: a\n---\nbody\n---\nmore\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "leading-space-fence",
+      "args": [
+        "  ---\nname: a\n---\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    },
+    {
+      "id": "unicode-separator-in-value",
+      "args": [
+        "---\nname: a b\n---\n"
+      ],
+      "expect": {
+        "frontmatter": true,
+        "name": "a",
+        "description": null,
+        "model": null,
+        "tools": null,
+        "disallowedTools": null,
+        "parseErrors": []
+      }
+    }
+  ]
+}

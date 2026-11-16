@@ -1,0 +1,197 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "mainHierarchyDir",
+  "cases": [
+    {
+      "id": "normal-checkout-null",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "linked-worktree",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "linked-worktree-subdir",
+      "args": [
+        "$ROOT/wt/sub"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/sub/x": ""
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "env-set-null",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "$ROOT/forced"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-git-null",
+      "args": [
+        "$ROOT/plain"
+      ],
+      "files": {
+        "plain/x": ""
+      },
+      "expect": null
+    },
+    {
+      "id": "submodule-gitdir-not-worktrees",
+      "args": [
+        "$ROOT/sub"
+      ],
+      "files": {
+        "sub/.git": "gitdir: $ROOT/super/.git/modules/sub\n",
+        "super/.git/HEAD": "x"
+      },
+      "expect": null
+    },
+    {
+      "id": "bare-common-dir-not-dotgit",
+      "args": [
+        "$ROOT/wtb"
+      ],
+      "files": {
+        "wtb/.git": "gitdir: $ROOT/bare.git/worktrees/wtb\n",
+        "bare.git/worktrees/wtb/commondir": "../..\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "relative-gitdir-pointer",
+      "args": [
+        "$ROOT/wtr"
+      ],
+      "files": {
+        "wtr/.git": "gitdir: ../main/.git/worktrees/wtr\n",
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wtr/commondir": "../..\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "missing-commondir-falls-back-to-grandparent",
+      "args": [
+        "$ROOT/wtc"
+      ],
+      "files": {
+        "wtc/.git": "gitdir: $ROOT/main2/.git/worktrees/wtc\n",
+        "main2/.git/worktrees/wtc/HEAD": "x"
+      },
+      "expect": "$ROOT/main2/.claude/hierarchy"
+    },
+    {
+      "id": "gitdir-line-not-first",
+      "args": [
+        "$ROOT/wtl"
+      ],
+      "files": {
+        "wtl/.git": "# comment\ngitdir: $ROOT/main/.git/worktrees/wtl\n",
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wtl/commondir": "../..\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "gitdir-crlf",
+      "args": [
+        "$ROOT/wtz"
+      ],
+      "files": {
+        "wtz/.git": "gitdir: $ROOT/main/.git/worktrees/wtz\r\n",
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wtz/commondir": "../..\r\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "gitdir-value-on-next-line",
+      "args": [
+        "$ROOT/wtn"
+      ],
+      "files": {
+        "wtn/.git": "gitdir:\n$ROOT/main/.git/worktrees/wtn\n",
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wtn/commondir": "../..\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "not-a-gitdir-file",
+      "args": [
+        "$ROOT/wtx"
+      ],
+      "files": {
+        "wtx/.git": "random\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "same-root-null",
+      "args": [
+        "$ROOT/wts"
+      ],
+      "files": {
+        "wts/.git": "gitdir: $ROOT/g/worktrees/y\n",
+        "g/worktrees/y/commondir": "$ROOT/wts/.git\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "env-blank-still-maps",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "   "
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "gitdir-pointer-trailing-spaces-trimmed",
+      "args": [
+        "$ROOT/wtt"
+      ],
+      "files": {
+        "wtt/.git": "gitdir: $ROOT/main/.git/worktrees/wtt  \n",
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wtt/commondir": "$ROOT/other/.git\n",
+        "other/.git/HEAD": "x"
+      },
+      "expect": "$ROOT/other/.claude/hierarchy"
+    }
+  ]
+}

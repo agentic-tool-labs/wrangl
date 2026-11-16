@@ -1,0 +1,18 @@
+{
+  "team_id": "t-legacy",
+  "created": "<NOW-1m>",
+  "mesh": {
+    "policy": "open"
+  },
+  "orchestrator": {
+    "pid": 999999,
+    "session_id": "sess-contract"
+  },
+  "members": [
+    {
+      "role": "implementor",
+      "name": "legacy-implementor",
+      "transport_id": "p-legacy-implementor"
+    }
+  ]
+}

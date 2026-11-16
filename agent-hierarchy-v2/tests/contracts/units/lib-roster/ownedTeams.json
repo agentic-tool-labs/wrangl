@@ -1,0 +1,325 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "ownedTeams",
+  "cases": [
+    {
+      "id": "by-pid",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 200
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "by-session",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "sessionId": "sB"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "by-pid-default-first-then-names-sorted",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "both-sessions-match",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 999,
+          "sessionId": "sA"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "both-sessions-known-but-differ-pid-ignored",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100,
+          "sessionId": "other"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "pid-matches-when-recorded-session-missing",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100,
+          "sessionId": "sZ"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "pid-matches-when-invoker-session-missing",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "no-pid-no-session-empty",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "null-invoker",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "undefined-invoker",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":200,\"session_id\":\"sB\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "pid-not-integer",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 1.5
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":1.5}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "string-pid-in-file-coerces",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 300
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":\"300\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "string-pid-with-spaces-coerces",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 300
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":\" 300 \"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "hex-string-pid-coerces",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 255
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":\"0xff\"}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "null-pid-in-file-is-zero",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 0
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":null}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "true-pid-in-file-is-one",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":true}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "unreadable-teams-skipped",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{bad",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "missing-orchestrator",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": 100
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[]}"
+      },
+      "expect": []
+    },
+    {
+      "id": "worktree-reads-home-teams",
+      "rerecorded": "peer-proof #144: a team is owned only by its recorded Orchestrator's pid with its recorded start time; this fixture records no start (or owns by session id alone), so the invoker owns nothing",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        {
+          "pid": 5
+        }
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":5}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "by-pid-and-start",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "pid": {
+            "$selfpid": 1
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[],\"orchestrator\":{\"pid\":$SELFPID,\"session_id\":\"sB\",\"pid_start\":\"$SELFSTART\"}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":100,\"session_id\":\"sA\"}}"
+      },
+      "expect": [
+        "beta"
+      ],
+      "rerecorded": "peer-proof #144 (review S2): the recorded Orchestrator pid with its recorded start time owns the team"
+    }
+  ]
+}

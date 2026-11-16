@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Ah.Abstractions/Ah.Abstractions.csproj" />
+    <ProjectReference Include="../Ah.Core/Ah.Core.csproj" />
+    <ProjectReference Include="../Ah.Config/Ah.Config.csproj" />
+    <ProjectReference Include="../Ah.Roster/Ah.Roster.csproj" />
+    <ProjectReference Include="../Ah.Hierarchy/Ah.Hierarchy.csproj" />
+  </ItemGroup>
+
+</Project>

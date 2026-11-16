@@ -1,0 +1,103 @@
+{
+  "lib": "lib-gate-target",
+  "module": "hooks/lib-gate-target.mjs",
+  "fn": "herdrInputCalls",
+  "cases": [
+    {
+      "id": "agent-prompt",
+      "args": [
+        "herdr agent prompt p msg"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-send-text",
+      "args": [
+        "herdr pane send-text 1-1 hi"
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "send-text",
+          "name": "1-1",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terminal-attach",
+      "args": [
+        "herdr terminal attach t1"
+      ],
+      "expect": [
+        {
+          "group": "terminal",
+          "verb": "attach",
+          "name": "t1",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "all-three-groups",
+      "args": [
+        "herdr agent send-keys a Enter; herdr pane run 1-1 ls; herdr terminal session control s"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "send-keys",
+          "name": "a",
+          "pane": null,
+          "args": [
+            "Enter"
+          ]
+        },
+        {
+          "group": "pane",
+          "verb": "run",
+          "name": "1-1",
+          "pane": null,
+          "args": [
+            "ls"
+          ]
+        },
+        {
+          "group": "terminal",
+          "verb": "session control",
+          "name": "s",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "read-only-verbs-are-not-input",
+      "args": [
+        "herdr agent read p --source visible; herdr agent list; herdr pane layout"
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-herdr",
+      "args": [
+        "ls -la"
+      ],
+      "expect": []
+    }
+  ]
+}

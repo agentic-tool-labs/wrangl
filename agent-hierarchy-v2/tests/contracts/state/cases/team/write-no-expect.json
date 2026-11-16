@@ -1,0 +1,55 @@
+{
+  "kind": "state-op",
+  "id": "write-no-expect",
+  "about": "a write without `expect` is refused as bad_request",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "write",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "path": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team": {
+          "team_id": "tm-1",
+          "name": "tm",
+          "created_at": "2026-01-01T00:00:00.000Z",
+          "members": [
+            {
+              "role": "architect",
+              "name": "tm-architect",
+              "model": "opus"
+            }
+          ]
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-team-write-no-expect"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": false,
+      "code": "bad_request",
+      "message": "team.write needs expect: the digest of the file as the caller read it, or \"absent\""
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a write that proceeds without the caller's digest",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:24.683Z"
+  }
+}

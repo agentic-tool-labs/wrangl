@@ -1,0 +1,51 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "codexTrustRoot",
+  "cases": [
+    {
+      "id": "git-repo",
+      "args": [
+        "$ROOT/work/repo/sub"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": ""
+      },
+      "expect": "$ROOT/work/repo"
+    },
+    {
+      "id": "no-git",
+      "args": [
+        "$ROOT/plain"
+      ],
+      "files": {
+        "plain/x": ""
+      },
+      "expect": "$ROOT/plain"
+    },
+    {
+      "id": "worktree",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "$ROOT/work/repo/"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": ""
+      },
+      "expect": "$ROOT/work/repo"
+    }
+  ]
+}

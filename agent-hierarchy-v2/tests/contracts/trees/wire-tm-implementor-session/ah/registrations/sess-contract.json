@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "session_id": "sess-contract",
+  "address": "tm-implementor@tm",
+  "addresses": [
+    "tm-implementor@tm"
+  ],
+  "boxes": {
+    "tm-implementor@tm": "<ROOT:ah>/mailbox/tm~fixture/tm-implementor"
+  },
+  "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+  "team_files": {
+    "tm-implementor@tm": "<ROOT:proj>/.claude/hierarchy/teams/tm.json"
+  },
+  "harness": "claude",
+  "pid": <PID:runner>,
+  "pid_start": "<PIDSTART:runner>",
+  "pane_id": null,
+  "cwd": "<ROOT:proj>",
+  "at": "2026-01-01T00:00:00.000Z"
+}

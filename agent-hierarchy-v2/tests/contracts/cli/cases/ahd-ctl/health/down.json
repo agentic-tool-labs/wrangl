@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "down",
+  "about": "health with no daemon reports it down",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "health"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"source\":\"files\",\"status\":\"down\",\"error\":{\"code\":\"daemon_down\",\"message\":\"the daemon is not running\"}}\n",
+    "stderr": "",
+    "exit": 3,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a health that starts the daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.389Z"
+  }
+}

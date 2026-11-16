@@ -1,0 +1,42 @@
+{
+  "kind": "hook",
+  "id": "other-command",
+  "about": "another command is left alone (nearest non-match)",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-ah-cli",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "git status",
+        "description": "contract"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unrelated command rewritten",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:28.228Z"
+  }
+}

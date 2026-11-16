@@ -1,0 +1,57 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "appendReportRecord",
+  "cases": [
+    {
+      "id": "seen",
+      "args": [
+        "seen",
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "seen",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "surfaced",
+      "args": [
+        "surfaced",
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "surfaced",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

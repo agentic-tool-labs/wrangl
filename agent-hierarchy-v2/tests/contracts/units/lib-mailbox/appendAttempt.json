@@ -1,0 +1,113 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "appendAttempt",
+  "cases": [
+    {
+      "id": "basic-row",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "id": "e1",
+          "rung": 1,
+          "state": "pending"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":1,\"state\":\"pending\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "row-keys-keep-order-and-at-last",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "state": "s",
+          "id": "e1",
+          "rung": 2,
+          "extra": {
+            "n": 1
+          }
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"state\":\"s\",\"id\":\"e1\",\"rung\":2,\"extra\":{\"n\":1},\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "second-row-appends",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "id": "e2",
+          "rung": 1,
+          "state": "pending"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":1,\"state\":\"x\",\"at\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":1,\"state\":\"x\",\"at\":\"2026-01-01T11:59:59.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"rung\":1,\"state\":\"pending\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "row-may-carry-its-own-at",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "id": "e1",
+          "at": "1999-01-01T00:00:00.000Z"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "attempts-path-is-a-directory-throws",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "id": "e1"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl/x": ""
+      },
+      "expectThrows": true
+    }
+  ]
+}

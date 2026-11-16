@@ -1,0 +1,436 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "add",
+  "cases": [
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "decided",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null,\"op_id\":\"op-1\"}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "parked",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "parked",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": null,
+            "choice": null,
+            "decider": null,
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": "unsure",
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        null,
+        {
+          "opId": "op-2"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":null,\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"unsure\",\"dangerous\":false,\"exchange\":null,\"op_id\":\"op-2\"}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "counts": {
+          "run": {
+            "decided": 0,
+            "parked": 1
+          },
+          "item": {
+            "decided": 0,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "refused-writes-nothing",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null,
+            "extra": 1
+          }
+        },
+        null,
+        {
+          "opId": "op-3"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): extra"
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "refused-detail-is-byte-cut",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null,
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": 1,
+            "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy": 2
+          }
+        },
+        null,
+        {
+          "opId": "op-4"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "refused-detail-cut-never-splits-a-character",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null,
+            "字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字": 1,
+            "字字字字字字字字字字字字字字字字字字字字字字字字": 2
+          }
+        },
+        null,
+        {
+          "opId": "op-5"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): 字字字字字字字字字字字字字字字字字字字字字字字字字字字字字字, 字字字字字字字字字字字字字字字字"
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "short-detail-is-kept",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "note",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        null,
+        {
+          "opId": "op-6"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "kind must be decided or parked"
+        }
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "path-is-not-a-log-throws",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/x.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        null,
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/x.jsonl is not a decision log"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "no-input-is-refused-as-invalid",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa"
+        },
+        null,
+        {
+          "opId": "op-7"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "the input must be one JSON object"
+        }
+      }
+    },
+    {
+      "id": "refusal-detail-of-exactly-the-cap-keeps-a-trailing-replacement-character",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "a",
+            "question": "q?",
+            "options": [
+              "A",
+              "B"
+            ],
+            "default": "a",
+            "choice": "a",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "",
+            "revert": "",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null,
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�": 1
+          }
+        },
+        null,
+        {
+          "opId": "op-9"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�"
+        }
+      }
+    }
+  ]
+}

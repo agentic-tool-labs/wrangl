@@ -1,0 +1,303 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "sumTranscript",
+  "cases": [
+    {
+      "id": "missing-file",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": ""
+      },
+      "expect": {
+        "calls": 0,
+        "in": 0,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    },
+    {
+      "id": "a-message-over-several-lines-counts-once-and-another-message-counts",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"id\":\"m1\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"cache_read_input_tokens\":3,\"cache_creation_input_tokens\":4},\"model\":\"m\"}}\n{\"type\":\"assistant\",\"message\":{\"id\":\"m1\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"cache_read_input_tokens\":3,\"cache_creation_input_tokens\":4},\"model\":\"m\"}}\n{\"type\":\"assistant\",\"message\":{\"id\":\"m2\",\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"cache_read_input_tokens\":3,\"cache_creation_input_tokens\":4},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": 2,
+        "out": 4,
+        "cache_read": 6,
+        "cache_create": 8,
+        "model": "m"
+      }
+    },
+    {
+      "id": "one-turn",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":10,\"output_tokens\":20,\"cache_read_input_tokens\":30,\"cache_creation_input_tokens\":40},\"model\":\"claude-opus-4\"}}\n"
+      },
+      "expect": {
+        "calls": 1,
+        "in": 10,
+        "out": 20,
+        "cache_read": 30,
+        "cache_create": 40,
+        "model": "claude-opus-4"
+      }
+    },
+    {
+      "id": "turns-add-up",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1,\"output_tokens\":2},\"model\":\"m\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":10,\"cache_read_input_tokens\":5},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": 11,
+        "out": 2,
+        "cache_read": 5,
+        "cache_create": 0,
+        "model": "m"
+      }
+    },
+    {
+      "id": "skips-corrupt-non-assistant-and-no-usage",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{not json\n\n{\"type\":\"user\",\"message\":{\"usage\":{\"input_tokens\":99}}}\n{\"type\":\"assistant\",\"message\":{}}\n{\"type\":\"assistant\"}\n5\nnull\n[]\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":3},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 1,
+        "in": 3,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "m"
+      }
+    },
+    {
+      "id": "mid-write-last-line",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":4}}}\n{\"type\":\"assistant\",\"mess"
+      },
+      "expect": {
+        "calls": 1,
+        "in": 4,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    },
+    {
+      "id": "empty-usage-object-counts-a-call",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 1,
+        "in": 0,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "m"
+      }
+    },
+    {
+      "id": "zero-usage-number-is-falsy",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":0}}\n"
+      },
+      "expect": {
+        "calls": 0,
+        "in": 0,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    },
+    {
+      "id": "truthy-non-object-usage-counts",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":\"x\"}}\n"
+      },
+      "expect": {
+        "calls": 1,
+        "in": 0,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    },
+    {
+      "id": "most-used-model-wins",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"a\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"b\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"b\"}}\n"
+      },
+      "expect": {
+        "calls": 3,
+        "in": 3,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "b"
+      }
+    },
+    {
+      "id": "model-tie-first-seen-wins",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"b\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"a\"}}\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": 2,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "b"
+      }
+    },
+    {
+      "id": "integer-like-model-key-orders-first",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"b\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"7\"}}\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": 2,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "7"
+      }
+    },
+    {
+      "id": "empty-model-is-not-counted-as-a-model",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"a\"}}\n"
+      },
+      "expect": {
+        "calls": 3,
+        "in": 3,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "a"
+      }
+    },
+    {
+      "id": "empty-and-non-string-model-ignored",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":5}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1}}}\n"
+      },
+      "expect": {
+        "calls": 3,
+        "in": 3,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    },
+    {
+      "id": "string-token-count-concatenates",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":\"7\"},\"model\":\"m\"}}\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":1},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": "071",
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "m"
+      }
+    },
+    {
+      "id": "negative-and-fractional-counts",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":-5,\"output_tokens\":0.5},\"model\":\"m\"}}\n"
+      },
+      "expect": {
+        "calls": 1,
+        "in": -5,
+        "out": 0.5,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": "m"
+      }
+    },
+    {
+      "id": "crlf-lines",
+      "args": [
+        "$ROOT/t.jsonl"
+      ],
+      "files": {
+        "t.jsonl": "{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":2}}}\r\n{\"type\":\"assistant\",\"message\":{\"usage\":{\"input_tokens\":3}}}\r\n"
+      },
+      "expect": {
+        "calls": 2,
+        "in": 5,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0,
+        "model": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"team_id":"t-tm","mesh":{"policy":"open"},"orchestrator":{"pid":2147483646,"pid_start":"Thu Jan  1 00:00:00 2026","session_id":"orch-other"},"members":[{"role":"implementor","name":"tm-implementor","transport_id":"p-tm-implementor"}]}

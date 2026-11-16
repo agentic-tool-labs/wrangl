@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "configured",
+  "about": "show on a repo with a roster prints its members",
+  "tree": "cli-roster",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "show",
+      "repo"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"level\": \"repo\",\n  \"path\": \"<ROOT:proj>/.claude/agent-hierarchy.json\",\n  \"container\": \"roster\",\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\",\n        \"kind\": \"claude\",\n        \"name\": \"proj-implementor\"\n      }\n    ]\n  },\n  \"shadowed\": null,\n  \"selection\": {\n    \"roster\": \"default\",\n    \"source\": \"default\",\n    \"level\": null,\n    \"path\": null\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a member missing from the shown roster",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.514Z"
+  }
+}

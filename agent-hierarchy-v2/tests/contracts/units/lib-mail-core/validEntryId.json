@@ -1,0 +1,70 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "validEntryId",
+  "cases": [
+    {
+      "id": "simple",
+      "args": [
+        "a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "punctuation",
+      "args": [
+        "a.b-c_d"
+      ],
+      "expect": true
+    },
+    {
+      "id": "dotdot-slash",
+      "args": [
+        "../x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "space",
+      "args": [
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "unicode",
+      "args": [
+        "é"
+      ],
+      "expect": false
+    },
+    {
+      "id": "newline",
+      "args": [
+        "a\n"
+      ],
+      "expect": false
+    }
+  ]
+}

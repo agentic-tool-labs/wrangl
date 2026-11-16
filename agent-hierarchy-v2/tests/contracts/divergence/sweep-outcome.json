@@ -1,0 +1,28 @@
+{
+  "about": "A legacy team.json whose Orchestrator pid is only undecided (no recorded start, so a missing process proves nothing) is neither swept nor reported as an orphaned team record by native. The recorded Node run did both. The recordings are not rewritten. A row named here is replayed with the recorded side's sweep outputs removed and the kept team's own contribution to the status document removed from both sides, and counts as diverged only when it is equal after that; see tests/contract-tools/lib-sweep-outcome.mjs and lib-ledger.mjs, scope sweep-outcome.",
+  "ruling": "b3 §13 TL6; b3 §B5; b6 §8",
+  "id": "sweep-outcome",
+  "reason": "A team-file orchestrator pid with no recorded start never proves the team orphaned (b3 §13 TL6); the recorded Node sweeps it or reports it orphaned",
+  "unmasked": "every stdout line other than the named ones, every tree entry other than the named paths, and every key of the status document outside the kept team's own contribution",
+  "scoped": [
+    {
+      "row": "hook/sessionstart/h3-legacy-stale-team-swept",
+      "kind": "sweep-outcome",
+      "statusTeam": null,
+      "stdoutLines": ["cleared stale team t-legacy\\n", "peers: none"],
+      "keptStdoutLines": ["Team t-legacy (authoritative): implementor=(subagent)"],
+      "treePaths": [
+        "proj/.claude/ah2/team.json",
+        "proj/.claude/ah2/_stale/team.*",
+        "proj/.claude/ah2/.state-team/.executed-ops.jsonl"
+      ],
+      "opLines": ["proj/.claude/ah2/.state-status/.executed-ops.jsonl"]
+    },
+    {
+      "row": "hook/sessionstart/h3-legacy-own-team-kept",
+      "kind": "sweep-outcome",
+      "statusTeam": null,
+      "stdoutLines": ["ah: 1 orphaned team record(s) (default) — their orchestrator process is gone. To take one over, ask the user, then `roster.mjs adopt --orchestrator-pid <your pid> --team <name>` via /wrangl:agent-team; `roster.mjs reap` lists them and `reap --commit` removes them."]
+    }
+  ]
+}

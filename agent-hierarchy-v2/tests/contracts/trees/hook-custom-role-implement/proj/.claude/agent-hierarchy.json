@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "roles": {
+    "godot-implementor": {
+      "class": "implement",
+      "agent": "godot-implementor",
+      "label": "Godot-Implementor",
+      "description": "d",
+      "routes": "r",
+      "model": "opus"
+    }
+  }
+}

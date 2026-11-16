@@ -1,0 +1,49 @@
+{
+  "kind": "hook",
+  "id": "h4-torn-log-gets-newline",
+  "about": "a log whose last line was torn gets a newline before the new line",
+  "tree": "hook-pipeline-live-torn-log",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-merge-record",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_response": {},
+      "tool_use_id": "toolu_contract",
+      "tool_input": {
+        "command": "gh pr merge 12 --match-head-commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --merge",
+        "description": "contract"
+      }
+    }
+  },
+  "mutant": "torn line joined",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.decisions.jsonl",
+          "mode": "0644",
+          "content": "{\"kind\":\"merge\",\"pr\":12,\"sha\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"method\":\"merge\",\"time\":\"<ISO:1>\",\"approval\":\"permission prompt\",\"ran\":true,\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:35.324Z"
+  }
+}

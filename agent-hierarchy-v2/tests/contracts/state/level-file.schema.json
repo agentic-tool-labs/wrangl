@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer"
+    },
+    "roster": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "roster",
+    "version"
+  ],
+  "additionalProperties": true
+}

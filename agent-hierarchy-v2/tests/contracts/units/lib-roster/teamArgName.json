@@ -1,0 +1,35 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamArgName",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        null
+      ],
+      "expect": "@default"
+    },
+    {
+      "id": "named",
+      "args": [
+        "alpha"
+      ],
+      "expect": "alpha"
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "the-literal",
+      "args": [
+        "@default"
+      ],
+      "expect": "@default"
+    }
+  ]
+}

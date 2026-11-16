@@ -1,0 +1,43 @@
+{
+  "kind": "cli",
+  "id": "missing-title",
+  "about": "new from the orchestrator without --title is refused",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "new",
+      "--to",
+      "implementor",
+      "--from",
+      "orchestrator",
+      "--slug",
+      "contract"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: --title is required for a request from orchestrator; give the dispatch a few plain words, verb first, e.g. --title \"Make UI slick\"\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an orchestrator request accepted without a title",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:42.795Z"
+  }
+}

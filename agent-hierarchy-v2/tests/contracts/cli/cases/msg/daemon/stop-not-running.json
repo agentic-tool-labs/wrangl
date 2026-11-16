@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "stop-not-running",
+  "about": "daemon stop with no daemon says not running and exits 0",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "daemon",
+      "stop"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "not running\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a stop that errors on a missing daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T13:53:17.088Z"
+  }
+}

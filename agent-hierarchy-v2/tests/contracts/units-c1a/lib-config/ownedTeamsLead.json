@@ -1,0 +1,54 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ownedTeamsLead",
+  "cases": [
+    {
+      "id": "two",
+      "args": [
+        [
+          "alpha",
+          "beta"
+        ]
+      ],
+      "expect": "You own 2 live teams: alpha, beta. Pass --team <name> to roster.mjs team verbs and to msg.mjs new; a member name already says its team."
+    },
+    {
+      "id": "with-default",
+      "args": [
+        [
+          null,
+          "alpha"
+        ]
+      ],
+      "expect": "You own 2 live teams: @default, alpha. Pass --team <name> to roster.mjs team verbs and to msg.mjs new; a member name already says its team."
+    },
+    {
+      "id": "three",
+      "args": [
+        [
+          "a",
+          null,
+          "c"
+        ]
+      ],
+      "expect": "You own 3 live teams: a, @default, c. Pass --team <name> to roster.mjs team verbs and to msg.mjs new; a member name already says its team."
+    },
+    {
+      "id": "one",
+      "args": [
+        [
+          "only"
+        ]
+      ],
+      "expect": "You own 1 live teams: only. Pass --team <name> to roster.mjs team verbs and to msg.mjs new; a member name already says its team."
+    },
+    {
+      "id": "empty",
+      "args": [
+        []
+      ],
+      "expect": "You own 0 live teams: . Pass --team <name> to roster.mjs team verbs and to msg.mjs new; a member name already says its team."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ahd</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ah.Abstractions/Ah.Abstractions.csproj" />
+    <ProjectReference Include="../Ah.Core/Ah.Core.csproj" />
+    <ProjectReference Include="../Ah.Platform/Ah.Platform.csproj" />
+    <ProjectReference Include="../Ah.Config/Ah.Config.csproj" />
+    <ProjectReference Include="../Ah.Roster/Ah.Roster.csproj" />
+    <ProjectReference Include="../Ah.Hierarchy/Ah.Hierarchy.csproj" />
+    <ProjectReference Include="../Ah.Mesh/Ah.Mesh.csproj" />
+    <ProjectReference Include="../Ah.Codex/Ah.Codex.csproj" />
+    <ProjectReference Include="../Ah.Launch/Ah.Launch.csproj" />
+    <ProjectReference Include="../Ah.Watch/Ah.Watch.csproj" />
+    <ProjectReference Include="../Ah.State/Ah.State.csproj" />
+    <ProjectReference Include="../Ah.StateDb/Ah.StateDb.csproj" />
+    <ProjectReference Include="../Ah.DaemonClient/Ah.DaemonClient.csproj" />
+    <ProjectReference Include="../Ah.Daemon/Ah.Daemon.csproj" />
+    <ProjectReference Include="../Ah.Hooks/Ah.Hooks.csproj" />
+    <ProjectReference Include="../Ah.Commands/Ah.Commands.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="../../../assets/mascot.ansi" LogicalName="mascot.ansi" />
+  </ItemGroup>
+
+</Project>

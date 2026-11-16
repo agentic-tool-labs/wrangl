@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "writer-bad-set",
+  "about": "state writer --set with a runtime that is neither node nor native is refused with exit 2",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "state",
+      "writer",
+      "--set",
+      "bogus"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--set takes node or native\"}}\n",
+    "stderr": "",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown writer accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:50:24.801Z"
+  }
+}

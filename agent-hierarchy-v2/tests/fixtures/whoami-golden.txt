@@ -1,0 +1,398 @@
+== no pane (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-pane-id",
+  "answered_by": null
+}
+== pane matches one member (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== tmux pane (rc=0)
+{
+  "member": {
+    "name": "beta-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "beta",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/beta.json",
+  "orchestrator": {
+    "pid": DEAD,
+    "session_id": null,
+    "live": false,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== pane matches none (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "not-a-member",
+  "answered_by": null
+}
+== pane matches two teams (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "ambiguous",
+  "answered_by": null,
+  "candidates": [
+    {
+      "team": "delta",
+      "name": "delta-one"
+    },
+    {
+      "team": "gamma",
+      "name": "gamma-one"
+    }
+  ]
+}
+== explicit team narrows the ambiguity (rc=0)
+{
+  "member": {
+    "name": "gamma-one",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "gamma",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/gamma.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": null,
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== explicit nonexistent team (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-team",
+  "answered_by": null
+}
+== explicit default team (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-team",
+  "answered_by": null
+}
+== env team file, member by pane (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "env",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== env team file, pane not a member (rc=0)
+{
+  "member": null,
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "env",
+  "work_tree": null
+}
+== env team file, no pane (rc=0)
+{
+  "member": null,
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "env",
+  "work_tree": null
+}
+== env team file that does not exist (rc=0)
+{
+  "member": null,
+  "team": "ghost",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/ghost.json",
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-team",
+  "answered_by": "env",
+  "work_tree": null
+}
+== env team file of another repo (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  },
+  "env_team_invalid": {
+    "value": "$SB/other/.claude/ah2/teams/alien.json",
+    "kind": "other-repo",
+    "why": "it is a team file of another repo's hierarchy dir ($SB/other/.claude/ah2), not this one's"
+  }
+}
+== env team file malformed (rc=0)
+{
+  "member": null,
+  "team": "broken",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/broken.json",
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-team",
+  "answered_by": "env",
+  "work_tree": null
+}
+== env team file not shaped like one (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  },
+  "env_team_invalid": {
+    "value": "$SB/myrepo/.claude/ah2/not-a-team.jsonl",
+    "kind": "malformed",
+    "why": "it is not a team file path (<hierarchy dir>/teams/<name>.json or <hierarchy dir>/team.json)"
+  }
+}
+== dead orchestrator pid (rc=0)
+{
+  "member": {
+    "name": "beta-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "beta",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/beta.json",
+  "orchestrator": {
+    "pid": DEAD,
+    "session_id": null,
+    "live": false,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== live orchestrator with a socket (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": "uds:$SB/socks/LIVE.sock"
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== registered pid from the session id (rc=0)
+{
+  "member": {
+    "name": "alpha-reviewer",
+    "role": "reviewer",
+    "route": "peer"
+  },
+  "team": "alpha",
+  "team_file": "$SB/myrepo/.claude/ah2/teams/alpha.json",
+  "orchestrator": {
+    "pid": LIVE,
+    "session_id": "orch-a",
+    "live": true,
+    "send_to": null
+  },
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": null,
+  "answered_by": "pane",
+  "work_tree": null,
+  "tree": {
+    "path": null,
+    "stream": null,
+    "owner": null,
+    "co_tenants": [],
+    "cross_stream": null
+  }
+}
+== pid known, no pane env (rc=0)
+{
+  "member": null,
+  "team": null,
+  "team_file": null,
+  "orchestrator": null,
+  "registered_pid": null,
+  "last_observed_brief": null,
+  "reason": "no-pane-id",
+  "answered_by": null
+}
+== bad flag (rc=2)
+ah roster: whoami: unrecognized flag --nope (use --team or --cwd)

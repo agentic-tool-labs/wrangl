@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "missing-args",
+  "about": "next-split without its arguments is refused",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "next-split"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: --mode must be one of auto, columns, grid, got undefined\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a split computed from nothing",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.307Z"
+  }
+}

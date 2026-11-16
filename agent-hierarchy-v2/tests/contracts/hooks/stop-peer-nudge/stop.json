@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "stop",
+  "about": "a stop with an open peer obligation is nudged",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-peer-nudge",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an open obligation not nudged",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:34.475Z"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "state-wrong-method",
+  "about": "a write op through GET is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "args": "{}"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/state/activity/record"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "activity.record is a write operation: use POST"
+      }
+    }
+  },
+  "mutant": "a write run by GET",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:10.389Z"
+  }
+}

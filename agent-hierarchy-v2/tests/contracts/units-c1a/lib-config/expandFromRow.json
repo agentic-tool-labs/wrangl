@@ -1,0 +1,451 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "expandFromRow",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        {
+          "from": "demo@mkt:qc"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "with-pin-and-stored-copy",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}",
+        "home/.claude/agent-hierarchy/trusted/927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0.json": "{\"row\":{\"class\":\"review\",\"description\":\"Checks things\",\"label\":\"QC\",\"model\":\"sonnet\",\"routes\":\"qc work\"},\"agentText\":\"---\\nname: qc\\ndescription: Checks things\\ntools: Read, Grep\\n---\\nYou are QC.\\n\",\"files\":[[\".claude-plugin/plugin.json\",\"68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af\"],[\"agents/qc.md\",\"d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da\"],[\"ah-roles.json\",\"9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa\"]]}\n"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "ok",
+          "message": null,
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "overrides-laid-over",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "label": "Quality",
+          "description": "mine",
+          "routes": "my work",
+          "model": "opus",
+          "dispatch": "peer"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "Quality",
+          "description": "mine",
+          "routes": "my work",
+          "model": "opus",
+          "agent": "demo:qc",
+          "dispatch": "peer"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "empty-routes-removes",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "routes": ""
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "empty-description-removes",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "description": ""
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "empty-label-kept-as-empty",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "label": ""
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "empty-model-kept-as-empty",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "model": ""
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "not-installed-uses-stored-copy",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0.json": "{\"row\":{\"class\":\"review\",\"description\":\"Checks things\",\"label\":\"QC\",\"model\":\"sonnet\",\"routes\":\"qc work\"},\"agentText\":\"---\\nname: qc\\ndescription: Checks things\\ntools: Read, Grep\\n---\\nYou are QC.\\n\",\"files\":[[\".claude-plugin/plugin.json\",\"68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af\"],[\"agents/qc.md\",\"d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da\"],[\"ah-roles.json\",\"9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa\"]]}\n"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-missing",
+          "message": "plugin demo is not installed",
+          "subcode": null,
+          "from": "demo@mkt:qc"
+        }
+      }
+    },
+    {
+      "id": "not-installed-no-copy",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      ],
+      "expect": {
+        "error": "pack-missing: plugin demo is not installed"
+      }
+    },
+    {
+      "id": "pin-changed-installed-still-expands",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "pin": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned sha256:dddddddddddd…, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "pin-not-string",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "pin": 5
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    },
+    {
+      "id": "from-malformed",
+      "args": [
+        {
+          "from": "nope"
+        }
+      ],
+      "expect": {
+        "error": "pack-invalid: from \"nope\" must be <plugin>@<marketplace>:<role>"
+      }
+    },
+    {
+      "id": "agent-named-in-pack",
+      "args": [
+        {
+          "from": "demo@mkt:qc"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"qc\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "agent": "demo:qc",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:f07d1dbd1be8…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:f07d1dbd1be8f2e70f0f5b06a0f839bd280c72e4490470eb979d2d9a0e720447"
+        }
+      }
+    },
+    {
+      "id": "role-invalid-no-source",
+      "args": [
+        {
+          "from": "demo@mkt:qc"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"nope\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "error": "pack-invalid: role qc: class is required, one of advise, design, review, implement, legwork, orchestrate"
+      }
+    },
+    {
+      "id": "unknown-override-key-ignored",
+      "args": [
+        {
+          "from": "demo@mkt:qc",
+          "color": "red"
+        }
+      ],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
+        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
+        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+      },
+      "expect": {
+        "raw": {
+          "class": "review",
+          "label": "QC",
+          "description": "Checks things",
+          "routes": "qc work",
+          "model": "sonnet",
+          "agent": "demo:qc"
+        },
+        "pack": {
+          "status": "pack-changed",
+          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "subcode": null,
+          "from": "demo@mkt:qc",
+          "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
+          "agentPath": "$ROOT/plug/demo/agents/qc.md",
+          "pinNow": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
+        }
+      }
+    }
+  ]
+}

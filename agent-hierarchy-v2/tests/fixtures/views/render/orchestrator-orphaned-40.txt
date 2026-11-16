@@ -1,0 +1,11 @@
+ah › repoB · pid 2424
+────────────────────────────────────────
+dir <ROOT>/repoB/.claude/hierarchy
+pid 2424  session –  not live
+
+  team             state    members live
+> beta             orphaned       1    0
+y copies: roster.mjs disband --plan --te
+am beta
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

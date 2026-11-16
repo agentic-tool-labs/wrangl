@@ -1,0 +1,12 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "SAME_FAILURE_MS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 10000
+    }
+  ]
+}

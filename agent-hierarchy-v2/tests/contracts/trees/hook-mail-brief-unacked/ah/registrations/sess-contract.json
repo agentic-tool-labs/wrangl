@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "session_id": "sess-contract",
+  "address": "implementor@tm",
+  "addresses": [
+    "implementor@tm"
+  ],
+  "boxes": {
+    "implementor@tm": "<ROOT:ah>/mailbox/tm~fixture/implementor"
+  },
+  "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+  "harness": "claude",
+  "pid": <PID:runner>,
+  "pane_id": null,
+  "cwd": "<ROOT:proj>",
+  "at": "2026-01-01T00:00:00.000Z"
+}

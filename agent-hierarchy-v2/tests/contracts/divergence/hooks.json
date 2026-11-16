@@ -1,0 +1,103 @@
+{
+  "about": "Where a native PreToolUse gate intentionally differs from the recorded Node oracle. Every row is a ruling, not an accident. Rulings: D4 (20261011-164349-146w): gates fail closed, so an internal error is deny JSON with exit 0, narrowed by issue #21: the conduit, worktree, msg, sendmessage-response and ah-cli gates log to hook-errors and allow, as in node, while push-guard, mcp-guard, trust-gate and ultra-gate stay closed; D5: the narrow Bash deny list of the self-care gate; 0114 \u00a73.1: no writer_mismatch.",
+  "genericDenyText": {
+    "reason": "ah: the <gate> gate hit an internal error and could not check this call, so it was held; see the hook error log.",
+    "systemMessage": "ah: a gate could not check this call, so it was held; see the hook error log.",
+    "note": "Provisional wording: the rulings fix the behaviour (deny JSON, exit 0), not the text. A gate that already has its own fail-closed text keeps it."
+  },
+  "internalError": [
+    {
+      "gate": "pretooluse-msg-gate",
+      "node": "logHookError, no output, exit 0 (allow)",
+      "native": "a recorder since ah-simplify: log to hook-errors, allow; it never denies"
+    },
+    {
+      "gate": "pretooluse-sendmessage-response",
+      "node": "logHookError, no output, exit 0 (allow)",
+      "native": "a recorder since ah-simplify: log to hook-errors, allow; it never denies"
+    },
+    {
+      "gate": "pretooluse-ah-cli",
+      "node": "logHookError, no output (the user's permission flow), exit 0",
+      "native": "log to hook-errors, allow (parity with node)"
+    },
+    {
+      "gate": "pretooluse-compound-allow",
+      "node": "none: native-only unit, no node oracle; behaviour is pinned by the Rig rows of HooksHostTests.CompoundAllow",
+      "native": "log to hook-errors, no output (Claude Code decides as today)"
+    },
+    {
+      "gate": "pretooluse-mail-claim",
+      "node": "no Node script exists: the unit is native-only",
+      "native": "a SendMessage that carries no mail entry marker and no request token is allowed; one that does is denied with the text that says ah could not record the relay"
+    }
+  ],
+  "orphanLineOffersAdopt": {
+    "id": "I0-orphan-line-offers-adopt",
+    "gate": "sessionstart",
+    "node": "the state block's orphaned-team line ends: `roster.mjs reap` to list, `reap --commit` to remove",
+    "native": "the line also says to ask the user and then adopt the team (`ah roster adopt --orchestrator-pid <your pid> --team <name>` via /wrangl:agent-team) before naming `reap` to list and `reap --commit` to remove",
+    "reason": "a fresh session that finds an orphan was steered toward deleting it",
+    "rowsExercisingNode": [
+      "hook/sessionstart/h3-stale-team-swept",
+      "hook/sessionstart/h3-stale-team-attributed-by-env-kept",
+      "hook/sessionstart/h3-legacy-stale-team-env-attributed-kept",
+      "hook/sessionstart/h3-live-team-not-swept"
+    ]
+  },
+  "eventNull": {
+    "node": "stdin `null` parses; reading a property of it throws inside each gate's try, so the internalError row of the gate applies (the self-care gate guards `input &&` and allows)",
+    "native": "a JSON null event is the generic deny for every gate, the self-care gate included"
+  },
+  "gateInput": {
+    "ruling": "GI-1..GI-3 (0109 \u00a72), DV-1 (0114 \u00a75.1)",
+    "node": "a gate fed an empty, unreadable, non-JSON or non-object payload, or one with no string tool_name, reads it as an empty event and allows",
+    "native": "deny JSON, exit 0, a constant reason that says the input was unusable and holds no input text; one hook-errors row; advisory hooks unchanged",
+    "gates": "every PreToolUse unit"
+  },
+  "scriptUnderRoot": {
+    "ruling": "SR-N2, Z-21 (0110 \u00a74.3), DV-2 (0114 \u00a75.1)",
+    "node": "a script is accepted when its root is the plugin's own or any sibling directory of it",
+    "native": "a sibling is accepted only when its .claude-plugin/plugin.json parses and its name equals the own root's byte for byte; any manifest error refuses",
+    "caseFiles": [
+      "units-h1/lib-ah-cli/scriptUnderRoot.json#sibling-version",
+      "units-h1/lib-ah-cli/scriptUnderRoot.json#sibling-of-root-itself"
+    ]
+  },
+  "identityFlags": {
+    "ruling": "MI-R1 (0115), DV-3",
+    "node": "a restricted role's msg or roster command may name --session, --orchestrator-pid or a session-identity environment prefix",
+    "native": "denied outside test mode with a constant reason that names the flag class; the Orchestrator, an Ultra-Advisor, a role-less session and test mode are unchanged",
+    "gate": "pretooluse-ah-cli"
+  },
+  "trustFileWrites": {
+    "ruling": "TA-5 (0115)",
+    "node": "the Reviewer write gate holds only a restricted Reviewer's writes; Write/Edit/MultiEdit of a trust file by any other role is not held",
+    "native": "a Write, Edit, MultiEdit or NotebookEdit whose real path is trusted-homes or trusted-hierarchy-dirs is denied for every session that has a role or is a participant",
+    "gate": "pretooluse-reviewer-write-gate"
+  },
+  "renderedMessages": {
+    "ruling": "C2 (0110 \u00a74.3), N1",
+    "node": "exception messages and the --from value are written raw into deny reasons and hook-errors rows",
+    "native": "each goes through SafeText.Render: escape sequences and control characters removed, JSON-quoted, at most 200 characters",
+    "gates": "pretooluse-roster-skill-gate, pretooluse-ah-cli, the host's rows"
+  },
+  "sessionEndForeignPid": {
+    "about": "#155: a pid is the session only when it is this user's process and its recorded start or its command line shows it",
+    "gate": "sessionend-roster",
+    "node": "any live pid on the session's up row holds the session, so the end is foreign: no down row, activity kept",
+    "native": "a live pid that is not a harness session (here a plain child process) does not hold it, so the end marks the member down and clears its activity",
+    "reason": "bare pid existence is also true of a recycled pid (the EC1 ghost); the case's fixture stands a non-harness process in for the other session",
+    "rowsExercisingNode": [
+      "hook/sessionend-roster/h3-foreign-live-pid-keeps-up"
+    ]
+  },
+  "excludedCases": [
+    "hook/pretooluse-ah-cli/h1-fill-as-wrong-role",
+    "hook/sessionend-roster/h3-foreign-live-pid-keeps-up"
+  ],
+  "excludedCaseRulings": {
+    "hook/pretooluse-ah-cli/h1-fill-as-wrong-role": "renderedMessages: C2 (0110 \u00a74.3), N1",
+    "hook/sessionend-roster/h3-foreign-live-pid-keeps-up": "sessionEndForeignPid: #155 (member-liveness-155 \u00a71)"
+  }
+}

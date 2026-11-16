@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "roster": {
+    "route": "peer",
+    "members": [
+      {
+        "role": "implementor",
+        "model": "sonnet",
+        "effort": "high"
+      },
+      {
+        "role": "reviewer",
+        "model": "opus"
+      }
+    ]
+  }
+}

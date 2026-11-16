@@ -1,0 +1,61 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "latestSubagentRecords",
+  "cases": [
+    {
+      "id": "latest-per-agent",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag2\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"stopped\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": {
+        "$map": [
+          [
+            "ag1",
+            {
+              "type": "subagent",
+              "session_id": "s1",
+              "agent_id": "ag1",
+              "status": "stopped",
+              "ts": "2026-06-01T11:59:55.000Z"
+            }
+          ],
+          [
+            "ag2",
+            {
+              "type": "subagent",
+              "session_id": "s1",
+              "agent_id": "ag2",
+              "status": "started",
+              "ts": "2026-06-01T11:59:00.000Z"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "other-session-ignored",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s2\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n"
+      },
+      "expect": {
+        "$map": []
+      }
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1"
+      ],
+      "expect": {
+        "$map": []
+      }
+    }
+  ]
+}

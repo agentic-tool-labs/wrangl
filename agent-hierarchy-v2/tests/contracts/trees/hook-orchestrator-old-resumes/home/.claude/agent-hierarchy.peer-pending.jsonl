@@ -1,0 +1,4 @@
+{"type": "watch-event", "kind": "RESUME", "subject": "sess-contract", "ts": "<NOW-20h>", "failed_at": "<NOW-20h>"}
+{"type": "watch-event", "kind": "RESUME", "subject": "sess-contract", "ts": "<NOW-21h>", "failed_at": "<NOW-21h>"}
+{"type": "watch-event", "kind": "RESUME", "subject": "sess-contract", "ts": "<NOW-22h>", "failed_at": "<NOW-22h>"}
+{"type": "watch-event", "kind": "RESUME", "subject": "sess-contract", "ts": "<NOW-23h>", "failed_at": "<NOW-23h>"}

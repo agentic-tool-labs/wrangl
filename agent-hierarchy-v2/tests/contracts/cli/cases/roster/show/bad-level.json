@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "bad-level",
+  "about": "an unknown level is refused with exit 2 and one line on stderr",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "show",
+      "nowhere"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"roster\": null,\n  \"hint\": \"no roster configured — spawn ad hoc with: roster.mjs spawn-ad-hoc <role> [--kind K] [--route pane|peer] --cwd <abs cwd>\",\n  \"selection\": {\n    \"roster\": \"default\",\n    \"source\": \"default\",\n    \"level\": null,\n    \"path\": null\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown level treated as repo",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.376Z"
+  }
+}

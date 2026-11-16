@@ -1,0 +1,39 @@
+{
+  "kind": "hook",
+  "id": "h3-details-capped",
+  "about": "error details and code are one line and capped",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "error": "rate_limit",
+      "error_message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\tyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+      "error_code": "E_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+    }
+  },
+  "mutant": "details not capped",
+  "expect": {
+    "stdout": "{\"terminalSequence\":\"\\u001b]9;ah: proj stopped on an API error (rate_limit). Open it to continue.\\u0007\\u0007\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:57.433Z"
+  }
+}

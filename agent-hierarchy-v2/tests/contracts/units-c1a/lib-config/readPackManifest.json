@@ -1,0 +1,994 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "readPackManifest",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/readme": "x"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-missing",
+          "message": "no ah-roles.json in $ROOT/pk"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "not-json",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{nope"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-invalid",
+          "message": "$ROOT/pk/ah-roles.json is not valid JSON"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "array",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "[]"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-invalid",
+          "message": "$ROOT/pk/ah-roles.json must hold a JSON object"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "string",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "\"x\""
+      },
+      "expect": {
+        "error": {
+          "code": "pack-invalid",
+          "message": "$ROOT/pk/ah-roles.json must hold a JSON object"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "no-version",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"roles\":{}}"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-version",
+          "message": "$ROOT/pk/ah-roles.json: version must be 1, got undefined"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "version-2",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":2,\"roles\":{}}"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-version",
+          "message": "$ROOT/pk/ah-roles.json: version must be 1, got 2"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "version-string",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":\"1\",\"roles\":{}}"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-version",
+          "message": "$ROOT/pk/ah-roles.json: version must be 1, got \"1\""
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "roles-array",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":[]}"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-invalid",
+          "message": "$ROOT/pk/ah-roles.json: roles must be an object"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "roles-missing",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1}"
+      },
+      "expect": {
+        "error": {
+          "code": "pack-invalid",
+          "message": "$ROOT/pk/ah-roles.json: roles must be an object"
+        },
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "empty-roles",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {}
+      }
+    },
+    {
+      "id": "one-valid-role",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-named",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"qc-agent\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": "qc-agent"
+            },
+            "agent": "qc-agent",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc-agent",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "unknown-top-key",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"extra\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [
+          "unknown key \"extra\" is ignored"
+        ],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "unknown-role-key",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"color\":\"red\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "color": "red"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": [
+              "role qc: unknown key \"color\" is ignored"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "peer-key",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"peer\":true}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "peer": true
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: peer is a local setting, not allowed in a pack"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "role-not-object",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":\"review\"}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": "review",
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: must be an object"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "role-null",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":null}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": null,
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: must be an object"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "role-array",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":[]}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": [],
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: must be an object"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "bad-role-name",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"Bad Name\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "Bad Name": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role \"Bad Name\": name must match /^[a-z][a-z0-9-]{0,30}$/"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "builtin-role-name",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"architect\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "architect": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role \"architect\": name \"architect\" is reserved"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "hidden-char-label",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"Q​A\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "Q​A",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-hidden-chars",
+              "message": "role qc: label holds a hidden character (U+200B at line 1, column 2)"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "hidden-char-routes",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"a‮b\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "a‮b",
+              "model": "sonnet"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-hidden-chars",
+              "message": "role qc: routes holds a hidden character (U+202E at line 1, column 2)"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-with-colon",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"x:y\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": "x:y"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent \"x:y\" must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-with-slash",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"a/b\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": "a/b"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent \"a/b\" must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-with-backslash",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"a\\\\b\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": "a\\b"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent \"a\\\\b\" must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-dotdot",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"a..b\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": "a..b"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent \"a..b\" must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-empty",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":\"\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": ""
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent \"\" must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "agent-number",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"agent\":5}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "agent": 5
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: agent 5 must name an agent in this plugin, with no \":\", \"/\", \"\\\" or \"..\""
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "bad-class",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"wizard\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "wizard",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: class is required, one of advise, design, review, implement, legwork, orchestrate"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "class-legwork",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"legwork\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "legwork",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "legwork",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": [
+              "role qc: routes is ignored on a legwork role — legwork is never routed within the chain"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "implement-class-routes",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"implement\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "implement",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "implement",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "model-bad",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"gpt-9\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "gpt-9"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role qc: model \"gpt-9\" is not allowed for class review (allowed: opus, sonnet, fable, inherit)"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "dispatch-model",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\",\"dispatch\":\"model\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "dispatch": "model"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet",
+              "dispatch": "model"
+            },
+            "error": null,
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "two-roles-one-bad",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"},\"ops\":{\"class\":\"nope\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "qc": {
+            "raw": {
+              "class": "review",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
+            },
+            "error": null,
+            "warnings": []
+          },
+          "ops": {
+            "raw": {
+              "class": "nope"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role ops: class is required, one of advise, design, review, implement, legwork, orchestrate"
+            },
+            "warnings": []
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "installRecords",
+  "cases": [
+    {
+      "id": "none",
+      "args": [],
+      "expect": []
+    },
+    {
+      "id": "one",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/p/demo\",\"version\":\"1.2.3\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/demo",
+          "version": "1.2.3",
+          "scope": "user"
+        }
+      ]
+    },
+    {
+      "id": "no-marketplace-key",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo\":[{\"installPath\":\"$ROOT/p/demo\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo",
+          "plugin": "demo",
+          "marketplace": null,
+          "installPath": "$ROOT/p/demo",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "two-records-one-key",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"installPath\":\"$ROOT/p/a\",\"version\":\"1\"},{\"installPath\":\"$ROOT/p/b\",\"scope\":\"project\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/a",
+          "version": "1",
+          "scope": null
+        },
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/b",
+          "version": null,
+          "scope": "project"
+        }
+      ]
+    },
+    {
+      "id": "record-without-path-skipped",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"version\":\"1\"},{\"installPath\":\"$ROOT/p/ok\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/ok",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "path-not-string",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"installPath\":5}]}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "version-and-scope-non-string",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"installPath\":\"$ROOT/p/a\",\"version\":2,\"scope\":[\"x\"]}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/a",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "null-record",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[null,{\"installPath\":\"$ROOT/p/a\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/a",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "list-not-array",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":{\"installPath\":\"$ROOT/p/a\"}}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "two-plugins-order",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"zeta@m\":[{\"installPath\":\"$ROOT/z\"}],\"alpha@m\":[{\"installPath\":\"$ROOT/a\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "zeta@m",
+          "plugin": "zeta",
+          "marketplace": "m",
+          "installPath": "$ROOT/z",
+          "version": null,
+          "scope": null
+        },
+        {
+          "key": "alpha@m",
+          "plugin": "alpha",
+          "marketplace": "m",
+          "installPath": "$ROOT/a",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "at-in-marketplace",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@a@b\":[{\"installPath\":\"$ROOT/p/a\"}]}}"
+      },
+      "expect": [
+        {
+          "key": "demo@a@b",
+          "plugin": "demo",
+          "marketplace": "a@b",
+          "installPath": "$ROOT/p/a",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "plugins-not-object",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":[1]}"
+      },
+      "expect": []
+    },
+    {
+      "id": "invalid-json",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{nope"
+      },
+      "expect": []
+    },
+    {
+      "id": "no-plugins-key",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2}"
+      },
+      "expect": []
+    }
+  ]
+}

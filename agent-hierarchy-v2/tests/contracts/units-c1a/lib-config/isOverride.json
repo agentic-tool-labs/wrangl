@@ -1,0 +1,53 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isOverride",
+  "cases": [
+    {
+      "id": "same",
+      "args": [
+        "architect",
+        {
+          "agent": "ah:architect"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "override",
+      "args": [
+        "architect",
+        {
+          "agent": "over:architect"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-agent",
+      "args": [
+        "architect",
+        {}
+      ],
+      "expect": false
+    },
+    {
+      "id": "custom-with-agent",
+      "args": [
+        "ui-implementor",
+        {
+          "agent": "x:y"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "custom-none",
+      "args": [
+        "ui-implementor",
+        null
+      ],
+      "expect": false
+    }
+  ]
+}

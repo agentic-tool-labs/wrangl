@@ -1,0 +1,125 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "indexAnchors",
+  "cases": [
+    {
+      "id": "two-anchors",
+      "args": [
+        "## [0] tldr\n- x\n## [1] goal\ntext\n"
+      ],
+      "expect": [
+        {
+          "line": 1,
+          "n": 0,
+          "key": "tldr",
+          "text": "## [0] tldr"
+        },
+        {
+          "line": 3,
+          "n": 1,
+          "key": "goal",
+          "text": "## [1] goal"
+        }
+      ]
+    },
+    {
+      "id": "line-numbers-are-one-based",
+      "args": [
+        "a\nb\n## [3] files\n"
+      ],
+      "expect": [
+        {
+          "line": 3,
+          "n": 3,
+          "key": "files",
+          "text": "## [3] files"
+        }
+      ]
+    },
+    {
+      "id": "indented-heading-ignored",
+      "args": [
+        "  ## [1] goal\n"
+      ],
+      "expect": []
+    },
+    {
+      "id": "needs-index",
+      "args": [
+        "## goal\n## [] goal\n## [x] goal\n"
+      ],
+      "expect": []
+    },
+    {
+      "id": "needs-key",
+      "args": [
+        "## [1] \n## [2]\n"
+      ],
+      "expect": []
+    },
+    {
+      "id": "key-stops-at-space",
+      "args": [
+        "## [4] files and more\n"
+      ],
+      "expect": [
+        {
+          "line": 1,
+          "n": 4,
+          "key": "files",
+          "text": "## [4] files and more"
+        }
+      ]
+    },
+    {
+      "id": "multi-digit-index",
+      "args": [
+        "## [12] key\n"
+      ],
+      "expect": [
+        {
+          "line": 1,
+          "n": 12,
+          "key": "key",
+          "text": "## [12] key"
+        }
+      ]
+    },
+    {
+      "id": "crlf-key-includes-no-cr",
+      "args": [
+        "## [1] goal\r\n"
+      ],
+      "expect": [
+        {
+          "line": 1,
+          "n": 1,
+          "key": "goal",
+          "text": "## [1] goal\r"
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": []
+    },
+    {
+      "id": "tab-after-key",
+      "args": [
+        "## [2] key\there\n"
+      ],
+      "expect": [
+        {
+          "line": 1,
+          "n": 2,
+          "key": "key",
+          "text": "## [2] key\there"
+        }
+      ]
+    }
+  ]
+}

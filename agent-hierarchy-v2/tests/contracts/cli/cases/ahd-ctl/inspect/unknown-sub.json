@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "unknown-sub",
+  "about": "inspect with an unknown sub-verb is refused with exit 2",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "inspect",
+      "nope"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"inspect needs one of boxes|entries|registrations|timers|events|status\"}}\n",
+    "stderr": "",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown sub-verb accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.592Z"
+  }
+}

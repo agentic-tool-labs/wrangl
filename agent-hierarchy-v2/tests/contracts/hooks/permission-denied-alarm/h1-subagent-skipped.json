@@ -1,0 +1,47 @@
+{
+  "kind": "hook",
+  "id": "h1-subagent-skipped",
+  "about": "a subagent's denial is not alarmed",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "permission-denied-alarm",
+    "event": {
+      "hook_event_name": "PermissionDenied",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "tool_name": "Bash",
+      "tool_input": { "command": "git cherry-pick abc" },
+      "tool_use_id": "toolu_contract",
+      "agent_id": "a-1",
+      "agent_type": "ah:implementor"
+    }
+  },
+  "mutant": "subagent guard dropped",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/ah2/hierarchy/hook-errors.jsonl",
+          "mode": "0644",
+          "content": "{\"ts\":\"<ISO:1>\",\"hook\":\"permission-denied-alarm.mjs\",\"event\":\"PermissionDenied\",\"session_id\":\"sess-contract\",\"message\":\"denied Bash: reason=(none given) tool_input=\\\"{\\\\\\\"command\\\\\\\":\\\\\\\"git cherry-pick abc\\\\\\\"}\\\"\",\"stack\":[]}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "native",
+    "note": "the hook has no Node counterpart; recorded from the native implementation",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-21T12:00:00.000Z"
+  }
+}

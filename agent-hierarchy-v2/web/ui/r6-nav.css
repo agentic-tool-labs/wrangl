@@ -1,0 +1,138 @@
+/* Navigation and layout (P4): the right-rail toggle and the widths where it matters. Tokens only. */
+
+.r6 .rail-toggle { display: none; height: 26px; min-width: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.r6 .rail-toggle[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.r6 .rail-toggle:focus-visible { outline: 2px solid var(--accent); }
+
+@media (max-width: 1099px) {
+  .r6 .rail-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .r6 .frame-body:not(.rail-open) > .rail, .r6 .frame-body:not(.rail-open) .ctx { display: none; }
+  .r6 .frame-body:not(.rail-open) .conversation { grid-template-columns: 230px minmax(0, 1fr); }
+  /* Home keeps Needs you under the table with the panel shut; Panel adds the rest. */
+  .r6 .frame-body:not(.rail-open):has(> .teams-rail) { flex-direction: column; }
+  .r6 .frame-body:not(.rail-open):has(> .teams-rail) > .main-col { flex: 1 1 0; min-height: 0; }
+  .r6 .frame-body:not(.rail-open) > .rail.teams-rail { display: block; flex: 0 0 auto; max-width: none; max-height: 40%; margin: 0 var(--sp-12) var(--sp-12); overflow: auto; }
+  .r6 .frame-body:not(.rail-open) > .teams-rail > section[aria-label="Recent across teams"] { display: none; }
+  /* five team tabs: tighter tabs, and the crumbs and chips never wrap inside the 40px header */
+  .r6 .shell-head .views .tab { padding: 0 var(--sp-6); }
+  .r6 .shell-head .tab, .r6 .shell-head .crumbs, .r6 .shell-head .chip { white-space: nowrap; }
+  .r6 .shell-head > :not(.crumbs), .r6 .shell-head .crumbs > :not(.branch) { flex-shrink: 0; }
+  .r6 .shell-head .branch { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* One scroll container per pane: the frame is a grid of fixed rows and the body never scrolls. */
+.r6 .frame-body:has(.conversation) { display: block; overflow: hidden; }
+.r6 .frame-body:has(.conversation) > .main-col { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.r6 .stage-wrap.view-conversation { flex: 1 1 0; min-height: 0; }
+.r6 .frame-body:has(.conversation) .conversation { flex: 1 1 0; height: auto; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+.r6 .conversation > * { min-height: 0; }
+.r6 .conversation .member-rail { overflow: auto; }
+.r6 .conversation > .ctx { overflow: auto; align-content: start; }
+.r6 .conversation .transcript { display: flex; flex-direction: column; position: relative; }
+.r6 .conversation .tr-scroll { flex: 1 1 0; min-height: 0; height: auto; }
+
+/* Conversation: header, toolbar, pinned controls. */
+.cv-head { display: flex; align-items: center; gap: 12px; flex: none; min-height: 40px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.cv-head .grow { flex: 1 1 auto; }
+.cv-state.st-working { color: var(--pill-working); }
+.cv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: none; min-height: 36px; padding: 4px 16px; border-bottom: 1px solid var(--line); background: var(--panel-bg); }
+.cv-bar .filters.seg { flex-wrap: nowrap; gap: 0; border: 1px solid var(--line-control); border-radius: 3px; overflow: hidden; }
+.cv-bar .filters.seg .tab { border: 0; border-radius: 0; padding: 3px 10px; }
+.cv-bar .err-count { color: var(--gone); }
+.cv-search { display: flex; align-items: center; gap: 6px; flex: 1 1 140px; min-width: 0; color: var(--muted); }
+.cv-search .search { flex: 1 1 auto; width: auto; }
+.cv-follow { display: flex; align-items: center; gap: 6px; color: var(--ink-2); flex: none; }
+.cv-bar .chip.scope { flex: none; }
+.r6 .conversation .cv-jump { position: absolute; right: 16px; bottom: 12px; height: 28px; padding: 0 12px; border-radius: 3px; font-weight: 600; cursor: pointer; }
+.r6 .conversation .cv-older { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); height: 24px; padding: 0 10px; border: 1px solid var(--line-control); border-radius: 3px; background: var(--panel-bg); color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.cv-older .spin { width: 10px; height: 10px; border: 2px solid var(--line-control); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) { .cv-older .spin { animation: none; } }
+
+/* Under 760px the member list is a horizontal strip. */
+@media (max-width: 759px) {
+  .r6 .shell-head { flex: 0 0 auto; height: auto; flex-wrap: wrap; row-gap: var(--sp-4); padding-block: var(--sp-4); }
+  .r6 .shell-head .crumbs { flex: 0 0 auto; }
+  .r6 .frame-body:has(.conversation) .conversation { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .r6 .conversation .member-rail { padding: 4px; overflow-x: auto; overflow-y: hidden; }
+  .r6 .conversation .member-rail ul { display: flex; gap: 4px; }
+  .r6 .conversation .member-rail li { flex: none; }
+  .r6 .conversation .member-rail .rail-body { min-height: 32px; width: auto; }
+}
+
+/* Overview: members column, centre, and the Activity rail (the shared .rail) at 340px. */
+.r6 .frame-body:has(.view-overview) { flex-wrap: nowrap; align-items: stretch; overflow: hidden; }
+.r6 .frame-body:has(.view-overview) > .main-col { flex: 1 1 0; min-width: 0; min-height: 0; }
+.r6 .frame-body:has(.view-overview) .stage-wrap { flex: 1 1 0; min-height: 0; padding: 0; overflow: hidden; }
+.r6 .frame-body:has(.view-overview) > .rail { flex: 0 0 340px; max-width: 340px; min-height: 0; overflow: auto; }
+.overview { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; min-height: 0; }
+.ov-members { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--panel-bg); }
+.ov-members > header, .ov-h { display: flex; align-items: center; gap: 8px; flex: none; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.ov-h { padding: 0 16px; margin-top: 8px; }
+.ov-members .grow { flex: 1 1 auto; }
+.ov-members .keys { font-size: var(--text-11); }
+.ov-scroll { overflow: auto; min-height: 0; }
+.overview h4 { margin: 0; padding: 8px 12px 2px; color: var(--muted-2); font-size: var(--text-11); font-weight: 400; letter-spacing: .04em; text-transform: uppercase; }
+.ov-members ul { list-style: none; margin: 0; padding: 0; }
+/* The press target fills the row and selects; the row's content sits above it and lets presses through, except on the name's link. */
+.ov-member { position: relative; }
+.ov-member .ov-hit { position: absolute; inset: 0; width: 100%; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
+.ov-member .ov-hit:hover { background: var(--surface-hover); }
+.ov-member .ov-hit:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.ov-member.selected .ov-hit { background: var(--row-sel); box-shadow: inset 2px 0 0 var(--accent); }
+.ov-member .ov-row { position: relative; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 6px 12px; color: var(--ink-2); pointer-events: none; }
+.ov-member .who a { display: block; padding-block: var(--sp-4); margin-block: calc(-1 * var(--sp-4)); color: inherit; text-decoration: none; pointer-events: auto; overflow: hidden; text-overflow: ellipsis; }
+.ov-member .who a:hover { color: var(--ink-strong); text-decoration: underline; }
+.ov-member .who a:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 1px; border-radius: var(--radius); }
+.ov-member .who { display: flex; flex-direction: column; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-member .who small, .ov-member .since, .ov-member .ctx { color: var(--muted); font-size: var(--text-11); }
+.ov-member.st-working .g { color: var(--pill-working); }
+.ov-member.st-blocked .g { color: var(--blocked); }
+.ov-member.st-idle, .ov-member.st-gone { color: var(--muted); }
+.ov-centre { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; }
+.ov-stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); flex: none; border-bottom: 1px solid var(--line); }
+.ov-stats .stat { padding: 12px 16px; border-right: 1px solid var(--line); min-width: 0; }
+.ov-stats .stat:last-child { border-right: 0; }
+.ov-stats h4 { padding: 0; }
+.ov-stats b { display: block; font-size: 22px; line-height: 28px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.ov-stats .attn b { color: var(--blocked); }
+.ov-stats span { color: var(--muted); font-size: var(--text-12); }
+/* A team's goal (ah2-53), on the Overview and in the Sitrep: each label in the Overview's muted label voice over its text, which wraps. */
+.team-goal dl { display: grid; gap: var(--sp-8); margin: 0; }
+.team-goal dt { color: var(--muted-2); font-size: var(--text-11); line-height: 16px; letter-spacing: .04em; text-transform: uppercase; }
+.team-goal .goal-team { letter-spacing: normal; text-transform: none; }
+.team-goal dd { margin: 0; color: var(--ink); font-size: var(--text-13); line-height: 20px; overflow-wrap: anywhere; }
+.ov-goal { flex: none; padding: var(--sp-12) var(--sp-16); border-bottom: 1px solid var(--line); }
+.ov-table .row { display: grid; grid-template-columns: 90px minmax(0, 3fr) minmax(0, 2fr) 150px 80px; gap: 12px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line-soft); min-width: 0; }
+.ov-table.no-branch .row { grid-template-columns: 90px minmax(0, 3fr) minmax(0, 2fr) 80px; }
+.ov-table.no-status .row { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) 150px 80px; }
+.ov-table.no-status.no-branch .row { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) 80px; }
+.ov-table .row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-table .row.head { position: sticky; top: 0; z-index: 1; padding: 6px 16px; background: var(--panel-bg); color: var(--muted-2); font-size: var(--type-table-heading-size, var(--text-11)); letter-spacing: .04em; text-transform: uppercase; font-family: var(--type-table-heading-font, inherit); font-style: var(--type-table-heading-style, inherit); font-weight: var(--type-table-heading-weight, inherit); }
+.ov-table .row.st-working .status { color: var(--pill-working); }
+.ov-table .empty { margin: 0; padding: 12px 16px; }
+.ov-tree { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; font-size: var(--text-12); line-height: 20px; color: var(--ink-2); white-space: pre; }
+.ov-tree .ln.st-working { color: var(--pill-working); }
+.ov-tree .ln.st-idle, .ov-tree .ln.st-gone { color: var(--muted); }
+
+@media (max-width: 759px) {
+  .overview { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .ov-members { border-right: 0; border-bottom: 1px solid var(--line); }
+  .ov-members .ov-scroll { display: flex; overflow-x: auto; overflow-y: hidden; }
+  .ov-members ul { display: flex; flex: none; }
+  .ov-member { flex: none; }
+}
+@media (max-width: 1099px) {
+  .r6 .frame-body:has(.view-overview):not(.rail-open) > .rail { display: none; }
+}
+
+/* Conversation columns: 240 + transcript + 300; the Details rail is one scroll container with plain sections. */
+.r6 .conversation { grid-template-columns: 240px minmax(0, 1fr) 300px; gap: 0; }
+.r6 .conversation .member-rail, .r6 .conversation .transcript { border-radius: 0; box-shadow: none; }
+.r6 .conversation .ctx { max-width: none; display: block; padding: 0; border: 1px solid var(--line); background: var(--panel-bg); }
+.ctx-head { display: flex; align-items: center; height: 40px; padding: 0 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.ctx-dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px 12px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: var(--text-12); }
+.ctx-dl dt { color: var(--muted); }
+.ctx-dl dd { margin: 0; overflow-wrap: anywhere; }
+.r6 .conversation .ctx h3 { margin: 0; padding: 10px 16px 4px; }
+.r6 .conversation .ctx ul, .r6 .conversation .ctx > p { padding: 0 16px 10px; margin: 0; border-bottom: 1px solid var(--line); }

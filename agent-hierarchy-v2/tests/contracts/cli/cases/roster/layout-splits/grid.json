@@ -1,0 +1,37 @@
+{
+  "kind": "cli",
+  "id": "grid",
+  "about": "layout-splits prints the split plan for a pane count",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "layout-splits",
+      "--mode",
+      "grid",
+      "--pane-count",
+      "4",
+      "--self",
+      "%1"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: layout-splits requires the herdr transport\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a plan with the wrong number of splits",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.001Z"
+  }
+}

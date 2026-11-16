@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "refused",
+  "about": "alias is accepted by the CLI and refused with its reason",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "alias",
+      "list"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: alias was removed: a team's name is chosen when it is created — `roster.mjs create --team <name>`. The name belongs to that team and is not stored anywhere else.\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an alias verb that silently does something",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.358Z"
+  }
+}

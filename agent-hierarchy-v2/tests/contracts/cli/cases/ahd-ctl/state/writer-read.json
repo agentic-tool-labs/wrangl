@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "writer-read",
+  "about": "state writer reports the writer stamp (no stamp: node)",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "state",
+      "writer"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"writer\":\"node\",\"gen\":0,\"version\":null,\"at\":null,\"source\":\"manifest\",\"manifest\":\"node\",\"file\":\"<ROOT:ah>/state-writer.json\"}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a writer read that creates a stamp",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:50:24.887Z"
+  }
+}

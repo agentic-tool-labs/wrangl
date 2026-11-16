@@ -1,0 +1,111 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "memberNamePrefix",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "repo-architect",
+        "architect"
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "ordinal",
+      "args": [
+        "repo-architect-2",
+        "architect"
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "long-prefix-with-hyphens",
+      "args": [
+        "a-b-c-implementor-12",
+        "implementor"
+      ],
+      "expect": "a-b-c"
+    },
+    {
+      "id": "role-not-at-end",
+      "args": [
+        "repo-architect-x",
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "name-is-role",
+      "args": [
+        "architect",
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-prefix-before-role",
+      "args": [
+        "-architect",
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "role-twice",
+      "args": [
+        "architect-architect",
+        "architect"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "name-not-string",
+      "args": [
+        5,
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "role-not-string",
+      "args": [
+        "repo-architect",
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-role",
+      "args": [
+        "repo-",
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "ordinal-with-letters",
+      "args": [
+        "repo-architect-2a",
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "newline-in-prefix",
+      "args": [
+        "a\nb-architect",
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ordinal-then-newline",
+      "args": [
+        "repo-architect-2\n",
+        "architect"
+      ],
+      "expect": null
+    }
+  ]
+}

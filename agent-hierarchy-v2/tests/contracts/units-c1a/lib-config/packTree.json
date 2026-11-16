@@ -1,0 +1,331 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packTree",
+  "cases": [
+    {
+      "id": "two-files",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/b.txt": "bee",
+        "t/a.txt": "ay"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ],
+          [
+            "b.txt",
+            "62cb81b5904a262ffaeed02abef36bfc540b09f964b8b0b636662f77ffce6714"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "nested",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/sub/deep/c.txt": "c",
+        "t/a.txt": "ay"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ],
+          [
+            "sub/deep/c.txt",
+            "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "top-level-git-skipped",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/.git/HEAD": "ref",
+        "t/a.txt": "ay"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "nested-git-kept",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/sub/.git/HEAD": "ref",
+        "t/a.txt": "ay"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ],
+          [
+            "sub/.git/HEAD",
+            "3ff6c05723bb069d19953340320fa9512f0be584742703e60226ded28bb43861"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "code-unit-order",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/B": "1",
+        "t/_": "2",
+        "t/a": "3",
+        "t/é.txt": "4",
+        "t/z.txt": "5"
+      },
+      "expect": {
+        "files": [
+          [
+            "B",
+            "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+          ],
+          [
+            "_",
+            "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+          ],
+          [
+            "a",
+            "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+          ],
+          [
+            "z.txt",
+            "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d"
+          ],
+          [
+            "é.txt",
+            "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "slash-vs-dash-order",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/a-b": "1",
+        "t/a/b": "2",
+        "t/a.b": "3"
+      },
+      "expect": {
+        "files": [
+          [
+            "a-b",
+            "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+          ],
+          [
+            "a.b",
+            "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+          ],
+          [
+            "a/b",
+            "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "binary-content",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/bin": {
+          "base64": "AAH//g=="
+        }
+      },
+      "expect": {
+        "files": [
+          [
+            "bin",
+            "5e90fe977790507860b03456633c9ad88ea951cd8a6620d3e37ca43c160c15ae"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/empty": ""
+      },
+      "expect": {
+        "files": [
+          [
+            "empty",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "empty-directory",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/emptydir": {
+          "dir": true
+        },
+        "t/a.txt": "ay"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ]
+        ],
+        "symlink": null,
+        "error": null
+      }
+    },
+    {
+      "id": "symlink-to-file",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/a.txt": "ay",
+        "t/real": "r"
+      },
+      "links": {
+        "t/link": "real"
+      },
+      "expect": {
+        "files": [
+          [
+            "a.txt",
+            "69d61997a241e97931db9dd1cfcef218041a752485f5f7956b09766287682da3"
+          ],
+          [
+            "real",
+            "454349e422f05297191ead13e21d3db520e5abef52055e4964b82fb213f593a1"
+          ]
+        ],
+        "symlink": "link",
+        "error": null
+      }
+    },
+    {
+      "id": "symlink-in-subdir-first-wins",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/a/x": "1",
+        "t/b/y": "2"
+      },
+      "links": {
+        "t/a/ln": "x",
+        "t/b/ln": "y"
+      },
+      "expect": {
+        "files": [
+          [
+            "a/x",
+            "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+          ],
+          [
+            "b/y",
+            "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+          ]
+        ],
+        "symlink": "a/ln",
+        "error": null
+      }
+    },
+    {
+      "id": "symlink-to-dir",
+      "args": [
+        "$ROOT/t"
+      ],
+      "files": {
+        "t/d/x": "1"
+      },
+      "links": {
+        "t/dl": "d"
+      },
+      "expect": {
+        "files": [
+          [
+            "d/x",
+            "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+          ]
+        ],
+        "symlink": "dl",
+        "error": null
+      }
+    },
+    {
+      "id": "root-missing",
+      "args": [
+        "$ROOT/never-made"
+      ],
+      "expect": {
+        "files": [],
+        "symlink": null,
+        "error": "ENOENT: no such file or directory, scandir '$ROOT/never-made'"
+      }
+    },
+    {
+      "id": "root-is-file",
+      "args": [
+        "$ROOT/afile"
+      ],
+      "files": {
+        "afile": "x"
+      },
+      "expect": {
+        "files": [],
+        "symlink": null,
+        "error": "ENOTDIR: not a directory, scandir '$ROOT/afile'"
+      }
+    }
+  ]
+}

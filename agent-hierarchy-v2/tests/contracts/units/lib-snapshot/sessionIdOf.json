@@ -1,0 +1,220 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "sessionIdOf",
+  "cases": [
+    {
+      "id": "newest-live-registration-wins",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor",
+          "role": "implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-old.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-old\",\"address\":\"proj-implementor@proj\",\"addresses\":[\"proj-implementor@proj\"],\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\",\"team_file\":null}\n",
+        "ah/registrations/s-new.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-new\",\"address\":\"proj-implementor@proj\",\"addresses\":[\"proj-implementor@proj\"],\"pid\":1,\"at\":\"2026-10-02T10:00:00.000Z\",\"team_file\":null}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "s-new"
+    },
+    {
+      "id": "dead-registration-is-ignored-falls-to-peer-row",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor",
+          "role": "implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-dead.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-dead\",\"address\":\"proj-implementor@proj\",\"addresses\":[\"proj-implementor@proj\"],\"pid\":999999,\"at\":\"2026-10-01T10:00:00.000Z\"}\n",
+        "proj/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"proj-implementor\",\"role\":\"implementor\",\"session_id\":\"s-peer\",\"status\":\"up\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\",\"ts\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "s-peer"
+    },
+    {
+      "id": "registration-for-another-team-file-is-skipped",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        "alpha",
+        {
+          "name": "proj-implementor",
+          "role": "implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-other.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-other\",\"address\":\"proj-implementor@proj\",\"addresses\":[\"proj-implementor@proj\"],\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\",\"team_file\":\"$ROOT/elsewhere/teams/beta.json\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "registration-for-this-team-file-is-used",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        "alpha",
+        {
+          "name": "proj-implementor",
+          "role": "implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-mine.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-mine\",\"address\":\"proj-implementor@alpha\",\"addresses\":[\"proj-implementor@alpha\"],\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\",\"team_file\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "s-mine"
+    },
+    {
+      "id": "address-without-addresses-list",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-a.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-a\",\"address\":\"proj-implementor@proj\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "s-a"
+    },
+    {
+      "id": "address-name-must-match-exactly",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/s-a.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-a\",\"address\":\"proj-implementor-2@proj\",\"addresses\":[\"proj-implementor-2@proj\"],\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "member-without-name",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "role": "implementor"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "member-null",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        null
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "nothing-known",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "peer-row-without-session-id-is-skipped",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"proj-implementor\",\"role\":\"implementor\",\"status\":\"up\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\",\"ts\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "registration-ties-keep-file-order",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/a-first.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"a-first\",\"address\":\"proj-implementor@proj\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n",
+        "ah/registrations/b-second.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"b-second\",\"address\":\"proj-implementor@proj\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "a-first"
+    },
+    {
+      "id": "registration-without-at-sorts-last",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "name": "proj-implementor"
+        }
+      ],
+      "files": {
+        "ah/registrations/a-noat.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"a-noat\",\"address\":\"proj-implementor@proj\",\"pid\":1}\n",
+        "ah/registrations/b-dated.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"b-dated\",\"address\":\"proj-implementor@proj\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "b-dated"
+    }
+  ]
+}

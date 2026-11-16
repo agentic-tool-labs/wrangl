@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../fixtures/Ah.Fixture.Registry/Ah.Fixture.Registry.csproj" />
+  </ItemGroup>
+
+</Project>

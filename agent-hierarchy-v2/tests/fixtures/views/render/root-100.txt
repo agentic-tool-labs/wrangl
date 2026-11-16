@@ -1,0 +1,8 @@
+ah
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  orchestrator                         state    #teams members live working blocked owed ctx overdue
+> repoA · no orchestrator              none          1       1    0       0       0    0   0       0
+  repoA · pid 4242                     live          3       5    3       1       2    1   1       0
+  repoB · pid 2424                     orphaned      1       1    0       0       0    0   0       0
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

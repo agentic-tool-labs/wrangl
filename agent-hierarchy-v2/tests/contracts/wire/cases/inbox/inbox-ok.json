@@ -1,0 +1,34 @@
+{
+  "kind": "wire",
+  "id": "inbox-ok",
+  "about": "a pull of an empty mailbox",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inbox"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "address": "tm-implementor@tm",
+      "entries": [],
+      "next": 0
+    }
+  },
+  "mutant": "a missing next cursor",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:01.155Z"
+  }
+}

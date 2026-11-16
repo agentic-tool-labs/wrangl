@@ -1,0 +1,39 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "ROSTER_BOOL_FLAGS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "plain",
+        "json",
+        "plan",
+        "commit",
+        "partial",
+        "manual",
+        "next",
+        "apply",
+        "kill",
+        "keep-sessions",
+        "spawn",
+        "dry-run",
+        "new-tab",
+        "new-workspace",
+        "allow-global",
+        "cancel",
+        "clear",
+        "close",
+        "confirm",
+        "also-config",
+        "no-spawn",
+        "allow-roster-edit",
+        "no-legwork-handoff",
+        "wait-only",
+        "no-worktree",
+        "yes"
+      ]
+    }
+  ]
+}

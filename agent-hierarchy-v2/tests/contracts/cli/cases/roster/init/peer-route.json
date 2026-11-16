@@ -1,0 +1,40 @@
+{
+  "kind": "cli",
+  "id": "peer-route",
+  "about": "init writes the repo level file with the route",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "init",
+      "repo",
+      "--route",
+      "peer"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"level\": \"repo\",\n  \"path\": \"<ROOT:proj>/.claude/agent-hierarchy.json\",\n  \"container\": \"roster\",\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": []\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/agent-hierarchy.json",
+          "mode": "0644",
+          "content": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": []\n  }\n}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a level file written without its route",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:48.840Z"
+  }
+}

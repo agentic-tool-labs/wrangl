@@ -1,0 +1,28 @@
+{
+  "about": "The plugin keeps its state in its own homes: the user-level state home is ~/.claude/ah2, a repository's project directory is <repo>/.claude/ah2 (or ~/.claude/ah2/project when the repository is the user's home), and every fixed name the v1 plugin kept directly under ~/.claude or <repo>/.claude lives under them. The recordings are not rewritten; the replay reads them with the layout mapped (the replay-mapping row of agent-prefix.json).",
+  "ruling": "0118 §3.1, §3.1a",
+  "rows": [
+    {
+      "id": "state-home",
+      "recorded": "~/.claude/agent-hierarchy (the default AH_HOME, the trusted-homes and trusted-hierarchy-dirs files, trusted/<pin>.json, projects/<slug>/agent-hierarchy.json)",
+      "native": "~/.claude/ah2 through Ah.Core.Text.AhPaths.HomeUnder; a v1 AH_HOME is refused with its own cause, and `ahd home trust` refuses v1's default home"
+    },
+    {
+      "id": "project-dir",
+      "recorded": "<repo>/.claude/hierarchy (teams, msgs, status.json, pipeline, peers, registrations)",
+      "native": "<repo>/.claude/ah2 through AhPaths.ProjectDir; ~/.claude/ah2/project when the repository's real path is the user's home",
+      "reason": "a v1 team, message or status file in a repository stays v1's, and the two homes never coincide"
+    },
+    {
+      "id": "user-global-hierarchy-dir",
+      "recorded": "~/.claude/hierarchy/<basename> and ~/.claude/hierarchy/hook-errors.jsonl",
+      "native": "~/.claude/ah2/hierarchy/<basename> and ~/.claude/ah2/hierarchy/hook-errors.jsonl"
+    },
+    {
+      "id": "fixed-names",
+      "recorded": "~/.claude/agent-hierarchy.json, agent-hierarchy.gate.json, agent-hierarchy.ultra-gate.state, agent-hierarchy.session-roles.json, agent-hierarchy.state/, agent-hierarchy.peer-pending.jsonl, agent-hierarchy.peer-records.state, agent-hierarchy.usage.jsonl, agent-hierarchy.usage-cache.json, agent-hierarchy.usage.state; <repo>/.claude/agent-hierarchy.json and ah-conventions.json",
+      "native": "the same names under ~/.claude/ah2 and <repo>/.claude/ah2",
+      "reason": "the v1 plugin writes these names, so v2 cannot share them; they keep their full names so a person can tell which plugin's file is which"
+    }
+  ]
+}

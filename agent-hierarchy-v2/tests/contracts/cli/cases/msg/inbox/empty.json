@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "empty",
+  "about": "inbox of an empty box prints no entries",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "inbox",
+      "--address",
+      "tm-implementor@tm",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"address\":\"tm-implementor@tm\",\"entries\":[],\"next\":0}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an entry invented",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.395Z"
+  }
+}

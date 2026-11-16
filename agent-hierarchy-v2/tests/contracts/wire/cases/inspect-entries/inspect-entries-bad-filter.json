@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "inspect-entries-bad-filter",
+  "about": "an unknown filter is 400 bad_request",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "filter": "nope",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/entries"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "filter must be one of pending, acked, all"
+      }
+    }
+  },
+  "mutant": "an unknown filter ignored",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:02.184Z"
+  }
+}

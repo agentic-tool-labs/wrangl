@@ -1,0 +1,34 @@
+{
+  "kind": "wire",
+  "id": "join-poll-unknown",
+  "about": "an unknown join id is 404",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/join/j-nope"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_found",
+        "message": "no join request \"j-nope\""
+      }
+    }
+  },
+  "mutant": "an unknown id reported pending",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:05.934Z"
+  }
+}

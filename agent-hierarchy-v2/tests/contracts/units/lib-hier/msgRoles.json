@@ -1,0 +1,83 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "msgRoles",
+  "cases": [
+    {
+      "id": "default-registry",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        "orchestrator",
+        "chief",
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "task-runner",
+        "backlog-groomer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    },
+    {
+      "id": "no-repo",
+      "args": [
+        "$ROOT/nowhere"
+      ],
+      "files": {
+        "nowhere": {
+          "dir": true
+        }
+      },
+      "expect": [
+        "orchestrator",
+        "chief",
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "task-runner",
+        "backlog-groomer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    },
+    {
+      "id": "custom-role-from-project-config",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roles\": {\"scribe\": {\"class\": \"legwork\"}}}\n"
+      },
+      "expect": [
+        "orchestrator",
+        "chief",
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "task-runner",
+        "backlog-groomer",
+        "sub-orchestrator",
+        "deputy-chief",
+        "scribe"
+      ]
+    }
+  ]
+}

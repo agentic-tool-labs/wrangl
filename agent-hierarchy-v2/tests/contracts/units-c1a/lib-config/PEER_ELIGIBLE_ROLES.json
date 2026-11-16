@@ -1,0 +1,22 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "PEER_ELIGIBLE_ROLES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    }
+  ]
+}

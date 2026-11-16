@@ -1,0 +1,83 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "appendPeerRecord",
+  "cases": [
+    {
+      "id": "one-row",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "appends",
+      "args": [
+        {
+          "a": 2
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "array-written-in-one-call",
+      "args": [
+        [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          }
+        ]
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "empty-array-writes-nothing-visible",
+      "args": [
+        []
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": ""
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "creates-dir",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

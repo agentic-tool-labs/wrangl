@@ -1,0 +1,27 @@
+{
+  "lib": "lib-gate-target",
+  "module": "hooks/lib-gate-target.mjs",
+  "fn": "HERDR_INPUT_VERBS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "agent": [
+          "prompt",
+          "send-keys",
+          "attach"
+        ],
+        "pane": [
+          "send-text",
+          "send-keys",
+          "run"
+        ],
+        "terminal": [
+          "attach",
+          "session control"
+        ]
+      }
+    }
+  ]
+}

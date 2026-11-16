@@ -1,0 +1,43 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamListText",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        []
+      ],
+      "expect": ""
+    },
+    {
+      "id": "default-only",
+      "args": [
+        [
+          null
+        ]
+      ],
+      "expect": "\"@default\""
+    },
+    {
+      "id": "default-and-named",
+      "args": [
+        [
+          null,
+          "alpha"
+        ]
+      ],
+      "expect": "\"@default\", \"alpha\""
+    },
+    {
+      "id": "two-named",
+      "args": [
+        [
+          "alpha",
+          "beta"
+        ]
+      ],
+      "expect": "\"alpha\", \"beta\""
+    }
+  ]
+}

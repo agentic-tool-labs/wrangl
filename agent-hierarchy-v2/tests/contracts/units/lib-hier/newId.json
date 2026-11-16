@@ -1,0 +1,115 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "newId",
+  "cases": [
+    {
+      "id": "utc",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expectPrefix": "20260816-143201-"
+    },
+    {
+      "id": "new-york-summer",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expectPrefix": "20260816-103201-"
+    },
+    {
+      "id": "kolkata",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "Asia/Kolkata"
+      },
+      "expectPrefix": "20260816-200201-"
+    },
+    {
+      "id": "lord-howe-dst",
+      "args": [
+        {
+          "$date": "2026-01-15T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "Australia/Lord_Howe"
+      },
+      "expectPrefix": "20260115-230000-"
+    },
+    {
+      "id": "year-boundary-east",
+      "args": [
+        {
+          "$date": "2025-12-31T23:30:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "Pacific/Kiritimati"
+      },
+      "expectPrefix": "20260101-133000-"
+    },
+    {
+      "id": "new-york-spring-forward-before",
+      "args": [
+        {
+          "$date": "2026-03-08T06:59:59Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expectPrefix": "20260308-015959-"
+    },
+    {
+      "id": "new-york-spring-forward-after",
+      "args": [
+        {
+          "$date": "2026-03-08T07:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expectPrefix": "20260308-030000-"
+    },
+    {
+      "id": "new-york-fall-back-first",
+      "args": [
+        {
+          "$date": "2026-11-01T05:59:59Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expectPrefix": "20261101-015959-"
+    },
+    {
+      "id": "new-york-fall-back-second",
+      "args": [
+        {
+          "$date": "2026-11-01T06:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expectPrefix": "20261101-010000-"
+    }
+  ]
+}

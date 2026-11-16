@@ -1,0 +1,69 @@
+{
+ "view_schema": 1,
+ "kind": "stream",
+ "id": "s-work",
+ "path": "/o/<oid>/t/<tkey:work>/s/s-work",
+ "breadcrumb": [
+  {
+   "kind": "root",
+   "id": "",
+   "label": "ah",
+   "path": "/"
+  },
+  {
+   "kind": "orchestrator",
+   "id": "<oid>",
+   "label": "repoW · pid <LIVEPID>",
+   "path": "/o/<oid>"
+  },
+  {
+   "kind": "team",
+   "id": "<tkey:work>",
+   "label": "work",
+   "path": "/o/<oid>/t/<tkey:work>"
+  },
+  {
+   "kind": "stream",
+   "id": "s-work",
+   "label": "s-work",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-work"
+  }
+ ],
+ "summary": {
+  "glyph_state": "working"
+ },
+ "children": [],
+ "body": {
+  "state": "open",
+  "branch": "s-work",
+  "base": "main",
+  "worktree": {
+   "path": "<ROOT>/wt/s-work",
+   "exists": true
+  },
+  "glyph_state": "working",
+  "peers": [
+   {
+    "name": "w-arch",
+    "role": "architect",
+    "status": "working",
+    "in_stream_tab": false
+   },
+   {
+    "name": "w-impl",
+    "role": "implementor",
+    "status": "idle",
+    "in_stream_tab": false
+   }
+  ],
+  "waiting_on": [
+   {
+    "on": "w-impl",
+    "request": "20261011-100000-bbbb",
+    "since": "<ts>",
+    "age_sec": 120
+   }
+  ],
+  "reason": null
+ }
+}

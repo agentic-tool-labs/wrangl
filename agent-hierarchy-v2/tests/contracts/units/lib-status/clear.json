@@ -1,0 +1,58 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "clear",
+  "cases": [
+    {
+      "id": "removes",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": null
+      },
+      "expect": {
+        "cleared": true
+      }
+    },
+    {
+      "id": "nothing-to-remove",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expect": {
+        "cleared": false
+      }
+    },
+    {
+      "id": "invalid-subject",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": ""
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": {
+        "cleared": false
+      }
+    }
+  ]
+}

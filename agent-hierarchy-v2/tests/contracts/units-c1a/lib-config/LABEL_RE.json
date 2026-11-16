@@ -1,0 +1,63 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "LABEL_RE",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "Ui Implementor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "hyphen",
+      "args": [
+        "Task-Runner"
+      ],
+      "expect": true
+    },
+    {
+      "id": "32",
+      "args": [
+        "Abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "33",
+      "args": [
+        "Abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "A_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-space",
+      "args": [
+        " a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "Ab\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    }
+  ]
+}

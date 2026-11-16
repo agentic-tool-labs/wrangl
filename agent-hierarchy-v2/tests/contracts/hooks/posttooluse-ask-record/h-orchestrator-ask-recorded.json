@@ -1,0 +1,99 @@
+{
+  "kind": "hook",
+  "id": "h-orchestrator-ask-recorded",
+  "about": "the recorded Orchestrator's question and response are recorded as received",
+  "tree": "hook-ask-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-ask-record",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "AskUserQuestion",
+      "tool_input": {
+        "questions": [
+          {
+            "question": "Which?",
+            "header": "h",
+            "options": [
+              {
+                "label": "a",
+                "description": "a"
+              },
+              {
+                "label": "b",
+                "description": "b"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "tool_response": {
+        "answers": {
+          "Which?": "a"
+        }
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "an ask not recorded",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.asks.jsonl",
+          "mode": "0644",
+          "content": "{\"at\":\"<ISO:1>\",\"writer\":\"posttooluse-ask-record\",\"session_id\":\"sess-contract\",\"questions\":[{\"question\":\"Which?\",\"header\":\"h\",\"options\":[{\"label\":\"a\",\"description\":\"a\"},{\"label\":\"b\",\"description\":\"b\"}],\"multiSelect\":false}],\"response\":{\"answers\":{\"Which?\":\"a\"}},\"sweep\":1,\"op_id\":\"rec:toolu_contract\"}\n{\"kind\":\"swept\",\"at\":\"<ISO:2>\",\"n\":1}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        },
+        {
+          "path": "ah/state/ah.db.progress_logs.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":1,\"at\":\"<ISO:3>\",\"kind\":\"ruling\",\"team\":\"tm\",\"stream\":null,\"sha\":null,\"base\":null,\"ref\":null,\"verdict\":null,\"slug\":null,\"into\":null,\"tag\":null,\"confirmed\":null,\"text\":\"h: a\",\"source\":{\"type\":\"tool\",\"path\":null,\"verb\":null,\"tool_use_id\":\"toolu_contract\"}}\n"
+        },
+        {
+          "path": "ah/state/ah.db.qa_log.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":1,\"kind\":\"ask\",\"at\":\"<EPOCHMS>\",\"session_id\":\"sess-contract\",\"team\":\"tm\",\"questions\":[{\"question\":\"Which?\",\"header\":\"h\",\"options\":[{\"label\":\"a\",\"description\":\"a\"},{\"label\":\"b\",\"description\":\"b\"}],\"multiSelect\":false}],\"answers\":{\"Which?\":\"a\"},\"op_id\":\"<OPID:2>\"}\n"
+        },
+        {
+          "path": "home/.claude/ah2/hierarchy/hook-errors.jsonl",
+          "mode": "0644",
+          "content": "{\"ts\":\"<ISO:4>\",\"hook\":\"posttooluse-ask-record.mjs\",\"event\":\"PostToolUse\",\"session_id\":\"sess-contract\",\"message\":\"trace: ask-record: entry tool_use_id=toolu_contract session=sess-contract cwd=<ROOT:proj> metadata_source=absent\",\"stack\":[]}\n{\"ts\":\"<ISO:5>\",\"hook\":\"posttooluse-ask-record.mjs\",\"event\":\"PostToolUse\",\"session_id\":\"sess-contract\",\"message\":\"trace: ask-record: recorded the answer in 1 directories\",\"stack\":[]}\n"
+        },
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-18T00:00:00.000Z",
+    "note": "native-only hook unit and state op: no Node recording exists"
+  }
+}

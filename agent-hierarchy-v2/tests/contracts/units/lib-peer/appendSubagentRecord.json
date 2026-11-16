@@ -1,0 +1,59 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "appendSubagentRecord",
+  "cases": [
+    {
+      "id": "started",
+      "args": [
+        "s1",
+        "ag1",
+        "started"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "subagent",
+              "session_id": "s1",
+              "agent_id": "ag1",
+              "status": "started",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "stopped",
+      "args": [
+        "s1",
+        "ag1",
+        "stopped"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "subagent",
+              "session_id": "s1",
+              "agent_id": "ag1",
+              "status": "stopped",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

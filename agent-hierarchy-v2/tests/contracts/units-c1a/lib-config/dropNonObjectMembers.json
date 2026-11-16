@@ -1,0 +1,155 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "dropNonObjectMembers",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        {
+          "roster": {
+            "members": [
+              {
+                "role": "a"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "mixed",
+      "args": [
+        {
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "a"
+              },
+              5,
+              "s",
+              [
+                1
+              ],
+              true
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "label": "roster",
+          "index": 0,
+          "type": "null",
+          "value": null
+        },
+        {
+          "label": "roster",
+          "index": 2,
+          "type": "number",
+          "value": 5
+        },
+        {
+          "label": "roster",
+          "index": 3,
+          "type": "string",
+          "value": "s"
+        },
+        {
+          "label": "roster",
+          "index": 4,
+          "type": "array",
+          "value": [
+            1
+          ]
+        },
+        {
+          "label": "roster",
+          "index": 5,
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "named-blocks",
+      "args": [
+        {
+          "roster": {
+            "members": [
+              1
+            ]
+          },
+          "rosters": {
+            "x": {
+              "members": [
+                {
+                  "role": "a"
+                },
+                null
+              ]
+            },
+            "y": {
+              "members": "no"
+            }
+          }
+        }
+      ],
+      "expect": [
+        {
+          "label": "roster",
+          "index": 0,
+          "type": "number",
+          "value": 1
+        },
+        {
+          "label": "rosters.x",
+          "index": 1,
+          "type": "null",
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "no-roster",
+      "args": [
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "block-not-object",
+      "args": [
+        {
+          "roster": [
+            1
+          ],
+          "rosters": {
+            "a": null
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "rosters-array",
+      "args": [
+        {
+          "roster": {
+            "members": []
+          },
+          "rosters": [
+            {
+              "members": [
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "expect": []
+    }
+  ]
+}

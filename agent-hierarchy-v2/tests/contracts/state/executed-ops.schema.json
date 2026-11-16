@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "op_id": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string"
+    },
+    "result": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "at",
+    "op_id",
+    "result"
+  ],
+  "additionalProperties": true,
+  "description": "one row of the file"
+}

@@ -1,0 +1,71 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "read",
+  "cases": [
+    {
+      "id": "peer-rows",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\"}\n{\"type\":\"gate\",\"ts\":\"2026-06-01T11:59:50.000Z\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a"
+        }
+      ]
+    },
+    {
+      "id": "gate-rows",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        },
+        null,
+        {
+          "domain": "gates"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\"}\n{\"type\":\"model\",\"op_id\":\"x\"}\n{\"type\":\"model\",\"op_id\":\"x\"}\n"
+      },
+      "expect": [
+        {
+          "type": "route"
+        },
+        {
+          "type": "model",
+          "op_id": "x"
+        }
+      ]
+    },
+    {
+      "id": "no-files",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "about": "subagent-inflight: the native hook writes a kind on each new started record; the Node oracle never wrote one.",
+  "ruling": "Architect rev 4 Q1 and rev 5 G6, accepted by the Orchestrator (view-model-rev4 report 20261016-014402-6mxt)",
+  "node": "hooks/subagent-inflight.mjs appends {type, session_id, agent_id, status, ts} for a started record, so a subagent, a background Bash and a Monitor cannot be told apart",
+  "native": "Ah.Hooks SubagentInflight appends the same row with kind after ts: subagent for SubagentStart, background for a background Bash run or a Monitor; a stopped record copies the kind of the latest started record of that id, and a record seeded without a kind gets none",
+  "reason": "the view's subagents field must list subagents only; records written before this change stay without a kind and are excluded from it",
+  "rowsExercisingNode": [
+    {
+      "row": "hook/subagent-inflight/h4-bash-background-started",
+      "node": "started row without kind",
+      "native": "started row with kind background"
+    },
+    {
+      "row": "hook/subagent-inflight/h4-monitor-started",
+      "node": "started row without kind",
+      "native": "started row with kind background"
+    },
+    {
+      "row": "hook/subagent-inflight/h4-start-while-owing-records",
+      "node": "started row without kind",
+      "native": "started row with kind subagent"
+    }
+  ],
+  "nativeOnly": [
+    {
+      "row": "Ah.Hooks.Tests SubagentInflightKindTests.ASubagentStartIsRecordedWithKindSubagent",
+      "proves": "SubagentStart writes kind subagent after ts"
+    },
+    {
+      "row": "Ah.Hooks.Tests SubagentInflightKindTests.ABackgroundBashAndAMonitorAreRecordedWithKindBackground",
+      "proves": "a background Bash and a Monitor write kind background"
+    },
+    {
+      "row": "Ah.Hooks.Tests SubagentInflightKindTests.AStopKeepsTheKindItsStartRecordedForASubagentAndForABackgroundTask",
+      "proves": "a stop copies the kind of its start"
+    },
+    {
+      "row": "Ah.Hooks.Tests SubagentInflightKindTests.NegativeAStopOfARecordWrittenWithoutAKindHasNoKindEither",
+      "proves": "a stop of a record seeded without a kind writes none"
+    },
+    {
+      "row": "tests/test-subagent-inflight.sh 7.2.1 and 7.2.3",
+      "proves": "the started and stopped records carry kind subagent, run through bin/ah-hook"
+    }
+  ],
+  "excludedCases": [
+    "hook/subagent-inflight/h4-bash-background-started",
+    "hook/subagent-inflight/h4-monitor-started",
+    "hook/subagent-inflight/h4-start-while-owing-records"
+  ]
+}

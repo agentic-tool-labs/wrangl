@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "subagent",
+  "about": "a started subagent receives the CLI root context",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagentstart-cli-root",
+    "event": {
+      "hook_event_name": "SubagentStart",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "agent_id": "a-1",
+      "agent_type": "general-purpose"
+    }
+  },
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"SubagentStart\",\"additionalContext\":\"ah CLI root (v<VERSION>): <PLUGIN> — roster: `node <PLUGIN>/hooks/roster.mjs <verb> --cwd <abs cwd>`, messages: `node <PLUGIN>/hooks/msg.mjs <verb> --cwd <abs cwd>` (verbs: agent-hierarchy/docs/cli-tools.md)\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a subagent started without the CLI root",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:36.753Z"
+  }
+}

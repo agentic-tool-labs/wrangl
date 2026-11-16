@@ -1,0 +1,18 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "RETRYABLE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "server_error",
+        "overloaded",
+        "rate_limit",
+        "unknown",
+        "transport"
+      ]
+    }
+  ]
+}

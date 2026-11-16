@@ -1,0 +1,52 @@
+{
+  "columns": 80,
+  "staged": [
+    {
+      "length": 120,
+      "composer_rows": 3,
+      "content_equals_ignoring_whitespace": true,
+      "rows_joined_by_space_equal_payload": true,
+      "rows_joined_without_separator_equal_payload": false,
+      "pasted_text_chip": false
+    },
+    {
+      "length": 250,
+      "composer_rows": 4,
+      "content_equals_ignoring_whitespace": true,
+      "rows_joined_by_space_equal_payload": false,
+      "rows_joined_without_separator_equal_payload": false,
+      "pasted_text_chip": false
+    },
+    {
+      "length": 480,
+      "composer_rows": 9,
+      "content_equals_ignoring_whitespace": true,
+      "rows_joined_by_space_equal_payload": false,
+      "rows_joined_without_separator_equal_payload": false,
+      "pasted_text_chip": false
+    }
+  ],
+  "pastes": [
+    {
+      "length": 120,
+      "outcome": "confirmed",
+      "reason": "turn-started",
+      "transcript_turns": 1,
+      "clean": true
+    },
+    {
+      "length": 250,
+      "outcome": "confirmed",
+      "reason": "turn-started",
+      "transcript_turns": 1,
+      "clean": true
+    },
+    {
+      "length": 480,
+      "outcome": "confirmed",
+      "reason": "turn-started",
+      "transcript_turns": 1,
+      "clean": true
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "questionKey",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "s1",
+        "Which option?"
+      ],
+      "expect": "c0b19150a3cb"
+    },
+    {
+      "id": "case-insensitive",
+      "args": [
+        "s1",
+        "WHICH OPTION?"
+      ],
+      "expect": "c0b19150a3cb"
+    },
+    {
+      "id": "whitespace-collapsed",
+      "args": [
+        "s1",
+        "  which   option?\n\t"
+      ],
+      "expect": "c0b19150a3cb"
+    },
+    {
+      "id": "item-matters",
+      "args": [
+        "s2",
+        "Which option?"
+      ],
+      "expect": "63f4428da05a"
+    },
+    {
+      "id": "non-ascii",
+      "args": [
+        "s1",
+        "Ünïcode ÇASE — ok?"
+      ],
+      "expect": "b0c928e2bffc"
+    },
+    {
+      "id": "dotted-capital-i-lowers-with-combining-dot",
+      "args": [
+        "s1",
+        "İSTANBUL"
+      ],
+      "expect": "9711dee405b6"
+    },
+    {
+      "id": "item-with-newline",
+      "args": [
+        "a\nb",
+        "q"
+      ],
+      "expect": "1f37c177719e"
+    },
+    {
+      "id": "numeric-item",
+      "args": [
+        5,
+        "q"
+      ],
+      "expect": "d1da39803a45"
+    },
+    {
+      "id": "null-item",
+      "args": [
+        null,
+        "q"
+      ],
+      "expect": "8fa52a6231d3"
+    },
+    {
+      "id": "undefined-item",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        "q"
+      ],
+      "expect": "e8cfa3d8a231"
+    },
+    {
+      "id": "empty-question",
+      "args": [
+        "s1",
+        ""
+      ],
+      "expect": "c16536a72c4b"
+    },
+    {
+      "id": "non-string-question-throws",
+      "args": [
+        "s1",
+        5
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "nbsp-is-whitespace",
+      "args": [
+        "s1",
+        "a  b"
+      ],
+      "expect": "76b3fe0e2e69"
+    },
+    {
+      "id": "astral-characters",
+      "args": [
+        "s1",
+        "🙂 ok"
+      ],
+      "expect": "cefa1d488809"
+    }
+  ]
+}

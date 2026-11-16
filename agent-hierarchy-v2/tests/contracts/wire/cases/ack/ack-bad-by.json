@@ -1,0 +1,37 @@
+{
+  "kind": "wire",
+  "id": "ack-bad-by",
+  "about": "an unknown `by` is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "address": "tm-implementor@tm",
+      "ids": [],
+      "by": "nobody",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/ack"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "by must be one of prompt-hook, adapter, cli, sendmessage, watcher, paste, stop-hook"
+      }
+    }
+  },
+  "mutant": "an unknown by accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:55.883Z"
+  }
+}

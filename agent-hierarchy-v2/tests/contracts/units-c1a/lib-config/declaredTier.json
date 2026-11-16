@@ -1,0 +1,95 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "declaredTier",
+  "cases": [
+    {
+      "id": "hit",
+      "args": [
+        "codex",
+        "gpt-5"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "opus"
+    },
+    {
+      "id": "model-miss",
+      "args": [
+        "codex",
+        "other"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "kind-miss",
+      "args": [
+        "pi",
+        "gpt-5"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "claude",
+      "args": [
+        "claude",
+        "opus"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "non-string-model",
+      "args": [
+        "codex",
+        5
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "undefined-model",
+      "args": [
+        "codex",
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-config",
+      "args": [
+        "codex",
+        "gpt-5"
+      ],
+      "files": {},
+      "expect": null
+    },
+    {
+      "id": "proto-model",
+      "args": [
+        "codex",
+        "toString"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "parseSentinel",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\" task=\"t1\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t1"
+      }
+    },
+    {
+      "id": "task-optional",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": ""
+      }
+    },
+    {
+      "id": "empty-task",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\" task=\"\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": ""
+      }
+    },
+    {
+      "id": "ref-stripped",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch [3fa9c1]\" task=\"t\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t"
+      }
+    },
+    {
+      "id": "reply-to-trimmed",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"  orch  \" task=\"t\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t"
+      }
+    },
+    {
+      "id": "extra-attrs-ignored",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\" task=\"t\" eta=\"small\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t"
+      }
+    },
+    {
+      "id": "mid-text",
+      "args": [
+        "hello [hierarchy-peer-brief reply-to=\"orch\" task=\"t\"] bye"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t"
+      }
+    },
+    {
+      "id": "empty-reply-to",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"\" task=\"t\"]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "missing-reply-to",
+      "args": [
+        "[hierarchy-peer-brief task=\"t\"]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "tab-separated",
+      "args": [
+        "[hierarchy-peer-brief\treply-to=\"orch\"\ttask=\"t\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": "t"
+      }
+    },
+    {
+      "id": "no-space-before-reply-to",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\"task=\"t\"]"
+      ],
+      "expect": {
+        "replyTo": "orch",
+        "task": ""
+      }
+    },
+    {
+      "id": "first-of-two",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"a\"] [hierarchy-peer-brief reply-to=\"b\"]"
+      ],
+      "expect": {
+        "replyTo": "a",
+        "task": ""
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

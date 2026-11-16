@@ -1,0 +1,12 @@
+ah › repoW · pid 4242 › work › s-work
+────────────────────────────────────────────────────────────────────────────────────────────────────
+◐ s-work  ·  open  ·  working
+branch s-work  base main
+worktree <ROOT>/wt/s-work
+peers 2
+  w-arch  architect  working  (outside the stream's tab)
+  w-impl  implementor  idle  (outside the stream's tab)
+waiting on 1
+  w-impl  20261011-100000-bbbb  2m ago
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

@@ -1,0 +1,739 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "healFalseDown",
+  "cases": [
+    {
+      "id": "heals-a-false-down",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w",
+              "op_id": "$any",
+              "ts": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "healed-row-keeps-the-up-records-fields-and-drops-its-type-and-ts",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\",\"pane_id\":\"%7\",\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\",\"pane_id\":\"%9\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w",
+              "pane_id": "%7",
+              "team": "alpha"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w",
+              "pane_id": "%9"
+            },
+            {
+              "type": "peer",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w",
+              "pane_id": "%7",
+              "team": "alpha",
+              "op_id": "$any",
+              "ts": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "last-row-not-down-is-left-alone",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "last-row-seen-is-left-alone",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"seen\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "seen",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "pid-mismatch-is-left-alone",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4243
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "no-up-row-is-left-alone",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"seen\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "seen",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "no-rows-for-the-session",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"other\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"other\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "other",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "other",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "other-sessions-down-row-does-not-count",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"other\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "other",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "latest-up-row-decides-the-pid",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":111,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 111,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w",
+              "op_id": "$any",
+              "ts": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "earlier-up-with-another-pid-is-not-used",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":111,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 111,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "undefined-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$undefined": 1
+        },
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "pid-zero",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        0
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":0,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":0,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 0,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 0,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "pid-negative",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        -5
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":-5,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":-5,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": -5,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": -5,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "pid-fraction",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242.5
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242.5,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242.5,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242.5,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242.5,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "pid-text",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        "4242"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"up\",\"pid\":4242,\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"status\":\"down\",\"pid\":4242,\"cwd\":\"/w\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": {
+          "$jsonl": [
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "up",
+              "pid": 4242,
+              "cwd": "/w"
+            },
+            {
+              "type": "peer",
+              "ts": "$any",
+              "name": "p-architect",
+              "role": "architect",
+              "session_id": "sess-1",
+              "status": "down",
+              "pid": 4242,
+              "cwd": "/w"
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "no-roster-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": null
+      },
+      "expect": false
+    },
+    {
+      "id": "dir-missing",
+      "args": [
+        "$ROOT/nowhere/.claude/hierarchy",
+        "sess-1",
+        4242
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": null
+      },
+      "expect": false
+    }
+  ]
+}

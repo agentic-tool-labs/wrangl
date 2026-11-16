@@ -1,0 +1,53 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "askDecision",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "Allow this?"
+      ],
+      "expect": {
+        "decision": "ask",
+        "reason": "Allow this?"
+      }
+    },
+    {
+      "id": "member",
+      "args": [
+        "Allow this?"
+      ],
+      "env": {
+        "WRANGL_TEAM_FILE": "/t.json"
+      },
+      "expect": {
+        "decision": "deny",
+        "reason": "Allow this? No one is at this session's prompt, so ah does not ask here. Do not retry this command. Put what you needed in your report as BLOCKED or NEEDS-DECISION for your Orchestrator, who will ask the user."
+      }
+    },
+    {
+      "id": "member-empty-reason",
+      "args": [
+        ""
+      ],
+      "env": {
+        "WRANGL_TEAM_FILE": "/t.json"
+      },
+      "expect": {
+        "decision": "deny",
+        "reason": " No one is at this session's prompt, so ah does not ask here. Do not retry this command. Put what you needed in your report as BLOCKED or NEEDS-DECISION for your Orchestrator, who will ask the user."
+      }
+    },
+    {
+      "id": "empty-reason",
+      "args": [
+        ""
+      ],
+      "expect": {
+        "decision": "ask",
+        "reason": ""
+      }
+    }
+  ]
+}

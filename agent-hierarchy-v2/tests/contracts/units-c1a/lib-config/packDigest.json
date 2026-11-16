@@ -1,0 +1,70 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packDigest",
+  "cases": [
+    {
+      "id": "empty",
+      "args": [
+        []
+      ],
+      "expect": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "id": "two",
+      "args": [
+        [
+          [
+            "a.txt",
+            "11"
+          ],
+          [
+            "b.txt",
+            "22"
+          ]
+        ]
+      ],
+      "expect": "sha256:45eb0237cf22d54d2e82c2506466e887c0412888c38d83fbc81699a9e6e6b977"
+    },
+    {
+      "id": "order-kept",
+      "args": [
+        [
+          [
+            "b.txt",
+            "22"
+          ],
+          [
+            "a.txt",
+            "11"
+          ]
+        ]
+      ],
+      "expect": "sha256:d50187d1e2408ca646b3986f5afe04a6d0543bcc2fbd9a675c2dc30a4cd2816c"
+    },
+    {
+      "id": "unicode-name",
+      "args": [
+        [
+          [
+            "café.txt",
+            "11"
+          ]
+        ]
+      ],
+      "expect": "sha256:2c228b88ead2f9b2689a9eea514fe7e9a8c9a98b9a97da0c0ce013bdadb142cd"
+    },
+    {
+      "id": "quote-in-name",
+      "args": [
+        [
+          [
+            "q\"x",
+            "11"
+          ]
+        ]
+      ],
+      "expect": "sha256:8f14b21d169d7bc11f516254b5b0d96fe74a3cd0f349e4138a9b887303d42906"
+    }
+  ]
+}

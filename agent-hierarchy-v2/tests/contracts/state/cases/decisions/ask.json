@@ -1,0 +1,69 @@
+{
+  "kind": "state-op",
+  "id": "ask",
+  "about": "decisions.ask is in-process only: the daemon route and the one-shot verb both refuse it as not served (the asks row is written by posttooluse-ask-record)",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "decisions",
+    "op": "ask",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "path": "<ROOT:proj>/.claude/hierarchy/asks.jsonl",
+        "row": {
+          "at": "2026-10-18T09:00:00.000Z",
+          "session_id": "sess-contract",
+          "questions": [
+            {
+              "question": "Which?",
+              "header": "h",
+              "options": [
+                {
+                  "label": "a",
+                  "description": "a"
+                },
+                {
+                  "label": "b",
+                  "description": "b"
+                }
+              ],
+              "multiSelect": false
+            }
+          ],
+          "response": {
+            "answers": {
+              "Which?": "a"
+            }
+          }
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-decisions-ask"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": false,
+      "code": "bad_request",
+      "message": "decisions.ask is not served by the daemon"
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "decisions.ask served over the route or the one-shot verb",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-18T00:00:00.000Z",
+    "note": "native-only hook unit and state op: no Node recording exists"
+  }
+}

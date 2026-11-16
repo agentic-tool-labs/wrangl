@@ -1,0 +1,27 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "read",
+  "cases": [
+    {
+      "id": "rows",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"op_id\":\"x\"}\n{\"op_id\":\"x\"}\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "op_id": "x"
+        }
+      ]
+    },
+    {
+      "id": "none",
+      "args": [],
+      "expect": []
+    }
+  ]
+}

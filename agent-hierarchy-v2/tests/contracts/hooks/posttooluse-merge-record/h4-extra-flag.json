@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h4-extra-flag",
+  "about": "an extra flag makes it a different command",
+  "tree": "hook-pipeline-live",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-merge-record",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_response": {},
+      "tool_use_id": "toolu_contract",
+      "tool_input": {
+        "command": "gh pr merge 12 --match-head-commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --squash --admin",
+        "description": "contract"
+      }
+    }
+  },
+  "mutant": "trailing flags allowed",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:34.491Z"
+  }
+}

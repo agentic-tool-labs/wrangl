@@ -1,0 +1,21 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "unmappedAdviseMessage",
+  "cases": [
+    {
+      "id": "gemini",
+      "args": [
+        "gemini"
+      ],
+      "expect": "The Ultra-Advisor's model must have a declared opus or fable tier, and `gemini` has no model mapping, so its model cannot be set or declared. Use claude, or a kind with a model mapping (codex)."
+    },
+    {
+      "id": "codex",
+      "args": [
+        "codex"
+      ],
+      "expect": "The Ultra-Advisor's model must have a declared opus or fable tier, and `codex` has no model mapping, so its model cannot be set or declared. Use claude, or a kind with a model mapping (codex)."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "teams": [
+    {
+      "id": "20261011-123929-1wmp",
+      "fingerprint": "3084380b",
+      "alias": "proj",
+      "label": "proj (1 role)",
+      "created_at": "2026-10-11T12:39:29-04:00",
+      "last_used": "2026-10-11T12:39:29-04:00",
+      "last_team_id": "20261011-123929-wcvm",
+      "roster_level": "repo",
+      "transport": "herdr",
+      "members": [
+        {
+          "role": "implementor",
+          "model": "sonnet",
+          "route": "peer"
+        }
+      ]
+    }
+  ]
+}

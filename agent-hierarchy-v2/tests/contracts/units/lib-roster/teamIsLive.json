@@ -1,0 +1,339 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamIsLive",
+  "cases": [
+    {
+      "id": "null-team",
+      "args": [
+        null
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "alive-and-fresh",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "alive-exactly-a-day-old",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "2026-01-01T00:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "alive-one-second-past-a-day",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "2025-12-31T23:59:59+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "alive-created-in-the-future",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "2026-01-03T00:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "alive-no-created",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          }
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "alive-created-not-a-date",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "yesterday"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "alive-created-not-a-string",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": 5
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "dead-pid",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 999999999
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "zero-pid",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 0
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "negative-pid",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": -5
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "fractional-pid",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 1.5
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "string-pid-is-not-an-integer",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": "1"
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "no-orchestrator",
+      "args": [
+        {
+          "members": [],
+          "created": "2026-01-01T23:00:00+00:00"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "owner-by-pid-wins-over-dead-and-old",
+      "rerecorded": "peer-proof #144: the record has no start time, so the pid does not prove the invoker owns it, and the team is judged by liveness: dead and old",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 4242
+          },
+          "created": "2020-01-01T00:00:00+00:00"
+        },
+        {
+          "pid": 4242
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "owner-by-session",
+      "rerecorded": "peer-proof #144: a session id owns nothing, so the team is judged by liveness: its recorded pid is dead and it is old",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 999999999,
+            "session_id": "s1"
+          },
+          "created": "2020-01-01T00:00:00+00:00"
+        },
+        {
+          "sessionId": "s1"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "not-owner-falls-back-to-liveness-dead",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 999999999
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        },
+        {
+          "pid": 7
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "not-owner-falls-back-to-liveness-alive",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            }
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        },
+        {
+          "pid": 7
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "different-sessions-not-owner-even-when-pid-matches",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 4242,
+            "session_id": "s1"
+          },
+          "created": "2020-01-01T00:00:00+00:00"
+        },
+        {
+          "pid": 4242,
+          "sessionId": "s2"
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "null-invoker",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": 999999999
+          },
+          "created": "2026-01-01T23:00:00+00:00"
+        },
+        null
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "owner-by-pid-and-start-wins-over-dead-and-old",
+      "args": [
+        {
+          "members": [],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            },
+            "pid_start": {
+              "$selfstart": 1
+            }
+          },
+          "created": "2020-01-01T00:00:00+00:00"
+        },
+        {
+          "pid": {
+            "$selfpid": 1
+          }
+        }
+      ],
+      "now": "2026-01-02T00:00:00.000Z",
+      "expect": true,
+      "rerecorded": "peer-proof #144 (review S2): the recorded Orchestrator pid with its recorded start time owns the team, whatever its age"
+    }
+  ]
+}

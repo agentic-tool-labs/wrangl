@@ -1,0 +1,82 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "upRecordFor",
+  "cases": [
+    {
+      "id": "latest-is-up",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": {
+        "type": "peer",
+        "ts": "2026-06-01T11:59:50.000Z",
+        "session_id": "s1",
+        "status": "up",
+        "pid": 1
+      }
+    },
+    {
+      "id": "latest-is-down",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"down\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "other-session",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s2"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "named-row-keyed-by-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"session_id\":\"s1\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": {
+        "type": "peer",
+        "ts": "2026-06-01T11:59:50.000Z",
+        "name": "a",
+        "session_id": "s1",
+        "status": "up",
+        "pid": 1
+      }
+    },
+    {
+      "id": "unknown-session-undefined",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"up\"}\n"
+      },
+      "expect": null
+    }
+  ]
+}

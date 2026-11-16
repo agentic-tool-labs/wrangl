@@ -1,0 +1,1021 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packNameClaims",
+  "cases": [
+    {
+      "id": "own-file-only",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "manifest-agent-uppercase-matches-lowercase-declaration",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "QA"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/QA.md": "---\nname: QA\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/other.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/other.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/other.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "other-file-declares-name",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/other.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/other.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/other.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "declared-name-case-insensitive",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/other.md": "---\nname: QA\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/other.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/other.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "other-file-different-name",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/other.md": "---\nname: zz\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "no-name-file-named-like-agent",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/sub/QA.md": "---\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/sub/QA.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/sub/QA.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-name-other-filename",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/misc.md": "---\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "anchor-is-unsure",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/odd.md": "---\nname: &x other\ndescription: d\n---\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/odd.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/odd.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "escape-in-quoted-key-unsure",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/odd.md": "---\n\"na\\u006de\": other\n---\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/odd.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/odd.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "two-name-keys-unsure",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/odd.md": "---\nname: a\nname: b\n---\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/odd.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/odd.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiline-name-unsure",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/odd.md": "---\nname:\n  - a\n---\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/odd.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/odd.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-frontmatter-filename-match",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/deep/qa.md": "no frontmatter"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/deep/qa.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/deep/qa.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "invalid-utf8-unsure",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/bad.md": {
+          "base64": "//4="
+        }
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/bad.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/bad.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "non-md-ignored",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/qa.txt": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "uppercase-md-extension",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/other.MD": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/other.MD"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/other.MD",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-string",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/extra/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":\"extra\"}"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "extra/o.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "extra/o.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-list",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/e1/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/e2/p.md": "---\nname: zz\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":[\"e1\",\"e2\"]}"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "e1/o.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "e1/o.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-number",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":5}"
+      },
+      "expect": {
+        "error": "plugin.json's agents must be a path or a list of paths",
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-mixed-list",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":[\"e1\",2]}"
+      },
+      "expect": {
+        "error": "plugin.json's agents must be a path or a list of paths",
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-outside",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":\"../elsewhere\"}"
+      },
+      "expect": {
+        "error": "plugin.json's agents path \"../elsewhere\" resolves outside the plugin",
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-absolute-outside",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":\"/private/tmp\"}"
+      },
+      "expect": {
+        "error": "plugin.json's agents path \"/private/tmp\" resolves outside the plugin",
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "plugin-json-agents-dotdot-name-inside",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/..agents/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{\"agents\":\"..agents\"}"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "..agents/o.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "..agents/o.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "plugin-json-invalid",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/.claude-plugin/plugin.json": "{nope"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/o.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/o.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "manifest-role-with-error-skipped",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa",
+              "error": {
+                "code": "x"
+              }
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "manifest-null",
+      "args": [
+        "$ROOT/c",
+        null
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "two-roles-two-claims",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            },
+            "ops": {
+              "agent": "ops"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/ops.md": "---\nname: ops\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/x.md": "---\nname: ops\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/y.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "ops",
+              [
+                "agents/x.md"
+              ]
+            ],
+            [
+              "qa",
+              [
+                "agents/y.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/x.md",
+              [
+                "ops"
+              ]
+            ],
+            [
+              "agents/y.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "agent-name-differs-from-role",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "impl"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/impl.md": "---\nname: impl\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/agents/z.md": "---\nname: impl\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": [
+            [
+              "qa",
+              [
+                "agents/z.md"
+              ]
+            ]
+          ]
+        },
+        "files": {
+          "$map": [
+            [
+              "agents/z.md",
+              [
+                "qa"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-agents-dir",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/readme": "x"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    },
+    {
+      "id": "symlinked-md-not-walked",
+      "args": [
+        "$ROOT/c",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "c/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "c/real/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "links": {
+        "c/agents/link.md": "../real/o.md"
+      },
+      "expect": {
+        "error": null,
+        "byRole": {
+          "$map": []
+        },
+        "files": {
+          "$map": []
+        }
+      }
+    }
+  ]
+}

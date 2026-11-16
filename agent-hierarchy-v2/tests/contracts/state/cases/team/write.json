@@ -1,0 +1,57 @@
+{
+  "kind": "state-op",
+  "id": "write",
+  "about": "write creates a team file when the caller read none",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "write",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "path": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team": {
+          "team_id": "tm-1",
+          "name": "tm",
+          "created_at": "2026-01-01T00:00:00.000Z",
+          "members": [
+            {
+              "role": "architect",
+              "name": "tm-architect",
+              "model": "opus"
+            }
+          ]
+        },
+        "expect": "absent"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-team-write"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "ok": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a write that skips the digest check",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T22:16:38.647Z"
+  }
+}

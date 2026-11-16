@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h1-ultra-advisor-send",
+  "about": "an ultra-advisor send judged",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-sendmessage-response",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "SendMessage",
+      "tool_input": {
+        "to": "tm-orchestrator",
+        "message": "status"
+      },
+      "tool_use_id": "toolu_contract",
+      "agent_type": "ah:ultra-advisor"
+    }
+  },
+  "mutant": "an ultra-advisor send judged",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:27:42.969Z"
+  }
+}

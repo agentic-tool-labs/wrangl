@@ -1,0 +1,8 @@
+ah
+────────────────────────────────────────
+  orchestrator   state    #teams members
+> repoA · no or… none          1       1
+  repoA · pid 4… live          3       5
+  repoB · pid 2… orphaned      1       1
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

@@ -1,0 +1,175 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "teamPrefix",
+  "cases": [
+    {
+      "id": "explicit-team",
+      "args": [
+        "$ROOT/repo",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "alpha"
+    },
+    {
+      "id": "default-is-repo-basename",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "default-no-git-uses-cwd-basename",
+      "args": [
+        "$ROOT/plain/dirname",
+        null
+      ],
+      "files": {
+        "plain/dirname/x": ""
+      },
+      "expect": "dirname"
+    },
+    {
+      "id": "legacy-prefix-from-team-json",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"myproj-architect\"},{\"role\":\"reviewer\",\"name\":\"myproj-reviewer-2\"}]}"
+      },
+      "expect": "myproj"
+    },
+    {
+      "id": "legacy-prefix-first-inferable-member",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"weird\"},{\"role\":\"reviewer\",\"name\":\"other-reviewer-3\"}]}"
+      },
+      "expect": "other"
+    },
+    {
+      "id": "legacy-no-inferable-member",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"weird\"}]}"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "legacy-prefix-ignores-explicit-team",
+      "args": [
+        "$ROOT/repo",
+        "named"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"myproj-architect\"}]}"
+      },
+      "expect": "named"
+    },
+    {
+      "id": "empty-team-string-falls-through",
+      "args": [
+        "$ROOT/repo",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "team-file-without-members-array",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":\"no\"}"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "team-file-invalid-json",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{nope"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "prefix-with-hyphen-greedy",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"implementor\",\"name\":\"a-b-c-implementor-2\"}]}"
+      },
+      "expect": "a-b-c"
+    },
+    {
+      "id": "role-not-at-end",
+      "args": [
+        "$ROOT/repo",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"implementor\",\"name\":\"implementor-extra\"}]}"
+      },
+      "expect": "repo"
+    },
+    {
+      "id": "worktree-uses-own-hierarchy",
+      "args": [
+        "$ROOT/wt",
+        null
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"wtproj-architect\"}]}"
+      },
+      "expect": "wtproj"
+    },
+    {
+      "id": "worktree-reads-team-home",
+      "args": [
+        "$ROOT/wt",
+        null
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"mainproj-architect\"}]}"
+      },
+      "expect": "mainproj"
+    }
+  ]
+}

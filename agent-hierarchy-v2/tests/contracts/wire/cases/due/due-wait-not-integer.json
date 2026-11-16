@@ -1,0 +1,35 @@
+{
+  "kind": "wire",
+  "id": "due-wait-not-integer",
+  "about": "an unproven caller with a malformed `wait` is refused 403 as anonymous: identity is checked before the query is validated",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "in": "{\"session\":\"s-none\",\"now\":1790000000000,\"busy_at\":null,\"poll_ms\":5000,\"handed\":{},\"state\":null}",
+      "wait": "1.5"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/due"
+  },
+  "expect": {
+    "status": 403,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "anonymous",
+        "message": "the daemon cannot tell which session or user is calling, so it accepts no writes from it"
+      }
+    }
+  },
+  "mutant": "an unproven caller told its wait is malformed",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T17:17:15.000Z",
+    "note": "native-only route (divergence/routes.json N5-mod-mail-push): no Node recording exists"
+  }
+}

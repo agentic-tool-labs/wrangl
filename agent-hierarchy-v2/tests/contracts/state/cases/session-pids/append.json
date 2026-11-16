@@ -1,0 +1,45 @@
+{
+  "kind": "state-op",
+  "id": "append",
+  "about": "append writes one pid row",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "session-pids",
+    "op": "append",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "session_id": "sess-1",
+        "pid": 12345
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-session-pids-append"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "written": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a second row for the same pid",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:20.288Z"
+  }
+}

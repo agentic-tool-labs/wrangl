@@ -1,0 +1,37 @@
+{
+  "kind": "hook",
+  "id": "h4-disabled-hierarchy-no-root-line",
+  "about": "a disabled hierarchy states no CLI root",
+  "tree": "hook-disabled",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "userpromptsubmit-peer-tracking",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "hello"
+    }
+  },
+  "mutant": "disabled still states root",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:37:07.326Z"
+  }
+}

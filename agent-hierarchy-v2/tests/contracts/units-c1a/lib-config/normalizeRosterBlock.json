@@ -1,0 +1,302 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "normalizeRosterBlock",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer",
+              "kind": "codex"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect"
+          },
+          {
+            "role": "architect"
+          },
+          {
+            "role": "reviewer",
+            "kind": "codex"
+          }
+        ]
+      }
+    },
+    {
+      "id": "stale-block-route",
+      "args": [
+        {
+          "route": "subagent",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "task-runner"
+            },
+            {
+              "role": "task-runner",
+              "route": "pane"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect"
+          },
+          {
+            "role": "task-runner",
+            "route": "subagent"
+          },
+          {
+            "role": "task-runner",
+            "route": "pane"
+          }
+        ]
+      }
+    },
+    {
+      "id": "member-subagent-route-chain",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "architect",
+              "route": "subagent"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect"
+          }
+        ]
+      }
+    },
+    {
+      "id": "member-subagent-route-legwork-kept",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "task-runner",
+              "route": "subagent"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "task-runner",
+            "route": "subagent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "onmissing-never-dropped",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "architect",
+              "onMissing": "never"
+            },
+            {
+              "role": "architect",
+              "onMissing": "auto"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect"
+          },
+          {
+            "role": "architect",
+            "onMissing": "auto"
+          }
+        ]
+      }
+    },
+    {
+      "id": "unknown-role-left",
+      "args": [
+        {
+          "route": "subagent",
+          "members": [
+            {
+              "role": "nobody",
+              "route": "subagent",
+              "onMissing": "never"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "nobody",
+            "route": "subagent",
+            "onMissing": "never"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-role-registry",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            {
+              "role": "ui",
+              "route": "subagent"
+            }
+          ]
+        },
+        {
+          "roles": {
+            "ui": {
+              "class": "implement"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          {
+            "role": "ui"
+          }
+        ]
+      }
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        {
+          "route": "peer",
+          "members": "x"
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": []
+      }
+    },
+    {
+      "id": "no-members",
+      "args": [
+        {
+          "route": "peer"
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": []
+      }
+    },
+    {
+      "id": "no-route",
+      "args": [
+        {
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "members": [
+          {
+            "role": "architect"
+          }
+        ]
+      }
+    },
+    {
+      "id": "extra-keys-kept",
+      "args": [
+        {
+          "route": "peer",
+          "layout": "grid",
+          "members": []
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "layout": "grid",
+        "members": []
+      }
+    },
+    {
+      "id": "non-object-member-kept",
+      "args": [
+        {
+          "route": "peer",
+          "members": [
+            5,
+            null,
+            {
+              "role": "architect"
+            }
+          ]
+        },
+        null
+      ],
+      "expect": {
+        "route": "peer",
+        "members": [
+          5,
+          null,
+          {
+            "role": "architect"
+          }
+        ]
+      }
+    }
+  ]
+}

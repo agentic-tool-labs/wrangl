@@ -1,0 +1,25 @@
+ah › repoW · pid 4242 › work
+────────────────────────────────────────
+transport herdr  mesh star  owed 0
+no open work
+links:
+  w-l1  w-impl@work  active  20 min left
+  w-l2  w-blk@work  revoked
+
+  name          role        kind   state
+> w-arch        architect   claude stale
+  w-impl        implementor claude stale
+  w-blk         implementor claude stale
+  w-idle        reviewer    claude stale
+  w-free        implementor claude stale
+  ──────────────────────────────────────
+  + newbie      reviewer    codex  join
+  + 20261011-1… –           codex  join
+  ◐ s-work      stream      –      open
+  × s-blocked   stream      –      open
+  ○ s-idle      stream      –      open
+  ✓ s-done      stream      –      done
+  · s-none      stream      –      open
+  · a/b%c       stream      –      open
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

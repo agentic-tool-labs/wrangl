@@ -1,0 +1,229 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "attributedRoster",
+  "cases": [
+    {
+      "id": "no-attribution-needed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "p-architect",
+          "role": "architect",
+          "status": "up",
+          "pid": 1
+        }
+      ]
+    },
+    {
+      "id": "nameless-row-attributed-by-pane",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":1,\"team\":\"stale\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up",
+          "pid": 1,
+          "name": "p-architect"
+        }
+      ]
+    },
+    {
+      "id": "role-mismatch-not-attributed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"reviewer\",\"pane_id\":\"%1\",\"status\":\"up\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "reviewer",
+          "pane_id": "%1",
+          "status": "up"
+        }
+      ]
+    },
+    {
+      "id": "unknown-pane-not-attributed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%9\",\"status\":\"up\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%9",
+          "status": "up"
+        }
+      ]
+    },
+    {
+      "id": "nameless-row-without-pane",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"status\":\"up\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "status": "up"
+        }
+      ]
+    },
+    {
+      "id": "two-sessions-collapse-latest-ts-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:58:20.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:10.000Z\",\"session_id\":\"s2\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":2}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:10.000Z",
+          "session_id": "s2",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up",
+          "pid": 2,
+          "name": "p-architect"
+        }
+      ]
+    },
+    {
+      "id": "named-seen-row-supplies-busy-and-task",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"status\":\"seen\",\"busy\":true,\"task\":\"t1\",\"role\":\"architect\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up",
+          "pid": 1,
+          "name": "p-architect",
+          "busy": true,
+          "task": "t1"
+        }
+      ]
+    },
+    {
+      "id": "named-briefed-row-supplies-busy",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"status\":\"briefed\",\"busy\":false,\"task\":null,\"role\":\"architect\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up",
+          "pid": 1,
+          "name": "p-architect",
+          "busy": false,
+          "task": null
+        }
+      ]
+    },
+    {
+      "id": "named-down-row-does-not-supply",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"status\":\"down\",\"busy\":true,\"role\":\"architect\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up",
+          "pid": 1,
+          "name": "p-architect"
+        }
+      ]
+    },
+    {
+      "id": "two-members-share-the-pane-not-attributed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"},{\"name\":\"q-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"role\":\"architect\",\"pane_id\":\"%1\",\"status\":\"up\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "role": "architect",
+          "pane_id": "%1",
+          "status": "up"
+        }
+      ]
+    }
+  ]
+}

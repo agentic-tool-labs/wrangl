@@ -1,0 +1,118 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "isAcked",
+  "cases": [
+    {
+      "id": "acked",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"prompt-hook\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "not-acked",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "invalid-id-with-slash",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "a/b"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/b": "x"
+      },
+      "expect": false
+    },
+    {
+      "id": "parent-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        ".."
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "dotfile-id-is-valid",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        ".hidden"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/.hidden": "x"
+      },
+      "expect": true
+    },
+    {
+      "id": "empty-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        ""
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "ack-is-a-directory",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1/x": ""
+      },
+      "expect": true
+    },
+    {
+      "id": "empty-ack-file-counts",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": ""
+      },
+      "expect": true
+    }
+  ]
+}

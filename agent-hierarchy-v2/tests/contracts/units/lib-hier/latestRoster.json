@@ -1,0 +1,121 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "latestRoster",
+  "cases": [
+    {
+      "id": "empty",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "latest-per-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"status\":\"up\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"b\",\"status\":\"up\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"status\":\"down\",\"n\":2}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a",
+          "status": "down",
+          "n": 2
+        },
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "b",
+          "status": "up"
+        }
+      ]
+    },
+    {
+      "id": "session-id-key-without-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"up\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"status\":\"down\",\"n\":2}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "status": "down",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "id": "name-wins-over-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"session_id\":\"s1\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s1\",\"n\":2}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a",
+          "session_id": "s1",
+          "n": 1
+        },
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "session_id": "s1",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "id": "rows-with-no-key-dropped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"status\":\"up\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"\",\"session_id\":\"\",\"status\":\"up\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "first-seen-position-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"b\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"n\":2}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a",
+          "n": 2
+        },
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "b",
+          "n": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "snapshotsHome",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy/snapshots"
+    },
+    {
+      "id": "worktree",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy/snapshots"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "kind": "hook",
+  "id": "stop",
+  "about": "an orchestrator stop is checked against its liveness",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-orchestrator-liveness",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "a stop that skips the liveness check",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"turn-end\",\"session_id\":\"sess-contract\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n"
+        },
+        {
+          "path": "ah/state/ah.db.qa_log.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":1,\"kind\":\"reply\",\"at\":\"<EPOCHMS>\",\"session_id\":\"sess-contract\",\"team\":\"tm\",\"prompt_id\":null,\"trigger\":\"later\",\"text\":\"done\",\"truncated\":true,\"op_id\":\"<OPID:2>\"}\n"
+        },
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:44:27.578Z"
+  }
+}

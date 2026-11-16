@@ -1,0 +1,38 @@
+{
+  "kind": "cli",
+  "id": "list",
+  "about": "link list of a team with no links prints none",
+  "tree": "wire-tm-session",
+  "env": {
+    "CLAUDE_PID": "<PID:runner>",
+    "CLAUDE_CODE_SESSION_ID": "sess-contract"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "link",
+      "list",
+      "--team",
+      "tm",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"links\":[]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a link listed that was never granted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.983Z"
+  }
+}

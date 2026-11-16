@@ -1,0 +1,6 @@
+{
+  "adapter": "mod",
+  "session_id": "sess-contract",
+  "at": "<NOW-1s>",
+  "poll_ms": 5000
+}

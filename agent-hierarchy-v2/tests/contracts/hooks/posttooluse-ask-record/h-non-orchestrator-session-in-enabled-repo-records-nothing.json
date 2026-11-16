@@ -1,0 +1,63 @@
+{
+  "kind": "hook",
+  "id": "h-non-orchestrator-session-in-enabled-repo-records-nothing",
+  "about": "another session in a repo whose team has an Orchestrator records nothing",
+  "tree": "hook-ask-other-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-ask-record",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "AskUserQuestion",
+      "tool_input": {
+        "questions": [
+          {
+            "question": "Which?",
+            "header": "h",
+            "options": [
+              {
+                "label": "a",
+                "description": "a"
+              },
+              {
+                "label": "b",
+                "description": "b"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "tool_response": {
+        "answers": {
+          "Which?": "a"
+        }
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "a non-orchestrator session ask recorded",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-18T00:00:00.000Z",
+    "note": "native-only hook unit and state op: no Node recording exists"
+  }
+}

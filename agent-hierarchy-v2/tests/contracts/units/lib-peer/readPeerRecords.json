@@ -1,0 +1,27 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "readPeerRecords",
+  "cases": [
+    {
+      "id": "missing-again",
+      "args": [],
+      "expect": []
+    },
+    {
+      "id": "rows",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "a": 2
+        }
+      ]
+    }
+  ]
+}

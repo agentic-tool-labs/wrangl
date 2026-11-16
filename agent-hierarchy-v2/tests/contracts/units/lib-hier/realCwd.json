@@ -1,0 +1,41 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "realCwd",
+  "cases": [
+    {
+      "id": "existing-dir",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo"
+    },
+    {
+      "id": "missing-path-as-is",
+      "args": [
+        "$ROOT/missing/dir"
+      ],
+      "expect": "$ROOT/missing/dir"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "dotdot-is-resolved",
+      "args": [
+        "$ROOT/repo/../repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo"
+    }
+  ]
+}

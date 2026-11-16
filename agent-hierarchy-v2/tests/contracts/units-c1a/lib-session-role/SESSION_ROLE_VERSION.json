@@ -1,0 +1,12 @@
+{
+  "lib": "lib-session-role",
+  "module": "hooks/lib-session-role.mjs",
+  "fn": "SESSION_ROLE_VERSION",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 1
+    }
+  ]
+}

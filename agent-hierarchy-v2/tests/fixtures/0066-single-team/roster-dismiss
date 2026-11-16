@@ -1,0 +1,41 @@
+0 {
+  "member": {
+    "role": "reviewer",
+    "name": "foo-reviewer",
+    "route": "peer",
+    "transport": "terminal",
+    "command": null
+  },
+  "live": false,
+  "close_token": "1e5a90a42d5a19db",
+  "sources": {
+    "team": {
+      "file": "<SANDBOX>/hier/teams/foo.json",
+      "members": 3
+    },
+    "peers": {
+      "live": 1
+    },
+    "herdr": {
+      "ok": false,
+      "reason": "team transport is not herdr",
+      "prefix": "foo"
+    }
+  },
+  "expected": 0,
+  "strays": [],
+  "not_closable": [
+    {
+      "name": "foo-reviewer",
+      "reason": "no pane"
+    }
+  ],
+  "warnings": [
+    "W8: 1 member cannot be closed from here, because they have no pane: foo-reviewer. Close them by hand."
+  ],
+  "team_id": "T-foo",
+  "remaining": [
+    "foo-architect",
+    "foo-coder"
+  ]
+}

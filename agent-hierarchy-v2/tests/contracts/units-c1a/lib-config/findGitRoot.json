@@ -1,0 +1,92 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "findGitRoot",
+  "cases": [
+    {
+      "id": "at-root",
+      "args": [
+        "$ROOT/r"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/r"
+    },
+    {
+      "id": "nested",
+      "args": [
+        "$ROOT/r/a/b"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/a/b/f": "x"
+      },
+      "expect": "$ROOT/r"
+    },
+    {
+      "id": "git-file-worktree",
+      "args": [
+        "$ROOT/r/sub"
+      ],
+      "files": {
+        "r/.git": "gitdir: /elsewhere/.git/worktrees/r\n",
+        "r/sub/f": "x"
+      },
+      "expect": "$ROOT/r"
+    },
+    {
+      "id": "nearest-wins",
+      "args": [
+        "$ROOT/r/inner/x"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/inner/.git/HEAD": "ref",
+        "r/inner/x/f": "1"
+      },
+      "expect": "$ROOT/r/inner"
+    },
+    {
+      "id": "none-above",
+      "args": [
+        "$ROOT/nogit/x"
+      ],
+      "files": {
+        "nogit/x/f": "1"
+      },
+      "expect": null
+    },
+    {
+      "id": "start-does-not-exist",
+      "args": [
+        "$ROOT/r/never/made"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/r"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "$ROOT/r/"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/r"
+    },
+    {
+      "id": "dot-segments",
+      "args": [
+        "$ROOT/r/a/../b"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/b/f": "1"
+      },
+      "expect": "$ROOT/r"
+    }
+  ]
+}

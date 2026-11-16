@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "path",
+  "about": "fill prints the response file's absolute path beside id, type, rev and bytes (callers read the file from it)",
+  "tree": "cli-msgs-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "fill",
+      "--id",
+      "20260101-000000-aaaa",
+      "--from",
+      "implementor",
+      "--req",
+      "<ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-aaaa--implementor--sample-a--request.md",
+      "--body",
+      "\"## [0] tldr\\n- done\\n\""
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"id\":\"<MSGID:1>\",\"type\":\"response\",\"path\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--sample-a--response.md\",\"rev\":1,\"bytes\":263}\n",
+    "stderr": "",
+    "exit": 0
+  },
+  "mutant": "a fill whose JSON leaves out path",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored (keep every API: msg fill's path, dropped in 7902a3827); stdout only, the tree is pinned by fill/body"
+  }
+}

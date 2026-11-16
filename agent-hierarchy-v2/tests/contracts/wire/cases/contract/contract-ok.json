@@ -1,0 +1,789 @@
+{
+  "kind": "wire",
+  "id": "contract-ok",
+  "about": "the contract as JSON",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/contract"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "contract_version": "1.1",
+      "enums": {
+        "ack_by": [
+          "prompt-hook",
+          "adapter",
+          "cli",
+          "sendmessage",
+          "watcher",
+          "paste",
+          "stop-hook"
+        ],
+        "builtin_harnesses": [
+          "claude",
+          "codex",
+          "claude-mod",
+          "stub",
+          "probe"
+        ],
+        "entry_filters": [
+          "pending",
+          "acked",
+          "all"
+        ],
+        "harness_name_pattern": "^[a-z][a-z0-9-]{1,31}$",
+        "requirement_levels": [
+          "must",
+          "should",
+          "may"
+        ],
+        "send_keys": [
+          "to",
+          "from",
+          "session_id",
+          "id",
+          "kind",
+          "ref",
+          "text",
+          "event",
+          "data",
+          "reply_to",
+          "to_session",
+          "eta",
+          "supersedes",
+          "post_link"
+        ],
+        "send_refusals": {
+          "broadcast_orchestrator_only": 403,
+          "from_mismatch": 403,
+          "link_exhausted": 403,
+          "mirror_failed": 503,
+          "not_linked": 403,
+          "outside_team": 403,
+          "removed_member": 403,
+          "team_gone": 403,
+          "team_mismatch": 403,
+          "team_unreadable": 403,
+          "team_unresolved": 403
+        }
+      },
+      "protocol": 1,
+      "requirements": [
+        {
+          "id": "P-ID",
+          "level": "must",
+          "text": "The participant has:\n\n- a `session_id` that is unique per agent session and stable for its life (a UUID is enough);\n- the harness name;\n- the member address it was admitted under."
+        },
+        {
+          "id": "P-REG",
+          "level": "must",
+          "text": "Call `POST /v1/register` on start with the values `GET /v1/contract/join` returned, plus `session_id`,\n`harness`, and `pid` if the harness has one. Register again after a daemon restart: a connection error, or a\nchange in `pid` or `started_at` on `GET /v1/health`. A `503 busy` answer is not a refusal: register again after a short wait."
+        },
+        {
+          "id": "P-PULL",
+          "level": "must",
+          "text": "Long-poll `GET /v1/inbox` with `address`, `session_id`, `adapter=<harness>` and `poll_ms`, and poll again\nwithin `poll_ms` of each return. Keep `since` (the byte offset) across polls. The pull is also the heartbeat:\na participant that stops pulling is stale after the heartbeat factor times `poll_ms` (see the rules below),\nand from then on its mail is routed `fallback`."
+        },
+        {
+          "id": "P-DELIVER",
+          "level": "must",
+          "text": "Put each entry's text into the agent's next turn verbatim, marker line included. Entries due together may\nshare one turn."
+        },
+        {
+          "id": "P-ACK",
+          "level": "must",
+          "text": "`POST /v1/ack` with `by: \"adapter\"`, and only after the text has entered a turn. Never ack an entry the agent\nwas not shown. Acking twice is harmless."
+        },
+        {
+          "id": "P-REPORT",
+          "level": "must",
+          "text": "For every brief (an entry carrying `[hierarchy-msg <id>]`), a response is filed for the request (`msg.mjs fill --id <id>`),\nin the shape shown below. It is written either by the agent itself, or by the harness through\n`POST /v1/state/msgs/create` with `req` set to the request path and an `op_id`. Then the harness sends the\nOrchestrator `POST /v1/send` with `ref` set to the response path, `from` its own address and `session_id` the id it registered with: a send without the registered `session_id` is refused `from_mismatch`.\n\n{{response-shape}}"
+        },
+        {
+          "id": "P-COMPAT",
+          "level": "must",
+          "text": "Ignore unknown fields. Refuse to run if `protocols` lacks the major version you were written for."
+        },
+        {
+          "id": "P-LIVE-PID",
+          "level": "should",
+          "text": "Supply `pid` on register, so liveness can use the process as well as the heartbeat."
+        },
+        {
+          "id": "P-ROLE",
+          "level": "should",
+          "text": "Load `GET /v1/contract/role?role=<role>` for the admitted role into the agent's instructions."
+        },
+        {
+          "id": "P-JOIN",
+          "level": "should",
+          "text": "A harness started without `AH_ADDRESS` asks to join before it registers. It takes the team from `AH_TEAM` (or lists\n`GET /v1/contract/teams`), then sends `POST /v1/join` with `team`, `harness`, its `session_id` and a `why` the\nOrchestrator reads. It polls `GET /v1/join/<join_id>?wait=<s>` until the status is not `pending`. It registers only after\n`accepted`, with the address and values the answer carries; while the join is pending, and after `denied`, `expired` or\n`failed`, it does not register and does not pull. A `failed` answer carries `error` (the accepted member row was not\nwritten) and sets no cooldown: it may ask again at once. After `denied` or `expired` it asks again no sooner than the cooldown: a refused\n`join_cooldown` carries `retry_after` seconds. Asking again while a join of the same session is pending answers with that\njoin, so a restart does not make a second request.\n\nThe Orchestrator reads the request together with what the daemon observed about the process the request names. The pid and\nthat process's command line are the harness's own choice, so they do not show who started it. The Orchestrator decides from its\nown process tree: a harness the Orchestrator launched from its own tool shell is its descendant and could accept its own join\nby construction, so a harness meant to join is started with `spawn-ad-hoc --command` or by the user, not from the\nOrchestrator's shell."
+        }
+      ],
+      "routes": [
+        {
+          "method": "GET",
+          "path": "/v1/health",
+          "purpose": "Liveness and version of the daemon. Check `protocols` contains your major version.",
+          "response": "{pid, version, protocol, protocols[], impl, started_at, root, owns, timer_state, requests, health_calls, unpulled_acks, errors, errors_by_code}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inspect/boxes",
+          "purpose": "The mailboxes on disk, with counts and adapter freshness.",
+          "query": {
+            "address": {
+              "note": "name@team; one box only",
+              "type": "string"
+            }
+          },
+          "response": "{boxes[{address, dir, entries, unacked, overdue, adapter, adapter_state, heartbeat_at}]}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inspect/entries",
+          "purpose": "The entries of one mailbox.",
+          "query": {
+            "address": {
+              "note": "name@team",
+              "required": true,
+              "type": "string"
+            },
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "filter": {
+              "enum": [
+                "pending",
+                "acked",
+                "all"
+              ],
+              "note": "default pending",
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "n": {
+              "note": "how many, newest last",
+              "type": "integer"
+            }
+          },
+          "response": "{address, entries[], total}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inspect/registrations",
+          "purpose": "The registrations the daemon holds, live or stale.",
+          "query": {
+            "since": {
+              "note": "the token of the last answer, or -1",
+              "type": "integer"
+            }
+          },
+          "response": "{registrations[{session_id, address, harness, pid, live, adapter}], token with since}, or {unchanged, token} when since is the token"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inspect/events",
+          "purpose": "The events waiting in the Orchestrator's mailbox.",
+          "query": {
+            "address": {
+              "note": "name@team",
+              "type": "string"
+            }
+          },
+          "response": "{events[]}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inspect/timers",
+          "purpose": "The dispatch clock the daemon keeps for Orchestrator sessions (a dry run).",
+          "query": {
+            "session": {
+              "type": "string"
+            }
+          },
+          "response": "{timers[]}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/status",
+          "purpose": "The live status document of a hierarchy directory the daemon watches, with its rev.",
+          "query": {
+            "dir": {
+              "note": "absolute hierarchy directory",
+              "required": true,
+              "type": "string"
+            },
+            "since": {
+              "note": "a rev",
+              "type": "integer"
+            },
+            "wait": {
+              "note": "0 to 25; needs since",
+              "type": "integer"
+            }
+          },
+          "response": "{rev, doc}"
+        },
+        {
+          "body": {
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "data": {
+              "required": false,
+              "type": "object"
+            },
+            "eta": {
+              "required": false,
+              "type": "string"
+            },
+            "event": {
+              "required": false,
+              "type": "string"
+            },
+            "from": {
+              "required": false,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "id": {
+              "required": false,
+              "type": "string"
+            },
+            "kind": {
+              "required": false,
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "post_link": {
+              "note": "a link id; only the team's Orchestrator posting into that link's thread uses it, a participant leaves it out",
+              "required": false,
+              "type": "string"
+            },
+            "ref": {
+              "required": false,
+              "type": "string"
+            },
+            "reply_to": {
+              "required": false,
+              "type": "string"
+            },
+            "session_id": {
+              "required": false,
+              "type": "string"
+            },
+            "supersedes": {
+              "note": "the id of an entry of yours in the recipient's box that this one replaces; refused once that entry is picked up or ended, or when it is another sender's",
+              "required": false,
+              "type": "string"
+            },
+            "text": {
+              "required": false,
+              "type": "string"
+            },
+            "to": {
+              "required": true,
+              "type": "string"
+            },
+            "to_session": {
+              "required": false,
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/send",
+          "purpose": "Send a mailbox entry.",
+          "response": "the entry as sent: {id, to, route, ...}; refused as {error: {code}} with from_mismatch (403), outside_team (403), not_linked (403), link_exhausted (403), broadcast_orchestrator_only (403), removed_member (403), team_gone (403), team_mismatch (403), team_unreadable (403), team_unresolved (403), mirror_failed (503)"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/inbox",
+          "purpose": "Long-poll a mailbox. With `adapter` set, each pull is also the heartbeat.",
+          "query": {
+            "adapter": {
+              "note": "the harness name; with it the pull also writes the heartbeat",
+              "type": "string"
+            },
+            "address": {
+              "note": "name@team",
+              "required": true,
+              "type": "string"
+            },
+            "all": {
+              "note": "\"1\" or \"true\": include acked entries",
+              "type": "boolean"
+            },
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "overdue": {
+              "note": "\"1\" or \"true\": only entries past their grace",
+              "type": "boolean"
+            },
+            "poll_ms": {
+              "note": "the participant's poll interval in milliseconds, default 5000; the heartbeat is fresh for 3 of them",
+              "type": "integer"
+            },
+            "session_id": {
+              "note": "the pulling session",
+              "type": "string"
+            },
+            "since": {
+              "note": "byte offset into the mailbox; required with wait, default 0",
+              "type": "integer"
+            },
+            "wait": {
+              "note": "seconds to hold the request open for a new entry, 0 to 25; needs since",
+              "type": "integer"
+            }
+          },
+          "response": "{address, entries[{id, from, kind, text, ref?, event?, created, ...}], next}"
+        },
+        {
+          "body": {
+            "address": {
+              "note": "name@team",
+              "required": true,
+              "type": "string"
+            },
+            "by": {
+              "enum": [
+                "prompt-hook",
+                "adapter",
+                "cli",
+                "sendmessage",
+                "watcher",
+                "paste",
+                "stop-hook"
+              ],
+              "required": true,
+              "type": "string"
+            },
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "ids": {
+              "note": "entry ids",
+              "required": true,
+              "type": "string[]"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "session_id": {
+              "note": "the acking session",
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/ack",
+          "purpose": "Acknowledge entries that entered a turn.",
+          "response": "{acked[], unknown[], fresh[]}"
+        },
+        {
+          "body": {
+            "address": {
+              "note": "name@team of the box holding the entry",
+              "required": true,
+              "type": "string"
+            },
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "id": {
+              "note": "entry id",
+              "required": true,
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "note": {
+              "note": "at most 200 characters",
+              "type": "string"
+            },
+            "reason": {
+              "enum": [
+                "already-reported",
+                "superseded",
+                "withdrawn"
+              ],
+              "required": true,
+              "type": "string"
+            },
+            "session_id": {
+              "note": "required in practice: the live registration that proves the caller is the carrier; without it the decline is refused",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/decline",
+          "purpose": "End the relay of an entry: a caller whose `session_id` names a live registration holding the carrier address on its relay request (and, when the request names a carrier session, that session or the only session registered to the carrier now) declines it, with a reason, so the ladder stops asking for the relay.",
+          "response": "{declined, by, reason}; refused as {error: {code}} with decline_refused (the entry has no relay request, its ladder has ended, it was picked up, the note is too long, or the caller is not its carrier), busy (the decline could not be recorded; try again)"
+        },
+        {
+          "body": {
+            "addresses": {
+              "note": "the member addresses (name@team) this session serves",
+              "required": true,
+              "type": "string[]"
+            },
+            "boxes": {
+              "note": "address -> absolute mailbox directory, for every address",
+              "required": true,
+              "type": "object"
+            },
+            "cwd": {
+              "note": "the session's working directory (an existing absolute directory, else ignored)",
+              "type": "string"
+            },
+            "harness": {
+              "note": "the harness name; default claude",
+              "type": "string"
+            },
+            "herdr_flavour": {
+              "note": "optional; tui or core: the herdr server the session's pane runs on; any other value is ignored",
+              "type": "string"
+            },
+            "pane_id": {
+              "note": "a terminal pane the session runs in, if any",
+              "type": "string"
+            },
+            "pid": {
+              "note": "required from 2.6.0: the session's process id, the caller's own or one of its ancestors'; without it the registration is unbound and may only create a record",
+              "type": "integer"
+            },
+            "pid_start": {
+              "note": "optional; derived: the process start time as ps -o lstart= prints it in UTC; when given it must match",
+              "type": "string"
+            },
+            "session_id": {
+              "note": "[A-Za-z0-9._-]+, unique per agent session and stable for its life",
+              "required": true,
+              "type": "string"
+            },
+            "team_file": {
+              "note": "absolute path of the team file the addresses belong to",
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/register",
+          "purpose": "Register a session under its address(es). A harness that is not built in must be admitted (a team-file row of kind custom naming the same harness) or the answer is 403 not_admitted.",
+          "response": "{ok: true}, with warning when no pid was given; refused as {error: {code}} with not_admitted (403), pid_occupied (403), busy (503: the process line could not be read; register again)"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/contract",
+          "purpose": "This contract as JSON.",
+          "response": "{contract_version, protocol, requirements[], routes[], enums, rules}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/contract/guide",
+          "purpose": "This contract as a markdown guide.",
+          "response": "text/markdown"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/contract/join",
+          "purpose": "For an admitted custom member: the values register needs.",
+          "query": {
+            "address": {
+              "note": "name@team",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "response": "{address, role, team_file, boxes{address: dir}, hierarchy_dir, poll_ms}; 404 not_admitted otherwise"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/contract/role",
+          "purpose": "The behavioural contract text of a role (read-only).",
+          "query": {
+            "role": {
+              "note": "a built-in role name",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "response": "{role, text}; 404 for an unknown role"
+        },
+        {
+          "body": {
+            "cwd": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "harness": {
+              "note": "the harness name; a custom name, not a built-in one",
+              "required": true,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "name_hint": {
+              "note": "the member name asked for: [a-z][a-z0-9-]{0,31}",
+              "type": "string"
+            },
+            "pid": {
+              "note": "the harness process id, shown to the Orchestrator",
+              "type": "integer"
+            },
+            "role_wanted": {
+              "note": "a known role name",
+              "type": "string"
+            },
+            "session_id": {
+              "note": "[A-Za-z0-9._-]+, the id the harness will register with",
+              "required": true,
+              "type": "string"
+            },
+            "team": {
+              "note": "the team to join (see GET /v1/contract/teams)",
+              "required": true,
+              "type": "string"
+            },
+            "why": {
+              "note": "one to 500 characters the Orchestrator reads when it decides",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/join",
+          "purpose": "Ask a team's Orchestrator to admit this harness as a custom member. Answered 202 with a new join id, or 200 with the id of a join of the same harness session still pending.",
+          "response": "{join_id, status: \"pending\", poll}; refused as {error: {code}} with bad_request (400), unknown_team (404), no_orchestrator (409), join_cooldown (429); join_cooldown carries retry_after seconds, unknown_team the live teams"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/join/{id}",
+          "purpose": "The outcome of a join. Long-polls up to wait seconds while it is pending; an undecided join expires 10 minutes after it was asked.",
+          "query": {
+            "cwd": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory; optional, the daemon finds the team without it",
+              "type": "string"
+            },
+            "wait": {
+              "note": "0 to 25 seconds",
+              "type": "integer"
+            }
+          },
+          "response": "{join_id, status: pending|accepted|denied|expired|failed}; accepted carries the values of GET /v1/contract/join (address, role, team_file, boxes, hierarchy_dir, poll_ms); denied carries why; failed carries error"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/contract/teams",
+          "purpose": "The live teams a harness may ask to join.",
+          "response": "[{team, orchestrator_live}]"
+        },
+        {
+          "body": {
+            "args": {
+              "fields": {
+                "content": {
+                  "note": "the whole file text",
+                  "required": true,
+                  "type": "string"
+                },
+                "dir": {
+                  "note": "the hierarchy directory the file lands in",
+                  "required": true,
+                  "type": "string"
+                },
+                "id": {
+                  "note": "the message id",
+                  "type": "string"
+                },
+                "path": {
+                  "note": "absolute path of the message file",
+                  "required": true,
+                  "type": "string"
+                },
+                "req": {
+                  "note": "for a response: the absolute path of its request, beside which the file is written",
+                  "type": "string"
+                }
+              },
+              "note": "the fields below",
+              "required": true,
+              "type": "object"
+            },
+            "context": {
+              "note": "the caller context fields",
+              "required": true,
+              "type": "object"
+            },
+            "op_id": {
+              "note": "a fresh id per write",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "method": "POST",
+          "path": "/v1/state/msgs/create",
+          "path_args": [
+            "path",
+            "dir"
+          ],
+          "purpose": "Create a message file exclusively (a response beside its request). A write needs an op_id: repeating one is safe.",
+          "response": "{result: {ok: true}}"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/state/{domain}/{op}",
+          "purpose": "A registered state read (the operations of the state registry whose kind is read and which the daemon serves).",
+          "query": {
+            "args": {
+              "note": "the operation's arguments as a JSON object",
+              "type": "string"
+            },
+            "cwd": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": true,
+              "type": "string"
+            },
+            "main_hierarchy_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            },
+            "messaging_socket_dir": {
+              "note": "caller context: an absolute directory",
+              "required": false,
+              "type": "string"
+            }
+          },
+          "response": "{result}"
+        }
+      ],
+      "rules": {
+        "heartbeat_fresh_factor": 3,
+        "inbox_wait_max_s": 25,
+        "marker_format": "[ah-entry <id> to <name@team>]",
+        "max_request_body_bytes": 65536,
+        "poll_ms_default": 5000
+      }
+    }
+  },
+  "mutant": "a route missing from the contract",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:57.104Z"
+  }
+}

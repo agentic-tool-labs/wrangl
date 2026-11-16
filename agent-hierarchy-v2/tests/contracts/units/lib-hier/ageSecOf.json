@@ -1,0 +1,89 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "ageSecOf",
+  "cases": [
+    {
+      "id": "one-minute",
+      "args": [
+        "2026-06-01T11:59:00.000Z",
+        1780315200000
+      ],
+      "expect": 60
+    },
+    {
+      "id": "future-is-zero",
+      "args": [
+        "2026-06-01T12:00:05.000Z",
+        1780315200000
+      ],
+      "expect": 0
+    },
+    {
+      "id": "now-default",
+      "args": [
+        "2026-06-01T11:00:00.000Z"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expect": 3600
+    },
+    {
+      "id": "offset-timestamp",
+      "args": [
+        "2026-06-01T08:00:00-04:00",
+        1780315200000
+      ],
+      "expect": 0
+    },
+    {
+      "id": "invalid-is-infinity",
+      "args": [
+        "yesterday",
+        1780315200000
+      ],
+      "expect": {
+        "$inf": 1
+      }
+    },
+    {
+      "id": "empty-is-infinity",
+      "args": [
+        "",
+        1780315200000
+      ],
+      "expect": {
+        "$inf": 1
+      }
+    },
+    {
+      "id": "undefined-is-infinity",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        1780315200000
+      ],
+      "expect": {
+        "$inf": 1
+      }
+    },
+    {
+      "id": "null-is-infinity",
+      "args": [
+        null,
+        1780315200000
+      ],
+      "expect": {
+        "$inf": 1
+      }
+    },
+    {
+      "id": "fraction",
+      "args": [
+        "2026-06-01T11:59:59.500Z",
+        1780315200000
+      ],
+      "expect": 0.5
+    }
+  ]
+}

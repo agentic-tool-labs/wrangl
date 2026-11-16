@@ -1,0 +1,29 @@
+{
+  "about": "A peers row proves nothing without the start time it was recorded with, and a member with no fresh row is undecided, not down. Displays count an undecided member as running, and a plan reports its liveness as unknown (live null, with the reason) instead of false. The recorded Node answered false or counted by pid alone. The recordings are not rewritten: a row named here is replayed with only the named paths removed from both sides.",
+  "ruling": "b6 §0, §2, §3; b3 §12",
+  "id": "peer-row-evidence",
+  "reason": "Phase B: a peers row without pid_start proves nothing (b2 row 11 as amended by b6 §0); Unknown members count in displays (b3 §12)",
+  "units": [
+    {
+      "unit": "lib-hier.buildStateBlock (the misplaced-peer count)",
+      "case": "lib-hier/buildStateBlock.json misplaced-peer-count",
+      "node": "1 misplaced peer(s)",
+      "native": "2 misplaced peer(s): rows a and b are up rows that name a pid and record no pid_start, so neither pid shows its session is gone and both count (Node counted by pid alone, 1)",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/HierarchyUnitTableTests.cs (native_expect), native/tests/Ah.Cli.Tests/RosterVerbTests.cs NegativeAMisplacedUpRowWithNoRecordedStart…"
+    }
+  ],
+  "scoped": [
+    {
+      "row": "cli/roster/dismiss/plan",
+      "kind": "json-paths",
+      "paths": ["live", "live_unknown"],
+      "confirmed": "the member tm-implementor has no peers.jsonl row (peers.live 0): b2/b3 row 13, no fresh row, Unknown"
+    },
+    {
+      "row": "cli/roster/teams/list",
+      "kind": "json-paths",
+      "paths": ["teams[name=tm].members"],
+      "confirmed": "tm-implementor and tm-reviewer have no peers.jsonl row (peers.live 0): row 13, Unknown, so both count"
+    }
+  ]
+}

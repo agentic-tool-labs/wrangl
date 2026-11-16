@@ -1,0 +1,45 @@
+<Project>
+
+  <PropertyGroup>
+    <AhNativeRoot>$(MSBuildThisFileDirectory)</AhNativeRoot>
+    <AhIsSrc>$([System.String]::Copy('$(MSBuildProjectDirectory)').StartsWith('$(AhNativeRoot)src'))</AhIsSrc>
+    <AhIsTests>$(MSBuildProjectName.EndsWith('.Tests'))</AhIsTests>
+    <ArtifactsPath>$(AhNativeRoot)artifacts</ArtifactsPath>
+
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- IDE0005 only fires in a command-line build when the compiler produces documentation; CS1591 is the price. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- No VBCSCompiler server outliving the build; Directory.Build.rsp turns off MSBuild node reuse. -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(AhIsSrc)' == 'true' and '$(MSBuildProjectName)' != 'Ah.Generators'">
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Ah.Cli' or '$(MSBuildProjectName)' == 'Ah.Tui'">
+    <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
+    <AhBuildPropertiesGiven Condition="'$(AhVersion)' != '' and '$(AhContract)' != ''">true</AhBuildPropertiesGiven>
+    <AhVersion Condition="'$(AhVersion)' == ''">0.0.0-dev</AhVersion>
+    <AhContract Condition="'$(AhContract)' == ''">0</AhContract>
+    <!-- The plugin's name is the one in its manifest, so a build with no -p:AhPluginName still names the plugin it sits in. -->
+    <AhPluginManifest>$(MSBuildThisFileDirectory)../.claude-plugin/plugin.json</AhPluginManifest>
+    <AhPluginNameFromManifest Condition="'$(AhPluginName)' == '' and Exists('$(AhPluginManifest)')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(AhPluginManifest)')), '&quot;name&quot;\s*:\s*&quot;([^&quot;]*)&quot;').Groups[1].Value)</AhPluginNameFromManifest>
+    <AhPluginName Condition="'$(AhPluginName)' == ''">$(AhPluginNameFromManifest)</AhPluginName>
+    <AhPluginName Condition="'$(AhPluginName)' == ''">wrangl</AhPluginName>
+  </PropertyGroup>
+
+</Project>

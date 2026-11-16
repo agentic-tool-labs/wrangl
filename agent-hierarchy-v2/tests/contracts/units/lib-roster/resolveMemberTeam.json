@@ -1,0 +1,188 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "resolveMemberTeam",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "p-architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "found": true,
+        "team": null
+      }
+    },
+    {
+      "id": "named-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "q-reviewer"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"reviewer\",\"name\":\"q-reviewer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "found": true,
+        "team": "alpha"
+      }
+    },
+    {
+      "id": "not-found",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "nobody"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "empty-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "null-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "default-wins-over-named",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "dup"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"dup\"}]}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"reviewer\",\"name\":\"dup\"}]}"
+      },
+      "expect": {
+        "found": true,
+        "team": null
+      }
+    },
+    {
+      "id": "no-teams",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "x"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "member-without-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "x"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\",\"name\":null}]}"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "numeric-member-name-not-equal",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "5"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":5}]}"
+      },
+      "expect": {
+        "found": false,
+        "team": null
+      }
+    },
+    {
+      "id": "null-member-row-throws",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "x"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[null,{\"role\":\"architect\",\"name\":\"x\"}]}"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "unreadable-default-falls-to-named",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "q"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{x",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"reviewer\",\"name\":\"q\"}]}"
+      },
+      "expect": {
+        "found": true,
+        "team": "alpha"
+      }
+    },
+    {
+      "id": "worktree-reads-home",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "q"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"reviewer\",\"name\":\"q\"}]}"
+      },
+      "expect": {
+        "found": true,
+        "team": null
+      }
+    }
+  ]
+}

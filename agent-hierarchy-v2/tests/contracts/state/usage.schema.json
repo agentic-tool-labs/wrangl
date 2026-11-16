@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "ts": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "agent_type": {
+      "type": "string"
+    },
+    "project_dir": {
+      "type": "string"
+    },
+    "found": {
+      "type": "boolean"
+    },
+    "model": {
+      "type": "string"
+    },
+    "calls": {
+      "type": "integer"
+    },
+    "in": {
+      "type": "integer"
+    },
+    "out": {
+      "type": "integer"
+    },
+    "cache_read": {
+      "type": "integer"
+    },
+    "cache_create": {
+      "type": "integer"
+    },
+    "op_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agent_id",
+    "agent_type",
+    "cache_create",
+    "cache_read",
+    "calls",
+    "found",
+    "in",
+    "model",
+    "op_id",
+    "out",
+    "project_dir",
+    "session_id",
+    "ts"
+  ],
+  "additionalProperties": true,
+  "description": "one row of the file"
+}

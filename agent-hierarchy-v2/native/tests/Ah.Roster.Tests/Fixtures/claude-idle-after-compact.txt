@@ -1,0 +1,44 @@
+
+ ▐▛███▛█   Claude Code v2.1.303
+▝▜██████▀  Sonnet 5.5 with medium effort · Claude Max
+ ▝▝   ▝▝   /Users/example/proj · /rc
+
+
+❯ Use the Read tool on /Users/example/big1.txt, then big2.txt, then big3.txt, then big1.txt again, one Read call each in sequence with limit 250. If a
+  Read is paused by a hook, re-run it. After the fourth, reply with only: read-all.
+
+⏺ ☎️ Doctor Strangelove pack is live: no fighting in the War Room.
+
+  Read 1 file
+  ⎿  PreToolUse:Read says: task-gopher: paused one direct lookup to suggest delegating it; re-running proceeds.
+
+⏺ The user asked for direct Reads, so I'm re-running the same call.
+
+  Read 3 files
+  ⎿  PreToolUse:Read says: task-gopher: paused again after several direct lookups in a row; re-running proceeds.
+  ⎿  Referenced file /Users/example/big2.txt
+  ⎿  Referenced file /Users/example/big1.txt
+
+⏺ read-all
+
+✻ Sautéed for 34s · done 11:33 PM
+
+
+
+
+
+
+
+
+
+
+
+embedding 127321/127323 · ~1m 10s                                                                                                                        [-]
+                                                                                                                                      8% until auto-compact
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ╭───────────────────────────────────────────────────────────────────────────╮╭─ Sonnet 5.5 : medium ────────────────────────────────────────────────────╮
+  │ proj | Concise | engram:244593 ∿ embedding                                ││ ctx:9% (88k/1000k) | 5h:13% / 7d:95% | ac:500K                           │
+  ╰───────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────────────────────╯
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← 2 agents

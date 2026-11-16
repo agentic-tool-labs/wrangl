@@ -1,0 +1,79 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "VALID_MODELS_BY_ROLE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "ultra-advisor": [
+          "fable",
+          "opus"
+        ],
+        "architect": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "reviewer": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "implementor": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "docs-writer": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "qa": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "ux-engineer": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "task-runner": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit",
+          "haiku"
+        ],
+        "backlog-groomer": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit",
+          "haiku"
+        ],
+        "sub-orchestrator": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ],
+        "deputy-chief": [
+          "opus",
+          "sonnet",
+          "fable",
+          "inherit"
+        ]
+      }
+    }
+  ]
+}

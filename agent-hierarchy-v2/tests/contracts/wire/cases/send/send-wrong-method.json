@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "send-wrong-method",
+  "about": "GET /v1/send is 405 with an Allow header",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/send"
+  },
+  "expect": {
+    "status": 405,
+    "headers": {
+      "allow": "POST"
+    },
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "GET is not allowed here"
+      }
+    }
+  },
+  "mutant": "a 404 for a wrong method",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:08.684Z"
+  },
+  "expect_headers": [
+    "allow"
+  ]
+}

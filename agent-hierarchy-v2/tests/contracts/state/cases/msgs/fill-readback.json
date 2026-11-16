@@ -1,0 +1,117 @@
+{
+  "kind": "state-op",
+  "id": "fill-readback",
+  "about": "fill writes the body into an existing response, and show reads the filled body back",
+  "tree": "state-ops",
+  "env": {
+    "WRANGL_HIERARCHY_DIR": "<ROOT:proj>/.claude/hierarchy"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "msgs",
+    "op": "fill",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "msgs",
+        "op": "create",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "path": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--tm-architect--probe--request.md",
+            "content": "---\ntype: request\nid: 20260101-120000-ab12\nto: tm-architect\nfrom: orchestrator\nslug: probe\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-01-01T12:00:00+00:00\n---\n\n## [0] tldr\n"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-req"
+        }
+      },
+      {
+        "domain": "msgs",
+        "op": "create",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "path": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--orchestrator--probe--response.md",
+            "content": "---\ntype: response\nid: 20260101-120000-ab12\nto: orchestrator\nfrom: tm-architect\nslug: probe\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-01-01T12:00:00+00:00\n---\n\n## [0] tldr\n"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-resp"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "path": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--orchestrator--probe--response.md",
+        "req": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--tm-architect--probe--request.md",
+        "id": "20260101-120000-ab12",
+        "from": "tm-architect",
+        "body": "\"report text from the architect\""
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-msgs-fill-readback"
+    },
+    "readback": [
+      [
+        "msg",
+        "show",
+        "20260101-120000-ab12",
+        "response",
+        "--pool",
+        "<ROOT:proj>/.claude/hierarchy"
+      ],
+      [
+        "msg",
+        "list",
+        "--all",
+        "--json",
+        "--cwd",
+        "<ROOT:proj>"
+      ]
+    ]
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "ok": true,
+        "bytes": 273,
+        "rev": 1
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "readback": [
+      {
+        "stdout": "---\ntype: response\nid: <MSGID:1>\nto: orchestrator\nfrom: tm-architect\nslug: probe\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: <ISOL:1>\n---\n\nreport text from the architect\n",
+        "exit": 0
+      },
+      {
+        "stdout": "[{\"id\":\"<MSGID:1>\",\"to\":\"tm-architect\",\"slug\":\"probe\",\"age\":\"<AGE>\",\"title\":null,\"title_source\":null,\"state\":\"closed\",\"request\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--tm-architect--probe--request.md\",\"response\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--probe--response.md\",\"has_response\":true}]\n",
+        "exit": 0
+      }
+    ]
+  },
+  "mutant": "a fill that answers ok but does not store the body",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored (review-d2 F2 read-back); expect recorded from the native binary"
+  }
+}

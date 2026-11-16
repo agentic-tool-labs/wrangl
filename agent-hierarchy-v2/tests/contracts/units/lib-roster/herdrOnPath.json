@@ -1,0 +1,150 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "herdrOnPath",
+  "cases": [
+    {
+      "id": "executable-in-first-dir",
+      "args": [],
+      "files": {
+        "a/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a:/usr/bin"
+      },
+      "expect": true
+    },
+    {
+      "id": "executable-in-second-dir",
+      "args": [],
+      "files": {
+        "a/other": {
+          "text": "",
+          "mode": 493
+        },
+        "b/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a:$ROOT/b"
+      },
+      "expect": true
+    },
+    {
+      "id": "present-but-not-executable",
+      "args": [],
+      "files": {
+        "a/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 420
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a"
+      },
+      "expect": false
+    },
+    {
+      "id": "not-executable-first-executable-later",
+      "args": [],
+      "files": {
+        "a/herdr": {
+          "text": "",
+          "mode": 420
+        },
+        "b/herdr": {
+          "text": "",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a:$ROOT/b"
+      },
+      "expect": true
+    },
+    {
+      "id": "absent",
+      "args": [],
+      "files": {
+        "a/tmux": {
+          "text": "",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-path",
+      "args": [],
+      "env": {
+        "PATH": ""
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-entries-skipped",
+      "args": [],
+      "files": {
+        "a/herdr": {
+          "text": "",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "::$ROOT/a:"
+      },
+      "expect": true
+    },
+    {
+      "id": "missing-directory-entry",
+      "args": [],
+      "files": {
+        "a/herdr": {
+          "text": "",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/nope:$ROOT/a"
+      },
+      "expect": true
+    },
+    {
+      "id": "directory-named-herdr-with-search-bit",
+      "args": [],
+      "files": {
+        "a/herdr/x": ""
+      },
+      "env": {
+        "PATH": "$ROOT/a"
+      },
+      "expect": true
+    },
+    {
+      "id": "name-must-be-exact",
+      "args": [],
+      "files": {
+        "a/herdr2": {
+          "text": "",
+          "mode": 493
+        },
+        "a/Herdr": {
+          "text": "",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/a"
+      },
+      "expect": true
+    }
+  ]
+}

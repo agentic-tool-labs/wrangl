@@ -1,0 +1,12 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "CONVENTIONS_PATH",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": ".claude/ah-conventions.json"
+    }
+  ]
+}

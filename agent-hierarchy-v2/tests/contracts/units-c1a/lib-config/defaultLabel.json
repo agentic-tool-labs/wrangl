@@ -1,0 +1,49 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "defaultLabel",
+  "cases": [
+    {
+      "id": "simple",
+      "args": [
+        "architect"
+      ],
+      "expect": "Architect"
+    },
+    {
+      "id": "hyphenated",
+      "args": [
+        "ui-implementor"
+      ],
+      "expect": "Ui-Implementor"
+    },
+    {
+      "id": "digits",
+      "args": [
+        "a1-b2"
+      ],
+      "expect": "A1-B2"
+    },
+    {
+      "id": "single",
+      "args": [
+        "x"
+      ],
+      "expect": "X"
+    },
+    {
+      "id": "double-hyphen",
+      "args": [
+        "a--b"
+      ],
+      "expect": "A--B"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    }
+  ]
+}

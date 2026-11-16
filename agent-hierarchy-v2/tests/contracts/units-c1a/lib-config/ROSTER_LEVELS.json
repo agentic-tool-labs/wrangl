@@ -1,0 +1,16 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROSTER_LEVELS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "repo-user",
+        "repo",
+        "global"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+ah › ah2-tm4 › impl-41  ● working 8m · …
+WORK ITEMS
+▸ at-14  ▶ in progress   Trim th…     8m
+  at-15  ▶ in progress   Also tr…    20m
+  at-12  ✓ done          Fix mes…     2h
+
+
+
+
+click or ⏎ open  esc team  q quit

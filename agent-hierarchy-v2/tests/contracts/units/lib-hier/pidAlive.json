@@ -1,0 +1,92 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "pidAlive",
+  "cases": [
+    {
+      "id": "self",
+      "args": [
+        {
+          "$selfpid": 1
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "zero",
+      "args": [
+        0
+      ],
+      "expect": false
+    },
+    {
+      "id": "negative",
+      "args": [
+        -1
+      ],
+      "expect": false
+    },
+    {
+      "id": "fraction",
+      "args": [
+        1.5
+      ],
+      "expect": false
+    },
+    {
+      "id": "string-number",
+      "args": [
+        "12"
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "nan",
+      "args": [
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "infinity",
+      "args": [
+        {
+          "$inf": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "dead-pid",
+      "args": [
+        2147483000
+      ],
+      "expect": false
+    },
+    {
+      "id": "init-pid-eperm-counts-alive",
+      "args": [
+        1
+      ],
+      "expect": true
+    }
+  ]
+}

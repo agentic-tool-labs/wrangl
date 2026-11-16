@@ -1,0 +1,42 @@
+{
+  "kind": "cli",
+  "id": "model",
+  "about": "edit changes one member's model in the level file",
+  "tree": "cli-roster",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "edit",
+      "repo",
+      "--member",
+      "proj-implementor",
+      "--model",
+      "opus"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"level\": \"repo\",\n  \"path\": \"<ROOT:proj>/.claude/agent-hierarchy.json\",\n  \"wasDefaulted\": false,\n  \"container\": \"roster\",\n  \"member\": {\n    \"role\": \"implementor\",\n    \"model\": \"opus\",\n    \"kind\": \"claude\",\n    \"name\": \"proj-implementor\"\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "path": "proj/.claude/agent-hierarchy.json",
+          "mode": "0644",
+          "content": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"opus\"\n      }\n    ]\n  }\n}\n"
+        }
+      ]
+    }
+  },
+  "mutant": "an edit that changes another member",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:48.388Z"
+  }
+}

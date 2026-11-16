@@ -1,0 +1,24 @@
+ah › ah2-tm4                                           ?1 ▶2 ‖0 · updated 4s ago
+AGENTS
+▸ orchestrator    ● working 2m        live    Ship train 22
+  impl-41         ● working 8m        live    Trim the terminal UI
+  reviewer-9      × ended 1h          gone    Review the trim
+SITREP
+  [-] Completed 0 of 5
+    Shipped ship-21 · fb04b16
+  [-] In progress 1
+    Trim the terminal UI
+  [-] Up next 0
+  [-] Waiting on you 1
+    Pick the DB migration order
+  [+] Report in, no one on it 1
+
+
+
+
+
+
+
+
+
+click or ⏎ open or fold  esc teams  q quit

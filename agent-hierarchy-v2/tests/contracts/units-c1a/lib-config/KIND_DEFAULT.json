@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "KIND_DEFAULT",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "claude"
+    }
+  ]
+}

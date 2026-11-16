@@ -1,0 +1,55 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "hasContractErrors",
+  "cases": [
+    {
+      "id": "error",
+      "args": [
+        [
+          {
+            "level": "warn"
+          },
+          {
+            "level": "error"
+          }
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "only-warn",
+      "args": [
+        [
+          {
+            "level": "warn"
+          }
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        []
+      ],
+      "expect": false
+    },
+    {
+      "id": "not-array",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "object",
+      "args": [
+        {
+          "level": "error"
+        }
+      ],
+      "expect": false
+    }
+  ]
+}

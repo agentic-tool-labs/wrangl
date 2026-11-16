@@ -1,0 +1,71 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "namedRosterKeys",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "across-levels",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"zeta\":{},\"alpha\":{\"members\":[]}}}",
+        "home/.claude/agent-hierarchy.json": "{\"rosters\":{\"beta\":{},\"alpha\":{}}}"
+      },
+      "expect": [
+        "alpha",
+        "beta",
+        "zeta"
+      ]
+    },
+    {
+      "id": "invalid-names-dropped",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"bad name\":{},\"architect\":{},\"ok\":{},\"-x\":{}}}"
+      },
+      "expect": [
+        "ok"
+      ]
+    },
+    {
+      "id": "bad-json",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{x"
+      },
+      "expect": []
+    },
+    {
+      "id": "default-key-included",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"default\":{},\"a\":{}}}"
+      },
+      "expect": [
+        "a",
+        "default"
+      ]
+    }
+  ]
+}

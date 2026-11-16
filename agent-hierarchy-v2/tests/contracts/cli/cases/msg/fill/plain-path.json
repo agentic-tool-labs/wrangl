@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "plain-path",
+  "about": "fill --plain prints `<path>  <id>`, the plain form callers parse",
+  "tree": "cli-msgs-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "fill",
+      "--id",
+      "20260101-000000-aaaa",
+      "--from",
+      "implementor",
+      "--req",
+      "<ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-aaaa--implementor--sample-a--request.md",
+      "--body",
+      "\"## [0] tldr\\n- done\\n\"",
+      "--plain"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--sample-a--response.md  <MSGID:1>\n",
+    "stderr": "",
+    "exit": 0
+  },
+  "mutant": "a plain fill that prints the id alone",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored (keep every API: the plain `<path>  <id>` form changed in 7902a3827); stdout only"
+  }
+}

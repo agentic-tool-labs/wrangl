@@ -1,0 +1,1841 @@
+[
+  {
+    "domain": "activity",
+    "op": "clear",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/activity/clear",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "subject"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "activity"
+    ]
+  },
+  {
+    "domain": "activity",
+    "op": "record",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/activity/record",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "activity",
+            "dir",
+            "subject",
+            "tool"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "activity"
+    ]
+  },
+  {
+    "domain": "activity",
+    "op": "sweep",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/activity/sweep",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "cutoff_ms",
+            "dir"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "activity"
+    ]
+  },
+  {
+    "domain": "decisions",
+    "op": "add",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/decisions/add",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "input",
+            "path",
+            "run"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "decisions"
+    ]
+  },
+  {
+    "domain": "decisions",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/decisions/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "merge",
+            "path"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "decisions"
+    ]
+  },
+  {
+    "domain": "decisions",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/decisions/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "decisions"
+    ]
+  },
+  {
+    "domain": "gates",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/gates/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "rec"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "gates"
+    ]
+  },
+  {
+    "domain": "gates",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/gates/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "gates"
+    ]
+  },
+  {
+    "domain": "links",
+    "op": "deny",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/deny",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "now",
+            "request",
+            "team",
+            "why"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "extend",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/extend",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "id",
+            "messages",
+            "minutes",
+            "now",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "grant",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/grant",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "link",
+            "now",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "pend",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/pend",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "id",
+            "request",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/links/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "release",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/release",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "id",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "revoke",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/revoke",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "id",
+            "now",
+            "reason",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "sweep",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/sweep",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "now",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "links",
+    "op": "use",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/links/use",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "from",
+            "now",
+            "team",
+            "to"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "mailbox",
+    "op": "ack",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/ack",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "by",
+            "dir",
+            "id",
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "mailbox",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "entry"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "mailbox",
+    "op": "attempt",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/attempt",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "row"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "mailbox",
+    "op": "heartbeat",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/heartbeat",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "adapter",
+            "dir",
+            "poll_ms",
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "mailbox",
+    "op": "register",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/register",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "boxes",
+            "cwd",
+            "harness",
+            "pid",
+            "session_id",
+            "team_file"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "mailbox",
+    "op": "unregister",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/mailbox/unregister",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "mailbox-acks",
+      "mailbox-attempts",
+      "mailbox-entries",
+      "registrations"
+    ]
+  },
+  {
+    "domain": "msgs",
+    "op": "archive",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/msgs/archive",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "files"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "msgs",
+    "op": "create",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/msgs/create",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "content",
+            "dir",
+            "path"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "msgs",
+    "op": "fill",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/msgs/fill",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "body",
+            "dir",
+            "from",
+            "id",
+            "path",
+            "req"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "msgs",
+    "op": "index",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/msgs/index",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "msgs",
+    "op": "list",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/msgs/list",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "msgs",
+    "op": "settle",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/msgs/settle",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "content",
+            "dir",
+            "from",
+            "path"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "peer-records",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/peer-records/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "rec"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "peer-pending"
+    ]
+  },
+  {
+    "domain": "peer-records",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/peer-records/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "peer-pending"
+    ]
+  },
+  {
+    "domain": "peers",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/peers/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "rec"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "peers"
+    ]
+  },
+  {
+    "domain": "peers",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/peers/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "peers"
+    ]
+  },
+  {
+    "domain": "session-pids",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/session-pids/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "pid",
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": []
+  },
+  {
+    "domain": "session-roles",
+    "op": "get",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/session-roles/get",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "session-roles"
+    ]
+  },
+  {
+    "domain": "session-roles",
+    "op": "set",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/session-roles/set",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "role",
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "session-roles"
+    ]
+  },
+  {
+    "domain": "status",
+    "op": "refresh",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/status/refresh",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "enabled",
+            "event"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "status"
+    ]
+  },
+  {
+    "domain": "team",
+    "op": "clear",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/team/clear",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "expect",
+            "path"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": "digest",
+    "stores_touched": [
+      "team",
+      "team-snapshots"
+    ]
+  },
+  {
+    "domain": "team",
+    "op": "history",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/team/history",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "alias",
+            "dir",
+            "fingerprint",
+            "members",
+            "roster_level",
+            "team_id",
+            "transport"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "team",
+      "team-snapshots"
+    ]
+  },
+  {
+    "domain": "team",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/team/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "team",
+      "team-snapshots"
+    ]
+  },
+  {
+    "domain": "team",
+    "op": "snapshot",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/team/snapshot",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "doc",
+            "team_name",
+            "ts"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "team",
+      "team-snapshots"
+    ]
+  },
+  {
+    "domain": "team",
+    "op": "write",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/team/write",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "dir",
+            "path",
+            "team"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": "digest",
+    "stores_touched": [
+      "team",
+      "team-snapshots"
+    ]
+  },
+  {
+    "domain": "ultra-gate",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/ultra-gate/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "ultra-gate"
+    ]
+  },
+  {
+    "domain": "ultra-gate",
+    "op": "write",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/ultra-gate/write",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "choice",
+            "cwd",
+            "session_id"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "ultra-gate"
+    ]
+  },
+  {
+    "domain": "usage",
+    "op": "append",
+    "method": "POST",
+    "kind": "write",
+    "path": "/v1/state/usage/append",
+    "body_schema": {
+      "type": "object",
+      "required": [
+        "args",
+        "op_id"
+      ],
+      "properties": {
+        "args": {
+          "type": "object",
+          "example_keys": [
+            "rec"
+          ]
+        },
+        "context": {
+          "type": "object"
+        },
+        "op_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "usage"
+    ]
+  },
+  {
+    "domain": "usage",
+    "op": "read",
+    "method": "GET",
+    "kind": "read",
+    "path": "/v1/state/usage/read",
+    "body_schema": {
+      "query": {
+        "args": "JSON object",
+        "context": "request context fields"
+      }
+    },
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {}
+      }
+    },
+    "daemon": true,
+    "precondition": null,
+    "stores_touched": [
+      "usage"
+    ]
+  }
+]

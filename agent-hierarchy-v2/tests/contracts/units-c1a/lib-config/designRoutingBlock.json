@@ -1,0 +1,573 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "designRoutingBlock",
+  "cases": [
+    {
+      "id": "no-alternatives",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "implement-and-review-alternatives",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "ui-implementor": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "ui",
+              "label": "UI Implementor",
+              "description": "Builds UI.",
+              "routes": "ui work"
+            },
+            "doc-reviewer": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "docrev",
+              "routes": "docs changes"
+            },
+            "broken-role": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "missing-agent"
+            },
+            "side-role": {
+              "model": "inherit",
+              "class": "legwork",
+              "agent": "side",
+              "description": ""
+            },
+            "spec-writer": {
+              "model": "sonnet",
+              "class": "design",
+              "agent": "spec",
+              "label": "Spec Writer",
+              "routes": "api specs"
+            },
+            "adviser": {
+              "model": "inherit",
+              "class": "advise",
+              "agent": "advise",
+              "label": "Adviser"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "ui-implementor": "default",
+            "doc-reviewer": "default",
+            "broken-role": "default",
+            "side-role": "default",
+            "spec-writer": "default",
+            "adviser": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n",
+        "repo/.claude/agents/spec.md": "---\nname: spec\ndescription: Designs specs for the team.\ntools: Read, SendMessage, Write\n---\nbody\n",
+        "repo/.claude/agents/advise.md": "---\nname: advise\ndescription: Advises on tradeoffs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/xrev.md": "---\nname: xrev\ndescription: An override reviewer.\ntools: Read, SendMessage\n---\nbody\n"
+      },
+      "expect": "ROUTING — when you write a spec, name its roles within its first 40 lines, each on its own line: `Implementer: <role>` and/or `Reviewer: <role>`. Choices:\n· Implement: `ui-implementor` for \"ui work\"; otherwise `implementor`.\n· Review: `doc-reviewer` for \"docs changes\"; otherwise `reviewer`."
+    },
+    {
+      "id": "implement-only",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "ui-implementor": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "ui",
+              "routes": "ui work"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "ui-implementor": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "ROUTING — when you write a spec, name its roles within its first 40 lines, each on its own line: `Implementer: <role>` and/or `Reviewer: <role>`. Choices:\n· Implement: `ui-implementor` for \"ui work\"; otherwise `implementor`."
+    },
+    {
+      "id": "review-only",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "doc-reviewer": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "docrev",
+              "routes": "docs changes"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "doc-reviewer": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "ROUTING — when you write a spec, name its roles within its first 40 lines, each on its own line: `Implementer: <role>` and/or `Reviewer: <role>`. Choices:\n· Review: `doc-reviewer` for \"docs changes\"; otherwise `reviewer`."
+    },
+    {
+      "id": "two-implement-alternatives-name-order",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "z-impl": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "z",
+              "routes": "z work"
+            },
+            "a-impl": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "a",
+              "routes": "a work"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "z-impl": "default",
+            "a-impl": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "ROUTING — when you write a spec, name its roles within its first 40 lines, each on its own line: `Implementer: <role>` and/or `Reviewer: <role>`. Choices:\n· Implement: `a-impl` for \"a work\"; `z-impl` for \"z work\"; otherwise `implementor`."
+    },
+    {
+      "id": "advise-and-design-alternatives-ignored",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "adv": {
+              "model": "inherit",
+              "class": "advise",
+              "agent": "a",
+              "routes": "advice"
+            },
+            "des": {
+              "model": "inherit",
+              "class": "design",
+              "agent": "d",
+              "routes": "designs"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "adv": "default",
+            "des": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "side-role-without-routes-ignored",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "side": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "s"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "side": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-routes-ignored",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "side": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "s",
+              "routes": ""
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "side": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "label-and-routes-text",
+      "args": [
+        {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "x-impl": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "x",
+              "label": "Ex Impl",
+              "routes": "quote \" and ` tick"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "task-runner": "default",
+            "x-impl": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "ROUTING — when you write a spec, name its roles within its first 40 lines, each on its own line: `Implementer: <role>` and/or `Reviewer: <role>`. Choices:\n· Implement: `x-impl` for \"quote \" and ` tick\"; otherwise `implementor`."
+    }
+  ]
+}

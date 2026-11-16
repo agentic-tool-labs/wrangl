@@ -1,0 +1,112 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "teamLayoutPreference",
+  "cases": [
+    {
+      "id": "none",
+      "args": [],
+      "files": {},
+      "expect": {
+        "layout": null,
+        "warnings": []
+      }
+    },
+    {
+      "id": "columns",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":\"columns\"}"
+      },
+      "expect": {
+        "layout": "columns",
+        "warnings": []
+      }
+    },
+    {
+      "id": "grid",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":\"grid\"}"
+      },
+      "expect": {
+        "layout": "grid",
+        "warnings": []
+      }
+    },
+    {
+      "id": "invalid",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":\"tiles\"}"
+      },
+      "expect": {
+        "layout": null,
+        "warnings": [
+          "ah: teamLayout \"tiles\" in $ROOT/home/.claude/agent-hierarchy.json is not a layout (allowed: auto, columns, grid) — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "null-value",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":null}"
+      },
+      "expect": {
+        "layout": null,
+        "warnings": [
+          "ah: teamLayout null in $ROOT/home/.claude/agent-hierarchy.json is not a layout (allowed: auto, columns, grid) — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "number-value",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":3}"
+      },
+      "expect": {
+        "layout": null,
+        "warnings": [
+          "ah: teamLayout 3 in $ROOT/home/.claude/agent-hierarchy.json is not a layout (allowed: auto, columns, grid) — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "not-object",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "[1]"
+      },
+      "expect": {
+        "layout": null,
+        "warnings": []
+      }
+    },
+    {
+      "id": "bad-json",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{nope"
+      },
+      "expect": {
+        "layout": null,
+        "warnings": []
+      }
+    },
+    {
+      "id": "repo-copy-ignored",
+      "args": [],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"teamLayout\":\"grid\"}"
+      },
+      "cwd": "repo",
+      "expect": {
+        "layout": null,
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "roleNameError",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "ui-implementor"
+      ],
+      "expect": null
+    },
+    {
+      "id": "upper",
+      "args": [
+        "Ui"
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "builtin",
+      "args": [
+        "architect"
+      ],
+      "expect": "name \"architect\" is reserved"
+    },
+    {
+      "id": "reserved",
+      "args": [
+        "advisor"
+      ],
+      "expect": "name \"advisor\" is reserved"
+    },
+    {
+      "id": "orchestrator",
+      "args": [
+        "orchestrator"
+      ],
+      "expect": "name \"orchestrator\" is reserved"
+    },
+    {
+      "id": "ordinal-suffix",
+      "args": [
+        "ui-2"
+      ],
+      "expect": "name must not end in - or -<digits> (that suffix is a peer instance ordinal)"
+    },
+    {
+      "id": "hyphen-end",
+      "args": [
+        "ui-"
+      ],
+      "expect": "name must not end in - or -<digits> (that suffix is a peer instance ordinal)"
+    },
+    {
+      "id": "digits-only-suffix",
+      "args": [
+        "a-12"
+      ],
+      "expect": "name must not end in - or -<digits> (that suffix is a peer instance ordinal)"
+    },
+    {
+      "id": "too-long",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+    },
+    {
+      "id": "other",
+      "args": [
+        "other"
+      ],
+      "expect": "name \"other\" is reserved"
+    }
+  ]
+}

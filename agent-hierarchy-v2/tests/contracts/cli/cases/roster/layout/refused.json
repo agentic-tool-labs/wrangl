@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "refused",
+  "about": "layout is accepted by the CLI and refused with its reason",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "layout",
+      "show"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: layout was removed: a team's layout is chosen when it is created — `roster.mjs create --mode <auto|columns|grid>`. An explicit --mode also becomes the default for future teams.\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a layout verb that silently does something",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:48.923Z"
+  }
+}

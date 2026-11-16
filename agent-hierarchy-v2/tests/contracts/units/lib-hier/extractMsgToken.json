@@ -1,0 +1,170 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "extractMsgToken",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "[hierarchy-msg /a/b/c.md]"
+      ],
+      "expect": "/a/b/c.md"
+    },
+    {
+      "id": "in-text",
+      "args": [
+        "please read [hierarchy-msg /a/b.md] and reply"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "extra-spaces",
+      "args": [
+        "[hierarchy-msg    /a/b.md   ]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "newline-after-name",
+      "args": [
+        "[hierarchy-msg\n/a/b.md]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "tab",
+      "args": [
+        "[hierarchy-msg\t/a/b.md]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "nbsp",
+      "args": [
+        "[hierarchy-msg /a/b.md]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "feff",
+      "args": [
+        "[hierarchy-msg﻿/a/b.md]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "ideographic-space",
+      "args": [
+        "[hierarchy-msg　/a/b.md]"
+      ],
+      "expect": "/a/b.md"
+    },
+    {
+      "id": "next-line-NEL-not-space",
+      "args": [
+        "[hierarchy-msg/a/b.md]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-space",
+      "args": [
+        "[hierarchy-msg/a/b.md]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "two-tokens-first-wins",
+      "args": [
+        "[hierarchy-msg /first.md] [hierarchy-msg /second.md]"
+      ],
+      "expect": "/first.md"
+    },
+    {
+      "id": "path-with-space",
+      "args": [
+        "[hierarchy-msg /a b.md]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "path-with-space-then-valid",
+      "args": [
+        "[hierarchy-msg /a b.md] [hierarchy-msg /c.md]"
+      ],
+      "expect": "/c.md"
+    },
+    {
+      "id": "empty-token",
+      "args": [
+        "[hierarchy-msg ]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unclosed",
+      "args": [
+        "[hierarchy-msg /a/b.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "wrong-name",
+      "args": [
+        "[hierarchy-message /a/b.md]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "uppercase-name",
+      "args": [
+        "[Hierarchy-Msg /a/b.md]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "unicode-path",
+      "args": [
+        "[hierarchy-msg /a/é/😀.md]"
+      ],
+      "expect": "/a/é/😀.md"
+    },
+    {
+      "id": "bracket-inside-not-allowed",
+      "args": [
+        "[hierarchy-msg /a]b.md]"
+      ],
+      "expect": "/a"
+    }
+  ]
+}

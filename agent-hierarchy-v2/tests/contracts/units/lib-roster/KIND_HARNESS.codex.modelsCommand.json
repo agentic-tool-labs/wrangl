@@ -1,0 +1,12 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.modelsCommand",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "codex debug models"
+    }
+  ]
+}

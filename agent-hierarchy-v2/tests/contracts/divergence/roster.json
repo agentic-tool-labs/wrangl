@@ -1,0 +1,155 @@
+{
+  "about": "Where the native roster teardown is intentionally stricter than the recorded Node oracle. Every row is a ruling from the destructive-path review, not an accident.",
+  "rows": [
+    {
+      "id": "R2-F1-appserver-pid-identity",
+      "where": "Ah.Launch Teardown.CloseOne, Ah.Cli LaunchComposition AppserverProcesses.Terminate",
+      "node": "stopAppserver signals the recorded appserver_pid with no sign or identity check, so a row holding -1 signals every process of the user, 0 the process group, and a reused pid an unrelated process",
+      "native": "only a whole number above 1 and at most 4194304 is ever passed to the signal; its command line must end with `app-server --listen unix://<the member's own socket>` or nothing is signalled, a `appserver pid not verified` warning is given, the result row carries appserver_unverified and the team row stays",
+      "test": "TeardownPasteTests.ARecordedPidThatIsNotAProcessIdIsNeverSignalledAndItsRowIsFlagged, TeardownPasteTests.ARecordedPidThatIsAStringIsNeverSignalled, TeardownPasteTests.AReusedPidThatIsNotTheAppserverIsNotSignalledAndWarnsThatItsRowStays, TeardownPasteTests.TheSmallestAndLargestAcceptedPidsAreAskedAbout, TeardownPasteTests.AReconcileKeepsTheRowOfAMemberWhoseAppserverWasNotVerified"
+    },
+    {
+      "id": "R2-F5-invoker-and-orchestrator-not-closed",
+      "where": "Ah.Commands TeardownSupport.IsInvokerOrOrchestrator and its use in disband, dismiss",
+      "node": "the live-peer list of a close can include the session running the command and the orchestrator, so a confirmed close ends the caller's own session",
+      "native": "the caller's session id, the caller's pane id and any record whose role is orchestrator are left out of every close list (team, no-team peers, single peer), named in a warning; dismiss of such a name is refused",
+      "test": "RosterTeamVerbTests.AMemberThatIsAnOrchestratorIsNeverOnACloseList"
+    },
+    {
+      "id": "R2-F4-close-requires-matching-pane-name",
+      "where": "Ah.Launch Teardown.ReuseConflict, Ah.Commands Resync.MatchMemberToPane",
+      "node": "the pre-close re-check passes when the pane's current name does not parse or is absent, and resync adopts a pane found by recorded id whatever it is named",
+      "native": "a member's pane is closed only when it is gone or its current name is the recorded one or another ordinal of the same prefix and role; an unparseable or absent name is refused and the pane stays; resync does not adopt a pane carrying another name",
+      "test": "TeardownPasteTests.AMemberIsNotClosedWhenItsPaneNowCarriesANameThatDoesNotParseOrNoName, TeardownPasteTests.AMemberIsClosedWhenItsPaneIsGoneOrStillCarriesItsOwnName"
+    },
+    {
+      "id": "R2-N1-tmux-kill-pane-bounded",
+      "where": "Ah.Launch Teardown.CloseMemberPane",
+      "node": "tmux kill-pane runs with no timeout",
+      "native": "tmux kill-pane is bounded at 10 seconds, as list-panes is",
+      "test": "TeardownPasteTests.ATmuxKillPaneIsBoundedAtTenSeconds"
+    },
+    {
+      "id": "R2-N2-duplicate-name-refused",
+      "where": "Ah.Commands DismissVerb, UntrackVerb",
+      "node": "a name that matches two rows closes or guards the first and then removes every row of that name",
+      "native": "a name that matches more than one row is refused and nothing changes",
+      "test": "RosterTeamVerbTests.ANameThatMatchesTwoRowsIsRefusedByDismissAndUntrackAndNothingChanges"
+    },
+    {
+      "id": "R2-N3-pane-id-shape",
+      "where": "Ah.Launch Teardown.CloseMemberPane, LaunchModule.IsHerdrPaneId and IsTmuxPaneId",
+      "node": "a pane id from a team file is passed to herdr pane close and tmux kill-pane -t as given",
+      "native": "a tmux target must be % and digits and a herdr id workspace:pN (an alphanumeric workspace, a colon, p and alphanumerics), or it is not passed on and the row reports it",
+      "test": "TeardownPasteTests.ATmuxTargetThatIsNotAPaneIdIsNeverPassedToTmux, TeardownPasteTests.AHerdrTargetThatIsNotAPaneIdIsNeverPassedToHerdr"
+    },
+    {
+      "id": "R2-S3-stream-ref-names",
+      "where": "Ah.Commands StreamVerbs.PlanWorktree",
+      "node": "--branch and --base are passed to git worktree add as given, so a value starting with - is read by git as an option",
+      "native": "a branch that starts with - or fails git check-ref-format --branch, or a base that starts with -, is refused as bad-ref and nothing is written",
+      "test": "RosterTeamVerbTests.StreamOpenRefusesABranchOrBaseGitCouldReadAsAnOption"
+    },
+    {
+      "id": "R2-S5-paste-lock-name",
+      "where": "Ah.Launch Paste, Ah.Commands DeliverVerb, LaunchModule.IsLockNamePart",
+      "node": "the paste lock file is named from the team id and member name as recorded, so a / or .. in either reaches outside the lock directory",
+      "native": "a team id or member name outside letters, digits, _, . and - or holding .. is refused (paste: bad_request; deliver: bad-name) before any lock file is made",
+      "test": "TeardownPasteTests.ATeamOrMemberNameThatCouldLeaveTheLockDirectoryIsRefusedBeforeAnyLockIsMade, RosterPaneVerbTests.DeliverToATeamWhoseIdCouldLeaveTheLockDirectoryTypesNothingAndMakesNoLock"
+    },
+    {
+      "id": "R2-N1-recorded-pane-shape",
+      "where": "Ah.Launch Paste.PlacementOf, Ah.Commands PaneMembers.TmuxCapture and AnswerVerb cancel",
+      "node": "a pane id read from a team file is used as the tmux -t target or as a herdr pane as recorded",
+      "native": "a tmux pane must be % and digits and a herdr pane workspace:pN (a tab id workspace:tN is not a pane), or the member has no addressable pane (deliver: not-sent, answer --cancel: cancel-unsupported) and no multiplexer call is made",
+      "test": "TeardownPasteTests.OnlyAPaneIdOfTheTransportsOwnShapeIsPasteable, RosterPaneVerbTests.DeliverToAMemberWhosePaneIdIsNotAPaneIdSendsNothing, RosterPaneVerbTests.AnswerCancelSendsNothingToAHerdrMemberWhosePaneIdIsNotAPaneId"
+    },
+    {
+      "id": "R3-S2-granting-answer-asks-the-user",
+      "where": "Ah.Hooks GrantingAnswer, RosterSkillGate (third rule) and AhCliGate, on `roster answer --choice <id>`",
+      "node": "the answer verb presses the keys of any table row, a granting one (a Yes or an Allow) included; the only guard is the skill's prose that a granting answer goes only on the user's pick, and the allow hook grants every such call prompt-free",
+      "native": "a `roster answer --choice` whose row grants, or that cannot be shown to name a non-granting row, is asked about on every call (the allow hook stays silent for it, as it does for a close and a trust commit) and is denied in a permission mode where the prompt is not known to reach the user; a non-granting row and `--cancel` stay prompt-free",
+      "test": "HooksHostTests.AGrantingAnswerIsAskedAboutAndIsNotAllowedWithoutAPrompt, HooksHostTests.ANonGrantingAnswerAndACancelAreNotAskedAboutAndStayPromptFree, HooksHostTests.AnAnswerThatCannotBeShownNotToGrantIsAskedAbout, HooksHostTests.AGrantingAnswerInAModeWhereThePromptIsNotKnownToReachTheUserIsDenied, HooksHostTests.AnAnswerChoiceInACommandTheGrammarCannotReadIsAskedAboutAndAnUnrelatedOneIsNot"
+    },
+    {
+      "id": "R3-S4-deliver-without-session-id-is-refused",
+      "where": "Ah.Commands DeliverVerb.MeshGate",
+      "node": "roster.mjs deliver applies no mesh send rule of its own",
+      "native": "a deliver that is not --wait-only and runs with no CLAUDE_CODE_SESSION_ID is refused (exit 2) before anything is sent, because the mesh send rule cannot be applied without the session's identity",
+      "test": "RosterPaneVerbTests.DeliverWithoutASessionIdIsRefusedBeforeAnythingIsSent"
+    },
+    {
+      "id": "TA-3-ahhome-untrusted-refused-outside-test-mode",
+      "where": "Ah.Platform AhHomeCheck / PlatformModule.CheckAhHome, enforced in Ah.Cli CliApp.Run (verbs) and HookVerb (hooks)",
+      "node": "any AH_HOME is honoured",
+      "native": "outside test mode an AH_HOME that is not the default home under the passwd entry's home and not listed in the default home's trusted-homes is refused: a verb exits 2 with the recovery text (daemon serve included, so it is not started), a gate denies, an advisory hook is silent with one hook-errors row; where, check, login, home and hook are exempt; an accepted home is its resolved real path",
+      "test": "AhHomeVerdictTests.AnotherHomeIsRefusedUntilTheUserTrustsItAndThenItIsAccepted, AhHomeGateTests.AVerbIsRefusedWithExitTwoWhenTheHomeIsUntrustedAndRunsOnceItIsTrusted, AhHomeGateTests.AGateIsDeniedAndAnAdvisoryHookIsSilentWithOneRowWhenTheHomeIsRefused"
+    },
+    {
+      "id": "TA-3-home-variable-not-honoured-outside-test-mode",
+      "where": "Ah.Platform SystemEnvironment.HomeDirectory and AhHomeCheck",
+      "node": "the home directory is $HOME",
+      "native": "outside test mode the home is the passwd entry's; HOME supplies neither the default state home nor the trust file, and a passwd entry that cannot be read refuses instead of falling back to HOME",
+      "test": "AhHomeVerdictTests.HomeNeverSuppliesTheDefaultHome, AhHomeVerdictTests.AFailingPasswdEntryRefusesAndDoesNotFallBackToHome, AhHomeGateTests.ATrustFileUnderAnInjectedHomeVariableIsNeverRead"
+    },
+    {
+      "id": "R5-live-team-gate-covers-every-template-write",
+      "where": "Ah.Commands RosterCli MutatesTemplate and RefuseRosterEditWhileOwningTeam (roster use, roster copy, roster delete, layout, alias)",
+      "node": "only init, add, edit and remove were refused while the session owns a live team; roster use, copy, delete, layout and alias ran",
+      "native": "every verb that writes the roster template is refused with exit 2 and 'edits the roster TEMPLATE, and this session owns live team <id>' while the session owns a live team (0044 section 1.3, applied deliberately; ruled by the Orchestrator on review 1s07)",
+      "test": "RosterTemplateVerbTests.EveryVerbThatWritesTheTemplateIsRefusedWhileTheSessionOwnsALiveTeam; tests/test-roster-select.sh S14"
+    },
+    {
+      "id": "I0-adopt-records-the-process-tied-session",
+      "where": "Ah.Commands AdoptVerb, OrchestratorSession.ProcessTied",
+      "node": "adopt re-stamps only orchestrator.pid and keeps whatever session_id the file already had, so a previous owner's session id stays on a team the adopter now owns",
+      "native": "adopt sets orchestrator.session_id to the session proven for the adopted pid (a bound daemon registration, or a session-pids row since the process started), and to null when none is proven, adding an `orchestrator session unknown` warning; a stated session id counts only when one of those proofs names it",
+      "reason": "the mesh gate accepts only a session-id match, and a pid alone confers nothing",
+      "rowsExercisingNode": [
+        "cli/roster/adopt/pid"
+      ]
+    }
+  ],
+  "doctor": [
+    {
+      "id": "R3-doctor-version-row-has-no-node",
+      "where": "Ah.Commands DoctorVerb, row `version`",
+      "node": "`ah <version> at <plugin root>, node <process.version>`",
+      "native": "`ah <version> at <plugin root>`: the CLI is a native binary and there is no node to name",
+      "rowsExercisingNode": [
+        "cli/roster/doctor/report"
+      ]
+    },
+    {
+      "id": "R3-doctor-hooks-syntax-is-compatibility",
+      "where": "Ah.Commands DoctorVerb, row `hooks-syntax`",
+      "node": "runs `node --check` on every hooks/*.mjs and reports `every hooks/*.mjs parses` or the files that fail",
+      "native": "the row keeps its label and its place in the report; there are no scripts to parse, so it says whether the running ahd matches the plugin manifest it was started with: `ahd <version> is compatible with the plugin at <root> (contract <n>)`, or a warn when no manifest was read",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "R3-doctor-runtime-dir-writable-bits",
+      "where": "Ah.Commands DoctorVerb, row `runtime-dir`",
+      "node": "`access(W_OK)` for the effective user",
+      "native": "any of the owner, group and other write bits of the directory's mode; the effective-uid check of access(2) is not available to the verb",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "TA-6-doctor-trust-file-rows",
+      "where": "Ah.Commands DoctorVerb, rows `trusted-homes` and `trusted-hierarchy-dirs`, after `marketplace`",
+      "node": "no such rows: Node has no trust files",
+      "native": "one row per trust file: absent, ignored whole with its reason, or its entries each trusted or ignored with the reason; warn when the file or an entry is ignored",
+      "rowsExercisingNode": [
+        "cli/roster/doctor/report"
+      ]
+    },
+    {
+      "id": "RL-doctor-rebuild-lock-row",
+      "where": "Ah.Commands DoctorVerb, row `rebuild-lock`, after the trust rows and before `roster-selection`",
+      "node": "no such row: the Node build has no rebuild lock",
+      "native": "present only when <home>/bin/.rebuild.lock exists: ok while it is under 10 minutes old, warn when it is older (or has no readable age), naming the file and `rm <file>`; never red, never written",
+      "reason": "without flock(1) the install script never takes over a stale lock, and a rebuild started from a hook cannot show its warning",
+      "rowsExercisingNode": []
+    }
+  ]
+}

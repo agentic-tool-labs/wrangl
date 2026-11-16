@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "status-down",
+  "about": "daemon status with no daemon reports it down",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "daemon",
+      "status",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"up\":false,\"registrations\":[],\"overdue\":0,\"load\":null}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a down daemon reported up",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.603Z"
+  }
+}

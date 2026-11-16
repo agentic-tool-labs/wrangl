@@ -1,0 +1,252 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "validateResponseToken",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": true,
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "fm": {
+          "id": "20260601-000001-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "s1",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null,
+          "created": "2026-06-01T11:01:00+00:00"
+        }
+      }
+    },
+    {
+      "id": "no-expectations",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": true,
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "fm": {
+          "id": "20260601-000001-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "s1",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null,
+          "created": "2026-06-01T11:01:00+00:00"
+        }
+      }
+    },
+    {
+      "id": "wrong-from",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "reviewer",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "wrong from: (file says architect, expected reviewer)"
+      }
+    },
+    {
+      "id": "wrong-id",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "20260601-000002-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "wrong id: (file says 20260601-000001-aaaa, expected 20260601-000002-aaaa)"
+      }
+    },
+    {
+      "id": "missing-token",
+      "args": [
+        "no token",
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "missing token"
+      }
+    },
+    {
+      "id": "path-missing",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000002-aaaa--orchestrator--s2--response.md]",
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "path not found ($ROOT/repo/.claude/hierarchy/msgs/20260601-000002-aaaa--orchestrator--s2--response.md)"
+      }
+    },
+    {
+      "id": "not-a-response",
+      "args": [
+        "[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md]",
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "not a response file"
+      }
+    },
+    {
+      "id": "outside-pool-unanchored",
+      "args": [
+        "[hierarchy-msg $ROOT/other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "file is outside this session's message pool ($ROOT/repo/.claude/hierarchy/msgs) — the pool follows the session cwd; if cwd moved into a worktree or another repo, the file is fine and the cwd is wrong"
+      }
+    },
+    {
+      "id": "outside-pool-beside-its-request",
+      "args": [
+        "[hierarchy-msg $ROOT/other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "20260601-000001-aaaa",
+        "$ROOT/other/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "other/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n"
+      },
+      "expect": {
+        "ok": true,
+        "path": "$ROOT/other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+        "fm": {
+          "id": "20260601-000001-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "s1",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null,
+          "created": "2026-06-01T11:01:00+00:00"
+        }
+      }
+    },
+    {
+      "id": "outside-pool-request-in-another-dir",
+      "args": [
+        "[hierarchy-msg $ROOT/other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "20260601-000001-aaaa",
+        "$ROOT/third/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "third/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "response is not in its request's directory ($ROOT/third/msgs) — file it with `msg.mjs fill --id 20260601-000001-aaaa --from <your role> --body-file -`, which places it beside the request"
+      }
+    },
+    {
+      "id": "request-path-relative-does-not-anchor",
+      "args": [
+        "[hierarchy-msg $ROOT/other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md]",
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "20260601-000001-aaaa",
+        "msgs/x--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n",
+        "other/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": {
+        "ok": false,
+        "why": "file is outside this session's message pool ($ROOT/repo/.claude/hierarchy/msgs) — the pool follows the session cwd; if cwd moved into a worktree or another repo, the file is fine and the cwd is wrong"
+      }
+    }
+  ]
+}

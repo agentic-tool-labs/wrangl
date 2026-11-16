@@ -1,0 +1,12 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "RESUME_PARAGRAPH",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "Continue the interrupted task. First re-check state: re-read any file you were changing, and for anything with side effects (push, merge, send, close, delete) confirm whether it already happened before doing it again. If you were mid-report, finish and send the report."
+    }
+  ]
+}

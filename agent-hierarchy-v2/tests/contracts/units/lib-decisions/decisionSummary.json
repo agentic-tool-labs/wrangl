@@ -1,0 +1,442 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "decisionSummary",
+  "cases": [
+    {
+      "id": "empty",
+      "args": [
+        [],
+        0
+      ],
+      "expect": {
+        "decided": 0,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {},
+        "skipped": 0,
+        "line": "decisions: 0 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "counts-by-kind",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a"
+          },
+          {
+            "kind": "decided",
+            "item": "a"
+          },
+          {
+            "kind": "parked",
+            "item": "a"
+          },
+          {
+            "kind": "decided",
+            "item": "b"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 3,
+        "flagged": 0,
+        "parked": 1,
+        "by_item": {
+          "a": {
+            "decided": 2,
+            "parked": 1
+          },
+          "b": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 3 decided (0 flagged), 1 waiting for you"
+      }
+    },
+    {
+      "id": "flagged-needs-review-true",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a",
+            "review": true
+          },
+          {
+            "kind": "decided",
+            "item": "a",
+            "review": "true"
+          },
+          {
+            "kind": "decided",
+            "item": "a",
+            "review": false
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 3,
+        "flagged": 1,
+        "parked": 0,
+        "by_item": {
+          "a": {
+            "decided": 3,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 3 decided (1 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "parked-review-is-not-flagged",
+      "args": [
+        [
+          {
+            "kind": "parked",
+            "item": "a",
+            "review": true
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 0,
+        "flagged": 0,
+        "parked": 1,
+        "by_item": {
+          "a": {
+            "decided": 0,
+            "parked": 1
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 0 decided (0 flagged), 1 waiting for you"
+      }
+    },
+    {
+      "id": "other-kinds-ignored",
+      "args": [
+        [
+          {
+            "kind": "merge",
+            "item": "a"
+          },
+          {
+            "item": "a"
+          },
+          {
+            "kind": "note",
+            "item": "a"
+          },
+          {
+            "kind": "decided",
+            "item": "a"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "a": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 1 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "skipped-passed-through",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a"
+          }
+        ],
+        3
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "a": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 3,
+        "line": "decisions: 1 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "skipped-undefined-omitted",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a"
+          }
+        ],
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "a": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "line": "decisions: 1 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "skipped-null",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a"
+          }
+        ],
+        null
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "a": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": null,
+        "line": "decisions: 1 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "item-undefined-keys-as-undefined",
+      "args": [
+        [
+          {
+            "kind": "decided"
+          },
+          {
+            "kind": "parked"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 1,
+        "by_item": {
+          "undefined": {
+            "decided": 1,
+            "parked": 1
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 1 decided (0 flagged), 1 waiting for you"
+      }
+    },
+    {
+      "id": "item-null-keys-as-null",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": null
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "null": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 1 decided (0 flagged), 0 waiting for you"
+      }
+    },
+    {
+      "id": "numeric-item-keys-as-text",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": 5
+          },
+          {
+            "kind": "parked",
+            "item": "5"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 0,
+        "parked": 1,
+        "by_item": {
+          "5": {
+            "decided": 1,
+            "parked": 1
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 1 decided (0 flagged), 1 waiting for you"
+      }
+    },
+    {
+      "id": "item-order-first-seen",
+      "args": [
+        [
+          {
+            "kind": "parked",
+            "item": "z"
+          },
+          {
+            "kind": "decided",
+            "item": "a"
+          },
+          {
+            "kind": "decided",
+            "item": "z"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 2,
+        "flagged": 0,
+        "parked": 1,
+        "by_item": {
+          "z": {
+            "decided": 1,
+            "parked": 1
+          },
+          "a": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 2 decided (0 flagged), 1 waiting for you"
+      }
+    },
+    {
+      "id": "line-text",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "a",
+            "review": true
+          },
+          {
+            "kind": "parked",
+            "item": "b"
+          },
+          {
+            "kind": "parked",
+            "item": "b"
+          }
+        ],
+        1
+      ],
+      "expect": {
+        "decided": 1,
+        "flagged": 1,
+        "parked": 2,
+        "by_item": {
+          "a": {
+            "decided": 1,
+            "parked": 0
+          },
+          "b": {
+            "decided": 0,
+            "parked": 2
+          }
+        },
+        "skipped": 1,
+        "line": "decisions: 1 decided (1 flagged), 2 waiting for you"
+      }
+    },
+    {
+      "id": "numeric-looking-items-sort-like-js-keys",
+      "args": [
+        [
+          {
+            "kind": "decided",
+            "item": "10"
+          },
+          {
+            "kind": "decided",
+            "item": "9"
+          },
+          {
+            "kind": "decided",
+            "item": "b"
+          },
+          {
+            "kind": "decided",
+            "item": "1"
+          }
+        ],
+        0
+      ],
+      "expect": {
+        "decided": 4,
+        "flagged": 0,
+        "parked": 0,
+        "by_item": {
+          "1": {
+            "decided": 1,
+            "parked": 0
+          },
+          "9": {
+            "decided": 1,
+            "parked": 0
+          },
+          "10": {
+            "decided": 1,
+            "parked": 0
+          },
+          "b": {
+            "decided": 1,
+            "parked": 0
+          }
+        },
+        "skipped": 0,
+        "line": "decisions: 4 decided (0 flagged), 0 waiting for you"
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "kind": "state-op",
+  "id": "append",
+  "about": "append writes one peer row with ts and op_id",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "peers",
+    "op": "append",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "rec": {
+          "status": "up",
+          "name": "tm-architect",
+          "role": "architect",
+          "session_id": "sess-1",
+          "cwd": "<ROOT:proj>"
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-peers-append"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "appended": true
+      }
+    },
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.roster_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"peer\",\"status\":\"up\",\"name\":\"tm-architect\",\"role\":\"architect\",\"session_id\":\"sess-1\",\"cwd\":\"<ROOT:proj>\",\"op_id\":\"op-peers-append\",\"ts\":\"<ISO:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a row without op_id",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T22:16:09.855Z"
+  }
+}

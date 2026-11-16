@@ -1,0 +1,221 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "append",
+  "cases": [
+    {
+      "id": "peers-row",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "name": "a",
+            "status": "up",
+            "role": "architect"
+          }
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"status\":\"up\",\"role\":\"architect\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "peers-row-with-op-id",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "name": "a",
+            "status": "up",
+            "role": "architect"
+          }
+        },
+        null,
+        {
+          "domain": "peers",
+          "opId": "op-1"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"status\":\"up\",\"role\":\"architect\",\"op_id\":\"op-1\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "peers-rec-type-overridden-in-place",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "type": "other",
+            "name": "a"
+          }
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"other\",\"name\":\"a\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "peers-rec-ts-overridden",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "name": "a",
+            "ts": "old"
+          }
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "gates-row",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "type": "route",
+            "value": "peers"
+          }
+        },
+        null,
+        {
+          "domain": "gates"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\",\"value\":\"peers\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "gates-row-with-op-id",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "type": "route",
+            "value": "peers"
+          }
+        },
+        null,
+        {
+          "domain": "gates",
+          "opId": "op-2"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\",\"value\":\"peers\",\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":\"op-2\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "gates-rec-ts-overridden-after-rec",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "ts": "old",
+            "type": "x"
+          }
+        },
+        null,
+        {
+          "domain": "gates"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"x\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "id": "appends-after-existing-rows",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {
+            "name": "a",
+            "status": "up",
+            "role": "architect"
+          }
+        },
+        null,
+        {
+          "domain": "peers"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"z\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"z\"}\n{\"type\":\"peer\",\"name\":\"a\",\"status\":\"up\",\"role\":\"architect\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    }
+  ]
+}

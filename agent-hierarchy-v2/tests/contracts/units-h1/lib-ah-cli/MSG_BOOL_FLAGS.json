@@ -1,0 +1,20 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "MSG_BOOL_FLAGS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "plain",
+        "json",
+        "open",
+        "closed",
+        "all",
+        "summary",
+        "overdue"
+      ]
+    }
+  ]
+}

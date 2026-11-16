@@ -1,0 +1,7 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/git.log"
+case "$*" in
+
+  *) exit 1;;
+esac

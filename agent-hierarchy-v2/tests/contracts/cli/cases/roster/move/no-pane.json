@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "no-pane",
+  "about": "move names a tracked member that has no pane and moves nothing",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "move",
+      "tm-implementor",
+      "--tab",
+      "t1",
+      "--dry-run"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: move: member tm-implementor has no pane to move\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a member with no pane reported as moved",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.150Z"
+  }
+}

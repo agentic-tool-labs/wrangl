@@ -1,0 +1,48 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "read",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        {}
+      ],
+      "expect": {
+        "version": 1,
+        "sessions": {}
+      }
+    },
+    {
+      "id": "present",
+      "args": [
+        {}
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"t\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "version": 1,
+        "sessions": {
+          "s1": {
+            "choice": "each",
+            "at": "t"
+          }
+        }
+      }
+    },
+    {
+      "id": "newer",
+      "args": [
+        {}
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 2,\n  \"sessions\": {\n    \"s1\": {}\n  }\n}\n"
+      },
+      "expect": {
+        "version": 1,
+        "sessions": {}
+      }
+    }
+  ]
+}

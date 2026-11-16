@@ -1,0 +1,44 @@
+{
+  "about": "Recorded Node cases whose answer the flag-day cutover changes on purpose (0114 \u00a75.1). Each row names the cases; a case listed here that fails is counted as diverged, not as a failure.",
+  "rows": [
+    {
+      "id": "DV-Z1",
+      "where": "hook pretooluse-ah-cli, Node-form commands",
+      "node": "a Bash command `node <root>/hooks/<roster|msg|ahd-ctl>.mjs \u2026` is recognised as the plugin's own CLI and judged",
+      "native": "the script does not exist after the cutover, so the Node form is not the plugin's CLI and the hook stays silent; the `<root>/bin/ah \u2026` form of every one of these commands gives the recorded verdict (0110 Z-22)",
+      "reason": "0110 SR-N3: the Node form may be dropped at the cutover commit; 0114 \u00a75",
+      "rowsExercisingNode": [
+        "hook/pretooluse-ah-cli/h1-ahd-status",
+        "hook/pretooluse-ah-cli/h1-deliver-as-orchestrator-sessionless",
+        "hook/pretooluse-ah-cli/h1-deliver-no-req",
+        "hook/pretooluse-ah-cli/h1-deliver-subagent",
+        "hook/pretooluse-ah-cli/h1-deliver-wait-only",
+        "hook/pretooluse-ah-cli/h1-deliver",
+        "hook/pretooluse-ah-cli/h1-dismiss-plan",
+        "hook/pretooluse-ah-cli/h1-fill-as-architect",
+        "hook/pretooluse-ah-cli/h1-fill-no-from",
+        "hook/pretooluse-ah-cli/h1-fill-persisted-only",
+        "hook/pretooluse-ah-cli/h1-fill",
+        "hook/pretooluse-ah-cli/h1-msg-list",
+        "hook/pretooluse-ah-cli/h1-role-show",
+        "hook/pretooluse-ah-cli/h1-roster-no-verb",
+        "hook/pretooluse-ah-cli/h1-roster-show",
+        "hook/pretooluse-ah-cli/h1-single-quoted-json",
+        "hook/pretooluse-ah-cli/h1-trust-set-dry",
+        "hook/pretooluse-ah-cli/msg-cli"
+      ]
+    },
+    {
+      "id": "DV-Z2",
+      "where": "ahd state, the writer verb",
+      "node": "`ahd state writer [--set|--check|--follow|--plain]` reads or sets the writer stamp; `ahd state` with no domain says `state needs writer or a state domain and operation`",
+      "native": "the verb and the stamp are deleted: `ahd state writer \u2026` is an ordinary unknown-domain usage error, and `ahd state` alone prints the one-shot verb's usage",
+      "reason": "0114 \u00a73.1: the writer stamp and `ahd state writer` are deleted",
+      "rowsExercisingNode": [
+        "cli/ahd-ctl/state/no-domain",
+        "cli/ahd-ctl/state/writer-bad-set",
+        "cli/ahd-ctl/state/writer-read"
+      ]
+    }
+  ]
+}

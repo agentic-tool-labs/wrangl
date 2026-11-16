@@ -1,0 +1,91 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isValidTeamAlias",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "alpha"
+      ],
+      "expect": true
+    },
+    {
+      "id": "role-collision",
+      "args": [
+        "architect"
+      ],
+      "expect": false
+    },
+    {
+      "id": "advisor-ok",
+      "args": [
+        "advisor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "too-long",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "max",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": true
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "a_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-hyphen",
+      "args": [
+        "-a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "digit-first",
+      "args": [
+        "1a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "token-inside",
+      "args": [
+        "my-implementor-x"
+      ],
+      "expect": false
+    }
+  ]
+}

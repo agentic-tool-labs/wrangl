@@ -1,0 +1,417 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "resolveRoster",
+  "cases": [
+    {
+      "id": "repo-level",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect"
+          },
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "naming-prefix",
+      "args": [
+        "$ROOT/repo",
+        null,
+        "alpha",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "alpha-architect"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "named-key",
+      "args": [
+        "$ROOT/repo",
+        "squad",
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]},\"rosters\":{\"squad\":{\"route\":\"pane\",\"members\":[{\"role\":\"architect\"}]}}}"
+      },
+      "expect": {
+        "level": "repo",
+        "route": "pane",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": "squad"
+      }
+    },
+    {
+      "id": "named-key-missing-falls-to-default",
+      "args": [
+        "$ROOT/repo",
+        "gone",
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "named-key-empty-members-falls-through",
+      "args": [
+        "$ROOT/repo",
+        "squad",
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]},\"rosters\":{\"squad\":{\"members\":[]}}}"
+      },
+      "expect": {
+        "level": "repo",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-members",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[]}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "repo-user-wins",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}",
+        "home/.claude/agent-hierarchy/projects/$ROOTSLUG-repo/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "expect": {
+        "level": "repo-user",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect"
+          }
+        ],
+        "path": "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-repo/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "global-fallback",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\"}]}}"
+      },
+      "expect": {
+        "level": "global",
+        "members": [
+          {
+            "role": "implementor",
+            "kind": "claude",
+            "name": "repo-implementor"
+          }
+        ],
+        "path": "$ROOT/home/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "repo-over-global",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "worktree-main-fallback",
+      "args": [
+        "$ROOT/wt",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "wt-reviewer"
+          }
+        ],
+        "path": "$ROOT/main/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "non-object-members-dropped",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[null,{\"role\":\"architect\"},5,{\"role\":\"architect\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect"
+          },
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect-2"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "stale-subagent-route",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"subagent\",\"members\":[{\"role\":\"architect\"},{\"role\":\"task-runner\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "route": "peer",
+        "members": [
+          {
+            "role": "architect",
+            "kind": "claude",
+            "name": "repo-architect"
+          },
+          {
+            "role": "task-runner",
+            "route": "subagent",
+            "kind": "claude",
+            "name": "repo-task-runner"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "registry-custom",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        {
+          "roles": {
+            "ui": {
+              "class": "implement"
+            }
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"ui\",\"route\":\"subagent\"}]}}"
+      },
+      "expect": {
+        "level": "repo",
+        "route": "peer",
+        "members": [
+          {
+            "role": "ui",
+            "kind": "claude",
+            "name": "repo-ui"
+          }
+        ],
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "bad-json-skipped",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{nope",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}"
+      },
+      "expect": {
+        "level": "global",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/home/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    },
+    {
+      "id": "array-root-skipped",
+      "args": [
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "[1]",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"reviewer\"}]}}"
+      },
+      "expect": {
+        "level": "global",
+        "members": [
+          {
+            "role": "reviewer",
+            "kind": "claude",
+            "name": "repo-reviewer"
+          }
+        ],
+        "path": "$ROOT/home/.claude/agent-hierarchy.json",
+        "teamKey": null
+      }
+    }
+  ]
+}

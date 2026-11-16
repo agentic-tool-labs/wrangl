@@ -1,0 +1,135 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "defaultTeamScope",
+  "cases": [
+    {
+      "id": "no-legacy-valid-prefix",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "myrepo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "team": "myrepo",
+        "defaulted": true
+      }
+    },
+    {
+      "id": "legacy-usable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "myrepo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true
+      }
+    },
+    {
+      "id": "legacy-unusable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "myrepo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{x"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unreadable": "$ROOT/repo/.claude/hierarchy/team.json"
+      }
+    },
+    {
+      "id": "unnamable-prefix-no-legacy",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "My Repo!"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unnamable": "My Repo!",
+        "suggested": "My-Repo"
+      }
+    },
+    {
+      "id": "unnamable-prefix-legacy-usable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "My Repo!"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unnamable": "My Repo!",
+        "suggested": "My-Repo"
+      }
+    },
+    {
+      "id": "unnamable-prefix-legacy-unusable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "My Repo!"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{x"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unnamable": "My Repo!",
+        "suggested": "My-Repo",
+        "unreadable": "$ROOT/repo/.claude/hierarchy/team.json"
+      }
+    },
+    {
+      "id": "prefix-too-long",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unnamable": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "suggested": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "prefix-reserved-token",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "team": null,
+        "defaulted": true,
+        "unnamable": "architect",
+        "suggested": "team"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "kind": "wire",
+  "id": "due-in-not-json",
+  "about": "an `in` that is not JSON is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "in": "{nope"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/due"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "in must be JSON"
+      }
+    }
+  },
+  "mutant": "unparseable input accepted",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T17:17:15.000Z",
+    "note": "native-only route (divergence/routes.json N5-mod-mail-push): no Node recording exists"
+  }
+}

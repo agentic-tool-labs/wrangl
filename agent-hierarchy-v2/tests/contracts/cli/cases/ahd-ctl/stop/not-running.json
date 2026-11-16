@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "not-running",
+  "about": "stop with no daemon reports not-running",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "stop"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"source\":\"files\",\"status\":\"not-running\"}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a stop that errors on a missing daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.960Z"
+  }
+}

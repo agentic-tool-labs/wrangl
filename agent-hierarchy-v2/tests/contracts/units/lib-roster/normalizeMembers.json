@@ -1,0 +1,410 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "normalizeMembers",
+  "cases": [
+    {
+      "id": "sorted-by-role",
+      "args": [
+        [
+          {
+            "role": "reviewer"
+          },
+          {
+            "role": "architect"
+          },
+          {
+            "role": "implementor"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect"
+        },
+        {
+          "role": "implementor"
+        },
+        {
+          "role": "reviewer"
+        }
+      ]
+    },
+    {
+      "id": "strips-runtime-fields",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "name": "x",
+            "transport_id": "%1",
+            "model": "opus",
+            "effort": "high",
+            "route": "peer",
+            "ref": "r"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "model": "opus",
+          "effort": "high",
+          "route": "peer"
+        }
+      ]
+    },
+    {
+      "id": "keeps-adapter",
+      "args": [
+        [
+          {
+            "role": "implementor",
+            "kind": "codex",
+            "route": "pane",
+            "adapter": "appserver"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "implementor",
+          "route": "pane",
+          "adapter": "appserver",
+          "kind": "codex"
+        }
+      ]
+    },
+    {
+      "id": "claude-kind-not-persisted",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "kind": "claude"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect"
+        }
+      ]
+    },
+    {
+      "id": "null-kind-not-persisted",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "kind": null
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect"
+        }
+      ]
+    },
+    {
+      "id": "other-kind-persisted",
+      "args": [
+        [
+          {
+            "role": "implementor",
+            "kind": "codex",
+            "route": "pane"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "implementor",
+          "route": "pane",
+          "kind": "codex"
+        }
+      ]
+    },
+    {
+      "id": "args-copied",
+      "args": [
+        [
+          {
+            "role": "implementor",
+            "kind": "codex",
+            "args": [
+              "--search"
+            ]
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "args": [
+            "--search"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "empty-args-dropped",
+      "args": [
+        [
+          {
+            "role": "implementor",
+            "args": []
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "implementor"
+        }
+      ]
+    },
+    {
+      "id": "auto-mode-snake",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "auto_mode": "plan"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "auto_mode": "plan"
+        }
+      ]
+    },
+    {
+      "id": "auto-mode-camel",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "autoMode": "auto"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "auto_mode": "auto"
+        }
+      ]
+    },
+    {
+      "id": "snake-wins-over-camel",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "auto_mode": "plan",
+            "autoMode": "auto"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "auto_mode": "plan"
+        }
+      ]
+    },
+    {
+      "id": "null-snake-hides-camel",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "auto_mode": null,
+            "autoMode": "auto"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect"
+        }
+      ]
+    },
+    {
+      "id": "null-fields-dropped",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "model": null,
+            "effort": null
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect"
+        }
+      ]
+    },
+    {
+      "id": "stable-for-equal-roles",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "model": "a"
+          },
+          {
+            "role": "architect",
+            "model": "b"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "model": "a"
+        },
+        {
+          "role": "architect",
+          "model": "b"
+        }
+      ]
+    },
+    {
+      "id": "case-folded-sort-then-ordinal",
+      "args": [
+        [
+          {
+            "role": "b"
+          },
+          {
+            "role": "A"
+          },
+          {
+            "role": "a"
+          },
+          {
+            "role": "B"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "A"
+        },
+        {
+          "role": "a"
+        },
+        {
+          "role": "B"
+        },
+        {
+          "role": "b"
+        }
+      ]
+    },
+    {
+      "id": "not-an-array",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "null-and-non-object-rows",
+      "args": [
+        [
+          null,
+          5,
+          "x",
+          {
+            "role": "architect"
+          }
+        ]
+      ],
+      "expect": [
+        {},
+        {},
+        {},
+        {
+          "role": "architect"
+        }
+      ]
+    },
+    {
+      "id": "missing-role-sorts-first",
+      "args": [
+        [
+          {
+            "role": "reviewer"
+          },
+          {
+            "model": "opus"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "model": "opus"
+        },
+        {
+          "role": "reviewer"
+        }
+      ]
+    },
+    {
+      "id": "numeric-role-sorted-as-string",
+      "args": [
+        [
+          {
+            "role": "b"
+          },
+          {
+            "role": 10
+          },
+          {
+            "role": 9
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": 10
+        },
+        {
+          "role": 9
+        },
+        {
+          "role": "b"
+        }
+      ]
+    },
+    {
+      "id": "on-missing-never-copied",
+      "args": [
+        [
+          {
+            "role": "implementor",
+            "model": "sonnet",
+            "onMissing": "auto",
+            "on_missing": "never"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "role": "implementor",
+          "model": "sonnet"
+        }
+      ]
+    }
+  ]
+}

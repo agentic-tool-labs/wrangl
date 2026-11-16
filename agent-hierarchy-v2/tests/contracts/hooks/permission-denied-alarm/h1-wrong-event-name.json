@@ -1,0 +1,39 @@
+{
+  "kind": "hook",
+  "id": "h1-wrong-event-name",
+  "about": "only a PermissionDenied event is handled",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "permission-denied-alarm",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "tool_name": "Bash",
+      "tool_input": { "command": "git cherry-pick abc" },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "event name unchecked",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "native",
+    "note": "the hook has no Node counterpart; recorded from the native implementation",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-21T12:00:00.000Z"
+  }
+}

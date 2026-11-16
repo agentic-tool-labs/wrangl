@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "help",
+  "about": "--help prints the usage text, not JSON",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--help"
+    ],
+    "stdin": null
+  },
+  "mutant": "the usage text drifted",
+  "expect": {
+    "stdout": "usage: node issue-intake.mjs --cwd <abs> --out-dir <abs> (--issues <ref,ref,...> | --labelled)\n  <ref>       N, #N or https://github.com/<o>/<r>/issues/N; given order kept, duplicates dropped\n  --labelled  every open issue carrying issues.trigger_label, in ascending number\nPrints one JSON object {repo, trigger_label, trusted_actors, items}, exit 0;\na run-level failure prints {\"error\": \"<code>: <detail>\"}, exit 1.\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:29.287Z"
+  }
+}

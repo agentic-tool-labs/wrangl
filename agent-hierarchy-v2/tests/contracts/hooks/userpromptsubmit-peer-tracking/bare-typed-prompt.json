@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "bare-typed-prompt",
+  "about": "a plain session hears nothing on a prompt, even one that mentions standing up a team",
+  "tree": "hook-configured-bare",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "userpromptsubmit-peer-tracking",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "please spin up the team"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a bare session told about ah2 on a prompt",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-11-02T00:00:00.000Z",
+    "note": "opt-in behaviour: recorded from the native binary, no Node recording exists"
+  }
+}

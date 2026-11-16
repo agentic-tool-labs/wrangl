@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "h4-stop-after-stopped-nothing",
+  "about": "a second stop over a stopped record writes nothing",
+  "tree": "hook-owes-one-stopped",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "SubagentStop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "agent_id": "a-1",
+      "agent_type": "general-purpose"
+    }
+  },
+  "mutant": "stop rewritten",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:41.204Z"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "KIND_RE",
+  "cases": [
+    {
+      "id": "claude",
+      "args": [
+        "claude"
+      ],
+      "expect": true
+    },
+    {
+      "id": "with-digit",
+      "args": [
+        "k2"
+      ],
+      "expect": true
+    },
+    {
+      "id": "hyphen",
+      "args": [
+        "a-b-"
+      ],
+      "expect": true
+    },
+    {
+      "id": "upper",
+      "args": [
+        "Claude"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-digit",
+      "args": [
+        "2k"
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "a_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "claude\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": true
+    },
+    {
+      "id": "space",
+      "args": [
+        "a b"
+      ],
+      "expect": false
+    }
+  ]
+}

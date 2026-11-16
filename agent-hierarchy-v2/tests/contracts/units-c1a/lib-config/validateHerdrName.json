@@ -1,0 +1,114 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "validateHerdrName",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "bob-1"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "a_b"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "32",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "33",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "derived name \"abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\" (33 chars) does not match Herdr's agent-name rule [a-z][a-z0-9_-]{0,31} (max 32 characters) — create the team with a shorter `--team <name>`, or use a shorter role or --member name"
+      }
+    },
+    {
+      "id": "upper",
+      "args": [
+        "Bob"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "derived name \"Bob\" (3 chars) does not match Herdr's agent-name rule [a-z][a-z0-9_-]{0,31} (max 32 characters) — create the team with a shorter `--team <name>`, or use a shorter role or --member name"
+      }
+    },
+    {
+      "id": "digit-first",
+      "args": [
+        "1b"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "derived name \"1b\" (2 chars) does not match Herdr's agent-name rule [a-z][a-z0-9_-]{0,31} (max 32 characters) — create the team with a shorter `--team <name>`, or use a shorter role or --member name"
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": {
+        "ok": false,
+        "why": "name must be a non-empty string"
+      }
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": {
+        "ok": false,
+        "why": "name must be a non-empty string"
+      }
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": {
+        "ok": false,
+        "why": "name must be a non-empty string"
+      }
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "ab\n"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "derived name \"ab\\n\" (3 chars) does not match Herdr's agent-name rule [a-z][a-z0-9_-]{0,31} (max 32 characters) — create the team with a shorter `--team <name>`, or use a shorter role or --member name"
+      }
+    },
+    {
+      "id": "quote-in-name",
+      "args": [
+        "a\"b"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "derived name \"a\\\"b\" (3 chars) does not match Herdr's agent-name rule [a-z][a-z0-9_-]{0,31} (max 32 characters) — create the team with a shorter `--team <name>`, or use a shorter role or --member name"
+      }
+    }
+  ]
+}

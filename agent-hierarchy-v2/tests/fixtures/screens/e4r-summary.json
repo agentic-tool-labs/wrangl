@@ -1,0 +1,116 @@
+{
+  "kinds": {
+    "claude-agent": {
+      "states": [
+        {
+          "state": "0",
+          "name": "trust",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude-agent/tmux-0-trust.txt",
+          "sha256": "c50a241e1e2b17cf33c34ff05c7bffbd41f8035451ee4b3a6babecb2ceb7b017"
+        },
+        {
+          "state": "1",
+          "name": "empty-composer",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude-agent/tmux-1-empty-composer.txt",
+          "sha256": "2db950c7f0e0d8c03291ef87063c92c3eae83366520bced0361b96136d9c4d6d"
+        },
+        {
+          "state": "2",
+          "name": "draft",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude-agent/tmux-2-draft.txt",
+          "sha256": "0d4c968e8c83371e1ada76efb9cf83ad35f081b556d398544d19d615152d095b"
+        },
+        {
+          "state": "3",
+          "name": "mid-turn",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude-agent/tmux-3-mid-turn.txt",
+          "sha256": "f102ea51473ee177386f4d04382dbc1b8d84ced169f927d482b065eb5aa9a379"
+        },
+        {
+          "state": "4",
+          "name": "permission",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude-agent/tmux-4-permission.txt",
+          "sha256": "62d99ff74d7bc9cfa3a2718317436ec9c818abd3b9a892cc23d9b30099244ffc"
+        },
+        {
+          "state": "5",
+          "name": "picker",
+          "status": "n/a",
+          "fixture": "",
+          "sha256": ""
+        }
+      ],
+      "all_reached": true,
+      "pairwise_distinct": true
+    },
+    "claude": {
+      "states": [
+        {
+          "state": "0",
+          "name": "trust",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-0-trust.txt",
+          "sha256": "b68b15290a56cbe161c3862959f5c8d36e8b8144184338d46d3c3271ad2970d6"
+        },
+        {
+          "state": "1",
+          "name": "empty-composer",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-1-empty-composer.txt",
+          "sha256": "8f1cf30dbcc5e3a5744e6a897863c7c7f51e7d96dbd041cbae0e48e8e6777d55"
+        },
+        {
+          "state": "2",
+          "name": "draft",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-2-draft.txt",
+          "sha256": "3c4b157c74297ea69513e76bade1b1dea6ab94ae02a64fb119a8a13ad4754b57"
+        },
+        {
+          "state": "3",
+          "name": "mid-turn",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-3-mid-turn.txt",
+          "sha256": "94f35976a691e4099349ddad4c91ae4187b5e36677e7c89d8e359044515ef5b7"
+        },
+        {
+          "state": "4",
+          "name": "permission",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-4-permission.txt",
+          "sha256": "33a6468a1750a99c1c387d419adae98f31f5e40404f77719fb1852b2a02a8b8f"
+        },
+        {
+          "state": "4c",
+          "name": "countdown",
+          "status": "unreached",
+          "fixture": "tests/fixtures/screens/claude/tmux-4c-countdown.unreached.txt",
+          "sha256": "72f15f74d896cf4ac85ac281f86e645e6604baf80b5681b04870511964fb793f"
+        },
+        {
+          "state": "5",
+          "name": "picker",
+          "status": "reached",
+          "fixture": "tests/fixtures/screens/claude/tmux-5-picker.txt",
+          "sha256": "4da3dab0d2a5c12267ffb2488f2f5b2477a855c7215b545e0bab2f294f9d9d30"
+        }
+      ],
+      "all_reached": false,
+      "pairwise_distinct": true
+    },
+    "codex": {
+      "status": "not-run",
+      "reason": "auth-undecided"
+    }
+  },
+  "versions": {
+    "claude": "2.1.294 (Claude Code)",
+    "tmux": "tmux 3.7b",
+    "codex": "not-run: auth-undecided"
+  }
+}

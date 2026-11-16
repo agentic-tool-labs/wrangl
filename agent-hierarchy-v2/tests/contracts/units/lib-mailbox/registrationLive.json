@@ -1,0 +1,565 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "registrationLive",
+  "cases": [
+    {
+      "id": "pid-self-alive",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": {
+            "$selfpid": 1
+          }
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "pid-dead",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": 2147483000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-one-alive",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": 1
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": true
+    },
+    {
+      "id": "pid-zero",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": 0
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-negative",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": -5
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-float",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": 1.5
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-string",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": "1"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-null",
+      "args": [
+        {
+          "harness": "claude",
+          "pid": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "pid-missing",
+      "args": [
+        {
+          "harness": "claude"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "builtin-without-pid-ignores-fresh-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "claude"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "codex-without-pid",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "codex"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "claude-mod-without-pid",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "claude-mod"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "stub-without-pid",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "stub"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "probe-without-pid",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "probe"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "harness-empty-string-counts-as-claude",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": ""
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "harness-missing-counts-as-claude",
+      "args": [
+        {
+          "session_id": "s1",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          }
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-fresh-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-stale-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-boundary-fresh",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:45.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-boundary-stale",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:44.999Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-other-sessions-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s2.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s2\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-no-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "custom-heartbeat-in-second-box",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "y@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/y",
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-with-dead-pid-ignores-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed",
+          "pid": 2147483000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-with-float-pid-uses-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed",
+          "pid": 1.5
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-with-string-pid-uses-heartbeat",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed",
+          "pid": "7"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-harness-number",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": 5
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-without-session-id-takes-any-sessions-heartbeat",
+      "args": [
+        {
+          "harness": "zed",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          }
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapters/s9.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s9\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "custom-legacy-adapter-json-has-no-session",
+      "args": [
+        {
+          "session_id": "s1",
+          "address": "z@tm",
+          "boxes": {
+            "z@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/z"
+          },
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/z/adapter.json": "{\"v\":1,\"adapter\":\"x\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "custom-no-boxes",
+      "args": [
+        {
+          "session_id": "s1",
+          "harness": "zed"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "addUsage",
+  "cases": [
+    {
+      "id": "adds-every-field",
+      "args": [
+        {
+          "calls": 10,
+          "in": 20,
+          "out": 30,
+          "cache_read": 40,
+          "cache_create": 50
+        },
+        {
+          "calls": 1,
+          "in": 2,
+          "out": 3,
+          "cache_read": 4,
+          "cache_create": 5
+        }
+      ],
+      "expect": {
+        "calls": 11,
+        "in": 22,
+        "out": 33,
+        "cache_read": 44,
+        "cache_create": 55
+      }
+    },
+    {
+      "id": "missing-fields-add-zero",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        {}
+      ],
+      "expect": {
+        "calls": 1,
+        "in": 1,
+        "out": 1,
+        "cache_read": 1,
+        "cache_create": 1
+      }
+    },
+    {
+      "id": "falsy-fields-add-zero",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        {
+          "calls": 0,
+          "in": null,
+          "out": false,
+          "cache_read": "",
+          "cache_create": {
+            "$nan": 1
+          }
+        }
+      ],
+      "expect": {
+        "calls": 1,
+        "in": 1,
+        "out": 1,
+        "cache_read": 1,
+        "cache_create": 1
+      }
+    },
+    {
+      "id": "negative-is-added",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        {
+          "calls": -2
+        }
+      ],
+      "expect": {
+        "calls": -1,
+        "in": 1,
+        "out": 1,
+        "cache_read": 1,
+        "cache_create": 1
+      }
+    },
+    {
+      "id": "true-adds-one",
+      "args": [
+        {
+          "calls": 0,
+          "in": 0,
+          "out": 0,
+          "cache_read": 0,
+          "cache_create": 0
+        },
+        {
+          "in": true
+        }
+      ],
+      "expect": {
+        "calls": 0,
+        "in": 1,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0
+      }
+    },
+    {
+      "id": "string-field-concatenates",
+      "args": [
+        {
+          "calls": 0,
+          "in": 0,
+          "out": 0,
+          "cache_read": 0,
+          "cache_create": 0
+        },
+        {
+          "in": "7"
+        }
+      ],
+      "expect": {
+        "calls": 0,
+        "in": "07",
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0
+      }
+    },
+    {
+      "id": "array-field-concatenates",
+      "args": [
+        {
+          "calls": 0,
+          "in": 0,
+          "out": 0,
+          "cache_read": 0,
+          "cache_create": 0
+        },
+        {
+          "in": [
+            1,
+            2
+          ]
+        }
+      ],
+      "expect": {
+        "calls": 0,
+        "in": "01,2",
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0
+      }
+    },
+    {
+      "id": "accumulator-without-fields-is-nan",
+      "args": [
+        {},
+        {
+          "calls": 1,
+          "in": 2,
+          "out": 3,
+          "cache_read": 4,
+          "cache_create": 5
+        }
+      ],
+      "expect": {
+        "calls": {
+          "$nan": 1
+        },
+        "in": {
+          "$nan": 1
+        },
+        "out": {
+          "$nan": 1
+        },
+        "cache_read": {
+          "$nan": 1
+        },
+        "cache_create": {
+          "$nan": 1
+        }
+      }
+    },
+    {
+      "id": "extra-accumulator-keys-kept",
+      "args": [
+        {
+          "calls": 0,
+          "in": 0,
+          "out": 0,
+          "cache_read": 0,
+          "cache_create": 0,
+          "model": "m"
+        },
+        {
+          "calls": 1,
+          "in": 2,
+          "out": 3,
+          "cache_read": 4,
+          "cache_create": 5
+        }
+      ],
+      "expect": {
+        "calls": 1,
+        "in": 2,
+        "out": 3,
+        "cache_read": 4,
+        "cache_create": 5,
+        "model": "m"
+      }
+    },
+    {
+      "id": "usage-string-adds-nothing",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        "abc"
+      ],
+      "expect": {
+        "calls": 1,
+        "in": 1,
+        "out": 1,
+        "cache_read": 1,
+        "cache_create": 1
+      }
+    },
+    {
+      "id": "usage-null-throws",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        null
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "usage-undefined-throws",
+      "args": [
+        {
+          "calls": 1,
+          "in": 1,
+          "out": 1,
+          "cache_read": 1,
+          "cache_create": 1
+        },
+        {
+          "$undefined": 1
+        }
+      ],
+      "expectThrows": true
+    }
+  ]
+}

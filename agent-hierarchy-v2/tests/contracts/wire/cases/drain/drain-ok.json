@@ -1,0 +1,30 @@
+{
+  "kind": "wire",
+  "id": "drain-ok",
+  "about": "a drain request is answered ok and the daemon exits",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "reason": "contract"
+    },
+    "path": "/v1/drain"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "ok": true
+    }
+  },
+  "mutant": "a drain that does not exit",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:58.073Z"
+  }
+}

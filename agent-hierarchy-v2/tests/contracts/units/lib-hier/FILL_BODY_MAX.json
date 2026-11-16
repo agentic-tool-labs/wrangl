@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "FILL_BODY_MAX",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 262144
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "dueEntries",
+  "cases": [
+    {
+      "id": "oldest-first-skips-other-session-and-grace",
+      "args": [
+        [
+          {
+            "v": 1,
+            "id": "a",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/a--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          },
+          {
+            "v": 1,
+            "id": "o",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/o--request.md",
+            "created": "2026-01-01T11:59:59.000Z",
+            "to_session": "other"
+          },
+          {
+            "v": 1,
+            "id": "f",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "fallback",
+            "ref": "/m/f--request.md",
+            "created": "2026-01-01T12:00:00.000Z"
+          },
+          {
+            "v": 1,
+            "id": "b",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/b--request.md",
+            "created": "2026-01-01T11:59:59.000Z",
+            "to_session": "me"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268800000,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        },
+        {
+          "v": 1,
+          "id": "b",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/b--request.md",
+          "created": "2026-01-01T11:59:59.000Z",
+          "to_session": "me"
+        }
+      ]
+    },
+    {
+      "id": "fallback-before-grace",
+      "args": [
+        [
+          {
+            "v": 1,
+            "id": "f",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "fallback",
+            "ref": "/m/f--request.md",
+            "created": "2026-01-01T12:00:00.000Z"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268949999,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "fallback-after-grace",
+      "args": [
+        [
+          {
+            "v": 1,
+            "id": "f",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "fallback",
+            "ref": "/m/f--request.md",
+            "created": "2026-01-01T12:00:00.000Z"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268995000,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "invalid-ids-skipped",
+      "args": [
+        [
+          {
+            "v": 1,
+            "id": "../x",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/../x--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          },
+          {
+            "v": 1,
+            "id": "ok",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/ok--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "ok",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/ok--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        }
+      ]
+    },
+    {
+      "id": "null-and-non-object-entries-skipped",
+      "args": [
+        [
+          null,
+          5,
+          {
+            "v": 1,
+            "id": "ok",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/ok--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "ok",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/ok--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        }
+      ]
+    },
+    {
+      "id": "entry-without-id-skipped",
+      "args": [
+        [
+          {
+            "route": "pull"
+          },
+          {
+            "v": 1,
+            "id": "ok",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/ok--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          }
+        ],
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "ok",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/ok--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        }
+      ]
+    },
+    {
+      "id": "no-entries",
+      "args": [
+        [],
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-options",
+      "args": [
+        [
+          {
+            "v": 1,
+            "id": "a",
+            "from": "orchestrator@tm",
+            "kind": "brief",
+            "route": "pull",
+            "ref": "/m/a--request.md",
+            "created": "2026-01-01T11:59:59.000Z"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        }
+      ]
+    }
+  ]
+}

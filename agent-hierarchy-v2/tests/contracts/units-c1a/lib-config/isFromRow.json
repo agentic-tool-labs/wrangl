@@ -1,0 +1,91 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isFromRow",
+  "cases": [
+    {
+      "id": "from-string",
+      "args": [
+        {
+          "from": "demo@mkt:qa"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "from-empty-string",
+      "args": [
+        {
+          "from": ""
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "from-number",
+      "args": [
+        {
+          "from": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "from-null",
+      "args": [
+        {
+          "from": null
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-from",
+      "args": [
+        {
+          "class": "review"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-object",
+      "args": [
+        {}
+      ],
+      "expect": false
+    },
+    {
+      "id": "array",
+      "args": [
+        [
+          {
+            "from": "a"
+          }
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "string",
+      "args": [
+        "demo@mkt:qa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "number",
+      "args": [
+        3
+      ],
+      "expect": false
+    }
+  ]
+}

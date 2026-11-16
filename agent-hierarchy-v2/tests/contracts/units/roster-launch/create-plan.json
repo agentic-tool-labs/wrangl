@@ -1,0 +1,3485 @@
+{
+  "lib": "roster-launch",
+  "module": "tests/contract-tools/launch-oracle.mjs",
+  "fn": "cli",
+  "cases": [
+    {
+      "id": "terminal-claude-defaults",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "terminal-claude-all-flags",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\",\n        \"effort\": \"high\",\n        \"autoMode\": \"auto\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "effort": "high",
+              "route": "peer",
+              "autoMode": "auto",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor --model sonnet --effort high --permission-mode auto --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "terminal-claude-inherit-model",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"inherit\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "inherit",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "terminal-two-members-same-role",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"implementor\",\n        \"model\": \"opus\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            },
+            {
+              "role": "implementor",
+              "name": "alpha-implementor-2",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor-2 --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "terminal-default-team-no-flag",
+      "args": [
+        [
+          "create",
+          "--plan"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "proj-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name proj-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/proj.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "terminal-subagent-route-has-no-spawn",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\",\n        \"route\": \"subagent\"\n      },\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "terminal",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            },
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "terminal",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}' --bg"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null
+              }
+            }
+          ],
+          "warnings": [
+            "ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+          ]
+        },
+        "stderr": "roster.mjs: warning — ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand.\n"
+      }
+    },
+    {
+      "id": "tmux-claude",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\",\n        \"effort\": \"low\"\n      }\n    ]\n  }\n}\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "tmux",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "effort": "low",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "tmux",
+                "kind": "claude",
+                "args": null,
+                "layout": [
+                  "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
+                ],
+                "launch": [
+                  "tmux send-keys -t <TARGET> \"claude --agent ah:implementor --name alpha-implementor --model sonnet --effort low --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": 0,
+                "target_source": {
+                  "kind": "stdout",
+                  "trim": true
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "tmux-two-members",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\",\n        \"autoMode\": \"plan\"\n      }\n    ]\n  }\n}\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "tmux",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "tmux",
+                "kind": "claude",
+                "args": null,
+                "layout": [
+                  "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
+                ],
+                "launch": [
+                  "tmux send-keys -t <TARGET> \"claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": 0,
+                "target_source": {
+                  "kind": "stdout",
+                  "trim": true
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "autoMode": "plan",
+              "args": null,
+              "spawn": {
+                "transport": "tmux",
+                "kind": "claude",
+                "args": null,
+                "layout": [
+                  "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
+                ],
+                "launch": [
+                  "tmux send-keys -t <TARGET> \"claude --agent ah:reviewer --name alpha-reviewer --model opus --permission-mode plan --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": 0,
+                "target_source": {
+                  "kind": "stdout",
+                  "trim": true
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "tmux-codex-is-refused",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\"\n      }\n    ]\n  }\n}\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "tmux",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": null,
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "tmux",
+                "kind": "codex",
+                "layout": [],
+                "launch": [],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null,
+                "refuse": "member alpha-architect has kind \"codex\", which requires the herdr transport, but the detected transport is \"tmux\" — start a Herdr session (HERDR_ENV=1) to spawn non-claude kinds"
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-claude",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-claude-full",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\",\n        \"effort\": \"max\",\n        \"autoMode\": \"acceptEdits\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "effort": "max",
+              "route": "peer",
+              "autoMode": "acceptEdits",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --effort max --permission-mode acceptEdits --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-three-members-layout-plan",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\"\n      },\n      {\n        \"role\": \"architect\",\n        \"model\": \"opus\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 3,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind claude --pane <TARGET> -- --agent ah:architect --name alpha-architect --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-subagent-members-not-counted",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\",\n        \"route\": \"subagent\"\n      },\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 2,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ],
+          "warnings": [
+            "ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+          ]
+        },
+        "stderr": "roster.mjs: warning — ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand.\n"
+      }
+    },
+    {
+      "id": "herdr-only-subagents-has-no-layout-plan",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\",\n        \"route\": \"subagent\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ],
+          "warnings": [
+            "ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+          ]
+        },
+        "stderr": "roster.mjs: warning — ah: roster.members[0] (reviewer) route \"subagent\" in $ROOT/proj/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-plain",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-args-quoting",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"args\": [\n          \"--search\",\n          \"-c\",\n          \"note=it's here\",\n          \"a b\"\n        ]\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": [
+                "--search",
+                "-c",
+                "note=it's here",
+                "a b"
+              ],
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--search",
+                  "-c",
+                  "note=it's here",
+                  "a b"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--search' '-c' 'note=it'\\''s here' 'a b'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-auto",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"auto\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "auto",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--sandbox",
+                  "workspace-write",
+                  "--ask-for-approval",
+                  "never"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--sandbox' 'workspace-write' '--ask-for-approval' 'never'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-manual",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"manual\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "manual",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--sandbox",
+                  "read-only",
+                  "--ask-for-approval",
+                  "on-request"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--sandbox' 'read-only' '--ask-for-approval' 'on-request'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect: auto-mode \"manual\" runs codex in a read-only sandbox, so this architect cannot write its report file without an approval answered in its own pane\nroster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-plan",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"plan\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "plan",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--sandbox",
+                  "read-only",
+                  "--ask-for-approval",
+                  "never"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--sandbox' 'read-only' '--ask-for-approval' 'never'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect: auto-mode \"plan\" runs codex in a read-only sandbox, so this architect cannot write its report file without an approval answered in its own pane\nroster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-accept-edits",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"acceptEdits\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "acceptEdits",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--sandbox",
+                  "workspace-write",
+                  "--ask-for-approval",
+                  "on-request"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--sandbox' 'workspace-write' '--ask-for-approval' 'on-request'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-dont-ask",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"dontAsk\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "dontAsk",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--sandbox",
+                  "workspace-write",
+                  "--ask-for-approval",
+                  "never"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--sandbox' 'workspace-write' '--ask-for-approval' 'never'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-auto-mode-bypass",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\",\n        \"autoMode\": \"bypassPermissions\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "autoMode": "bypassPermissions",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--dangerously-bypass-approvals-and-sandbox"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--dangerously-bypass-approvals-and-sandbox'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-no-model",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ],
+          "members_needing_model": [
+            {
+              "name": "alpha-architect",
+              "role": "architect",
+              "class": "design",
+              "kind": "codex",
+              "allowed": null,
+              "fallback": null,
+              "models_command": "codex debug models"
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-out-of-range",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\"\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.100.0'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "adapter_note": "codex 0.100.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this.",
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-unreadable-version",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "adapter_note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this.",
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-in-range",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\"\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.162.0-alpha.2'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- 'resume' '<thread-id>' '--remote' 'unix://$ROOT/ah/run/codex/alpha-alpha-architect.sock'"
+                ],
+                "appserver": {
+                  "sock": "$ROOT/ah/run/codex/alpha-alpha-architect.sock",
+                  "tmp": "$ROOT/ah/run/codex/tmp/alpha-alpha-architect",
+                  "serverArgs": [
+                    "-c",
+                    "sandbox_mode=\"workspace-write\"",
+                    "-c",
+                    "sandbox_workspace_write.network_access=false",
+                    "-c",
+                    "sandbox_workspace_write.writable_roots=[\"$ROOT/ah/run/codex/tmp/alpha-alpha-architect\"]",
+                    "-c",
+                    "approval_policy=\"on-request\"",
+                    "-c",
+                    "sandbox_workspace_write.exclude_slash_tmp=true",
+                    "-c",
+                    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+                    "-c",
+                    "shell_environment_policy.set.TMPDIR=\"$ROOT/ah/run/codex/tmp/alpha-alpha-architect\"",
+                    "-c",
+                    "model=\"gpt-5\"",
+                    "-c",
+                    "model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"",
+                    "-c",
+                    "approvals_reviewer=\"user\"",
+                    "app-server",
+                    "--listen",
+                    "unix://$ROOT/ah/run/codex/alpha-alpha-architect.sock"
+                  ],
+                  "modes": {
+                    "sandbox": "workspace-write",
+                    "approval": "on-request"
+                  },
+                  "plain": "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                },
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-in-range-with-args",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"args\": [\n          \"--search\",\n          \"--add-dir\",\n          \"$ROOT/extra\"\n        ]\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.162.0-alpha.2'\n",
+          "mode": 493
+        },
+        "extra/x": ""
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": [
+                "--search",
+                "--add-dir",
+                "$ROOT/extra"
+              ],
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--search",
+                  "--add-dir",
+                  "$ROOT/extra"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--search' '--add-dir' '$ROOT/extra'"
+                ],
+                "adapter_note": "the app-server adapter was not used: launch arguments outside the adapter allow-list: --search; launched without it",
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-violation-falls-back",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"args\": [\n          \"--dangerously-bypass-approvals-and-sandbox\"\n        ]\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.162.0-alpha.2'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": [
+                "--dangerously-bypass-approvals-and-sandbox"
+              ],
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": [
+                  "--dangerously-bypass-approvals-and-sandbox"
+                ],
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"' '--dangerously-bypass-approvals-and-sandbox'"
+                ],
+                "adapter_note": "the app-server adapter was not used: launch arguments outside the adapter allow-list: --dangerously-bypass-approvals-and-sandbox; launched without it",
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-off",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.162.0-alpha.2'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-codex-adapter-requested",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"appserver\"\n      }\n    ]\n  }\n}\n",
+        "bin/codex": {
+          "text": "#!/bin/sh\necho 'codex-cli 0.100.0'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "adapter_note": "codex 0.100.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this.",
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-claude-with-args-is-invalid",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\",\n        \"args\": [\n          \"--x\"\n        ]\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": [
+                "--x"
+              ],
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "layout": [],
+                "launch": [],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": null,
+                "target_from": null,
+                "target_source": null,
+                "refuse": "member alpha-implementor (kind claude) has an invalid configuration: args is not allowed for kind \"claude\" — Claude CLI flags are set with --model/--effort/--auto-mode, which are validated; args would bypass that (got [\"--x\"])"
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-codex-two-members",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"architect\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5-mini\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 2,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "architect",
+              "name": "alpha-architect",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-architect --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-architect.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "codex",
+              "model": "gpt-5-mini",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind codex --pane <TARGET> -- '--model' 'gpt-5-mini' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-reviewer.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-architect's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\nroster.mjs: warning — alpha-reviewer's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-mixed-claude-and-codex",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 2,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-reviewer.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-reviewer's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-instructions-path-for-codex-implementor",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"kind\": \"codex\",\n        \"model\": \"gpt-5\",\n        \"route\": \"pane\",\n        \"adapter\": \"off\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 1,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "codex",
+              "model": "gpt-5",
+              "route": "pane",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "codex",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind codex --pane <TARGET> -- '--model' 'gpt-5' '-c' 'model_instructions_file=\"$ROOT/proj/.claude/hierarchy/instructions/alpha-implementor.md\"' '-c' 'approvals_reviewer=\"user\"'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": "roster.mjs: warning — alpha-implementor's native legwork children will run on its own model: no codex model is declared at tier haiku. Declare one with `roster.mjs tier set codex <model> haiku`.\n"
+      }
+    },
+    {
+      "id": "herdr-claude-name-with-suffix",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "auto",
+            "source": "default"
+          },
+          "layout_plan": {
+            "mode": "auto",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 3,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer-2",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer-2 --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer-2 --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer-3",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer-3 --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer-3 --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-layout-columns-from-flag",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha",
+          "--mode",
+          "columns"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "columns",
+            "source": "explicit"
+          },
+          "layout_plan": {
+            "mode": "columns",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 2,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-layout-grid-from-flag",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha",
+          "--mode",
+          "grid"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      },\n      {\n        \"role\": \"reviewer\",\n        \"model\": \"opus\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "level": "repo",
+          "path": "$ROOT/proj/.claude/agent-hierarchy.json",
+          "transport": "herdr",
+          "layout": {
+            "mode": "grid",
+            "source": "explicit"
+          },
+          "layout_plan": {
+            "mode": "grid",
+            "computed_by": "roster.mjs layout-splits",
+            "pane_count": 2,
+            "inspect_command": "herdr pane layout --current",
+            "inspect_source": {
+              "kind": "json",
+              "path": ".result.layout.panes"
+            },
+            "split_command": "herdr pane split --pane <SPLIT_TARGET> --direction <DIRECTION> --cwd \"$ROOT/proj\" --no-focus",
+            "target_source": {
+              "kind": "json",
+              "path": ".result.pane.pane_id"
+            }
+          },
+          "members": [
+            {
+              "role": "implementor",
+              "name": "alpha-implementor",
+              "kind": "claude",
+              "model": "sonnet",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-implementor --kind claude --pane <TARGET> -- --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            },
+            {
+              "role": "reviewer",
+              "name": "alpha-reviewer",
+              "kind": "claude",
+              "model": "opus",
+              "route": "peer",
+              "args": null,
+              "spawn": {
+                "transport": "herdr",
+                "kind": "claude",
+                "args": null,
+                "layout": [],
+                "launch": [
+                  "herdr agent start alpha-reviewer --kind claude --pane <TARGET> -- --agent ah:reviewer --name alpha-reviewer --model opus --settings '{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\'' '\\'''\\''\"}}'"
+                ],
+                "launch_cwd": "$ROOT/proj",
+                "target_placeholder": "<TARGET>",
+                "target_from": null,
+                "target_source": {
+                  "kind": "json",
+                  "path": ".result.pane.pane_id"
+                }
+              }
+            }
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "herdr-layout-bad-mode",
+      "args": [
+        [
+          "create",
+          "--plan",
+          "--team",
+          "alpha",
+          "--mode",
+          "spiral"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "proj/.claude/agent-hierarchy.json": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 2,
+        "stdout": "",
+        "stderr": "roster.mjs: --mode must be one of auto, columns, grid, got \"spiral\"\n"
+      }
+    },
+    {
+      "id": "custom-on-tmux-command",
+      "args": [
+        [
+          "spawn-ad-hoc",
+          "architect",
+          "--kind",
+          "custom",
+          "--harness",
+          "myagent",
+          "--command",
+          "my-agent --flag",
+          "--team",
+          "alpha",
+          "--dry-run"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "dry_run": true,
+          "role": "architect",
+          "name": "alpha-architect",
+          "address": "alpha-architect@alpha",
+          "launch": [
+            "tmux send-keys -t <TARGET> 'AH_HOME='\\''$ROOT/ah'\\'' AH_ADDRESS='\\''alpha-architect@alpha'\\'' my-agent --flag' Enter"
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "custom-on-tmux-command-with-quotes",
+      "args": [
+        [
+          "spawn-ad-hoc",
+          "architect",
+          "--kind",
+          "custom",
+          "--harness",
+          "myagent",
+          "--command",
+          "my-agent --note 'it'\\''s' \"two words\"",
+          "--team",
+          "alpha",
+          "--dry-run"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "dry_run": true,
+          "role": "architect",
+          "name": "alpha-architect",
+          "address": "alpha-architect@alpha",
+          "launch": [
+            "tmux send-keys -t <TARGET> 'AH_HOME='\\''$ROOT/ah'\\'' AH_ADDRESS='\\''alpha-architect@alpha'\\'' my-agent --note '\\''it'\\''\\'\\'''\\''s'\\'' \"two words\"' Enter"
+          ]
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "custom-on-tmux-no-command-launches-nothing",
+      "args": [
+        [
+          "spawn-ad-hoc",
+          "architect",
+          "--kind",
+          "custom",
+          "--harness",
+          "myagent",
+          "--team",
+          "alpha",
+          "--dry-run"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n",
+        "bin/tmux": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": {
+          "dry_run": true,
+          "role": "architect",
+          "name": "alpha-architect",
+          "address": "alpha-architect@alpha",
+          "launch": []
+        },
+        "stderr": ""
+      }
+    },
+    {
+      "id": "custom-on-herdr-is-refused",
+      "args": [
+        [
+          "spawn-ad-hoc",
+          "architect",
+          "--kind",
+          "custom",
+          "--harness",
+          "myagent",
+          "--command",
+          "my-agent",
+          "--team",
+          "alpha",
+          "--dry-run"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "HERDR_ENV": "1",
+        "HERDR_PANE_ID": "1-1"
+      },
+      "expect": {
+        "exit": 2,
+        "stdout": "",
+        "stderr": "roster.mjs: spawn-ad-hoc: member alpha-architect has a command, and ah launches a custom harness's command only in a tmux window (the detected transport is \"herdr\") — omit --command and start the harness yourself with AH_HOME and AH_ADDRESS set\n"
+      }
+    },
+    {
+      "id": "custom-on-terminal-is-refused",
+      "args": [
+        [
+          "spawn-ad-hoc",
+          "architect",
+          "--kind",
+          "custom",
+          "--harness",
+          "myagent",
+          "--command",
+          "my-agent",
+          "--team",
+          "alpha",
+          "--dry-run"
+        ]
+      ],
+      "cwd": "proj",
+      "files": {
+        "proj/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "CLAUDE_PID": {
+          "$selfpid": 1
+        },
+        "CLAUDE_CODE_SESSION_ID": "sess-plan",
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 2,
+        "stdout": "",
+        "stderr": "roster.mjs: spawn-ad-hoc: member alpha-architect has a command, and ah launches a custom harness's command only in a tmux window (the detected transport is \"terminal\") — omit --command and start the harness yourself with AH_HOME and AH_ADDRESS set\n"
+      }
+    }
+  ]
+}

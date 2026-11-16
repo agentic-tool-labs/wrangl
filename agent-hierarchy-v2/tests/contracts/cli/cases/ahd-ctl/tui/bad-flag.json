@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "bad-flag",
+  "about": "--json is an unknown flag of ahd-ctl: exit 2",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "tui",
+      "status",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"unknown flag --json\"}}\n",
+    "stderr": "",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "--json accepted by ahd-ctl",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.034Z"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "fingerprint",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        {
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect",
+              "model": "opus"
+            }
+          ]
+        }
+      ],
+      "expect": "2e5a9475"
+    },
+    {
+      "id": "null-level-and-transport",
+      "args": [
+        {
+          "roster_level": null,
+          "transport": null,
+          "members": []
+        }
+      ],
+      "expect": "e916bd96"
+    },
+    {
+      "id": "falsy-level-becomes-null",
+      "args": [
+        {
+          "roster_level": "",
+          "transport": 0,
+          "members": []
+        }
+      ],
+      "expect": "e916bd96"
+    },
+    {
+      "id": "members-order-matters",
+      "args": [
+        {
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "reviewer"
+            },
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "expect": "0c48b69f"
+    },
+    {
+      "id": "missing-members-omitted",
+      "args": [
+        {
+          "roster_level": "repo",
+          "transport": "herdr"
+        }
+      ],
+      "expect": "205fd2c2"
+    },
+    {
+      "id": "unicode-members",
+      "args": [
+        {
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "é "
+            }
+          ]
+        }
+      ],
+      "expect": "9f3912c0"
+    },
+    {
+      "id": "lone-surrogate",
+      "args": [
+        {
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "\ud800"
+            }
+          ]
+        }
+      ],
+      "expect": "c7a12f8d"
+    }
+  ]
+}

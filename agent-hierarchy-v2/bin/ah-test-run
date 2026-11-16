@@ -1,0 +1,432 @@
+#!/bin/bash
+# agent-hierarchy — run one command, in any repository, while holding K of the B tokens of a machine-wide bucket, so that however many
+# sessions start heavy work (a test run of any stack, a mutation sweep, a perf run) the work that runs at once never needs more than B
+# CPUs. This is the one implementation: `ah test run` execs it and tests/with-slot.sh is a shim that execs it.
+#
+#   ah test run [--tokens <k>] [--eta <seconds|small|medium|large>] [--label <text>] [--] <command> [args...]
+#
+#   --eta              how long the command should take: seconds, or small = 300 s, medium = 600 s (the default), large = 1200 s. The
+#                      run is capped at 3 x the ETA (see below). Be honest, not generous: an overrun inside the cap only costs the
+#                      caller a late finish, but the cap is a kill.
+#   --tokens           how many CPUs of parallelism the command may use. Default: the tokens of the test-command registry's row for the
+#                      command (`ah test plan`), else ceil(B / 2) (an unknown run is assumed heavy). More than B is clamped to B, so
+#                      the run proceeds alone; less than 1 is refused (exit 2). The command gets the grant as AH_TEST_TOKENS_GRANTED,
+#                      and the row's adapter has already put it into the runner's own parallelism setting where the runner has one.
+#   --label            what the holder and each waiter are called in the records and the waiting line (default: the command).
+#   AH_TEST_TOKENS     the capacity B of the default pool (default max(2, ncpu - 2)).
+#   AH_TEST_SLOTS      0 disables the limiter: the command runs at once. Any other number is the legacy name of AH_TEST_TOKENS.
+#   AH_TEST_ADAPT      0 skips the registry step: no row tokens, no environment, no added arguments (the default size then applies).
+#   AH_TEST_SLOT_WAIT  longest wait for the tokens in seconds (default 3600); then exit 75 and the command does not run.
+#   AH_SLOTS_DIR       the pool directory (default /private/tmp/ahprobe.slots); only a /private/tmp/ahprobe.* path is accepted.
+#   AH_SLOT_POOL       a named pool (lower-case letters, digits, '-'): its own bucket and queue, so one kind of work excludes only
+#                      its own kind. Unset is the default test pool.
+#   AH_SLOT_POOL_SLOTS capacity B of a named pool, in tokens (default 1).
+#   AH_SLOT_LABEL      what the holder and each waiter are called in the records and the waiting line (default: the command).
+#
+# The command's exit code is passed through, except when the cap fires: at 3 x ETA wall-clock the command's process group gets
+# TERM, and KILL 10 s later if anything is left; a line {kind, at, pool, slot, holder, eta, cap, killed} is appended to
+# <pool dir>/journal.jsonl, `with-slot: CAPPED after <time> (eta <time>); killed <pids>` is printed and the exit code is 124. A
+# command that was started inside a grant that is already held, or with the limiter off, is not capped by this script.
+# While waiting, one line on stderr names the queue position, and again every 15 s;
+# once a holder is known, `waiting for <pool> slot held by <label> (pid <pid>, <age>)` is printed once and then every 60 s.
+# The command runs with AH_TEST_SLOT_HELD=1 (a named pool: AH_SLOT_HELD_<POOL>=1), so a nested with-slot.sh (or a run-all.sh
+# started inside) takes no tokens of the same pool and cannot deadlock on the first.
+#
+# How it works. A lease is the directory <pool dir>/held/<microseconds>-<pid>/ holding a `holder` record {label, pid, pid_start,
+# tokens, since}. The pool dir is AH_SLOTS_DIR for the default pool and AH_SLOTS_DIR/pool-<name> for a named one, and `capacity`
+# in it names B. Waiters take a ticket <pool dir>/q/<microseconds>-<pid>/ holding `pid` and a `waiter` record of the same shape,
+# and only the oldest live ticket looks at the leases, so waiters are served strictly in arrival order (a large request at the head
+# blocks smaller ones behind it, so nothing starves) and recovery has one actor at a time. The head takes <pool dir>/lock (mkdir,
+# atomic) for the moment it needs: it reaps the leases whose pid is gone or whose recorded start time is not that pid's (each is
+# renamed to a tomb name this process makes up, which succeeds for one process only, and the tomb is removed), adds up the tokens
+# of the live ones, and writes its own lease when B minus that sum is at least K. This process removes only paths it made: its
+# own lease, its own ticket, its own lock, a tomb it renamed into being. A dead waiter's ticket is skipped, and removed the same
+# way. Never removes anything outside AH_SLOTS_DIR.
+
+HERE=$(cd "$(dirname "$0")" && pwd)
+ROOT=$(cd "$HERE/.." && pwd)
+. "$ROOT/tests/lib-pid.sh"
+. "$ROOT/tests/lib-tokens.sh"
+
+SLOTS_DIR="${AH_SLOTS_DIR:-/private/tmp/ahprobe.slots}"
+POOL="${AH_SLOT_POOL:-}"
+WAIT="${AH_TEST_SLOT_WAIT:-3600}"
+
+case "$POOL" in
+  '') K="$(ah_bucket_capacity)"; POOLDIR="$SLOTS_DIR"; POOLNAME=test; HELD_VAR=AH_TEST_SLOT_HELD ;;
+  *[!a-z0-9-]*|-*) echo "with-slot: AH_SLOT_POOL must be lower-case letters, digits and '-': $POOL" >&2; exit 2 ;;
+  *) K="${AH_SLOT_POOL_SLOTS:-1}"; POOLDIR="$SLOTS_DIR/pool-$POOL"; POOLNAME="$POOL"
+     HELD_VAR="AH_SLOT_HELD_$(printf '%s' "$POOL" | tr 'a-z-' 'A-Z_')" ;;
+esac
+
+USAGE="usage: ah test run [--tokens <k>] [--eta <seconds|small|medium|large>] [--label <text>] [--] <command> [args...]"
+ETA_ARG=""
+TOKENS=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --eta|--tokens|--label)
+      [ $# -ge 2 ] || { echo "with-slot: $1 needs a value. $USAGE" >&2; exit 2; }
+      case "$1" in --eta) ETA_ARG="$2" ;; --tokens) TOKENS="$2" ;; --label) AH_SLOT_LABEL="$2" ;; esac
+      shift 2 ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+[ -n "$ETA_ARG" ] || ETA_ARG=medium
+case "$ETA_ARG" in
+  small) ETA=300 ;;
+  medium) ETA=600 ;;
+  large) ETA=1200 ;;
+  ''|*[!0-9]*|0|0[0-9]*) echo "with-slot: --eta must be a number of seconds above 0, or small, medium or large: $ETA_ARG" >&2; exit 2 ;;
+  *) ETA="$ETA_ARG" ;;
+esac
+if [ -n "$TOKENS" ]; then
+  case "$TOKENS" in *[!0-9]*|0) echo "with-slot: --tokens must be a number of at least 1: $TOKENS" >&2; exit 2 ;; esac
+fi
+[ $# -ge 1 ] || { echo "$USAGE" >&2; exit 2; }
+
+# The test-scope check runs first and unconditionally (AH_TEST_ADAPT=0 and a disabled limiter do not skip it): a team member
+# who may not run whole-project tests gets the refusal and exit 64, and nothing runs. Without a working binary, a member's run is
+# refused too (its role cannot be checked); anyone else proceeds.
+# The tree's own bin/ah is a shim that fails where no native binary is installed for it (a member's work tree), so the installed
+# ~/.local/bin/ah answers instead; the first that runs the check wins. PATH is not searched: a member can steer it.
+AH_BIN=""
+CHECK_RC=127
+CHECK_ERR=""
+for candidate in "$ROOT/bin/ah" "${HOME:-/nonexistent}/.local/bin/ah"; do
+  [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+  CHECK_ERR=$("$candidate" test plan --check --cwd "$PWD" -- "$@" 2>&1 >/dev/null); CHECK_RC=$?
+  if [ "$CHECK_RC" = 0 ] || [ "$CHECK_RC" = 64 ]; then AH_BIN=$candidate; break; fi
+done
+if [ "$CHECK_RC" = 64 ]; then
+  printf '%s\n' "$CHECK_ERR" >&2
+  exit 64
+elif [ "$CHECK_RC" != 0 ] && [ -n "${AH_MEMBER_NAME:-}" ]; then
+  [ -z "$CHECK_ERR" ] || printf '%s\n' "$CHECK_ERR" >&2
+  echo "ah: ah not found or not working; a member's test run cannot be checked" >&2
+  exit 64
+fi
+case "$K" in ''|*[!0-9]*) echo "with-slot: the token count must be a number" >&2; exit 2;; esac
+case "$WAIT" in ''|*[!0-9]*) echo "with-slot: AH_TEST_SLOT_WAIT must be a number of seconds" >&2; exit 2;; esac
+case "$SLOTS_DIR" in
+  /private/tmp/ahprobe.?*) ;;
+  *) echo "with-slot: refusing a slot directory outside /private/tmp/ahprobe.*: $SLOTS_DIR" >&2; exit 2;;
+esac
+case "$SLOTS_DIR" in */../*|*/..) echo "with-slot: refusing a slot directory with ..: $SLOTS_DIR" >&2; exit 2;; esac
+
+# The registry's answer for the default pool's command (`ah test plan`): the tokens its row asks for, the environment its runner takes
+# its parallelism from, and the arguments added where they are absent. Inside a grant already held, the grant is the size; with the
+# limiter off, or AH_TEST_ADAPT=0, nothing is added. Without the binary or perl, when the plan takes longer than 10 s, or for a command no row names, the
+# command runs as it is.
+NEWARGV=()
+PLAN_TOKENS=0
+if [ -z "$POOL" ] && [ "$K" != 0 ] && [ "${AH_TEST_ADAPT:-1}" != 0 ] && [ -n "$AH_BIN" ] && command -v perl >/dev/null 2>&1; then
+  PLAN_SIZE="$TOKENS"
+  [ "${!HELD_VAR:-}" = 1 ] && PLAN_SIZE="${AH_TEST_TOKENS_GRANTED:-$TOKENS}"
+  while IFS=$'\t' read -r kind a b; do
+    case "$kind" in
+      tokens) PLAN_TOKENS="$a" ;;
+      env) export "$a=$b" 2>/dev/null || true ;;
+      arg) NEWARGV+=("$a") ;;
+    esac
+  done < <(perl -e 'alarm 10; exec @ARGV' "$AH_BIN" test plan --capacity "$K" ${PLAN_SIZE:+--tokens "$PLAN_SIZE"} --cwd "$PWD" -- "$@" 2>/dev/null </dev/null)
+  [ "${#NEWARGV[@]}" -gt 0 ] && set -- "${NEWARGV[@]}"
+fi
+# a command that opens with VAR=value is run through env, which sets it
+if [[ ${1:-} =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then set -- env "$@"; fi
+
+# a limiter that is off, or tokens this process tree already holds
+if [ "$K" = 0 ] || [ "${!HELD_VAR:-}" = 1 ]; then exec "$@"; fi
+
+if [ -z "$POOL" ] && [ -z "${AH_TEST_TOKENS:-}" ] && [ -n "${AH_TEST_SLOTS:-}" ]; then
+  echo "with-slot: AH_TEST_SLOTS=$AH_TEST_SLOTS is read as AH_TEST_TOKENS=$AH_TEST_SLOTS (legacy name)" >&2
+fi
+if [ -z "$TOKENS" ] && [ "$PLAN_TOKENS" -gt 0 ]; then TOKENS="$PLAN_TOKENS"; fi
+if [ -z "$TOKENS" ]; then TOKENS=$(( (K + 1) / 2 )); fi
+[ "$TOKENS" -gt "$K" ] && TOKENS="$K"
+
+mkdir -p "$POOLDIR/q" "$POOLDIR/held" || { echo "with-slot: cannot create $POOLDIR" >&2; exit 2; }
+
+# kill -0 is a builtin: it needs no fork, so an overloaded machine cannot make a live process look dead the way a failed `ps` would
+alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
+mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0; }
+rand() { echo "$RANDOM$RANDOM"; }
+# the start time as the process table reports it in UTC, the text every other pid-plus-start check compares
+start_of() { TZ=UTC LC_ALL=C ps -o lstart= -p "$1" 2>/dev/null | sed 's/^ *//; s/ *$//'; }
+# a value that is safe inside a JSON string
+clean() { printf '%s' "$1" | tr -d '"\\\n\r\t' | cut -c1-200; }
+# one field of a record written by record(): the first string or number value of key $2
+field() { sed -n "s/.*\"$2\": *\"\{0,1\}\([^\",}]*\).*/\1/p" "$1" 2>/dev/null | head -1; }
+age() { local s=$1; if [ "$s" -ge 3600 ]; then echo "$((s / 3600))h$((s % 3600 / 60))m"; elif [ "$s" -ge 60 ]; then echo "$((s / 60))m$((s % 60))s"; else echo "${s}s"; fi; }
+
+LABEL="$(clean "${AH_SLOT_LABEL:-with-slot ${1##*/}}")"
+MYSTART="$(start_of $$)"
+# $2, when given, is how many seconds the holder waited for its tokens
+# $3, when given, is the process group of the command
+record() { printf '{"label": "%s", "pid": %s, "pid_start": "%s", "tokens": %s, %s%s"since": %s}\n' "$LABEL" "$$" "$MYSTART" "$TOKENS" "${2:+\"waited\": $2, }" "${3:+\"pgid\": $3, }" "$(date +%s)" >"$1"; }
+
+stamp=$(perl -MTime::HiRes=time -e 'printf "%.0f", time * 1000000' 2>/dev/null)
+[ -n "$stamp" ] || stamp="$(date +%s)000000"
+TICKET="$POOLDIR/q/$stamp-$$"
+MYSLOT=""
+LOCK="$POOLDIR/lock"
+HAVELOCK=0
+WARNED=""
+
+lock_drop() {
+  if [ "$HAVELOCK" = 1 ] && [ "$(cat "$LOCK/owner" 2>/dev/null)" = "$$" ]; then rm -rf "$LOCK"; fi
+  HAVELOCK=0
+}
+release() {
+  if [ -n "$MYSLOT" ] && [ "$(field "$POOLDIR/held/$MYSLOT/holder" pid)" = "$$" ]; then rm -rf "${POOLDIR:?}/held/$MYSLOT"; fi
+  lock_drop
+  rm -rf "$TICKET"
+}
+trap release EXIT
+
+mkdir "$TICKET" 2>/dev/null || { echo "with-slot: cannot take a ticket in $POOLDIR/q" >&2; exit 2; }
+echo "$$" >"$TICKET/pid"
+record "$TICKET/waiter"
+
+# the tickets that are alive, oldest first (a dead waiter's is removed by renaming it away first)
+live_tickets() {
+  local t pid tomb
+  for t in "$POOLDIR"/q/*; do
+    [ -d "$t" ] || continue
+    pid=$(cat "$t/pid" 2>/dev/null)
+    if [ -z "$pid" ]; then
+      # being written: a young ticket is live
+      [ $(( $(date +%s) - $(mtime "$t") )) -lt 5 ] && echo "$t"
+      continue
+    fi
+    if alive "$pid"; then echo "$t"; else
+      tomb="$POOLDIR/q/.dead.$$.$(rand)"
+      mv "$t" "$tomb" 2>/dev/null && rm -rf "$tomb"
+    fi
+  done | sort
+}
+
+# the pool's short critical section; a lock whose owner is gone (or that never got an owner within 5 s) is taken over
+lock_take() {
+  local p tomb
+  if mkdir "$LOCK" 2>/dev/null; then echo "$$" >"$LOCK/owner"; HAVELOCK=1; return 0; fi
+  p=$(cat "$LOCK/owner" 2>/dev/null)
+  if { [ -z "$p" ] && [ $(( $(date +%s) - $(mtime "$LOCK") )) -ge 5 ]; } || { [ -n "$p" ] && ! alive "$p"; }; then
+    [ "$(cat "$LOCK/owner" 2>/dev/null)" = "$p" ] || return 1
+    tomb="$POOLDIR/lock.stale.$$.$(rand)"
+    if mv "$LOCK" "$tomb" 2>/dev/null; then
+      rm -rf "$tomb"
+      if mkdir "$LOCK" 2>/dev/null; then echo "$$" >"$LOCK/owner"; HAVELOCK=1; return 0; fi
+    fi
+  fi
+  return 1
+}
+
+# a lease is stale when its holder is gone, or the pid now belongs to another process (the holder record's start time differs)
+lease_is_stale() { # <lease dir>
+  local pid recorded now
+  pid=$(field "$1/holder" pid)
+  if [ -z "$pid" ]; then [ $(( $(date +%s) - $(mtime "$1") )) -ge 5 ]; return; fi
+  if alive "$pid"; then
+    recorded=$(field "$1/holder" pid_start)
+    [ -n "$recorded" ] || return 1
+    now=$(start_of "$pid")
+    { [ -n "$now" ] && [ "$now" != "$recorded" ]; } || return 1
+  fi
+  # the holder is gone, or its pid now belongs to another process; a killed holder leaves its command running, and the tokens stay
+  # held until that command's process group is gone. A command that leaves a long-lived process in its group (a build server, a
+  # daemon) therefore keeps its tokens until that process exits; removing the lease directory by hand frees them.
+  local pg
+  pg=$(field "$1/holder" pgid)
+  case "$pg" in ''|*[!0-9]*) return 0 ;; esac
+  kill -0 -- "-$pg" 2>/dev/null && return 1
+  return 0
+}
+
+# reaps the leases of holders that are gone and prints the tokens the live ones hold
+used_tokens() {
+  local l t sum who tomb
+  sum=0
+  for l in "$POOLDIR"/held/*; do
+    [ -d "$l" ] || continue
+    if lease_is_stale "$l"; then
+      who="$(field "$l/holder" label) (pid $(field "$l/holder" pid))"
+      tomb="$POOLDIR/held/.stale.$$.$(rand)"
+      if mv "$l" "$tomb" 2>/dev/null; then
+        rm -rf "$tomb"
+        echo "with-slot: reclaimed the $POOLNAME slot of a holder that is gone: $who" >&2
+      fi
+      continue
+    fi
+    t=$(field "$l/holder" tokens)
+    case "$t" in ''|*[!0-9]*) t=1 ;; esac
+    sum=$((sum + t))
+  done
+  echo "$sum"
+}
+
+# the head of the queue takes its lease when K tokens are free
+try_tokens() {
+  local used tmp
+  lock_take || return 1
+  used=$(used_tokens)
+  # the capacity is the pool's: callers that disagree with the recorded one follow it while any lease is held; a pool with no
+  # holder takes the capacity of the caller that finds it empty
+  local recorded
+  recorded=$(cat "$POOLDIR/capacity" 2>/dev/null)
+  case "$recorded" in
+    ''|*[!0-9]*|0) recorded="" ;;
+  esac
+  if [ -n "$recorded" ] && [ "$recorded" != "$K" ] && [ "$used" -gt 0 ]; then
+    [ -n "$WARNED" ] || echo "with-slot: the $POOLNAME pool's recorded capacity is $recorded tokens; this caller's $K is ignored while it is held" >&2
+    WARNED=1
+    K="$recorded"
+    [ "$TOKENS" -gt "$K" ] && TOKENS="$K"
+  elif [ "$recorded" != "$K" ]; then
+    echo "$K" >"$POOLDIR/capacity"
+  fi
+  if [ $((K - used)) -ge "$TOKENS" ]; then
+    tmp="$POOLDIR/held/.new.$$"
+    rm -rf "$tmp"
+    WAITED=$((SECONDS - start))
+    mkdir "$tmp" && record "$tmp/holder" "$WAITED" && mv "$tmp" "$POOLDIR/held/${TICKET##*/}" && MYSLOT="${TICKET##*/}"
+  fi
+  lock_drop
+  [ -n "$MYSLOT" ]
+}
+
+# the longest-held lease's holder, as "<label>|<pid>|<age seconds>"; empty when no lease has a readable holder record
+oldest_holder() {
+  local l since best="" bestsince=0
+  for l in "$POOLDIR"/held/*; do
+    [ -d "$l" ] || continue
+    since=$(field "$l/holder" since)
+    if [ -n "$since" ] && { [ -z "$best" ] || [ "$since" -lt "$bestsince" ]; }; then
+      best="$l"; bestsince="$since"
+    fi
+  done
+  [ -n "$best" ] || return 0
+  echo "$(field "$best/holder" label)|$(field "$best/holder" pid)|$(( $(date +%s) - bestsince ))"
+}
+
+start=$SECONDS
+last=-100
+lastholder=-100
+while :; do
+  tickets=$(live_tickets)
+  head=$(printf '%s\n' "$tickets" | head -1)
+  if [ "$head" = "$TICKET" ] && try_tokens; then break; fi
+  now=$((SECONDS - start))
+  if [ "$now" -ge "$WAIT" ]; then
+    echo "with-slot: waited ${now}s for $TOKENS $POOLNAME tokens (of $K); giving up (exit 75)" >&2
+    exit 75
+  fi
+  if [ $((now - last)) -ge 15 ]; then
+    pos=$(printf '%s\n' "$tickets" | grep -n -x -F "$TICKET" | head -1 | cut -d: -f1)
+    echo "with-slot: queued at position ${pos:-?} of $(printf '%s\n' "$tickets" | grep -c .) (needs $TOKENS of $K tokens, waited ${now}s)" >&2
+    last=$now
+  fi
+  if [ $((now - lastholder)) -ge 60 ] && holder=$(oldest_holder) && [ -n "$holder" ]; then
+    IFS='|' read -r hlabel hpid hage <<<"$holder"
+    echo "waiting for $POOLNAME slot held by $hlabel (pid $hpid, $(age "$hage"))" >&2
+    lastholder=$now
+  fi
+  sleep 1
+done
+rm -rf "$TICKET"
+
+export "$HELD_VAR=1" AH_TEST_SLOT_N="$MYSLOT" AH_TEST_TOKENS_GRANTED="$TOKENS"
+CAP=$((ETA * 3))
+CAPPED="$POOLDIR/held/$MYSLOT/capped"
+
+# The command runs in a process group of its own (its pid is the group id), so that the cap and a signal sent to this script reach
+# everything it started. Without perl it runs in this script's group and only the command itself is signalled.
+# A `dotnet test --filter` run that matched no test exits 0, which reads as a pass. Its output is copied to a file so that case can be told
+# from a run that tested something and be failed (exit 4) below.
+FILTER=""; prev=""
+for a in "$@"; do
+  [ "$prev" = --filter ] && FILTER=$a
+  case "$a" in --filter=*) FILTER=${a#--filter=} ;; esac
+  prev=$a
+done
+OUTDIR=""; TEEPID=""
+exec 5>&1
+if [ -n "$FILTER" ] && [ "$(basename "$1")" = dotnet ] && [ "${2:-}" = test ]; then
+  OUTDIR=$(mktemp -d "${TMPDIR:-/tmp}/with-slot.XXXXXX") && mkfifo "$OUTDIR/fifo" || OUTDIR=""
+fi
+if [ -n "$OUTDIR" ]; then
+  tee "$OUTDIR/out" <"$OUTDIR/fifo" &
+  TEEPID=$!
+  exec 5>"$OUTDIR/fifo"
+fi
+
+GROUP=0
+if command -v perl >/dev/null 2>&1; then
+  GROUP=1
+  perl -e 'setpgrp(0, 0); exec {$ARGV[0]} @ARGV or do { print STDERR "with-slot: cannot run $ARGV[0]: $!\n"; exit 127 }' -- "$@" >&5 &
+else
+  "$@" >&5 &
+fi
+CHILD=$!
+exec 5>&-
+if [ "$GROUP" = 1 ]; then
+  # the process group is the command's pid; kept in the lease so that these tokens stay held if this script is killed
+  record "$POOLDIR/held/$MYSLOT/.holder.$$" "$WAITED" "$CHILD" && mv -f "$POOLDIR/held/$MYSLOT/.holder.$$" "$POOLDIR/held/$MYSLOT/holder"
+fi
+signal_child() { # <signal name>
+  if [ "$GROUP" = 1 ]; then kill -s "$1" -- "-$CHILD" 2>/dev/null || kill -s "$1" "$CHILD" 2>/dev/null; else kill -s "$1" "$CHILD" 2>/dev/null; fi
+}
+# the group appears a moment after the command starts, so its pid counts too
+child_alive() { { [ "$GROUP" = 1 ] && kill -0 -- "-$CHILD"; } 2>/dev/null || kill -0 "$CHILD" 2>/dev/null; }
+trap 'signal_child TERM' TERM INT HUP  # pid-owned: the command this script started and is waiting on
+
+# The cap. It ends by itself once the command is over or this script is gone, and it never signals a process this script did not start.
+(
+  t0=$SECONDS
+  while [ $((SECONDS - t0)) -lt "$CAP" ]; do
+    child_alive && kill -0 "$$" 2>/dev/null || exit 0
+    sleep 1
+  done
+  child_alive || exit 0
+  : >"$CAPPED"
+  pids=$(ps -axo pid=,pgid= 2>/dev/null | awk -v g="$CHILD" '$2 == g { printf "%s%s", sep, $1; sep = " " }')
+  [ "$GROUP" = 1 ] && [ -n "$pids" ] || pids="$CHILD"
+  signal_child TERM
+  waited=0
+  while [ "$waited" -lt 10 ] && child_alive; do sleep 1; waited=$((waited + 1)); done
+  if child_alive; then signal_child KILL; fi
+  printf '{"kind": "capped", "at": %s, "pool": "%s", "slot": "%s", "holder": "%s", "eta": %s, "cap": %s, "killed": [%s]}\n' \
+    "$(date +%s)" "$POOLNAME" "$MYSLOT" "$LABEL" "$ETA" "$CAP" "$(printf '%s' "$pids" | tr ' ' ',')" >>"$SLOTS_DIR/journal.jsonl"
+  echo "with-slot: CAPPED after $(age "$CAP") (eta $(age "$ETA")); killed $pids" >&2
+) &
+WATCH=$!
+
+wait "$CHILD"
+RC=$?
+# a trapped signal ends `wait` early: wait for the command itself
+while kill -0 "$CHILD" 2>/dev/null; do wait "$CHILD"; RC=$?; done
+# What the command left in its group is a leak: nothing can stop it by ancestry once it is reparented. A process that took its own group is not touched.
+if [ "$GROUP" = 1 ] && kill -0 -- "-$CHILD" 2>/dev/null; then
+  kill -s TERM -- "-$CHILD" 2>/dev/null
+  for _ in 1 2 3 4; do kill -0 -- "-$CHILD" 2>/dev/null || break; sleep 0.5; done
+  kill -s KILL -- "-$CHILD" 2>/dev/null
+fi
+if [ -e "$CAPPED" ]; then
+  wait "$WATCH" 2>/dev/null
+  RC=124
+else
+  ah_signal_child TERM "$WATCH"
+fi
+if [ -n "$TEEPID" ]; then
+  # a build server the command left running holds the pipe open, so tee would not end by itself
+  for _ in 1 2 3 4 5 6; do kill -0 "$TEEPID" 2>/dev/null || break; sleep 0.5; done
+  kill "$TEEPID" 2>/dev/null
+  wait "$TEEPID" 2>/dev/null
+  if [ "$RC" = 0 ] && grep -q 'No test matches the given testcase filter' "$OUTDIR/out" 2>/dev/null \
+    && ! grep -Eq '(Passed|Failed)!.*Total:' "$OUTDIR/out" 2>/dev/null; then
+    echo "with-slot: the test filter matched 0 tests; nothing was tested (filter: $FILTER)" >&2
+    RC=4
+  fi
+  rm -rf "$OUTDIR"
+fi
+exit "$RC"

@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h4-note-annotation-orchestrator",
+  "about": "a delivered progress note gets the note rule beside it",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "userpromptsubmit-peer-tracking",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "<cross-session-message from=\"tm-orchestrator\" from-name=\"tm-orchestrator\">\nnote 20260101-000000-abcd: halfway\n</cross-session-message>"
+    }
+  },
+  "mutant": "note rule missing",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"ah: A peer note is news: it never closes a dispatch, and it needs no reply.\\n\\nah CLI root (v<VERSION>): <PLUGIN> — roster: `node <PLUGIN>/hooks/roster.mjs <verb> --cwd <abs cwd>`, messages: `node <PLUGIN>/hooks/msg.mjs <verb> --cwd <abs cwd>` (verbs: agent-hierarchy/docs/cli-tools.md)\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"cli-root\",\"session_id\":\"sess-contract\",\"digest\":\"<DIGEST>\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:37:10.123Z"
+  }
+}

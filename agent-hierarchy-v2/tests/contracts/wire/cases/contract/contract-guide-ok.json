@@ -1,0 +1,31 @@
+{
+  "kind": "wire",
+  "id": "contract-guide-ok",
+  "about": "the contract as markdown",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/contract/guide"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8"
+    },
+    "json": null
+  },
+  "mutant": "the guide served as JSON",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:56.605Z"
+  },
+  "expect_headers": [
+    "content-type"
+  ]
+}

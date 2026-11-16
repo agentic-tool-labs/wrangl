@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "plan-no-roster",
+  "about": "create --plan with no roster at any level hands off to init",
+  "tree": "wire-tm-owner",
+  "env": {
+    "CLAUDE_PID": "<PID:runner>",
+    "CLAUDE_CODE_SESSION_ID": "sess-contract"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "create",
+      "--plan"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: a live Team t-tm already exists — disband it first\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a plan made from nothing",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.970Z"
+  }
+}

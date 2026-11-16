@@ -1,0 +1,908 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "parseAhCommand",
+  "cases": [
+    {
+      "id": "roster-status",
+      "args": [
+        "node /p/hooks/roster.mjs status"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "status",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "roster-no-verb",
+      "args": [
+        "node /p/hooks/roster.mjs"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": null,
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "msg-new-flags",
+      "args": [
+        "node /p/hooks/msg.mjs new --type response --id 20261011-1-a --from implementor --req /x/y--request.md"
+      ],
+      "expect": {
+        "script": "msg",
+        "scriptPath": "/p/hooks/msg.mjs",
+        "verb": "new",
+        "positional": [],
+        "flags": {
+          "type": "response",
+          "id": "20261011-1-a",
+          "from": "implementor",
+          "req": "/x/y--request.md"
+        }
+      }
+    },
+    {
+      "id": "ahd-status-plain",
+      "args": [
+        "node /p/hooks/ahd-ctl.mjs status --plain"
+      ],
+      "expect": {
+        "script": "ahd-ctl",
+        "scriptPath": "/p/hooks/ahd-ctl.mjs",
+        "verb": "status",
+        "positional": [],
+        "flags": {
+          "plain": true
+        }
+      }
+    },
+    {
+      "id": "bool-then-positional",
+      "args": [
+        "node /p/hooks/roster.mjs --json show"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "json": true
+        }
+      }
+    },
+    {
+      "id": "bool-flag-takes-no-value",
+      "args": [
+        "node /p/hooks/roster.mjs show --json team"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [
+          "team"
+        ],
+        "flags": {
+          "json": true
+        }
+      }
+    },
+    {
+      "id": "valued-flag-then-flag",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd --json"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd": true,
+          "json": true
+        }
+      }
+    },
+    {
+      "id": "valued-flag-at-end",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd": true
+        }
+      }
+    },
+    {
+      "id": "flag-eq-form",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd=/x"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd=/x": true
+        }
+      }
+    },
+    {
+      "id": "dash-n-ahd-ctl",
+      "args": [
+        "node /p/hooks/ahd-ctl.mjs logs -n 20"
+      ],
+      "expect": {
+        "script": "ahd-ctl",
+        "scriptPath": "/p/hooks/ahd-ctl.mjs",
+        "verb": "logs",
+        "positional": [],
+        "flags": {
+          "n": "20"
+        }
+      }
+    },
+    {
+      "id": "dash-n-roster-is-positional",
+      "args": [
+        "node /p/hooks/roster.mjs logs -n 20"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "logs",
+        "positional": [
+          "-n",
+          "20"
+        ],
+        "flags": {}
+      }
+    },
+    {
+      "id": "dash-n-ahd-ctl-at-end",
+      "args": [
+        "node /p/hooks/ahd-ctl.mjs logs -n"
+      ],
+      "expect": {
+        "script": "ahd-ctl",
+        "scriptPath": "/p/hooks/ahd-ctl.mjs",
+        "verb": "logs",
+        "positional": [],
+        "flags": {
+          "n": true
+        }
+      }
+    },
+    {
+      "id": "single-quoted-json",
+      "args": [
+        "node /p/hooks/roster.mjs create --members '{\"a\":\"b c\"}'"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "create",
+        "positional": [],
+        "flags": {
+          "members": "{\"a\":\"b c\"}"
+        }
+      }
+    },
+    {
+      "id": "single-quoted-with-meta",
+      "args": [
+        "node /p/hooks/roster.mjs create --members '{\"a\":\"b;c|d>e$f\"}'"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "create",
+        "positional": [],
+        "flags": {
+          "members": "{\"a\":\"b;c|d>e$f\"}"
+        }
+      }
+    },
+    {
+      "id": "single-quoted-newline",
+      "args": [
+        "node /p/hooks/roster.mjs create --members 'a\nb'"
+      ],
+      "expect": null
+    },
+    {
+      "id": "single-quoted-cr",
+      "args": [
+        "node /p/hooks/roster.mjs create --members 'a\rb'"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unterminated-single",
+      "args": [
+        "node /p/hooks/roster.mjs create --members 'abc"
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-plain",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a b\""
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "name": "a b"
+        }
+      }
+    },
+    {
+      "id": "double-quoted-semicolon",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a;b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-dollar",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a$b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-backtick",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a`b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-backslash",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a\\b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-hash-ok",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a#b\""
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "name": "a#b"
+        }
+      }
+    },
+    {
+      "id": "double-quoted-pipe",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a|b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-amp",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a&b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-lt",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a<b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-gt",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a>b\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-paren",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a(b)\""
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-quoted-brace-ok",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a{b}\""
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "name": "a{b}"
+        }
+      }
+    },
+    {
+      "id": "double-quoted-glob-ok",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"a*b?[c]~\""
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "name": "a*b?[c]~"
+        }
+      }
+    },
+    {
+      "id": "unterminated-double",
+      "args": [
+        "node /p/hooks/roster.mjs show --name \"abc"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-semicolon",
+      "args": [
+        "node /p/hooks/roster.mjs show; rm x"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-and",
+      "args": [
+        "node /p/hooks/roster.mjs show && rm x"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-pipe",
+      "args": [
+        "node /p/hooks/roster.mjs show | cat"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-redirect-out",
+      "args": [
+        "node /p/hooks/roster.mjs show > f"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-redirect-in",
+      "args": [
+        "node /p/hooks/roster.mjs show < f"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-paren",
+      "args": [
+        "node /p/hooks/roster.mjs show (x)"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-backtick",
+      "args": [
+        "node /p/hooks/roster.mjs show `x`"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-dollar",
+      "args": [
+        "node /p/hooks/roster.mjs show $HOME"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-backslash",
+      "args": [
+        "node /p/hooks/roster.mjs show a\\ b"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-newline",
+      "args": [
+        "node /p/hooks/roster.mjs show\nrm x"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-cr",
+      "args": [
+        "node /p/hooks/roster.mjs show\rrm x"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-hash",
+      "args": [
+        "node /p/hooks/roster.mjs show #comment"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-brace",
+      "args": [
+        "node /p/hooks/roster.mjs show {a,b}"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-star",
+      "args": [
+        "node /p/hooks/roster.mjs show *"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-question",
+      "args": [
+        "node /p/hooks/roster.mjs show a?"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-bracket-open",
+      "args": [
+        "node /p/hooks/roster.mjs show [a]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unquoted-tilde",
+      "args": [
+        "node /p/hooks/roster.mjs show ~"
+      ],
+      "expect": null
+    },
+    {
+      "id": "mixed-quote-hides-brace",
+      "args": [
+        "node /p/hooks/roster.mjs show --cl{o..o}s''e"
+      ],
+      "expect": null
+    },
+    {
+      "id": "tab-separated",
+      "args": [
+        "node\t/p/hooks/roster.mjs\tshow"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "leading-space",
+      "args": [
+        "   node /p/hooks/roster.mjs show"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "trailing-space",
+      "args": [
+        "node /p/hooks/roster.mjs show   "
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "multiple-spaces",
+      "args": [
+        "node   /p/hooks/roster.mjs    show"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "whitespace-only",
+      "args": [
+        "   "
+      ],
+      "expect": null
+    },
+    {
+      "id": "node-only",
+      "args": [
+        "node"
+      ],
+      "expect": null
+    },
+    {
+      "id": "first-token-quoted",
+      "args": [
+        "'node' /p/hooks/roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "first-token-not-node",
+      "args": [
+        "nodejs /p/hooks/roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-whole-quoted",
+      "args": [
+        "node '/p/hooks/roster.mjs' show"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "script-double-quoted",
+      "args": [
+        "node \"/p/hooks/roster.mjs\" show"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {}
+      }
+    },
+    {
+      "id": "script-mixed-quote",
+      "args": [
+        "node /p/hooks/'roster'.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-relative",
+      "args": [
+        "node hooks/roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-wrong-name",
+      "args": [
+        "node /p/hooks/other.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-wrong-dir",
+      "args": [
+        "node /p/lib/roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-dir-hooks-suffix",
+      "args": [
+        "node /p/myhooks/roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "script-root",
+      "args": [
+        "node /roster.mjs show"
+      ],
+      "expect": null
+    },
+    {
+      "id": "duplicate-flag-last-wins",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd /a --cwd /b"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd": "/b"
+        }
+      }
+    },
+    {
+      "id": "positional-after-flags",
+      "args": [
+        "node /p/hooks/roster.mjs dismiss --close name"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "dismiss",
+        "positional": [
+          "name"
+        ],
+        "flags": {
+          "close": true
+        }
+      }
+    },
+    {
+      "id": "flag-value-looks-like-flag",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd --team x"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd": true,
+          "team": "x"
+        }
+      }
+    },
+    {
+      "id": "flag-value-single-dash",
+      "args": [
+        "node /p/hooks/roster.mjs show --cwd -x"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "cwd": "-x"
+        }
+      }
+    },
+    {
+      "id": "verb-after-bool-flags",
+      "args": [
+        "node /p/hooks/roster.mjs --plain --json teams"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "teams",
+        "positional": [],
+        "flags": {
+          "plain": true,
+          "json": true
+        }
+      }
+    },
+    {
+      "id": "roster-bools-keep-verb",
+      "args": [
+        "node /p/hooks/roster.mjs role set a --from /x --dry-run"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "role",
+        "positional": [
+          "set",
+          "a"
+        ],
+        "flags": {
+          "from": "/x",
+          "dry-run": true
+        }
+      }
+    },
+    {
+      "id": "msg-bool-open",
+      "args": [
+        "node /p/hooks/msg.mjs list --open all"
+      ],
+      "expect": {
+        "script": "msg",
+        "scriptPath": "/p/hooks/msg.mjs",
+        "verb": "list",
+        "positional": [
+          "all"
+        ],
+        "flags": {
+          "open": true
+        }
+      }
+    },
+    {
+      "id": "msg-bool-all",
+      "args": [
+        "node /p/hooks/msg.mjs list --all open"
+      ],
+      "expect": {
+        "script": "msg",
+        "scriptPath": "/p/hooks/msg.mjs",
+        "verb": "list",
+        "positional": [
+          "open"
+        ],
+        "flags": {
+          "all": true
+        }
+      }
+    },
+    {
+      "id": "ahd-bool-pending",
+      "args": [
+        "node /p/hooks/ahd-ctl.mjs inspect entries --pending --n 5"
+      ],
+      "expect": {
+        "script": "ahd-ctl",
+        "scriptPath": "/p/hooks/ahd-ctl.mjs",
+        "verb": "inspect",
+        "positional": [
+          "entries"
+        ],
+        "flags": {
+          "pending": true,
+          "n": "5"
+        }
+      }
+    },
+    {
+      "id": "ahd-bool-follow",
+      "args": [
+        "node /p/hooks/ahd-ctl.mjs logs --follow x"
+      ],
+      "expect": {
+        "script": "ahd-ctl",
+        "scriptPath": "/p/hooks/ahd-ctl.mjs",
+        "verb": "logs",
+        "positional": [
+          "x"
+        ],
+        "flags": {
+          "follow": true
+        }
+      }
+    },
+    {
+      "id": "roster-not-ahd-bool",
+      "args": [
+        "node /p/hooks/roster.mjs show --pending x"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "pending": "x"
+        }
+      }
+    },
+    {
+      "id": "unicode-arg",
+      "args": [
+        "node /p/hooks/roster.mjs show --name 'é中'"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "show",
+        "positional": [],
+        "flags": {
+          "name": "é中"
+        }
+      }
+    },
+    {
+      "id": "not-a-string-null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-object",
+      "args": [
+        {
+          "command": "x"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "meta-lone-open-brace",
+      "args": [
+        "node /p/hooks/roster.mjs status a{b"
+      ],
+      "expect": null
+    },
+    {
+      "id": "meta-lone-close-brace",
+      "args": [
+        "node /p/hooks/roster.mjs status a}b"
+      ],
+      "expect": null
+    },
+    {
+      "id": "meta-brace-pair",
+      "args": [
+        "node /p/hooks/roster.mjs status {a,b}"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-brace-plain-word",
+      "args": [
+        "node /p/hooks/roster.mjs status ab"
+      ],
+      "expect": {
+        "script": "roster",
+        "scriptPath": "/p/hooks/roster.mjs",
+        "verb": "status",
+        "positional": [
+          "ab"
+        ],
+        "flags": {}
+      }
+    }
+  ]
+}

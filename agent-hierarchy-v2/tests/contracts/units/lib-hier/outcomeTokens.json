@@ -1,0 +1,266 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "outcomeTokens",
+  "cases": [
+    {
+      "id": "text-0",
+      "args": [
+        "BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-1",
+      "args": [
+        "BLOCKED: reason"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-2",
+      "args": [
+        "- BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-3",
+      "args": [
+        "* NEEDS-DECISION"
+      ],
+      "expect": [
+        "NEEDS-DECISION"
+      ]
+    },
+    {
+      "id": "text-4",
+      "args": [
+        "1. NEEDS-INTENT"
+      ],
+      "expect": [
+        "NEEDS-INTENT"
+      ]
+    },
+    {
+      "id": "text-5",
+      "args": [
+        "## BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-6",
+      "args": [
+        "###### BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-7",
+      "args": [
+        "####### BLOCKED"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-8",
+      "args": [
+        "status: BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-9",
+      "args": [
+        "**Status:** NEEDS-DECISION"
+      ],
+      "expect": [
+        "NEEDS-DECISION"
+      ]
+    },
+    {
+      "id": "text-10",
+      "args": [
+        "verdict: BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-11",
+      "args": [
+        "Verdict - BLOCKED"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-12",
+      "args": [
+        "- [2] status: BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-13",
+      "args": [
+        "- [1] NEEDS-INTENT"
+      ],
+      "expect": [
+        "NEEDS-INTENT"
+      ]
+    },
+    {
+      "id": "text-14",
+      "args": [
+        "  - `BLOCKED`"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-15",
+      "args": [
+        "__BLOCKED__"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-16",
+      "args": [
+        "blocked"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-17",
+      "args": [
+        "NOT BLOCKED"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-18",
+      "args": [
+        "BLOCKEDX"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-19",
+      "args": [
+        "BLOCKED-NOW"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-20",
+      "args": [
+        "BLOCKED_x"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-21",
+      "args": [
+        "changes: BLOCKED"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-22",
+      "args": [
+        "gaps: NEEDS-DECISION"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-23",
+      "args": [
+        "the work is BLOCKED"
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-24",
+      "args": [
+        "BLOCKED\nNEEDS-DECISION\nBLOCKED"
+      ],
+      "expect": [
+        "BLOCKED",
+        "NEEDS-DECISION"
+      ]
+    },
+    {
+      "id": "text-25",
+      "args": [
+        "[hierarchy-msg /x/y--response.md] BLOCKED"
+      ],
+      "expect": [
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "text-26",
+      "args": [
+        "[hierarchy-msg /x] - NEEDS-INTENT"
+      ],
+      "expect": [
+        "NEEDS-INTENT"
+      ]
+    },
+    {
+      "id": "text-27",
+      "args": [
+        ""
+      ],
+      "expect": []
+    },
+    {
+      "id": "text-28",
+      "args": [
+        "no outcome here"
+      ],
+      "expect": []
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": []
+    }
+  ]
+}

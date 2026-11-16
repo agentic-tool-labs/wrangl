@@ -1,0 +1,142 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isTeamAliasShape",
+  "cases": [
+    {
+      "id": "shape-0",
+      "args": [
+        "tm"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-1",
+      "args": [
+        "a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-2",
+      "args": [
+        "A1"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-3",
+      "args": [
+        "1a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-4",
+      "args": [
+        "a-b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-5",
+      "args": [
+        "a--b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-6",
+      "args": [
+        "-a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-7",
+      "args": [
+        "a-"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-8",
+      "args": [
+        "a_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-9",
+      "args": [
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-10",
+      "args": [
+        "a.b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-11",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "shape-12",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-13",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-14",
+      "args": [
+        "éa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-15",
+      "args": [
+        "a\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-16",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-17",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "shape-18",
+      "args": [
+        [
+          "a"
+        ]
+      ],
+      "expect": false
+    }
+  ]
+}

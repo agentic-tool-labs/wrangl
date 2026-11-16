@@ -1,0 +1,75 @@
+{
+  "kind": "state-op",
+  "id": "release",
+  "about": "release takes back one count",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "links",
+    "op": "release",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "links",
+        "op": "grant",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "team": "tm",
+            "link": {
+              "id": "lk-1",
+              "task": "20260101-120000-ab12",
+              "peers": [
+                "tm-b@tm"
+              ],
+              "requester": "tm-a@tm",
+              "granted_by": "orchestrator",
+              "messages": 2,
+              "minutes": 30
+            },
+            "now": 1767225600000
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-grant"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team": "tm",
+        "id": "lk-1"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-links-release"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "id": "lk-1"
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a release below zero",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:12.523Z"
+  }
+}

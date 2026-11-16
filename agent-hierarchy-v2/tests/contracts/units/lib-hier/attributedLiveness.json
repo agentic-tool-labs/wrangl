@@ -1,0 +1,188 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "attributedLiveness",
+  "cases": [
+    {
+      "id": "live-up",
+      "args": [
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "c",
+            "role": "reviewer",
+            "status": "seen",
+            "ts": "2026-06-01T10:00:00.000Z"
+          }
+        ],
+        "a"
+      ],
+      "expect": {
+        "rec": {
+          "name": "a",
+          "role": "architect",
+          "status": "up",
+          "pid": 1,
+          "ts": "2026-06-01T11:59:50.000Z"
+        },
+        "live": true
+      }
+    },
+    {
+      "id": "down-is-not-live",
+      "args": [
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "c",
+            "role": "reviewer",
+            "status": "seen",
+            "ts": "2026-06-01T10:00:00.000Z"
+          }
+        ],
+        "b"
+      ],
+      "expect": {
+        "rec": {
+          "name": "b",
+          "role": "reviewer",
+          "status": "down",
+          "pid": 1,
+          "ts": "2026-06-01T11:59:50.000Z"
+        },
+        "live": false
+      }
+    },
+    {
+      "id": "stale-seen",
+      "args": [
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "c",
+            "role": "reviewer",
+            "status": "seen",
+            "ts": "2026-06-01T10:00:00.000Z"
+          }
+        ],
+        "c"
+      ],
+      "expect": {
+        "rec": {
+          "name": "c",
+          "role": "reviewer",
+          "status": "seen",
+          "ts": "2026-06-01T10:00:00.000Z"
+        },
+        "live": false
+      }
+    },
+    {
+      "id": "unknown-name",
+      "args": [
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "c",
+            "role": "reviewer",
+            "status": "seen",
+            "ts": "2026-06-01T10:00:00.000Z"
+          }
+        ],
+        "zzz"
+      ],
+      "expect": {
+        "rec": null,
+        "live": false
+      }
+    },
+    {
+      "id": "empty-roster",
+      "args": [
+        [],
+        "a"
+      ],
+      "expect": {
+        "rec": null,
+        "live": false
+      }
+    },
+    {
+      "id": "first-match-wins",
+      "args": [
+        [
+          {
+            "name": "a",
+            "status": "down"
+          },
+          {
+            "name": "a",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "a"
+      ],
+      "expect": {
+        "rec": {
+          "name": "a",
+          "status": "down"
+        },
+        "live": false
+      }
+    }
+  ]
+}

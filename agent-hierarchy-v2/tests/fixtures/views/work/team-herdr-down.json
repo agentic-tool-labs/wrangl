@@ -1,0 +1,376 @@
+{
+ "view_schema": 1,
+ "kind": "team",
+ "id": "<tkey:work>",
+ "path": "/o/<oid>/t/<tkey:work>",
+ "breadcrumb": [
+  {
+   "kind": "root",
+   "id": "",
+   "label": "ah",
+   "path": "/"
+  },
+  {
+   "kind": "orchestrator",
+   "id": "<oid>",
+   "label": "repoW · pid <LIVEPID>",
+   "path": "/o/<oid>"
+  },
+  {
+   "kind": "team",
+   "id": "<tkey:work>",
+   "label": "work",
+   "path": "/o/<oid>/t/<tkey:work>"
+  }
+ ],
+ "summary": {
+  "teams": 1,
+  "members": 5,
+  "live": 0,
+  "working": 0,
+  "blocked": 0,
+  "owed": 0,
+  "ctx_high": 0,
+  "overdue": 0,
+  "joins_pending": 2,
+  "streams_stuck": 0
+ },
+ "children": [
+  {
+   "kind": "member",
+   "id": "w-arch",
+   "label": "w-arch",
+   "path": "/o/<oid>/t/<tkey:work>/m/w-arch",
+   "state": "stale",
+   "summary": {
+    "role": "architect",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  },
+  {
+   "kind": "member",
+   "id": "w-impl",
+   "label": "w-impl",
+   "path": "/o/<oid>/t/<tkey:work>/m/w-impl",
+   "state": "stale",
+   "summary": {
+    "role": "implementor",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  },
+  {
+   "kind": "member",
+   "id": "w-blk",
+   "label": "w-blk",
+   "path": "/o/<oid>/t/<tkey:work>/m/w-blk",
+   "state": "stale",
+   "summary": {
+    "role": "implementor",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  },
+  {
+   "kind": "member",
+   "id": "w-idle",
+   "label": "w-idle",
+   "path": "/o/<oid>/t/<tkey:work>/m/w-idle",
+   "state": "stale",
+   "summary": {
+    "role": "reviewer",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  },
+  {
+   "kind": "member",
+   "id": "w-free",
+   "label": "w-free",
+   "path": "/o/<oid>/t/<tkey:work>/m/w-free",
+   "state": "stale",
+   "summary": {
+    "role": "implementor",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  },
+  {
+   "kind": "join",
+   "id": "20261011-100100-cccc",
+   "label": "newbie",
+   "path": null,
+   "state": "pending",
+   "command": "msg.mjs join accept 20261011-100100-cccc --basis user-approved --why '<edit: why you approve>'",
+   "commands": {
+    "accept": "msg.mjs join accept 20261011-100100-cccc --basis user-approved --why '<edit: why you approve>'",
+    "deny": "msg.mjs join deny 20261011-100100-cccc --basis user-declined --why '<edit: why you decline>'"
+   },
+   "summary": {
+    "harness": "codex",
+    "role_wanted": "reviewer",
+    "created_at": "<ts>",
+    "expires_at": "<ts>",
+    "age_sec": 90,
+    "expires_in_sec": 510
+   }
+  },
+  {
+   "kind": "join",
+   "id": "20261011-100200-dddd",
+   "label": "20261011-100200-dddd",
+   "path": null,
+   "state": "pending",
+   "command": "msg.mjs join accept 20261011-100200-dddd --basis user-approved --why '<edit: why you approve>'",
+   "commands": {
+    "accept": "msg.mjs join accept 20261011-100200-dddd --basis user-approved --why '<edit: why you approve>'",
+    "deny": "msg.mjs join deny 20261011-100200-dddd --basis user-declined --why '<edit: why you decline>'"
+   },
+   "summary": {
+    "harness": "codex",
+    "role_wanted": null,
+    "created_at": "<ts>",
+    "expires_at": null,
+    "age_sec": 30,
+    "expires_in_sec": null
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "s-work",
+   "label": "s-work",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-work",
+   "state": "open",
+   "summary": {
+    "glyph_state": "unknown",
+    "branch": "s-work",
+    "peers": 2,
+    "waiting": 1
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "s-blocked",
+   "label": "s-blocked",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-blocked",
+   "state": "open",
+   "summary": {
+    "glyph_state": "unknown",
+    "branch": "s-blocked",
+    "peers": 1,
+    "waiting": 0
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "s-idle",
+   "label": "s-idle",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-idle",
+   "state": "open",
+   "summary": {
+    "glyph_state": "unknown",
+    "branch": null,
+    "peers": 1,
+    "waiting": 0
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "s-done",
+   "label": "s-done",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-done",
+   "state": "done",
+   "summary": {
+    "glyph_state": "done",
+    "branch": "s-done",
+    "peers": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "s-none",
+   "label": "s-none",
+   "path": "/o/<oid>/t/<tkey:work>/s/s-none",
+   "state": "open",
+   "summary": {
+    "glyph_state": "unknown",
+    "branch": "s-none",
+    "peers": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "kind": "stream",
+   "id": "a/b%c",
+   "label": "a/b%c",
+   "path": "/o/<oid>/t/<tkey:work>/s/a%2Fb%25c",
+   "state": "open",
+   "summary": {
+    "glyph_state": "unknown",
+    "branch": "odd",
+    "peers": 0,
+    "waiting": 0
+   }
+  }
+ ],
+ "body": {
+  "transport": "herdr",
+  "mesh_policy": "star",
+  "open_dispatches": [],
+  "owed_total": 0,
+  "dispatches_truncated": 0,
+  "skipped_members": 0,
+  "commands": [
+   {
+    "label": "plan a disband",
+    "command": "roster.mjs disband --plan --team work"
+   }
+  ],
+  "streams": [
+   {
+    "name": "s-work",
+    "state": "open",
+    "glyph_state": "unknown",
+    "branch": "s-work",
+    "worktree_exists": true,
+    "path": "/o/<oid>/t/<tkey:work>/s/s-work"
+   },
+   {
+    "name": "s-blocked",
+    "state": "open",
+    "glyph_state": "unknown",
+    "branch": "s-blocked",
+    "worktree_exists": false,
+    "path": "/o/<oid>/t/<tkey:work>/s/s-blocked"
+   },
+   {
+    "name": "s-idle",
+    "state": "open",
+    "glyph_state": "unknown",
+    "branch": null,
+    "worktree_exists": false,
+    "path": "/o/<oid>/t/<tkey:work>/s/s-idle"
+   },
+   {
+    "name": "s-done",
+    "state": "done",
+    "glyph_state": "done",
+    "branch": "s-done",
+    "worktree_exists": false,
+    "path": "/o/<oid>/t/<tkey:work>/s/s-done"
+   },
+   {
+    "name": "s-none",
+    "state": "open",
+    "glyph_state": "unknown",
+    "branch": "s-none",
+    "worktree_exists": false,
+    "path": "/o/<oid>/t/<tkey:work>/s/s-none"
+   },
+   {
+    "name": "a/b%c",
+    "state": "open",
+    "glyph_state": "unknown",
+    "branch": "odd",
+    "worktree_exists": false,
+    "path": "/o/<oid>/t/<tkey:work>/s/a%2Fb%25c"
+   }
+  ],
+  "links": [
+   {
+    "id": "w-l1",
+    "peers": [
+     "w-impl@work"
+    ],
+    "state": "active",
+    "remaining_min": 20,
+    "command": "msg.mjs link show w-l1"
+   },
+   {
+    "id": "w-l2",
+    "peers": [
+     "w-blk@work"
+    ],
+    "state": "revoked",
+    "remaining_min": null,
+    "command": "msg.mjs link show w-l2"
+   }
+  ],
+  "links_truncated": 0,
+  "joins": [
+   {
+    "id": "20261011-100100-cccc",
+    "harness": "codex",
+    "name_hint": "newbie",
+    "role_wanted": "reviewer",
+    "why": "wants to review the stream",
+    "created_at": "<ts>",
+    "expires_at": "<ts>",
+    "age_sec": 90,
+    "expires_in_sec": 510,
+    "commands": {
+     "accept": "msg.mjs join accept 20261011-100100-cccc --basis user-approved --why '<edit: why you approve>'",
+     "deny": "msg.mjs join deny 20261011-100100-cccc --basis user-declined --why '<edit: why you decline>'"
+    }
+   },
+   {
+    "id": "20261011-100200-dddd",
+    "harness": "codex",
+    "name_hint": null,
+    "role_wanted": null,
+    "why": "no expiry recorded",
+    "created_at": "<ts>",
+    "expires_at": null,
+    "age_sec": 30,
+    "expires_in_sec": null,
+    "commands": {
+     "accept": "msg.mjs join accept 20261011-100200-dddd --basis user-approved --why '<edit: why you approve>'",
+     "deny": "msg.mjs join deny 20261011-100200-dddd --basis user-declined --why '<edit: why you decline>'"
+    }
+   }
+  ],
+  "reason": "herdr not reachable from the daemon"
+ }
+}

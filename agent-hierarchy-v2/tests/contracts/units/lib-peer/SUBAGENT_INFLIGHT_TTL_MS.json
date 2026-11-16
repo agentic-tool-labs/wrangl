@@ -1,0 +1,12 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "SUBAGENT_INFLIGHT_TTL_MS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 3600000
+    }
+  ]
+}

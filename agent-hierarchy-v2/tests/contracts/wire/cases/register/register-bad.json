@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "register-bad",
+  "about": "a registration without boxes is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "session_id": "s",
+      "addresses": [
+        "tm-implementor@tm"
+      ]
+    },
+    "path": "/v1/register"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "a registration needs session_id, addresses and boxes (address -> box directory)"
+      }
+    }
+  },
+  "mutant": "a registration with no boxes accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:06.417Z"
+  }
+}

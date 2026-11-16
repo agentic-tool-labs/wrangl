@@ -1,0 +1,297 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "envTeamFile",
+  "cases": [
+    {
+      "id": "unset",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ]
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-value",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-absolute",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "teams/alpha.json"
+      ],
+      "expect": {
+        "invalid": "it is not an absolute path",
+        "kind": "malformed",
+        "value": "teams/alpha.json"
+      }
+    },
+    {
+      "id": "dotdot",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/../hierarchy/team.json"
+      ],
+      "expect": {
+        "invalid": "it climbs directories with `..`",
+        "kind": "malformed",
+        "value": "$ROOT/repo/.claude/hierarchy/../hierarchy/team.json"
+      }
+    },
+    {
+      "id": "not-a-team-file-path",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/other.json"
+      ],
+      "expect": {
+        "invalid": "it is not a team file path (<hierarchy dir>/teams/<name>.json or <hierarchy dir>/team.json)",
+        "kind": "malformed",
+        "value": "$ROOT/repo/.claude/hierarchy/other.json"
+      }
+    },
+    {
+      "id": "named-in-home",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/teams/alpha.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "home": "$ROOT/repo/.claude/hierarchy",
+        "teamName": "alpha"
+      }
+    },
+    {
+      "id": "legacy-in-home",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "home": "$ROOT/repo/.claude/hierarchy",
+        "teamName": null
+      }
+    },
+    {
+      "id": "bad-team-name",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/teams/Bad Name.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "invalid": "it does not name a team file with a valid team name",
+        "kind": "malformed",
+        "value": "$ROOT/repo/.claude/hierarchy/teams/Bad Name.json"
+      }
+    },
+    {
+      "id": "named-not-json-extension",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/teams/alpha.txt"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "invalid": "it does not name a team file with a valid team name",
+        "kind": "malformed",
+        "value": "$ROOT/repo/.claude/hierarchy/teams/alpha.txt"
+      }
+    },
+    {
+      "id": "other-repo-hierarchy-dir",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/elsewhere/.claude/hierarchy/teams/alpha.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "invalid": "it is a team file of another repo's hierarchy dir ($ROOT/elsewhere/.claude/hierarchy), not this one's",
+        "kind": "other-repo",
+        "value": "$ROOT/elsewhere/.claude/hierarchy/teams/alpha.json"
+      }
+    },
+    {
+      "id": "not-inside-a-hierarchy-dir",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/elsewhere/teams/alpha.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "invalid": "it is not inside a hierarchy dir",
+        "kind": "malformed",
+        "value": "$ROOT/elsewhere/teams/alpha.json"
+      }
+    },
+    {
+      "id": "worktree-caller-team-in-main",
+      "args": [
+        [
+          "$ROOT/wt/.claude/hierarchy"
+        ],
+        "$ROOT/main/.claude/hierarchy/teams/alpha.json"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": {
+        "home": "$ROOT/main/.claude/hierarchy",
+        "teamName": "alpha"
+      }
+    },
+    {
+      "id": "worktree-own-dir",
+      "args": [
+        [
+          "$ROOT/wt/.claude/hierarchy"
+        ],
+        "$ROOT/wt/.claude/hierarchy/teams/alpha.json"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": {
+        "home": "$ROOT/wt/.claude/hierarchy",
+        "teamName": "alpha"
+      }
+    },
+    {
+      "id": "home-via-symlink-free-realpath-of-missing-dir",
+      "args": [
+        [
+          "$ROOT/new/.claude/hierarchy"
+        ],
+        "$ROOT/new/.claude/hierarchy/teams/a.json"
+      ],
+      "expect": {
+        "home": "$ROOT/new/.claude/hierarchy",
+        "teamName": "a"
+      }
+    },
+    {
+      "id": "no-homes",
+      "args": [
+        [],
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "invalid": "it is a team file of another repo's hierarchy dir ($ROOT/repo/.claude/hierarchy), not this one's",
+        "kind": "other-repo",
+        "value": "$ROOT/repo/.claude/hierarchy/team.json"
+      }
+    },
+    {
+      "id": "empty-home-skipped",
+      "args": [
+        [
+          "",
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "home": "$ROOT/repo/.claude/hierarchy",
+        "teamName": null
+      }
+    },
+    {
+      "id": "value-from-environment",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ]
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_TEAM_FILE": "$ROOT/repo/.claude/hierarchy/teams/alpha.json"
+      },
+      "expect": {
+        "home": "$ROOT/repo/.claude/hierarchy",
+        "teamName": "alpha"
+      }
+    },
+    {
+      "id": "trailing-slash-path",
+      "args": [
+        [
+          "$ROOT/repo/.claude/hierarchy"
+        ],
+        "$ROOT/repo/.claude/hierarchy/team.json/"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "home": "$ROOT/repo/.claude/hierarchy",
+        "teamName": null
+      }
+    },
+    {
+      "id": "hierarchy-dir-under-home-claude-hierarchy",
+      "args": [
+        [
+          "$ROOT/home/.claude/hierarchy/proj"
+        ],
+        "$ROOT/other/.claude/hierarchy/teams/a.json"
+      ],
+      "expect": {
+        "invalid": "it is a team file of another repo's hierarchy dir ($ROOT/other/.claude/hierarchy), not this one's",
+        "kind": "other-repo",
+        "value": "$ROOT/other/.claude/hierarchy/teams/a.json"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "REASONING_MODELS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit"
+      ]
+    }
+  ]
+}

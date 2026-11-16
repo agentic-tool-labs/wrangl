@@ -1,0 +1,11 @@
+{
+  "team_id": "t-tm",
+  "mesh": {
+    "policy": "open"
+  },
+  "orchestrator": {
+    "pid": "<PID:runner>",
+    "session_id": "sess-contract"
+  },
+  "members": []
+}

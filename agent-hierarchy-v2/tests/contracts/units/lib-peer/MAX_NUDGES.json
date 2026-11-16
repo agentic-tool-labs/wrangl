@@ -1,0 +1,12 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "MAX_NUDGES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 2
+    }
+  ]
+}

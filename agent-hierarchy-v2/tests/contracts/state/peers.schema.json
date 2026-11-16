@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "pid": {
+      "type": "integer"
+    },
+    "role": {
+      "type": "string"
+    },
+    "pane_id": {
+      "type": "string"
+    },
+    "ts": {
+      "type": "string"
+    },
+    "op_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "op_id",
+    "pane_id",
+    "pid",
+    "role",
+    "session_id",
+    "status",
+    "ts",
+    "type"
+  ],
+  "additionalProperties": true,
+  "description": "one row of the file"
+}

@@ -1,0 +1,293 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "scanEntryText",
+  "cases": [
+    {
+      "id": "multibyte-torn-and-unterminated",
+      "args": [
+        "{\"id\":\"a\",\"text\":\"é\"}\n{torn\n{\"id\":\"b\"}\n{\"id\":\"c\"",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a",
+              "text": "é"
+            },
+            "end": 23
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 40
+          }
+        ],
+        "next": 40
+      }
+    },
+    {
+      "id": "resume-after-first-line",
+      "args": [
+        "{\"id\":\"a\",\"text\":\"é\"}\n{torn\n{\"id\":\"b\"}\n{\"id\":\"c\"",
+        23
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 40
+          }
+        ],
+        "next": 40
+      }
+    },
+    {
+      "id": "from-beyond-text",
+      "args": [
+        "{\"id\":\"a\",\"text\":\"é\"}\n{torn\n{\"id\":\"b\"}\n{\"id\":\"c\"",
+        10000
+      ],
+      "expect": {
+        "rows": [],
+        "next": 10000
+      }
+    },
+    {
+      "id": "default-from",
+      "args": [
+        "{\"id\":\"a\",\"text\":\"é\"}\n{torn\n{\"id\":\"b\"}\n{\"id\":\"c\""
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a",
+              "text": "é"
+            },
+            "end": 23
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 40
+          }
+        ],
+        "next": 40
+      }
+    },
+    {
+      "id": "empty-text",
+      "args": [
+        "",
+        0
+      ],
+      "expect": {
+        "rows": [],
+        "next": 0
+      }
+    },
+    {
+      "id": "empty-text-from",
+      "args": [
+        "",
+        7
+      ],
+      "expect": {
+        "rows": [],
+        "next": 7
+      }
+    },
+    {
+      "id": "blank-lines-skipped",
+      "args": [
+        "\n\n{\"id\":\"a\"}\n  \n{\"id\":\"b\"}\n",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a"
+            },
+            "end": 13
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 27
+          }
+        ],
+        "next": 27
+      }
+    },
+    {
+      "id": "crlf-lines-trimmed",
+      "args": [
+        "{\"id\":\"a\"}\r\n{\"id\":\"b\"}\r\n",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a"
+            },
+            "end": 12
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 24
+          }
+        ],
+        "next": 24
+      }
+    },
+    {
+      "id": "non-object-lines",
+      "args": [
+        "[1]\n\"x\"\n5\nnull\n{\"id\":\"ok\"}\n",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "ok"
+            },
+            "end": 27
+          }
+        ],
+        "next": 27
+      }
+    },
+    {
+      "id": "id-not-string",
+      "args": [
+        "{\"id\":5}\n{\"id\":\"s\"}\n",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "s"
+            },
+            "end": 20
+          }
+        ],
+        "next": 20
+      }
+    },
+    {
+      "id": "emoji-bytes",
+      "args": [
+        "{\"id\":\"a\",\"t\":\"😀\"}\n{\"id\":\"b\"}\n",
+        0
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a",
+              "t": "😀"
+            },
+            "end": 22
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 33
+          }
+        ],
+        "next": 33
+      }
+    },
+    {
+      "id": "from-mid-line-skips-that-line",
+      "args": [
+        "{\"id\":\"a\"}\n{\"id\":\"b\"}\n",
+        5
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a"
+            },
+            "end": 11
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 22
+          }
+        ],
+        "next": 22
+      }
+    },
+    {
+      "id": "from-at-line-end",
+      "args": [
+        "{\"id\":\"a\"}\n{\"id\":\"b\"}\n",
+        11
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 22
+          }
+        ],
+        "next": 22
+      }
+    },
+    {
+      "id": "from-one-before-line-end",
+      "args": [
+        "{\"id\":\"a\"}\n{\"id\":\"b\"}\n",
+        10
+      ],
+      "expect": {
+        "rows": [
+          {
+            "entry": {
+              "id": "a"
+            },
+            "end": 11
+          },
+          {
+            "entry": {
+              "id": "b"
+            },
+            "end": 22
+          }
+        ],
+        "next": 22
+      }
+    },
+    {
+      "id": "no-trailing-newline-only-line",
+      "args": [
+        "{\"id\":\"a\"}",
+        0
+      ],
+      "expect": {
+        "rows": [],
+        "next": 0
+      }
+    }
+  ]
+}

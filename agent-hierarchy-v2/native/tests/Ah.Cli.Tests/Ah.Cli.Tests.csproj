@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.Cli/Ah.Cli.csproj" />
+    <ProjectReference Include="../Ah.TestKit/Ah.TestKit.csproj" />
+    <ProjectReference Include="../fixtures/Ah.Fixture.Registry/Ah.Fixture.Registry.csproj" />
+    <None Include="../Ah.Roster.Tests/Fixtures/**" Link="Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

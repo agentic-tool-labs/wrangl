@@ -1,0 +1,14 @@
+{"kind":"decided","id":"d1","item":"a","review":true,"at":"2026-06-01T10:00:00Z","by":"architect"}
+{"kind":"decided","id":"d1","item":"a","review":true,"at":"2026-06-01T10:00:01Z","by":"architect"}
+{"kind":"decided","item":"a","review":true,"at":"2026-06-01T10:00:02Z","by":"architect"}
+{"kind":"decided","id":"","item":"b","at":"2026-06-01T10:00:03Z","by":"architect"}
+{"kind":"decided","id":7,"item":"b","at":"2026-06-01T10:00:04Z","by":"architect"}
+{"kind":"parked","id":"p1","item":"a","at":"2026-06-01T10:01:00Z","by":"architect"}
+{"kind":"parked","id":"p2","item":"b","at":"2026-06-01T10:01:01Z","by":"architect"}
+{"kind":"parked","item":"b","at":"2026-06-01T10:01:02Z","by":"architect"}
+{"kind":"parked","id":7,"item":"b","at":"2026-06-01T10:01:03Z","by":"architect"}
+{"kind":"answered","answered_by":"user","answers":"p1","at":"2026-06-01T10:02:00Z","by":"user"}
+{"kind":"answered","answered_by":"user","at":"2026-06-01T10:02:01Z","by":"user"}
+{"kind":"answered","answered_by":"user","answers":7,"at":"2026-06-01T10:02:02Z","by":"user"}
+{"kind":"answered","answered_by":"user","answers":"zz","at":"2026-06-01T10:02:03Z","by":"user"}
+{"kind":"answered","answered_by":"user","answers":"d1","at":"2026-06-01T10:02:04Z","by":"user"}

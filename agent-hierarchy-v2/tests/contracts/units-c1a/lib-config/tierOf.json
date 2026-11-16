@@ -1,0 +1,147 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "tierOf",
+  "cases": [
+    {
+      "id": "haiku",
+      "args": [
+        "haiku"
+      ],
+      "expect": 1
+    },
+    {
+      "id": "sonnet",
+      "args": [
+        "sonnet"
+      ],
+      "expect": 2
+    },
+    {
+      "id": "opus",
+      "args": [
+        "opus"
+      ],
+      "expect": 3
+    },
+    {
+      "id": "fable",
+      "args": [
+        "fable"
+      ],
+      "expect": 4
+    },
+    {
+      "id": "claude-opus-4-5",
+      "args": [
+        "claude-opus-4-5"
+      ],
+      "expect": 3
+    },
+    {
+      "id": "claude-sonnet-5",
+      "args": [
+        "claude-sonnet-5"
+      ],
+      "expect": 2
+    },
+    {
+      "id": "upper",
+      "args": [
+        "OPUS"
+      ],
+      "expect": 3
+    },
+    {
+      "id": "glued",
+      "args": [
+        "opusx"
+      ],
+      "expect": null
+    },
+    {
+      "id": "glued-front",
+      "args": [
+        "xopus"
+      ],
+      "expect": null
+    },
+    {
+      "id": "digit-adjacent",
+      "args": [
+        "opus4"
+      ],
+      "expect": 3
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "my_haiku_model"
+      ],
+      "expect": 1
+    },
+    {
+      "id": "both",
+      "args": [
+        "haiku-opus"
+      ],
+      "expect": 1
+    },
+    {
+      "id": "unknown",
+      "args": [
+        "gpt-4"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "kelvin",
+      "args": [
+        "haiKu"
+      ],
+      "expect": 1
+    },
+    {
+      "id": "dotted-i",
+      "args": [
+        "haİku"
+      ],
+      "expect": null
+    },
+    {
+      "id": "sonnet-end",
+      "args": [
+        "claude-3-sonnet"
+      ],
+      "expect": 2
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "opus\n"
+      ],
+      "expect": 3
+    }
+  ]
+}

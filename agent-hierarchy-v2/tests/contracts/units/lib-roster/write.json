@@ -1,0 +1,125 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "write",
+  "cases": [
+    {
+      "id": "new-file-and-parent-dirs",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team": {
+            "members": [
+              {
+                "role": "architect",
+                "name": "p-architect",
+                "transport_id": "%1",
+                "route": "peer"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1
+            }
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": "{\n  \"members\": [\n    {\n      \"role\": \"architect\",\n      \"name\": \"p-architect\",\n      \"transport_id\": \"%1\",\n      \"route\": \"peer\"\n    }\n  ],\n  \"orchestrator\": {\n    \"pid\": 1\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "replaces-existing",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team": {
+            "members": [],
+            "note": "é "
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": "{\n  \"members\": [],\n  \"note\": \"é \"\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "lone-surrogate-roundtrips",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team": {
+            "members": [
+              {
+                "role": "a\ud800"
+              }
+            ]
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": "{\n  \"members\": [\n    {\n      \"role\": \"a\\ud800\"\n    }\n  ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "integer-keys-ordered-first",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team": {
+            "1": "y",
+            "2": "x",
+            "z": 1,
+            "members": []
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": "{\n  \"1\": \"y\",\n  \"2\": \"x\",\n  \"z\": 1,\n  \"members\": []\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "path-not-a-string-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team": {
+            "members": []
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "kindFieldWarnings",
+  "cases": [
+    {
+      "id": "claude-none",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "codex-chain-readonly-plan",
+      "args": [
+        {
+          "role": "architect",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "plan"
+        }
+      ],
+      "expect": [
+        "auto-mode \"plan\" runs codex in a read-only sandbox, so this architect cannot write its report file without an approval answered in its own pane"
+      ]
+    },
+    {
+      "id": "codex-chain-readonly-manual",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "manual"
+        }
+      ],
+      "expect": [
+        "auto-mode \"manual\" runs codex in a read-only sandbox, so this implementor cannot write its report file without an approval answered in its own pane"
+      ]
+    },
+    {
+      "id": "codex-chain-writable-auto",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "auto"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "codex-legwork-readonly-no-warning",
+      "args": [
+        {
+          "role": "task-runner",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "plan"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "codex-custom-chain-readonly",
+      "args": [
+        {
+          "role": "ui-dev",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "plan"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": [
+        "auto-mode \"plan\" runs codex in a read-only sandbox, so this ui-dev cannot write its report file without an approval answered in its own pane"
+      ]
+    },
+    {
+      "id": "codex-custom-legwork-readonly",
+      "args": [
+        {
+          "role": "scribe",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "plan"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "advise-undeclared-model",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "expect": [
+        "codex model gpt-5 has no declared tier; an advise-class member needs a model declared opus or fable, so spawning it will refuse. Declare it with `roster.mjs tier set codex gpt-5 <opus|fable>` if that is how it compares"
+      ]
+    },
+    {
+      "id": "advise-declared-opus",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "advise-declared-fable",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"fable\"}}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "advise-declared-sonnet",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"sonnet\"}}}"
+      },
+      "expect": [
+        "codex model gpt-5 is declared sonnet; an advise-class member needs a model declared opus or fable, so spawning it will refuse. Declare it with `roster.mjs tier set codex gpt-5 <opus|fable>` if that is how it compares"
+      ]
+    },
+    {
+      "id": "advise-declared-nonsense-tier",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"huge\"}}}"
+      },
+      "expect": [
+        "codex model gpt-5 has no declared tier; an advise-class member needs a model declared opus or fable, so spawning it will refuse. Declare it with `roster.mjs tier set codex gpt-5 <opus|fable>` if that is how it compares"
+      ]
+    },
+    {
+      "id": "advise-tier-check-off",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        },
+        null,
+        {
+          "tier": false
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "advise-no-model",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "advise-empty-model",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": ""
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "advise-custom-role",
+      "args": [
+        {
+          "role": "oracle",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": [
+        "codex model gpt-5 has no declared tier; an advise-class member needs a model declared opus or fable, so spawning it will refuse. Declare it with `roster.mjs tier set codex gpt-5 <opus|fable>` if that is how it compares"
+      ]
+    },
+    {
+      "id": "advise-other-kind-no-harness",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "gemini",
+          "route": "pane",
+          "model": "g1"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "null-member",
+      "args": [
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "tier-true-explicit",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        },
+        null,
+        {
+          "tier": true
+        }
+      ],
+      "expect": [
+        "codex model gpt-5 has no declared tier; an advise-class member needs a model declared opus or fable, so spawning it will refuse. Declare it with `roster.mjs tier set codex gpt-5 <opus|fable>` if that is how it compares"
+      ]
+    }
+  ]
+}

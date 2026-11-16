@@ -1,0 +1,15 @@
+{
+  "about": "Lifecycle scenarios that exercise a Node/native coexistence the native daemon and client no longer have.",
+  "rows": [
+    {
+      "id": "FD-writer-stamp-retired",
+      "where": "tests/contracts/lifecycle/08-impl-drain.sh, native client and native daemon",
+      "node": "state-writer.json names the runtime that writes the shared stores: a client or daemon of the other runtime drains the running daemon, and the stamp's runtime is started in its place",
+      "native": "native is the only writer: nothing reads state-writer.json and no Node daemon is ever spawned, so a stamp naming node drains nothing",
+      "reason": "0114 flag day: writer stamp retired, no Node/native coexistence",
+      "rowsExercisingNode": [
+        "lifecycle/08-impl-drain"
+      ]
+    }
+  ]
+}

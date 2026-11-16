@@ -1,0 +1,40 @@
+{
+  "kind": "hook",
+  "id": "h4-listagents-unknown-skipped",
+  "about": "a peer that is no configured target and carries no role is not recorded",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-roster",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "ListAgents",
+      "tool_input": {},
+      "tool_response": "Peer sessions (1):\n  stranger-session [aaaaaa]  ·  interactive  ·  idle  ·  started 1h ago\n",
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "unknown peer recorded",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:38.698Z"
+  }
+}

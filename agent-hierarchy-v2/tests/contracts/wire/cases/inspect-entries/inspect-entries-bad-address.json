@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "inspect-entries-bad-address",
+  "about": "an address that is not name@team is 400 bad_address",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "nobody"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/entries"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_address",
+        "message": "address must be name@team"
+      }
+    }
+  },
+  "mutant": "a bad address accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:01.941Z"
+  }
+}

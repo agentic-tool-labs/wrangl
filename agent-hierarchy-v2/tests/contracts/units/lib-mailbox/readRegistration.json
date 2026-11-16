@@ -1,0 +1,271 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "readRegistration",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "v": 1,
+        "session_id": "s1",
+        "address": "a@tm",
+        "addresses": [
+          "a@tm"
+        ],
+        "boxes": {
+          "a@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        "team_file": null,
+        "harness": "claude",
+        "pid": 1,
+        "pane_id": null,
+        "at": "2026-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "missing",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "id-with-slash",
+      "args": [
+        "a/b"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/b.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-id",
+      "args": [
+        ""
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "parent-id",
+      "args": [
+        "../x"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "null-id",
+      "args": [
+        null
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "address-not-a-string",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":5,\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-address",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "array-document",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "[1,2]\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "null-document",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "null\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "string-document",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "\"x\"\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "torn-json",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"address\":\"a@tm\","
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": ""
+      },
+      "expect": null
+    },
+    {
+      "id": "unknown-fields-kept",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\",\"extra\":{\"n\":[1,2]},\"cwd\":\"/w\"}\n"
+      },
+      "expect": {
+        "v": 1,
+        "session_id": "s1",
+        "address": "a@tm",
+        "addresses": [
+          "a@tm"
+        ],
+        "boxes": {
+          "a@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        "team_file": null,
+        "harness": "claude",
+        "pid": 1,
+        "pane_id": null,
+        "at": "2026-01-01T00:00:00.000Z",
+        "extra": {
+          "n": [
+            1,
+            2
+          ]
+        },
+        "cwd": "/w"
+      }
+    },
+    {
+      "id": "bom-prefixed",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "﻿{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "address-empty-string-is-valid",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "v": 1,
+        "session_id": "s1",
+        "address": "",
+        "addresses": [
+          "a@tm"
+        ],
+        "boxes": {
+          "a@tm": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        "team_file": null,
+        "harness": "claude",
+        "pid": 1,
+        "pane_id": null,
+        "at": "2026-01-01T00:00:00.000Z"
+      }
+    }
+  ]
+}

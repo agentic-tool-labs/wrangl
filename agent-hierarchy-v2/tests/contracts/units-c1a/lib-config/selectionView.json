@@ -1,0 +1,73 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "selectionView",
+  "cases": [
+    {
+      "id": "full",
+      "args": [
+        {
+          "roster": "squad",
+          "key": "squad",
+          "source": "activeRoster",
+          "level": "repo",
+          "path": "/p"
+        }
+      ],
+      "expect": {
+        "roster": "squad",
+        "source": "activeRoster",
+        "level": "repo",
+        "path": "/p"
+      }
+    },
+    {
+      "id": "default",
+      "args": [
+        {
+          "roster": "default",
+          "key": null,
+          "source": "default",
+          "level": null,
+          "path": null
+        }
+      ],
+      "expect": {
+        "roster": "default",
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "extra-dropped",
+      "args": [
+        {
+          "roster": "a",
+          "key": "a",
+          "source": "flag",
+          "level": null,
+          "path": null,
+          "extra": 1
+        }
+      ],
+      "expect": {
+        "roster": "a",
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "missing-keys",
+      "args": [
+        {
+          "roster": "a"
+        }
+      ],
+      "expect": {
+        "roster": "a"
+      }
+    }
+  ]
+}

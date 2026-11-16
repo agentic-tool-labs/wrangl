@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "list-empty",
+  "about": "decision list with no pipeline run prints none",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "decision",
+      "list"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: decision list: no open pipeline-run-anchor exchange for this team — no pipeline run is live — pass --run <anchor id> for a finished run\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a decision invented",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.739Z"
+  }
+}

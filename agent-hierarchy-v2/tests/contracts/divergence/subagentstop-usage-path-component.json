@@ -1,0 +1,27 @@
+{
+  "about": "SubagentStop usage collector: where the native hook is stricter than the Node oracle about which transcript it reads.",
+  "ruling": "Reviewer batch 3 N9 (20261012-013345-17oj), accepted by the Orchestrator",
+  "node": "hooks/subagentstop-usage.mjs joins the payload's session_id and agent_id into <project dir>/<session_id>/subagents/agent-<agent_id>.jsonl without checking either, so an id carrying a separator or .. sums a transcript outside the session's own subagents folder",
+  "native": "Ah.Hooks SubagentStopUsage reads a transcript only when session_id and agent_id are each one path component (no '/', no NUL, not '.' or '..'); otherwise the usage row is still appended, found false with zero sums",
+  "reason": "the read is sum-only and nothing but token counts reaches the log, but the path is built from payload data; Claude's ids are uuid or hex tokens, so refusing a separator costs no real input",
+  "rowsExercisingNode": [
+    {
+      "row": "hook/subagentstop-usage/h4-session-id-escapes-session-folder",
+      "node": "found true, sums of the sibling session's transcript",
+      "native": "found false, zero sums"
+    }
+  ],
+  "nativeOnly": [
+    {
+      "row": "Ah.Hooks.Tests SubagentStopUsageTests.AnIdThatLeavesItsFolderIsNotFollowed",
+      "proves": "session_id ../x, session_id .. and an agent_id climbing out through x/../../../y are not followed"
+    },
+    {
+      "row": "Ah.Hooks.Tests SubagentStopUsageTests.IdsThatMerelyContainDotsAreStillRead",
+      "proves": "an id that only contains dots (a..b, sess.v1..2) is one component and is read"
+    }
+  ],
+  "excludedCases": [
+    "hook/subagentstop-usage/h4-session-id-escapes-session-folder"
+  ]
+}

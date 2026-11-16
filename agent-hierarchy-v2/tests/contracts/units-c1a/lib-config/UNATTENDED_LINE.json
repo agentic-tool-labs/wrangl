@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "UNATTENDED_LINE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "takes work in unattended /ah:pipeline runs (pushes draft PRs, does not merge)"
+    }
+  ]
+}

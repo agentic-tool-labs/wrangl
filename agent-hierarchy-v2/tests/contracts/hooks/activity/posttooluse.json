@@ -1,0 +1,45 @@
+{
+  "kind": "hook",
+  "id": "posttooluse",
+  "about": "a tool result keeps the subject working with the tool named",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "echo hi",
+        "description": "contract"
+      },
+      "tool_response": {
+        "stdout": "hi"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "the tool name lost",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:26.676Z"
+  }
+}

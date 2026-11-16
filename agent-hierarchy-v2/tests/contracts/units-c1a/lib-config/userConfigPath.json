@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "userConfigPath",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "$ROOT/home/.claude/agent-hierarchy.json"
+    }
+  ]
+}

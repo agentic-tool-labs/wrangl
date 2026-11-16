@@ -1,0 +1,58 @@
+{
+  "kind": "hook",
+  "id": "h6-pretooluse-askuserquestion-orchestrator-blocked",
+  "about": "PreToolUse of AskUserQuestion reaches the activity hook as the Orchestrator session; stdout, stderr and the tree stay as recorded",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "AskUserQuestion",
+      "tool_use_id": "toolu_contract",
+      "tool_input": {
+        "questions": [
+          {
+            "question": "Which one?",
+            "header": "Pick",
+            "options": [
+              {
+                "label": "a",
+                "description": "a"
+              },
+              {
+                "label": "b",
+                "description": "b"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": null,
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-21T18:09:18.000Z",
+    "note": "recorded from the native binary; the case exists so the PreToolUse AskUserQuestion activity row has a case"
+  }
+}

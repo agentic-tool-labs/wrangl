@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h3-mail-brief-two-listed",
+  "about": "two owed mailed briefs are listed together",
+  "tree": "hook-mail-brief-two",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-peer-nudge",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "briefs collapsed",
+  "expect": {
+    "stdout": "{\"decision\":\"block\",\"reason\":\"ah: you have a brief to answer:\\n- entry <MSGID:1>, from orchestrator@tm: [hierarchy-msg <MSGID:2>]; its report is not written yet. File it with `msg.mjs fill --id <MSGID:2> --from implementor --body-file -`, then run: msg.mjs send orchestrator@tm --kind report --ref <MSGID:2>.\\n- entry <MSGID:3>, from orchestrator@tm: [hierarchy-msg <MSGID:4>]; its report is not written yet. File it with `msg.mjs fill --id <MSGID:4> --from implementor --body-file -`, then run: msg.mjs send orchestrator@tm --kind report --ref <MSGID:4>.\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"mail-nudge\",\"session_id\":\"sess-contract\",\"task\":\"<MSGID:1>\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>:0\"}\n{\"type\":\"mail-nudge\",\"session_id\":\"sess-contract\",\"task\":\"<MSGID:3>\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:1>:1\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:39:15.492Z"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "isComposer",
+  "cases": [
+    {
+      "id": "idle-with-shortcuts",
+      "args": [
+        "codex",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      ],
+      "expect": true
+    },
+    {
+      "id": "idle-without-shortcuts",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  gpt-5 · /repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "idle-no-blank-row",
+      "args": [
+        "codex",
+        "out\n› Ask Codex to do anything\n  gpt-5 · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "idle-follow-up-placeholder",
+      "args": [
+        "codex",
+        "out\n\n› Ask a follow-up question\n\n  gpt-5 · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "alt-glyph",
+      "args": [
+        "codex",
+        "out\n\n» Ask Codex to do anything\n\n  gpt-5 · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "draft-text-in-composer",
+      "args": [
+        "codex",
+        "out\n\n› fix the bug\n\n  gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "placeholder-with-trailing-spaces",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything   \n\n  gpt-5 · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "two-blank-rows-between",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n\n  gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "queued-message-under-prompt",
+      "args": [
+        "codex",
+        "› Ask Codex to do anything\n  queued: do the thing\n  gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "status-line-missing-path",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  gpt-5 high"
+      ],
+      "expect": false
+    },
+    {
+      "id": "status-line-indented-three",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n   gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "status-path-absolute",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  gpt-5 · /abs"
+      ],
+      "expect": true
+    },
+    {
+      "id": "braille-in-blank-cells",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n⠀⠁\n  gpt-5 · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-blank-lines",
+      "args": [
+        "codex",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts\n\n  \n"
+      ],
+      "expect": true
+    },
+    {
+      "id": "prompt-row-five-lines-up",
+      "args": [
+        "codex",
+        "› Ask Codex to do anything\na\nb\nc\nd\n  gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-glyph-space",
+      "args": [
+        "codex",
+        "out\n\n›Ask Codex to do anything\n\n  gpt-5 · ~/repo"
+      ],
+      "expect": false
+    },
+    {
+      "id": "unknown-kind",
+      "args": [
+        "gemini",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      ],
+      "expect": false
+    },
+    {
+      "id": "claude-kind-has-no-codex-composer",
+      "args": [
+        "claude",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-screen",
+      "args": [
+        "codex",
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "shortcuts-wrong-text",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  gpt-5 · ~/repo\n  press ? for shortcuts"
+      ],
+      "expect": false
+    },
+    {
+      "id": "status-two-segments-before-cwd",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  a · b · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "status-astral-model-name",
+      "args": [
+        "codex",
+        "out\n\n› Ask Codex to do anything\n\n  😀 gpt · ~/repo"
+      ],
+      "expect": true
+    },
+    {
+      "id": "three-rows-under-the-prompt",
+      "args": [
+        "codex",
+        "› Ask Codex to do anything\n  gpt-5 · ~/repo\n  ? for shortcuts\n  extra row"
+      ],
+      "expect": false
+    }
+  ]
+}

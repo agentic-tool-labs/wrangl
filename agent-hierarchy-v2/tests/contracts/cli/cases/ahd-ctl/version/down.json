@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "down",
+  "about": "version with no daemon reports the plugin version",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "version"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"source\":\"files\",\"client\":{\"version\":\"<VERSION>\"},\"daemon\":null,\"verdict\":null}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a version that starts the daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.234Z"
+  }
+}

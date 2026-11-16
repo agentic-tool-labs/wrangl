@@ -1,0 +1,24 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROLE_LABELS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "ultra-advisor": "Ultra-Advisor",
+        "architect": "Architect",
+        "reviewer": "Reviewer",
+        "implementor": "Implementor",
+        "docs-writer": "Docs-Writer",
+        "qa": "QA",
+        "ux-engineer": "UX-Engineer",
+        "task-runner": "Task-Runner",
+        "backlog-groomer": "Backlog-Groomer",
+        "sub-orchestrator": "Sub-Orchestrator",
+        "deputy-chief": "Deputy-Chief"
+      }
+    }
+  ]
+}

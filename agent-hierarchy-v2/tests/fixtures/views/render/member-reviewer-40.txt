@@ -1,0 +1,12 @@
+… › alpha › alpha-reviewer
+────────────────────────────────────────
+reviewer  ·  reviewer  ·  codex (pane)
+model gpt-5  effort –  session –  work …
+placement herdr  pane %2  pasteable
+live  blocked for 60s
+context –
+blocked permission — askme
+owed 0
+mailbox  unacked 0  overdue 0  adapter …
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

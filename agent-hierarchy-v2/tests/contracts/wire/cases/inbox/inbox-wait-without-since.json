@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "inbox-wait-without-since",
+  "about": "wait without since is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "wait": "1",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inbox"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "wait needs since: unacked entries are always new, so a long-poll without a cursor would return at once"
+      }
+    }
+  },
+  "mutant": "wait without since accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:01.443Z"
+  }
+}

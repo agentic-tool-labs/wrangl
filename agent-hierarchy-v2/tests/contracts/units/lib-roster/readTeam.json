@@ -1,0 +1,210 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "readTeam",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":111,\"session_id\":\"sess-1\"},\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}]}"
+      },
+      "expect": {
+        "version": 1,
+        "team_id": "t",
+        "orchestrator": {
+          "pid": 111,
+          "session_id": "sess-1"
+        },
+        "members": [
+          {
+            "role": "architect",
+            "name": "p-architect",
+            "transport_id": "%1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":111,\"session_id\":\"sess-1\"},\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}]}"
+      },
+      "expect": {
+        "version": 1,
+        "team_id": "t",
+        "orchestrator": {
+          "pid": 111,
+          "session_id": "sess-1"
+        },
+        "members": [
+          {
+            "role": "architect",
+            "name": "p-architect",
+            "transport_id": "%1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "none"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-an-object",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "[1,2]"
+      },
+      "expect": null
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":{}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "members-empty-array-ok",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[]}"
+      },
+      "expect": {
+        "members": []
+      }
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{nope"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": ""
+      },
+      "expect": null
+    },
+    {
+      "id": "bom-prefixed-is-unreadable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "﻿{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":111,\"session_id\":\"sess-1\"},\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "lone-surrogate-roundtrips",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"a\\ud800b\"}]}"
+      },
+      "expect": {
+        "members": [
+          {
+            "role": "architect",
+            "name": "a\ud800b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "key-order-and-integer-keys",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"z\":1,\"members\":[],\"2\":\"x\",\"1\":\"y\"}"
+      },
+      "expect": {
+        "1": "y",
+        "2": "x",
+        "z": 1,
+        "members": []
+      }
+    },
+    {
+      "id": "directory-in-place-of-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json/inner": "x"
+      },
+      "expect": null
+    },
+    {
+      "id": "worktree-home-file",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":111,\"session_id\":\"sess-1\"},\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}]}"
+      },
+      "expect": {
+        "version": 1,
+        "team_id": "t",
+        "orchestrator": {
+          "pid": 111,
+          "session_id": "sess-1"
+        },
+        "members": [
+          {
+            "role": "architect",
+            "name": "p-architect",
+            "transport_id": "%1"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,442 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "staleTeamKeys",
+  "cases": [
+    {
+      "id": "clean",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"version\":1}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "no-config-files",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "team-alias-global",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"teamAlias\":\"old\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamAlias in $ROOT/home/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/home/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": [
+          "old"
+        ]
+      }
+    },
+    {
+      "id": "team-alias-repo",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/agent-hierarchy.json": "{\"teamAlias\":\"old\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamAlias in $ROOT/r/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/r/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": [
+          "old"
+        ]
+      }
+    },
+    {
+      "id": "team-alias-empty-string",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"teamAlias\":\"\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamAlias in $ROOT/home/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/home/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "team-alias-number",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"teamAlias\":3}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamAlias in $ROOT/home/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/home/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "roster-layout",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\"}],\"layout\":\"grid\"}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roster.layout in $ROOT/r/.claude/agent-hierarchy.json is ignored — a team's layout is chosen when it is created (`roster.mjs create --mode <auto|columns|grid>`), and an explicit --mode becomes the default for future teams. It has no effect; delete it from $ROOT/r/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "team-layout-in-repo",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/agent-hierarchy.json": "{\"teamLayout\":\"grid\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamLayout in $ROOT/r/.claude/agent-hierarchy.json is ignored — the default team layout is read from the global config ($ROOT/home/.claude/agent-hierarchy.json) only, and an explicit `create --mode <m>` sets it. It has no effect; delete it from $ROOT/r/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "team-layout-in-global-ok",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"teamLayout\":\"grid\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "route-subagent",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"route\":\"subagent\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "route-peers-ok",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"route\":\"peers\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "roster-route-subagent",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"subagent\",\"members\":[{\"role\":\"implementor\"}]}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roster.route \"subagent\" in $ROOT/home/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "member-route-subagent",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\",\"route\":\"subagent\"}]}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roster.members[0] (implementor) route \"subagent\" in $ROOT/home/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "member-on-missing-never",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\",\"onMissing\":\"never\"}]}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roster.members[0] (implementor) onMissing \"never\" in $ROOT/home/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "member-on-missing-auto-ok",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[{\"role\":\"implementor\",\"onMissing\":\"auto\"}]}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "members-not-objects",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roster\":{\"members\":[\"x\",{\"role\":\"implementor\"},3]}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "roster `$ROOT/home/.claude/agent-hierarchy.json`: `members[0]` is not an object (`string`); ignored",
+          "roster `$ROOT/home/.claude/agent-hierarchy.json`: `members[2]` is not an object (`number`); ignored"
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "role-dispatch-model-chain",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roles\":{\"architect\":{\"dispatch\":\"model\"}}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roles.architect.dispatch \"model\" in $ROOT/home/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "role-dispatch-model-legwork-ok",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roles\":{\"task-runner\":{\"dispatch\":\"model\"}}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "role-dispatch-model-custom-with-registry",
+      "args": [
+        "$ROOT/r",
+        {
+          "roles": {
+            "qa": {
+              "class": "review",
+              "label": "QA",
+              "routes": "qa work",
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"roles\":{\"qa\":{\"dispatch\":\"model\"}}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: roles.qa.dispatch \"model\" in $ROOT/home/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "invalid-model-tiers",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"gpt-9\":\"high\",\"good\":2}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: modelTiers.gpt-9 in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it.",
+          "ah: modelTiers.good in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it."
+        ],
+        "aliases": []
+      }
+    },
+    {
+      "id": "invalid-json-skipped",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{nope"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "json-array-skipped",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "[1]"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [],
+        "aliases": []
+      }
+    },
+    {
+      "id": "several-levels-order",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"teamAlias\":\"g\"}",
+        "r/.claude/agent-hierarchy.json": "{\"teamAlias\":\"r\"}",
+        "r/.claude/agent-hierarchy.local.json": "{\"teamAlias\":\"u\"}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: teamAlias in $ROOT/r/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/r/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file.",
+          "ah: teamAlias in $ROOT/home/.claude/agent-hierarchy.json is ignored — a team's name is chosen when it is created (`roster.mjs create --team <name>`). It has no effect; delete it from $ROOT/home/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file."
+        ],
+        "aliases": [
+          "r",
+          "g"
+        ]
+      }
+    },
+    {
+      "id": "named-roster-blocks",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/agent-hierarchy.json": "{\"rosters\":{\"alt\":{\"members\":[{\"role\":\"reviewer\",\"route\":\"subagent\"}],\"layout\":\"columns\"}}}"
+      },
+      "cwd": "r",
+      "expect": {
+        "warnings": [
+          "ah: rosters.alt.layout in $ROOT/r/.claude/agent-hierarchy.json is ignored — a team's layout is chosen when it is created (`roster.mjs create --mode <auto|columns|grid>`), and an explicit --mode becomes the default for future teams. It has no effect; delete it from $ROOT/r/.claude/agent-hierarchy.json to drop this warning, or it is removed at the next CLI write to that file.",
+          "ah: rosters.alt.members[0] (reviewer) route \"subagent\" in $ROOT/r/.claude/agent-hierarchy.json is ignored — only legwork roles run as subagents. It is migrated at the next CLI write to that file, or delete it by hand."
+        ],
+        "aliases": []
+      }
+    }
+  ]
+}

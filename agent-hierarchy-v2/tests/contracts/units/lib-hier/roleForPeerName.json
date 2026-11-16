@@ -1,0 +1,285 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "roleForPeerName",
+  "cases": [
+    {
+      "id": "team-member-role",
+      "args": [
+        "p-architect",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}"
+      },
+      "expect": "architect"
+    },
+    {
+      "id": "configured-peer-name",
+      "args": [
+        "repo-reviewer",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "reviewer"
+    },
+    {
+      "id": "role-token-in-name",
+      "args": [
+        "other-implementor-2",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "implementor"
+    },
+    {
+      "id": "unknown-name",
+      "args": [
+        "zzz",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "name-not-a-string",
+      "args": [
+        5,
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "named-team-scope-member",
+      "args": [
+        "p-architect",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": "alpha",
+          "teamVia": "team",
+          "ownedTeams": []
+        },
+        "repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"reviewer\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}"
+      },
+      "expect": "reviewer"
+    }
+  ]
+}

@@ -1,0 +1,555 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "recognizeScreen",
+  "cases": [
+    {
+      "id": "codex-approval-blocked",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "approval",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `rm -rf` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-approval-not-blocked",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-working",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "working"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-status-undefined",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        null
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-wrapped-option",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n     continued text\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-unknown-label",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Sure, go (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-two-marked",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n› 2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-no-heading",
+      "args": [
+        "codex",
+        "  Something\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-other-heading-present",
+      "args": [
+        "codex",
+        "Would you like to make the following edits?\n  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-other-heading-below-footer-check",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel\nneeds your approval.",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-approval-footer-with-thread",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel or t to open thread",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "approval",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `rm -rf` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-trust-dialog-idle",
+      "args": [
+        "codex",
+        "  Do you trust the contents of this directory? Working with untrusted contents comes with higher risk of prompt injection.\n\n› 1. Yes, continue\n  2. No, quit\n\n  Press enter to continue",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "trust-dialog",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-trust-dialog-blocked-status-disagrees",
+      "args": [
+        "codex",
+        "  Do you trust the contents of this directory? Working with untrusted contents comes with higher risk of prompt injection.\n\n› 1. Yes, continue\n  2. No, quit\n\n  Press enter to continue",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-trust-dialog-wrapped-heading",
+      "args": [
+        "codex",
+        "  Do you trust the contents of this directory?\nWorking with untrusted contents comes with higher risk of prompt injection.\n\n› 1. Yes, continue\n  2. No, quit\n\n  Press enter to continue",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "trust-dialog",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-login",
+      "args": [
+        "codex",
+        "  Sign in with ChatGPT to use Codex as part of your paid plan\n\n> 1. Sign in with ChatGPT\n     Usually the best choice\n\n  2. Sign in with Device Code\n     Sign in from another device\n\n  3. Provide your own API key\n     Pay for what you use\n\n  Press enter to continue",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "login",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Sign in with ChatGPT"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Sign in with Device Code"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "Provide your own API key"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-login-working",
+      "args": [
+        "codex",
+        "  Sign in with ChatGPT to use Codex as part of your paid plan\n\n> 1. Sign in with ChatGPT\n     Usually the best choice\n\n  2. Sign in with Device Code\n     Sign in from another device\n\n  3. Provide your own API key\n     Pay for what you use\n\n  Press enter to continue",
+        "working"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-login-unknown-method",
+      "args": [
+        "codex",
+        "  Sign in with ChatGPT to use Codex as part of your paid plan\n\n> 1. Sign in with ChatGPT\n     Usually the best choice\n\n  2. Sign in with Device Code\n     Sign in from another device\n\n  3. Provide your own API key\n     Pay for what you use\n\n  Press enter to continue",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "login",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Sign in with ChatGPT"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Sign in with Device Code"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "Provide your own API key"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-login-options-tight",
+      "args": [
+        "codex",
+        "  Sign in with ChatGPT to use Codex as part of your paid plan\n\n> 1. Sign in with ChatGPT\n     Usually the best choice\n  2. Sign in with Device Code\n     Sign in from another device\n  3. Provide your own API key\n     Pay for what you use\n\n  Press enter to continue",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "login",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Sign in with ChatGPT"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Sign in with Device Code"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "Provide your own API key"
+          }
+        ]
+      }
+    },
+    {
+      "id": "codex-idle-composer",
+      "args": [
+        "codex",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "idle"
+      ],
+      "expect": {
+        "composer": true,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-idle-composer-herdr-working",
+      "args": [
+        "codex",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "working"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-idle-composer-status-unknown",
+      "args": [
+        "codex",
+        "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "unknown"
+      ],
+      "expect": {
+        "composer": true,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-nothing",
+      "args": [
+        "codex",
+        "",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    },
+    {
+      "id": "codex-trailing-blank-lines-and-spaces",
+      "args": [
+        "codex",
+        "  Would you like to run the following command?  \n  \n  $ rm -rf /tmp/x  \n  \n› 1. Yes, proceed (y)  \n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)  \n  3. No, and tell Codex what to do differently (esc)  \n  \n  Press enter to confirm or esc to cancel\n\n",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "approval",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `rm -rf` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "claude-idle",
+      "args": [
+        "claude",
+        "  earlier output\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts",
+        "idle"
+      ],
+      "expect": {
+        "composer": true,
+        "prompt": null,
+        "block": [],
+        "busy": false,
+        "draft": false,
+        "recognized": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "claude-idle-herdr-working",
+      "args": [
+        "claude",
+        "  earlier output\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts",
+        "working"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": [],
+        "busy": false,
+        "draft": false,
+        "recognized": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "claude-permission",
+      "args": [
+        "claude",
+        " Bash command\n\n   ls -la\n\n Do you want to proceed?\n ❯ 1. Yes\n   2. Yes, and don't ask again for ls commands\n   3. No, and tell Claude what to do differently (esc)\n\n Esc to cancel · Tab to add additional instructions",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for ls commands"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Claude what to do differently (esc)"
+          }
+        ],
+        "busy": false,
+        "draft": false,
+        "recognized": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "claude-draft",
+      "args": [
+        "claude",
+        "x\n────────────────────────────────────────\n❯ hello\n────────────────────────────────────────\n  ? for shortcuts",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": [],
+        "busy": false,
+        "draft": true,
+        "recognized": true,
+        "text": "hello"
+      }
+    },
+    {
+      "id": "claude-busy",
+      "args": [
+        "claude",
+        "x\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  esc to interrupt",
+        "working"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": [],
+        "busy": true,
+        "draft": false,
+        "recognized": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "claude-unrecognized",
+      "args": [
+        "claude",
+        "hello",
+        "idle"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": [],
+        "busy": false,
+        "draft": false,
+        "recognized": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "unknown-kind",
+      "args": [
+        "gemini",
+        "  Would you like to run the following command?\n\n  $ rm -rf /tmp/x\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm -rf` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel",
+        "blocked"
+      ],
+      "expect": {
+        "composer": false,
+        "prompt": null,
+        "block": []
+      }
+    }
+  ]
+}

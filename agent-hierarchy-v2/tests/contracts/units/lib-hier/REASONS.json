@@ -1,0 +1,16 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "REASONS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "context",
+        "second-opinion",
+        "parallel"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "thresholdFor",
+  "cases": [
+    {
+      "id": "case-0-small",
+      "args": [
+        "small"
+      ],
+      "expect": 300
+    },
+    {
+      "id": "case-1-medium",
+      "args": [
+        "medium"
+      ],
+      "expect": 600
+    },
+    {
+      "id": "case-2-large",
+      "args": [
+        "large"
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "case-3-huge",
+      "args": [
+        "huge"
+      ],
+      "expect": 300
+    },
+    {
+      "id": "case-4-MEDIUM",
+      "args": [
+        "MEDIUM"
+      ],
+      "expect": 300
+    },
+    {
+      "id": "case-5-",
+      "args": [
+        ""
+      ],
+      "expect": 600
+    },
+    {
+      "id": "case-6-null",
+      "args": [
+        null
+      ],
+      "expect": 600
+    },
+    {
+      "id": "case-7-undefine",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": 600
+    },
+    {
+      "id": "case-8-5",
+      "args": [
+        5
+      ],
+      "expect": 300
+    },
+    {
+      "id": "case-9-small",
+      "args": [
+        [
+          "small"
+        ]
+      ],
+      "expect": 300
+    }
+  ]
+}

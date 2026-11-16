@@ -1,0 +1,16 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "MERGE_METHODS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "merge",
+        "squash",
+        "rebase"
+      ]
+    }
+  ]
+}

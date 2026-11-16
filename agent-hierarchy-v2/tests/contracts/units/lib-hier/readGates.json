@@ -1,0 +1,148 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "readGates",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "rows",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"value\":\"peers\"}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"model\",\"model\":\"m\"}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "route",
+          "value": "peers"
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "model",
+          "model": "m"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-op-id-first-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"a\",\"op_id\":\"x\",\"n\":1}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"a\",\"op_id\":\"x\",\"n\":2}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"b\",\"op_id\":\"y\"}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "a",
+          "op_id": "x",
+          "n": 1
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "b",
+          "op_id": "y"
+        }
+      ]
+    },
+    {
+      "id": "rows-without-op-id-all-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"a\"}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"a\"}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "a"
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "type": "a"
+        }
+      ]
+    },
+    {
+      "id": "falsy-op-ids-all-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":\"\"}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":\"\"}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":0}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":0}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": ""
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": ""
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": 0
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": 0
+        }
+      ]
+    },
+    {
+      "id": "corrupt-line-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"a\":1}\n{bad\n{\"a\":2}\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "a": 2
+        }
+      ]
+    },
+    {
+      "id": "number-and-string-op-ids-differ",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":5}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"op_id\":\"5\"}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": 5
+        },
+        {
+          "ts": "2026-06-01T12:00:00.000Z",
+          "op_id": "5"
+        }
+      ]
+    }
+  ]
+}

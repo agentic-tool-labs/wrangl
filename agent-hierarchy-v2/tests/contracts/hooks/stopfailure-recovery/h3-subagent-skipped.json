@@ -1,0 +1,40 @@
+{
+  "kind": "hook",
+  "id": "h3-subagent-skipped",
+  "about": "a subagent's failure is not recorded",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "error": "rate_limit",
+      "error_message": "slow down",
+      "agent_id": "a-1",
+      "agent_type": "ah:implementor"
+    }
+  },
+  "mutant": "subagent guard dropped",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:58.736Z"
+  }
+}

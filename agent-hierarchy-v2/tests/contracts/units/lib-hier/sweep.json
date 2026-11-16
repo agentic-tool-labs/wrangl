@@ -1,0 +1,157 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "sweep",
+  "cases": [
+    {
+      "id": "old-closed-pair-archived",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        4102444800000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": null,
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expect": 1
+    },
+    {
+      "id": "cutoff-boundary-is-archived",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        1780920000000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": 1
+    },
+    {
+      "id": "one-ms-younger-is-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        1780919999999
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--architect--s1--request.md": null,
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": 0
+    },
+    {
+      "id": "open-exchange-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        4102444800000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000002-aaaa--architect--s2--request.md": "---\nid: 20260601-000002-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s2\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:02:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/archive/20260601-000002-aaaa--architect--s2--request.md": null
+      },
+      "expect": 0
+    },
+    {
+      "id": "days-argument",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        1,
+        1780401600000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": 1
+    },
+    {
+      "id": "created-unparseable-falls-back-to-mtime",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        4102444800000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: never\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: never\n---\n\n## [0] tldr\n- [1] status: DONE\n\n## [1] status\n- the work is done\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/archive/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: never\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": 1
+    },
+    {
+      "id": "stale-activity-record-removed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        4102444800000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/s1.json": "{\"activity\":\"idle\"}\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/s1.json": null
+      },
+      "expect": 0
+    },
+    {
+      "id": "fresh-activity-record-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        0
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/s1.json": "{\"activity\":\"idle\"}\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/s1.json": "{\"activity\":\"idle\"}\n"
+      },
+      "expect": 0
+    },
+    {
+      "id": "nothing-to-do",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        7,
+        4102444800000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": 0
+    }
+  ]
+}

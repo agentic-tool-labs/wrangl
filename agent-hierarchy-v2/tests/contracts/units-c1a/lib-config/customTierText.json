@@ -1,0 +1,49 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "customTierText",
+  "cases": [
+    {
+      "id": "design-and-advise",
+      "args": [
+        {
+          "roles": {
+            "architect": {},
+            "d-role": {
+              "class": "design",
+              "label": "Deep"
+            },
+            "a-role": {
+              "class": "advise"
+            },
+            "i-role": {
+              "class": "implement"
+            },
+            "z-role": {
+              "class": "design"
+            }
+          }
+        }
+      ],
+      "expect": ", and custom: a-role, Deep, z-role"
+    },
+    {
+      "id": "none",
+      "args": [
+        {
+          "roles": {
+            "architect": {}
+          }
+        }
+      ],
+      "expect": ""
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": ""
+    }
+  ]
+}

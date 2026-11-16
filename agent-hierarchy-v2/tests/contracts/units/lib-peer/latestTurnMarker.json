@@ -1,0 +1,49 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "latestTurnMarker",
+  "cases": [
+    {
+      "id": "last-marker-of-the-session",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"turn\",\"session_id\":\"s1\",\"status\":\"armed\",\"ts\":\"2026-06-01T11:59:50.000Z\"}\n{\"type\":\"turn\",\"session_id\":\"s2\",\"status\":\"armed\"}\n{\"type\":\"turn\",\"session_id\":\"s1\",\"status\":\"disarmed\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": {
+        "type": "turn",
+        "session_id": "s1",
+        "status": "disarmed",
+        "ts": "2026-06-01T11:59:55.000Z"
+      }
+    },
+    {
+      "id": "other-session-only",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"turn\",\"session_id\":\"s2\",\"status\":\"armed\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1"
+      ],
+      "expect": null
+    },
+    {
+      "id": "obligation-rows-are-not-markers",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"task\":\"t1\",\"from\":\"orch\",\"status\":\"pending\"}\n"
+      },
+      "expect": null
+    }
+  ]
+}

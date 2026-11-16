@@ -1,0 +1,472 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "recognizeClaude",
+  "cases": [
+    {
+      "id": "idle",
+      "args": [
+        "  earlier output\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "idle-ascii-space-after-glyph",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "idle-placeholder",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ Try \"fix lint errors\"\n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "idle-placeholder-with-trailing-text",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ Try \"fix lint errors\" now\n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": true,
+        "busy": false,
+        "text": "Try \"fix lint errors\" now"
+      }
+    },
+    {
+      "id": "draft",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ hello world\n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": true,
+        "busy": false,
+        "text": "hello world"
+      }
+    },
+    {
+      "id": "draft-multiline",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ hello\n  world\n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": true,
+        "busy": false,
+        "text": "hello world"
+      }
+    },
+    {
+      "id": "busy-footer",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  esc to interrupt"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "busy-footer-substring-of-word",
+      "args": [
+        "x\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  xesc to interrupt"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "busy-spinner",
+      "args": [
+        "✻ Pondering… (12s · ↑ 3k tokens)\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": true,
+        "text": ""
+      }
+    },
+    {
+      "id": "busy-spinner-no-seconds",
+      "args": [
+        "✻ Pondering… (soon)\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "busy-spinner-too-far-above",
+      "args": [
+        "✻ Pondering… (12s)\na\nb\nc\nd\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": null,
+        "block": [],
+        "composer": true,
+        "draft": false,
+        "busy": false,
+        "text": ""
+      }
+    },
+    {
+      "id": "permission-prompt",
+      "args": [
+        " Bash command\n\n   ls -la\n\n Do you want to proceed?\n ❯ 1. Yes\n   2. Yes, and don't ask again for ls commands\n   3. No, and tell Claude what to do differently (esc)\n\n Esc to cancel · Tab to add additional instructions"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for ls commands"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Claude what to do differently (esc)"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "permission-prompt-no-marked-option",
+      "args": [
+        " Bash command\n\n   ls -la\n\n Do you want to proceed?\n   1. Yes\n   2. Yes, and don't ask again for ls commands\n   3. No, and tell Claude what to do differently (esc)\n\n Esc to cancel · Tab to add additional instructions"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "permission-prompt-two-marked",
+      "args": [
+        " Bash command\n\n   ls -la\n\n Do you want to proceed?\n ❯ 1. Yes\n ❯ 2. Yes, and don't ask again for ls commands\n   3. No, and tell Claude what to do differently (esc)\n\n Esc to cancel · Tab to add additional instructions"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "permission-prompt-gap-in-numbers",
+      "args": [
+        " Bash command\n\n   ls -la\n\n Do you want to proceed?\n ❯ 1. Yes\n   2. Yes, and don't ask again for ls commands\n   4. No, and tell Claude what to do differently (esc)\n\n Esc to cancel · Tab to add additional instructions"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "permission-prompt-one-option",
+      "args": [
+        " Do you want to proceed?\n ❯ 1. Yes\n Esc to cancel"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "permission-footer-too-far-down",
+      "args": [
+        " Do you want to proceed?\n ❯ 1. Yes\n   2. No\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\n Esc to cancel"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "trust-dialog",
+      "args": [
+        "\n Quick safety check: Is this a project you created or one you trust?\n\n ❯ Yes, I trust this folder\n   No, exit\n\n Enter to confirm · Esc to cancel"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "trust-dialog",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, I trust this folder"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, exit"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "trust-dialog-no-marker",
+      "args": [
+        "\n Quick safety check: Is this a project you created or one you trust?\n\n   Yes, I trust this folder\n   No, exit\n\n Enter to confirm · Esc to cancel"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "picker",
+      "args": [
+        "☐ Which approach?\n\n ❯ 1. Option A\n   2. Option B\n\n Enter to select · ↑/↓ to navigate · Esc to cancel"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "picker",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Option A"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Option B"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "rule-only",
+      "args": [
+        "────────────────────────────────────────\n────────────────────────────────────────"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "plain-text",
+      "args": [
+        "hello\nworld"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "composer-rule-too-far",
+      "args": [
+        "x\n────────────────────────────────────────\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n❯ \n────────────────────────────────────────\nfoot"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "crlf-lines",
+      "args": [
+        " Bash command\r\n\r\n   ls -la\r\n\r\n Do you want to proceed?\r\n ❯ 1. Yes\r\n   2. Yes, and don't ask again for ls commands\r\n   3. No, and tell Claude what to do differently (esc)\r\n\r\n Esc to cancel · Tab to add additional instructions"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for ls commands"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Claude what to do differently (esc)"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "footer-twelfth-line-from-the-end-found",
+      "args": [
+        " Do you want to proceed?\n ❯ 1. Yes\n   2. No\n Esc to cancel\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx"
+      ],
+      "expect": {
+        "recognized": true,
+        "prompt": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No"
+          }
+        ],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    },
+    {
+      "id": "footer-thirteenth-line-from-the-end-not-found",
+      "args": [
+        " Do you want to proceed?\n ❯ 1. Yes\n   2. No\n Esc to cancel\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx\nx"
+      ],
+      "expect": {
+        "recognized": false,
+        "prompt": null,
+        "block": [],
+        "composer": false,
+        "draft": false,
+        "busy": false
+      }
+    }
+  ]
+}

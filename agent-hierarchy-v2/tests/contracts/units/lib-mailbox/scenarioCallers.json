@@ -1,0 +1,2750 @@
+{
+  "lib": "lib-mailbox",
+  "module": "tests/contract-tools/units-shims/lib-mailbox.mjs",
+  "fn": "scenario",
+  "cases": [
+    {
+      "id": "request-context-without-a-socket",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "requestContext"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "request-context-with-a-socket",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "requestContext"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off",
+        "CLAUDE_CODE_MESSAGING_SOCKET": "/run/socks/12.sock"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": "/run/socks"
+          }
+        }
+      ]
+    },
+    {
+      "id": "request-context-takes-the-cwd-it-is-given",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "requestContext",
+              "cwd": "/elsewhere/x"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": {
+            "cwd": "/elsewhere/x",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "resolve-orchestrator-by-live-pid",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pid": {
+                "$selfpid": 1
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resolve-orchestrator-by-session",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "session_id": "o1"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "resolve-orchestrator-pid-must-be-alive",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pid": 2147483000
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "resolve-orchestrator-of-two-teams",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "writeTeam",
+              "team": "ot",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pid": {
+                "$selfpid": 1
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@ot",
+              "team": "ot",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/ot.json",
+              "dir": "$ROOT/ah/mailbox/ot~HASH/orchestrator"
+            },
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resolve-member-by-pane",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pane_id": "%7"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "team": "tm",
+              "name": "a",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resolve-member-by-another-pane",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pane_id": "%8"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "b@tm",
+              "team": "tm",
+              "name": "b",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resolve-unknown-pane",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pane_id": "%99"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "resolve-nobody",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "resolve-with-a-team-arg",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pane_id": "%7",
+              "team_arg": "tm"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "team": "tm",
+              "name": "a",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resolve-with-an-unknown-team-arg",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "resolveCaller",
+              "pane_id": "%7",
+              "team_arg": "nope"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "ensure-registered-registers-a-session-start-left-unregistered",
+      "args": [{"ctx": {"cwd": "$ROOT/h", "hierarchy_dir": "$ROOT/h", "main_hierarchy_dir": null, "messaging_socket_dir": null}, "steps": [
+        {"op": "writeTeam", "team": "tm", "doc": {"members": [{"name": "a", "role": "implementor", "kind": "claude", "transport_id": "%7"}], "orchestrator": {"pid": 2147483000, "session_id": "o1"}}},
+        {"op": "ensureRegistered", "session_id": "s-a", "pid": {"$selfpid": 1}, "pane_id": "%7"},
+        {"op": "ensureRegistered", "session_id": "s-a", "pid": {"$selfpid": 1}, "pane_id": "%9"},
+        {"op": "writeTeam", "team": "tm", "doc": {"members": [{"name": "a", "role": "implementor", "kind": "claude", "transport_id": "%7"}, {"name": "b", "role": "reviewer", "kind": "claude", "transport_id": "%8"}], "orchestrator": {"pid": 2147483000, "session_id": "o1"}}},
+        {"op": "ensureRegistered", "session_id": "s-a", "pid": {"$selfpid": 1}, "pane_id": "%9"}
+      ]}],
+      "env": {"AH_HOME": "$ROOT/ah", "WRANGL_HIERARCHY_DIR": "$ROOT/h", "AH_DAEMON": "off"},
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {"ok": true},
+        {"ok": [{"address": "a@tm", "team": "tm", "name": "a", "teamFile": "$ROOT/h/teams/tm.json", "dir": "$ROOT/ah/mailbox/tm~HASH/a"}]},
+        {"ok": [{"address": "a@tm", "dir": "$ROOT/ah/mailbox/tm~HASH/a"}]},
+        {"ok": true},
+        {"ok": []}
+      ]
+    },
+    {
+      "id": "caller-boxes-of-an-orchestrator-write-once-while-the-teams-stamp-holds",
+      "args": [{"ctx": {"cwd": "$ROOT/h", "hierarchy_dir": "$ROOT/h", "main_hierarchy_dir": null, "messaging_socket_dir": null}, "steps": [
+        {"op": "writeTeam", "team": "tm", "doc": {"members": [], "orchestrator": {"pid": {"$selfpid": 1}, "pid_start": {"$selfstart": 1}, "session_id": "o1"}}},
+        {"op": "callerBoxes", "session_id": "o1", "pid": {"$selfpid": 1}},
+        {"op": "callerBoxes", "session_id": "o1", "pid": {"$selfpid": 1}},
+        {"op": "writeTeam", "team": "tm", "doc": {"members": [{"name": "a", "role": "implementor", "kind": "claude", "transport_id": "%7"}], "orchestrator": {"pid": {"$selfpid": 1}, "pid_start": {"$selfstart": 1}, "session_id": "o1"}}},
+        {"op": "callerBoxes", "session_id": "o1", "pid": {"$selfpid": 1}}
+      ]}],
+      "env": {"AH_HOME": "$ROOT/ah", "WRANGL_HIERARCHY_DIR": "$ROOT/h", "AH_DAEMON": "off"},
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {"ok": true},
+        {"ok": [{"address": "orchestrator@tm", "team": "tm", "name": "orchestrator", "teamFile": "$ROOT/h/teams/tm.json", "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"}]},
+        {"ok": [{"address": "orchestrator@tm", "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"}]},
+        {"ok": true},
+        {"ok": [{"address": "orchestrator@tm", "team": "tm", "name": "orchestrator", "teamFile": "$ROOT/h/teams/tm.json", "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"}]}
+      ]
+    },
+    {
+      "id": "negative-ensure-registered-writes-nothing-for-a-pane-no-member-holds",
+      "args": [{"ctx": {"cwd": "$ROOT/h", "hierarchy_dir": "$ROOT/h", "main_hierarchy_dir": null, "messaging_socket_dir": null}, "steps": [
+        {"op": "writeTeam", "team": "tm", "doc": {"members": [{"name": "a", "role": "implementor", "kind": "claude", "transport_id": "%7"}], "orchestrator": {"pid": 2147483000, "session_id": "o1"}}},
+        {"op": "ensureRegistered", "session_id": "s-a", "pid": {"$selfpid": 1}, "pane_id": "%9"},
+        {"op": "registration", "session_id": "s-a"}
+      ]}],
+      "env": {"AH_HOME": "$ROOT/ah", "WRANGL_HIERARCHY_DIR": "$ROOT/h", "AH_DAEMON": "off"},
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [{"ok": true}, {"ok": []}, {"ok": null}]
+    },
+    {
+      "id": "register-caller-writes-the-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "registerCaller",
+              "session_id": "s-a",
+              "pid": {
+                "$selfpid": 1
+              },
+              "pane_id": "%7"
+            },
+            {
+              "op": "registration",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "team": "tm",
+              "name": "a",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        },
+        {
+          "ok": {
+            "v": 1,
+            "session_id": "s-a",
+            "address": "a@tm",
+            "addresses": [
+              "a@tm"
+            ],
+            "boxes": {
+              "a@tm": "$ROOT/ah/mailbox/tm~HASH/a"
+            },
+            "team_file": "$ROOT/h/teams/tm.json",
+            "harness": "claude",
+            "pid": "<selfpid>",
+            "pane_id": "%7",
+            "team_files": {
+              "a@tm": "$ROOT/h/teams/tm.json"
+            },
+            "cwd": "$ROOT/h",
+            "at": "2026-01-01T12:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-caller-without-a-session-writes-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "registerCaller",
+              "pane_id": "%7"
+            },
+            {
+              "op": "registration",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "team": "tm",
+              "name": "a",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        },
+        {
+          "ok": null
+        }
+      ]
+    },
+    {
+      "id": "register-caller-who-is-nobody-writes-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "registerCaller",
+              "session_id": "s-x",
+              "pane_id": "%99"
+            },
+            {
+              "op": "registration",
+              "session_id": "s-x"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        },
+        {
+          "ok": null
+        }
+      ]
+    },
+    {
+      "id": "register-orchestrator-with-every-team",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "writeTeam",
+              "team": "ot",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "registerCaller",
+              "session_id": "o1",
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "registration",
+              "session_id": "o1"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@ot",
+              "team": "ot",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/ot.json",
+              "dir": "$ROOT/ah/mailbox/ot~HASH/orchestrator"
+            },
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            }
+          ]
+        },
+        {
+          "ok": {
+            "v": 1,
+            "session_id": "o1",
+            "address": "orchestrator@ot",
+            "addresses": [
+              "orchestrator@ot",
+              "orchestrator@tm"
+            ],
+            "boxes": {
+              "orchestrator@ot": "$ROOT/ah/mailbox/ot~HASH/orchestrator",
+              "orchestrator@tm": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            },
+            "team_file": "$ROOT/h/teams/ot.json",
+            "harness": "claude",
+            "pid": "<selfpid>",
+            "pane_id": null,
+            "team_files": {
+              "orchestrator@ot": "$ROOT/h/teams/ot.json",
+              "orchestrator@tm": "$ROOT/h/teams/tm.json"
+            },
+            "cwd": "$ROOT/h",
+            "at": "2026-01-01T12:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "caller-boxes-use-a-live-member-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "callerBoxes",
+              "session_id": "s-a",
+              "pane_id": "%8"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "caller-boxes-rederive-an-orchestrator-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "writeTeam",
+              "team": "ot",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "o1",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "callerBoxes",
+              "session_id": "o1",
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "registration",
+              "session_id": "o1"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@ot",
+              "team": "ot",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/ot.json",
+              "dir": "$ROOT/ah/mailbox/ot~HASH/orchestrator"
+            },
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "name": "orchestrator",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            }
+          ]
+        },
+        {
+          "ok": {
+            "v": 1,
+            "session_id": "o1",
+            "address": "orchestrator@ot",
+            "addresses": [
+              "orchestrator@ot",
+              "orchestrator@tm"
+            ],
+            "boxes": {
+              "orchestrator@ot": "$ROOT/ah/mailbox/ot~HASH/orchestrator",
+              "orchestrator@tm": "$ROOT/ah/mailbox/tm~HASH/orchestrator"
+            },
+            "team_file": "$ROOT/h/teams/ot.json",
+            "harness": "claude",
+            "pid": "<selfpid>",
+            "pane_id": null,
+            "team_files": {
+              "orchestrator@ot": "$ROOT/h/teams/ot.json",
+              "orchestrator@tm": "$ROOT/h/teams/tm.json"
+            },
+            "cwd": "$ROOT/h",
+            "at": "2026-01-01T12:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "caller-boxes-reregister-when-the-registration-is-dead",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 2147483000
+            },
+            {
+              "op": "callerBoxes",
+              "session_id": "s-a",
+              "pane_id": "%8"
+            },
+            {
+              "op": "registration",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "b@tm",
+              "team": "tm",
+              "name": "b",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/b"
+            }
+          ]
+        },
+        {
+          "ok": {
+            "v": 1,
+            "session_id": "s-a",
+            "address": "b@tm",
+            "addresses": [
+              "b@tm"
+            ],
+            "boxes": {
+              "b@tm": "$ROOT/ah/mailbox/tm~HASH/b"
+            },
+            "team_file": "$ROOT/h/teams/tm.json",
+            "harness": "claude",
+            "pid": null,
+            "pane_id": "%8",
+            "team_files": {
+              "b@tm": "$ROOT/h/teams/tm.json"
+            },
+            "cwd": "$ROOT/h",
+            "at": "2026-01-01T12:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "caller-boxes-without-any-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "callerBoxes",
+              "session_id": "s-new",
+              "pane_id": "%7"
+            },
+            {
+              "op": "registration",
+              "session_id": "s-new"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "a@tm",
+              "team": "tm",
+              "name": "a",
+              "teamFile": "$ROOT/h/teams/tm.json",
+              "dir": "$ROOT/ah/mailbox/tm~HASH/a"
+            }
+          ]
+        },
+        {
+          "ok": {
+            "v": 1,
+            "session_id": "s-new",
+            "address": "a@tm",
+            "addresses": [
+              "a@tm"
+            ],
+            "boxes": {
+              "a@tm": "$ROOT/ah/mailbox/tm~HASH/a"
+            },
+            "team_file": "$ROOT/h/teams/tm.json",
+            "harness": "claude",
+            "pid": null,
+            "pane_id": "%7",
+            "team_files": {
+              "a@tm": "$ROOT/h/teams/tm.json"
+            },
+            "cwd": "$ROOT/h",
+            "at": "2026-01-01T12:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "join-decider-is-this-process-or-an-ancestor",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "session": "s-o"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "join-decider-with-the-matching-session",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "o1",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders",
+              "session_id": "o1"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "session": "o1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "join-decider-session-contradicts-the-team-file",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "o1",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders",
+              "session_id": "other"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-session-contradicts-the-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  }
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders",
+              "session_id": "other"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-pid-not-an-ancestor",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 1,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-pid-dead",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": 2147483000
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-needs-a-registration-holding-the-address",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-registration-holds-another-address",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "join-decider-of-two-teams",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "writeTeam",
+              "team": "ot",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": {
+                    "$selfpid": 1
+                  },
+                  "pid_start": {
+                    "$selfstart": 1
+                  },
+                  "session_id": "o2"
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                },
+                {
+                  "team": "ot",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": {
+                "$selfpid": 1
+              }
+            },
+            {
+              "op": "joinDeciders"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            {
+              "address": "orchestrator@ot",
+              "team": "ot",
+              "session": "s-o"
+            },
+            {
+              "address": "orchestrator@tm",
+              "team": "tm",
+              "session": "s-o"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ack-routed-acks-and-reports-fresh",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "x"
+              }
+            },
+            {
+              "op": "ackRouted",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1",
+                "nope"
+              ],
+              "by": "prompt-hook",
+              "session_id": "s-a"
+            },
+            {
+              "op": "ackRouted",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "cli"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "x"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [
+              "nope"
+            ],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "ack-routed-writes-the-relay-obligation",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "rn1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "ackRouted",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "rn1"
+              ],
+              "by": "prompt-hook",
+              "session_id": "s-a"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "rn1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "rn1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "rn1"
+            ]
+          }
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ack-routed-by-cli-writes-no-obligation",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "writeTeam",
+              "team": "tm",
+              "doc": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor",
+                    "kind": "claude",
+                    "transport_id": "%7"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer",
+                    "kind": "claude",
+                    "transport_id": "%8"
+                  }
+                ],
+                "orchestrator": {
+                  "pid": 2147483000,
+                  "session_id": "o1"
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "rn1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "ackRouted",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "rn1"
+              ],
+              "by": "cli",
+              "session_id": "s-a"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "WRANGL_HIERARCHY_DIR": "$ROOT/h",
+        "AH_DAEMON": "off"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "rn1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "rn1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "rn1"
+            ]
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h1-fill-as-wrong-role",
+  "about": "a fill by another role allowed",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-ah-cli",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "node <PLUGIN>/hooks/msg.mjs fill --from reviewer --id x",
+        "description": "contract"
+      },
+      "tool_use_id": "toolu_contract",
+      "agent_type": "ah:architect"
+    }
+  },
+  "mutant": "a fill by another role allowed",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"ah: msg.mjs fill may only write a response from your own role (architect); --from names reviewer\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:26:56.616Z"
+  }
+}

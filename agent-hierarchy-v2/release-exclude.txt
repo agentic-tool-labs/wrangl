@@ -1,0 +1,18 @@
+# Paths kept out of the public release export (scripts/release-export.sh), relative to agent-hierarchy-v2.
+# One path per line; a directory excludes everything under it. A line starting with ! keeps that path
+# although a listed directory holds it (a test reads it). Blank lines and # comments are ignored.
+docs/specs
+docs/audits
+docs/evidence
+docs/research
+docs/retired
+bench
+scripts/adr-backfill.sh
+tests/test-adr-backfill.sh
+!docs/specs/orchestrator-cadence.md
+!bench/ah-call-latency.sh
+scripts/adr-backfill.sh
+tests/test-adr-backfill.sh
+docs/herdr-desktop/proposals
+docs/herdr-desktop/design-note.md
+docs/herdr-desktop/evidence.md

@@ -1,0 +1,92 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "rosterLevelCandidates",
+  "cases": [
+    {
+      "id": "normal",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "repo-user": [
+          "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-repo/agent-hierarchy.json"
+        ],
+        "repo": [
+          "$ROOT/repo/.claude/agent-hierarchy.json"
+        ],
+        "global": [
+          "$ROOT/home/.claude/agent-hierarchy.json"
+        ]
+      }
+    },
+    {
+      "id": "worktree",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": {
+        "repo-user": [
+          "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-wt/agent-hierarchy.json",
+          "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-main/agent-hierarchy.json"
+        ],
+        "repo": [
+          "$ROOT/wt/.claude/agent-hierarchy.json",
+          "$ROOT/main/.claude/agent-hierarchy.json"
+        ],
+        "global": [
+          "$ROOT/home/.claude/agent-hierarchy.json"
+        ]
+      }
+    },
+    {
+      "id": "no-git",
+      "args": [
+        "$ROOT/plain"
+      ],
+      "files": {
+        "plain/x": "y"
+      },
+      "expect": {
+        "repo-user": [
+          "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-plain/agent-hierarchy.json"
+        ],
+        "repo": [
+          "$ROOT/plain/.claude/agent-hierarchy.json"
+        ],
+        "global": [
+          "$ROOT/home/.claude/agent-hierarchy.json"
+        ]
+      }
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "repo-user": [
+          "$ROOT/home/.claude/agent-hierarchy/projects/$ROOTSLUG-repo/agent-hierarchy.json"
+        ],
+        "repo": [
+          "$ROOT/repo/.claude/agent-hierarchy.json"
+        ],
+        "global": [
+          "$ROOT/home/.claude/agent-hierarchy.json"
+        ]
+      }
+    }
+  ]
+}

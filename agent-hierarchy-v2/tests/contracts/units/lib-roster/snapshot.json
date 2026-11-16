@@ -1,0 +1,243 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "snapshot",
+  "cases": [
+    {
+      "id": "writes-file",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "20260101T120000123Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": "{\n  \"kind\": \"ah-team-snapshot\",\n  \"v\": 1,\n  \"members\": [],\n  \"team\": \"alpha\"\n}\n"
+      },
+      "expect": {
+        "file": "alpha-20260101T120000123Z.json",
+        "removed": 0
+      }
+    },
+    {
+      "id": "bad-ts-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "2026-01-01",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "bad-team-name-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "a/b",
+          "ts": "20260101T120000123Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "empty-team-name-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "",
+          "ts": "20260101T120000123Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "numeric-ts-coerced-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": 20260101,
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "keeps-ten-newest",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "20260101T120000200Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000001Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000002Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000003Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000004Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000005Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000006Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000007Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000008Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000009Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000200Z.json": "{\n  \"kind\": \"ah-team-snapshot\",\n  \"v\": 1,\n  \"members\": [],\n  \"team\": \"alpha\"\n}\n",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000000Z.json": null,
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000001Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000002Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": {
+        "file": "alpha-20260101T120000200Z.json",
+        "removed": 1
+      }
+    },
+    {
+      "id": "other-teams-untouched",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "20260101T120000200Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000001Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000002Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000003Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000004Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000005Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000006Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000007Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000008Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000009Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000010Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/beta-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-2-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/snapshots/beta-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-2-20260101T120000000Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000000Z.json": null,
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000001Z.json": null,
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000002Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": {
+        "file": "alpha-20260101T120000200Z.json",
+        "removed": 2
+      }
+    },
+    {
+      "id": "worktree-writes-home",
+      "args": [
+        {
+          "dir": "$ROOT/wt/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "20260101T120000123Z",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": [],
+            "team": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expectFiles": {
+        "main/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": "{\n  \"kind\": \"ah-team-snapshot\",\n  \"v\": 1,\n  \"members\": [],\n  \"team\": \"alpha\"\n}\n",
+        "wt/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": null
+      },
+      "expect": {
+        "file": "alpha-20260101T120000123Z.json",
+        "removed": 0
+      }
+    },
+    {
+      "id": "ts-final-letter-wrong-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "team_name": "alpha",
+          "ts": "20260101T120000123X",
+          "doc": {
+            "kind": "ah-team-snapshot",
+            "v": 1,
+            "members": []
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    }
+  ]
+}

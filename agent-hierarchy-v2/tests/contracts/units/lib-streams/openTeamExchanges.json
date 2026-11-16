@@ -1,0 +1,284 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "openTeamExchanges",
+  "cases": [
+    {
+      "id": "one-open-default-team",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: p-architect\nfrom_name: orch\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": "p-architect",
+          "from_name": "orch",
+          "age_sec": 3600
+        }
+      ]
+    },
+    {
+      "id": "closed-excluded",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--alpha--response.md": "---\nid: 20260101-000000-aa11\ntype: response\nto: orchestrator\nfrom: architect\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:10:00+00:00\n---\n\nok\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "every-team-when-undefined",
+      "args": [
+        "$ROOT/h",
+        {
+          "$undefined": 1
+        },
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: t1\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n",
+        "h/msgs/20260101-000000-bb22--reviewer--beta--request.md": "---\nid: 20260101-000000-bb22\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: beta\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-bb22",
+          "slug": "beta",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600
+        },
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600
+        }
+      ]
+    },
+    {
+      "id": "named-team-only",
+      "args": [
+        "$ROOT/h",
+        "t1",
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: t1\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n",
+        "h/msgs/20260101-000000-bb22--reviewer--beta--request.md": "---\nid: 20260101-000000-bb22\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: beta\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600
+        }
+      ]
+    },
+    {
+      "id": "default-team-excludes-tagged",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: t1\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n",
+        "h/msgs/20260101-000000-bb22--reviewer--beta--request.md": "---\nid: 20260101-000000-bb22\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: beta\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-bb22",
+          "slug": "beta",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600
+        }
+      ]
+    },
+    {
+      "id": "created-requested",
+      "args": [
+        "$ROOT/h",
+        null,
+        {
+          "created": true
+        }
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600,
+          "created": "2026-01-01T00:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "created-missing-is-null",
+      "args": [
+        "$ROOT/h",
+        null,
+        {
+          "created": true
+        }
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\n---\n\nx\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": {
+            "$inf": 1
+          },
+          "created": null
+        }
+      ]
+    },
+    {
+      "id": "age-rounds-half-up",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T00:00:00.500Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2025-12-31T23:59:59+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 2
+        }
+      ]
+    },
+    {
+      "id": "age-infinite-when-created-unparseable",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: yesterday\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": {
+            "$inf": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "age-clamped-at-zero-for-future",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2027-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 0
+        }
+      ]
+    },
+    {
+      "id": "no-msgs-dir",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "expect": []
+    },
+    {
+      "id": "slug-from-filename",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T01:00:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--from-name--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: from-name\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "from-name",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3600
+        }
+      ]
+    },
+    {
+      "id": "age-rounds-two-and-a-half-up",
+      "args": [
+        "$ROOT/h",
+        null,
+        {}
+      ],
+      "now": "2026-01-01T00:00:02.500Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--alpha--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: alpha\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\ncreated: 2026-01-01T00:00:00+00:00\n---\n\n## [0] tldr\n- x\n"
+      },
+      "expect": [
+        {
+          "id": "20260101-000000-aa11",
+          "slug": "alpha",
+          "to_name": null,
+          "from_name": null,
+          "age_sec": 3
+        }
+      ]
+    }
+  ]
+}

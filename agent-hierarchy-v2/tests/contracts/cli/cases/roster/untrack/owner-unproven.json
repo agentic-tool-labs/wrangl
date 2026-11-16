@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "owner-unproven",
+  "about": "an owner verb run with no registered Orchestrator among its ancestors is refused with owner-unproven and changes nothing",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "untrack",
+      "nope"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"status\": \"refused\",\n  \"refused\": \"owner-unproven\",\n  \"proof\": \"no-orchestrator\"\n}\n",
+    "stderr": "roster.mjs untrack: could not prove which Claude session runs this command; nothing was changed. Run it from the Orchestrator's Claude session.\nowner proof: no registered session is an ancestor of this command.\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "the owner verb runs without an owner proof",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.4.2",
+    "at": "2026-10-17T13:50:00.000Z",
+    "note": "added with the owner-proof trees and recorded from the native binary, not from the Node oracle"
+  }
+}

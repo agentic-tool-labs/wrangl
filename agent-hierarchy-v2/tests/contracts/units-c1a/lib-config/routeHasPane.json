@@ -1,0 +1,65 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "routeHasPane",
+  "cases": [
+    {
+      "id": "peer",
+      "args": [
+        "peer"
+      ],
+      "expect": true
+    },
+    {
+      "id": "pane",
+      "args": [
+        "pane"
+      ],
+      "expect": true
+    },
+    {
+      "id": "subagent",
+      "args": [
+        "subagent"
+      ],
+      "expect": false
+    },
+    {
+      "id": "mail",
+      "args": [
+        "mail"
+      ],
+      "expect": false
+    },
+    {
+      "id": "case",
+      "args": [
+        "Peer"
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "number",
+      "args": [
+        1
+      ],
+      "expect": false
+    }
+  ]
+}

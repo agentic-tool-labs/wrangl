@@ -1,0 +1,42 @@
+{
+  "view_schema": 1,
+  "kind": "inbox",
+  "id": "/o/o.101/t/boxes/m/impl",
+  "path": "/inbox/o/o.101/t/boxes/m/impl",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "member",
+      "id": "/o/o.101/t/boxes/m/impl",
+      "label": "impl",
+      "path": "/o/o.101/t/boxes/m/impl"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "boxes": [
+      {
+        "address": "impl@alpha",
+        "entries": [
+          {
+            "id": "m1",
+            "kind": "request",
+            "from": "orchestrator@alpha",
+            "to": "impl@alpha",
+            "created": "2027-01-15T07:58:00.000Z",
+            "acked": false,
+            "ref": null
+          }
+        ]
+      }
+    ]
+  },
+  "rev": "aad9b46ecb99b4c3"
+}

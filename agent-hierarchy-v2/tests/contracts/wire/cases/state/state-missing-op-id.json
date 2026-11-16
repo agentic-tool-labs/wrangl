@@ -1,0 +1,41 @@
+{
+  "kind": "wire",
+  "id": "state-missing-op-id",
+  "about": "a write without op_id is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "subject": "s",
+        "activity": "idle"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      }
+    },
+    "path": "/v1/state/activity/record"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "a state write needs an op_id"
+      }
+    }
+  },
+  "mutant": "a write without op_id accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:08.936Z"
+  }
+}

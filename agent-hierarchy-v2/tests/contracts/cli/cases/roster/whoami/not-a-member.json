@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "not-a-member",
+  "about": "whoami outside a member's pane says so",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "whoami",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"member\": null,\n  \"team\": null,\n  \"team_file\": null,\n  \"orchestrator\": null,\n  \"registered_pid\": null,\n  \"last_observed_brief\": null,\n  \"reason\": \"no-pane-id\",\n  \"answered_by\": null\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an identity invented for a plain shell",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:55.269Z"
+  }
+}

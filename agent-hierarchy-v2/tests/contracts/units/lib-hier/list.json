@@ -1,0 +1,51 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "list",
+  "cases": [
+    {
+      "id": "message-names-sorted",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000002-aaaa--architect--s2--request.md": "---\nid: 20260601-000002-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s2\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/README.md": "x",
+        "repo/.claude/hierarchy/msgs/archive/20260601-000003-aaaa--architect--s3--request.md": "x"
+      },
+      "expect": [
+        "20260601-000001-aaaa--architect--s1--request.md",
+        "20260601-000002-aaaa--architect--s2--request.md"
+      ]
+    },
+    {
+      "id": "no-msgs-dir",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "only-non-messages",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/notes.txt": "x"
+      },
+      "expect": []
+    }
+  ]
+}

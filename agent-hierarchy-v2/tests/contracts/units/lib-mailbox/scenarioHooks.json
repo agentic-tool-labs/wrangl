@@ -1,0 +1,6143 @@
+{
+  "lib": "lib-mailbox",
+  "module": "tests/contract-tools/units-shims/lib-mailbox.mjs",
+  "fn": "scenario",
+  "cases": [
+    {
+      "id": "prompt-list-marker-acks-the-ids-it-names",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "see [ah-entry e1,e2] please"
+            },
+            {
+              "op": "inbox",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1",
+              "e2"
+            ],
+            "fresh": [
+              "e1",
+              "e2"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "entries": [],
+            "next": 248
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-to-marker-for-this-box",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry e1 to a@tm]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-to-marker-for-another-address-acks-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry e1 to b@tm]"
+            },
+            {
+              "op": "inbox",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [],
+            "fresh": [],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "entries": [
+              {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            ],
+            "next": 124
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-unknown-id",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry zz]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-without-markers",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "hello there"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-from-a-session-without-a-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-none",
+              "prompt": "[ah-entry e1]"
+            },
+            {
+              "op": "inbox",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [],
+            "fresh": [],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "entries": [
+              {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            ],
+            "next": 124
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-same-text-twice-is-not-blocked-unless-adapter-shaped",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry e1]"
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry e1]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-adapter-shaped-first-delivery",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-adapter-shaped-second-delivery-is-blocked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-adapter-shaped-acked-earlier-by-the-cli-is-not-blocked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-adapter-shaped-acked-earlier-by-an-adapter-is-not-blocked-here",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "adapter"
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-adapter-shaped-with-a-new-and-an-old-entry",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "build": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1",
+                    "e2"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1",
+              "e2"
+            ],
+            "fresh": [
+              "e2"
+            ],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-first-delivery",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-second-delivery-is-blocked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-acked-earlier-by-sendmessage-is-not-blocked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "sendmessage"
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-acked-earlier-by-the-stop-hook-is-blocked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "stop-hook"
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-with-an-edited-line-passes",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ],
+                  "suffix": " edited"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-text-around-the-relay-passes",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ],
+                  "prefix": "note: "
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-relay-of-an-entry-the-box-lacks-passes",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ],
+                  "address": "a@tm",
+                  "id": "ghost"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-wrapped-multiline-entry-passes-and-never-blocks",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "line one\nline two"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": {
+                "wrap": {
+                  "team": "tm",
+                  "name": "a",
+                  "ids": [
+                    "e1"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "line one\nline two"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-two-boxes-a-to-marker-picks-its-box",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "e9",
+                "from": "b@tm",
+                "to": "b@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e9"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-ab",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                },
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-ab",
+              "prompt": "[ah-entry e9 to b@tm]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e9",
+              "from": "b@tm",
+              "to": "b@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e9"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e9"
+            ],
+            "fresh": [
+              "e9"
+            ],
+            "block": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt-relay-needed-request-makes-an-obligation",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "rn1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry rn1]"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "rn1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "rn1"
+            ],
+            "fresh": [
+              "rn1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-marker-acks-in-the-recipients-box",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-a",
+              "to": "a@tm",
+              "message": "hi [ah-entry e1 to a@tm]"
+            },
+            {
+              "op": "inbox",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": [
+            "e1"
+          ]
+        },
+        {
+          "ok": {
+            "entries": [],
+            "next": 124
+          }
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-trailing-ref-is-stripped-from-the-recipient",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-a",
+              "to": "a@tm [uds:/tmp/cc-socks/9.sock]",
+              "message": "hi [ah-entry e1 to a@tm]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": [
+            "e1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-unresolvable-recipient",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-a",
+              "to": "zz@tm",
+              "message": "[ah-entry e1 to a@tm]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-marker-for-another-address-acks-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-a",
+              "to": "a@tm",
+              "message": "[ah-entry e1 to b@tm]"
+            },
+            {
+              "op": "inbox",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": []
+        },
+        {
+          "ok": {
+            "entries": [
+              {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            ],
+            "next": 124
+          }
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-list-marker",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-a",
+              "to": "a@tm",
+              "message": "[ah-entry e1,e2]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": [
+            "e1",
+            "e2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-by-ref-token-and-the-sessions-sender",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-o",
+              "to": "a@tm",
+              "message": "see [hierarchy-msg $ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md]"
+            },
+            {
+              "op": "file",
+              "team": "tm",
+              "name": "a",
+              "rel": "acks/b1"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": [
+            "b1"
+          ]
+        },
+        {
+          "ok": "{\"v\":1,\"id\":\"b1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"sendmessage\",\"session_id\":\"s-o\"}\n"
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-by-ref-token-from-another-sender-acks-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-b",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-b",
+              "to": "a@tm",
+              "message": "see [hierarchy-msg $ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-by-ref-token-already-acked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "b1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-o",
+              "to": "a@tm",
+              "message": "see [hierarchy-msg $ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "b1"
+            ]
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-without-marker-or-token",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-o",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "orchestrator"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-o",
+              "to": "a@tm",
+              "message": "plain words"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-from-a-session-with-no-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "ackFromSendMessage",
+              "session_id": "s-none",
+              "to": "a@tm",
+              "message": "see [hierarchy-msg $ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md]"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-acked-by-the-prompt-hook-of-this-session",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry b1]"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "fresh": [
+              "b1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": [
+            {
+              "id": "b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md",
+              "from": "orchestrator@tm"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-brief-with-a-response-is-closed",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry b1]"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "done\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "fresh": [
+              "b1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-acked-by-someone-else",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "b1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "b1"
+            ]
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-acked-by-the-prompt-hook-of-another-session",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "b1"
+              ],
+              "by": "prompt-hook",
+              "session_id": "s-other"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "b1"
+            ]
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-note-entries-are-ignored",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry e1]"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "fresh": [
+              "e1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-ref-that-is-no-message-file",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "orchestrator@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-b1",
+                "ref": "$ROOT/h/msgs/plain.md"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "ackFromPrompt",
+              "session_id": "s-a",
+              "prompt": "[ah-entry b1]"
+            },
+            {
+              "op": "openBriefs",
+              "session_id": "s-a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "orchestrator@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-b1",
+              "ref": "$ROOT/h/msgs/plain.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "acked": [
+              "b1"
+            ],
+            "fresh": [
+              "b1"
+            ],
+            "block": false
+          }
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "open-brief-no-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "openBriefs",
+              "session_id": "s-none"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "summary-live-registrations-and-overdue",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "old",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:58:00.000Z",
+                "text": "t-old"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "new",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-new"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "old2",
+                "from": "b@tm",
+                "to": "b@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:58:00.000Z",
+                "text": "t-old2"
+              }
+            },
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "register",
+              "session_id": "s-b",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "pid": 1,
+              "harness": "claude"
+            },
+            {
+              "op": "heartbeat",
+              "team": "tm",
+              "name": "a",
+              "adapter": "pull",
+              "session_id": "s-a",
+              "poll_ms": 5000
+            },
+            {
+              "op": "summary"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "old",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:58:00.000Z",
+              "text": "t-old"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "new",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-new"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "old2",
+              "from": "b@tm",
+              "to": "b@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:58:00.000Z",
+              "text": "t-old2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {},
+        {
+          "ok": {
+            "registrations": [
+              {
+                "address": "a@tm",
+                "harness": "claude",
+                "adapter": "fresh"
+              },
+              {
+                "address": "b@tm",
+                "harness": "claude",
+                "adapter": "none"
+              }
+            ],
+            "overdue": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "summary-stale-heartbeat-and-dead-registration",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "register",
+              "session_id": "s-dead",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "pid": 2147483000
+            },
+            {
+              "op": "write",
+              "team": "tm",
+              "name": "a",
+              "rel": "adapters/s-a.json",
+              "text": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s-a\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:00.000Z\",\"acked_through\":0}\n"
+            },
+            {
+              "op": "summary"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "registrations": [
+              {
+                "address": "a@tm",
+                "harness": "claude",
+                "adapter": "stale"
+              }
+            ],
+            "overdue": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "summary-nothing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "summary"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "registrations": [],
+            "overdue": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-boxes-counts-and-adapter-state",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:58:00.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e2"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "e3",
+                "from": "b@tm",
+                "to": "b@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e3"
+              }
+            },
+            {
+              "op": "heartbeat",
+              "team": "tm",
+              "name": "a",
+              "adapter": "pull-adapter",
+              "session_id": "s-a",
+              "poll_ms": 5000
+            },
+            {
+              "op": "inspectBoxes"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:58:00.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e2"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e2"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e3",
+              "from": "b@tm",
+              "to": "b@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e3"
+            },
+            "existed": false
+          }
+        },
+        {},
+        {
+          "ok": {
+            "boxes": [
+              {
+                "address": "a@tm",
+                "dir": "$ROOT/ah/mailbox/tm~HASH/a",
+                "entries": 2,
+                "unacked": 1,
+                "overdue": 1,
+                "heartbeat_at": "2026-01-01T12:00:00.000Z",
+                "adapter": "pull-adapter",
+                "adapter_state": "fresh"
+              },
+              {
+                "address": "b@tm",
+                "dir": "$ROOT/ah/mailbox/tm~HASH/b",
+                "entries": 1,
+                "unacked": 1,
+                "overdue": 0,
+                "heartbeat_at": null,
+                "adapter": null,
+                "adapter_state": "none"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-boxes-filtered-by-address",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "e3",
+                "from": "b@tm",
+                "to": "b@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e3"
+              }
+            },
+            {
+              "op": "inspectBoxes",
+              "address": "b@tm"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e3",
+              "from": "b@tm",
+              "to": "b@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e3"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "boxes": [
+              {
+                "address": "b@tm",
+                "dir": "$ROOT/ah/mailbox/tm~HASH/b",
+                "entries": 1,
+                "unacked": 1,
+                "overdue": 0,
+                "heartbeat_at": null,
+                "adapter": null,
+                "adapter_state": "none"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-boxes-stale-heartbeat",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "write",
+              "team": "tm",
+              "name": "a",
+              "rel": "adapters/s-a.json",
+              "text": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s-a\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:00.000Z\",\"acked_through\":0}\n"
+            },
+            {
+              "op": "inspectBoxes"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "boxes": [
+              {
+                "address": "a@tm",
+                "dir": "$ROOT/ah/mailbox/tm~HASH/a",
+                "entries": 1,
+                "unacked": 1,
+                "overdue": 0,
+                "heartbeat_at": "2026-01-01T11:59:00.000Z",
+                "adapter": "pull",
+                "adapter_state": "stale"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-boxes-none",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "inspectBoxes"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "boxes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-pending-by-default",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "pending",
+            "entries": [
+              {
+                "id": "e2",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-acked",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "e1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "acked"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "e1"
+            ],
+            "unknown": [],
+            "fresh": [
+              "e1"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "acked",
+            "entries": [
+              {
+                "id": "e1",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": true,
+                "attempt": null
+              }
+            ],
+            "total": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-all-with-latest-attempt",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              },
+              "attempt": {
+                "id": "e2",
+                "rung": 3,
+                "state": "routed-fallback"
+              }
+            },
+            {
+              "op": "write",
+              "team": "tm",
+              "name": "a",
+              "rel": "attempts.jsonl",
+              "text": "{\"v\":1,\"id\":\"e2\",\"rung\":3,\"state\":\"routed-fallback\",\"at\":\"2026-01-01T11:59:57.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"rung\":4,\"state\":\"paste-failed\",\"adapter\":\"x\",\"reason\":\"no pane\",\"at\":\"2026-01-01T11:59:58.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"rung\":4,\"ladder\":true,\"state\":\"pending\",\"at\":\"2026-01-01T11:59:59.000Z\"}\n{\"id\":\n"
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "e1",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "e2",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": {
+                  "state": "paste-failed",
+                  "rung": 4,
+                  "adapter": "x",
+                  "at": "2026-01-01T11:59:58.000Z",
+                  "reason": "no pane"
+                }
+              }
+            ],
+            "total": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-newest-n",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e3",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e3"
+              }
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all",
+              "n": 2
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e3",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e3"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "e2",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "e3",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-n-zero-is-everything",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e3",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e3"
+              }
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all",
+              "n": 0
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e3",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e3"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "e1",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "e2",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "e3",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-negative-n-skips-from-the-front",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e2",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e2"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e3",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e3"
+              }
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all",
+              "n": -1
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e2",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e2"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e3",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e3"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "e2",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "e3",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-n-larger-than-the-box",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "e1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-e1"
+              }
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all",
+              "n": 50
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "e1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-e1"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "e1",
+                "kind": "note",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-entries-event-and-ref-fields",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "event": "link-ended"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "b1",
+                "from": "b@tm",
+                "to": "a@tm",
+                "kind": "brief",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+              }
+            },
+            {
+              "op": "inspectEntries",
+              "team": "tm",
+              "name": "a",
+              "filter": "all"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "event": "link-ended"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "b1",
+              "from": "b@tm",
+              "to": "a@tm",
+              "kind": "brief",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "address": "a@tm",
+            "filter": "all",
+            "entries": [
+              {
+                "id": "v1",
+                "kind": "event",
+                "from": "ahd",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": null,
+                "event": "link-ended",
+                "acked": false,
+                "attempt": null
+              },
+              {
+                "id": "b1",
+                "kind": "brief",
+                "from": "b@tm",
+                "to": "a@tm",
+                "created": "2026-01-01T11:59:59.000Z",
+                "route": "pull",
+                "ref": "$ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md",
+                "event": null,
+                "acked": false,
+                "attempt": null
+              }
+            ],
+            "total": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-registrations-live-stale-and-defaults",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "register",
+              "session_id": "s-dead",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "pid": 2147483000,
+              "pane_id": "%3",
+              "team_file": "$ROOT/h/teams/tm.json",
+              "cwd": "/w"
+            },
+            {
+              "op": "inspectRegistrations"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "registrations": [
+              {
+                "session_id": "s-a",
+                "address": "a@tm",
+                "addresses": [
+                  "a@tm"
+                ],
+                "harness": "claude",
+                "pid": 1,
+                "live": true,
+                "pane_id": null,
+                "team_file": null,
+                "at": "2026-01-01T12:00:00.000Z",
+                "adapter": "none"
+              },
+              {
+                "session_id": "s-dead",
+                "address": "b@tm",
+                "addresses": [
+                  "b@tm"
+                ],
+                "harness": "claude",
+                "pid": 2147483000,
+                "live": false,
+                "pane_id": "%3",
+                "team_file": "$ROOT/h/teams/tm.json",
+                "at": "2026-01-01T12:00:00.000Z",
+                "adapter": "none"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-registrations-skip-junk-and-name-from-file",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "inspectRegistrations"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "ah/registrations/torn.json": "{\"address\":",
+        "ah/registrations/noaddr.json": "{\"v\":1,\"session_id\":\"x\"}\n",
+        "ah/registrations/named-by-file.json": "{\"v\":1,\"address\":\"q@tm\",\"harness\":\"zed\",\"pid\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n",
+        "ah/registrations/note.txt": "x"
+      },
+      "expect": [
+        {
+          "ok": true
+        },
+        {
+          "ok": {
+            "registrations": [
+              {
+                "session_id": "named-by-file",
+                "address": "q@tm",
+                "addresses": [
+                  "q@tm"
+                ],
+                "harness": "zed",
+                "pid": null,
+                "live": false,
+                "pane_id": null,
+                "team_file": null,
+                "at": "2026-01-01T00:00:00.000Z",
+                "adapter": "none"
+              },
+              {
+                "session_id": "s-a",
+                "address": "a@tm",
+                "addresses": [
+                  "a@tm"
+                ],
+                "harness": "claude",
+                "pid": 1,
+                "live": true,
+                "pane_id": null,
+                "team_file": null,
+                "at": "2026-01-01T12:00:00.000Z",
+                "adapter": "none"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-registrations-adapter-freshness-of-the-first-box",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "register",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "pid": 1
+            },
+            {
+              "op": "heartbeat",
+              "team": "tm",
+              "name": "a",
+              "adapter": "pull",
+              "session_id": "s-a",
+              "poll_ms": 5000
+            },
+            {
+              "op": "inspectRegistrations"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": true
+        },
+        {},
+        {
+          "ok": {
+            "registrations": [
+              {
+                "session_id": "s-a",
+                "address": "a@tm",
+                "addresses": [
+                  "a@tm"
+                ],
+                "harness": "claude",
+                "pid": 1,
+                "live": true,
+                "pane_id": null,
+                "team_file": null,
+                "at": "2026-01-01T12:00:00.000Z",
+                "adapter": "fresh"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-events-unacked-ahd-events-oldest-first",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v2",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v2",
+                "event": "later",
+                "data": {
+                  "request_id": "r2"
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:55.000Z",
+                "text": "t-v1",
+                "event": "earlier",
+                "to_session": "s-a"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v3",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v3",
+                "event": "acked"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v4",
+                "from": "a@tm",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v4",
+                "event": "not-ahd"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v5",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v5"
+              }
+            },
+            {
+              "op": "ack",
+              "team": "tm",
+              "name": "a",
+              "ids": [
+                "v3"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "inspectEvents"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v2",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v2",
+              "event": "later",
+              "data": {
+                "request_id": "r2"
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:55.000Z",
+              "text": "t-v1",
+              "event": "earlier",
+              "to_session": "s-a"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v3",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v3",
+              "event": "acked"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v4",
+              "from": "a@tm",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v4",
+              "event": "not-ahd"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v5",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v5"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "acked": [
+              "v3"
+            ],
+            "unknown": [],
+            "fresh": [
+              "v3"
+            ]
+          }
+        },
+        {
+          "ok": {
+            "events": [
+              {
+                "address": "a@tm",
+                "id": "v1",
+                "event": "earlier",
+                "to_session": "s-a",
+                "request_id": null,
+                "created": "2026-01-01T11:59:55.000Z"
+              },
+              {
+                "address": "a@tm",
+                "id": "v2",
+                "event": "later",
+                "to_session": null,
+                "request_id": "r2",
+                "created": "2026-01-01T11:59:59.000Z"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "inspect-events-filtered-by-address",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "v1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v1",
+                "event": "x"
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "v2",
+                "from": "ahd",
+                "to": "b@tm",
+                "kind": "event",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "text": "t-v2",
+                "event": "y"
+              }
+            },
+            {
+              "op": "inspectEvents",
+              "address": "b@tm"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v1",
+              "event": "x"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "v2",
+              "from": "ahd",
+              "to": "b@tm",
+              "kind": "event",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "text": "t-v2",
+              "event": "y"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "events": [
+              {
+                "address": "b@tm",
+                "id": "v2",
+                "event": "y",
+                "to_session": null,
+                "request_id": null,
+                "created": "2026-01-01T11:59:59.000Z"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

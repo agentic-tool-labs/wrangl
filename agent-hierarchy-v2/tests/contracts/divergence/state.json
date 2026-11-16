@@ -1,0 +1,33 @@
+{
+  "about": "Where the native state service and daemon are intentionally stricter than the recorded Node oracle. Every row is a ruling from the trust-surface review, not an accident.",
+  "rows": [
+    {
+      "id": "F6-state-path-dotdot",
+      "where": "Ah.State StateRequestChecks.CheckPathArgs (an op's declared path arguments)",
+      "node": "realish collapses `..` textually before resolving links, so `<hier>/link/../x` with `link` leaving the hierarchy is judged inside",
+      "native": "a path argument with a `..` segment is a 400 bad_request (`<field> must not contain a .. segment`); a path whose first missing component is a symlink is refused as outside",
+      "test": "StateServiceTests.APathArgumentWithADotDotSegmentIs400EvenWhenItCollapsesInside, StateServiceTests.ALinkInsideTheHierarchyThatLeavesItIsRefusedAndALinkThatStaysIsNot"
+    },
+    {
+      "id": "F8-daemon-socket-owner-only-at-bind",
+      "where": "Ah.Daemon SocketBinder.Bind",
+      "node": "the socket is bound under the process umask and chmod 0600 after it is serving",
+      "native": "the socket file is restricted to 0600 before Bind returns, so it is owner-only before anything listens on it",
+      "test": "DaemonServerTests.ABoundSocketIsOwnerOnlyBeforeAnyoneCanListenOnIt"
+    },
+    {
+      "id": "N5-daemon-drain-reason-control-chars",
+      "where": "Ah.Daemon DaemonServer /v1/drain",
+      "node": "logs the caller's reason (first 80 characters) as given, newlines included",
+      "native": "control characters are stripped from the reason before it is truncated and logged",
+      "test": "DaemonServerTests.ADrainReasonIsLoggedWithoutControlCharacters, DaemonServerTests.APlainDrainReasonIsLoggedAsGiven"
+    },
+    {
+      "id": "CC-1-state-claims-derived-or-trusted",
+      "where": "Ah.State StateRequestChecks.CheckContext, over IHierarchyDirPolicy.CheckClaim",
+      "node": "hierarchy_dir and main_hierarchy_dir are accepted when each is an existing directory owned by the daemon's user, whatever cwd says",
+      "native": "hierarchy_dir must be the directory cwd derives to, or the accepted main checkout's, or a trusted hierarchy directory; main_hierarchy_dir must be the derived main (a linked worktree confirmed by its own back-pointer) or trusted; anything else is a 400 bad_request naming the field",
+      "test": "RequestContextCheckerTests.AHierarchyDirectoryTheCwdDoesNotDeriveToIsRefusedWithItsField, RequestContextCheckerTests.ALinkedWorktreesMainHierarchyIsAcceptedOnlyWithItsBackPointer"
+    }
+  ]
+}

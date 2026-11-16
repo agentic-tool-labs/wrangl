@@ -1,0 +1,44 @@
+{
+  "kind": "state-op",
+  "id": "clear-absent",
+  "about": "clear of an absent record reports it",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "activity",
+    "op": "clear",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "subject": "sess-none"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-activity-clear-absent"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "cleared": false
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an error for an absent record",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:08.434Z"
+  }
+}

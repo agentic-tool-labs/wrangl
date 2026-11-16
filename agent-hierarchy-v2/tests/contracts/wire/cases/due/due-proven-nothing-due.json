@@ -1,0 +1,39 @@
+{
+  "kind": "wire",
+  "id": "due-proven-nothing-due",
+  "about": "a proven session with nothing due is answered empty at the wait limit, in the one answer shape",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "in": "{\"session\":\"sess-contract\",\"now\":1790000000000,\"busy_at\":null,\"poll_ms\":5000,\"handed\":{},\"state\":null}",
+      "wait": "1"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/due"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "acked": [],
+      "compact": null,
+      "daemon": null,
+      "idle": true,
+      "ids": [],
+      "prompt": null,
+      "state": "{\"orchestrator@tm\":[0,0]}",
+      "v": 1
+    }
+  },
+  "mutant": "an answer with another shape or with mail invented",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T17:17:15.000Z",
+    "note": "native-only route (divergence/routes.json N5-mod-mail-push): no Node recording exists"
+  }
+}

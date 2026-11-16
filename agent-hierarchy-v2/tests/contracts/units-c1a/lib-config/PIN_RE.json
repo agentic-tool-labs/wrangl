@@ -1,0 +1,91 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "PIN_RE",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": true
+    },
+    {
+      "id": "valid-mixed-digits",
+      "args": [
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ],
+      "expect": true
+    },
+    {
+      "id": "uppercase-hex",
+      "args": [
+        "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ],
+      "expect": false
+    },
+    {
+      "id": "one-short",
+      "args": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "one-long",
+      "args": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-prefix",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-space",
+      "args": [
+        " sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "non-hex",
+      "args": [
+        "sha256:gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    }
+  ]
+}

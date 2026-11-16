@@ -1,0 +1,12 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "STATUS_SCHEMA",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 1
+    }
+  ]
+}

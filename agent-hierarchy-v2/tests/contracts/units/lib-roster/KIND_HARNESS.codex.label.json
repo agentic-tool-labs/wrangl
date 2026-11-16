@@ -1,0 +1,12 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.label",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "Codex"
+    }
+  ]
+}

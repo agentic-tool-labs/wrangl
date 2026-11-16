@@ -1,0 +1,39 @@
+{
+  "kind": "cli",
+  "id": "no-response",
+  "about": "fill of a response that was never created is refused",
+  "tree": "wire-tm-implementor-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "fill",
+      "--id",
+      "20260101-000000-cccc",
+      "--from",
+      "implementor",
+      "--req",
+      "<ROOT:proj>/.claude/hierarchy/msgs/none.md",
+      "--body",
+      "\"x\""
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: fill: --req: no such file <ROOT:proj>/.claude/hierarchy/msgs/none.md\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a fill that creates the file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.189Z"
+  }
+}

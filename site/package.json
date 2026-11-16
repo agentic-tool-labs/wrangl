@@ -1,0 +1,9 @@
+{
+  "name": "wrangl-docs-site",
+  "private": true,
+  "type": "module",
+  "description": "Builds the Wrangl documentation site from the Markdown docs. See build.mjs.",
+  "engines": { "node": ">=20" },
+  "scripts": { "build": "node build.mjs", "test": "node --test" },
+  "dependencies": { "marked": "18.1.2" }
+}

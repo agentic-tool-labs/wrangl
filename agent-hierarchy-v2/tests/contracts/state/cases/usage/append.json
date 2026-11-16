@@ -1,0 +1,52 @@
+{
+  "kind": "state-op",
+  "id": "append",
+  "about": "append writes one usage row with an op_id",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "usage",
+    "op": "append",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "rec": {
+          "ts": "2026-01-01T00:00:00.000Z",
+          "session_id": "sess-contract",
+          "agent_id": "a-1",
+          "agent_type": "ah:implementor",
+          "model": "m",
+          "calls": 1,
+          "in": 1,
+          "out": 1
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-usage-append"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "appended": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a row without op_id",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:26.048Z"
+  }
+}

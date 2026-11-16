@@ -1,0 +1,18 @@
+{
+  "team_id": "t-tm",
+  "mesh": {
+    "policy": "open"
+  },
+  "orchestrator": {
+    "pid": "<PID:runner>",
+    "session_id": "sess-orch"
+  },
+  "members": [
+    {
+      "role": "implementor",
+      "name": "tm-implementor",
+      "transport_id": "p-tm-implementor",
+      "expected_root": "<ROOT:ah>/elsewhere"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "kind": "cli",
+  "id": "request",
+  "about": "new stores a request skeleton and prints its id and path; the skeleton's frontmatter is held by MsgsDbWriteTests.MsgNewStoresARequestSkeletonWithItsFrontmatterAndMakesNoMsgsDirectory",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "new",
+      "--to",
+      "implementor",
+      "--from",
+      "orchestrator",
+      "--slug",
+      "contract",
+      "--title",
+      "Contract title",
+      "--id",
+      "20260101-000000-cccc"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"id\":\"<MSGID:1>\",\"type\":\"request\",\"path\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--contract--request.md\",\"existing\":false}\n",
+    "stderr": "note: <MSGID:1> was not on the checklist; added item _run/auto-contract-title and linked it. Next time link it yourself: `roster.mjs checklist add \"<what>\" --ref <request id>` (new item) or `roster.mjs checklist set <item> --ref <request id>` (existing item), or `msg.mjs new --item <id>` at dispatch.\n",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.progress_logs.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":\"1.1\",\"ts\":\"<ISO:1>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"add\",\"title\":\"Contract title\",\"cause\":{\"event\":\"verb\",\"ref\":\"auto-add\",\"at\":\"<ISO:2>\"},\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n{\"v\":\"1.1\",\"ts\":\"<ISO:3>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"source\",\"source\":\"auto-created by msg.mjs new\",\"cause\":{\"event\":\"verb\",\"ref\":\"auto-add\",\"at\":\"<ISO:4>\"},\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n{\"v\":\"1.1\",\"ts\":\"<ISO:5>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"next\",\"cause\":{\"event\":\"verb\",\"ref\":\"auto-add\",\"at\":\"<ISO:6>\"},\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n{\"v\":\"1.1\",\"ts\":\"<ISO:7>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"assign\",\"holder\":\"implementor\",\"cause\":{\"event\":\"dispatch\",\"ref\":\"<MSGID:1>\",\"at\":\"<ISO:8>\"},\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n{\"v\":\"1.1\",\"ts\":\"<ISO:9>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"start\",\"cause\":{\"event\":\"dispatch\",\"ref\":\"<MSGID:1>\",\"at\":\"<ISO:10>\"},\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n{\"v\":\"1.1\",\"ts\":\"<ISO:11>\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"auto-contract-title\",\"event\":\"ref\",\"ref\":\"<MSGID:1>\",\"cause\":{\"event\":\"dispatch\",\"ref\":\"<MSGID:1>\",\"at\":\"<ISO:12>\"},\"base\":\"<GITSHA>\",\"by\":\"orchestrator@tm\",\"session\":\"sess-contract\"}\n"
+        },
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a request skeleton with the wrong frontmatter",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:43.102Z"
+  }
+}

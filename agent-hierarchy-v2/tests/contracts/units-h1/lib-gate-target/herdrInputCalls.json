@@ -1,0 +1,526 @@
+{
+  "lib": "lib-gate-target",
+  "module": "hooks/lib-gate-target.mjs",
+  "fn": "herdrInputCalls",
+  "cases": [
+    {
+      "id": "agent-prompt",
+      "args": [
+        "herdr agent prompt worker hello"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-prompt-pane-flag",
+      "args": [
+        "herdr agent prompt worker --pane p_1 hello"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_1",
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-prompt-pane-eq",
+      "args": [
+        "herdr agent prompt worker --pane=p_1 hello"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_1",
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-send-keys",
+      "args": [
+        "herdr agent send-keys worker Enter"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "send-keys",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "Enter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-attach",
+      "args": [
+        "herdr agent attach worker"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "attach",
+          "name": "worker",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "agent-get-not-input",
+      "args": [
+        "herdr agent get worker"
+      ],
+      "expect": []
+    },
+    {
+      "id": "pane-send-text",
+      "args": [
+        "herdr pane send-text p_3 'hello world'"
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "send-text",
+          "name": "p_3",
+          "pane": null,
+          "args": [
+            "'hello",
+            "world'"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-run",
+      "args": [
+        "herdr pane run p_3 -- ls"
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "run",
+          "name": "p_3",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "terminal-attach",
+      "args": [
+        "herdr terminal attach t_1"
+      ],
+      "expect": [
+        {
+          "group": "terminal",
+          "verb": "attach",
+          "name": "t_1",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "terminal-session-control",
+      "args": [
+        "herdr terminal session control t_1 raw"
+      ],
+      "expect": [
+        {
+          "group": "terminal",
+          "verb": "session control",
+          "name": "t_1",
+          "pane": null,
+          "args": [
+            "raw"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terminal-session-other",
+      "args": [
+        "herdr terminal session list"
+      ],
+      "expect": []
+    },
+    {
+      "id": "global-option-value",
+      "args": [
+        "herdr --session main agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "global-option-bare",
+      "args": [
+        "herdr --verbose agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "global-between-group-verb",
+      "args": [
+        "herdr agent --session main prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "remote-keybindings",
+      "args": [
+        "herdr --remote-keybindings k agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quoted-command-word",
+      "args": [
+        "\"herdr\" agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "single-quoted-command-word",
+      "args": [
+        "'herdr' agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quoted-name",
+      "args": [
+        "herdr agent prompt 'worker' hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "double-quoted-name",
+      "args": [
+        "herdr agent prompt \"worker\" hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "after-and",
+      "args": [
+        "cd /x && herdr agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "after-semicolon",
+      "args": [
+        "echo a; herdr agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "after-pipe",
+      "args": [
+        "echo a | herdr agent prompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-calls",
+      "args": [
+        "herdr agent prompt a x; herdr pane send-text p_1 y"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "a",
+          "pane": null,
+          "args": [
+            "x"
+          ]
+        },
+        {
+          "group": "pane",
+          "verb": "send-text",
+          "name": "p_1",
+          "pane": null,
+          "args": [
+            "y"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "line-continuation",
+      "args": [
+        "herdr agent \\\nprompt worker hi"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hi"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flag-takes-next-word",
+      "args": [
+        "herdr agent prompt worker --timeout 5 hello"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flag-eq-keeps-next",
+      "args": [
+        "herdr agent prompt worker --timeout=5 hello"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "double-dash-stops",
+      "args": [
+        "herdr agent prompt worker -- --pane p_9 x"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "no-name",
+      "args": [
+        "herdr agent prompt"
+      ],
+      "expect": []
+    },
+    {
+      "id": "flag-only-no-name",
+      "args": [
+        "herdr agent prompt --pane p_1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "pane-flag-no-value",
+      "args": [
+        "herdr agent prompt worker --pane"
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "word-boundary-not-herdr",
+      "args": [
+        "myherdr agent prompt worker hi"
+      ],
+      "expect": []
+    },
+    {
+      "id": "dotted-prefix-not-herdr",
+      "args": [
+        "x.herdr agent prompt worker hi"
+      ],
+      "expect": []
+    },
+    {
+      "id": "hyphen-prefix-not-herdr",
+      "args": [
+        "my-herdr agent prompt worker hi"
+      ],
+      "expect": []
+    },
+    {
+      "id": "herdr-no-trailing-space",
+      "args": [
+        "herdr"
+      ],
+      "expect": []
+    },
+    {
+      "id": "wrong-group",
+      "args": [
+        "herdr workspace prompt worker hi"
+      ],
+      "expect": []
+    },
+    {
+      "id": "agent-start-name",
+      "args": [
+        "herdr agent start Bad_Name --pane p_2"
+      ],
+      "expect": []
+    },
+    {
+      "id": "agent-start-ok",
+      "args": [
+        "herdr agent start good-name"
+      ],
+      "expect": []
+    }
+  ]
+}

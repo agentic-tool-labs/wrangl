@@ -1,0 +1,32 @@
+{
+  "kind": "wire",
+  "id": "state-read-ok",
+  "about": "a registered state read (peers.read) through GET",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "args": "{\"dir\":\"<ROOT:proj>/.claude/hierarchy\"}",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/state/peers/read"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "result": []
+    }
+  },
+  "mutant": "a read that writes",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:09.419Z"
+  }
+}

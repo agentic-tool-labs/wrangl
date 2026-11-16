@@ -1,0 +1,2 @@
+{"type": "user", "message": {"role": "user", "content": "[hierarchy-msg <ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-abcd--orchestrator--demo--response.md]\nThis is a response."}}
+{"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "ok"}]}}

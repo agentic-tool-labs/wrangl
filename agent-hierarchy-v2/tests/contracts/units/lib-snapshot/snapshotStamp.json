@@ -1,0 +1,61 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "snapshotStamp",
+  "cases": [
+    {
+      "id": "fixed-instant",
+      "args": [
+        {
+          "$date": "2026-01-02T03:04:05.123Z"
+        }
+      ],
+      "expect": "20260102T030405123Z"
+    },
+    {
+      "id": "zero-milliseconds",
+      "args": [
+        {
+          "$date": "2026-01-02T03:04:05.000Z"
+        }
+      ],
+      "expect": "20260102T030405000Z"
+    },
+    {
+      "id": "end-of-year",
+      "args": [
+        {
+          "$date": "2026-12-31T23:59:59.999Z"
+        }
+      ],
+      "expect": "20261231T235959999Z"
+    },
+    {
+      "id": "epoch",
+      "args": [
+        {
+          "$date": "1970-01-01T00:00:00.000Z"
+        }
+      ],
+      "expect": "19700101T000000000Z"
+    },
+    {
+      "id": "leap-day",
+      "args": [
+        {
+          "$date": "2024-02-29T12:00:00.001Z"
+        }
+      ],
+      "expect": "20240229T120000001Z"
+    },
+    {
+      "id": "year-0999",
+      "args": [
+        {
+          "$date": "0999-06-07T08:09:10.011Z"
+        }
+      ],
+      "expect": "09990607T080910011Z"
+    }
+  ]
+}

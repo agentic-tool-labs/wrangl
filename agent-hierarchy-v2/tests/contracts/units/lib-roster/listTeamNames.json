@@ -1,0 +1,120 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "listTeamNames",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "two-teams-sorted-by-bytes",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/zeta.json": "{}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{}"
+      },
+      "expect": [
+        "alpha",
+        "zeta"
+      ]
+    },
+    {
+      "id": "ignores-non-json-and-bad-aliases",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/ok.json": "{}",
+        "repo/.claude/hierarchy/teams/bad_name.json": "{}",
+        "repo/.claude/hierarchy/teams/-x.json": "{}",
+        "repo/.claude/hierarchy/teams/note.txt": "x",
+        "repo/.claude/hierarchy/teams/.json": "{}"
+      },
+      "expect": [
+        "ok"
+      ]
+    },
+    {
+      "id": "alias-length-32-ok-33-rejected",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json": "{}",
+        "repo/.claude/hierarchy/teams/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json": "{}"
+      },
+      "expect": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "id": "digits-and-hyphens",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/9-lives.json": "{}",
+        "repo/.claude/hierarchy/teams/team-2.json": "{}"
+      },
+      "expect": [
+        "9-lives",
+        "team-2"
+      ]
+    },
+    {
+      "id": "worktree-home-then-pool",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/shared.json": "{}",
+        "main/.claude/hierarchy/teams/mainonly.json": "{}",
+        "wt/.claude/hierarchy/teams/shared.json": "{}",
+        "wt/.claude/hierarchy/teams/wtonly.json": "{}"
+      },
+      "expect": [
+        "mainonly",
+        "shared",
+        "wtonly"
+      ]
+    },
+    {
+      "id": "unicode-name-rejected",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/é.json": "{}"
+      },
+      "expect": []
+    },
+    {
+      "id": "teams-is-a-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams": "x"
+      },
+      "expect": []
+    }
+  ]
+}

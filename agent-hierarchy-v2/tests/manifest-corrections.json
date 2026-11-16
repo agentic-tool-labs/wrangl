@@ -1,0 +1,240 @@
+{
+  "about": "Hand corrections to the generated manifest (tests/manifest-notes.md says why). classify.mjs applies them by suite name after the heuristic.",
+  "corrections": {
+    "test-codex-no-credentials": {
+      "kind": "static",
+      "covers": [
+        "hooks/*.mjs",
+        "native/**",
+        "mod/**"
+      ],
+      "reads_source": true
+    },
+    "test-run-all": {
+      "kind": "contract",
+      "covers": [
+        "tests/run-all.sh",
+        "tests/lib-daemon-leak.sh"
+      ]
+    },
+    "test-run-all-lanes": {
+      "kind": "contract",
+      "covers": [
+        "tests/run-all.sh",
+        "tests/contract-tools/select.mjs",
+        "tests/contract-tools/classify.mjs",
+        "tests/manifest.json"
+      ]
+    },
+    "test-ahd-team-hold": {
+      "kind": "contract",
+      "covers": [
+        "bin/ah-hook",
+        "native/src/Ah.Commands/Roster/Team/**"
+      ]
+    },
+    "test-so-autonomy": {
+      "kind": "static",
+      "covers": [
+        "native/src/Ah.Commands/Roster/**",
+        "native/src/Ah.Roster/**"
+      ]
+    },
+    "test-leak-check-native": {
+      "kind": "contract",
+      "covers": [
+        "tests/lib-daemon-leak.sh"
+      ]
+    },
+    "test-contract-normalize": {
+      "kind": "contract",
+      "covers": [
+        "tests/contract-tools/normalize.mjs",
+        "tests/contracts/normalize.json"
+      ]
+    },
+    "test-contract-tools": {
+      "kind": "contract",
+      "covers": [
+        "tests/contract-tools/**",
+        "tests/contracts/normalize.json",
+        "tests/contracts/wire/routes.json"
+      ]
+    },
+    "test-contract-state": {
+      "kind": "contract",
+      "covers": [
+        "tests/contract-tools/gen-samples.mjs",
+        "tests/contract-tools/import-json-bytes.mjs",
+        "tests/contracts/stores.json",
+        "tests/contracts/state/**",
+        "hooks/lib-state.mjs",
+        "hooks/lib-status.mjs",
+        "hooks/lib-hier.mjs",
+        "hooks/lib-roster.mjs",
+        "hooks/lib-links.mjs",
+        "hooks/lib-gate.mjs",
+        "hooks/lib-session-role.mjs",
+        "hooks/lib-usage.mjs",
+        "hooks/lib-peer.mjs"
+      ]
+    },
+    "test-contracts": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "bin/ahd",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-contracts-s0": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "bin/ahd",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-contracts-s1": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "bin/ahd",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-contracts-s2": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "bin/ahd",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-contracts-s3": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "bin/ahd",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-manifest-complete": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "native/cutover.json",
+        "tests/test-*.sh",
+        "tests/manifest.json",
+        "tests/manifest-corrections.json",
+        "tests/contract-tools/classify.mjs",
+        "tests/contract-tools/check-manifest.mjs"
+      ],
+      "units": "all"
+    },
+    "test-parity-tap": {
+      "kind": "contract",
+      "covers": [
+        "hooks/lib-parity-tap.mjs",
+        "hooks/lib-dispatch.mjs",
+        "native/cutover.json",
+        "tests/contracts/normalize.json"
+      ],
+      "reads_source": true
+    },
+    "test-parity-replay": {
+      "kind": "contract",
+      "covers": [
+        "hooks/*.mjs",
+        "hooks/registry.json",
+        "hooks/lib-parity-tap.mjs",
+        "tests/parity/**",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-contract-native-skip": {
+      "kind": "contract",
+      "covers": [
+        "hooks/lib-dispatch.mjs",
+        "native/cutover.json",
+        "tests/contract-tools/**",
+        "tests/contracts/**"
+      ],
+      "units": "all"
+    },
+    "test-with-slot": {
+      "kind": "contract",
+      "covers": [
+        "tests/with-slot.sh",
+        "tests/run-all.sh"
+      ],
+      "reads_source": false
+    },
+    "test-hermetic-guard": {
+      "kind": "static",
+      "covers": [
+        "tests/lib-hermetic.sh",
+        "bin/ah-trust.sh",
+        "bin/ah-testmode.sh"
+      ]
+    },
+    "test-home-predicate": {
+      "kind": "static",
+      "covers": [
+        "bin/ah-trust.sh",
+        "bin/ah-testmode.sh",
+        "tests/contracts/home-predicate.json",
+        "tests/contract-tools/home-predicate-sh.mjs",
+        "tests/contract-tools/trusted-homes-sh.mjs"
+      ]
+    },
+    "test-affected-smoke": {
+      "kind": "contract",
+      "covers": [
+        "tests/affected-smoke.sh",
+        "tests/contract-tools/affected-select.mjs",
+        "tests/contract-tools/select.mjs",
+        "agents/orchestrator.md",
+        "agents/implementor.md",
+        "skills/agent-team/SKILL.md"
+      ]
+    },
+    "test-shim-trust": {
+      "covers": [
+        "bin/ah-hook",
+        "bin/ahd",
+        "bin/ah-trust.sh",
+        "bin/ah-testmode.sh"
+      ]
+    }
+  },
+  "family_covers": {
+    "test-roster-": [
+      "native/src/Ah.Roster/**",
+      "native/src/Ah.Commands/Roster/**"
+    ],
+    "test-msg-": [
+      "native/src/Ah.Mesh/**"
+    ],
+    "test-team-": [
+      "native/src/Ah.Commands/Roster/Team/**"
+    ]
+  }
+}

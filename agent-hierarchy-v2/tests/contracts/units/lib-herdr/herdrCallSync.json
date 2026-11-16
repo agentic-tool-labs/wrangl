@@ -1,0 +1,434 @@
+{
+  "lib": "lib-herdr",
+  "module": "hooks/lib-herdr.mjs",
+  "fn": "herdrCallSync",
+  "cases": [
+    {
+      "id": "parses-json-stdout",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho '{\"result\":{\"agents\":[]}}'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "result": {
+          "agents": []
+        }
+      }
+    },
+    {
+      "id": "passes-the-argv",
+      "args": [
+        [
+          "pane",
+          "split",
+          "--pane",
+          "1-1",
+          "--direction",
+          "right"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nprintf '{\"argv\":\"%s\"}' \"$*\"\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "argv": "pane split --pane 1-1 --direction right"
+      }
+    },
+    {
+      "id": "allow-failure-ok-shape",
+      "args": [
+        [
+          "agent",
+          "get",
+          "x"
+        ],
+        {
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho '{\"a\":1}'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "ok": true,
+        "stdout": "{\"a\":1}\n",
+        "stderr": "",
+        "status": 0
+      }
+    },
+    {
+      "id": "allow-failure-nonzero-keeps-stdout",
+      "args": [
+        [
+          "agent",
+          "get",
+          "x"
+        ],
+        {
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho '{\"error\":{\"code\":\"agent_not_found\"}}'; exit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "ok": false,
+        "stdout": "{\"error\":{\"code\":\"agent_not_found\"}}\n",
+        "stderr": "",
+        "status": 1
+      }
+    },
+    {
+      "id": "allow-failure-nonzero-keeps-stderr",
+      "args": [
+        [
+          "agent",
+          "get",
+          "x"
+        ],
+        {
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho oops >&2; exit 3\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "ok": false,
+        "stdout": "",
+        "stderr": "oops\n",
+        "status": 3
+      }
+    },
+    {
+      "id": "allow-failure-exit-status",
+      "args": [
+        [
+          "agent",
+          "get",
+          "x"
+        ],
+        {
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 7\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "ok": false,
+        "stdout": "",
+        "stderr": "",
+        "status": 7
+      }
+    },
+    {
+      "id": "nonzero-throws-with-stderr",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho 'daemon down' >&2; exit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list failed: daemon down"
+    },
+    {
+      "id": "nonzero-without-stderr-throws-command-failed",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 2\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list failed: Command failed: herdr agent list"
+    },
+    {
+      "id": "unparseable-stdout-throws",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho not-json\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unparseable output"
+    },
+    {
+      "id": "empty-stdout-throws",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ntrue\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unparseable output"
+    },
+    {
+      "id": "timeout-throws-timed-out",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {
+          "timeoutMs": 300
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nsleep 5\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list timed out after 300ms"
+    },
+    {
+      "id": "timeout-throws-even-with-allow-failure",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {
+          "timeoutMs": 300,
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nsleep 5\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list timed out after 300ms"
+    },
+    {
+      "id": "timeout-from-env",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nsleep 5\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "AH_HERDR_TIMEOUT_MS": "300"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list timed out after 300ms"
+    },
+    {
+      "id": "missing-binary-throws",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/empty"
+      },
+      "expectThrows": true,
+      "expectError": "herdr agent list failed: spawnSync herdr ENOENT"
+    },
+    {
+      "id": "missing-binary-allow-failure-shape",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {
+          "allowFailure": true
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 0\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/empty"
+      },
+      "expect": {
+        "ok": false,
+        "stdout": "",
+        "stderr": "",
+        "status": null
+      }
+    },
+    {
+      "id": "stdout-is-utf8",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nprintf '{\"t\":\"h\\303\\251llo\"}'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "t": "héllo"
+      }
+    },
+    {
+      "id": "json-with-surrounding-whitespace",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nprintf '\\n  {\"a\":1}  \\n'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "a": 1
+      }
+    },
+    {
+      "id": "scalar-json-is-returned",
+      "args": [
+        [
+          "agent",
+          "list"
+        ],
+        {}
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho 42\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": 42
+    }
+  ]
+}

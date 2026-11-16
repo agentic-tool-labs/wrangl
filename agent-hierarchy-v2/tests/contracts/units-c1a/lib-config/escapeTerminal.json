@@ -1,0 +1,84 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "escapeTerminal",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "plain text"
+      ],
+      "expect": "plain text"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "ansi",
+      "args": [
+        "\u001b[31mred\u001b[0m"
+      ],
+      "expect": "\\u{1b}[31mred\\u{1b}[0m"
+    },
+    {
+      "id": "zero-width",
+      "args": [
+        "a​b"
+      ],
+      "expect": "a\\u{200b}b"
+    },
+    {
+      "id": "bidi",
+      "args": [
+        "a‮b"
+      ],
+      "expect": "a\\u{202e}b"
+    },
+    {
+      "id": "tag-astral",
+      "args": [
+        "a󠁁b"
+      ],
+      "expect": "a\\u{e0041}b"
+    },
+    {
+      "id": "emoji-untouched",
+      "args": [
+        "x😀y"
+      ],
+      "expect": "x😀y"
+    },
+    {
+      "id": "newline-tab-untouched",
+      "args": [
+        "a\nb\tc"
+      ],
+      "expect": "a\nb\tc"
+    },
+    {
+      "id": "nul",
+      "args": [
+        "a\u0000b"
+      ],
+      "expect": "a\\u{0}b"
+    },
+    {
+      "id": "two-in-a-row",
+      "args": [
+        "​‌"
+      ],
+      "expect": "\\u{200b}\\u{200c}"
+    },
+    {
+      "id": "number",
+      "args": [
+        7
+      ],
+      "expect": "7"
+    }
+  ]
+}

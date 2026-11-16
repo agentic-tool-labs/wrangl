@@ -1,0 +1,259 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamOwnedBy",
+  "cases": [
+    {
+      "id": "same-pid",
+      "rerecorded": "peer-proof #144: a pid with no recorded start time may be a reused one, so it proves no ownership",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5
+          }
+        },
+        {
+          "pid": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "different-pid",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5
+          }
+        },
+        {
+          "pid": 6
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "same-session-any-pid",
+      "rerecorded": "peer-proof #144: a recorded session_id is a hint and owns nothing; only the pid and its start time do",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5,
+            "session_id": "s"
+          }
+        },
+        {
+          "pid": 9,
+          "sessionId": "s"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "different-sessions-same-pid-not-owner",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5,
+            "session_id": "s"
+          }
+        },
+        {
+          "pid": 5,
+          "sessionId": "t"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "invoker-without-session-same-pid",
+      "rerecorded": "peer-proof #144: a pid with no recorded start time may be a reused one, so it proves no ownership",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5,
+            "session_id": "s"
+          }
+        },
+        {
+          "pid": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "team-without-session-same-pid",
+      "rerecorded": "peer-proof #144: a pid with no recorded start time may be a reused one, so it proves no ownership",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5
+          }
+        },
+        {
+          "pid": 5,
+          "sessionId": "s"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "string-pid-in-file-coerces",
+      "rerecorded": "peer-proof #144: the pid still coerces, but with no recorded start time it proves no ownership",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": "5"
+          }
+        },
+        {
+          "pid": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "float-invoker-pid",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5
+          }
+        },
+        {
+          "pid": 5.5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-team",
+      "args": [
+        null,
+        {
+          "pid": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-invoker",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5
+          }
+        },
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-orchestrator",
+      "args": [
+        {},
+        {
+          "pid": 0
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "session-only-invoker",
+      "rerecorded": "peer-proof #144: a recorded session_id is a hint and owns nothing; only the pid and its start time do",
+      "args": [
+        {
+          "orchestrator": {
+            "session_id": "s"
+          }
+        },
+        {
+          "sessionId": "s"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "same-pid-and-start",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            },
+            "pid_start": {
+              "$selfstart": 1
+            }
+          }
+        },
+        {
+          "pid": {
+            "$selfpid": 1
+          }
+        }
+      ],
+      "expect": true,
+      "rerecorded": "peer-proof #144 (review S2): the recorded Orchestrator pid with its recorded start time owns the team"
+    },
+    {
+      "id": "same-pid-other-start",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": {
+              "$selfpid": 1
+            },
+            "pid_start": "Thu Jan  1 00:00:00 1970"
+          }
+        },
+        {
+          "pid": {
+            "$selfpid": 1
+          }
+        }
+      ],
+      "expect": false,
+      "rerecorded": "peer-proof #144 (review S2): the same pid with another recorded start time is a reused pid and owns nothing"
+    },
+    {
+      "id": "proven-session",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5,
+            "session_id": "s"
+          }
+        },
+        {
+          "pid": 9,
+          "sessionId": "s",
+          "provenSessions": [
+            "s"
+          ]
+        }
+      ],
+      "expect": true,
+      "rerecorded": "peer-proof #144 (review S2): the recorded Orchestrator session is one the invoker process provably holds"
+    },
+    {
+      "id": "proven-session-is-another",
+      "args": [
+        {
+          "orchestrator": {
+            "pid": 5,
+            "session_id": "s"
+          }
+        },
+        {
+          "pid": 9,
+          "sessionId": "s",
+          "provenSessions": [
+            "t"
+          ]
+        }
+      ],
+      "expect": false,
+      "rerecorded": "peer-proof #144 (review S2): a recorded session the invoker does not provably hold owns nothing"
+    }
+  ]
+}

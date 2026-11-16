@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "unknown-member",
+  "about": "edit of a member the roster lacks is refused",
+  "tree": "cli-roster",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "edit",
+      "repo",
+      "--member",
+      "nobody",
+      "--model",
+      "opus"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: no member named \"nobody\" at level \"repo\"\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown member edited silently",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:48.535Z"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.approvalsArgs",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "-c",
+        "approvals_reviewer=\"user\""
+      ]
+    }
+  ]
+}

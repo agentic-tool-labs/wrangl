@@ -1,0 +1,42 @@
+{
+  "kind": "hook",
+  "id": "h1-single-quoted-json",
+  "about": "ah-cli command single-quoted-json misjudged",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-ah-cli",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "node <PLUGIN>/hooks/roster.mjs create --members '{\"a\":\"b\"}'",
+        "description": "contract"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "ah-cli command single-quoted-json misjudged",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"ah: plugin-shipped CLI — roster.mjs create\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:26:57.991Z"
+  }
+}

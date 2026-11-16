@@ -1,0 +1,2755 @@
+{
+  "lib": "lib-mesh",
+  "module": "tests/contract-tools/units-shims/lib-mesh.mjs",
+  "fn": "decideJson",
+  "cases": [
+    {
+      "id": "system-sender",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "system",
+            "address": "user"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 2
+      }
+    },
+    {
+      "id": "system-recipient",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "system",
+            "address": "user"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 2
+      }
+    },
+    {
+      "id": "external-sender",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "external",
+            "address": "zed@nowhere"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 2
+      }
+    },
+    {
+      "id": "open-policy-member-to-member",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "open"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 1
+      }
+    },
+    {
+      "id": "open-policy-member-outside-team",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "open"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "x@ot",
+            "name": "x",
+            "team": "ot",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 1
+      }
+    },
+    {
+      "id": "relay-of-a-live-entry",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {
+            "relayLive": [
+              [
+                "e1",
+                "b@tm"
+              ]
+            ]
+          },
+          "text": "see [ah-entry e1 to b@tm]",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 3
+      }
+    },
+    {
+      "id": "relay-entry-not-live",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {
+            "relayLive": [
+              [
+                "e2",
+                "b@tm"
+              ]
+            ]
+          },
+          "text": "see [ah-entry e1 to b@tm]",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "relay-to-another-address",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {
+            "relayLive": [
+              [
+                "e1",
+                "b@tm"
+              ]
+            ]
+          },
+          "text": "[ah-entry e1 to b@tm]",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "c@tm",
+            "name": "c",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to c@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "relay-text-with-two-markers-takes-the-first",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {
+            "relayLive": [
+              [
+                "e2",
+                "b@tm"
+              ]
+            ]
+          },
+          "text": "[ah-entry e1 to c@tm] [ah-entry e2 to b@tm]",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "broadcast-by-own-orchestrator",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "broadcast",
+            "team": "tm",
+            "address": "*@tm"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 8
+      }
+    },
+    {
+      "id": "broadcast-by-member-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "broadcast",
+            "team": "tm",
+            "address": "*@tm"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 8,
+        "code": "broadcast_orchestrator_only",
+        "status": 403,
+        "message": "ah: only the Orchestrator of tm may broadcast to the team (to '*@tm')."
+      }
+    },
+    {
+      "id": "broadcast-by-other-teams-orchestrator-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@ot",
+            "name": "orchestrator",
+            "team": "ot",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "broadcast",
+            "team": "tm",
+            "address": "*@tm"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 8,
+        "code": "broadcast_orchestrator_only",
+        "status": 403,
+        "message": "ah: only the Orchestrator of tm may broadcast to the team (to '*@tm')."
+      }
+    },
+    {
+      "id": "broadcast-by-member-under-star-warn-is-still-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "broadcast",
+            "team": "tm",
+            "address": "*@tm"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 8,
+        "code": "broadcast_orchestrator_only",
+        "status": 403,
+        "message": "ah: only the Orchestrator of tm may broadcast to the team (to '*@tm')."
+      }
+    },
+    {
+      "id": "reply-to-briefer",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {
+            "repliesToBriefer": true
+          },
+          "text": "",
+          "msgKind": "report",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": "3a"
+      }
+    },
+    {
+      "id": "orchestrator-to-orchestrator-other-team",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "orchestrator",
+            "address": "orchestrator@ot",
+            "name": "orchestrator",
+            "team": "ot",
+            "role": "orchestrator"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 4
+      }
+    },
+    {
+      "id": "orchestrator-to-own-member",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 5
+      }
+    },
+    {
+      "id": "member-to-own-orchestrator",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 5
+      }
+    },
+    {
+      "id": "member-to-other-team-member",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "x@ot",
+            "name": "x",
+            "team": "ot",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 6,
+        "code": "outside_team",
+        "status": 403,
+        "message": "ah: members of a team message only their own team. Ask orchestrator@tm; the Orchestrators of different teams can talk to each other."
+      }
+    },
+    {
+      "id": "member-to-external",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "external",
+            "address": "zed@nowhere"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 6,
+        "code": "outside_team",
+        "status": 403,
+        "message": "ah: members of a team message only their own team. Ask orchestrator@tm; the Orchestrators of different teams can talk to each other."
+      }
+    },
+    {
+      "id": "member-to-other-teams-orchestrator",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "orchestrator",
+            "address": "orchestrator@ot",
+            "name": "orchestrator",
+            "team": "ot",
+            "role": "orchestrator"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 6,
+        "code": "outside_team",
+        "status": 403,
+        "message": "ah: members of a team message only their own team. Ask orchestrator@tm; the Orchestrators of different teams can talk to each other."
+      }
+    },
+    {
+      "id": "orchestrator-to-other-teams-member",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "x@ot",
+            "name": "x",
+            "team": "ot",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 7,
+        "code": "outside_team",
+        "status": 403,
+        "message": "ah: reach x@ot through its own team's Orchestrator; Orchestrators talk to Orchestrators, and members stay inside their team."
+      }
+    },
+    {
+      "id": "orchestrator-to-external",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "orchestrator",
+            "address": "orchestrator@tm",
+            "name": "orchestrator",
+            "team": "tm",
+            "role": "orchestrator"
+          },
+          "recipient": {
+            "kind": "external",
+            "address": "zed@nowhere"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 7
+      }
+    },
+    {
+      "id": "peer-with-an-active-link",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "ref": "r.md",
+          "facts": {"chainReaches": [["r.md", "20260101-000000-aa11"]]},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": true,
+        "rule": 9,
+        "count": true,
+        "mirror": true,
+        "link": "lk1",
+        "task": "20260101-000000-aa11",
+        "team": "tm",
+        "dir": "$ROOT/h"
+      }
+    },
+    {
+      "id": "linked-entry-without-a-ref-is-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 9,
+        "code": "link_needs_ref",
+        "status": 403,
+        "message": "ah: a message over a link must carry --ref <message file> that belongs to the linked task: send it with `node $AHROOT/hooks/msg.mjs send --to <peer> --ref <id>` or a msg send --text note of at most 280 characters, never a bare SendMessage, or send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "linked-short-bare-sendmessage-without-a-ref-is-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            }
+          },
+          "facts": {},
+          "text": "hi",
+          "msgKind": "sendmessage",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 9,
+        "code": "link_needs_ref",
+        "status": 403,
+        "message": "ah: a message over a link must carry --ref <message file> that belongs to the linked task: send it with `node $AHROOT/hooks/msg.mjs send --to <peer> --ref <id>` or a msg send --text note of at most 280 characters, never a bare SendMessage, or send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "linked-entry-off-the-linked-task-is-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "ref": "r.md",
+          "facts": {"chainReaches": [["r.md", "20260101-999999-zz99"]]},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 9,
+        "code": "link_off_task",
+        "status": 403,
+        "message": "ah: this entry is not part of task 20260101-000000-aa11; new work goes through the Orchestrator orchestrator@tm."
+      }
+    },
+    {
+      "id": "peer-link-covers-the-reverse-direction",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "ref": "r.md",
+          "facts": {"chainReaches": [["r.md", "20260101-000000-aa11"]]},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "reviewer"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": true,
+        "rule": 9,
+        "count": true,
+        "mirror": true,
+        "link": "lk1",
+        "task": "20260101-000000-aa11",
+        "team": "tm",
+        "dir": "$ROOT/h"
+      }
+    },
+    {
+      "id": "peer-link-covers-another-pair-only",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "c@tm",
+            "name": "c",
+            "team": "tm",
+            "role": "architect"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to c@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "peer-without-a-link",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "task": {
+            "id": "20260101-000000-aa11",
+            "path": "/p/x.md"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task 20260101-000000-aa11 --why \"<reason>\" (/p/x.md).\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "peer-with-a-capped-link",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 9,
+        "code": "link_exhausted",
+        "status": 403,
+        "message": "ah: link lk1 has used its 3 messages or its 30 minutes. Ask for more: node $AHROOT/hooks/msg.mjs link extend-request lk1 --why \"<reason>\", or report back to the Orchestrator."
+      }
+    },
+    {
+      "id": "peer-capped-link-past-the-grace",
+      "args": [
+        {
+          "now": 1767229800000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "peer-link-revoked-is-not-covering",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"revoked\",\"end_reason\":\"revoked\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "star-warn-peer-without-a-link-passes-with-a-warning",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 10,
+        "warn": true,
+        "code": "would_refuse",
+        "would": "not_linked",
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm.",
+        "mirror": true
+      }
+    },
+    {
+      "id": "star-warn-outside-team-passes-with-a-warning",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "x@ot",
+            "name": "x",
+            "team": "ot",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": true,
+        "rule": 6,
+        "warn": true,
+        "code": "would_refuse",
+        "would": "outside_team",
+        "message": "ah: members of a team message only their own team. Ask orchestrator@tm; the Orchestrators of different teams can talk to each other.",
+        "mirror": false
+      }
+    },
+    {
+      "id": "star-warn-exhausted-link-is-still-refused",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"expired\",\"end_reason\":\"message_cap\",\"ended_at\":\"2026-01-01T00:08:00.000Z\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": false,
+        "rule": 9,
+        "code": "link_exhausted",
+        "status": 403,
+        "message": "ah: link lk1 has used its 3 messages or its 30 minutes. Ask for more: node $AHROOT/hooks/msg.mjs link extend-request lk1 --why \"<reason>\", or report back to the Orchestrator."
+      }
+    },
+    {
+      "id": "star-warn-with-a-link-counts",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "ref": "r.md",
+          "facts": {"chainReaches": [["r.md", "20260101-000000-aa11"]]},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": true,
+        "rule": 9,
+        "count": true,
+        "mirror": true,
+        "link": "lk1",
+        "task": "20260101-000000-aa11",
+        "team": "tm",
+        "dir": "$ROOT/h"
+      }
+    },
+    {
+      "id": "sender-team-unknown-defaults-to-star",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {},
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "team-entry-without-dir-has-no-links",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "implementor"
+                  }
+                ]
+              }
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "text-undefined",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "member-sender-without-address",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "allow": false,
+        "rule": 10,
+        "code": "not_linked",
+        "status": 403,
+        "message": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+      }
+    },
+    {
+      "id": "star-warn-linked-entry-without-a-ref-passes-with-a-warning",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "facts": {},
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": true,
+        "rule": 9,
+        "warn": true,
+        "code": "would_refuse",
+        "would": "link_needs_ref",
+        "message": "ah: a message over a link must carry --ref <message file> that belongs to the linked task: send it with `node $AHROOT/hooks/msg.mjs send --to <peer> --ref <id>` or a msg send --text note of at most 280 characters, never a bare SendMessage, or send through orchestrator@tm.",
+        "mirror": false
+      }
+    },
+    {
+      "id": "star-warn-linked-entry-off-the-linked-task-passes-with-a-warning",
+      "args": [
+        {
+          "now": 1767226200000,
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ],
+                "mesh": {
+                  "policy": "star-warn"
+                }
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          },
+          "ref": "r.md",
+          "facts": {
+            "chainReaches": [
+              [
+                "r.md",
+                "20260101-999999-zz99"
+              ]
+            ]
+          },
+          "text": "",
+          "msgKind": "note",
+          "sender": {
+            "kind": "member",
+            "address": "a@tm",
+            "name": "a",
+            "team": "tm",
+            "role": "implementor"
+          },
+          "recipient": {
+            "kind": "member",
+            "address": "b@tm",
+            "name": "b",
+            "team": "tm",
+            "role": "implementor"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: tm\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/tm.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@tm\"],\"direction\":\"both\",\"requester\":\"a@tm\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}\n"
+      },
+      "expect": {
+        "allow": true,
+        "rule": 9,
+        "warn": true,
+        "code": "would_refuse",
+        "would": "link_off_task",
+        "message": "ah: this entry is not part of task 20260101-000000-aa11; new work goes through the Orchestrator orchestrator@tm.",
+        "mirror": false
+      }
+    }
+  ]
+}

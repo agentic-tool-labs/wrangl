@@ -1,0 +1,276 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "pullable",
+  "cases": [
+    {
+      "id": "plain-pull-entry",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "other-session",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z",
+          "to_session": "other"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "same-session",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z",
+          "to_session": "me"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "to-session-but-no-session-id",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z",
+          "to_session": "other"
+        },
+        {
+          "now": 1767268800000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "session-id-but-no-to-session",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "pull",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "fallback-inside-grace",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268949999,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "fallback-at-grace",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268965000,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "fallback-one-ms-before-grace",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268964999,
+          "hb": {
+            "poll_ms": 5000
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "fallback-default-poll-boundary",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268995000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "fallback-invalid-created",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "not a date"
+        },
+        {
+          "sessionId": "me",
+          "now": 1768268800000
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "fallback-missing-created",
+      "args": [
+        {
+          "id": "f",
+          "route": "fallback"
+        },
+        {
+          "sessionId": "me",
+          "now": 1768268800000
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "fallback-other-session-wins-first",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2026-01-01T12:00:00.000Z",
+          "to_session": "x"
+        },
+        {
+          "sessionId": "me",
+          "now": 1768268800000
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "route-other",
+      "args": [
+        {
+          "v": 1,
+          "id": "a",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "push",
+          "ref": "/m/a--request.md",
+          "created": "2026-01-01T11:59:59.000Z"
+        },
+        {
+          "sessionId": "me",
+          "now": 1767268800000
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-options-fallback-old",
+      "args": [
+        {
+          "v": 1,
+          "id": "f",
+          "from": "orchestrator@tm",
+          "kind": "brief",
+          "route": "fallback",
+          "ref": "/m/f--request.md",
+          "created": "2000-01-01T00:00:00.000Z"
+        }
+      ],
+      "expect": true
+    }
+  ]
+}

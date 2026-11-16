@@ -1,0 +1,100 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "renderSend",
+  "cases": [
+    {
+      "id": "pull-with-adapter",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "delivery": "pull",
+          "adapter": "pull-adapter"
+        }
+      ],
+      "expect": "entry e1 → a@tm\ndelivery: pull (pull-adapter) — the pull-adapter pull delivers it; do not SendMessage it"
+    },
+    {
+      "id": "pull-without-adapter",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "delivery": "pull"
+        }
+      ],
+      "expect": "entry e1 → a@tm\ndelivery: pull — the pull delivers it; do not SendMessage it"
+    },
+    {
+      "id": "deliver",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "delivery": "fallback",
+          "deliver": {
+            "member": "a",
+            "command": "roster.mjs deliver a"
+          }
+        }
+      ],
+      "expect": "entry e1 → a@tm\ndelivery: fallback — roster.mjs deliver a"
+    },
+    {
+      "id": "sendmessage",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "orchestrator@tm",
+          "delivery": "fallback",
+          "sendmessage": {
+            "to": "uds:/tmp/cc-socks/1.sock",
+            "text": "hello [ah-entry e1 to orchestrator@tm]"
+          }
+        }
+      ],
+      "expect": "entry e1 → orchestrator@tm\ndelivery: fallback — SendMessage \"hello [ah-entry e1 to orchestrator@tm]\" to uds:/tmp/cc-socks/1.sock"
+    },
+    {
+      "id": "no-carrier",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "cz@tm",
+          "delivery": "fallback"
+        }
+      ],
+      "expect": "entry e1 → cz@tm\ndelivery: fallback — no carrier; a custom harness takes the entry when it next pulls"
+    },
+    {
+      "id": "broadcast",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "*@tm",
+          "delivery": "pull",
+          "broadcast": {
+            "delivered": [
+              "a@tm",
+              "b@tm"
+            ]
+          }
+        }
+      ],
+      "expect": "broadcast e1 → *@tm: 2 members (a@tm, b@tm)"
+    }
+  ]
+}

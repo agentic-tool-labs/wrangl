@@ -1,0 +1,1 @@
+{"team_id":"t-tm","mesh":{"policy":"open"},"orchestrator":{"pid":<PID:runner>,"session_id":"orch-tm"},"members":[{"role":"implementor","name":"tm-implementor","transport_id":"p-tm-implementor"},{"role":"reviewer","name":"tm-reviewer","transport_id":"p-tm-reviewer"}]}

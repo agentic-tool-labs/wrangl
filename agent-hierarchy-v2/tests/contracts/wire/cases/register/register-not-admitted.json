@@ -1,0 +1,41 @@
+{
+  "kind": "wire",
+  "id": "register-not-admitted",
+  "about": "a custom harness the team file does not admit is 403 not_admitted",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "session_id": "s-impl",
+      "addresses": [
+        "tm-implementor@tm"
+      ],
+      "boxes": {
+        "tm-implementor@tm": "<ROOT:proj>/boxes/tm-implementor"
+      },
+      "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+      "harness": "custom-x"
+    },
+    "path": "/v1/register"
+  },
+  "expect": {
+    "status": 403,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_admitted",
+        "message": "harness custom-x is not admitted: tm-implementor@tm is not a custom member admitted under that harness"
+      }
+    }
+  },
+  "mutant": "an unadmitted harness registered",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:06.661Z"
+  }
+}

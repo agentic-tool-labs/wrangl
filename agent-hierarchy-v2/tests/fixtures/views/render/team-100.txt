@@ -1,0 +1,12 @@
+ah › repoA · pid 4242 › alpha
+────────────────────────────────────────────────────────────────────────────────────────────────────
+transport herdr  mesh star  owed 1
+open work:
+  do-the-thing → alpha-architect  working  sent 60s ago  eta medium
+
+  name                         role        kind   state doing            ctx owed blocked        pid
+> alpha-architect              architect   claude live  working 60s   88% !!    1 –                –
+  alpha-reviewer               reviewer    codex  live  blocked 60s        –    0 permission       –
+  alpha-impl                   implementor claude live  blocked 60s      69%    0 permission       –
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

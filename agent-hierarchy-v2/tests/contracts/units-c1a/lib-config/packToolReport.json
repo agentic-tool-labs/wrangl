@@ -1,0 +1,121 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packToolReport",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        {
+          "tools": [
+            "Read",
+            "Bash",
+            "Grep"
+          ],
+          "disallowedTools": [
+            "Grep"
+          ]
+        }
+      ],
+      "expect": {
+        "effective": [
+          "Read",
+          "Bash"
+        ],
+        "flagged": [
+          "Bash"
+        ]
+      }
+    },
+    {
+      "id": "mcp",
+      "args": [
+        {
+          "tools": [
+            "Read",
+            "mcp__srv__tool",
+            "Agent",
+            "Edit"
+          ],
+          "disallowedTools": null
+        }
+      ],
+      "expect": {
+        "effective": [
+          "Read",
+          "mcp__srv__tool",
+          "Agent",
+          "Edit"
+        ],
+        "flagged": [
+          "mcp__srv__tool",
+          "Agent",
+          "Edit"
+        ]
+      }
+    },
+    {
+      "id": "no-tools",
+      "args": [
+        {
+          "tools": null,
+          "disallowedTools": null
+        }
+      ],
+      "expect": {
+        "effective": [],
+        "flagged": []
+      }
+    },
+    {
+      "id": "all-disallowed",
+      "args": [
+        {
+          "tools": [
+            "Bash"
+          ],
+          "disallowedTools": [
+            "Bash"
+          ]
+        }
+      ],
+      "expect": {
+        "effective": [],
+        "flagged": []
+      }
+    },
+    {
+      "id": "write-edit",
+      "args": [
+        {
+          "tools": [
+            "Write",
+            "Edit",
+            "NotebookEdit"
+          ]
+        }
+      ],
+      "expect": {
+        "effective": [
+          "Write",
+          "Edit",
+          "NotebookEdit"
+        ],
+        "flagged": [
+          "Write",
+          "Edit"
+        ]
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        {}
+      ],
+      "expect": {
+        "effective": [],
+        "flagged": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,1361 @@
+{
+  "label": "9a71e90c",
+  "at": "2026-11-01T00:50:36.979Z",
+  "chrome": "/Users/example/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+  "runs_per_mode": 3,
+  "runs": [
+    {
+      "diagnostics": "off",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.26,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 487,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.77,
+        "main_thread_busy_pct": 3.42,
+        "script_pct": 0.01,
+        "layout_pct": 0.45,
+        "style_pct": 0.33,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1144,
+        "js_heap_mb": 3.8
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2294/5720",
+          "1034/5348",
+          "2194/5684",
+          "928/5314",
+          "2089/5658",
+          "829/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2443/5782",
+          "31/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1231,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.82,
+        "script_s": 0.05,
+        "layout_s": 0.16
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "off",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.26,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.56,
+        "main_thread_busy_pct": 3.29,
+        "script_pct": 0.01,
+        "layout_pct": 0.44,
+        "style_pct": 0.32,
+        "layouts": 3616,
+        "style_recalcs": 3616,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2295/5720",
+          "1035/5348",
+          "2195/5684",
+          "929/5314",
+          "2089/5658",
+          "829/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2444/5782",
+          "32/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1230,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.74,
+        "script_s": 0.05,
+        "layout_s": 0.14
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "off",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.24,
+        "main_thread_busy_pct": 0.11,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.34,
+        "main_thread_busy_pct": 3.2,
+        "script_pct": 0.01,
+        "layout_pct": 0.43,
+        "style_pct": 0.31,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.8,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2291/5720",
+          "1031/5348",
+          "2191/5684",
+          "925/5314",
+          "2085/5658",
+          "825/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2444/5782",
+          "32/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1232,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.9,
+        "script_s": 0.05,
+        "layout_s": 0.16
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "on",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.26,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.91,
+        "main_thread_busy_pct": 3.42,
+        "script_pct": 0.01,
+        "layout_pct": 0.46,
+        "style_pct": 0.33,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.8,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2299/5720",
+          "1039/5348",
+          "2199/5684",
+          "933/5314",
+          "2093/5658",
+          "833/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2444/5782",
+          "32/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1230,
+          "p50": 16.7,
+          "p95": 16.8,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 2.14,
+        "script_s": 0.06,
+        "layout_s": 0.18
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "on",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.27,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.87,
+        "main_thread_busy_pct": 3.43,
+        "script_pct": 0.01,
+        "layout_pct": 0.46,
+        "style_pct": 0.33,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2291/5720",
+          "1031/5348",
+          "2191/5684",
+          "925/5314",
+          "2085/5658",
+          "825/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2443/5782",
+          "31/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1227,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.87,
+        "script_s": 0.06,
+        "layout_s": 0.16
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "on",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.27,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.95,
+        "main_thread_busy_pct": 3.49,
+        "script_pct": 0.01,
+        "layout_pct": 0.47,
+        "style_pct": 0.34,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": [
+          "2397/5746",
+          "1131/5376",
+          "2294/5720",
+          "1034/5348",
+          "2194/5684",
+          "928/5314",
+          "2088/5658",
+          "828/5286",
+          "4529/5254",
+          "4529/5254",
+          "4529/5254",
+          "2444/5782",
+          "32/4218",
+          "3500/4226",
+          "3500/4226"
+        ],
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1230,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.84,
+        "script_s": 0.05,
+        "layout_s": 0.15
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    }
+  ],
+  "median": [
+    {
+      "diagnostics": "off",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.26,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.56,
+        "main_thread_busy_pct": 3.29,
+        "script_pct": 0.01,
+        "layout_pct": 0.44,
+        "style_pct": 0.32,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": {
+          "0": "2397/5746",
+          "1": "1131/5376",
+          "2": "2294/5720",
+          "3": "1034/5348",
+          "4": "2194/5684",
+          "5": "928/5314",
+          "6": "2089/5658",
+          "7": "829/5286",
+          "8": "4529/5254",
+          "9": "4529/5254",
+          "10": "4529/5254",
+          "11": "2443/5782",
+          "12": "31/4218",
+          "13": "3500/4226",
+          "14": "3500/4226"
+        },
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1231,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.82,
+        "script_s": 0.05,
+        "layout_s": 0.16
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    },
+    {
+      "diagnostics": "on",
+      "dwell_s": 30,
+      "pre_idle_s": 30,
+      "teams_idle": {
+        "seconds": 25,
+        "page_cpu_pct": 0.27,
+        "main_thread_busy_pct": 0.12,
+        "script_pct": 0.01,
+        "layout_pct": 0.02,
+        "style_pct": 0.01,
+        "layouts": 37,
+        "style_recalcs": 37,
+        "dom_nodes": 486,
+        "js_heap_mb": 1.6
+      },
+      "fixture": {
+        "preset": "small",
+        "members": 10,
+        "open": 8,
+        "done": 33,
+        "label": "fixture=small(10/8/33)",
+        "transcript_turns": 400,
+        "slices_held_by_the_page": 44,
+        "subscription_ids": 44,
+        "load_bytes_non_poll": 378427
+      },
+      "request_line_max_bytes": 2790,
+      "plan_slice_max_bytes": null,
+      "questions_slice_max_bytes": null,
+      "first_load_bytes": 378427,
+      "idle": {
+        "seconds": 60,
+        "page_cpu_pct": 6.91,
+        "main_thread_busy_pct": 3.43,
+        "script_pct": 0.01,
+        "layout_pct": 0.46,
+        "style_pct": 0.33,
+        "layouts": 3615,
+        "style_recalcs": 3615,
+        "dom_nodes": 1147,
+        "js_heap_mb": 3.9
+      },
+      "motion": {
+        "seconds": 15,
+        "fps": 60,
+        "frame_ms": {
+          "n": 900,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0
+      },
+      "scroll": {
+        "scroll_height_px": 1934,
+        "flings": 15,
+        "scroll_trace": {
+          "0": "2397/5746",
+          "1": "1131/5376",
+          "2": "2299/5720",
+          "3": "1039/5348",
+          "4": "2199/5684",
+          "5": "933/5314",
+          "6": "2093/5658",
+          "7": "833/5286",
+          "8": "4529/5254",
+          "9": "4529/5254",
+          "10": "4529/5254",
+          "11": "2444/5782",
+          "12": "32/4218",
+          "13": "3500/4226",
+          "14": "3500/4226"
+        },
+        "scroll_height_after_px": 4226,
+        "frame_ms": {
+          "n": 1230,
+          "p50": 16.7,
+          "p95": 16.7,
+          "p99": 16.8,
+          "max": 16.8
+        },
+        "over_20ms": 0,
+        "over_50ms": 0,
+        "main_thread_busy_s": 1.87,
+        "script_s": 0.06,
+        "layout_s": 0.16
+      },
+      "long_poll": {
+        "idle": {
+          "replies": 24,
+          "body_bytes": 70501,
+          "wire_bytes": 79804,
+          "max_body_bytes": 6001,
+          "mean_body_bytes": 2938,
+          "slices_in_replies": 71
+        },
+        "load": {
+          "replies": 0,
+          "body_bytes": 0,
+          "wire_bytes": 0,
+          "max_body_bytes": 0,
+          "mean_body_bytes": 0,
+          "slices_in_replies": 0
+        },
+        "all": 93715
+      }
+    }
+  ],
+  "realistic": {
+    "fixture": {
+      "preset": "realistic",
+      "members": 50,
+      "open": 40,
+      "done": 1500,
+      "label": "fixture=realistic(50/40/1500)",
+      "transcript_turns": 400,
+      "slices_held_by_the_page": 152,
+      "subscription_ids": 152,
+      "load_bytes_non_poll": 384644
+    },
+    "sha": "9a71e90",
+    "date": "2026-11-01T01:16:50.059Z",
+    "runs_per_mode": 3,
+    "median": [
+      {
+        "diagnostics": "off",
+        "dwell_s": 30,
+        "pre_idle_s": 30,
+        "teams_idle": {
+          "seconds": 25,
+          "page_cpu_pct": 0.3,
+          "main_thread_busy_pct": 0.15,
+          "script_pct": 0.01,
+          "layout_pct": 0.03,
+          "style_pct": 0.01,
+          "layouts": 37,
+          "style_recalcs": 37,
+          "dom_nodes": 984,
+          "js_heap_mb": 1.7
+        },
+        "fixture": {
+          "preset": "realistic",
+          "members": 50,
+          "open": 40,
+          "done": 1500,
+          "label": "fixture=realistic(50/40/1500)",
+          "transcript_turns": 400,
+          "slices_held_by_the_page": 152,
+          "subscription_ids": 152,
+          "load_bytes_non_poll": 384644
+        },
+        "request_line_max_bytes": 10242,
+        "plan_slice_max_bytes": null,
+        "questions_slice_max_bytes": null,
+        "first_load_bytes": 384644,
+        "idle": {
+          "seconds": 60,
+          "page_cpu_pct": 12.46,
+          "main_thread_busy_pct": 5.33,
+          "script_pct": 0.01,
+          "layout_pct": 0.54,
+          "style_pct": 0.48,
+          "layouts": 3601,
+          "style_recalcs": 3601,
+          "dom_nodes": 2376,
+          "js_heap_mb": 6
+        },
+        "motion": {
+          "seconds": 15,
+          "fps": 60.1,
+          "frame_ms": {
+            "n": 900,
+            "p50": 16.7,
+            "p95": 16.7,
+            "p99": 16.8,
+            "max": 16.8
+          },
+          "over_20ms": 0,
+          "over_50ms": 0
+        },
+        "scroll": {
+          "scroll_height_px": 1934,
+          "flings": 15,
+          "scroll_trace": {
+            "0": "2397/5746",
+            "1": "1131/5376",
+            "2": "2293/5720",
+            "3": "1033/5348",
+            "4": "2193/5684",
+            "5": "927/5314",
+            "6": "2089/5658",
+            "7": "829/5286",
+            "8": "4529/5254",
+            "9": "4529/5254",
+            "10": "4529/5254",
+            "11": "2443/5782",
+            "12": "0/4076",
+            "13": "3358/4084",
+            "14": "3358/4084"
+          },
+          "scroll_height_after_px": 4084,
+          "frame_ms": {
+            "n": 1232,
+            "p50": 16.7,
+            "p95": 16.8,
+            "p99": 16.8,
+            "max": 16.8
+          },
+          "over_20ms": 0,
+          "over_50ms": 0,
+          "main_thread_busy_s": 1.95,
+          "script_s": 0.06,
+          "layout_s": 0.15
+        },
+        "long_poll": {
+          "idle": {
+            "replies": 15,
+            "body_bytes": 114317,
+            "wire_bytes": 120137,
+            "max_body_bytes": 9644,
+            "mean_body_bytes": 7621,
+            "slices_in_replies": 63
+          },
+          "load": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "all": 152590
+        }
+      },
+      {
+        "diagnostics": "on",
+        "dwell_s": 30,
+        "pre_idle_s": 30,
+        "teams_idle": {
+          "seconds": 25,
+          "page_cpu_pct": 0.29,
+          "main_thread_busy_pct": 0.15,
+          "script_pct": 0.01,
+          "layout_pct": 0.02,
+          "style_pct": 0.01,
+          "layouts": 37,
+          "style_recalcs": 37,
+          "dom_nodes": 983,
+          "js_heap_mb": 1.6
+        },
+        "fixture": {
+          "preset": "realistic",
+          "members": 50,
+          "open": 40,
+          "done": 1500,
+          "label": "fixture=realistic(50/40/1500)",
+          "transcript_turns": 400,
+          "slices_held_by_the_page": 152,
+          "subscription_ids": 152,
+          "load_bytes_non_poll": 384644
+        },
+        "request_line_max_bytes": 10242,
+        "plan_slice_max_bytes": null,
+        "questions_slice_max_bytes": null,
+        "first_load_bytes": 384644,
+        "idle": {
+          "seconds": 60,
+          "page_cpu_pct": 12.45,
+          "main_thread_busy_pct": 5.26,
+          "script_pct": 0.01,
+          "layout_pct": 0.54,
+          "style_pct": 0.48,
+          "layouts": 3601,
+          "style_recalcs": 3601,
+          "dom_nodes": 2377,
+          "js_heap_mb": 6
+        },
+        "motion": {
+          "seconds": 15,
+          "fps": 60.1,
+          "frame_ms": {
+            "n": 900,
+            "p50": 16.7,
+            "p95": 16.8,
+            "p99": 16.8,
+            "max": 16.8
+          },
+          "over_20ms": 0,
+          "over_50ms": 0
+        },
+        "scroll": {
+          "scroll_height_px": 1934,
+          "flings": 15,
+          "scroll_trace": {
+            "0": "2397/5746",
+            "1": "1131/5376",
+            "2": "2291/5720",
+            "3": "1031/5348",
+            "4": "2191/5684",
+            "5": "925/5314",
+            "6": "2090/5658",
+            "7": "830/5286",
+            "8": "4529/5254",
+            "9": "4529/5254",
+            "10": "4529/5254",
+            "11": "2444/5782",
+            "12": "0/4076",
+            "13": "3358/4084",
+            "14": "3358/4084"
+          },
+          "scroll_height_after_px": 4084,
+          "frame_ms": {
+            "n": 1231,
+            "p50": 16.7,
+            "p95": 16.7,
+            "p99": 16.8,
+            "max": 16.8
+          },
+          "over_20ms": 0,
+          "over_50ms": 0,
+          "main_thread_busy_s": 1.94,
+          "script_s": 0.06,
+          "layout_s": 0.15
+        },
+        "long_poll": {
+          "idle": {
+            "replies": 15,
+            "body_bytes": 114317,
+            "wire_bytes": 120137,
+            "max_body_bytes": 9644,
+            "mean_body_bytes": 7621,
+            "slices_in_replies": 63
+          },
+          "load": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "all": 152590
+        }
+      }
+    ],
+    "spread": [
+      {
+        "diagnostics": "off",
+        "dwell_s": 0,
+        "pre_idle_s": 0,
+        "teams_idle": {
+          "seconds": 0,
+          "page_cpu_pct": 0.05,
+          "main_thread_busy_pct": 0.02,
+          "script_pct": 0,
+          "layout_pct": 0.01,
+          "style_pct": 0,
+          "layouts": 0,
+          "style_recalcs": 0,
+          "dom_nodes": 1,
+          "js_heap_mb": 0
+        },
+        "fixture": {
+          "preset": "realistic",
+          "members": 0,
+          "open": 0,
+          "done": 0,
+          "label": "fixture=realistic(50/40/1500)",
+          "transcript_turns": 0,
+          "slices_held_by_the_page": 0,
+          "subscription_ids": 0,
+          "load_bytes_non_poll": 0
+        },
+        "request_line_max_bytes": 0,
+        "plan_slice_max_bytes": null,
+        "questions_slice_max_bytes": null,
+        "first_load_bytes": 0,
+        "idle": {
+          "seconds": 0,
+          "page_cpu_pct": 0.58,
+          "main_thread_busy_pct": 0.32,
+          "script_pct": 0,
+          "layout_pct": 0.04,
+          "style_pct": 0.04,
+          "layouts": 1,
+          "style_recalcs": 1,
+          "dom_nodes": 19,
+          "js_heap_mb": 0
+        },
+        "motion": {
+          "seconds": 0,
+          "fps": 0.1,
+          "frame_ms": {
+            "n": 0,
+            "p50": 0,
+            "p95": 0.1,
+            "p99": 0,
+            "max": 0
+          },
+          "over_20ms": 0,
+          "over_50ms": 0
+        },
+        "scroll": {
+          "scroll_height_px": 0,
+          "flings": 0,
+          "scroll_trace": [
+            "2397/5746",
+            "1131/5376",
+            "2293/5720",
+            "1033/5348",
+            "2193/5684",
+            "927/5314",
+            "2089/5658",
+            "829/5286",
+            "4529/5254",
+            "4529/5254",
+            "4529/5254",
+            "2443/5782",
+            "0/4076",
+            "3358/4084",
+            "3358/4084"
+          ],
+          "scroll_height_after_px": 0,
+          "frame_ms": {
+            "n": 1,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0,
+            "max": 0
+          },
+          "over_20ms": 0,
+          "over_50ms": 0,
+          "main_thread_busy_s": 0.07,
+          "script_s": 0.01,
+          "layout_s": 0
+        },
+        "long_poll": {
+          "idle": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "load": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "all": 0
+        }
+      },
+      {
+        "diagnostics": "on",
+        "dwell_s": 0,
+        "pre_idle_s": 0,
+        "teams_idle": {
+          "seconds": 0,
+          "page_cpu_pct": 0.01,
+          "main_thread_busy_pct": 0.01,
+          "script_pct": 0,
+          "layout_pct": 0.01,
+          "style_pct": 0,
+          "layouts": 0,
+          "style_recalcs": 0,
+          "dom_nodes": 1,
+          "js_heap_mb": 0.1
+        },
+        "fixture": {
+          "preset": "realistic",
+          "members": 0,
+          "open": 0,
+          "done": 0,
+          "label": "fixture=realistic(50/40/1500)",
+          "transcript_turns": 0,
+          "slices_held_by_the_page": 0,
+          "subscription_ids": 0,
+          "load_bytes_non_poll": 0
+        },
+        "request_line_max_bytes": 0,
+        "plan_slice_max_bytes": null,
+        "questions_slice_max_bytes": null,
+        "first_load_bytes": 0,
+        "idle": {
+          "seconds": 0,
+          "page_cpu_pct": 0.07,
+          "main_thread_busy_pct": 0.16,
+          "script_pct": 0,
+          "layout_pct": 0.01,
+          "style_pct": 0.01,
+          "layouts": 1,
+          "style_recalcs": 1,
+          "dom_nodes": 0,
+          "js_heap_mb": 0.1
+        },
+        "motion": {
+          "seconds": 0,
+          "fps": 0.1,
+          "frame_ms": {
+            "n": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0,
+            "max": 0
+          },
+          "over_20ms": 0,
+          "over_50ms": 0
+        },
+        "scroll": {
+          "scroll_height_px": 0,
+          "flings": 0,
+          "scroll_trace": [
+            "2397/5746",
+            "1131/5376",
+            "2291/5720",
+            "1031/5348",
+            "2191/5684",
+            "925/5314",
+            "2090/5658",
+            "830/5286",
+            "4529/5254",
+            "4529/5254",
+            "4529/5254",
+            "2444/5782",
+            "0/4076",
+            "3358/4084",
+            "3358/4084"
+          ],
+          "scroll_height_after_px": 0,
+          "frame_ms": {
+            "n": 3,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0,
+            "max": 0
+          },
+          "over_20ms": 0,
+          "over_50ms": 0,
+          "main_thread_busy_s": 0.08,
+          "script_s": 0,
+          "layout_s": 0.01
+        },
+        "long_poll": {
+          "idle": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "load": {
+            "replies": 0,
+            "body_bytes": 0,
+            "wire_bytes": 0,
+            "max_body_bytes": 0,
+            "mean_body_bytes": 0,
+            "slices_in_replies": 0
+          },
+          "all": 0
+        }
+      }
+    ],
+    "idle_bytes_spread_pct": [
+      {
+        "diagnostics": "off",
+        "pct": 0
+      },
+      {
+        "diagnostics": "on",
+        "pct": 0
+      }
+    ],
+    "idle_bytes_gated": true
+  }
+}

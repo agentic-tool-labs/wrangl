@@ -1,0 +1,142 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "hasGate",
+  "cases": [
+    {
+      "id": "a-matching-gate",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "type",
+            "equals": "route"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\",\"value\":\"x\"}\n{\"type\":\"model\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "no-matching-gate",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "type",
+            "equals": "nudge"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "no-gates-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "type",
+            "equals": "route"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "field-absent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "request_id",
+            "equals": "x"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "strict-equality-number-vs-text",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "n",
+            "equals": 1
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"n\":\"1\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "number-equal",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "n",
+            "equals": 1
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"n\":1}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "duplicate-op-id-second-row-is-dropped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "k",
+            "equals": 2
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"k\":1,\"op_id\":\"x\"}\n{\"k\":2,\"op_id\":\"x\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-gates-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$predicate": {
+            "field": "type",
+            "equals": "route"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": ""
+      },
+      "expect": false
+    }
+  ]
+}

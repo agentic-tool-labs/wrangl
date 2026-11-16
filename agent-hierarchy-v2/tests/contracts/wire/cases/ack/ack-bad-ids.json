@@ -1,0 +1,39 @@
+{
+  "kind": "wire",
+  "id": "ack-bad-ids",
+  "about": "ids that are not strings is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "address": "tm-implementor@tm",
+      "ids": [
+        1
+      ],
+      "by": "cli",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/ack"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "ids must be an array of entry ids"
+      }
+    }
+  },
+  "mutant": "non-string ids accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:56.122Z"
+  }
+}

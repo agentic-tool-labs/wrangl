@@ -1,0 +1,142 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "knownRun",
+  "cases": [
+    {
+      "id": "log-exists",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "open-anchor",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "closed-anchor",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:55:00.000Z\n---\n\n## [0] tldr\n- [1] status: \n- [2] changes: \n- [3] evidence: \n- [4] gaps: \n- [5] open_questions: \n\n## [1] status\n- none\n\n## [2] changes\n- none\n\n## [3] evidence\n- none\n\n## [4] gaps\n- none\n\n## [5] open_questions\n- none\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "exchange-of-another-slug",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:51:40.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "unknown-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000007-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "not-an-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "run-1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "id-shaped-with-suffix",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaax"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        5
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "undefined",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--pipeline-run-anchor--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: orchestrator\nfrom: orchestrator\nslug: pipeline-run-anchor\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:50:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "log-wins-without-exchange",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000009-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000009-aaaa/decisions.jsonl": "{}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "empty-log-dir-is-not-a-log",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000009-aaaa"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000009-aaaa/.keep": ""
+      },
+      "expect": false
+    }
+  ]
+}

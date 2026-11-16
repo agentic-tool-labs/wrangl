@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer"
+    },
+    "team_id": {
+      "type": "string"
+    },
+    "created": {
+      "type": "string"
+    },
+    "roster_level": {
+      "type": "string"
+    },
+    "transport": {
+      "type": "string"
+    },
+    "orchestrator": {
+      "type": "object"
+    },
+    "members": {
+      "type": "array"
+    },
+    "expected_root": {
+      "type": "string"
+    },
+    "roster": {
+      "type": "null"
+    },
+    "layout": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "created",
+    "expected_root",
+    "layout",
+    "members",
+    "orchestrator",
+    "roster",
+    "roster_level",
+    "team_id",
+    "transport",
+    "version"
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,1 @@
+{"v":1,"files":{"transcripts/sess-aaaa1111.jsonl":{"offset":211,"days":{"2026-01-05":{"calls":1,"in":10,"out":2000,"cache_read":50000,"cache_create":100}},"models":{"claude-opus-4":1},"session_id":"sess-aaaa1111"},"transcripts/gone.jsonl":{"offset":10,"days":{"2026-01-03":{"calls":2,"in":1,"out":1,"cache_read":1,"cache_create":1}},"models":{},"session_id":"sess-gone"}}}

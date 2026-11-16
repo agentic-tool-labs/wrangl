@@ -1,0 +1,45 @@
+{
+  "kind": "cli",
+  "id": "bad-ref",
+  "about": "a ref that is not an issue ref",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "1,abc"
+    ],
+    "stdin": null
+  },
+  "mutant": "a bad ref was accepted",
+  "expect": {
+    "stdout": "{\"error\":\"usage: not an issue ref: abc\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:25.061Z"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "kind": "state-op",
+  "id": "sweep",
+  "about": "sweep deletes records older than the cutoff",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "activity",
+    "op": "sweep",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "activity",
+        "op": "record",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "subject": "sess-1",
+            "activity": "working",
+            "tool": "Bash"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-act"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "cutoff_ms": 1000
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-activity-sweep"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "removed": 0
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a sweep that deletes a newer record",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:09.259Z"
+  }
+}

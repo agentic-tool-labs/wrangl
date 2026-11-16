@@ -1,0 +1,11 @@
+ah › repoW · pid 4242
+────────────────────────────────────────────────────────────────────────────────────────────────────
+dir <ROOT>/repoW/.claude/hierarchy
+pid 4242  session s-orch  live
+
+  team                                  state    joins members live working blocked owed ctx overdue
+> quiet                                 live         0       1    0       0       0    0   0       0
+  work                                  live         2       5    0       0       0    0   0       0
+y copies: roster.mjs disband --plan --team quiet
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

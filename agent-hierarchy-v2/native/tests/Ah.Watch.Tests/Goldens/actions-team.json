@@ -1,0 +1,86 @@
+{
+  "view_schema": 1,
+  "kind": "actions",
+  "id": "/o/o.101/t/boxes",
+  "path": "/actions/o/o.101/t/boxes",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "team",
+      "id": "/o/o.101/t/boxes",
+      "label": "alpha",
+      "path": "/o/o.101/t/boxes"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "actions": 4
+  },
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "team",
+      "path": "/o/o.101/t/boxes"
+    },
+    "actions": [
+      {
+        "id": "team.status",
+        "label": "Team status",
+        "key": "s",
+        "group": "read",
+        "kind": "read",
+        "target": "team",
+        "help": "Show the status of this team.",
+        "invoke": {
+          "get": "/status/o/o.101/t/boxes"
+        }
+      },
+      {
+        "id": "team.stream_board",
+        "label": "Stream board",
+        "key": "S",
+        "group": "read",
+        "kind": "read",
+        "target": "team",
+        "help": "Show the streams of this team and their state.",
+        "invoke": {
+          "get": "/stream-status/o/o.101/t/boxes"
+        }
+      },
+      {
+        "id": "team.copy_name",
+        "label": "Copy team name",
+        "key": "y",
+        "group": "copy",
+        "kind": "copy",
+        "target": "team",
+        "help": "Copy this team's name.",
+        "invoke": {
+          "copy": "alpha"
+        }
+      },
+      {
+        "id": "team.ask_disband",
+        "label": "Ask: disband…",
+        "key": null,
+        "group": "ask",
+        "kind": "owner",
+        "target": "team",
+        "help": "Copy a request asking the Orchestrator for the plan to disband this team.",
+        "confirm": "Only the Orchestrator can run this. This copies the command; nothing is run from here.",
+        "invoke": {
+          "ask_orchestrator": {
+            "command": "ah roster disband --plan --team alpha",
+            "request_text": "Please run this for me and tell me what it prints: ah roster disband --plan --team alpha"
+          }
+        }
+      }
+    ]
+  },
+  "rev": "be777f5053910582"
+}

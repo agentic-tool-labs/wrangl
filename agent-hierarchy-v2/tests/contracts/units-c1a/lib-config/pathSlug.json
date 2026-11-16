@@ -1,0 +1,42 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "pathSlug",
+  "cases": [
+    {
+      "id": "abs",
+      "args": [
+        "$ROOT/a/b"
+      ],
+      "expect": "$ROOTSLUG-a-b"
+    },
+    {
+      "id": "relative",
+      "args": [
+        "a/b"
+      ],
+      "expect": "$ROOTSLUG-a-b"
+    },
+    {
+      "id": "root",
+      "args": [
+        "/"
+      ],
+      "expect": "-"
+    },
+    {
+      "id": "trailing",
+      "args": [
+        "$ROOT/a/"
+      ],
+      "expect": "$ROOTSLUG-a"
+    },
+    {
+      "id": "dots",
+      "args": [
+        "$ROOT/a/../b"
+      ],
+      "expect": "$ROOTSLUG-b"
+    }
+  ]
+}

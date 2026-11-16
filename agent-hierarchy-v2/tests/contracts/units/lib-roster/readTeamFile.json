@@ -1,0 +1,96 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "readTeamFile",
+  "cases": [
+    {
+      "id": "record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "members": [
+          {
+            "role": "architect",
+            "name": "p-architect",
+            "transport_id": "%1",
+            "route": "peer"
+          }
+        ],
+        "orchestrator": {
+          "pid": 1
+        }
+      }
+    },
+    {
+      "id": "absent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-a-record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "[1]"
+      },
+      "expect": null
+    },
+    {
+      "id": "members-missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"orchestrator\":{}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{x"
+      },
+      "expect": null
+    },
+    {
+      "id": "bom",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "﻿{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "any-path-no-home-mapping",
+      "args": [
+        "$ROOT/elsewhere/anything.json"
+      ],
+      "files": {
+        "elsewhere/anything.json": "{\"members\":[]}"
+      },
+      "expect": {
+        "members": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,1189 @@
+{
+  "lib": "lib-mux",
+  "module": "hooks/lib-mux.mjs",
+  "fn": "guardShellCommand",
+  "cases": [
+    {
+      "id": "off-outside-a-test",
+      "args": [
+        "herdr agent list"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/real"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "fake-binary-passes",
+      "args": [
+        "herdr agent list"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "real-binary-trips",
+      "args": [
+        "claude --agent x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "unlisted-herdr-trips-when-first-on-path",
+      "args": [
+        "herdr agent list"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/real:$ROOT/fake"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "absent-binary-is-left-to-fail",
+      "args": [
+        "codex --version"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "argument-position-is-not-checked",
+      "args": [
+        "echo claude codex herdr tmux"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "flag-value-position-is-not-checked",
+      "args": [
+        "somecmd --kind claude"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "env-assignment-prefix",
+      "args": [
+        "FOO=1 BAR=2 claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "exec-prefix",
+      "args": [
+        "exec claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "command-prefix",
+      "args": [
+        "command claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "env-prefix-with-assignment",
+      "args": [
+        "env FOO=1 claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "env-prefix-with-unset-flag",
+      "args": [
+        "env -u FOO claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "env-prefix-with-dash-flag",
+      "args": [
+        "env -i claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "env-with-unset-consumes-its-value",
+      "args": [
+        "env -u claude herdr x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "second-command-after-and",
+      "args": [
+        "true && claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "after-semicolon",
+      "args": [
+        "true; claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "after-pipe",
+      "args": [
+        "true | claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "after-or",
+      "args": [
+        "false || claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "after-background",
+      "args": [
+        "true & claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "after-newline",
+      "args": [
+        "true\nclaude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "quoted-command-word",
+      "args": [
+        "\"claude\" run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "single-quoted-command-word",
+      "args": [
+        "'claude' run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "escaped-character-in-word",
+      "args": [
+        "cla\\ude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "quoted-separator-does-not-split",
+      "args": [
+        "echo 'a; claude run'"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "double-quoted-separator-does-not-split",
+      "args": [
+        "echo \"a && claude run\""
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "command-substitution-is-not-parsed",
+      "args": [
+        "echo $(claude run)"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "backticks-are-not-parsed",
+      "args": [
+        "echo `claude run`"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "absolute-path-to-real-binary-trips",
+      "args": [
+        "$ROOT/real/claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "absolute-path-to-fake-binary-passes",
+      "args": [
+        "$ROOT/fake/herdr agent list"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "absolute-path-not-executable-is-left-to-fail",
+      "args": [
+        "$ROOT/real/nothing run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "not-guarded-binary",
+      "args": [
+        "git status"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "missing-fake-dir-lists-nothing",
+      "args": [
+        "herdr agent list"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/missing",
+        "PATH": "$ROOT/fake"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "fake-bin-list-two-dirs",
+      "args": [
+        "tmux ls"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/other:$ROOT/fake",
+        "PATH": "$ROOT/fake"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "hermetic-must-be-exactly-1",
+      "args": [
+        "claude run"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "true",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/real"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "non-executable-file-is-not-found",
+      "args": [
+        "herdr x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "",
+          "mode": 420
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/real"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "env-argument-path-is-used",
+      "args": [
+        "herdr x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake:$ROOT/real:/usr/bin:/bin"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "sibling-dir-sharing-a-prefix-is-not-the-fake-dir",
+      "args": [
+        "herdr x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake2/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake2"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "nested-dir-of-the-fake-dir-passes",
+      "args": [
+        "herdr x"
+      ],
+      "files": {
+        "fake/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/tmux": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "real/claude": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        },
+        "fake/sub/herdr": {
+          "text": "#!/bin/sh\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_TEST_HERMETIC": "1",
+        "AH_TEST_FAKE_BIN": "$ROOT/fake",
+        "PATH": "$ROOT/fake/sub"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

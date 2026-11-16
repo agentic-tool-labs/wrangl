@@ -1,0 +1,98 @@
+{
+  "kindDefault": "claude",
+  "kindCustom": "custom",
+  "routeMail": "mail",
+  "builtinHarnesses": [
+    "claude",
+    "codex",
+    "claude-mod",
+    "stub",
+    "probe"
+  ],
+  "kindRe": "^[a-z][a-z0-9-]*$",
+  "harnessNameRe": "^[a-z][a-z0-9-]{1,31}$",
+  "roles": [
+    "ultra-advisor",
+    "architect",
+    "reviewer",
+    "implementor",
+    "docs-writer",
+    "qa",
+    "ux-engineer",
+    "task-runner",
+    "sub-orchestrator"
+  ],
+  "roleClass": {
+    "ultra-advisor": "advise",
+    "architect": "design",
+    "reviewer": "review",
+    "implementor": "implement",
+    "docs-writer": "implement",
+    "qa": "implement",
+    "ux-engineer": "implement",
+    "task-runner": "legwork",
+    "sub-orchestrator": "orchestrate"
+  },
+  "subagentOnly": [],
+  "classes": {
+    "advise": {
+      "models": [
+        "fable",
+        "opus"
+      ],
+      "chain": true
+    },
+    "design": {
+      "models": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit"
+      ],
+      "chain": true
+    },
+    "review": {
+      "models": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit"
+      ],
+      "chain": true
+    },
+    "implement": {
+      "models": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit"
+      ],
+      "chain": true
+    },
+    "legwork": {
+      "models": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit",
+        "haiku"
+      ],
+      "chain": false
+    },
+    "orchestrate": {
+      "models": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit"
+      ],
+      "chain": true
+    }
+  },
+  "tiers": {
+    "haiku": 1,
+    "sonnet": 2,
+    "opus": 3,
+    "fable": 4
+  }
+}

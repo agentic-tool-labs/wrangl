@@ -1,0 +1,90 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamRosterKey",
+  "cases": [
+    {
+      "id": "records-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":\"squad\"}"
+      },
+      "expect": "squad"
+    },
+    {
+      "id": "records-null-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":null}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-roster-field-uses-team-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[]}"
+      },
+      "expect": "alpha"
+    },
+    {
+      "id": "no-roster-field-default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-key-is-default-block",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":\"\"}"
+      },
+      "expect": null
+    },
+    {
+      "id": "non-string-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":5}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    }
+  ]
+}

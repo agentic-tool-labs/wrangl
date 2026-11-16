@@ -1,0 +1,98 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "readRoster",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "peer-rows-only",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"status\":\"up\"}\n{\"type\":\"gate\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"b\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"c\",\"status\":\"down\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a",
+          "status": "up"
+        },
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "c",
+          "status": "down"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-op-id-first-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"op_id\":\"x\",\"n\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"op_id\":\"x\",\"n\":2}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"b\",\"op_id\":\"y\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "a",
+          "op_id": "x",
+          "n": 1
+        },
+        {
+          "type": "peer",
+          "ts": "2026-06-01T11:59:50.000Z",
+          "name": "b",
+          "op_id": "y"
+        }
+      ]
+    },
+    {
+      "id": "rows-without-type-dropped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"name\":\"a\"}\n{\"type\":\"peer\",\"name\":\"b\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "name": "b"
+        }
+      ]
+    },
+    {
+      "id": "corrupt-line-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{bad\n{\"type\":\"peer\",\"name\":\"b\"}\n"
+      },
+      "expect": [
+        {
+          "type": "peer",
+          "name": "b"
+        }
+      ]
+    }
+  ]
+}

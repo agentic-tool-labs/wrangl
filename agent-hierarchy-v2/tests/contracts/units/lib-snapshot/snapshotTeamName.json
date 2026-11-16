@@ -1,0 +1,37 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "snapshotTeamName",
+  "cases": [
+    {
+      "id": "named",
+      "args": [
+        "alpha"
+      ],
+      "expect": "alpha"
+    },
+    {
+      "id": "null-is-team",
+      "args": [
+        null
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "undefined-is-team",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "empty-string-stays-empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+ah › ah2-tm4   ?1 ▶2 ‖0 · updated 4s ago
+AGENTS
+▸ orchestrator    ● working 2m
+  impl-41         ● working 8m
+  reviewer-9      × ended 1h
+SITREP
+  [-] Completed 0 of 5
+    Shipped ship-21 · fb04b16
+  [-] In progress 1
+click or ⏎ open or fold  esc teams  q q…

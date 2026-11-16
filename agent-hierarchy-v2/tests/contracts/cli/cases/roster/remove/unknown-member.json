@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "unknown-member",
+  "about": "remove of a member the roster lacks is refused",
+  "tree": "cli-roster",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "remove",
+      "repo",
+      "--member",
+      "nobody"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: no member named \"nobody\" at level \"repo\"\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown member removed silently",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.795Z"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "api-error",
+  "about": "a turn that ended in an API error is recovered",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "error": "rate_limit",
+      "error_message": "slow down"
+    }
+  },
+  "expect": {
+    "stdout": "{\"terminalSequence\":\"\\u001b]9;ah: proj stopped on an API error (rate_limit). Open it to continue.\\u0007\\u0007\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a recovery that never fires",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:34.909Z"
+  }
+}

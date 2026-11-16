@@ -1,0 +1,49 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isBuiltinRole",
+  "cases": [
+    {
+      "id": "architect",
+      "args": [
+        "architect"
+      ],
+      "expect": true
+    },
+    {
+      "id": "task-runner",
+      "args": [
+        "task-runner"
+      ],
+      "expect": true
+    },
+    {
+      "id": "custom",
+      "args": [
+        "ui-implementor"
+      ],
+      "expect": false
+    },
+    {
+      "id": "orchestrator",
+      "args": [
+        "orchestrator"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "case",
+      "args": [
+        "Architect"
+      ],
+      "expect": false
+    }
+  ]
+}

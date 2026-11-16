@@ -1,0 +1,96 @@
+#!/bin/sh
+# agent-hierarchy — `ah`: the agent-facing CLI as a bare command. Claude Code puts a plugin's bin/ on the PATH of its Bash tool, so
+# `ah roster …`, `ah msg …`, `ah usage-report …` and `ah issue-intake …` work there with no path. POSIX sh, no bashisms.
+#   AH_HOME is not the default home, not listed in <default home>/trusted-homes and not a test sandbox:
+#                                      refuse with exit 2 and say how to trust it (bin/ah-trust.sh), unless the verb is one the
+#                                      binary runs whatever the home is (ah_verb_free)
+#   a native binary found:             exec <binary> --plugin-root <plugin root> ah "$@"   (same argv, stdio and exit code)
+#   none found:                        exit 1 with a message naming `sh <plugin root>/scripts/install.sh --apply`
+# Where the binary may live is the rule bin/ah-hook states, and the routing is bin/ahd's: both come from bin/ah-trust.sh. The
+# plugin root is this script's own symlink-resolved location, so ~/.local/bin/ah -> <plugin>/bin/ah works.
+
+# No tool is looked up on a PATH the environment chose; the caller's PATH is put back before anything is exec'd.
+orig_path=$PATH
+PATH=/usr/bin:/bin
+export PATH
+
+self=$0
+case "$self" in /*) ;; *) self=$PWD/$self ;; esac
+for _hop in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  [ -L "$self" ] || break
+  link=$(readlink "$self") || break
+  case "$link" in /*) self=$link ;; *) self=${self%/*}/$link ;; esac
+done
+root=$(cd "${self%/*}/.." 2>/dev/null && pwd -P) || { echo "ah: cannot resolve the plugin root" >&2; exit 1; }
+for lib in ah-testmode.sh ah-trust.sh; do
+  if [ ! -f "$root/bin/$lib" ]; then
+    echo "ah: $root/bin/$lib not found; the plugin install this command came from is incomplete" >&2
+    exit 1
+  fi
+  . "$root/bin/$lib"
+done
+# Outside test mode the root is this script's own, whatever the environment said; test mode keeps what a test set.
+if ah_test_mode; then
+  [ -n "${AH_PLUGIN_ROOT:-}" ] || AH_PLUGIN_ROOT=$root
+else
+  AH_PLUGIN_ROOT=$root
+fi
+export AH_PLUGIN_ROOT
+
+if [ "$#" -eq 0 ]; then
+  # The binary's own no-argument usage (CliApp.RunAh), word for word; `ah --help` reaches the binary and prints it on stdout.
+  echo "usage: ah <roster|progress|ledger|msg|qa|looks|alarm|proc|admin|view|allow|rules|test|usage|usage-report|herdr|backlog|work|adr|db|issue-intake|hook> [args]" >&2
+  exit 2
+fi
+
+passwd=
+ah_load_passwd_home && passwd=$_ah_ph
+# The state-home verdict comes first, on every route. The verbs the binary runs whatever the home is go on to it; every other
+# verb stops here with the reason.
+reason=$(ah_home_verdict "$passwd")
+verdict=$?
+if [ "$verdict" != 0 ] && ! ah_verb_free ah "$@"; then
+  printf 'ah: %s, so ah did not run.\n' "$reason" >&2
+  shown=$(printf '%s' "${AH_HOME-}" | LC_ALL=C tr -cd '[:print:]' | cut -c1-200)
+  case "$shown" in
+    /*)
+      if [ -t 2 ]; then
+        printf 'Trust it once, from this terminal:  ahd home trust %s\nor unset AH_HOME to use the default home.\n' "$shown" >&2
+      else
+        echo "Ask the user to trust this home from a terminal, or to unset AH_HOME." >&2
+      fi
+      ;;
+    *) echo "Unset AH_HOME to use the default home." >&2 ;;
+  esac
+  exit 2
+fi
+
+# A refused home with a verb the binary exempts goes to the default home's binary; with no binary to answer it, nothing runs.
+bin=
+route=$(ah_route "$passwd" "$orig_path" "$root/bin" "$verdict" "$reason") || :
+case "$route" in
+  "bin "*) bin=${route#bin } ;;
+  "refuse "*)
+    printf 'ah: %s, and no native ah binary could be run to answer, so ah did not run.\n' "${route#refuse }" >&2
+    echo "Run the plugin's scripts/install.sh --apply, or ask the user to; or unset AH_HOME to use the default home." >&2
+    exit 2
+    ;;
+esac
+
+if [ -n "$bin" ] && ah_is_shim "$bin" "$root/bin"; then
+  echo "ah: $bin is a shim, not the native binary; run: sh $root/scripts/install.sh --apply" >&2
+  exit 1
+fi
+
+PATH=$orig_path
+export PATH
+if [ -n "$bin" ]; then
+  # The root goes over explicitly, where the environment cannot set it (a test's own AH_PLUGIN_ROOT travels as the variable).
+  if [ "$AH_PLUGIN_ROOT" = "$root" ]; then
+    exec "$bin" --plugin-root "$root" ah "$@"
+  fi
+  exec "$bin" ah "$@"
+fi
+
+echo "ah: no native binary is installed; run: sh $root/scripts/install.sh --apply" >&2
+exit 1

@@ -1,0 +1,117 @@
+{
+  "versions": {
+    "claude": "2.1.296 (Claude Code)",
+    "tmux": "tmux 3.7b",
+    "codex": "codex-cli 0.162.0-alpha.2"
+  },
+  "facts": {
+    "bring_up_ok": true,
+    "gate_passed_at_start_and_after_resume": true,
+    "gate_passed_after_attach": true,
+    "reported_exclude_slash_tmp": true,
+    "reported_exclude_tmpdir_env_var": true,
+    "reported_writable_roots": [
+      "<T>/ah/run/codex/tmp/e6r2-probe",
+      "<T>/pool"
+    ],
+    "exclusions_reported_true": true,
+    "instruction_marker_in_warmup_reply": true,
+    "tui_history_shows_marker": true,
+    "i_unix_socket_denied": true,
+    "ii_write_under_ah_denied": true,
+    "iii_write_under_add_dir_allowed": true,
+    "iv_write_outside_roots_denied": true,
+    "iv_b_write_through_tmp_spelling_denied": true,
+    "v_write_system_temp_denied": true,
+    "vi_mktemp_allowed_member_tmp_non_empty": true,
+    "member_tmp_entries": 1,
+    "sandbox_turn_completed": true,
+    "server_requests": [],
+    "model_last_reply": "i=1 ii=1 iii=0 iv=1 ivb=1 v=1 vi=0"
+  },
+  "verdict": "all pass: set the range",
+  "server_argv": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"<T>/ah/run/codex/tmp/e6r2-probe\",\"<T>/pool\"]",
+    "-c",
+    "approval_policy=\"never\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"<T>/ah/run/codex/tmp/e6r2-probe\"",
+    "-c",
+    "model_instructions_file=\"<T>/instr.md\"",
+    "app-server",
+    "--listen",
+    "unix://<T>/cx.sock",
+    ""
+  ],
+  "client": {
+    "replies": {
+      "warmup": [
+        "E6R2-INSTR"
+      ],
+      "sandbox": [
+        "i=1 ii=1 iii=0 iv=1 ivb=1 v=1 vi=0"
+      ]
+    },
+    "errors": [],
+    "notifications": {
+      "remoteControl/status/changed": 1,
+      "account/updated": 1,
+      "thread/started": 2,
+      "mcpServer/startupStatus/updated": 3,
+      "thread/status/changed": 6,
+      "turn/started": 2,
+      "item/started": 7,
+      "item/completed": 7,
+      "item/agentMessage/delta": 28,
+      "thread/tokenUsage/updated": 11,
+      "account/rateLimits/updated": 9,
+      "turn/completed": 2,
+      "deprecationNotice": 2,
+      "thread/goal/cleared": 3,
+      "thread/name/updated": 1
+    },
+    "modes": {
+      "sandbox": "workspace-write",
+      "approval": "never"
+    },
+    "bringUp": {
+      "ok": true,
+      "step": "done"
+    },
+    "threadId": "<id>",
+    "afterAttach": {
+      "ok": true,
+      "failed": []
+    },
+    "reported": {
+      "type": "workspaceWrite",
+      "writableRoots": [
+        "<T>/ah/run/codex/tmp/e6r2-probe",
+        "<T>/pool"
+      ],
+      "networkAccess": false,
+      "excludeTmpdirEnvVar": true,
+      "excludeSlashTmp": true
+    },
+    "sandboxTurn": {
+      "started": true,
+      "completed": true
+    },
+    "completedTurns": 2
+  },
+  "tui_captures": {
+    "0-idle": "\n  >_ OpenAI Codex (v0.162.0-alpha.2)\n     <T>/ws/e6r2\n\n  To get started, describe a task or try one of these commands:\n\n  /init - create an AGENTS.md file with instructions for Codex\n  /status - show current session configuration\n  /permissions - choose what Codex is allowed to do\n  /model - choose what model and reasoning effort to use\n  /review - review any changes and find issues\n\n\n\u203a What is your instruction marker? Reply with it only.\n\n\n\u2022 E6R2-INSTR\n\n  Worked for 2s \u2022 10:52 PM\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u203a Ask Codex to do anything\n\n  GPT-6.1-Sol default \u00b7 <T>/ws/e6r2\n  ? for shortcuts\n",
+    "0-attach": "\n  >_ OpenAI Codex (v0.162.0-alpha.2)\n     <T>/ws/e6r2\n\n  To get started, describe a task or try one of these commands:\n\n  /init - create an AGENTS.md file with instructions for Codex\n  /status - show current session configuration\n  /permissions - choose what Codex is allowed to do\n  /model - choose what model and reasoning effort to use\n  /review - review any changes and find issues\n\n\n\u203a What is your instruction marker? Reply with it only.\n\n\n\u2022 E6R2-INSTR\n\n  Worked for 2s \u2022 10:52 PM\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u203a Ask Codex to do anything\n\n  GPT-6.1-Sol default \u00b7 <T>/ws/e6r2\n  ? for shortcuts\n",
+    "1-after": "\n  >_ OpenAI Codex (v0.162.0-alpha.2)\n     <T>/ws/e6r2\n\n  To get started, describe a task or try one of these commands:\n\n  /init - create an AGENTS.md file with instructions for Codex\n  /status - show current session configuration\n  /permissions - choose what Codex is allowed to do\n  /model - choose what model and reasoning effort to use\n  /review - review any changes and find issues\n\n\n\u203a What is your instruction marker? Reply with it only.\n\n\n\u2022 E6R2-INSTR\n\n  Worked for 2s \u2022 10:52 PM\n\n\n\u203a Run these seven shell commands, one at a time, exactly as written. Do not retry a command or look for another way. When all seven have run, reply with one line giving the exit status of each, as\n  i=<n> ii=<n> iii=<n> iv=<n> ivb=<n> v=<n> vi=<n>.\n  (i) nc -U -w 2 <T>/ah/probe.sock </dev/null\n  (ii) sh -c 'echo x > <T>/ah/x'\n  (iii) sh -c 'echo x > <T>/pool/x'\n  (iv) sh -c 'echo x > <T>/ctl/x'\n  (ivb) sh -c 'echo x > /tmp/ahprobe.rxatTd/ctl/y'\n  (v) sh -c 'echo x > <T>/systmp/x'\n  (vi) sh -c 'echo \"$TMPDIR\"; f=$(mktemp) && echo ok > \"$f\"'\n\n\n\u2022 Failed (exit 1) nc -U -w 2 <T>/ah/probe.sock </dev/null\n  \u2514 (no output)\n\n\u2022 Ran sh -c 'echo x > <T>/pool/x'\n  \u2514 (no output)\n\n\u2022 Ran sh -c 'echo \"$TMPDIR\"; f=$(mktemp) && echo ok > \"$f\"'\n  \u2514 <T>/ah/run/codex/tmp/e6r2-probe\n\n\u2022 i=1 ii=1 iii=0 iv=1 ivb=1 v=1 vi=0\n\n  Worked for 14s \u2022 10:52 PM\n\n\n\u203a Ask Codex to do anything\n\n  GPT-6.1-Sol default \u00b7 <T>/ws/e6r2 \u00b7 Run seven shell commands\n  ? for shortcuts\n"
+  },
+  "app_server_log": ""
+}

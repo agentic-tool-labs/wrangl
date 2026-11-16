@@ -1,0 +1,301 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "validateTeamMember",
+  "cases": [
+    {
+      "id": "valid-peer",
+      "args": [
+        {
+          "role": "architect",
+          "name": "repo-architect",
+          "route": "peer"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "valid-subagent-no-name",
+      "args": [
+        {
+          "role": "task-runner",
+          "route": "subagent"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "valid-subagent-null-name",
+      "args": [
+        {
+          "role": "task-runner",
+          "route": "subagent",
+          "name": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "subagent-numeric-name",
+      "args": [
+        {
+          "role": "task-runner",
+          "route": "subagent",
+          "name": 5
+        }
+      ],
+      "expect": [
+        "name must be a non-empty string or null, got 5"
+      ]
+    },
+    {
+      "id": "peer-no-name",
+      "args": [
+        {
+          "role": "architect",
+          "route": "peer"
+        }
+      ],
+      "expect": [
+        "name is required and must be a non-empty string when route is \"peer\", got undefined"
+      ]
+    },
+    {
+      "id": "peer-empty-name",
+      "args": [
+        {
+          "role": "architect",
+          "route": "peer",
+          "name": ""
+        }
+      ],
+      "expect": [
+        "name must not be an empty string"
+      ]
+    },
+    {
+      "id": "pane-no-name",
+      "args": [
+        {
+          "role": "architect",
+          "route": "pane"
+        }
+      ],
+      "expect": [
+        "name is required and must be a non-empty string when route is \"pane\", got undefined"
+      ]
+    },
+    {
+      "id": "subagent-empty-name",
+      "args": [
+        {
+          "role": "task-runner",
+          "route": "subagent",
+          "name": ""
+        }
+      ],
+      "expect": [
+        "name must not be an empty string"
+      ]
+    },
+    {
+      "id": "bad-role",
+      "args": [
+        {
+          "role": "wizard",
+          "name": "x",
+          "route": "peer"
+        }
+      ],
+      "expect": [
+        "role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator, got \"wizard\""
+      ]
+    },
+    {
+      "id": "bad-route",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "carrier"
+        }
+      ],
+      "expect": [
+        "route must be one of peer, subagent, pane, mail, got \"carrier\""
+      ]
+    },
+    {
+      "id": "missing-route",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x"
+        }
+      ],
+      "expect": [
+        "route must be one of peer, subagent, pane, mail, got undefined"
+      ]
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": [
+        "member must be an object, got null"
+      ]
+    },
+    {
+      "id": "array",
+      "args": [
+        []
+      ],
+      "expect": [
+        "member must be an object, got []"
+      ]
+    },
+    {
+      "id": "string",
+      "args": [
+        "x"
+      ],
+      "expect": [
+        "member must be an object, got \"x\""
+      ]
+    },
+    {
+      "id": "transport-id-number",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "peer",
+          "transport_id": 5
+        }
+      ],
+      "expect": [
+        "transport_id must be a string or null, got 5"
+      ]
+    },
+    {
+      "id": "tab-id-number",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "peer",
+          "tab_id": 5
+        }
+      ],
+      "expect": [
+        "tab_id must be a string or null, got 5"
+      ]
+    },
+    {
+      "id": "workspace-id-bool",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "peer",
+          "workspace_id": true
+        }
+      ],
+      "expect": [
+        "workspace_id must be a string or null, got true"
+      ]
+    },
+    {
+      "id": "ids-null-ok",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "peer",
+          "transport_id": null,
+          "tab_id": null,
+          "workspace_id": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "codex-pane-with-name",
+      "args": [
+        {
+          "role": "implementor",
+          "name": "x",
+          "route": "pane",
+          "kind": "codex"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "codex-peer-route",
+      "args": [
+        {
+          "role": "implementor",
+          "name": "x",
+          "route": "peer",
+          "kind": "codex"
+        }
+      ],
+      "expect": [
+        "route must be \"pane\" for kind \"codex\" (a non-claude agent is reached through its Herdr pane, not SendMessage or the Agent tool), got \"peer\""
+      ]
+    },
+    {
+      "id": "custom-mail",
+      "args": [
+        {
+          "role": "implementor",
+          "name": "x",
+          "route": "mail",
+          "kind": "custom",
+          "harness": "my-agent"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-role-registry",
+      "args": [
+        {
+          "role": "ui-dev",
+          "name": "x",
+          "route": "peer"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "stored-name-allowed-on-claude",
+      "args": [
+        {
+          "role": "architect",
+          "name": "x",
+          "route": "peer",
+          "model": "opus"
+        }
+      ],
+      "expect": []
+    }
+  ]
+}

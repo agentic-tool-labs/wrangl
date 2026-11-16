@@ -1,0 +1,41 @@
+{
+  "kind": "wire",
+  "id": "state-write-ok",
+  "about": "a registered state write (activity.record) through POST, with its tree diff",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "subject": "s-impl",
+        "activity": "working"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-1"
+    },
+    "path": "/v1/state/activity/record"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "result": {
+        "written": true
+      }
+    }
+  },
+  "mutant": "a write that is not applied",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:09.901Z"
+  }
+}

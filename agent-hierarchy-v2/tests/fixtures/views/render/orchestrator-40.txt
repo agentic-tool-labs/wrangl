@@ -1,0 +1,13 @@
+ah › repoA · pid 4242
+────────────────────────────────────────
+dir <ROOT>/repoA/.claude/hierarchy
+pid 4242  session sess-orch  live
+
+  team             state    members live
+> alpha            live           3    3
+  gamma            live           1    0
+  weird            live           1    0
+y copies: roster.mjs disband --plan --te
+am alpha
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

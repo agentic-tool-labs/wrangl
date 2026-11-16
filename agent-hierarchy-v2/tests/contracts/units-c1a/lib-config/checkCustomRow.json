@@ -1,0 +1,306 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "checkCustomRow",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "ui-implementor",
+        {
+          "class": "implement",
+          "agent": "ui"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "implement",
+          "agent": "ui",
+          "label": "Ui-Implementor",
+          "model": "inherit"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "full",
+      "args": [
+        "ui-implementor",
+        {
+          "class": "implement",
+          "agent": "plug:ui",
+          "label": "UI",
+          "description": "Does UI.",
+          "routes": "ui work",
+          "model": "opus",
+          "dispatch": "peer"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "implement",
+          "agent": "plug:ui",
+          "label": "UI",
+          "description": "Does UI.",
+          "routes": "ui work",
+          "model": "opus",
+          "dispatch": "peer"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "bad-name",
+      "args": [
+        "Bad",
+        {
+          "class": "implement",
+          "agent": "ui"
+        }
+      ],
+      "expect": {
+        "error": "name must match /^[a-z][a-z0-9-]{0,30}$/"
+      }
+    },
+    {
+      "id": "builtin-name",
+      "args": [
+        "architect",
+        {
+          "class": "design",
+          "agent": "x"
+        }
+      ],
+      "expect": {
+        "error": "name \"architect\" is reserved"
+      }
+    },
+    {
+      "id": "missing-class",
+      "args": [
+        "x-role",
+        {
+          "agent": "ui"
+        }
+      ],
+      "expect": {
+        "error": "class is required, one of advise, design, review, implement, legwork, orchestrate"
+      }
+    },
+    {
+      "id": "bad-class",
+      "args": [
+        "x-role",
+        {
+          "class": "bogus",
+          "agent": "ui"
+        }
+      ],
+      "expect": {
+        "error": "class is required, one of advise, design, review, implement, legwork, orchestrate"
+      }
+    },
+    {
+      "id": "missing-agent",
+      "args": [
+        "x-role",
+        {
+          "class": "implement"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "implement",
+          "agent": "x-role",
+          "label": "X-Role",
+          "model": "inherit"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "bad-agent",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "agent": "a b"
+        }
+      ],
+      "expect": {
+        "error": "agent \"a b\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+      }
+    },
+    {
+      "id": "bad-label",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "agent": "ui",
+          "label": "bad_label"
+        }
+      ],
+      "expect": {
+        "error": "label must match /^[A-Za-z0-9][A-Za-z0-9 -]{0,31}$/"
+      }
+    },
+    {
+      "id": "bad-description",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "agent": "ui",
+          "description": "a\nb"
+        }
+      ],
+      "expect": {
+        "error": "description must be one line with no backticks"
+      }
+    },
+    {
+      "id": "bad-routes",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "agent": "ui",
+          "routes": 5
+        }
+      ],
+      "expect": {
+        "error": "routes must be a non-empty string"
+      }
+    },
+    {
+      "id": "routes-on-legwork",
+      "args": [
+        "x-role",
+        {
+          "class": "legwork",
+          "agent": "ui",
+          "routes": "docs"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "legwork",
+          "agent": "ui",
+          "label": "X-Role",
+          "model": "inherit"
+        },
+        "warnings": [
+          "routes is ignored on a legwork role — legwork is never routed within the chain"
+        ]
+      }
+    },
+    {
+      "id": "model-not-allowed",
+      "args": [
+        "x-role",
+        {
+          "class": "advise",
+          "agent": "ui",
+          "model": "sonnet"
+        }
+      ],
+      "expect": {
+        "error": "model \"sonnet\" is not allowed for class advise (allowed: fable, opus)"
+      }
+    },
+    {
+      "id": "model-haiku-legwork",
+      "args": [
+        "x-role",
+        {
+          "class": "legwork",
+          "agent": "ui",
+          "model": "haiku"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "legwork",
+          "agent": "ui",
+          "label": "X-Role",
+          "model": "haiku"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "not-object",
+      "args": [
+        "x-role",
+        "text"
+      ],
+      "expect": {
+        "error": "row must be an object"
+      }
+    },
+    {
+      "id": "array",
+      "args": [
+        "x-role",
+        [
+          1
+        ]
+      ],
+      "expect": {
+        "error": "row must be an object"
+      }
+    },
+    {
+      "id": "null",
+      "args": [
+        "x-role",
+        null
+      ],
+      "expect": {
+        "error": "row must be an object"
+      }
+    },
+    {
+      "id": "shell-self-care",
+      "args": [
+        "x-role",
+        {
+          "class": "design",
+          "agent": "ui",
+          "shell": "self-care"
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "design",
+          "agent": "ui",
+          "label": "X-Role",
+          "model": "inherit",
+          "shell": "self-care"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "unknown-key",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "agent": "ui",
+          "extra": 1
+        }
+      ],
+      "expect": {
+        "row": {
+          "class": "implement",
+          "agent": "ui",
+          "label": "X-Role",
+          "model": "inherit"
+        },
+        "warnings": []
+      }
+    }
+  ]
+}

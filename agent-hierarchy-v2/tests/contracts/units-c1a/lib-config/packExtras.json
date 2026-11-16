@@ -1,0 +1,275 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packExtras",
+  "cases": [
+    {
+      "id": "clean-pack",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/ah-roles.json": "{}",
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/.claude-plugin/plugin.json": "{\"name\":\"x\",\"version\":\"1\"}",
+        "x/README.md": "r"
+      },
+      "expect": []
+    },
+    {
+      "id": "root-entries",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/ah-roles.json": "{}",
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/hooks/h.json": "{}",
+        "x/Makefile": "x",
+        "x/LICENSE.txt": "l",
+        "x/CHANGELOG": "c",
+        "x/license": "l"
+      },
+      "expect": [
+        {
+          "kind": "root",
+          "name": "Makefile"
+        },
+        {
+          "kind": "root",
+          "name": "hooks"
+        }
+      ]
+    },
+    {
+      "id": "plugin-json-extra-keys",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/.claude-plugin/plugin.json": "{\"name\":\"x\",\"hooks\":\"h\",\"mcpServers\":{},\"author\":\"a\"}"
+      },
+      "expect": [
+        {
+          "kind": "plugin.json",
+          "name": "hooks"
+        },
+        {
+          "kind": "plugin.json",
+          "name": "mcpServers"
+        }
+      ]
+    },
+    {
+      "id": "agent-not-named-by-manifest",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/agents/spare.md": "---\nname: spare\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/agents/notes.txt": "n"
+      },
+      "expect": [
+        {
+          "kind": "agent",
+          "name": "agents/spare.md"
+        }
+      ]
+    },
+    {
+      "id": "claimed-agent-lists-roles",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/agents/other.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": [
+        {
+          "kind": "agent",
+          "name": "agents/other.md",
+          "claims": [
+            "qa"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claim-outside-agents-dir",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/extra/o.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/.claude-plugin/plugin.json": "{\"agents\":\"extra\"}"
+      },
+      "expect": [
+        {
+          "kind": "root",
+          "name": "extra"
+        },
+        {
+          "kind": "plugin.json",
+          "name": "agents"
+        },
+        {
+          "kind": "agent",
+          "name": "extra/o.md",
+          "claims": [
+            "qa"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manifest-null",
+      "args": [
+        "$ROOT/x",
+        null
+      ],
+      "files": {
+        "x/agents/a.md": "---\nname: a\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": [
+        {
+          "kind": "agent",
+          "name": "agents/a.md"
+        }
+      ]
+    },
+    {
+      "id": "dir-missing",
+      "args": [
+        "$ROOT/never-made",
+        {
+          "roles": {}
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "uppercase-md-not-an-agent-file",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {
+            "qa": {
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "files": {
+        "x/agents/qa.md": "---\nname: qa\ndescription: d\ntools: Read\n---\nbody\n",
+        "x/agents/NOTES.MD": "---\nname: zz\ndescription: d\ntools: Read\n---\nbody\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "plugin-json-invalid",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {}
+        }
+      ],
+      "files": {
+        "x/.claude-plugin/plugin.json": "{nope",
+        "x/a": "1"
+      },
+      "expect": [
+        {
+          "kind": "root",
+          "name": "a"
+        }
+      ]
+    },
+    {
+      "id": "plugin-json-array",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {}
+        }
+      ],
+      "files": {
+        "x/.claude-plugin/plugin.json": "[1]"
+      },
+      "expect": []
+    },
+    {
+      "id": "root-entries-sorted",
+      "args": [
+        "$ROOT/x",
+        {
+          "roles": {}
+        }
+      ],
+      "files": {
+        "x/zeta": "1",
+        "x/Alpha": "1",
+        "x/beta": "1"
+      },
+      "expect": [
+        {
+          "kind": "root",
+          "name": "Alpha"
+        },
+        {
+          "kind": "root",
+          "name": "beta"
+        },
+        {
+          "kind": "root",
+          "name": "zeta"
+        }
+      ]
+    }
+  ]
+}

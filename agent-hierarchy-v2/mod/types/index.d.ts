@@ -1,0 +1,60 @@
+/** A severity the drawing layer names; the module turns it into Text props in one table. */
+export type Tone = 'bad' | 'warn' | 'work' | 'idle'
+
+/** One Pane row as data: a heading or line of text, a team member, or a dispatch. Widths are applied when drawing. */
+export type PaneRow =
+  | { row: 'text'; tone: Tone; text: string }
+  | { row: 'member'; tone: Tone; name: string; kind: string; route: string; state: string; base: string; icon: string; iconColor: string | null; focus: boolean }
+  | { row: 'dispatch'; tone: Tone; slug: string; label: string; eta: string | null; pct: number | null; elapsed: string; state: string; icon: string; iconColor: string | null }
+
+/** One team as data, for the sectioned Pane: its pipeline rows (null when it has no pipeline), its members with their stream ('' for none), and its dispatches with the member each went to. */
+export type TeamModel = {
+  name: string
+  /** True for the team kept in the pool's default team file (its key is null); a team named `default` is false. */
+  isDefault: boolean
+  summary: TeamSummary
+  pipeline: PaneRow[] | null
+  members: { stream: string; row: PaneRow }[]
+  dispatches: { member: string; row: PaneRow }[]
+}
+
+/** What closing a team would interrupt: its member count, the live members working or blocked, and its open dispatches with the member each went to. */
+export type TeamSummary = { members: number; busy: string[]; blocked: string[]; open: { member: string; state: string }[] }
+
+/**
+ * What the band, the Pane and the toasts show at one instant, with nothing that depends on width. The band's
+ * line is `head`, then each `tail` item while it fits.
+ */
+export type View = {
+  band: { tone: Tone; head: string; tail: string[] } | null
+  pane: PaneRow[]
+  teams: TeamModel[]
+  toasts: { key: string; text: string }[]
+  /** True when `teams` are the viewer's own, proven by the document's `owners`; false for a pool-wide (older) document. */
+  owned: boolean
+}
+
+declare module 'claude-code' {
+  interface PluginState {
+    wrangl: {
+      /** The current view; null whenever nothing should show (no document, expired, invisible, member session). */
+      view: View | null
+      /** Why `view` is null, named in the empty Pane's line; null while there is a view. */
+      why: string | null
+      /** Toast keys already shown this session; never written means not yet seeded. */
+      seen: string[]
+      /** Auto-open has fired this session. */
+      opened: boolean
+      /** The person closed the Pane this session; /wrangl-hierarchy-pane clears it. */
+      closed: boolean
+      /** What the Pane shows: the Sitrep (never written means this too) or the hierarchy. */
+      paneMode: 'pane' | 'sitrep'
+      /** The Sitrep the Pane draws, as the daemon last served it. */
+      sitrep: unknown
+      /** A dismiss is in progress (a dialog is open or a command is running); further presses do nothing. */
+      dismissing: boolean
+      /** The mail submitted to this session, newest first, at most 10: the Mail section of the Pane shows it. */
+      mail: { at: number; ids: string[]; address: string; text: string; state: 'delivered' | 'not delivered' }[]
+    }
+  }
+}

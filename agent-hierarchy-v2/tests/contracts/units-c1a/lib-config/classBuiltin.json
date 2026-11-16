@@ -1,0 +1,49 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "classBuiltin",
+  "cases": [
+    {
+      "id": "design",
+      "args": [
+        "design"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "advise",
+      "args": [
+        "advise"
+      ],
+      "expect": "ultra-advisor"
+    },
+    {
+      "id": "legwork",
+      "args": [
+        "legwork"
+      ],
+      "expect": "task-runner"
+    },
+    {
+      "id": "unknown",
+      "args": [
+        "nope"
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/gh.log"
+case "$*" in
+  'api repos/{owner}/{repo}/branches/main') printf '%s' '{"protected":true}'; exit 0;;
+  'api repos/{owner}/{repo}/rules/branches/main') printf '%s' '[]'; exit 0;;
+  'api repos/{owner}/{repo}/branches/main/protection') printf '%s' '{"required_pull_request_reviews":{},"enforce_admins":{"enabled":false}}'; exit 0;;
+  *) exit 1;;
+esac

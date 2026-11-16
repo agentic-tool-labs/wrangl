@@ -1,0 +1,48 @@
+{
+  "kind": "hook",
+  "id": "h4-held-failed-follows",
+  "about": "a plain session whose record says failed follows its next event",
+  "tree": "hook-plain-failed-activity",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "go"
+    }
+  },
+  "mutant": "failed record not followed",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:32.522Z"
+  }
+}

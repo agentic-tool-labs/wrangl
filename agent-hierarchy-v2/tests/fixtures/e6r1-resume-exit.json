@@ -1,0 +1,104 @@
+{
+  "argv_flags": "resume <id> --remote unix://<T>/cx.sock",
+  "flags_dropped_and_retried": false,
+  "exit_code": null,
+  "stderr": "",
+  "first_attempt_exit_code": null,
+  "first_attempt_stderr": null,
+  "tui_scrollback_when_dead": null,
+  "app_server_log": "",
+  "client": {
+    "threadCreated": true,
+    "threadStartCwd": "/tmp/ahprobe.kvov4q/ws/e6r1",
+    "idLoadedOnServer": true,
+    "warmup": {
+      "start": {
+        "ok": true,
+        "keys": [
+          "turn"
+        ]
+      },
+      "completed": true,
+      "token_usage_notifications": 1,
+      "resume_read": {
+        "ok": true,
+        "keys": [
+          "thread",
+          "model",
+          "modelProvider",
+          "serviceTier",
+          "disabledPluginIds",
+          "cwd",
+          "runtimeWorkspaceRoots",
+          "instructionSources",
+          "approvalPolicy",
+          "approvalsReviewer",
+          "sandbox",
+          "activePermissionProfile",
+          "reasoningEffort",
+          "collaborationMode",
+          "multiAgentMode",
+          "initialTurnsPage",
+          "turnsBackwardsCursor",
+          "itemsBackwardsCursor"
+        ],
+        "fields": {
+          "approvalPolicy": "never",
+          "approvalsReviewer": "user",
+          "sandbox": {
+            "type": "readOnly",
+            "networkAccess": false
+          },
+          "activePermissionProfile": null
+        }
+      },
+      "rollout_after": true
+    },
+    "gate": {
+      "at_start": {
+        "pass": true,
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "approvalPolicy": "never"
+      },
+      "pass": true,
+      "after_warmup": {
+        "pass": true,
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "approvalPolicy": "never"
+      },
+      "after_attach": {
+        "pass": true,
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "approvalPolicy": "never"
+      }
+    },
+    "errors": [],
+    "notifications": {
+      "remoteControl/status/changed": 1,
+      "thread/started": 2,
+      "mcpServer/startupStatus/updated": 3,
+      "thread/status/changed": 10,
+      "turn/started": 4,
+      "account/updated": 1,
+      "item/started": 11,
+      "item/completed": 11,
+      "item/agentMessage/delta": 404,
+      "thread/tokenUsage/updated": 7,
+      "account/rateLimits/updated": 5,
+      "turn/completed": 4,
+      "deprecationNotice": 2,
+      "thread/goal/cleared": 3,
+      "thread/name/updated": 1
+    },
+    "serverRequests": []
+  }
+}

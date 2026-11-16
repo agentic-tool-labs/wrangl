@@ -1,0 +1,91 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamFileHome",
+  "cases": [
+    {
+      "id": "default-team-file",
+      "args": [
+        "/a/.claude/hierarchy/team.json"
+      ],
+      "expect": "/a/.claude/hierarchy"
+    },
+    {
+      "id": "named-team-file",
+      "args": [
+        "/a/.claude/hierarchy/teams/alpha.json"
+      ],
+      "expect": "/a/.claude/hierarchy"
+    },
+    {
+      "id": "not-a-team-file",
+      "args": [
+        "/a/.claude/hierarchy/other.json"
+      ],
+      "expect": null
+    },
+    {
+      "id": "teams-dir-but-any-name",
+      "args": [
+        "/a/hierarchy/teams/x.txt"
+      ],
+      "expect": "/a/hierarchy"
+    },
+    {
+      "id": "legacy-name-at-root",
+      "args": [
+        "/team.json"
+      ],
+      "expect": "/"
+    },
+    {
+      "id": "named-at-root",
+      "args": [
+        "/teams/x.json"
+      ],
+      "expect": "/"
+    },
+    {
+      "id": "relative-default",
+      "args": [
+        "team.json"
+      ],
+      "expect": "."
+    },
+    {
+      "id": "relative-named",
+      "args": [
+        "teams/x.json"
+      ],
+      "expect": "."
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "/a/team.json/"
+      ],
+      "expect": "/a"
+    },
+    {
+      "id": "nested-teams-dir",
+      "args": [
+        "/a/teams/b/teams/c.json"
+      ],
+      "expect": "/a/teams/b"
+    },
+    {
+      "id": "team-json-in-teams-dir",
+      "args": [
+        "/a/teams/team.json"
+      ],
+      "expect": "/a/teams"
+    }
+  ]
+}

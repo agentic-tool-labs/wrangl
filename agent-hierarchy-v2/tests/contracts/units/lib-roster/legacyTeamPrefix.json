@@ -1,0 +1,72 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "legacyTeamPrefix",
+  "cases": [
+    {
+      "id": "inferable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\"}]}"
+      },
+      "expect": "p"
+    },
+    {
+      "id": "first-inferable-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"weird\"},{\"role\":\"reviewer\",\"name\":\"q-reviewer\"}]}"
+      },
+      "expect": "q"
+    },
+    {
+      "id": "none-inferable",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"weird\"}]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "only-default-team-considered",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\"}]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "non-object-rows",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[null,5,{\"role\":\"architect\",\"name\":\"p-architect\"}]}"
+      },
+      "expect": "p"
+    }
+  ]
+}

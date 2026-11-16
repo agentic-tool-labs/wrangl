@@ -1,0 +1,170 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "declaredModelTiers",
+  "cases": [
+    {
+      "id": "none",
+      "args": [],
+      "files": {},
+      "expect": {
+        "tiers": {},
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\",\"gpt-mini\":\"haiku\"},\"pi\":{\"x\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "tiers": {
+          "codex": {
+            "gpt-5": "opus",
+            "gpt-mini": "haiku"
+          },
+          "pi": {
+            "x": "sonnet"
+          }
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "claude-ignored",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"claude\":{\"opus\":\"fable\"},\"codex\":{\"m\":\"opus\"}}}"
+      },
+      "expect": {
+        "tiers": {
+          "codex": {
+            "m": "opus"
+          }
+        },
+        "warnings": [
+          "ah: modelTiers.claude in $ROOT/home/.claude/agent-hierarchy.json is ignored — a Claude model carries its own tier."
+        ]
+      }
+    },
+    {
+      "id": "bad-tier-ignored",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"a\":\"ultra\",\"b\":3,\"c\":\"opus\",\"d\":null}}}"
+      },
+      "expect": {
+        "tiers": {
+          "codex": {
+            "c": "opus"
+          }
+        },
+        "warnings": [
+          "ah: modelTiers.codex.a in $ROOT/home/.claude/agent-hierarchy.json is \"ultra\", not a tier (haiku, sonnet, opus, fable) — ignoring it.",
+          "ah: modelTiers.codex.b in $ROOT/home/.claude/agent-hierarchy.json is 3, not a tier (haiku, sonnet, opus, fable) — ignoring it.",
+          "ah: modelTiers.codex.d in $ROOT/home/.claude/agent-hierarchy.json is null, not a tier (haiku, sonnet, opus, fable) — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "kind-not-object",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":\"opus\",\"pi\":[1],\"tiny\":null}}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": [
+          "ah: modelTiers.codex in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it.",
+          "ah: modelTiers.pi in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it.",
+          "ah: modelTiers.tiny in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "bad-kind-name",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"Bad Kind\":{\"a\":\"opus\"},\"9x\":{\"a\":\"opus\"}}}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": [
+          "ah: modelTiers.Bad Kind in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it.",
+          "ah: modelTiers.9x in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<model>\": \"<tier>\"} — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "not-object",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":\"x\"}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": [
+          "ah: modelTiers in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<kind>\": {\"<model>\": \"<tier>\"}} — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "array",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":[1]}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": [
+          "ah: modelTiers in $ROOT/home/.claude/agent-hierarchy.json is not an object of {\"<kind>\": {\"<model>\": \"<tier>\"}} — ignoring it."
+        ]
+      }
+    },
+    {
+      "id": "null-ignored",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":null}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": []
+      }
+    },
+    {
+      "id": "bad-json",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{nope"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": []
+      }
+    },
+    {
+      "id": "not-object-root",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "[1]"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": []
+      }
+    },
+    {
+      "id": "empty-models-object",
+      "args": [],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{}}}"
+      },
+      "expect": {
+        "tiers": {},
+        "warnings": []
+      }
+    }
+  ]
+}

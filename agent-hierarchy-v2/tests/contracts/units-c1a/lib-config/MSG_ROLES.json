@@ -1,0 +1,26 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "MSG_ROLES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "orchestrator",
+        "chief",
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "task-runner",
+        "backlog-groomer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    }
+  ]
+}

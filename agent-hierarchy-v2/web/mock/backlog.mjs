@@ -1,0 +1,27 @@
+// The groom-1 backlog (23 items), as `ah backlog import` maps it: b<N> ids in file order, the wave lowercased, rank within the wave.
+// [key, title, wave, size, theme, rank, outcome, issue number from a `#N` source]
+export const GROOM = [
+  ["b1", "DB speed: msgs and state reads at file speed or better", "now", "L", "DB/perf", 1, "Message and state ops in SQLite no slower than the old files (today 6x slower); hook writes never dropped for budget", 458],
+  ["b2", "Soft gates: one-time NOT DONE nudges", "now", "M", "soft-gates", 2, "The 9 soft nudges (message format, route, inline report, conduit, reviewer-write, self-care, roster-skill, herdr-name, worktree) ship as one-time recorders, never denies", null],
+  ["b3", "No test litter", "now", "S", "tests/CI", 3, "Tests and members leave nothing behind: no TestResults pile-up, no stray mock servers, member TMPDIR outside any git tree", 258],
+  ["b4", "Fast ship gate: build + affected tests + keep-set", "now", "S", "ops", 4, "ship.sh runs build, changed-file tests and tests/keep-set.sh, not the full suite; publish-bin.sh stops calling dotnet build-server shutdown; stale origin/HEAD refreshed before basing a stream", 245],
+  ["b5", "Keep-set green and quiet", "now", "M", "tests/CI", 5, "test-ahd-fallback green (context field 400), flaky tests fixed or quarantined, every always-red shell suite deleted or fixed", 116],
+  ["b6", "Finish the gate strip: Ultra-Advisor leftovers", "now", "S", "simplify/source-cut", 6, "UltraGateDomain, Set/ClearGateDecision, the StateDb gate op and the stale `ultra gate:` status line are gone; 27 fixture/doc files carry the new directive text; one Ultra-Advisor ask per pipeline run (F2)", null],
+  ["b7", "One liveness truth", "next", "M", "messaging", 1, "One liveness implementation feeds /v1/view, the read model, hooks and the UI; live/idle/busy/dead/bare are distinguishable and correct after reboot and pid reuse", 90],
+  ["b8", "Message delivery: exactly once, right address", "next", "M", "messaging", 2, "Reports never fail team_mismatch, survive session rename, are not re-submitted as prompts; finished exchanges close (note replies included)", 44],
+  ["b9", "Web UI shows true state", "next", "M", "UI/plans/boards/Q&A", 3, "UI reconnects after ahd restart; checklist/queue views match the CLI; graph fills the view and clusters lanes; gates.jsonl recorder rows and a soft-gate badge are visible", 114],
+  ["b10", "ahd idle CPU and client storms", "next", "M", "DB/perf", 4, "Idle ahd near 0% CPU; overloaded or restarting ahd never spawns extra daemons; restart works on a busy daemon; aggregated views computed once per change", 259],
+  ["b11", "Allow list covers routine member work", "next", "S", "ops", 5, "Members in auto mode are not classifier-denied for plain reads, commits, SendMessage, test lanes or self-diagnose; expand the allow list instead of adding gates", 316],
+  ["b12", "ah silent outside ah teams", "next", "S", "ops", 6, "Hooks and mods do nothing in a session that is not an ah team member (one identity predicate)", 431],
+  ["b13", "Alarms and nudges that are right and actionable", "next", "M", "messaging", 7, "No false or repeated alarms; every alarm names a command that works; valued nudges added (idle member with open brief before ETA, orchestrator on ETA expiry)", 303],
+  ["b14", "msg verb friction", "next", "S", "messaging", 8, "msg new/send validate up front, no spurious usage refusal, notes can be long and carry --ref, no-action notes cost no turn", 34],
+  ["b15", "Quit, reboot, resume works whole (manual path)", "next", "M", "ops", 9, "quit -> reboot -> resume restores every team (incl. second team) under the right names and cwd, with no auto-start after a pause", 78],
+  ["b16", "Deep source cut (ponytail audit vs UI keep list)", "next", "L", "simplify/source-cut", 10, "Ah.Watch, Ah.Hierarchy, Ah.Commands, Ah.Codex, Ah.Hooks cut to what the keep list needs (prod is 242K lines)", null],
+  ["b17", "Coverage to 80% where it matters", "next", "M", "tests/CI", 11, "Cli 66.9, Hooks 76.4, DaemonClient 77.2, Launch 78.4, Commands 79.2 reach 80% after the cut, testing breaks only", null],
+  ["b18", "Docs pass after the strip", "next", "S", "docs", 12, "pipeline-conventions.md, skills (daemon path), contract coverage.md and P-REG text match the stripped product", 33],
+  ["b19", "Plans and Questions build, questions never block", "later", "L", "UI/plans/boards/Q&A", 1, "plans-and-questions.md built; questions/decisions tracked and shown; one pending question never stalls other streams; standing decision rules as data", 386],
+  ["b20", "Web UI design pass and Plans view", "later", "L", "UI/plans/boards/Q&A", 2, "Design language/density pass; Plans grouped by team; show-all-done toggle; pages for status/inbox/stream-status; graph layout port", 110],
+  ["b21", "Spawn and roster friction", "later", "M", "ops", 3, "Spawn is honest (no silent fail, folder trust handled, inherits login/install), stream-open reports/defaults base right, dismiss exits cleanly, names shown everywhere", 6],
+  ["b22", "Notifications and fleet observability", "later", "M", "messaging", 4, "Notifications reach the user when the orchestrator is dead; usage report per team; pipeline can adopt current work on request", 246],
+  ["b23", "Soft-gates mod front end", "later", "S", "soft-gates", 5, "A mod surface shows soft-gate nudges and recorder rows beside the chat", null],
+];

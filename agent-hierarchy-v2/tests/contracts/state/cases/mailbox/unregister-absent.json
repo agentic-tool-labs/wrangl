@@ -1,0 +1,49 @@
+{
+  "kind": "state-op",
+  "id": "unregister-absent",
+  "about": "unregister of an absent registration reports it",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "mailbox",
+    "op": "unregister",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "session_id": "sess-none"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-mailbox-unregister-absent"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "removed": false
+      }
+    },
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/registrations/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"op-mailbox-unregister-absent\",\"at\":\"<ISO:1>\",\"result\":{\"removed\":false}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an error for an absent registration",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:15.651Z"
+  }
+}

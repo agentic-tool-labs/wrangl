@@ -1,0 +1,283 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "originDefault",
+  "cases": [
+    {
+      "id": "symbolic-target-trunk",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/trunk\n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/trunk^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/trunk^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/trunk",
+        "branch": "trunk"
+      }
+    },
+    {
+      "id": "symbolic-target-with-slash-branch",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/team/trunk\n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/team/trunk^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/team/trunk^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/team/trunk",
+        "branch": "team/trunk"
+      }
+    },
+    {
+      "id": "symbolic-target-whitespace-trimmed",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' '  refs/remotes/origin/dev \n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/dev^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/dev^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/dev",
+        "branch": "dev"
+      }
+    },
+    {
+      "id": "symbolic-target-unverifiable-falls-to-main",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/gone\n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/gone^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/main",
+        "branch": "main"
+      }
+    },
+    {
+      "id": "symbolic-target-other-remote-ignored",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/upstream/HEAD\n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/upstream/HEAD^{commit}') exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/main",
+        "branch": "main"
+      }
+    },
+    {
+      "id": "symbolic-target-not-a-remote-ref",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/heads/main\n'; exit 0;;\n  *'rev-parse --verify -q refs/heads/main^{commit}') exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/master^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/master^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/master",
+        "branch": "master"
+      }
+    },
+    {
+      "id": "no-symbolic-ref-main",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/main",
+        "branch": "main"
+      }
+    },
+    {
+      "id": "no-symbolic-ref-master-only",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/master^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/master^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/master",
+        "branch": "master"
+      }
+    },
+    {
+      "id": "main-wins-over-master",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/master^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/main",
+        "branch": "main"
+      }
+    },
+    {
+      "id": "nothing-resolves",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/master^{commit}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "symbolic-target-empty-output",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/master^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/master^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/master",
+        "branch": "master"
+      }
+    },
+    {
+      "id": "scope-object",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "/x/.git"
+        }
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --git-dir=/x/.git symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo --git-dir=/x/.git rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": {
+        "ref": "refs/remotes/origin/main",
+        "branch": "main"
+      }
+    }
+  ]
+}

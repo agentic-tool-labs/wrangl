@@ -1,0 +1,39 @@
+{
+  "kind": "cli",
+  "id": "week-text",
+  "about": "a window with no records in it",
+  "tree": "cli-usage",
+  "env": {
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "usage-report",
+    "argv": [
+      "week"
+    ],
+    "stdin": null
+  },
+  "mutant": "an empty window printed something else",
+  "expect": {
+    "stdout": "agent-hierarchy usage — <TS:usage>\ndata: state database (6 subagent records)\n\nSESSION sess-bbb (latest with subagent activity)\n  role           agents  calls       out        in  cache-read\n  orchestrator        1      1       700         7       70.0k\n  godot-implementor      1      3      4.0k        10          10\n  other               1      3       700        15           0\n  total               3      7      5.4k        32       70.0k\n\nWEEK — output tokens by role\n  role           agents  calls       out        in  cache-read\n  total               0      0         0         0           0\n\n\nin = fresh input tokens; cache reads shown separately (≈10x cheaper).\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/ah2/agent-hierarchy.usage-cache.json",
+          "mode": "0644",
+          "content": "{\"v\":2,\"files\":{\"transcripts/sess-aaaa1111.jsonl\":{\"offset\":683,\"days\":{\"2026-01-05\":{\"calls\":2,\"in\":30,\"out\":5000,\"cache_read\":110000,\"cache_create\":100},\"2026-01-06\":{\"calls\":1,\"in\":5,\"out\":500,\"cache_read\":1000,\"cache_create\":0}},\"models\":{\"claude-opus-4\":2,\"claude-sonnet-4\":1},\"session_id\":\"sess-aaaa1111\",\"last_message\":null},\"transcripts/sess-bbbb2222.jsonl\":{\"offset\":208,\"days\":{\"2026-01-06\":{\"calls\":1,\"in\":7,\"out\":700,\"cache_read\":70000,\"cache_create\":10}},\"models\":{\"claude-opus-4\":1},\"session_id\":\"sess-bbbb2222\",\"last_message\":null},\"missing-dir/sess-cccc3333.jsonl\":{\"offset\":0,\"days\":{},\"models\":{},\"session_id\":\"sess-cccc3333\"}}}"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:11:05.057Z"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "wire",
+  "id": "inspect-registrations-ok",
+  "about": "registrations the daemon holds",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/registrations",
+    "before": [
+      {
+        "method": "POST",
+        "path": "/v1/register",
+        "body": {
+          "session_id": "s-impl",
+          "addresses": [
+            "tm-implementor@tm"
+          ],
+          "boxes": {
+            "tm-implementor@tm": "<ROOT:proj>/boxes/tm-implementor"
+          },
+          "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+          "harness": "claude"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "registrations": [
+        {
+          "adapter": "none",
+          "address": "tm-implementor@tm",
+          "addresses": [
+            "tm-implementor@tm"
+          ],
+          "at": "<ISO:1>",
+          "harness": "claude",
+          "live": false,
+          "pane_id": null,
+          "pid": null,
+          "session_id": "s-impl",
+          "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+          "team_files": null
+        }
+      ]
+    }
+  },
+  "mutant": "a registration missing",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:03.162Z"
+  }
+}

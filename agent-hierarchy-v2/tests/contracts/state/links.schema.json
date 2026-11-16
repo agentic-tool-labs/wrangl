@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "integer"
+    },
+    "links": {
+      "type": "array"
+    },
+    "denied": {
+      "type": "array"
+    }
+  },
+  "required": [
+    "denied",
+    "links",
+    "v"
+  ],
+  "additionalProperties": true
+}

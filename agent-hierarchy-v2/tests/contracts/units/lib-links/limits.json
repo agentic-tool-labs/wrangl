@@ -1,0 +1,127 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "limits",
+  "cases": [
+    {
+      "id": "table",
+      "args": [],
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-override-partial",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "{\"messages\":3}"
+      },
+      "expect": {
+        "messages": 3,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-override-adds-key",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "{\"extra\":1}"
+      },
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2,
+        "extra": 1
+      }
+    },
+    {
+      "id": "env-not-json",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "{nope"
+      },
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-array",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "[1,2]"
+      },
+      "expect": {
+        "0": 1,
+        "1": 2,
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-null",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "null"
+      },
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-string",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": "\"x\""
+      },
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    },
+    {
+      "id": "env-empty",
+      "args": [],
+      "env": {
+        "AH_LINK_LIMITS": ""
+      },
+      "expect": {
+        "messages": 12,
+        "minutes": 30,
+        "activePerMember": 2,
+        "peersPerLink": 2,
+        "extendGraceMs": 600000,
+        "extensionsBeforeUser": 2
+      }
+    }
+  ]
+}

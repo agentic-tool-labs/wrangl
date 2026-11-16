@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "team_id": "20261011-123928-13v0",
+  "created": "2026-10-11T12:39:28-04:00",
+  "roster_level": "repo",
+  "transport": "herdr",
+  "orchestrator": {
+    "session_id": null,
+    "pid": 36773
+  },
+  "members": [
+    {
+      "role": "implementor",
+      "name": "proj-implementor",
+      "model": "sonnet",
+      "route": "peer",
+      "transport_id": "%9",
+      "expected_root": "<ROOT:proj>"
+    }
+  ],
+  "expected_root": "<ROOT:proj>",
+  "roster": null,
+  "layout": "auto"
+}

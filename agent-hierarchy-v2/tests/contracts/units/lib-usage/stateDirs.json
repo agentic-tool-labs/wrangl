@@ -1,0 +1,14 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "stateDirs",
+  "cases": [
+    {
+      "id": "beside-the-usage-file",
+      "args": [],
+      "expect": [
+        "$ROOT/home/.claude/agent-hierarchy.usage.state"
+      ]
+    }
+  ]
+}

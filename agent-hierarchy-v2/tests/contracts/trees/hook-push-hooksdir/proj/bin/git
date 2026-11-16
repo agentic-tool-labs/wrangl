@@ -1,0 +1,19 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/git.log"
+case "$*" in
+  *'rev-parse --show-toplevel') printf '%s\n' "$2"; exit 0;;
+  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/main
+'; exit 0;;
+  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;
+  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;
+  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{"version":1,"protected_branches":["release/*"],"protected_paths":["secrets/**"]}'; exit 0;;
+  *'symbolic-ref -q --short HEAD') printf '%s' 'feat
+'; exit 0;;
+  *'rev-parse --verify -q feat^{commit}') exit 0;;
+  *'rev-parse --verify -q HEAD^{commit}') exit 0;;
+  *'rev-parse --verify -q topic^{commit}') exit 0;;
+  *'ls-tree -r --full-tree --name-only -z '*) printf 'plugins/x/.claude-plugin/plugin.json\0'; exit 0;;
+  *'log --no-renames --diff-merges=dense-combined --name-only -z --format='*) printf 'plugins/x/hooks/run.sh\0'; exit 0;;
+  *) exit 1;;
+esac

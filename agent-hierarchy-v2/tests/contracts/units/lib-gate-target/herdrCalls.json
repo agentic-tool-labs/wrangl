@@ -1,0 +1,641 @@
+{
+  "lib": "lib-gate-target",
+  "module": "hooks/lib-gate-target.mjs",
+  "fn": "herdrCalls",
+  "cases": [
+    {
+      "id": "agent-prompt",
+      "args": [
+        "herdr agent prompt p-implementor hello there",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "hello",
+            "there"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-send-keys-with-keys",
+      "args": [
+        "herdr agent send-keys p-implementor Enter",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "send-keys",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "Enter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-flag",
+      "args": [
+        "herdr agent prompt --pane 1-2 p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": "1-2",
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-flag-equals",
+      "args": [
+        "herdr agent prompt --pane=1-2 p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": "1-2",
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "global-option-before-group",
+      "args": [
+        "herdr --session work agent prompt p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "global-option-between-group-and-verb",
+      "args": [
+        "herdr agent --remote host prompt p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bare-global-flag",
+      "args": [
+        "herdr --remote-keybindings x agent prompt p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verb-not-listed",
+      "args": [
+        "herdr agent list",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "group-mismatch",
+      "args": [
+        "herdr pane send-text 1-1 hello",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "chained-commands",
+      "args": [
+        "echo hi && herdr agent prompt a one; herdr agent send-keys b Enter | cat",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "a",
+          "pane": null,
+          "args": [
+            "one"
+          ]
+        },
+        {
+          "group": "agent",
+          "verb": "send-keys",
+          "name": "b",
+          "pane": null,
+          "args": [
+            "Enter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quoted-command-word",
+      "args": [
+        "\"herdr\" agent prompt p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "single-quoted-command-word",
+      "args": [
+        "'herdr' agent prompt p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quoted-name",
+      "args": [
+        "herdr agent prompt 'p-implementor' msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "double-dash-stops-scan",
+      "args": [
+        "herdr agent prompt p-implementor -- --not-a-flag",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "flag-takes-next-word-as-value",
+      "args": [
+        "herdr agent prompt --wait p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "msg",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "backslash-newline-continues-line",
+      "args": [
+        "herdr agent prompt \\\n  p-implementor msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p-implementor",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "no-name-yields-nothing",
+      "args": [
+        "herdr agent prompt",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "only-flags-yields-nothing",
+      "args": [
+        "herdr agent prompt --pane 1-1",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "path-prefixed-herdr-is-not-matched",
+      "args": [
+        "/usr/local/bin/herdr agent prompt p msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "word-ending-in-herdr-is-not-matched",
+      "args": [
+        "myherdr agent prompt p msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "herdr-as-argument-is-matched-after-separator",
+      "args": [
+        "echo; herdr agent prompt p msg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-word-verb",
+      "args": [
+        "herdr terminal session control abc",
+        "terminal",
+        [
+          "attach",
+          "session control"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "terminal",
+          "verb": "session control",
+          "name": "abc",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "two-word-verb-partial-does-not-match",
+      "args": [
+        "herdr terminal session abc",
+        "terminal",
+        [
+          "attach",
+          "session control"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "pane-run",
+      "args": [
+        "herdr pane run 1-3 ls -la",
+        "pane",
+        [
+          "send-text",
+          "send-keys",
+          "run"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "run",
+          "name": "1-3",
+          "pane": null,
+          "args": [
+            "ls",
+            "-la"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-send-text-name-then-args",
+      "args": [
+        "herdr pane send-text 1-3 one two three",
+        "pane",
+        [
+          "send-text",
+          "send-keys",
+          "run"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "send-text",
+          "name": "1-3",
+          "pane": null,
+          "args": [
+            "one",
+            "two",
+            "three"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "herdr-in-subshell-text",
+      "args": [
+        "(herdr agent prompt p msg)",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "msg)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "empty-command",
+      "args": [
+        "",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "tab-separated",
+      "args": [
+        "herdr\tagent\tprompt\tp\tmsg",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "msg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flag-with-equals-value-and-name",
+      "args": [
+        "herdr agent send-keys --timeout=5 p Enter",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "send-keys",
+          "name": "p",
+          "pane": null,
+          "args": [
+            "Enter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-calls-same-line-or",
+      "args": [
+        "herdr agent prompt a x || herdr agent prompt b y",
+        "agent",
+        [
+          "prompt",
+          "send-keys",
+          "attach"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "a",
+          "pane": null,
+          "args": [
+            "x"
+          ]
+        },
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "b",
+          "pane": null,
+          "args": [
+            "y"
+          ]
+        }
+      ]
+    }
+  ]
+}

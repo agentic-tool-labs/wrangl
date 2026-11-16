@@ -1,0 +1,331 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "classProp",
+  "cases": [
+    {
+      "id": "chain-builtin",
+      "args": [
+        "architect",
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        },
+        "chain"
+      ],
+      "expect": true
+    },
+    {
+      "id": "models-legwork",
+      "args": [
+        "task-runner",
+        null,
+        "models"
+      ],
+      "expect": [
+        "opus",
+        "sonnet",
+        "fable",
+        "inherit",
+        "haiku"
+      ]
+    },
+    {
+      "id": "builtin-name",
+      "args": [
+        "reviewer",
+        null,
+        "builtin"
+      ],
+      "expect": "reviewer"
+    },
+    {
+      "id": "step-null",
+      "args": [
+        "task-runner",
+        null,
+        "step"
+      ],
+      "expect": null
+    },
+    {
+      "id": "contract-null",
+      "args": [
+        "task-runner",
+        null,
+        "contract"
+      ],
+      "expect": null
+    },
+    {
+      "id": "contract-obj",
+      "args": [
+        "implementor",
+        null,
+        "contract"
+      ],
+      "expect": {
+        "required": [
+          "Read",
+          "SendMessage",
+          [
+            "Edit",
+            "Write"
+          ],
+          [
+            "Write",
+            "Bash"
+          ]
+        ],
+        "forbidden": [],
+        "discouraged": [
+          "advisor"
+        ],
+        "missingRecommended": [
+          "Bash"
+        ]
+      }
+    },
+    {
+      "id": "custom",
+      "args": [
+        "ui-implementor",
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        },
+        "owesResponse"
+      ],
+      "expect": true
+    },
+    {
+      "id": "unknown-role",
+      "args": [
+        "nobody",
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        },
+        "chain"
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "unknown-prop",
+      "args": [
+        "architect",
+        null,
+        "nope"
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "ultra-gate",
+      "args": [
+        "ultra-advisor",
+        null,
+        "ultraGate"
+      ],
+      "expect": true
+    }
+  ]
+}

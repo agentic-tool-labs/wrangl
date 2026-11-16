@@ -1,0 +1,332 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "afterWrite",
+  "cases": [
+    {
+      "id": "written-line-refreshes-status",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        {
+          "id": "d1",
+          "counts": {}
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": {
+          "$json": {
+            "schema": 1,
+            "written_at": "$any",
+            "expires_at": "$any",
+            "enabled": true,
+            "member_sessions": [],
+            "teams": [],
+            "timeline": [
+              {
+                "at": "$any",
+                "visible": false,
+                "tone": "idle",
+                "live": 0,
+                "out": 0,
+                "blocked": 0,
+                "overdue": 0,
+                "stalled": 0,
+                "text": "0 live · 0 out",
+                "short": "0/0"
+              }
+            ],
+            "owners": []
+          }
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "refusal-does-not-refresh",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        {
+          "refused": {
+            "reason": "invalid",
+            "detail": "x"
+          }
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "null-result-does-not-refresh",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        null,
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "undefined-result-does-not-refresh",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa",
+          "input": {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        },
+        {
+          "$undefined": 1
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "merge-line-appended-refreshes",
+      "args": [
+        "append",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        {
+          "appended": true
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": {
+          "$json": {
+            "schema": 1,
+            "written_at": "$any",
+            "expires_at": "$any",
+            "enabled": true,
+            "member_sessions": [],
+            "teams": [],
+            "timeline": [
+              {
+                "at": "$any",
+                "visible": false,
+                "tone": "idle",
+                "live": 0,
+                "out": 0,
+                "blocked": 0,
+                "overdue": 0,
+                "stalled": 0,
+                "text": "0 live · 0 out",
+                "short": "0/0"
+              }
+            ],
+            "owners": []
+          }
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-hierarchy-dir-writes-nothing",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/nowhere/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "run": "20260601-000001-aaaa"
+        },
+        {
+          "id": "d1"
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "nowhere/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "path-is-not-a-log-throws",
+      "args": [
+        "add",
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/x.jsonl"
+        },
+        {
+          "id": "d1"
+        },
+        null,
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/x.jsonl is not a decision log"
+    }
+  ]
+}

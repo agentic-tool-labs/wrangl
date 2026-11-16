@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.State/Ah.State.csproj" />
+    <ProjectReference Include="../../src/Ah.Platform/Ah.Platform.csproj" />
+    <ProjectReference Include="../../src/Ah.Config/Ah.Config.csproj" />
+    <ProjectReference Include="../Ah.TestKit/Ah.TestKit.csproj" />
+  </ItemGroup>
+
+</Project>

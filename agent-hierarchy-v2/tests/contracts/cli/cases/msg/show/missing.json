@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "missing",
+  "about": "show of an id that names no message is refused as not found",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "show",
+      "20260101-000000-zzzz"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: no request <MSGID:1>\n",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a show that prints nothing and exits 0 for an unknown id",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored: msg show is native-only (ah-msgs-db-only D1) and the Node implementation never had it; expect re-recorded from the native binary"
+  }
+}

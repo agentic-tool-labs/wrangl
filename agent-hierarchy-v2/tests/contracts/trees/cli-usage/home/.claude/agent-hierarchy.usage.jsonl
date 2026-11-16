@@ -1,0 +1,9 @@
+{"ts":"2026-01-05T10:00:00.000Z","session_id":"sess-aaaa1111","agent_id":"a1","agent_type":"ah:implementor","project_dir":"transcripts","calls":4,"in":1200,"out":15000,"cache_read":90000,"cache_create":500,"found":true}
+{"ts":"2026-01-05T10:05:00.000Z","session_id":"sess-aaaa1111","agent_id":"a2","agent_type":"ah:reviewer","project_dir":"transcripts","calls":2,"in":300,"out":2500000,"cache_read":4000000,"cache_create":0,"found":true}
+{"ts":"2026-01-05T10:06:00.000Z","session_id":"sess-aaaa1111","agent_id":"a3","agent_type":"task-gopher:task-gopher","project_dir":"transcripts","calls":9,"in":50,"out":900,"cache_read":0,"cache_create":0,"found":false}
+{"ts":"2026-01-06T09:00:00.000Z","session_id":"sess-bbbb2222","agent_id":"b1","agent_type":"godot-implementor","project_dir":"transcripts","calls":3,"in":10,"out":4000,"cache_read":10,"cache_create":1,"found":true}
+{"ts":"2026-01-06T09:30:00.000Z","session_id":"sess-bbbb2222","agent_id":"b2","agent_type":"Explore","project_dir":"transcripts","calls":1,"in":5,"out":100,"cache_read":0,"cache_create":0,"found":true}
+this line is not json
+{"ts":"2026-01-06T09:31:00.000Z","session_id":"sess-bbbb2222","agent_id":"b2","agent_type":"Explore","project_dir":"transcripts","calls":3,"in":15,"out":700,"cache_read":0,"cache_create":0,"found":true}
+{"ts":"2026-01-04T08:00:00.000Z","session_id":"sess-cccc3333","agent_id":"c1","agent_type":"ah:architect","project_dir":"missing-dir","calls":5,"in":70,"out":6000,"cache_read":20000,"cache_create":3,"found":true}
+{"session_id":"sess-cccc3333","agent_type":"ah:architect"}

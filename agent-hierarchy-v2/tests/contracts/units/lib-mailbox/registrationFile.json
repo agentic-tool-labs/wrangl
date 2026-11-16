@@ -1,0 +1,59 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "registrationFile",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/registrations/s1.json"
+    },
+    {
+      "id": "parent-segment-normalised",
+      "args": [
+        "../x"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/x.json"
+    },
+    {
+      "id": "empty-id",
+      "args": [
+        ""
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/registrations/.json"
+    },
+    {
+      "id": "slash-in-id",
+      "args": [
+        "a/b"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/registrations/a/b.json"
+    },
+    {
+      "id": "default-ah-home",
+      "args": [
+        "s1"
+      ],
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/home/.claude/agent-hierarchy/registrations/s1.json"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+artifacts/
+
+# dotnet test writes results and --blame-hang dumps here, one directory per test project
+TestResults/

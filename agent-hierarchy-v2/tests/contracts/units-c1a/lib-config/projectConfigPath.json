@@ -1,0 +1,56 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "projectConfigPath",
+  "cases": [
+    {
+      "id": "abs",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "expect": "$ROOT/repo/.claude/agent-hierarchy.json"
+    },
+    {
+      "id": "relative",
+      "args": [
+        "sub/dir"
+      ],
+      "expect": "$ROOT/sub/dir/.claude/agent-hierarchy.json"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "$ROOT/repo/"
+      ],
+      "expect": "$ROOT/repo/.claude/agent-hierarchy.json"
+    },
+    {
+      "id": "dot-dot",
+      "args": [
+        "$ROOT/repo/../other"
+      ],
+      "expect": "$ROOT/other/.claude/agent-hierarchy.json"
+    }
+  ]
+}

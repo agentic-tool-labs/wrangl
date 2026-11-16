@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "once",
+  "about": "tui --once prints one plain frame and never starts the daemon",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "tui",
+      "--once"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "ahd is not running\n",
+    "stderr": "",
+    "exit": 3,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a tui that starts the daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.161Z"
+  }
+}

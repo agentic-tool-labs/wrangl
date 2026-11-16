@@ -1,0 +1,68 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamRosterEntry",
+  "cases": [
+    {
+      "id": "records-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":\"squad\"}"
+      },
+      "expect": "squad"
+    },
+    {
+      "id": "records-null-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"roster\":null}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-roster-field-uses-team-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[]}"
+      },
+      "expect": "alpha"
+    },
+    {
+      "id": "no-file-is-undefined",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "default-team-no-field",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[]}"
+      },
+      "expect": null
+    }
+  ]
+}

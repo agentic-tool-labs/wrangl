@@ -1,0 +1,77 @@
+{
+  "kind": "state-op",
+  "id": "add",
+  "about": "add appends one decision row under the lock",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "decisions",
+    "op": "add",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "path": "<ROOT:proj>/.claude/hierarchy/pipeline/20260101-130000-aa11/decisions.jsonl",
+        "run": "20260101-130000-aa11",
+        "input": {
+          "kind": "decided",
+          "item": "item-1",
+          "source": "architect",
+          "question": "Which approach?",
+          "options": [
+            "use A",
+            "use B"
+          ],
+          "default": "a",
+          "choice": "a",
+          "decider": {
+            "role": "architect",
+            "name": "tm-architect",
+            "model": "opus"
+          },
+          "rationale": "A is simpler",
+          "revert": "switch to B",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-decisions-add"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "id": "d1",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a row without the run",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T22:14:13.745Z"
+  }
+}

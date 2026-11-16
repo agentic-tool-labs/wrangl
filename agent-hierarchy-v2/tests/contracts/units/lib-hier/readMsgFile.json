@@ -1,0 +1,562 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "readMsgFile",
+  "cases": [
+    {
+      "id": "full-response",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260816-143201-ab12\ntype: response\nto: orchestrator\nfrom: implementor\nslug: s\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: agent-tools\nteam_file: /x/teams/t.json\nteam_guide: /x/g.md\ncreated: 2026-08-16T14:32:01-04:00\n---\n\n## [0] tldr\n- [1] status: done\n\n## [1] status\n- ok\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\nid: 20260816-143201-ab12\ntype: response\nto: orchestrator\nfrom: implementor\nslug: s\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: agent-tools\nteam_file: /x/teams/t.json\nteam_guide: /x/g.md\ncreated: 2026-08-16T14:32:01-04:00\n---\n\n## [0] tldr\n- [1] status: done\n\n## [1] status\n- ok\n",
+        "fm": {
+          "id": "20260816-143201-ab12",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "implementor",
+          "slug": "s",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": "agent-tools",
+          "team_file": "/x/teams/t.json",
+          "team_guide": "/x/g.md",
+          "created": "2026-08-16T14:32:01-04:00"
+        },
+        "anchors": [
+          {
+            "line": 18,
+            "n": 0,
+            "key": "tldr",
+            "text": "## [0] tldr"
+          },
+          {
+            "line": 21,
+            "n": 1,
+            "key": "status",
+            "text": "## [1] status"
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "## [0] tldr\n- [1] x: y\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "## [0] tldr\n- [1] x: y\n",
+        "fm": null,
+        "anchors": [
+          {
+            "line": 1,
+            "n": 0,
+            "key": "tldr",
+            "text": "## [0] tldr"
+          }
+        ]
+      }
+    },
+    {
+      "id": "unterminated-frontmatter",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: a\nto: b\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\nid: a\nto: b\n",
+        "fm": null,
+        "anchors": []
+      }
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": ""
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "",
+        "fm": null,
+        "anchors": []
+      }
+    },
+    {
+      "id": "only-fence",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\n",
+        "fm": null,
+        "anchors": []
+      }
+    },
+    {
+      "id": "empty-frontmatter",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\n---\nbody\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\n---\nbody\n",
+        "fm": {},
+        "anchors": []
+      }
+    },
+    {
+      "id": "null-and-empty-values",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na: null\nb:\nc:   \nd: nullx\ne: Null\n---\nx\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na: null\nb:\nc:   \nd: nullx\ne: Null\n---\nx\n",
+        "fm": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "d": "nullx",
+          "e": "Null"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "comments",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na: foo  # c\nb: foo # c\nc: foo#c\nd: #only\ne: a #b #c\nf: \"q # r\"\ng: x\t# t\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na: foo  # c\nb: foo # c\nc: foo#c\nd: #only\ne: a #b #c\nf: \"q # r\"\ng: x\t# t\n---\n",
+        "fm": {
+          "a": "foo",
+          "b": "foo",
+          "c": "foo#c",
+          "d": "#only",
+          "e": "a",
+          "f": "\"q",
+          "g": "x"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "value-whitespace-trim",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na:    spaced out   \nb:\tTabbed\t\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na:    spaced out   \nb:\tTabbed\t\n---\n",
+        "fm": {
+          "a": "spaced out",
+          "b": "Tabbed"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "key-shapes",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na-b_c1: v\n_u: v\n1x: no\n-d: no\nk.e.y: no\nok: yes\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na-b_c1: v\n_u: v\n1x: no\n-d: no\nk.e.y: no\nok: yes\n---\n",
+        "fm": {
+          "a-b_c1": "v",
+          "_u": "v",
+          "ok": "yes"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "duplicate-key-last-wins-first-position",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na: 1\nb: 2\na: 3\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na: 1\nb: 2\na: 3\n---\n",
+        "fm": {
+          "a": "3",
+          "b": "2"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "non-key-lines-ignored",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nnot a field\n  indented: v\na: 1\n: novalue\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\nnot a field\n  indented: v\na: 1\n: novalue\n---\n",
+        "fm": {
+          "a": "1"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "colon-in-value",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na: http://x:80/y\nb: a: b\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na: http://x:80/y\nb: a: b\n---\n",
+        "fm": {
+          "a": "http://x:80/y",
+          "b": "a: b"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "crlf-fields-not-parsed",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\r\nid: a\r\nto: b\r\n---\r\nbody\r\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\r\nid: a\r\nto: b\r\n---\r\nbody\r\n",
+        "fm": {},
+        "anchors": []
+      }
+    },
+    {
+      "id": "crlf-empty-after-colon",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\r\nid:\r\n---\r\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\r\nid:\r\n---\r\n",
+        "fm": {
+          "id": null
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "bom-before-fence",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "﻿---\nid: a\n---\nb\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "﻿---\nid: a\n---\nb\n",
+        "fm": {
+          "id": "a"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "leading-blank-line",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "\n---\nid: a\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "\n---\nid: a\n---\n",
+        "fm": null,
+        "anchors": []
+      }
+    },
+    {
+      "id": "fence-with-trailing-space",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "--- \nid: a\n--- \nb\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "--- \nid: a\n--- \nb\n",
+        "fm": {
+          "id": "a"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "fence-with-nbsp",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "--- \nid: a\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "--- \nid: a\n---\n",
+        "fm": {
+          "id": "a"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "unicode-values",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\na: é中😀\nb: \ud800\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\na: é中😀\nb: �\n---\n",
+        "fm": {
+          "a": "é中😀",
+          "b": "�"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "fields-proto-key",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "---\n__proto__: x\nconstructor: y\n---\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\n__proto__: x\nconstructor: y\n---\n",
+        "fm": {
+          "constructor": "y"
+        },
+        "anchors": []
+      }
+    },
+    {
+      "id": "anchors",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "## [0] tldr\n- a\n## [1] goal\n## [12] files and more\n##  [2] not\n## [3]nokey\n## [x] bad\n ## [4] indented\n## [5] k\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "## [0] tldr\n- a\n## [1] goal\n## [12] files and more\n##  [2] not\n## [3]nokey\n## [x] bad\n ## [4] indented\n## [5] k\n",
+        "fm": null,
+        "anchors": [
+          {
+            "line": 1,
+            "n": 0,
+            "key": "tldr",
+            "text": "## [0] tldr"
+          },
+          {
+            "line": 3,
+            "n": 1,
+            "key": "goal",
+            "text": "## [1] goal"
+          },
+          {
+            "line": 4,
+            "n": 12,
+            "key": "files",
+            "text": "## [12] files and more"
+          },
+          {
+            "line": 9,
+            "n": 5,
+            "key": "k",
+            "text": "## [5] k"
+          }
+        ]
+      }
+    },
+    {
+      "id": "anchor-crlf",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "## [0] tldr\r\n## [1] goal\r\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "## [0] tldr\r\n## [1] goal\r\n",
+        "fm": null,
+        "anchors": [
+          {
+            "line": 1,
+            "n": 0,
+            "key": "tldr",
+            "text": "## [0] tldr\r"
+          },
+          {
+            "line": 2,
+            "n": 1,
+            "key": "goal",
+            "text": "## [1] goal\r"
+          }
+        ]
+      }
+    },
+    {
+      "id": "anchor-nonascii-key",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "## [0] ключ\n## [1] 日本語 extra\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "## [0] ключ\n## [1] 日本語 extra\n",
+        "fm": null,
+        "anchors": [
+          {
+            "line": 1,
+            "n": 0,
+            "key": "ключ",
+            "text": "## [0] ключ"
+          },
+          {
+            "line": 2,
+            "n": 1,
+            "key": "日本語",
+            "text": "## [1] 日本語 extra"
+          }
+        ]
+      }
+    },
+    {
+      "id": "anchor-big-number",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": "## [99999999999999999999] k\n"
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "## [99999999999999999999] k\n",
+        "fm": null,
+        "anchors": [
+          {
+            "line": 1,
+            "n": 100000000000000000000,
+            "key": "k",
+            "text": "## [99999999999999999999] k"
+          }
+        ]
+      }
+    },
+    {
+      "id": "invalid-utf8",
+      "args": [
+        "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "msgs/20260601-000001-aaaa--architect--s1--request.md": {
+          "base64": "LS0tCmlkOiBh/mIKLS0tCmJvZHn/CiMjIFswXSB4/g=="
+        }
+      },
+      "expect": {
+        "path": "$ROOT/msgs/20260601-000001-aaaa--architect--s1--request.md",
+        "text": "---\nid: a�b\n---\nbody�\n## [0] x�",
+        "fm": {
+          "id": "a�b"
+        },
+        "anchors": [
+          {
+            "line": 5,
+            "n": 0,
+            "key": "x�",
+            "text": "## [0] x�"
+          }
+        ]
+      }
+    },
+    {
+      "id": "missing-file",
+      "args": [
+        "$ROOT/m/none.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "directory",
+      "args": [
+        "$ROOT/m"
+      ],
+      "files": {
+        "m": {
+          "dir": true
+        }
+      },
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "kind": "cli",
+  "id": "dry-run",
+  "about": "spawn-one --dry-run prints the launch it would make",
+  "tree": "cli-roster-owner",
+  "env": {
+    "CLAUDE_PID": "<PID:runner>",
+    "CLAUDE_CODE_SESSION_ID": "sess-contract"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "spawn-one",
+      "implementor",
+      "--member",
+      "proj-implementor",
+      "--model",
+      "sonnet",
+      "--team",
+      "proj",
+      "--dry-run"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"dry_run\": true,\n  \"role\": \"implementor\",\n  \"name\": \"proj-implementor\",\n  \"mode\": \"auto\",\n  \"launch\": [\n    \"claude --agent wrangl:implementor --name proj-implementor --model sonnet --settings '<ROOT:proj>/.claude/ah2/launch/proj-implementor.settings.json' --bg\"\n  ]\n}\n",
+    "stderr": "roster.mjs: load unknown (daemon unavailable: down); the spawn is not paced\n",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/ah2/launch/proj-implementor.meta.json",
+          "mode": "0600",
+          "content": "{\n  \"surface_version\": 15,\n  \"generated_at\": \"<ISO:1>\"\n}\n"
+        },
+        {
+          "path": "proj/.claude/ah2/launch/proj-implementor.settings.json",
+          "mode": "0600",
+          "content": "{\n  \"env\": {\n    \"WRANGL_TEAM_FILE\": \"<ROOT:proj>/.claude/ah2/teams/proj.json\",\n    \"WRANGL_EXPECTED_ROOT\": \"<ROOT:proj>\",\n    \"AH_MEMBER_NAME\": \"proj-implementor\",\n    \"TMPDIR\": \"<ROOT:ah>/t/287641ad\"\n  },\n  \"statusLine\": {\n    \"type\": \"command\",\n    \"command\": \"sh -c 'f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi' ''\"\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(<PLUGIN>/bin/ah:*)\",\n      \"Bash(ah:*)\",\n      \"Bash(node <PLUGIN>/hooks/ahd-ctl.mjs:*)\",\n      \"Bash(ahd:*)\",\n      \"Bash(<PLUGIN>/tests/with-slot.sh:*)\",\n      \"Bash(git:*)\",\n      \"Bash(git -C:*)\",\n      \"Bash(dotnet:*)\",\n      \"Bash(node:*)\",\n      \"Bash(npm:*)\",\n      \"Bash(npx:*)\",\n      \"Bash(python3:*)\",\n      \"Bash(sh:*)\",\n      \"Bash(bash:*)\",\n      \"Bash(make:*)\",\n      \"Bash(ls:*)\",\n      \"Bash(cat:*)\",\n      \"Bash(head:*)\",\n      \"Bash(tail:*)\",\n      \"Bash(wc:*)\",\n      \"Bash(grep:*)\",\n      \"Bash(rg:*)\",\n      \"Bash(find:*)\",\n      \"Bash(sed:*)\",\n      \"Bash(awk:*)\",\n      \"Bash(sort:*)\",\n      \"Bash(uniq:*)\",\n      \"Bash(diff:*)\",\n      \"Bash(jq:*)\",\n      \"Bash(pwd:*)\",\n      \"Bash(echo:*)\",\n      \"Bash(printf:*)\",\n      \"Bash(test:*)\",\n      \"Bash(which:*)\",\n      \"Bash(env:*)\",\n      \"Bash(date:*)\",\n      \"Bash(mktemp:*)\",\n      \"Bash(cd:*)\",\n      \"Bash(cut:*)\",\n      \"Bash(tr:*)\",\n      \"Bash(mkdir:*)\",\n      \"Bash(cp:*)\",\n      \"Bash(mv:*)\",\n      \"Bash(touch:*)\",\n      \"Bash(true:*)\",\n      \"Bash(basename:*)\",\n      \"Bash(dirname:*)\",\n      \"Bash(kill:*)\",\n      \"Bash(pkill:*)\",\n      \"Bash(sleep:*)\",\n      \"Bash(ps:*)\",\n      \"Bash(pgrep:*)\",\n      \"Bash(rm -rf /private/tmp/ahprobe.*)\",\n      \"Bash(rm -rf /tmp/ahprobe.*)\",\n      \"Bash(chmod -R u+w /private/tmp/ahprobe.*)\",\n      \"Bash(chmod -R u+w /tmp/ahprobe.*)\",\n      \"Bash(find /private/tmp -maxdepth 1 -name 'ahprobe*' *)\",\n      \"Bash(rm -rf $TMPDIR/*)\",\n      \"Bash(rm -rf /private/tmp/claude-*)\",\n      \"Bash(rm -rf /var/folders/*)\",\n      \"Bash(*)\",\n      \"Read\",\n      \"Edit\",\n      \"Write\",\n      \"Glob\",\n      \"Grep\",\n      \"NotebookEdit\",\n      \"SendMessage\"\n    ]\n  }\n}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a dry run that launches",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:51.065Z"
+  }
+}

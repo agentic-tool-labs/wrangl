@@ -1,0 +1,347 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "locateAgentFile",
+  "cases": [
+    {
+      "id": "repo-only",
+      "args": [
+        "worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": "$ROOT/repo/.claude/agents/worker.md",
+        "level": "repo",
+        "shadowed": null,
+        "error": null,
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "user-only",
+      "args": [
+        "worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": "$ROOT/home/.claude/agents/worker.md",
+        "level": "user",
+        "shadowed": null,
+        "error": null,
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "both-shadowed",
+      "args": [
+        "worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "x",
+        "home/.claude/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": "$ROOT/repo/.claude/agents/worker.md",
+        "level": "repo",
+        "shadowed": "$ROOT/home/.claude/agents/worker.md",
+        "error": null,
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "neither",
+      "args": [
+        "worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "agent-not-found",
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "plugin-first-existing",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@a\":[{\"installPath\":\"$ROOT/p1\"},{\"installPath\":\"$ROOT/p2\"}],\"other@a\":[{\"installPath\":\"$ROOT/p3\"}]}}",
+        "p2/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": "$ROOT/p2/agents/worker.md",
+        "level": "plugin",
+        "shadowed": null,
+        "error": null,
+        "records": 2,
+        "candidates": [
+          "$ROOT/p1/agents/worker.md",
+          "$ROOT/p2/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "plugin-no-file",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@a\":[{\"installPath\":\"$ROOT/p1\"},\"junk\",{\"installPath\":5}]}}"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "plugin-unresolvable",
+        "records": 3,
+        "candidates": [
+          "$ROOT/p1/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "plugin-no-records",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "plugin-unresolvable",
+        "records": 0,
+        "candidates": []
+      }
+    },
+    {
+      "id": "plugins-not-object",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "[1]"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "plugin-unresolvable",
+        "records": 0,
+        "candidates": []
+      }
+    },
+    {
+      "id": "records-not-array",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@a\":{\"installPath\":\"$ROOT/p1\"}}}"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "plugin-unresolvable",
+        "records": 0,
+        "candidates": []
+      }
+    },
+    {
+      "id": "bad-json",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{nope"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "plugin-unresolvable",
+        "records": 0,
+        "candidates": []
+      }
+    },
+    {
+      "id": "plugin-name-without-marketplace-key",
+      "args": [
+        "plug:worker",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug\":[{\"installPath\":\"$ROOT/p1\"}]}}",
+        "p1/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": "$ROOT/p1/agents/worker.md",
+        "level": "plugin",
+        "shadowed": null,
+        "error": null,
+        "records": 1,
+        "candidates": [
+          "$ROOT/p1/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "agent-with-second-colon",
+      "args": [
+        "plug:a:b",
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@a\":[{\"installPath\":\"$ROOT/p1\"}]}}",
+        "p1/agents/a:b.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "plugin",
+        "path": "$ROOT/p1/agents/a:b.md",
+        "level": "plugin",
+        "shadowed": null,
+        "error": null,
+        "records": 1,
+        "candidates": [
+          "$ROOT/p1/agents/a:b.md"
+        ]
+      }
+    },
+    {
+      "id": "cwd-empty-uses-process",
+      "args": [
+        "worker",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agents/worker.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": "$ROOT/home/.claude/agents/worker.md",
+        "level": "user",
+        "shadowed": null,
+        "error": null,
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    },
+    {
+      "id": "non-string-ref",
+      "args": [
+        5,
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": null,
+        "level": null,
+        "shadowed": null,
+        "error": "agent-not-found",
+        "candidates": [
+          "$ROOT/repo/.claude/agents/5.md",
+          "$ROOT/home/.claude/agents/5.md"
+        ]
+      }
+    },
+    {
+      "id": "nested-cwd-finds-root",
+      "args": [
+        "worker",
+        "$ROOT/repo/sub/dir"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "x",
+        "repo/sub/dir/x": "y"
+      },
+      "cwd": "repo",
+      "expect": {
+        "kind": "bare",
+        "path": "$ROOT/repo/.claude/agents/worker.md",
+        "level": "repo",
+        "shadowed": null,
+        "error": null,
+        "candidates": [
+          "$ROOT/repo/.claude/agents/worker.md",
+          "$ROOT/home/.claude/agents/worker.md"
+        ]
+      }
+    }
+  ]
+}

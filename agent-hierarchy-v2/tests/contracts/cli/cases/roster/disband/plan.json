@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "plan",
+  "about": "disband --plan on a team lists what would close and writes nothing",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "disband",
+      "--plan",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"close\": [\n    {\n      \"role\": \"implementor\",\n      \"name\": \"tm-implementor\",\n      \"transport_id\": \"p-tm-implementor\",\n      \"command\": null\n    },\n    {\n      \"role\": \"reviewer\",\n      \"name\": \"tm-reviewer\",\n      \"transport_id\": \"p-tm-reviewer\",\n      \"command\": null\n    }\n  ],\n  \"close_token\": \"ced2305d974fdde9\",\n  \"next\": \"node <PLUGIN>/hooks/roster.mjs disband --close --confirm --plan-token ced2305d974fdde9 --team tm\",\n  \"expected\": 0,\n  \"strays\": [],\n  \"not_closable\": [],\n  \"team_files\": [\n    \"<ROOT:proj>/.claude/ah2/teams/tm.json\"\n  ],\n  \"warnings\": [],\n  \"sources\": {\n    \"team\": {\n      \"file\": \"<ROOT:proj>/.claude/ah2/teams/tm.json\",\n      \"members\": 2\n    },\n    \"peers\": {\n      \"live\": 0\n    },\n    \"herdr\": {\n      \"ok\": false,\n      \"reason\": \"team transport is not herdr\",\n      \"prefix\": \"tm\"\n    }\n  },\n  \"tmp_bytes\": 0,\n  \"clean_close\": {\n    \"minted\": false,\n    \"reasons\": [\n      \"nothing to close\"\n    ]\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a plan that closes",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:45.539Z"
+  }
+}

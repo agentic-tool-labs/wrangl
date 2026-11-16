@@ -1,0 +1,82 @@
+{
+  "kind": "wire",
+  "id": "health-ok",
+  "about": "GET /v1/health answers 200 with the daemon's identity and counters",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/health"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "errors": 0,
+      "errors_by_code": {},
+      "gc": {
+        "allocated_bytes": "<GC>",
+        "census": "<GC>",
+        "committed_bytes": "<GC>",
+        "fragmented_bytes": "<GC>",
+        "gen0": "<GC>",
+        "gen1": "<GC>",
+        "gen2": "<GC>",
+        "heap_bytes": "<GC>",
+        "live_bytes": "<GC>"
+      },
+      "health_calls": 2,
+      "impl": "<IMPL>",
+      "ladder": {
+        "escalated": 0,
+        "paused": 0,
+        "pending": 0,
+        "sending": 0
+      },
+      "load": {
+        "api_errors_10m": "<LOAD>",
+        "harnesses": "<LOAD>",
+        "load1_per_cpu": "<LOAD>",
+        "mem_pressure": "<LOAD>",
+        "since": "<ISO:2>",
+        "state": "ok",
+        "thresholds": {
+          "api_error_sessions": 3,
+          "api_errors": 10,
+          "load1_per_cpu": 1.5,
+          "mem_pressure": "critical",
+          "spawn_gap_s": 300,
+          "ticks": 3
+        },
+        "triggers": []
+      },
+      "owns": {
+        "mailbox": true,
+        "status": false,
+        "timers": []
+      },
+      "pid": "<PID>",
+      "protocol": 1,
+      "protocols": [
+        1,
+        2
+      ],
+      "requests": 0,
+      "root": "<PLUGIN>",
+      "started_at": "<ISO:1>",
+      "timer_state": {},
+      "unpulled_acks": 0,
+      "version": "<VERSION>"
+    }
+  },
+  "mutant": "a health body missing protocols",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:42:41.813Z"
+  }
+}

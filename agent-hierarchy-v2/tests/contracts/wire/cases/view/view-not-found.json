@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "view-not-found",
+  "about": "an unknown view path is 404 with nearest",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "path": "/o/nope"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": "not_found",
+      "nearest": "/",
+      "path": "/o/nope",
+      "view_schema": 1
+    }
+  },
+  "mutant": "a 200 for an unknown node",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:14.401Z"
+  }
+}

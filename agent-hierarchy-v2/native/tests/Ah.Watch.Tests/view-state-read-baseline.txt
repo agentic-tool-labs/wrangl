@@ -1,0 +1,1 @@
+# Banned raw state reads in the view (see ViewStateReadRatchetTests). This file may only shrink; it is empty when H1 is done.

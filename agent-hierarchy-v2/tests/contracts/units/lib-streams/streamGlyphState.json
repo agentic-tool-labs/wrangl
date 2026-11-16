@@ -1,0 +1,101 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamGlyphState",
+  "cases": [
+    {
+      "id": "done-ignores-unknown",
+      "args": [
+        "done",
+        [],
+        [],
+        false
+      ],
+      "expect": "done"
+    },
+    {
+      "id": "not-done-unknown-status",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [],
+        false
+      ],
+      "expect": "unknown"
+    },
+    {
+      "id": "not-done-known-idle",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [],
+        true
+      ],
+      "expect": "idle"
+    },
+    {
+      "id": "default-known",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "working"
+          }
+        ],
+        []
+      ],
+      "expect": "working"
+    },
+    {
+      "id": "blocked",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "blocked"
+          }
+        ],
+        []
+      ],
+      "expect": "blocked"
+    },
+    {
+      "id": "none",
+      "args": [
+        "open",
+        [],
+        []
+      ],
+      "expect": "none"
+    },
+    {
+      "id": "undefined-known-flag-is-known",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "blocked"
+          }
+        ],
+        [],
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "blocked"
+    }
+  ]
+}

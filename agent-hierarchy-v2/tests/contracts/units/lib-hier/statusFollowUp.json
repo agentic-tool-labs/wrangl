@@ -1,0 +1,51 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "statusFollowUp",
+  "cases": [
+    {
+      "id": "first-token-of-first-section",
+      "args": [
+        "## [0] tldr\nBLOCKED\nNEEDS-DECISION\n"
+      ],
+      "expect": "BLOCKED"
+    },
+    {
+      "id": "later-section-ignored",
+      "args": [
+        "## [0] tldr\nall good\n## [1] x\nBLOCKED\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "none",
+      "args": [
+        "## [0] tldr\nDONE\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-section",
+      "args": [
+        "BLOCKED"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

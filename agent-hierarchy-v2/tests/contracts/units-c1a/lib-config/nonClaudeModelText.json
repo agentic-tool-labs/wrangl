@@ -1,0 +1,80 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "nonClaudeModelText",
+  "cases": [
+    {
+      "id": "declared",
+      "args": [
+        {
+          "kind": "codex",
+          "model": "gpt-5"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "codex:gpt-5(opus)"
+    },
+    {
+      "id": "undeclared",
+      "args": [
+        {
+          "kind": "codex",
+          "model": "zzz"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "codex:zzz(?)"
+    },
+    {
+      "id": "no-model",
+      "args": [
+        {
+          "kind": "codex"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "codex:?(?)"
+    },
+    {
+      "id": "default-kind",
+      "args": [
+        {
+          "model": "opus"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "claude:opus(?)"
+    },
+    {
+      "id": "null-member",
+      "args": [
+        null
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "claude:?(?)"
+    },
+    {
+      "id": "numeric-model",
+      "args": [
+        {
+          "kind": "codex",
+          "model": 7
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.json": "{\"modelTiers\":{\"codex\":{\"gpt-5\":\"opus\"}}}"
+      },
+      "expect": "codex:7(?)"
+    }
+  ]
+}

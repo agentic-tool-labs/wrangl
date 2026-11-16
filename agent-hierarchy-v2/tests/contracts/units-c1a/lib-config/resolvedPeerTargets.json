@@ -1,0 +1,178 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "resolvedPeerTargets",
+  "cases": [
+    {
+      "id": "builtin-auto",
+      "args": [
+        "architect",
+        {
+          "peer": "auto"
+        },
+        "repo"
+      ],
+      "expect": [
+        "repo-architect"
+      ]
+    },
+    {
+      "id": "builtin-no-peer",
+      "args": [
+        "architect",
+        {},
+        "repo"
+      ],
+      "expect": [
+        "repo-architect"
+      ]
+    },
+    {
+      "id": "builtin-named",
+      "args": [
+        "architect",
+        {
+          "peer": "named"
+        },
+        "repo"
+      ],
+      "expect": [
+        "named"
+      ]
+    },
+    {
+      "id": "builtin-array",
+      "args": [
+        "architect",
+        {
+          "peer": [
+            "a",
+            " ",
+            "b",
+            5,
+            ""
+          ]
+        },
+        "repo"
+      ],
+      "expect": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "id": "model-dispatch",
+      "args": [
+        "architect",
+        {
+          "dispatch": "model"
+        },
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "legwork",
+      "args": [
+        "task-runner",
+        {
+          "peer": "x"
+        },
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-entry",
+      "args": [
+        "architect",
+        null,
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-chain",
+      "args": [
+        "ui-implementor",
+        {
+          "class": "implement",
+          "peer": "u"
+        },
+        "repo"
+      ],
+      "expect": [
+        "u"
+      ]
+    },
+    {
+      "id": "custom-non-chain",
+      "args": [
+        "doc-writer",
+        {
+          "class": "legwork",
+          "peer": "u"
+        },
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-unknown-class",
+      "args": [
+        "x",
+        {
+          "class": "bogus"
+        },
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-no-class",
+      "args": [
+        "x",
+        {},
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "empty-array",
+      "args": [
+        "architect",
+        {
+          "peer": []
+        },
+        "repo"
+      ],
+      "expect": []
+    },
+    {
+      "id": "number-peer",
+      "args": [
+        "architect",
+        {
+          "peer": 5
+        },
+        "repo"
+      ],
+      "expect": [
+        5
+      ]
+    },
+    {
+      "id": "empty-string-peer",
+      "args": [
+        "architect",
+        {
+          "peer": ""
+        },
+        "repo"
+      ],
+      "expect": [
+        "repo-architect"
+      ]
+    }
+  ]
+}

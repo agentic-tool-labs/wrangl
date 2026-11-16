@@ -1,0 +1,37 @@
+{
+  "kind": "wire",
+  "id": "join-ok",
+  "about": "a join request is accepted as pending (202)",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "team": "tm",
+      "harness": "custom-x",
+      "session_id": "s-custom",
+      "why": "to help",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/join"
+  },
+  "expect": {
+    "status": 202,
+    "headers": {},
+    "json": {
+      "join_id": "<MSGID:1>",
+      "poll": "/v1/join/<MSGID:1>",
+      "status": "pending"
+    }
+  },
+  "mutant": "a join answered 200 instead of 202",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:03.885Z"
+  }
+}

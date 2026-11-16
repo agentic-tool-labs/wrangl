@@ -1,0 +1,168 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "hiddenCharAt",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "just text"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "tab-and-newline-ok",
+      "args": [
+        "a\tb\nc"
+      ],
+      "expect": null
+    },
+    {
+      "id": "zero-width-space",
+      "args": [
+        "ab​cd"
+      ],
+      "expect": "U+200B at line 1, column 3"
+    },
+    {
+      "id": "bidi-override-line-2",
+      "args": [
+        "line one\nli‮ne two"
+      ],
+      "expect": "U+202E at line 2, column 3"
+    },
+    {
+      "id": "bell",
+      "args": [
+        "x\u0007y"
+      ],
+      "expect": "U+0007 at line 1, column 2"
+    },
+    {
+      "id": "del",
+      "args": [
+        "xy"
+      ],
+      "expect": "U+007F at line 1, column 2"
+    },
+    {
+      "id": "c1-control",
+      "args": [
+        "xy"
+      ],
+      "expect": "U+0085 at line 1, column 2"
+    },
+    {
+      "id": "line-separator",
+      "args": [
+        "a b"
+      ],
+      "expect": "U+2028 at line 1, column 2"
+    },
+    {
+      "id": "paragraph-separator",
+      "args": [
+        "a b"
+      ],
+      "expect": "U+2029 at line 1, column 2"
+    },
+    {
+      "id": "variation-selector",
+      "args": [
+        "❤️"
+      ],
+      "expect": "U+FE0F at line 1, column 2"
+    },
+    {
+      "id": "tag-character",
+      "args": [
+        "a󠁁b"
+      ],
+      "expect": "U+E0041 at line 1, column 2"
+    },
+    {
+      "id": "astral-visible",
+      "args": [
+        "x😀y"
+      ],
+      "expect": null
+    },
+    {
+      "id": "column-after-astral",
+      "args": [
+        "😀😀​"
+      ],
+      "expect": "U+200B at line 1, column 3"
+    },
+    {
+      "id": "soft-hyphen",
+      "args": [
+        "x­y"
+      ],
+      "expect": "U+00AD at line 1, column 2"
+    },
+    {
+      "id": "combining-grapheme-joiner",
+      "args": [
+        "x͏y"
+      ],
+      "expect": "U+034F at line 1, column 2"
+    },
+    {
+      "id": "hangul-filler",
+      "args": [
+        "xㅤy"
+      ],
+      "expect": "U+3164 at line 1, column 2"
+    },
+    {
+      "id": "braille-blank",
+      "args": [
+        "x⠀y"
+      ],
+      "expect": "U+2800 at line 1, column 2"
+    },
+    {
+      "id": "bom",
+      "args": [
+        "﻿text"
+      ],
+      "expect": "U+FEFF at line 1, column 1"
+    },
+    {
+      "id": "escape-sequence",
+      "args": [
+        "\u001b[31mred"
+      ],
+      "expect": "U+001B at line 1, column 1"
+    },
+    {
+      "id": "first-of-two",
+      "args": [
+        "a​b‮c"
+      ],
+      "expect": "U+200B at line 1, column 2"
+    },
+    {
+      "id": "number-coerced",
+      "args": [
+        42
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-coerced",
+      "args": [
+        null
+      ],
+      "expect": null
+    }
+  ]
+}

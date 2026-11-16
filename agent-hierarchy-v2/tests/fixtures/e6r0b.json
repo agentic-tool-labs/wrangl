@@ -1,0 +1,549 @@
+{
+  "placement": "before",
+  "placement_before_ok": true,
+  "placement_after_ok": true,
+  "decision": "Build 4.1a as written: every variant whose thread can be created reports the pinned mode, network off, no widened root; refused at config load by this version: H2,H4",
+  "survivors": [],
+  "rejected_at_config_load": [
+    {
+      "variant": "H2",
+      "error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      }
+    },
+    {
+      "variant": "H4",
+      "error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      }
+    }
+  ],
+  "h5": {
+    "keys_found_in_schema": [
+      "\"permissions\""
+    ],
+    "run": false,
+    "note": "keys recorded only; no permission-profile variant written (key names unknown)"
+  },
+  "runs": [
+    {
+      "variant": "H0",
+      "pin": "none",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": {
+          "id": ":read-only",
+          "extends": null
+        }
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": null,
+        "config.sandbox_workspace_write": null,
+        "config.features.windows_sandbox_service": false,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.profile": null,
+        "config.profiles": {},
+        "config.include_permissions_instructions": true,
+        "config.default_permissions": null,
+        "config.permissions": null
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H0",
+      "pin": "before",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.profiles": {},
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.features.windows_sandbox_service": false,
+        "config.include_permissions_instructions": true,
+        "config.default_permissions": null,
+        "config.profile": null,
+        "config.permissions": null,
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H0",
+      "pin": "after",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.features.windows_sandbox_service": false,
+        "config.permissions": null,
+        "config.include_permissions_instructions": true,
+        "config.profiles": {},
+        "config.default_permissions": null,
+        "config.profile": null,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H1",
+      "pin": "none",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "dangerFullAccess"
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "danger-full-access",
+        "config.sandbox_workspace_write": null,
+        "config.profiles": {},
+        "config.features.windows_sandbox_service": false,
+        "config.default_permissions": null,
+        "config.include_permissions_instructions": true,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.profile": null,
+        "config.permissions": null,
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "user",
+            "file": "/private/tmp/ahprobe.s9DIXX/codex/config.toml",
+            "profile": null
+          },
+          "version": "sha256:26955cc3379a1457aac73e795d5158e7b02d1f8f71ef7fcf1962914c73a8edd1"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H1",
+      "pin": "before",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.default_permissions": null,
+        "config.features.windows_sandbox_service": false,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.profiles": {},
+        "config.include_permissions_instructions": true,
+        "config.permissions": null,
+        "config.profile": null,
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H1",
+      "pin": "after",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.profile": null,
+        "config.permissions": null,
+        "config.profiles": {},
+        "config.default_permissions": null,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.features.windows_sandbox_service": false,
+        "config.include_permissions_instructions": true,
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H2",
+      "pin": "none",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    },
+    {
+      "variant": "H2",
+      "pin": "before",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    },
+    {
+      "variant": "H2",
+      "pin": "after",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    },
+    {
+      "variant": "H3",
+      "pin": "none",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": {
+          "id": ":read-only",
+          "extends": null
+        }
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": null,
+        "config.sandbox_workspace_write": {
+          "writable_roots": [
+            "/private/tmp/ahprobe.s9DIXX/ah"
+          ],
+          "network_access": true,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.permissions": null,
+        "config.default_permissions": null,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.profile": null,
+        "config.include_permissions_instructions": true,
+        "config.profiles": {},
+        "config.features.windows_sandbox_service": false,
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "user",
+            "file": "/private/tmp/ahprobe.s9DIXX/codex/config.toml",
+            "profile": null
+          },
+          "version": "sha256:1942cf83faddac8ac591770920b411b0242236070961b9348abcf8a8c2836af6"
+        },
+        "origins.sandbox_workspace_write.writable_roots.0": {
+          "name": {
+            "type": "user",
+            "file": "/private/tmp/ahprobe.s9DIXX/codex/config.toml",
+            "profile": null
+          },
+          "version": "sha256:1942cf83faddac8ac591770920b411b0242236070961b9348abcf8a8c2836af6"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H3",
+      "pin": "before",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.permissions": null,
+        "config.features.windows_sandbox_service": false,
+        "config.profile": null,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.default_permissions": null,
+        "config.include_permissions_instructions": true,
+        "config.profiles": {},
+        "origins.sandbox_workspace_write.writable_roots.0": {
+          "name": {
+            "type": "user",
+            "file": "/private/tmp/ahprobe.s9DIXX/codex/config.toml",
+            "profile": null
+          },
+          "version": "sha256:1942cf83faddac8ac591770920b411b0242236070961b9348abcf8a8c2836af6"
+        },
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H3",
+      "pin": "after",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": true,
+      "thread_start_error": null,
+      "thread_start_fields": {
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": null
+      },
+      "config_read_fields": {
+        "config.approval_policy": null,
+        "config.approvals_reviewer": null,
+        "config.sandbox_mode": "read-only",
+        "config.sandbox_workspace_write": {
+          "writable_roots": [],
+          "network_access": false,
+          "exclude_tmpdir_env_var": false,
+          "exclude_slash_tmp": false
+        },
+        "config.profile": null,
+        "config.shell_environment_policy.experimental_use_profile": null,
+        "config.permissions": null,
+        "config.default_permissions": null,
+        "config.profiles": {},
+        "config.include_permissions_instructions": true,
+        "config.features.windows_sandbox_service": false,
+        "origins.sandbox_workspace_write.writable_roots.0": {
+          "name": {
+            "type": "user",
+            "file": "/private/tmp/ahprobe.s9DIXX/codex/config.toml",
+            "profile": null
+          },
+          "version": "sha256:1942cf83faddac8ac591770920b411b0242236070961b9348abcf8a8c2836af6"
+        },
+        "origins.sandbox_workspace_write.network_access": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        },
+        "origins.sandbox_mode": {
+          "name": {
+            "type": "sessionFlags"
+          },
+          "version": "sha256:228dd1e9b7aa161fea648740bcfc3c12a141c71a58d0f77d15f963d7af2d3d47"
+        }
+      },
+      "server_log_head": ""
+    },
+    {
+      "variant": "H4",
+      "pin": "none",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    },
+    {
+      "variant": "H4",
+      "pin": "before",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    },
+    {
+      "variant": "H4",
+      "pin": "after",
+      "client_rc": "0",
+      "initialize_ok": true,
+      "thread_created": false,
+      "thread_start_error": {
+        "code": -32600,
+        "message": "failed to load configuration: legacy `profile = \"wide\"` config is no longer supported; use `--profile wide` with `wide.config.toml` instead"
+      },
+      "thread_start_fields": {},
+      "config_read_fields": null,
+      "server_log_head": ""
+    }
+  ]
+}

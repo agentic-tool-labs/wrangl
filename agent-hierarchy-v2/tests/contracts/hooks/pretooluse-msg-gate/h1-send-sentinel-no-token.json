@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h1-send-sentinel-no-token",
+  "about": "a sentinel send without a token passed",
+  "tree": "hook-orch-msgs",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-msg-gate",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "SendMessage",
+      "tool_input": {
+        "to": "tm-architect",
+        "message": "[hierarchy-peer-brief reply-to=uds:/x]\nwork",
+        "notify_when_idle": true
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "a sentinel send without a token passed",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:27:17.865Z"
+  }
+}

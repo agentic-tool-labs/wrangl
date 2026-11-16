@@ -1,0 +1,175 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "readStoredCopy",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"agent\":\"demo:qa\",\"class\":\"review\",\"label\":\"QA\"},\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}\n"
+      },
+      "expect": {
+        "row": {
+          "agent": "demo:qa",
+          "class": "review",
+          "label": "QA"
+        },
+        "agentText": "agent\n",
+        "files": [
+          [
+            "a",
+            "1"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "absent",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-pin",
+      "args": [
+        "nope"
+      ],
+      "expect": null
+    },
+    {
+      "id": "uppercase-pin",
+      "args": [
+        "SHA256:DCEA67A5847365A6425E767A1A6E1DFE6FA957FED3713AB9EBFB2F1F6713A901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"agent\":\"demo:qa\",\"class\":\"review\",\"label\":\"QA\"},\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "content-hashes-elsewhere",
+      "args": [
+        "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json": "{\"row\":{\"agent\":\"demo:qa\",\"class\":\"review\",\"label\":\"QA\"},\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{nope"
+      },
+      "expect": null
+    },
+    {
+      "id": "row-not-object",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":\"x\",\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "row-missing",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "agent-text-not-string",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"class\":\"review\",\"agent\":\"demo:qa\",\"label\":\"QA\"},\"agentText\":5,\"files\":[[\"a\",\"1\"]]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "files-not-array",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"class\":\"review\",\"agent\":\"demo:qa\",\"label\":\"QA\"},\"agentText\":\"agent\\n\",\"files\":{}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "row-keys-unsorted-still-valid",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"label\":\"QA\",\"class\":\"review\",\"agent\":\"demo:qa\"},\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]]}"
+      },
+      "expect": {
+        "row": {
+          "label": "QA",
+          "class": "review",
+          "agent": "demo:qa"
+        },
+        "agentText": "agent\n",
+        "files": [
+          [
+            "a",
+            "1"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "extra-key-ignored",
+      "args": [
+        "sha256:dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy/trusted/dcea67a5847365a6425e767a1a6e1dfe6fa957fed3713ab9ebfb2f1f6713a901.json": "{\"row\":{\"agent\":\"demo:qa\",\"class\":\"review\",\"label\":\"QA\"},\"agentText\":\"agent\\n\",\"files\":[[\"a\",\"1\"]],\"note\":\"x\"}"
+      },
+      "expect": {
+        "row": {
+          "agent": "demo:qa",
+          "class": "review",
+          "label": "QA"
+        },
+        "agentText": "agent\n",
+        "files": [
+          [
+            "a",
+            "1"
+          ]
+        ],
+        "note": "x"
+      }
+    }
+  ]
+}

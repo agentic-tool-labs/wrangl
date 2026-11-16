@@ -1,0 +1,59 @@
+{
+  "view_schema": 1,
+  "kind": "graph",
+  "path": "/graph/o/<oid>",
+  "body": {
+    "nodes": [
+      {
+        "id": "/o/<oid>",
+        "kind": "orchestrator",
+        "role": "orchestrator",
+        "state": "live",
+        "label": "repoW · pid 4242",
+        "team": null,
+        "order": 0
+      },
+      {
+        "id": "/o/<oid>/t/<tkey:work>/m/w-arch",
+        "kind": "member",
+        "role": "architect",
+        "state": "busy",
+        "label": "w-arch",
+        "team": "<tkey:work>",
+        "order": 1
+      },
+      {
+        "id": "/o/<oid>/t/<tkey:work>/m/w-free",
+        "kind": "member",
+        "role": "implementor",
+        "state": "live",
+        "label": "w-free",
+        "team": "<tkey:work>",
+        "order": 2
+      }
+    ],
+    "edges": [
+      {
+        "id": "mail:1",
+        "kind": "mail",
+        "from": "/o/<oid>/t/<tkey:work>/m/w-arch",
+        "to": "/o/<oid>",
+        "direction": "out",
+        "age_ms": 1000,
+        "fresh": true
+      }
+    ],
+    "hints": {
+      "team_order": [
+        "<tkey:work>"
+      ],
+      "member_order_in_team": {
+        "<tkey:work>": [
+          "w-arch",
+          "w-free"
+        ]
+      },
+      "centre": "/o/<oid>"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "sessions": {
+    "g-one": {
+      "choice": "off",
+      "at": "2026-10-11T16:39:26.764Z",
+      "cwd": "/work/one"
+    },
+    "g-two": {
+      "choice": "session",
+      "at": "2026-10-11T16:39:26.716Z"
+    }
+  }
+}

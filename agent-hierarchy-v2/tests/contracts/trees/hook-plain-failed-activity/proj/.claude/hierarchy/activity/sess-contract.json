@@ -1,0 +1,12 @@
+{
+  "activity": "failed",
+  "at": "2026-01-01T00:00:00.000Z",
+  "failed_at": "2026-01-01T00:00:00.000Z",
+  "source": "stopfailure",
+  "error": "rate_limit",
+  "streak": 2,
+  "blocked_by": null,
+  "note": null,
+  "tool": null,
+  "tool_at": null
+}

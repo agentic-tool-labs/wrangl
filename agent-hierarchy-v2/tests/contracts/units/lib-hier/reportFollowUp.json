@@ -1,0 +1,77 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "reportFollowUp",
+  "cases": [
+    {
+      "id": "response-with-outcome",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\nBLOCKED\n"
+      },
+      "expect": "This report says BLOCKED: answer it with a new request (--parent 20260601-000001-aaaa), never by re-sending the old one."
+    },
+    {
+      "id": "response-without-outcome",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\nDONE\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "two-tokens-joined",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:01:00+00:00\n---\n\n## [0] tldr\nBLOCKED\nNEEDS-INTENT\n"
+      },
+      "expect": "This report says BLOCKED: answer it with a new request (--parent 20260601-000001-aaaa), never by re-sending the old one. This report says NEEDS-INTENT: supply the intent and re-dispatch as a new request (--parent 20260601-000001-aaaa); it is not a review round-trip."
+    },
+    {
+      "id": "request-file-is-not-a-carrier",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "missing-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

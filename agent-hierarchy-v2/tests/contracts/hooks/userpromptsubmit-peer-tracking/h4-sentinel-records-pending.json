@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h4-sentinel-records-pending",
+  "about": "a wrapped delivery opening with the brief sentinel records a pending obligation and arms the turn",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "userpromptsubmit-peer-tracking",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "<cross-session-message from=\"tm-orchestrator\" from-name=\"tm-orchestrator\">\n[hierarchy-peer-brief reply-to=\"tm-orchestrator\" task=\"demo\"]\nDo it.\n</cross-session-message>"
+    }
+  },
+  "mutant": "sentinel not recorded",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"ah CLI root (v<VERSION>): <PLUGIN> — roster: `node <PLUGIN>/hooks/roster.mjs <verb> --cwd <abs cwd>`, messages: `node <PLUGIN>/hooks/msg.mjs <verb> --cwd <abs cwd>` (verbs: agent-hierarchy/docs/cli-tools.md)\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":\"tm-orchestrator\",\"reply_to\":\"tm-orchestrator\",\"task\":\"demo\",\"armed_by\":\"sentinel\",\"ts\":\"<ISO:1>\",\"status\":\"pending\",\"nudges\":0,\"op_id\":\"<OPID:1>\"}\n{\"type\":\"turn\",\"session_id\":\"sess-contract\",\"status\":\"armed\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n{\"type\":\"cli-root\",\"session_id\":\"sess-contract\",\"digest\":\"<DIGEST>\",\"ts\":\"<ISO:3>\",\"op_id\":\"<OPID:3>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:37:10.827Z"
+  }
+}

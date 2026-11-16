@@ -1,0 +1,375 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "visibleTeams",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": []
+    },
+    {
+      "id": "named-teams-of-the-hierarchy-dir",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n",
+        "h/teams/zeta.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":2147483000}}\n"
+      },
+      "expect": [
+        {
+          "team": "tm",
+          "path": "$ROOT/h/teams/tm.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1,
+              "session_id": "o1"
+            }
+          },
+          "live": true
+        },
+        {
+          "team": "zeta",
+          "path": "$ROOT/h/teams/zeta.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 2147483000
+            }
+          },
+          "live": false
+        }
+      ]
+    },
+    {
+      "id": "main-checkout-teams-too",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": "$ROOT/m",
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n",
+        "m/teams/other.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "team": "tm",
+          "path": "$ROOT/h/teams/tm.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1,
+              "session_id": "o1"
+            }
+          },
+          "live": true
+        },
+        {
+          "team": "other",
+          "path": "$ROOT/m/teams/other.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1,
+              "session_id": "o1"
+            }
+          },
+          "live": true
+        }
+      ]
+    },
+    {
+      "id": "same-team-file-via-both-dirs-once",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": "$ROOT/h",
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": [
+        {
+          "team": "tm",
+          "path": "$ROOT/h/teams/tm.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1,
+              "session_id": "o1"
+            }
+          },
+          "live": true
+        }
+      ]
+    },
+    {
+      "id": "legacy-team-json-is-not-named",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/team.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "torn-team-file-skipped",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n",
+        "h/teams/bad.json": "{\"members\":"
+      },
+      "expect": [
+        {
+          "team": "tm",
+          "path": "$ROOT/h/teams/tm.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": {
+              "pid": 1,
+              "session_id": "o1"
+            }
+          },
+          "live": true
+        }
+      ]
+    },
+    {
+      "id": "orchestrator-without-a-pid-is-not-live",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":null}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": [
+        {
+          "team": "tm",
+          "path": "$ROOT/h/teams/tm.json",
+          "data": {
+            "members": [
+              {
+                "name": "a",
+                "role": "implementor",
+                "kind": "claude"
+              },
+              {
+                "name": "b",
+                "role": "reviewer",
+                "kind": "codex"
+              },
+              {
+                "name": "cz",
+                "role": "builder",
+                "kind": "custom"
+              },
+              {
+                "name": "plain",
+                "role": "architect"
+              }
+            ],
+            "orchestrator": null
+          },
+          "live": false
+        }
+      ]
+    }
+  ]
+}

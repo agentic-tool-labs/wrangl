@@ -1,0 +1,19 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "AUTO_MODE_VALUES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "auto",
+        "acceptEdits",
+        "plan",
+        "dontAsk",
+        "manual",
+        "bypassPermissions"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "PACK_AGENT_KEYS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "name",
+        "description",
+        "model",
+        "tools",
+        "disallowedTools",
+        "color",
+        "effort",
+        "maxTurns"
+      ]
+    }
+  ]
+}

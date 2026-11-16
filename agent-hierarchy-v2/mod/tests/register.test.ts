@@ -1,0 +1,1936 @@
+import { test, expect, mock } from 'claude-code/testing'
+import { fixtures } from './fixtures.ts'
+import { sectionsFor, vectors } from './vectors.ts'
+import { utf8Bytes } from '../view.ts'
+import { dismissTeam, register, viewOpen } from '../register.tsx'
+
+const NOW = Date.parse('2026-01-01T12:00:00.000Z')
+const REPO = '/work/repo'
+const FILE = '/work/repo/.claude/ah2/status.json'
+
+// What the staged engine answers: the session's cwd and id, the checkouts (dirs holding `.git`), the
+// files, and a record of every entry set and every read.
+type World = {
+  cwd: string
+  id: string
+  git: string[]
+  files: Record<string, { text: string; mtimeMs: number; kind?: string; isLink?: boolean; size?: number }>
+  shown: (string | undefined)[]
+  reads: number
+  readPaths: string[]
+  registered: unknown[]
+  opens: unknown[]
+  placed: boolean
+  panes: { id: string; title: string; isShown: boolean; isFocused: boolean; isPlaced: boolean }[]
+  writes: { key: string; value: unknown }[]
+  toasts: string[]
+  toastCalls: any[]
+  order: string[]
+  defaultTab?: boolean
+  stateGet?: (_$: any, e: any, next: any) => any
+}
+const world = (over: Partial<World> = {}): World => ({
+  cwd: REPO + '/sub', id: 'sess-orch', git: [REPO], files: { [FILE]: { text: fixtures.work, mtimeMs: 1 } }, shown: [], reads: 0, readPaths: [], registered: [], opens: [], placed: true, panes: [], writes: [], toasts: [], toastCalls: [], order: [], ...over,
+})
+
+// Answers every $ call the module makes, from `w`; nothing real is read.
+const stage = (on: any, w: World) => {
+  on('session.start', (_$: any, e: any) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: w.cwd }))
+  on('session.id', () => ({ value: w.id }))
+  on('fs.exists', (_$: any, e: any) => ({ value: w.git.some((d) => e.path === d + '/.git') }))
+  on('fs.stat', (_$: any, e: any) => {
+    const f = w.files[e.path]
+    return f ? { value: { kind: f.kind ?? 'file', size: f.size ?? utf8Bytes(f.text), mtimeMs: f.mtimeMs, isLink: f.isLink ?? false } } : { deny: 'no such file' }
+  })
+  on('fs.read', (_$: any, e: any) => {
+    const f = w.files[e.path]
+    w.reads++
+    w.readPaths.push(e.path)
+    return f ? { value: f.text } : { deny: 'no such file' }
+  })
+  on('ui.status', (_$: any, e: any) => { w.shown.push(e.text); return { value: undefined } })
+  on('command.register', (_$: any, e: any) => { w.registered.push(e); return { value: undefined } })
+  on('ui.open', (_$: any, e: any) => { w.order.push('open'); w.opens.push(e); return { value: w.placed ? { isPlaced: true } : { isPlaced: false, reason: 'no surface places panes' } } })
+  on('ui.panes', () => ({ value: w.panes }))
+  // These tests draw the hierarchy unless they say otherwise: a Pane left to its default shows the Sitrep tab (w.defaultTab).
+  on('state.get', async ($: any, e: any, next: any) => {
+    const held = await (w.stateGet ?? ((_$: any, x: any, n: any) => n(x)))($, e, next)
+    return e.key === 'paneMode' && held?.value?.value === undefined && w.defaultTab !== true ? { value: { value: 'pane', version: 1 } } : held
+  })
+  on('state.set', async (_$: any, e: any, next: any) => { w.order.push(`set:${e.key}`); w.writes.push({ key: e.key, value: e.value }); return next(e) })
+  on('ui.toast', (_$: any, e: any) => { w.toasts.push(typeof e === 'string' ? e : e.text); w.toastCalls.push(e); return { value: undefined } })
+}
+const AH = '/ah'
+const TOKEN64 = 'ab'.repeat(32)
+const ok = (stdout = '') => () => ({ value: { exitCode: 0, stdout, stderr: '' } })
+const fails = (code: number, stdout = '') => () => ({ value: { exitCode: code, stdout, stderr: '' } })
+// What the band's View button needs once pressed: the answer to the chooser (a label, or null for a dismissed dialog) and the AH_HOME read.
+// Registered with the other hooks; the AH_HOME answer starts at arm(), after `start`, so the session's mail poll stays off.
+// `run` answers process.run; with none, any run fails the test.
+const viewAnswers = (on: any, answer: string | null, run?: (e: any) => any) => {
+  let armed = false
+  const asked: { question: string; options: string[] }[] = []
+  const ran: any[] = []
+  on('tool.call', (_$: any, e: any, next: any) => {
+    if (e.tool !== 'AskUserQuestion') return next(e)
+    const q = e.questions[0]
+    asked.push({ question: q.question, options: q.options.map((o: any) => o.label) })
+    return answer === null ? { deny: 'dismissed' } : { result: { questions: e.questions, answers: { [q.question]: answer } } }
+  })
+  on('env.get', (_$: any, e: any) => ({ value: armed && (e.name ?? e.key) === 'AH_HOME' ? AH : undefined }))
+  on('process.run', (_$: any, e: any) => { ran.push(e); return run ? run(e) : { deny: 'unexpected run' } })
+  return { asked, ran, arm: () => { armed = true } }
+}
+const writesOf = (w: World, key: string) => w.writes.filter((x) => x.key === key).map((x) => x.value)
+// session.start returns before its first tick has run; `start` also lets that tick finish.
+const start = async ($: any, w: World, surface: string) => {
+  const r = await $.session.start({ cwd: w.cwd, surface, isInteractive: true })
+  for (let i = 0; i < 10; i++) await new Promise<void>((res) => setTimeout(res, 0))
+  return r
+}
+
+// Another plugin that closes ah's Pane from its own command. A close it makes reaches ah's hook with origin
+// `plugin`; the kit has no way to raise a person's close.
+const CLOSER: any = {
+  name: 'closer',
+  register(on: any) {
+    on('session.start', async ($: any, e: any, next: any) => { await $.command.register({ name: 'close-ah', description: 'closes ah-status' }); return next(e) })
+    on('command.run', { command: 'close-ah' }, async ($: any) => {
+      try { await $.ui.close({ id: 'ah-status' }); return { text: 'closed' } } catch (err) { return { text: `refused: ${String(err)}` } }
+    })
+  },
+}
+
+// The Text props each tone draws with, as the spec's table pins them.
+const TONE: Record<string, Record<string, unknown>> = { bad: { color: 'error', bold: true }, warn: { color: 'warning' }, work: {}, idle: { dimColor: true } }
+// The mod passes bold. The desktop host (Claude Code 2.1.301) draws a bold Text with no weight as bold plus weight 'semibold'; the terminal surface adds nothing.
+const toneOf = (surface: string, tone: string): Record<string, unknown> => (tone === 'bad' && surface === 'desktop' ? { ...TONE.bad, weight: 'semibold' } : TONE[tone])
+
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`${surface}: session.start returns what next returned, and sets the entry from the doc`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    expect(await start($, w, surface)).toEqual({ cwd: w.cwd })
+    expect(w.shown).toEqual(['1 live · 1 out'])
+  })
+
+  test(`${surface}: the entry is set, then cleared when the file goes`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    delete w.files[FILE]
+    await clock.advance(2000)
+    expect(w.shown).toEqual(['1 live · 1 out', undefined])
+  })
+
+  test(`${surface}: a missing file sets nothing`, async ($, on) => {
+    const w = world({ files: {} })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await clock.advance(4000)
+    expect(w.shown).toEqual([undefined])
+    expect(w.reads).toBe(0)
+  })
+
+  test(`${surface}: no git checkout above the cwd sets nothing and reads nothing`, async ($, on) => {
+    const w = world({ git: [] })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual([undefined])
+    expect(w.reads).toBe(0)
+  })
+
+  test(`${surface}: the clock moves the entry along the timeline`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await clock.advance(240000)
+    expect(w.shown).toEqual(['1 live · 1 out', '1 live · 1 out · 1 overdue'])
+  })
+
+  test(`${surface}: the file is read again only when its mtime changes`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await clock.advance(6000)
+    expect(w.reads).toBe(1)
+    w.files[FILE] = { text: fixtures.idle, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(w.reads).toBe(2)
+    expect(w.shown).toEqual(['1 live · 1 out', '2 live · 0 out'])
+  })
+
+  const notRead = (label: string, over: { kind?: string; isLink?: boolean; size?: number }) =>
+    test(`${surface}: ${label} is absent and not read`, async ($, on) => {
+      const w = world({ files: { [FILE]: { text: fixtures.work, mtimeMs: 1, ...over } } })
+      stage(on, w)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      expect(w.reads).toBe(0)
+      expect(w.shown).toEqual([undefined])
+    })
+  notRead('a symbolic link', { isLink: true })
+  notRead('a FIFO or device', { kind: 'other' })
+  notRead('a directory', { kind: 'dir' })
+  notRead('an empty file', { size: 0 })
+
+  test(`${surface}: a regular non-empty file is shown`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.work, mtimeMs: 1, kind: 'file', isLink: false } } })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.reads).toBe(1)
+    expect(w.shown).toEqual(['1 live · 1 out'])
+  })
+
+  test(`${surface}: a file over 262,144 bytes is not read`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.work + ' '.repeat(262144), mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.reads).toBe(0)
+    expect(w.shown).toEqual([undefined])
+  })
+
+  test(`${surface}: a cwd change finds the other checkout's file`, { options: { status_entry: true } }, async ($, on) => {
+    const other = '/other/repo/.claude/ah2/status.json'
+    const w = world({ git: [REPO, '/other/repo'] })
+    w.files[other] = { text: fixtures.idle, mtimeMs: 5 }
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.cwd = '/other/repo'
+    await clock.advance(2000)
+    w.cwd = '/elsewhere'
+    await clock.advance(2000)
+    expect(w.shown).toEqual(['1 live · 1 out', '2 live · 0 out', undefined])
+  })
+
+  // A linked worktree at WT whose main checkout is REPO. `own` is the worktree's own status.json text, `main` the main's.
+  const WT = '/work/wt'
+  const WT_FILE = WT + '/.claude/ah2/status.json'
+  const linked = (main: string | null, own: string | null, over: Partial<World> = {}): World => {
+    const w = world({ cwd: WT + '/sub', git: [WT], files: {}, ...over })
+    w.files[WT + '/.git'] = { text: 'gitdir: /work/repo/.git/worktrees/wt\n', mtimeMs: 1 }
+    w.files['/work/repo/.git/worktrees/wt/commondir'] = { text: '../..\n', mtimeMs: 1 }
+    if (main !== null) w.files[FILE] = { text: main, mtimeMs: 2 }
+    if (own !== null) w.files[WT_FILE] = { text: own, mtimeMs: 3 }
+    return w
+  }
+
+  test(`${surface}: a worktree document that lists the viewer is shown, not the main checkout's`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.work, fixtures.idle)
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual(['2 live · 0 out'])
+  })
+
+  // The worktree's own document can be absent, not list the viewer, be expired or be unreadable; the main checkout's is then shown.
+  const expiredIdle = fixtures.idle.replace(/"expires_at":\s*"[^"]+"/, '"expires_at": "2020-01-01T00:00:00.000Z"')
+  for (const [why, own] of [['is absent', null], ['does not list the viewer', fixtures.foreign], ['is expired', expiredIdle], ['is unreadable', 'not json']] as const) {
+    test(`${surface}: the main checkout's document is shown when the worktree's ${why}`, { options: { status_entry: true } }, async ($, on) => {
+      const w = linked(fixtures.work, own)
+      stage(on, w)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      expect(w.shown).toEqual(['1 live · 1 out'])
+    })
+  }
+
+  test(`${surface}: a viewer neither document lists gets the worktree document's cause`, async ($, on) => {
+    const w = linked(fixtures.foreign, fixtures.foreign)
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(writesOf(w, 'why')).toEqual(['no team owned by this session'])
+  })
+
+  test(`${surface}: the same teams show as the cwd moves main to worktree and back`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.work, null, { cwd: REPO + '/sub', git: [REPO, WT] })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.cwd = WT + '/sub'
+    await clock.advance(2000)
+    w.cwd = REPO + '/sub'
+    await clock.advance(2000)
+    expect(w.shown).toEqual(['1 live · 1 out'])
+  })
+
+  test(`${surface}: a team recorded in the worktree's own dir shows when the main document does not own the viewer`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.foreign, fixtures.idle)
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual(['2 live · 0 out'])
+  })
+
+  test(`${surface}: a main checkout without a status document leaves the worktree's own`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(null, fixtures.idle)
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual(['2 live · 0 out'])
+  })
+
+  test(`${surface}: a submodule's .git file is the nearest checkout, whatever the main document says`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.work, null)
+    w.files[WT + '/.git'] = { text: 'gitdir: /work/repo/.git/modules/wt\n', mtimeMs: 1 }
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown.filter(Boolean)).toEqual([])
+    expect(w.readPaths).not.toContain(FILE)
+  })
+
+  test(`${surface}: a malformed .git file is the nearest checkout`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.work, null)
+    w.files[WT + '/.git'] = { text: 'not a pointer\n', mtimeMs: 1 }
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown.filter(Boolean)).toEqual([])
+    expect(w.readPaths).not.toContain(FILE)
+  })
+
+  test(`${surface}: a normal checkout never looks beyond its own document`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 }, '/work/other/.claude/ah2/status.json': { text: fixtures.work, mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual(['2 live · 0 out'])
+  })
+
+  test(`${surface}: when the worktree document lists the viewer, the main checkout's status file is not read`, { options: { status_entry: true } }, async ($, on) => {
+    const w = linked(fixtures.work, fixtures.idle)
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.readPaths).toContain(WT_FILE)
+    expect(w.readPaths).not.toContain(FILE)
+  })
+
+  test(`${surface}: a member session sets nothing`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual([undefined])
+  })
+
+  test(`${surface}: a session whose id becomes a member's hides the entry at the next tick`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.id = 'sess-demo-reviewer'
+    await clock.advance(2000)
+    expect(w.shown).toEqual(['1 live · 1 out', undefined])
+  })
+
+  test(`${surface}: status_entry false clears the entry at once, so a reload with it off leaves no old line`, { options: { status_entry: false } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual([undefined])
+  })
+
+  test(`${surface}: with no options the entry is off`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual([undefined])
+  })
+
+  test(`${surface}: status_entry true shows the entry`, { options: { status_entry: true } }, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.shown).toEqual(['1 live · 1 out'])
+  })
+
+  // ---- the band and the Pane, drawn through the module's ui.render hooks
+  for (const [name, v] of Object.entries(vectors)) {
+    test(`${surface}: ${name} draws its band above the chain's answer and its Pane rows, Box, Text and engine only`, async ($, on) => {
+      const w = world({ id: v.sessionId, files: { [FILE]: { text: fixtures[name], mtimeMs: 1 } } })
+      stage(on, w)
+      beneath(on)
+      mock.clock(on, { now: Date.parse(v.now) })
+      await start($, w, surface)
+      const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+      expect(walk(band, ['Button'])).toEqual([])
+      // A null view draws a short line naming why for a member, and no band for a session of no team.
+      expect(texts(band)).toEqual(v.band === null ? (name in NO_VIEW_LINE ? [{ text: NO_VIEW_LINE[name], props: toneOf(surface, 'idle') }, CORE_LINE] : [CORE_LINE]) : [{ text: v.band.text, props: toneOf(surface, v.band.tone) }, CORE_LINE])
+      const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+      expect(walk(noTabs(pane))).toEqual([])
+      // A null view's one line names its cause; every other vector draws exactly its rows.
+      const cause = NULL_CAUSE[name]
+      if (name === 'member-session') expect(paneTexts(pane)).toEqual([])
+      else if (cause === undefined) expect(boxes(pane)).toEqual(sectionsFor[name].map((b) => ({ ...b, bordered: true })))
+      else expect(paneTexts(pane)).toEqual([{ text: `No hierarchy status here (${cause}).`, props: TONE.idle }])
+    })
+  }
+
+  test(`${surface}: the band draws a View button after its text, and pressing it asks which view; Pane clears the closed mark before one open`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    const view = viewAnswers(on, 'Pane')
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+    expect(buttons(await ui.drawn()).length).toBe(2)
+    const before = w.opens.length
+    w.order.length = 0
+    view.arm()
+    await ui.press({ key: 'ah-view' })
+    expect(view.asked).toEqual([{ question: 'Open view', options: ['Pane', 'Sitrep', 'TUI', 'Web'] }])
+    expect(view.ran).toEqual([])
+    expect(w.order).toEqual(['set:closed', 'set:paneMode', 'open'])
+    expect(writesOf(w, 'closed')).toEqual([false])
+    expect(w.opens.slice(before)).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+    expect(w.toasts).toEqual([])
+  })
+
+  const paneUp = (isPlaced: boolean) => [{ id: 'ah-status', title: 'Hierarchy', isShown: true, isFocused: false, isPlaced }]
+  const press = async ($: any, on: any, surface: string, w: World) => {
+    const closes: unknown[] = []
+    stage(on, w)
+    const view = viewAnswers(on, 'Pane')
+    beneath(on)
+    on('ui.close', (_$: any, e: any) => { w.order.push('close'); closes.push(e); return { value: undefined } })
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+    const before = w.opens.length
+    w.order.length = 0
+    view.arm()
+    await ui.press({ key: 'ah-view' })
+    return { closes, opened: w.opens.length - before, asked: view.asked.length, ran: view.ran.length }
+  }
+
+  test(`${surface}: pressing the button while the Pane is open closes it and marks it closed`, async ($, on) => {
+    const w = world({ panes: paneUp(true) })
+    const r = await press($, on, surface, w)
+    expect(r.closes).toEqual([{ id: 'ah-status', origin: { kind: 'plugin' } }])
+    expect(r.opened).toBe(0)
+    expect(r.asked).toBe(0)
+    expect(r.ran).toBe(0)
+    expect(w.order).toEqual(['set:closed', 'close'])
+    expect(writesOf(w, 'closed')).toEqual([true])
+  })
+
+  test(`${surface}: pressing the button with no Pane open opens it and closes nothing`, async ($, on) => {
+    const r = await press($, on, surface, world({ panes: [] }))
+    expect(r.closes).toEqual([])
+    expect(r.opened).toBe(1)
+    expect(r.asked).toBe(1)
+    expect(r.ran).toBe(0)
+  })
+
+  test(`${surface}: pressing the button while the Pane waits undrawn opens it as before and closes nothing`, async ($, on) => {
+    const r = await press($, on, surface, world({ panes: paneUp(false) }))
+    expect(r.closes).toEqual([])
+    expect(r.opened).toBe(1)
+  })
+
+  test(`${surface}: another plugin's open pane is not the Pane, so the button opens`, async ($, on) => {
+    const r = await press($, on, surface, world({ panes: [{ ...paneUp(true)[0], id: 'other' }] }))
+    expect(r.closes).toEqual([])
+    expect(r.opened).toBe(1)
+  })
+
+  test(`${surface}: /wrangl-hierarchy-pane while the Pane is open still only opens`, async ($, on) => {
+    const w = world({ panes: paneUp(true) })
+    stage(on, w)
+    beneath(on)
+    on('ui.close', () => { w.order.push('close'); return { value: undefined } })
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const before = w.opens.length
+    const out = await $.command.run({ command: 'wrangl-hierarchy-pane', args: '' })
+    expect(w.opens.length - before).toBe(1)
+    expect(w.order.includes('close')).toBe(false)
+    expect(out).toEqual({ text: 'Opened the hierarchy Pane.' })
+  })
+
+  test(`${surface}: a press that places no Pane toasts the not-placed text`, async ($, on) => {
+    const w = world({ placed: false })
+    stage(on, w)
+    const view = viewAnswers(on, 'Pane')
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+    view.arm()
+    await ui.press({ key: 'ah-view' })
+    expect(w.toasts).toEqual(['The hierarchy Pane is open, but this session shows no panes.'])
+  })
+
+  const draw = async ($: any, surface: string, props: any) => buttons(await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props, viewport: VIEWPORT })).drawn())
+
+  const draws = async ($: any, surface: string, props: any) => (await draw($, surface, props)).map((b: any) => b.props?.key ?? b.key)
+
+  test(`${surface}: the band draws the Pane button and no Dismiss in a member session`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(await draws($, surface, bandProps())).toEqual(['ah-pane'])
+  })
+
+  for (const [label, id, text] of [['an owned', 'sess-orch', fixtures.work], ['a member', 'sess-demo-reviewer', fixtures['member-session']], ['a no-file', 'sess-orch', undefined]] as const) {
+    test(`${surface}: with the band option off no band draws in ${label} session`, { options: { band: false } }, async ($, on) => {
+      const w = world({ id, files: text === undefined ? {} : { [FILE]: { text, mtimeMs: 1 } } })
+      stage(on, w)
+      beneath(on)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+      expect(texts(band)).toEqual([CORE_LINE])
+      expect(walk(band, ['Button'])).toEqual([])
+    })
+  }
+
+  test(`${surface}: with the band option true or unset the band draws`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(texts(await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn())[0].text).toBe('1 team · 1 of 1 agents up · nothing needs you · 1 in flight')
+  })
+
+  test(`${surface}: a session with no team file draws no band and no button`, async ($, on) => {
+    const w = world({ files: {} })
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+    expect(texts(band)).toEqual([CORE_LINE])
+    expect(await draws($, surface, bandProps())).toEqual([])
+  })
+
+  test(`${surface}: the band draws no button during a survey or below 40 columns, and below 40 its text is unfitted`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(await draw($, surface, bandProps({ hasSurvey: true }))).toEqual([])
+    expect(await draw($, surface, bandProps({ bodyColumns: 39 }))).toEqual([])
+    const narrow = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps({ bodyColumns: 39 }), viewport: VIEWPORT })).drawn()
+    // Cut to all 39 columns, with no room kept for a button.
+    expect(texts(narrow)[0].text).toBe('1 team · 1 of 1 agents up · nothing ne…')
+  })
+
+  const hiddenCases = [
+    ['an invisible entry', 'sess-orch', (d: any) => { d.timeline[0].visible = false; for (const o of d.owners) o.timeline[0].visible = false }],
+    ['a member session', 'sess-member', (d: any) => { d.member_sessions = [...d.member_sessions, 'sess-member'] }],
+  ] as const
+  for (const [label, id, edit] of hiddenCases) test(`${surface}: with no view only a member's band draws a button, and none draws Dismiss (${label})`, async ($, on) => {
+    const doc = JSON.parse(fixtures.idle)
+    edit(doc)
+    const w = world({ id, files: { [FILE]: { text: JSON.stringify(doc), mtimeMs: 1 } } })
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(await draws($, surface, bandProps())).toEqual(label === 'a member session' ? ['ah-pane'] : [])
+  })
+
+  const E_DOC = (teams: unknown) => JSON.stringify({
+    schema: 1, written_at: '2026-01-01T12:00:00.000Z', expires_at: '2026-01-02T12:00:00.000Z', enabled: true, member_sessions: [], teams,
+    timeline: [{ at: '2026-01-01T12:00:00.000Z', live: 3, blocked: 0, out: 0, overdue: 0, stalled: 0, text: '3 live · 0 out', short: '3/0', tone: 'idle', visible: true }],
+  })
+  for (const [label, teams] of [['teams: []', []], ['teams holding only non-records', [1, 'x']]] as const) {
+    test(`${surface}: a visible doc with ${label} draws one dim line saying so, and the band shows the entry text`, async ($, on) => {
+      const w = world({ files: { [FILE]: { text: E_DOC(teams), mtimeMs: 1 } } })
+      stage(on, w)
+      beneath(on)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+      expect(paneTexts(pane)).toEqual([{ text: 'No live team in the status file.', props: TONE.idle }])
+      const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+      expect(texts(band)).toEqual([{ text: '3 live · 0 out', props: TONE.idle }, CORE_LINE])
+    })
+  }
+
+  for (const value of [{}, { pane: 'x' }, 7]) {
+    test(`${surface}: a held view of ${JSON.stringify(value)} draws the null-view line, not the engine's fallback`, async ($, on) => {
+      const w = world({ files: { [FILE]: { text: E_DOC([]), mtimeMs: 1 } } })
+      stage(on, w)
+      beneath(on)
+      // What the host holds for `view`, whatever an older or newer build of the module left there.
+      w.stateGet = async (_$: any, e: any, next: any) => (e.key === 'view' ? { value, version: 1 } : next(e))
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+      expect(paneTexts(pane).length).toBe(1)
+      expect(paneTexts(pane)[0].text.startsWith('No hierarchy status here')).toBe(true)
+    })
+  }
+
+  const asDoc = (fixture: string, over: Record<string, unknown>) => JSON.stringify({ ...JSON.parse(fixture), ...over })
+  const CAUSES: [string, () => World, string][] = [
+    ['no file', () => world({ files: {} }), 'no file'],
+    ['a file that is not JSON', () => world({ files: { [FILE]: { text: 'not json {', mtimeMs: 1 } } }), 'unreadable'],
+    ['a file that is a link', () => world({ files: { [FILE]: { text: fixtures.work, mtimeMs: 1, isLink: true } } }), 'unreadable'],
+    ['an expired doc', () => world({ files: { [FILE]: { text: asDoc(fixtures.work, { expires_at: '2026-01-01T11:00:00.000Z' }), mtimeMs: 1 } } }), 'expired'],
+    ['a doc that says the hierarchy is off', () => world({ files: { [FILE]: { text: fixtures.hidden, mtimeMs: 1 } } }), 'hierarchy off'],
+    ['a doc that is not visible while enabled', () => world({ files: { [FILE]: { text: asDoc(fixtures.hidden, { enabled: true }), mtimeMs: 1 } } }), 'not visible'],
+  ]
+  for (const [label, make, cause] of CAUSES) {
+    test(`${surface}: the empty Pane names its cause: ${label} -> ${cause}`, async ($, on) => {
+      const w = make()
+      stage(on, w)
+      beneath(on)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+      expect(paneTexts(pane)).toEqual([{ text: `No hierarchy status here (${cause}).`, props: TONE.idle }])
+    })
+  }
+
+  test(`${surface}: the cause follows the file: a doc that becomes visible drops it, and a doc that goes away names it`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: asDoc(fixtures.hidden, { enabled: true }), mtimeMs: 1 } } })
+    stage(on, w)
+    beneath(on)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })
+    expect(paneTexts(await ui.drawn())[0].text).toBe('No hierarchy status here (not visible).')
+    w.files[FILE] = { text: fixtures.work, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(paneTexts(await ui.drawn()).some((t) => t.text.startsWith('No hierarchy status here'))).toBe(false)
+    delete w.files[FILE]
+    await clock.advance(2000)
+    expect(paneTexts(await ui.drawn())).toEqual([{ text: 'No hierarchy status here (no file).', props: TONE.idle }])
+  })
+
+  test(`${surface}: the band yields to the chain during a survey`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.bad, mtimeMs: 1 } } })
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: Date.parse(vectors.bad.now) })
+    await start($, w, surface)
+    const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps({ hasSurvey: true }), viewport: VIEWPORT })).drawn()
+    expect(band).toMatchObject(CORE)
+    expect(texts(band)).toEqual([CORE_LINE])
+  })
+
+  test(`${surface}: a view change redraws a mounted band, and its going leaves the chain's answer`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    beneath(on)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+    expect(texts(await ui.drawn())[0].text).toBe('1 team · 1 of 1 agents up · nothing needs you · 1 in flight')
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(texts(await ui.drawn())[0].text).toBe(vectors.warn.band!.text)
+    delete w.files[FILE]
+    await clock.advance(2000)
+    expect(texts(await ui.drawn())).toEqual([CORE_LINE])
+  })
+
+  test(`${surface}: the tick writes the view only when it changed`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(writesOf(w, 'view').length).toBe(1)
+    await clock.advance(4000)
+    expect(writesOf(w, 'view').length).toBe(1)
+    w.files[FILE] = { text: fixtures.work, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(writesOf(w, 'view').length).toBe(2)
+  })
+
+  for (const [name, now, text, props] of [
+    ['bad', Date.parse(vectors.bad.now), vectors.bad.band?.text, toneOf(surface, 'bad')],
+    ['warn', Date.parse(vectors.warn.now), vectors.warn.band?.text, { color: 'warning' }],
+    ['work', NOW, '1 team · 1 of 1 agents up · nothing needs you · 1 in flight', {}],
+  ] as const) {
+    test(`${surface}: the ${name} band's Text props are ${JSON.stringify(props)}`, async ($, on) => {
+      const w = world({ files: { [FILE]: { text: fixtures[name], mtimeMs: 1 } } })
+      stage(on, w)
+      beneath(on)
+      mock.clock(on, { now })
+      await start($, w, surface)
+      const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+      expect(texts(band)[0]).toEqual({ text, props })
+    })
+  }
+
+  test(`${surface}: a tone the table does not name draws dim`, async ($, on) => {
+    const odd = { band: { tone: 'odd', head: 'odd band', tail: [] }, pane: [{ row: 'text', tone: 'odd', text: 'odd row' }], toasts: [] }
+    const w = world()
+    w.stateGet = async (_$: any, e: any, next: any) => (e.key === 'view' ? { value: { value: odd, version: 1 } } : next(e))
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+    expect(texts(band)[0]).toEqual({ text: 'odd band', props: { dimColor: true } })
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(paneTexts(pane)).toEqual([{ text: 'odd row', props: { dimColor: true } }])
+  })
+
+  test(`${surface}: another component, and another Pane, pass through`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.bad, mtimeMs: 1 } } })
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: Date.parse(vectors.bad.now) })
+    await start($, w, surface)
+    const other = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'other', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(other).toMatchObject(CORE)
+    expect(texts(other)).toEqual([CORE_LINE])
+  })
+
+  // ---- /wrangl-hierarchy-pane, auto-open and close
+  test(`${surface}: session.start registers /wrangl-hierarchy-pane`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.registered).toEqual([{ name: 'wrangl-hierarchy-pane', description: 'Open the hierarchy status Pane' }])
+  })
+
+  for (const placed of [true, false]) {
+    test(`${surface}: /wrangl-hierarchy-pane with no status file opens the Pane and answers with text alone (placed ${placed})`, async ($, on) => {
+      const w = world({ files: {}, placed })
+      on('command.run', { command: 'wrangl-hierarchy-pane' }, () => ({ text: 'beneath', context: ['sent to the model'], exitCode: 3 }))
+      stage(on, w)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const answer = await $.command.run({ command: 'wrangl-hierarchy-pane', args: '' })
+      expect(answer).toEqual({ text: placed ? 'Opened the hierarchy Pane.' : 'The hierarchy Pane is open, but this session shows no panes.' })
+      expect(w.opens).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+    })
+  }
+
+  for (const [when, now] of [['current', NOW], ['expired', Date.parse('2030-01-01T00:00:00.000Z')]] as const) {
+    for (const placed of [true, false]) {
+      test(`${surface}: /wrangl-hierarchy-pane in a member session opens the mail Pane (doc ${when}, placed ${placed})`, async ($, on) => {
+        const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } }, placed })
+        on('command.run', { command: 'wrangl-hierarchy-pane' }, () => ({ text: 'beneath', context: ['sent to the model'], exitCode: 3 }))
+        stage(on, w)
+        mock.clock(on, { now })
+        await start($, w, surface)
+        expect(await $.command.run({ command: 'wrangl-hierarchy-pane', args: '' })).toEqual({ text: placed ? 'Opened the mail Pane.' : 'The mail Pane is open, but this session shows no panes.' })
+        expect(w.opens).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+      })
+    }
+  }
+
+  test(`${surface}: a member session's Pane draws the Mail section alone, with no hierarchy section and no cause row`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(walk(pane)).toEqual([])
+    expect(boxes(pane)).toEqual([])
+    expect(paneTexts(pane)).toEqual([])
+    expect(allBoxes(pane).map((b) => b.title)).toEqual([MAIL_TITLE])
+    expect(mailBox(pane).lines).toEqual(['No mail this session.', 'Older or earlier-session mail: ah msg inbox --all --address <address>'])
+  })
+
+  test(`${surface}: the View button's Pane choice draws the hierarchy alone, with no Mail box under it`, async ($, on) => {
+    const w = world({ id: vectors.work.sessionId, files: { [FILE]: { text: fixtures.work, mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: Date.parse(vectors.work.now) })
+    await start($, w, surface)
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    const titles = allBoxes(pane).map((b) => b.title)
+    expect(titles.length).toBeGreaterThan(0)
+    expect(titles).not.toContain(MAIL_TITLE)
+  })
+
+  test(`${surface}: a non-member Pane opens on the Sitrep with no Mail and no tabs`, async ($, on) => {
+    const w = world({ id: vectors.work.sessionId, defaultTab: true, files: { [FILE]: { text: fixtures.work, mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: Date.parse(vectors.work.now) })
+    await start($, w, surface)
+    const pane = JSON.stringify(await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn())
+    expect(pane).toContain('Sitrep')
+    expect(pane).not.toContain(MAIL_TITLE)
+    expect(pane).not.toContain('[Mail]')
+  })
+
+  test(`${surface}: negative: a member session's Pane holds the Mail alone, with no tabs`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', defaultTab: true, files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    mock.clock(on, { now: Date.parse(vectors.work.now) })
+    await start($, w, surface)
+    const pane = JSON.stringify(await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn())
+    expect(pane).toContain(MAIL_TITLE)
+    expect(pane).not.toContain('Sitrep')
+  })
+
+  test(`${surface}: the Mail section draws the held records newest first, the text verbatim, and says when the state cannot be read`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    const recs = [
+      { at: NOW, ids: ['e2'], address: 'imp@tm', text: 'ah mail for imp@tm (1):\n- note from user: hi\n[ah-entry e2]', state: 'delivered' },
+      { at: NOW - 60000, ids: ['e1'], address: 'imp@tm', text: 'ah mail for imp@tm (1):\n- brief from orchestrator@tm: [hierarchy-msg /m/e1--request.md]\n[ah-entry e1]', state: 'not delivered' },
+    ]
+    stage(on, w)
+    w.stateGet = (_$: any, e: any, next: any) => (e.key === 'mail' ? { value: { value: recs, version: 1 } } : next(e))
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    const lines = mailBox(pane).lines
+    expect(lines.filter((l: string) => l.includes(' · ')).map((l: string) => l.replace(/^\d\d:\d\d:\d\d/, 'T'))).toEqual(['T · delivered · e2', 'T · not delivered · e1'])
+    expect(lines).toContain('- note from user: hi')
+    expect(lines).toContain('- brief from orchestrator@tm: [hierarchy-msg /m/e1--request.md]')
+    expect(lines[lines.length - 1]).toBe('Older or earlier-session mail: ah msg inbox --all --address imp@tm')
+    expect(lines.indexOf('- note from user: hi')).toBeLessThan(lines.indexOf('- brief from orchestrator@tm: [hierarchy-msg /m/e1--request.md]'))
+  })
+
+  test(`${surface}: negative: a held record that still names a changed file says nothing about it`, async ($, on) => {
+    const w = world({
+      id: 'sess-demo-reviewer',
+      files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 }, '/m/a.md': { text: 'x', mtimeMs: 9 } },
+    })
+    const rec = (id: string, files?: { path: string; mtime: number }[]) => ({ at: NOW, ids: [id], address: 'imp@tm', text: 'ah mail for imp@tm (1):\n- note from user: hi', state: 'delivered', ...(files ? { files } : {}) })
+    const recs = [rec('a', [{ path: '/m/a.md', mtime: 5 }]), rec('d')]
+    stage(on, w)
+    w.stateGet = (_$: any, e: any, next: any) => (e.key === 'mail' ? { value: { value: recs, version: 1 } } : next(e))
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(mailBox(pane).lines.filter((l: string) => l.includes(' · delivered · ')).map((l: string) => l.replace(/^\d\d:\d\d:\d\d/, 'T'))).toEqual([
+      'T · delivered · a',
+      'T · delivered · d',
+    ])
+  })
+
+  test(`${surface}: a state that cannot be read draws the unavailable line and still the inbox line`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    w.stateGet = (_$: any, e: any, next: any) => (e.key === 'mail' ? { deny: 'state unreadable' } : next(e))
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(mailBox(pane).lines).toEqual(['Mail text unavailable (state read failed). Run: ah msg inbox --all --address <address>', 'Older or earlier-session mail: ah msg inbox --all --address <address>'])
+  })
+
+  test(`${surface}: a session that stops being a member gets the Pane at the next tick`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.id = 'sess-orch'
+    await clock.advance(2000)
+    w.opens.length = 0
+    expect(await $.command.run({ command: 'wrangl-hierarchy-pane', args: '' })).toEqual({ text: 'Opened the hierarchy Pane.' })
+    expect(w.opens).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+  })
+
+  test(`${surface}: another command is not answered`, async ($, on) => {
+    const w = world({ files: {} })
+    on('command.run', { command: 'other' }, () => ({ text: 'other ran' }))
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(await $.command.run({ command: 'other', args: '' })).toEqual({ text: 'other ran' })
+    expect(w.opens).toEqual([])
+  })
+
+  for (const placed of [true, false]) {
+    test(`${surface}: auto-open fires once, when there is first a view (placed ${placed})`, async ($, on) => {
+      const w = world({ files: {}, placed })
+      stage(on, w)
+      const clock = mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      expect(w.opens).toEqual([])
+      w.files[FILE] = { text: fixtures.work, mtimeMs: 1 }
+      await clock.advance(2000)
+      expect(w.opens).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+      await clock.advance(6000)
+      expect(w.opens.length).toBe(1)
+      expect(writesOf(w, 'opened')).toEqual([true])
+    })
+  }
+
+  test(`${surface}: auto-open never fires in a member session`, async ($, on) => {
+    const w = world({ id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await clock.advance(4000)
+    expect(w.opens).toEqual([])
+  })
+
+  test(`${surface}: auto-open does not fire again after a reload`, async ($, on) => {
+    const w = world()
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(w.opens.length).toBe(1)
+    await start($, w, surface)
+    await clock.advance(2000)
+    expect(w.opens.length).toBe(1)
+  })
+
+  test(`${surface}: auto-open never fires while the Pane is marked closed`, async ($, on) => {
+    const w = world({ files: {} })
+    w.stateGet = async (_$: any, e: any, next: any) => (e.key === 'closed' ? { value: { value: true, version: 1 } } : next(e))
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.work, mtimeMs: 1 }
+    await clock.advance(4000)
+    expect(w.opens).toEqual([])
+    expect(writesOf(w, 'opened')).toEqual([])
+  })
+
+  test(`${surface}: /wrangl-hierarchy-pane clears the closed mark before it opens the Pane`, async ($, on) => {
+    const w = world({ files: {} })
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await $.command.run({ command: 'wrangl-hierarchy-pane', args: '' })
+    expect(writesOf(w, 'closed')).toEqual([false])
+    expect(w.opens).toEqual([{ id: 'ah-status', title: 'Hierarchy' }])
+  })
+
+  test(`${surface}: a close by a plugin does not mark the Pane closed`, { plugins: [CLOSER] }, async ($, on) => {
+    const w = world({ files: {} })
+    on('ui.close', () => ({ value: undefined }))
+    stage(on, w)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    expect(await $.command.run({ command: 'close-ah', args: '' })).toEqual({ text: 'closed' })
+    expect(writesOf(w, 'closed')).toEqual([])
+  })
+
+  for (const [beneathAnswer, expected] of [[{ value: undefined }, 'closed'], [{ deny: 'kept open beneath' }, 'kept open beneath']] as const) {
+    test(`${surface}: ui.close calls next exactly once and returns what it returned (${expected})`, { plugins: [CLOSER] }, async ($, on) => {
+      const w = world({ files: {} })
+      let calls = 0
+      on('ui.close', () => { calls++; return beneathAnswer })
+      stage(on, w)
+      mock.clock(on, { now: NOW })
+      await start($, w, surface)
+      const answer: any = await $.command.run({ command: 'close-ah', args: '' })
+      expect(calls).toBe(1)
+      expect(answer.text).toContain(expected)
+    })
+  }
+
+
+  // ---- toasts
+  test(`${surface}: the first view seeds the seen set and toasts nothing`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.bad, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: Date.parse(vectors.bad.now) })
+    await start($, w, surface)
+    await clock.advance(4000)
+    expect(w.toasts).toEqual([])
+    expect(writesOf(w, 'seen')).toEqual([vectors.bad.toasts.map((t) => t.key)])
+  })
+
+  test(`${surface}: a new key toasts once, with its text, and not again`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(w.toasts).toEqual(['architect blocked · Allow edits to config.toml? (y/n) · answer it through the Orchestrator'])
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 3 }
+    await clock.advance(6000)
+    expect(w.toasts.length).toBe(1)
+    expect(writesOf(w, 'seen')).toEqual([[], [vectors.warn.toasts[0].key]])
+  })
+
+  test(`${surface}: a tick with no view neither prunes nor toasts again`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+    await clock.advance(2000)
+    delete w.files[FILE]
+    await clock.advance(2000)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 3 }
+    await clock.advance(2000)
+    expect(w.toasts.length).toBe(1)
+    expect(writesOf(w, 'seen')).toEqual([[], [vectors.warn.toasts[0].key]])
+  })
+
+  test(`${surface}: a member session toasts nothing and seeds nothing`, async ($, on) => {
+    const doc = JSON.parse(fixtures.warn)
+    doc.member_sessions = [...doc.member_sessions, 'sess-member']
+    const w = world({ id: 'sess-member', files: { [FILE]: { text: JSON.stringify(doc), mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    await clock.advance(4000)
+    expect(w.toasts).toEqual([])
+    expect(writesOf(w, 'seen')).toEqual([])
+  })
+
+  test(`${surface}: the seen set outlives a reload, so a key does not toast twice`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+    await clock.advance(2000)
+    await start($, w, surface)
+    await clock.advance(4000)
+    expect(w.toasts.length).toBe(1)
+  })
+
+  test(`${surface}: a key is pruned once its dispatch leaves the doc, and toasts if it comes back`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.bad, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: Date.parse(vectors.bad.now) })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.idle, mtimeMs: 2 }
+    await clock.advance(2000)
+    expect(writesOf(w, 'seen').at(-1)).toEqual([])
+    w.files[FILE] = { text: fixtures.bad, mtimeMs: 3 }
+    await clock.advance(2000)
+    expect(w.toasts).toEqual(vectors.bad.toasts.map((t) => t.text))
+  })
+
+  test(`${surface}: a member still in the doc keeps its key, so the same block does not toast again`, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+    await clock.advance(2000)
+    w.files[FILE] = { text: fixtures.idle, mtimeMs: 3 }
+    await clock.advance(2000)
+    w.files[FILE] = { text: fixtures.warn, mtimeMs: 4 }
+    await clock.advance(2000)
+    expect(w.toasts.length).toBe(1)
+  })
+
+}
+
+// What the chain beneath the module answers for the band, and for any Pane but the module's.
+const CORE = { type: 'Text', children: ['core'] }
+const CORE_LINE = { text: 'core', props: {} }
+function beneath(on: any) {
+  on('ui.render', { component: 'AbovePrompt' }, () => CORE)
+  on('ui.render', { component: 'Pane' }, () => CORE)
+}
+const VIEWPORT = { columns: 125, rows: 40 }
+// The vectors whose view is null, and the cause the empty Pane's line names for each.
+const NO_VIEW_LINE: Record<string, string> = { 'member-session': 'Wrangl · member session' }
+const NULL_CAUSE: Record<string, string> = { hidden: 'hierarchy off', 'member-session': 'member session', foreign: 'no team owned by this session' }
+const bandProps = (over: Record<string, unknown> = {}): any =>
+  ({ hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 120, scroll: { offset: 0, bodyRows: 10 }, view: {}, ...over })
+const paneProps = (): any => ({ title: 'Hierarchy', isFocused: false, bodyColumns: 120, placement: 'inline', scroll: { offset: 0, bodyRows: 20 }, view: {} })
+
+// The Pane's sections as drawn: per top-level Box, its border color (null: dim), whether it has a border, its bold
+// title, and each row Box's Texts joined (indent, icon, text).
+function allBoxes(n: any): { title: string; color: string | null; bordered: boolean; lines: string[] }[] {
+  return noTabs(n).children.map((b: any) => {
+    const kids = (b.children ?? []).filter(Boolean)
+    const title = kids[0]?.type === 'Text' && kids[0].props?.bold === true ? kids[0] : null
+    const rows = title ? kids.slice(1) : kids
+    return {
+      title: title ? (title.children ?? []).join('') : '',
+      color: b.props?.borderColor ?? null,
+      bordered: b.props?.borderStyle === 'round',
+      lines: rows.map((r: any) => (r.children ?? []).filter(Boolean).map((t: any) => (t.children ?? []).join('')).join('')),
+    }
+  })
+}
+
+// The Mail section is drawn last in every Pane; `boxes` and `paneTexts` leave it out, `mailBox` is it alone.
+const MAIL_TITLE = 'Mail (newest first)'
+const isMail = (b: any): boolean => (b?.children ?? []).some((c: any) => c?.type === 'Text' && c.props?.bold === true && (c.children ?? []).join('') === MAIL_TITLE)
+// The row of tabs on top of a non-member Pane, the only top-level row: what these helpers read is the sections under it.
+const isTabs = (b: any): boolean => b?.props?.flexDirection === 'row' && buttons(b).length > 0
+const noTabs = (n: any) => ({ ...n, children: (n.children ?? []).filter((b: any) => !isTabs(b)) })
+const boxes = (n: any) => allBoxes({ children: noTabs(n).children.filter((b: any) => !isMail(b)) })
+const mailBox = (n: any) => allBoxes({ children: (n.children ?? []).filter(isMail) })[0]
+const paneTexts = (n: any) => texts({ ...n, children: noTabs(n).children.filter((b: any) => !isMail(b)) })
+
+// Every Text in the tree, in document order, with its props.
+function texts(n: any): { text: string; props: Record<string, unknown> }[] {
+  if (typeof n !== 'object' || n === null) return []
+  if (n.type === 'Text') return [{ text: (n.children ?? []).join(''), props: n.props ?? {} }]
+  return (n.children ?? []).flatMap(texts)
+}
+// Every Button in the tree.
+function buttons(n: any): any[] {
+  if (typeof n !== 'object' || n === null) return []
+  return [...(n.type === 'Button' ? [n] : []), ...(n.children ?? []).flatMap(buttons)]
+}
+// What a drawn tree holds that a status view may not: an element other than Box, Text or core's engine, or a
+// node carrying a press, client or raster key.
+function walk(n: any, extra: string[] = []): string[] {
+  if (typeof n !== 'object' || n === null) return []
+  const found = ['Box', 'Text', 'engine', ...extra].includes(n.type) ? [] : [`element ${n.type}`]
+  for (const key of ['press', 'client', 'raster']) if (key in n && !extra.includes(n.type)) found.push(`${n.type} has ${key}`)
+  return [...found, ...(n.children ?? []).flatMap((c: any) => walk(c, extra))]
+}
+
+// ---- the sectioned Pane as drawn
+// The `work` fixture with its member in stream `api`; its one dispatch stays in that stream, or with `leftover`
+// goes to a member that is in no stream, so it draws in DISPATCHES.
+const withStreams = (leftover = true): string => {
+  const doc = JSON.parse(fixtures.work)
+  doc.teams[0].members[0].stream = 'api'
+  if (leftover) doc.teams[0].dispatches[0].member = 'nobody'
+  return JSON.stringify(doc)
+}
+const drawnPane = async ($: any, on: any, w: World, columns: number) => noTabs(await drawnWithTabs($, on, w, columns))
+const drawnWithTabs = async ($: any, on: any, w: World, columns: number) => {
+  stage(on, w)
+  beneath(on)
+  mock.clock(on, { now: Date.parse(vectors.work.now) })
+  await start($, w, 'terminal')
+  return (await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: { ...paneProps(), bodyColumns: columns }, viewport: { columns, rows: 40 } })).drawn()
+}
+const anyBorder = (n: any): boolean => typeof n === 'object' && n !== null && (n.props?.borderStyle !== undefined || (n.children ?? []).some(anyBorder))
+
+test('the Pane draws each section in a round box with its own color, a bold title in that color, and colored icons', async ($, on) => {
+  const w = world({ id: vectors.work.sessionId, files: { [FILE]: { text: withStreams(), mtimeMs: 1 } } })
+  const pane = await drawnPane($, on, w, 60)
+  expect(walk(pane)).toEqual([])
+  expect(boxes(pane).map((b: any) => [b.title, b.color, b.bordered])).toEqual([
+    ['TEAM default', 'permission', true], ['STREAM api', 'suggestion', true], ['DISPATCHES', null, true],
+  ])
+  expect(pane.children.map((b: any) => b.props.key)).toEqual(['team:0', 'stream:0:api', 'dispatches:0'])
+  const box = pane.children[1]
+  expect(box.props).toMatchObject({ flexDirection: 'column', borderStyle: 'round', borderColor: 'suggestion' })
+  expect(box.children[0].props).toMatchObject({ bold: true, color: 'suggestion' })
+  expect(box.children[1].children[0]).toMatchObject({ type: 'Text', props: { color: 'success' }, children: ['● '] })
+  const dispatchBox = pane.children[2]
+  expect(dispatchBox.props).toMatchObject({ borderStyle: 'round', borderDimColor: true })
+  expect(dispatchBox.props.borderColor).toBe(undefined)
+  expect(dispatchBox.children[0].props).toMatchObject({ bold: true, dimColor: true })
+  expect(dispatchBox.children[1].children[0].props).toMatchObject({ color: 'error' })
+})
+
+test('a dispatch to a streamed member draws inside its stream box, indented, with no DISPATCHES box', async ($, on) => {
+  const w = world({ id: vectors.work.sessionId, files: { [FILE]: { text: withStreams(false), mtimeMs: 1 } } })
+  const pane = await drawnPane($, on, w, 60)
+  expect(boxes(pane).map((b: any) => b.title)).toEqual(['TEAM default', 'STREAM api'])
+  const row = pane.children[1].children[2]
+  expect(row.children[0]).toMatchObject({ type: 'Text', children: ['  '] })
+  expect(row.children[1]).toMatchObject({ props: { color: 'error' }, children: ['▲ '] })
+})
+
+test('below 40 columns the Pane draws no border, and the title keeps its color', async ($, on) => {
+  const w = world({ id: vectors.work.sessionId, files: { [FILE]: { text: withStreams(), mtimeMs: 1 } } })
+  const pane = await drawnPane($, on, w, 39)
+  expect(anyBorder(pane)).toBe(false)
+  expect(boxes(pane).map((b: any) => [b.title, b.color, b.bordered])).toEqual([['TEAM default', null, false], ['STREAM api', null, false], ['DISPATCHES', null, false]])
+  const title = pane.children[1].children[0]
+  expect(title.props).toMatchObject({ bold: true, color: 'suggestion' })
+})
+
+test('a null view draws one line with no border and no icon', async ($, on) => {
+  const w = world({ id: vectors.work.sessionId, files: {} })
+  const pane = await drawnPane($, on, w, 60)
+  expect(anyBorder({ children: pane.children.filter((b: any) => !isMail(b)) })).toBe(false)
+  expect(paneTexts(pane).length).toBe(1)
+})
+
+// ---- clicking a member's name focuses its pane (the pinned helper, through the Pane's Button)
+// The `work` fixture's one member, marked focusable (or not) and renamed.
+const focusDoc = (over: Record<string, unknown> = {}, base: string = fixtures.work): string => {
+  const doc = JSON.parse(base)
+  Object.assign(doc.teams[0].members[0], { name: 'demo-architect', route: 'peer', kind: 'claude', focusable: true, ...over })
+  return JSON.stringify(doc)
+}
+const OK = { value: { exitCode: 0, stdout: '', stderr: '' } }
+// Mounts the Pane over `text`, answering process.run with `run`; returns what was run and toasted.
+const focusPane = async ($: any, on: any, text: string, run: (e: any) => any = () => OK, id: string = vectors.work.sessionId) => {
+  const w = world({ id, files: { [FILE]: { text, mtimeMs: 1 } } })
+  const calls: any[] = []
+  stage(on, w)
+  beneath(on)
+  mock.clock(on, { now: Date.parse(vectors.work.now) })
+  on('process.run', (_$: any, e: any) => { calls.push(e); return run(e) })
+  await start($, w, 'terminal')
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })
+  return { w, calls, ui }
+}
+const isTabButton = (b: any) => /^\[?(Sitrep|Mail)\]?$/.test(String(b.props?.label ?? b.label))
+const buttonCount = async (ui: any) => (await ui.findAll({ type: 'Button' })).filter((b: any) => !isTabButton(b)).length
+
+test('F1 a click on a focusable member runs exactly the fixed argv with the fixed timeout, once, and shows nothing', async ($, on) => {
+  const { w, calls, ui } = await focusPane($, on, focusDoc())
+  expect(await buttonCount(ui)).toBe(1)
+  await ui.press({ key: 'ah-name-demo-architect' })
+  expect(calls).toEqual([{ argv: ['herdr', 'agent', 'focus', 'demo-architect'], init: { timeoutMs: 5000 } }])
+  expect(w.toasts).toEqual([])
+})
+
+for (const name of ['-x', 'a b', '../t', 'A', 'a'.repeat(33), '', 'a.b', '-', '1a']) {
+  test(`F2 the name ${JSON.stringify(name)} fails the pattern: nothing runs, and the toast carries no name`, async ($, on) => {
+    const { w, calls, ui } = await focusPane($, on, focusDoc({ name }))
+    expect(await buttonCount(ui)).toBe(1)
+    await ui.press({ key: `ah-name-${name}` })
+    expect(calls).toEqual([])
+    expect(w.toasts).toEqual(['Could not focus that member.'])
+  })
+}
+
+for (const name of ['a', 'a'.repeat(32), 'a1_b-2']) {
+  test(`F2b the name ${JSON.stringify(name)} is at the pattern's edge and runs`, async ($, on) => {
+    const { calls, ui } = await focusPane($, on, focusDoc({ name }))
+    await ui.press({ key: `ah-name-${name}` })
+    expect(calls.map((c) => c.argv[3])).toEqual([name])
+  })
+}
+
+for (const focusable of ['true', 1, 'yes', false, null, {}, [true], undefined]) {
+  test(`F3 focusable ${JSON.stringify(focusable) ?? 'absent'} is not exactly true: no Button`, async ($, on) => {
+    const doc = JSON.parse(focusDoc({ focusable }))
+    if (focusable === undefined) delete doc.teams[0].members[0].focusable
+    const { ui } = await focusPane($, on, JSON.stringify(doc))
+    expect(await buttonCount(ui)).toBe(0)
+  })
+}
+
+const FAILS: [string, (e: any) => any][] = [
+  ['a non-zero exit', () => ({ value: { exitCode: 1, stdout: '', stderr: 'secret' } })],
+  ['an exit with no code', () => ({ value: { exitCode: 127 } })],
+  ['a refusal', () => ({ deny: 'boom' })],
+  ['a throw', () => { throw new Error('boom') }],
+  ['no result', () => ({ value: undefined })],
+]
+for (const [label, run] of FAILS) {
+  test(`F7 ${label} from the run shows the failure with the name and never throws out of the press`, async ($, on) => {
+    const { w, calls, ui } = await focusPane($, on, focusDoc(), run)
+    await ui.press({ key: 'ah-name-demo-architect' })
+    expect(calls.length).toBe(1)
+    expect(w.toasts).toEqual(['Could not focus demo-architect.'])
+    expect(w.toasts.join('')).not.toContain('secret')
+  })
+}
+
+const NO_BUTTON: [string, Record<string, unknown>, number][] = [
+  ['a gone member', { live: false }, 0],
+  ['a member row of this very session', { session_id: vectors.work.sessionId }, 0],
+  ['a member that is not focusable', { focusable: false }, 0],
+  ['a member of another session', { session_id: 'some-other-session' }, 1],
+]
+for (const [label, over, want] of NO_BUTTON) {
+  test(`F8 ${label}: ${want} Button`, async ($, on) => {
+    expect(await buttonCount((await focusPane($, on, focusDoc(over))).ui)).toBe(want)
+  })
+}
+
+test('F9 in a member session the Pane holds no Button anywhere', async ($, on) => {
+  const { ui, calls } = await focusPane($, on, focusDoc({}, fixtures['member-session']), () => OK, vectors['member-session'].sessionId)
+  expect(await buttonCount(ui)).toBe(0)
+  expect(calls).toEqual([])
+})
+
+test('a focusable member row draws its name as the Button and the rest as toned text; a name the width cut is not a Button', async ($, on) => {
+  const { ui } = await focusPane($, on, focusDoc())
+  const pane = noTabs(await ui.drawn())
+  const row = pane.children[0].children[1]
+  expect(row.children.map((c: any) => c.type)).toEqual(['Text', 'Box', 'Text'])
+  expect(row.children[1].props.key).toBe('ah-focus-demo-architect')
+  expect(row.children[1].children[0]).toMatchObject({ type: 'Button', props: { plain: true, label: 'demo-architect' }, hover: { underline: true } })
+  expect(row.children[2].children).toEqual([' · claude · peer · working'])
+  await ui.unmount()
+  const narrow = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: { ...paneProps(), bodyColumns: 12 }, viewport: { columns: 12, rows: 40 } })
+  expect(await buttonCount(narrow)).toBe(0)
+})
+
+// ---- toast_seconds
+const TOASTING = { options: { toast_seconds: 30 } }
+// (The kit rejects a string for a number option, so string forms are covered by the pure mapping's tests.)
+const toasting = async ($: any, on: any, w: World) => {
+  stage(on, w)
+  beneath(on)
+  const clock = mock.clock(on, { now: NOW })
+  await start($, w, 'terminal')
+  w.files[FILE] = { text: fixtures.warn, mtimeMs: 2 }
+  await clock.advance(2000)
+  return clock
+}
+for (const [label, opts, ms] of [['a stored 30', { toast_seconds: 30 }, 30000], ['nothing stored', {}, 10000], ['a negative', { toast_seconds: -3 }, 10000], ['1', { toast_seconds: 1 }, 2000], ['500', { toast_seconds: 500 }, 60000]] as const) {
+  test(`R1 ${label}: the status toast passes the same timeoutMs, from one value`, { options: opts }, async ($, on) => {
+    const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+    await toasting($, on, w)
+    expect(w.toastCalls).toEqual([{ text: 'architect blocked · Allow edits to config.toml? (y/n) · answer it through the Orchestrator', timeoutMs: ms }])
+  })
+  test(`R1 ${label}: the band's not-placed notice passes it too`, { options: opts }, async ($, on) => {
+    const w = world({ placed: false })
+    stage(on, w)
+    const view = viewAnswers(on, 'Pane')
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, 'terminal')
+    const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+    view.arm()
+    await ui.press({ key: 'ah-view' })
+    expect(w.toastCalls).toEqual([{ text: 'The hierarchy Pane is open, but this session shows no panes.', timeoutMs: ms }])
+  })
+}
+
+test('R3 with toast_seconds 0 a doc change that would toast makes no toast call, and the view is the same as with toasts on', { options: { toast_seconds: 0 } }, async ($, on) => {
+  const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+  await toasting($, on, w)
+  expect(w.toastCalls).toEqual([])
+  expect(writesOf(w, 'seen')).toEqual([[], [vectors.warn.toasts[0].key]])
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+  expect(texts(await ui.drawn())[0].text).toBe(vectors.warn.band?.text ?? '')
+})
+
+test('R3 with toast_seconds 0 the band button\'s not-placed path makes no toast call', { options: { toast_seconds: 0 } }, async ($, on) => {
+  const w = world({ placed: false })
+  stage(on, w)
+  const view = viewAnswers(on, 'Pane')
+  beneath(on)
+  mock.clock(on, { now: NOW })
+  await start($, w, 'terminal')
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+  view.arm()
+  await ui.press({ key: 'ah-view' })
+  expect(w.toastCalls).toEqual([])
+  expect(w.opens.length).toBeGreaterThan(0)
+})
+
+test('R3 notices seen while off are not replayed when toasts are on again', { options: { toast_seconds: 0 } }, async ($, on) => {
+  const w = world({ files: { [FILE]: { text: fixtures.idle, mtimeMs: 1 } } })
+  await toasting($, on, w)
+  expect(w.toastCalls).toEqual([])
+  const seen = writesOf(w, 'seen').at(-1)
+  expect(seen).toEqual([vectors.warn.toasts[0].key])
+})
+
+test('R3 the pinned helper is unchanged: its two toasts keep the engine default and show whatever toast_seconds is', { options: { toast_seconds: 0 } }, async ($, on) => {
+  const w = world({ id: vectors.work.sessionId, files: { [FILE]: { text: JSON.stringify({ ...JSON.parse(fixtures.work), teams: [{ ...JSON.parse(fixtures.work).teams[0], members: [{ ...JSON.parse(fixtures.work).teams[0].members[0], name: 'A', focusable: true, route: 'peer', kind: 'claude' }] }] }), mtimeMs: 1 } } })
+  stage(on, w)
+  beneath(on)
+  mock.clock(on, { now: Date.parse(vectors.work.now) })
+  on('process.run', () => ({ value: { exitCode: 1 } }))
+  await start($, w, 'terminal')
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })
+  await ui.press({ key: 'ah-name-A' })
+  expect(w.toastCalls).toEqual([{ text: 'Could not focus that member.' }])
+})
+
+// ---- Dismiss: the band's second button, its dialogs and the two roster calls it makes.
+const DNOW = Date.parse(vectors.work.now)
+const DID = vectors.work.sessionId
+const doc = (edit: (d: any) => void = () => {}): string => { const d = JSON.parse(fixtures.work); edit(d); return JSON.stringify(d) }
+// Every member idle and every dispatch reported: nothing in flight.
+const idleEdit = (d: any) => { d.teams[0].members[0].activity = 'idle'; d.teams[0].dispatches[0].states = [{ at: '2026-01-01T11:59:00.000Z', state: 'reported' }] }
+const TOKEN = '0123456789abcdef'
+const planOf = (over: Record<string, unknown> = {}) => ({ close: [{ role: 'architect', name: 'demo-architect' }], close_token: TOKEN, next: 'x', expected: 1, strays: [], not_closable: [], team_files: ['/x/team.json'], warnings: [], sources: {}, ...over })
+const out = (o: unknown, exitCode = 0, stderr = '') => ({ value: { exitCode, stdout: typeof o === 'string' ? o : JSON.stringify(o), stderr } })
+const PLAN_OK = () => out(planOf())
+const CLOSE_OK = () => out({ closed: true, still_live: [], results: [] })
+// A press of Dismiss with scripted dialogs: an answer string, or null for a dialog that is dismissed. `runs` answer process.run in order.
+const dismissRig = async ($: any, on: any, text: string, asks: (string | null)[], runs: ((e: any) => any)[] = [PLAN_OK, CLOSE_OK], over: { options?: any; columns?: number; id?: string } = {}) => {
+  const w = world({ id: over.id ?? DID, files: { [FILE]: { text, mtimeMs: 1 } } })
+  const asked: { question: string; options: string[] }[] = []
+  const ran: any[] = []
+  stage(on, w)
+  beneath(on)
+  mock.clock(on, { now: DNOW })
+  on('tool.call', (_$: any, e: any, next: any) => {
+    if (e.tool !== 'AskUserQuestion') return next(e)
+    const q = e.questions[0]
+    asked.push({ question: q.question, options: q.options.map((o: any) => o.label) })
+    const a = asks[asked.length - 1]
+    return a === null || a === undefined ? { deny: 'dismissed' } : { result: { questions: e.questions, answers: { [q.question]: a } } }
+  })
+  on('process.run', (_$: any, e: any) => { ran.push(e); return (runs[ran.length - 1] ?? (() => out('', 1, 'unscripted')))(e) })
+  await start($, w, 'terminal')
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'AbovePrompt', props: bandProps({ bodyColumns: over.columns ?? 120 }), viewport: VIEWPORT })
+  return { w, asked, ran, ui, press: () => ui.press({ key: 'ah-dismiss' }) }
+}
+const keysOf = (n: any): string[] => buttons(n).map((b: any) => b.props?.key ?? b.key)
+const CWD = '/work/repo/sub'
+const roster = (over: string[]) => [expect.stringMatching(/\/bin\/ah$/), 'roster', 'disband', ...over]
+const planArgv = (team: string) => roster(['--plan', '--team', team, '--cwd', CWD])
+const closeArgv = (team: string) => roster(['--close', '--confirm', '--plan-token', TOKEN, '--team', team, '--cwd', CWD])
+
+for (const [columns, keys] of [[125, ['ah-view', 'ah-dismiss']], [52, ['ah-view', 'ah-dismiss']], [51, ['ah-view']], [40, ['ah-view']]] as [number, string[]][]) {
+  test(`D1 an owned view at ${columns} columns draws ${keys.join(' + ')}`, async ($, on) => {
+    const { ui } = await dismissRig($, on, doc(), [], [], { columns })
+    expect(keysOf(await ui.drawn())).toEqual(keys)
+  })
+}
+
+test('D1b below the Pane button width neither button is drawn', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc(), [], [], { columns: 39 })
+  expect(keysOf(await ui.drawn())).toEqual([])
+})
+
+test('D2 a legacy document (no owners) draws View and no Dismiss', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc((d) => { delete d.owners }), [], [])
+  expect(keysOf(await ui.drawn())).toEqual(['ah-view'])
+})
+
+test('D2b negative: a bare viewer in a repo with a live team draws no band and no button', async ($, on) => {
+  const a = await dismissRig($, on, doc(), [], [], { id: 'someone-else' })
+  expect(keysOf(await a.ui.drawn())).toEqual([])
+})
+
+test('D2c a member session draws the Pane button and no Dismiss', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc((d) => { d.member_sessions = [DID] }), [], [])
+  expect(keysOf(await ui.drawn())).toEqual(['ah-pane'])
+})
+
+test('D2d an owned view with no team (pipeline only) draws no Dismiss', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc((d) => { d.teams = []; d.owners[0].teams = [] }), [], [])
+  expect(keysOf(await ui.drawn()).includes('ah-dismiss')).toBe(false)
+})
+
+for (const [label, answer] of [['Cancel', 'Cancel'], ['Other free text', 'sure, go'], ['a dismissed dialog', null]] as [string, string | null][]) {
+  test(`D3 ${label} on the confirm: the plan ran, nothing closed, no toast`, async ($, on) => {
+    const { w, asked, ran, press } = await dismissRig($, on, doc(idleEdit), [answer])
+    await press()
+    expect(ran.length).toBe(1)
+    expect(ran[0].argv).toEqual(planArgv('@default'))
+    expect(asked.length).toBe(1)
+    expect(asked[0].options[0]).toBe('Cancel')
+    expect(w.toasts).toEqual([])
+  })
+}
+
+test('D4 an idle team: one dialog, then the close with the plan token, then the toast', async ($, on) => {
+  const { w, asked, ran, press } = await dismissRig($, on, doc(idleEdit), ['Dismiss default'])
+  await press()
+  expect(asked.length).toBe(1)
+  expect(asked[0].options).toEqual(['Cancel', 'Dismiss default'])
+  expect(asked[0].question).toContain('Dismiss team default? This closes 1 member session: demo-architect.')
+  expect(asked[0].question).toContain('No member is busy.')
+  expect(asked[0].question).toContain('No open dispatches.')
+  expect(asked[0].question).not.toContain('in-flight')
+  expect(ran.map((r) => r.argv)).toEqual([planArgv('@default'), closeArgv('@default')])
+  expect(ran.map((r) => r.init)).toEqual([{ timeoutMs: 15000 }, { timeoutMs: 30000 }])
+  expect(w.toasts).toEqual(['Dismissed default.'])
+})
+
+test('D5 a busy member with an open dispatch: both named in the question, then a second dialog, then the close', async ($, on) => {
+  const { w, asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams[0].dispatches[0].states = [{ at: '2026-01-01T11:59:00.000Z', state: 'overdue' }] }), ['Dismiss default', 'Dismiss anyway'])
+  await press()
+  expect(asked.length).toBe(2)
+  expect(asked[0].question).toContain('BUSY now: demo-architect.')
+  expect(asked[0].question).toContain('Open dispatches: 1 (demo-architect late).')
+  expect(asked[0].question).toContain('Their in-flight work will be lost.')
+  expect(asked[1].options).toEqual(['Cancel', 'Dismiss anyway'])
+  expect(asked[1].question).toBe('default has work in flight: demo-architect busy; 1 open dispatch. Close it anyway and lose that work?')
+  expect(ran.length).toBe(2)
+  expect(w.toasts).toEqual(['Dismissed default.'])
+})
+
+for (const [label, answer] of [['Cancel', 'Cancel'], ['Other free text', 'yes please'], ['a dismissed dialog', null]] as [string, string | null][]) {
+  test(`D6 ${label} on the second dialog: no close, no toast`, async ($, on) => {
+    const { w, asked, ran, press } = await dismissRig($, on, doc(), ['Dismiss default', answer])
+    await press()
+    expect(asked.length).toBe(2)
+    expect(ran.length).toBe(1)
+    expect(w.toasts).toEqual([])
+  })
+}
+
+test('D7 an open dispatch with nobody working still asks twice', async ($, on) => {
+  const { asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams[0].members[0].activity = 'idle' }), ['Dismiss default', 'Dismiss anyway'])
+  await press()
+  expect(asked.length).toBe(2)
+  expect(asked[0].question).toContain('No member is busy.')
+  expect(asked[1].question).toBe('default has work in flight: 1 open dispatch. Close it anyway and lose that work?')
+  expect(ran.length).toBe(2)
+})
+
+test('D7b a busy member with no open dispatch asks twice and names no dispatch count', async ($, on) => {
+  const { asked, press } = await dismissRig($, on, doc((d) => { d.teams[0].dispatches[0].states = [{ at: '2026-01-01T11:59:00.000Z', state: 'reported' }] }), ['Dismiss default', 'Cancel'])
+  await press()
+  expect(asked[1].question).toBe('default has work in flight: demo-architect busy. Close it anyway and lose that work?')
+})
+
+test('D8 a blocked member is not busy: one dialog, with a Blocked line', async ($, on) => {
+  const { asked, ran, press } = await dismissRig($, on, doc((d) => { idleEdit(d); d.teams[0].members[0].activity = 'blocked' }), ['Dismiss default'])
+  await press()
+  expect(asked.length).toBe(1)
+  expect(asked[0].question).toContain('No member is busy.')
+  expect(asked[0].question).toContain('Blocked: demo-architect.')
+  expect(ran.length).toBe(2)
+})
+
+test('D8b reported and expired dispatches are not open', async ($, on) => {
+  const { asked, press } = await dismissRig($, on, doc((d) => { idleEdit(d); d.teams[0].dispatches.push({ ...d.teams[0].dispatches[0], id: 'x2', states: [{ at: '2026-01-01T11:59:00.000Z', state: 'expired' }] }) }), ['Cancel'])
+  await press()
+  expect(asked[0].question).toContain('No open dispatches.')
+})
+
+test('D8c stalled and overdue dispatches are open', async ($, on) => {
+  const { asked, press } = await dismissRig($, on, doc((d) => { idleEdit(d); d.teams[0].dispatches[0].states = [{ at: '2026-01-01T11:59:00.000Z', state: 'stalled' }] }), ['Cancel'])
+  await press()
+  expect(asked[0].question).toContain('Open dispatches: 1 (demo-architect stuck).')
+})
+
+test('D9 the default team is addressed as @default and a team named default as default', async ($, on) => {
+  const named = await dismissRig($, on, doc((d) => { d.teams[0].team = 'default'; d.owners[0].teams = ['default'] }), ['Cancel'])
+  await named.press()
+  expect(named.ran[0].argv).toEqual(planArgv('default'))
+})
+
+test('D9b both owned: the picker labels them @default and default, each answer keeps its own argv', async ($, on) => {
+  const two = (d: any) => { d.teams.push({ ...JSON.parse(JSON.stringify(d.teams[0])), team: 'default' }); d.owners[0].teams = [null, 'default'] }
+  const a = await dismissRig($, on, doc(two), ['@default', 'Cancel'])
+  await a.press()
+  expect(a.asked[0].options).toEqual(['Cancel', '@default', 'default'])
+  expect(a.ran[0].argv).toEqual(planArgv('@default'))
+  expect(a.asked[1].options).toEqual(['Cancel', 'Dismiss @default'])
+})
+
+test('D9c the picker answer default reaches the named team', async ($, on) => {
+  const two = (d: any) => { d.teams.push({ ...JSON.parse(JSON.stringify(d.teams[0])), team: 'default' }); d.owners[0].teams = [null, 'default'] }
+  const a = await dismissRig($, on, doc(two), ['default', 'Cancel'])
+  await a.press()
+  expect(a.ran[0].argv).toEqual(planArgv('default'))
+})
+
+for (const [label, answer] of [['Cancel', 'Cancel'], ['Other free text', 'beta please'], ['a dismissed dialog', null]] as [string, string | null][]) {
+  test(`D10 ${label} on the team picker: nothing runs at all`, async ($, on) => {
+    const { w, asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams.push({ ...JSON.parse(JSON.stringify(d.teams[0])), team: 'beta' }); d.owners[0].teams = [null, 'beta'] }), [answer])
+    await press()
+    expect(asked.length).toBe(1)
+    expect(asked[0].options).toEqual(['Cancel', 'default', 'beta'])
+    expect(ran).toEqual([])
+    expect(w.toasts).toEqual([])
+  })
+}
+
+test('D10b the picked team alone is planned, asked about and closed', async ($, on) => {
+  const { w, asked, ran, press } = await dismissRig($, on, doc((d) => { idleEdit(d); d.teams.push({ ...JSON.parse(JSON.stringify(d.teams[0])), team: 'beta' }); d.owners[0].teams = [null, 'beta'] }), ['beta', 'Dismiss beta'])
+  await press()
+  expect(asked[1].options).toEqual(['Cancel', 'Dismiss beta'])
+  expect(ran.map((r) => r.argv)).toEqual([planArgv('beta'), closeArgv('beta')])
+  expect(w.toasts).toEqual(['Dismissed beta.'])
+})
+
+test('D11 four owned teams: a pointer to the skill, no dialog, no process', async ($, on) => {
+  const { w, asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams = ['a', 'b', 'c', 'd'].map((t) => ({ ...JSON.parse(JSON.stringify(d.teams[0])), team: t })); d.owners[0].teams = ['a', 'b', 'c', 'd'] }), [])
+  await press()
+  expect(asked).toEqual([])
+  expect(ran).toEqual([])
+  expect(w.toasts).toEqual(['Too many teams to choose here; use the agent-team skill to disband.'])
+})
+
+test('D12 a team another session owns is never offered and never in an argv', async ($, on) => {
+  const { asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams.push({ ...JSON.parse(JSON.stringify(d.teams[0])), team: 'foreign-team' }); d.owners.push({ ...d.owners[0], sessions: ['someone-else'], teams: ['foreign-team'] }) }), ['Cancel'])
+  await press()
+  expect(JSON.stringify(asked)).not.toContain('foreign-team')
+  expect(JSON.stringify(ran)).not.toContain('foreign-team')
+  expect(ran[0].argv).toEqual(planArgv('@default'))
+})
+
+const BAD_NAMES = ['a b', '-x', 'a'.repeat(33), 'a;rm', '../t', 'a_b', 'a.b', '$(x)', 'x`y`']
+for (const name of BAD_NAMES) {
+  test(`D13 the team name ${JSON.stringify(name)} fails the name shape: no process, the generic toast`, async ($, on) => {
+    const { w, asked, ran, press } = await dismissRig($, on, doc((d) => { d.teams[0].team = name; d.owners[0].teams = [name] }), [])
+    await press()
+    expect(ran).toEqual([])
+    expect(asked).toEqual([])
+    expect(w.toasts).toEqual(['Could not dismiss that team.'])
+  })
+}
+for (const name of ['a', 'Beta-2', '9lives', 'a'.repeat(32)]) {
+  test(`D13b the team name ${JSON.stringify(name)} is at the shape's edge and runs`, async ($, on) => {
+    const { ran, press } = await dismissRig($, on, doc((d) => { d.teams[0].team = name; d.owners[0].teams = [name] }), ['Cancel'])
+    await press()
+    expect(ran[0].argv).toEqual(planArgv(name))
+  })
+}
+
+const PLAN_FAILS: [string, (e: any) => any, string][] = [
+  ['exit 2 with stderr', () => out('', 2, 'roster.mjs: team file is unreadable\nmore'), 'Could not dismiss default: team file is unreadable'],
+  ['a refusal', () => ({ deny: 'boom' }), 'Could not dismiss default: plan failed'],
+  ['a throw', () => { throw new Error('timed out') }, 'Could not dismiss default: plan failed'],
+  ['non-JSON output', () => out('not json'), 'Could not dismiss default: plan failed'],
+  ['no token', () => out(planOf({ close_token: undefined })), 'Could not dismiss default: plan failed'],
+  ['a token of the wrong shape', () => out(planOf({ close_token: '--confirm' })), 'Could not dismiss default: plan failed'],
+  ['nothing to dismiss', () => out({ disbanded: false, reason: 'no active team and no live peers' }), 'Nothing to dismiss: no active team and no live peers'],
+  ['a plan over live peers (the team file is gone)', () => out(planOf({ source: 'peers', team_files: [] })), 'Could not dismiss default: no team file'],
+  ['a plan that names no team file', () => out(planOf({ team_files: [] })), 'Could not dismiss default: no team file'],
+  ['a source key whatever its value', () => out(planOf({ source: 'team' })), 'Could not dismiss default: no team file'],
+]
+for (const [label, run, toast] of PLAN_FAILS) {
+  test(`D14 plan: ${label} shows its toast, opens no dialog and runs no close`, async ($, on) => {
+    const { w, asked, ran, press } = await dismissRig($, on, doc(), ['Dismiss default', 'Dismiss anyway'], [run, CLOSE_OK])
+    await press()
+    expect(asked).toEqual([])
+    expect(ran.length).toBe(1)
+    expect(w.toasts).toEqual([toast])
+  })
+}
+
+const CLOSE_FAILS: [string, (e: any) => any, string][] = [
+  ['a stale token', () => out('', 2, 'roster.mjs: disband --close: --plan-token does not match the current close plan (the topology may have changed)'), 'default changed since the check; press Dismiss again.'],
+  ['closed false with still_live', () => out({ closed: false, still_live: ['demo-architect'] }), 'default: not all sessions closed (demo-architect).'],
+  ['closed false with kept rows', () => out({ closed: false, still_live: [], kept: [{ name: 'k1', why: 'live' }] }), 'default: not all sessions closed (k1).'],
+  ['closed true with a still_live name', () => out({ closed: true, still_live: ['x'] }), 'default: not all sessions closed (x).'],
+  ['exit 1 with stderr', () => out('', 1, 'roster.mjs: bad thing'), 'Could not dismiss default: bad thing'],
+  ['a refusal', () => ({ deny: 'boom' }), 'Could not dismiss default: close failed'],
+  ['a throw', () => { throw new Error('timed out') }, 'Could not dismiss default: close failed'],
+  ['non-JSON output', () => out('oops'), 'Could not dismiss default: close failed'],
+]
+for (const [label, run, toast] of CLOSE_FAILS) {
+  test(`D15 close: ${label} shows its toast and never "Dismissed"`, async ($, on) => {
+    const { w, ran, press } = await dismissRig($, on, doc(idleEdit), ['Dismiss default'], [PLAN_OK, run])
+    await press()
+    expect(ran.length).toBe(2)
+    expect(w.toasts).toEqual([toast])
+  })
+}
+
+test('D16 with toast_seconds 0 the outcome toast still shows, with no duration of its own', { options: { toast_seconds: 0 } }, async ($, on) => {
+  const { w, press } = await dismissRig($, on, doc(idleEdit), ['Dismiss default'])
+  await press()
+  expect(w.toastCalls).toEqual([{ text: 'Dismissed default.' }])
+})
+
+// A stand-in `$` for the helper alone: what the engine's own harness would not let a test vary (the plugin directory, the cwd).
+const stub = (over: { root?: unknown; cwd?: unknown; view?: unknown; ask?: (q: string, o: any) => Promise<string>; run?: (a: string[], i: any) => Promise<any> } = {}) => {
+  const state: Record<string, unknown> = { view: over.view }
+  const log = { toasts: [] as string[], runs: [] as string[][], asks: [] as string[] }
+  const $ = {
+    state: { get: async (k: any) => ({ value: state[k.key] }), set: async (k: any, v: unknown) => { state[k.key] = v } },
+    ui: { ask: async (q: string, o: any) => { log.asks.push(q); return (over.ask ?? (async () => 'Cancel'))(q, o) }, toast: async (t: string) => { log.toasts.push(t) } },
+    process: { run: async (a: string[], i: any) => { log.runs.push(a); return (over.run ?? (async () => ({ exitCode: 0, stdout: JSON.stringify(planOf()), stderr: '' })))(a, i) } },
+    session: { cwd: async () => ('cwd' in over ? over.cwd : CWD) },
+    plugin: { root: 'root' in over ? over.root : '/opt/ah' },
+  }
+  return { $, log, state }
+}
+const ownedView = (): any => ({ owned: true, teams: [{ name: 'default', isDefault: true, summary: { members: 1, busy: [], blocked: [], open: [] } }] })
+
+test('D17 the command is the plugin directory plus /bin/ah roster disband', async () => {
+  const s = stub({ view: ownedView() })
+  await dismissTeam(s.$)
+  expect(s.log.runs[0]).toEqual(['/opt/ah/bin/ah', 'roster', 'disband', '--plan', '--team', '@default', '--cwd', CWD])
+})
+
+for (const root of [undefined, '', 'relative/dir', './x', 42, null]) {
+  test(`D17b the plugin directory ${JSON.stringify(root) ?? 'absent'} is not absolute: no process, a toast`, async () => {
+    const s = stub({ view: ownedView(), root })
+    await dismissTeam(s.$)
+    expect(s.log.runs).toEqual([])
+    expect(s.log.toasts).toEqual(['Could not dismiss default: plugin path unavailable'])
+  })
+}
+
+for (const cwd of [undefined, '', 'rel/dir', 7]) {
+  test(`D17c the working directory ${JSON.stringify(cwd) ?? 'absent'} is not absolute: no process, a toast`, async () => {
+    const s = stub({ view: ownedView(), cwd })
+    await dismissTeam(s.$)
+    expect(s.log.runs).toEqual([])
+    expect(s.log.toasts).toEqual(['Could not dismiss default: working directory unavailable'])
+  })
+}
+
+test('D18 a press while a dismiss is in flight does nothing; the flag clears afterwards', async () => {
+  let release: (a: string) => void = () => {}
+  let calls = 0
+  const s = stub({ view: ownedView(), ask: () => (calls++ === 0 ? new Promise<string>((r) => { release = r }) : Promise.resolve('Cancel')) })
+  const first = dismissTeam(s.$)
+  for (let i = 0; i < 50; i++) await Promise.resolve()
+  await dismissTeam(s.$)
+  await dismissTeam(s.$)
+  expect(s.log.asks.length).toBe(1)
+  expect(s.log.runs.length).toBe(1)
+  release('Cancel')
+  await first
+  expect(s.state.dismissing).toBe(false)
+  await dismissTeam(s.$)
+  expect(s.log.asks.length).toBe(2)
+})
+
+test('D18b the flag clears when a dialog is dismissed or a call throws', async () => {
+  const s = stub({ view: ownedView(), ask: async () => { throw new Error('dismissed') } })
+  await dismissTeam(s.$)
+  expect(s.state.dismissing).toBe(false)
+  const t = stub({ view: ownedView(), run: async () => { throw new Error('boom') } })
+  await dismissTeam(t.$)
+  expect(t.state.dismissing).toBe(false)
+})
+
+test('D19 a held view that is not owned, or not a view, runs nothing', async () => {
+  for (const view of [undefined, null, {}, { owned: false, teams: ownedView().teams }, { owned: true, teams: 'x' }, { owned: true, teams: [{ name: 'a' }] }]) {
+    const s = stub({ view })
+    await dismissTeam(s.$)
+    expect(s.log.runs).toEqual([])
+    expect(s.log.asks).toEqual([])
+  }
+})
+
+// The Pane's render hook driven directly, so a test can draw it again and move the clock between draws.
+const paneRig = (recs: unknown[], clock: { now: number }) => {
+  const statPaths: string[] = []
+  const hooks: Record<string, any> = {}
+  register((event: string, matcher: any, fn: any) => { hooks[`${event}:${matcher?.component ?? ''}`] = fn ?? matcher }, {} as any)
+  const Plain = () => null
+  const $: any = {
+    state: { get: async (k: { key: string }) => ({ value: k.key === 'mail' ? recs : undefined }) },
+    clock: { now: async () => clock.now },
+    fs: { stat: async (p: string) => { statPaths.push(p); return { mtimeMs: 9 } } },
+    ui: { resolve: () => ({ Box: Plain, Button: Plain, Text: Plain }) },
+  }
+  return { statPaths, draw: () => hooks['ui.render:Pane']($, { props: { bodyColumns: 80 } }) }
+}
+const mailRecord = (id: string, path: string) => ({ at: NOW, ids: [id], address: 'imp@tm', text: 'ah mail for imp@tm (1):\n- note from user: hi', state: 'delivered', files: [{ path, mtime: 9 }] })
+
+test('negative: a redraw stats no file a held mail record still names, in this tick or the next', async () => {
+  const clock = { now: NOW }
+  const rig = paneRig([mailRecord('a', '/m/a.md'), mailRecord('b', '/m/b.md')], clock)
+
+  await rig.draw()
+  clock.now += 2000
+  await rig.draw()
+
+  expect(rig.statPaths).toEqual([])
+})
+
+// ---- The band's View button: the chooser, the three views, and what a press may run.
+const viewRig = async ($: any, on: any, answer: string | null, run?: (e: any) => any, over: Partial<World> = {}) => {
+  const w = world(over)
+  stage(on, w)
+  const view = viewAnswers(on, answer, run)
+  beneath(on)
+  mock.clock(on, { now: NOW })
+  await start($, w, 'terminal')
+  view.arm()
+  const ui = await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })
+  return { w, ui, ...view, press: () => ui.press({ key: 'ah-view' }) }
+}
+const tokenFile = { [AH + '/run/band.token']: { text: TOKEN64, mtimeMs: 1 } }
+
+test('V1 the View button asks Open view with Pane, Sitrep, TUI and Web in that order, and a dismissed dialog runs nothing and opens nothing', async ($, on) => {
+  const r = await viewRig($, on, null, undefined, { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  const before = r.w.opens.length
+  await r.press()
+  expect(r.asked).toEqual([{ question: 'Open view', options: ['Pane', 'Sitrep', 'TUI', 'Web'] }])
+  expect(r.ran).toEqual([])
+  expect(r.w.opens.length - before).toBe(0)
+  expect(r.w.toasts).toEqual([])
+})
+
+test('V1b Sitrep opens the Pane, runs nothing, and the Pane draws the Sitrep tab selected, in place of the hierarchy', async ($, on) => {
+  const r = await viewRig($, on, 'Sitrep', undefined, { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await r.press()
+  expect(r.ran).toEqual([])
+  expect(r.w.opens.at(-1)).toMatchObject({ id: 'ah-status', title: 'Hierarchy' })
+  const pane = JSON.stringify(await (await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn())
+  expect(pane).toContain('Loading…')
+  expect(pane).toContain('Sitrep')
+  expect(pane).not.toContain('Mail (newest first)')
+})
+
+test('V2 Web reads the token file under AH_HOME and runs bin/ah view open --kind web with the token on stdin alone', async ($, on) => {
+  const r = await viewRig($, on, 'Web', ok('Web opened\n'), { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await r.press()
+  expect(r.w.readPaths.filter((p) => p.endsWith('band.token'))).toEqual([AH + '/run/band.token'])
+  expect(r.ran.length).toBe(1)
+  expect(r.ran[0].argv).toEqual([expect.stringMatching(/\/bin\/ah$/), 'view', 'open', '--kind', 'web'])
+  expect(r.ran[0].init).toEqual({ stdin: JSON.stringify({ token: TOKEN64 }) + '\n', timeoutMs: 15000 })
+  expect(JSON.stringify(r.ran[0].argv)).not.toContain(TOKEN64)
+  expect(Object.keys(r.ran[0].init).sort()).toEqual(['stdin', 'timeoutMs'])
+  expect(r.w.toasts).toEqual([])
+})
+
+for (const [label, text] of [['too short', 'ab'.repeat(31)], ['too long', 'ab'.repeat(33)], ['upper case', 'AB'.repeat(32)], ['not hex', 'zz'.repeat(32)], ['a trailing newline', TOKEN64 + '\n'], ['empty', ''], ['a JSON line', JSON.stringify({ token: TOKEN64 })]] as const) {
+  test(`V3 a token file that is ${label} toasts that Web is unavailable and runs nothing`, async ($, on) => {
+    const r = await viewRig($, on, 'Web', undefined, { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, [AH + '/run/band.token']: { text, mtimeMs: 1 } } })
+    await r.press()
+    expect(r.ran).toEqual([])
+    expect(r.w.toasts).toEqual(['Web is unavailable (ahd not running?); run `ahd ui start` in a terminal'])
+  })
+}
+
+test('V3b a missing token file toasts that Web is unavailable and runs nothing', async ($, on) => {
+  const r = await viewRig($, on, 'Web')
+  await r.press()
+  expect(r.ran).toEqual([])
+  expect(r.w.toasts).toEqual(['Web is unavailable (ahd not running?); run `ahd ui start` in a terminal'])
+})
+
+test('V4 a Web run that exits non-zero toasts the first line it printed', async ($, on) => {
+  const r = await viewRig($, on, 'Web', fails(3, 'Web did not open (no browser); run `ahd ui start` in a terminal\nmore\n'), { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await r.press()
+  expect(r.w.toasts).toEqual(['Web did not open (no browser); run `ahd ui start` in a terminal'])
+})
+
+test('V4b a Web run that prints nothing and exits non-zero toasts the command to run, and one that is rejected too', async ($, on) => {
+  const a = await viewRig($, on, 'Web', fails(2), { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await a.press()
+  expect(a.w.toasts).toEqual(['Web did not open; run `ahd ui start` in a terminal'])
+})
+
+test('V4c a rejected Web run toasts that it did not open', async ($, on) => {
+  const r = await viewRig($, on, 'Web', () => ({ deny: 'timed out' }), { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await r.press()
+  expect(r.ran.length).toBe(1)
+  expect(r.w.toasts).toEqual(['Web did not open; run `ahd ui start` in a terminal'])
+})
+
+test('V5 TUI runs bin/ah view open --kind tui --session <id> with a 10 s timeout and reads no token', async ($, on) => {
+  const r = await viewRig($, on, 'TUI', ok('TUI opened\n'), { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  await r.press()
+  expect(r.ran.length).toBe(1)
+  expect(r.ran[0].argv).toEqual([expect.stringMatching(/\/bin\/ah$/), 'view', 'open', '--kind', 'tui', '--session', 'sess-orch'])
+  expect(r.ran[0].init).toEqual({ timeoutMs: 10000 })
+  expect(r.w.readPaths.some((p) => p.endsWith('band.token'))).toBe(false)
+  expect(r.w.toasts).toEqual([])
+})
+
+test('V5b a TUI run that exits non-zero toasts the first line it printed, and one that prints nothing toasts the command', async ($, on) => {
+  const a = await viewRig($, on, 'TUI', fails(3, 'Run ahd tui in a terminal\n'))
+  await a.press()
+  expect(a.w.toasts).toEqual(['Run ahd tui in a terminal'])
+})
+
+test('V5c a silent failing TUI run toasts the command to run', async ($, on) => {
+  const a = await viewRig($, on, 'TUI', fails(2))
+  await a.press()
+  expect(a.w.toasts).toEqual(['TUI did not open; run `ahd tui` in a terminal'])
+})
+
+test('V6 an answer that is none of the three runs nothing and opens nothing', async ($, on) => {
+  const r = await viewRig($, on, 'sure, go', undefined, { files: { [FILE]: { text: fixtures.work, mtimeMs: 1 }, ...tokenFile } })
+  const before = r.w.opens.length
+  await r.press()
+  expect(r.ran).toEqual([])
+  expect(r.w.opens.length - before).toBe(0)
+})
+
+test('V7 a member session draws the Pane button, never View, and its press asks nothing and runs nothing', async ($, on) => {
+  const r = await viewRig($, on, 'Web', undefined, { id: 'sess-demo-reviewer', files: { [FILE]: { text: fixtures['member-session'], mtimeMs: 1 }, ...tokenFile } })
+  expect(keysOf(await r.ui.drawn())).toEqual(['ah-pane'])
+  await r.ui.press({ key: 'ah-pane' })
+  expect(r.asked).toEqual([])
+  expect(r.ran).toEqual([])
+})
+
+test('V8 /ah2-view is not registered; only /wrangl-hierarchy-pane is', async ($, on) => {
+  const w = world()
+  stage(on, w)
+  beneath(on)
+  mock.clock(on, { now: NOW })
+  await start($, w, 'terminal')
+  expect(w.registered).toEqual([{ name: 'wrangl-hierarchy-pane', description: 'Open the hierarchy status Pane' }])
+})
+
+test('V9 viewOpen called directly: the token read is the only file read, and nothing is run for Pane', async () => {
+  const reads: string[] = []
+  const ran: any[] = []
+  const toasts: string[] = []
+  const $ = {
+    ui: { ask: async () => 'Pane', toast: async (m: string) => { toasts.push(m) } },
+    fs: { read: async (p: string) => { reads.push(p); return TOKEN64 } },
+    process: { run: async (argv: string[], init: any) => { ran.push({ argv, init }); return { exitCode: 0, stdout: '', stderr: '' } } },
+    plugin: { root: '/plug' },
+    session: { id: async () => 's1' },
+  }
+  expect(await viewOpen($, { ahHome: AH })).toBe('pane')
+  expect(reads).toEqual([])
+  expect(ran).toEqual([])
+  $.ui.ask = async () => 'Web'
+  expect(await viewOpen($, { ahHome: AH })).toBeUndefined()
+  expect(reads).toEqual([AH + '/run/band.token'])
+  expect(ran).toEqual([{ argv: ['/plug/bin/ah', 'view', 'open', '--kind', 'web'], init: { stdin: JSON.stringify({ token: TOKEN64 }) + '\n', timeoutMs: 15000 } }])
+  expect(toasts).toEqual([])
+})
+
+test('V9b viewOpen with a plugin root that is not an absolute path runs nothing for Web or the TUI', async () => {
+  const ran: any[] = []
+  for (const root of [undefined, '', 'relative/dir', 7]) {
+    for (const choice of ['Web', 'TUI']) {
+      const $ = {
+        ui: { ask: async () => choice, toast: async () => {} },
+        fs: { read: async () => TOKEN64 },
+        process: { run: async (argv: string[]) => { ran.push(argv); return { exitCode: 0, stdout: '', stderr: '' } } },
+        plugin: { root },
+        session: { id: async () => 's1' },
+      }
+      expect(await viewOpen($, { ahHome: AH })).toBeUndefined()
+    }
+  }
+  expect(ran).toEqual([])
+})
+
+// The Pane's Sitrep end to end through the engine: a lead whose cwd is another repository than its team's, as the daemon answers it today.
+const SITREP_HOME = '/ah'
+const TEAM_DIR = '/other/repo/.claude/ah2'
+const SITREP_REGIONS = [
+  { col: 'c', list: 'completed', total: 'completed_total', label: 'Completed', optional: false, folded: false },
+  { col: 'p', list: 'in_progress', total: 'in_progress_total', label: 'In progress', optional: false, folded: false },
+  { col: 'n', list: 'up_next', total: null, label: 'Up next', optional: false, folded: false },
+]
+const sitrepRig = async ($: any, on: any, rows: unknown[]) => {
+  const w = world({ id: vectors.work.sessionId, defaultTab: true, panes: [{ id: 'ah-status', title: 'Hierarchy', isShown: true, isFocused: false, isPlaced: true }], files: { [FILE]: { text: JSON.stringify({ ...JSON.parse(fixtures.work), owners: [] }), mtimeMs: 1 } } })
+  w.files[SITREP_HOME + '/session-marks/' + w.id] = { text: 'x', mtimeMs: 1 }
+  stage(on, w)
+  const clock = mock.clock(on, { now: Date.parse(vectors.work.now) })
+  const views: string[] = []
+  let statusAsks = 0
+  on('env.get', (_$: any, e: any) => ({ value: (e.name ?? e.key) === 'AH_HOME' ? SITREP_HOME : undefined }))
+  on('process.run', () => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify({ v: 1, ids: [], prompt: null, idle: true, state: 'S1', acked: [], daemon: { socket: '/run/ahd.sock' } }) } }))
+  on('http.fetch', (_$: any, e: any) => {
+    const reply = (body: unknown, status = 200) => ({ value: { ok: status === 200, status, headers: {}, text: JSON.stringify(body) } })
+    if (e.url.includes('/v1/due')) return new Promise(() => {})
+    if (e.url.includes('/v1/inspect/registrations')) return reply({ registrations: rows })
+    if (e.url.includes('/v1/status')) {
+      if (!decodeURIComponent(e.url).includes('dir=' + TEAM_DIR + '&')) return reply({ error: { code: 'not_found' } }, 404)
+      statusAsks++
+      return reply({ rev: 2, doc: JSON.parse(fixtures.work) })
+    }
+    views.push(e.url)
+    const sub = new URL(e.url).searchParams.get('sub')!.split(',')
+    return reply({ epoch: 'e1', seq: 9, resync: false, removed: [], slices: sub.map((id) => ({ id, body: { regions: SITREP_REGIONS, as_of: Date.parse(vectors.work.now), completed_total: 1, in_progress_total: 1, completed: [{ kind: 'item', title: 'Done row' }], in_progress: [{ title: 'Working row' }], up_next: [{ title: 'Next row' }] } })) })
+  })
+  await start($, w, 'terminal')
+  await clock.advance(30000)
+  const drawn = JSON.stringify(await (await $.ui.mount({ plugin: 'wrangl', surface: 'terminal', component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn())
+  return { drawn, views, statusAsks }
+}
+
+test('Pane Sitrep: a lead in another repository than its team draws Completed, In progress, Up next from the daemon', async ($, on) => {
+  const { drawn, views } = await sitrepRig($, on, [{ session_id: vectors.work.sessionId, team_file: '/other/repo/.claude/ah2/teams/t.json' }])
+  expect(views.length).toBeGreaterThan(0)
+  expect(drawn.indexOf('Done row')).toBeGreaterThan(-1)
+  expect(drawn.indexOf('Done row')).toBeLessThan(drawn.indexOf('Working row'))
+  expect(drawn.indexOf('Working row')).toBeLessThan(drawn.indexOf('Next row'))
+})
+
+test('a status with no file behind it is asked of the daemon every other 2 s tick, not every tick (J2)', async ($, on) => {
+  // 30 s is 15 ticks: every tick would be about 14 asks, every other about 7
+  const { statusAsks } = await sitrepRig($, on, [{ session_id: vectors.work.sessionId, team_file: '/other/repo/.claude/ah2/teams/t.json' }])
+  expect(statusAsks).toBeGreaterThanOrEqual(5)
+  expect(statusAsks).toBeLessThanOrEqual(8)
+})
+
+test('Pane Sitrep negative: a session with no registered team asks for no slice and says why', async ($, on) => {
+  const { drawn, views } = await sitrepRig($, on, [])
+  expect(views).toEqual([])
+  expect(drawn).toContain('No open team of yours here')
+})

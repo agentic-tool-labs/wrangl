@@ -1,0 +1,304 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "ackIds",
+  "cases": [
+    {
+      "id": "acks-a-present-entry",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1"
+        ],
+        "prompt-hook",
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e2--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"prompt-hook\",\"session_id\":\"s1\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e2": null
+      },
+      "expect": {
+        "acked": [
+          "e1"
+        ],
+        "unknown": [],
+        "fresh": [
+          "e1"
+        ]
+      }
+    },
+    {
+      "id": "without-session-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"cli\"}\n"
+      },
+      "expect": {
+        "acked": [
+          "e1"
+        ],
+        "unknown": [],
+        "fresh": [
+          "e1"
+        ]
+      }
+    },
+    {
+      "id": "already-acked-is-acked-not-fresh",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1"
+        ],
+        "cli",
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"paste\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"paste\"}\n"
+      },
+      "expect": {
+        "acked": [
+          "e1"
+        ],
+        "unknown": [],
+        "fresh": []
+      }
+    },
+    {
+      "id": "unknown-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "zz"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/zz": null
+      },
+      "expect": {
+        "acked": [],
+        "unknown": [
+          "zz"
+        ],
+        "fresh": []
+      }
+    },
+    {
+      "id": "invalid-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "../x",
+          "a/b"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expect": {
+        "acked": [],
+        "unknown": [
+          "../x",
+          "a/b"
+        ],
+        "fresh": []
+      }
+    },
+    {
+      "id": "duplicate-ids-second-is-not-fresh",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1",
+          "e1"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"cli\"}\n"
+      },
+      "expect": {
+        "acked": [
+          "e1",
+          "e1"
+        ],
+        "unknown": [],
+        "fresh": [
+          "e1"
+        ]
+      }
+    },
+    {
+      "id": "empty-ids",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expect": {
+        "acked": [],
+        "unknown": [],
+        "fresh": []
+      }
+    },
+    {
+      "id": "no-entries-file",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": {
+        "acked": [],
+        "unknown": [
+          "e1"
+        ],
+        "fresh": []
+      }
+    },
+    {
+      "id": "mixed-present-and-unknown-keep-order",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e2",
+          "nope",
+          "e1"
+        ],
+        "cli",
+        "s9"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e2--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"cli\",\"session_id\":\"s9\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e2": "{\"v\":1,\"id\":\"e2\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"cli\",\"session_id\":\"s9\"}\n"
+      },
+      "expect": {
+        "acked": [
+          "e2",
+          "e1"
+        ],
+        "unknown": [
+          "nope"
+        ],
+        "fresh": [
+          "e2",
+          "e1"
+        ]
+      }
+    },
+    {
+      "id": "torn-entry-line-is-not-present",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e2"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n{\"id\":\"e2\","
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e2": null
+      },
+      "expect": {
+        "acked": [],
+        "unknown": [
+          "e2"
+        ],
+        "fresh": []
+      }
+    },
+    {
+      "id": "acks-path-is-a-file-throws",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        [
+          "e1"
+        ],
+        "cli"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks": "x"
+      },
+      "expectThrows": true
+    }
+  ]
+}

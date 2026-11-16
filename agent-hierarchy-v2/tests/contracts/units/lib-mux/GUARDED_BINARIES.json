@@ -1,0 +1,19 @@
+{
+  "lib": "lib-mux",
+  "module": "hooks/lib-mux.mjs",
+  "fn": "GUARDED_BINARIES",
+  "cases": [
+    {
+      "id": "list",
+      "args": [],
+      "expect": [
+        "herdr",
+        "hc",
+        "herdr-app",
+        "tmux",
+        "claude",
+        "codex"
+      ]
+    }
+  ]
+}

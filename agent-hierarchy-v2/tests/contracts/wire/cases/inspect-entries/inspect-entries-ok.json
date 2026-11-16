@@ -1,0 +1,35 @@
+{
+  "kind": "wire",
+  "id": "inspect-entries-ok",
+  "about": "entries of one mailbox",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/entries"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "address": "tm-implementor@tm",
+      "entries": [],
+      "filter": "pending",
+      "total": 0
+    }
+  },
+  "mutant": "entries of the wrong box",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:02.668Z"
+  }
+}

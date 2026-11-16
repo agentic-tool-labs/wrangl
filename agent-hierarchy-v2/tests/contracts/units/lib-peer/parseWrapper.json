@@ -1,0 +1,138 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "parseWrapper",
+  "cases": [
+    {
+      "id": "from-and-name",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">hello"
+      ],
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "fromName": "orch",
+        "body": "hello"
+      }
+    },
+    {
+      "id": "from-only",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\">hello"
+      ],
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "fromName": "",
+        "body": "hello"
+      }
+    },
+    {
+      "id": "attr-order-swapped",
+      "args": [
+        "<cross-session-message from-name=\"orch\" from=\"uds:/tmp/a.sock\">hi"
+      ],
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "fromName": "orch",
+        "body": "hi"
+      }
+    },
+    {
+      "id": "no-from",
+      "args": [
+        "<cross-session-message from-name=\"orch\">hi"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-from",
+      "args": [
+        "<cross-session-message from=\"\">hi"
+      ],
+      "expect": null
+    },
+    {
+      "id": "tag-prefix-only",
+      "args": [
+        "<cross-session-messages from=\"x\">hi"
+      ],
+      "expect": null
+    },
+    {
+      "id": "from-name-only-does-not-satisfy-from",
+      "args": [
+        "<cross-session-message from-name=\"orch\" other=\"1\">hi"
+      ],
+      "expect": null
+    },
+    {
+      "id": "text-before-tag",
+      "args": [
+        "intro <cross-session-message from=\"x\">body"
+      ],
+      "expect": {
+        "from": "x",
+        "fromName": "",
+        "body": "body"
+      }
+    },
+    {
+      "id": "no-tag",
+      "args": [
+        "from=\"x\" just text"
+      ],
+      "expect": null
+    },
+    {
+      "id": "extra-attrs",
+      "args": [
+        "<cross-session-message mode=\"prompting\" from=\"a\" from-name=\"b\" x=\"y\">body"
+      ],
+      "expect": {
+        "from": "a",
+        "fromName": "b",
+        "body": "body"
+      }
+    },
+    {
+      "id": "from-inside-other-attr-value",
+      "args": [
+        "<cross-session-message note=\"x-from=\" from=\"real\">body"
+      ],
+      "expect": {
+        "from": " from=",
+        "fromName": "",
+        "body": "body"
+      }
+    },
+    {
+      "id": "quoted-gt-in-attr",
+      "args": [
+        "<cross-session-message from=\"a>b\" from-name=\"n\">body"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

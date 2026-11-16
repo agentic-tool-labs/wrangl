@@ -1,0 +1,107 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "errorKind",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "rate_limit"
+      ],
+      "expect": "rate_limit"
+    },
+    {
+      "id": "punctuation-stripped",
+      "args": [
+        "rate-limit!"
+      ],
+      "expect": "ratelimit"
+    },
+    {
+      "id": "spaces-stripped",
+      "args": [
+        "server error"
+      ],
+      "expect": "servererror"
+    },
+    {
+      "id": "digits-and-case-kept",
+      "args": [
+        "Err_42"
+      ],
+      "expect": "Err_42"
+    },
+    {
+      "id": "cut-at-forty",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "exactly-forty",
+      "args": [
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "id": "forty-one-after-strip-cut",
+      "args": [
+        "ccccccccccccccccccccccccccccccccccccccccc"
+      ],
+      "expect": "cccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "id": "stripped-before-cut",
+      "args": [
+        "------------------------------ddddddddddddddddddddddddddddddddddddddddddddd"
+      ],
+      "expect": "dddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "id": "all-stripped-is-unknown",
+      "args": [
+        "--!!"
+      ],
+      "expect": "unknown"
+    },
+    {
+      "id": "empty-is-unknown",
+      "args": [
+        ""
+      ],
+      "expect": "unknown"
+    },
+    {
+      "id": "non-ascii-letters-stripped",
+      "args": [
+        "café"
+      ],
+      "expect": "caf"
+    },
+    {
+      "id": "number-is-unknown",
+      "args": [
+        5
+      ],
+      "expect": "unknown"
+    },
+    {
+      "id": "null-is-unknown",
+      "args": [
+        null
+      ],
+      "expect": "unknown"
+    },
+    {
+      "id": "undefined-is-unknown",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "unknown"
+    }
+  ]
+}

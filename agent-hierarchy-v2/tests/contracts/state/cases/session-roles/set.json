@@ -1,0 +1,45 @@
+{
+  "kind": "state-op",
+  "id": "set",
+  "about": "set records a session's role",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "session-roles",
+    "op": "set",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "session_id": "sess-1",
+        "role": "architect"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-session-roles-set"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "session_id": "sess-1",
+        "role": "architect"
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a role written under the wrong session",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:21.146Z"
+  }
+}

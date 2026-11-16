@@ -1,0 +1,81 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "ensureHierarchyDir",
+  "cases": [
+    {
+      "id": "fresh-repo",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/.gitignore": "*\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "existing-gitignore-kept",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.gitignore": "custom\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/.gitignore": "custom\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "env-dir-wins",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "$ROOT/elsewhere"
+      },
+      "expectFiles": {
+        "elsewhere/.gitignore": "*\n",
+        "repo/.claude/hierarchy/.gitignore": null
+      },
+      "expect": "$ROOT/elsewhere"
+    },
+    {
+      "id": "no-git-uses-home",
+      "args": [
+        "$ROOT/work"
+      ],
+      "files": {
+        "work": {
+          "dir": true
+        }
+      },
+      "expectFiles": {
+        "home/.claude/hierarchy/work/.gitignore": "*\n"
+      },
+      "expect": "$ROOT/home/.claude/hierarchy/work"
+    },
+    {
+      "id": "twice-is-idempotent",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/keep.md": "x"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/msgs/keep.md": "x",
+        "repo/.claude/hierarchy/.gitignore": "*\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    }
+  ]
+}

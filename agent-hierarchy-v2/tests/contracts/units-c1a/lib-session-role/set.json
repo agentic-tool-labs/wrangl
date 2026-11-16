@@ -1,0 +1,246 @@
+{
+  "lib": "lib-session-role",
+  "module": "hooks/lib-session-role.mjs",
+  "fn": "set",
+  "cases": [
+    {
+      "id": "new-file",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "overwrite",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": "reviewer"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectThrows": true,
+      "rerecorded": "C3c: role pinned to the setting process"
+    },
+    {
+      "id": "second-session",
+      "args": [
+        {
+          "session_id": "s2",
+          "role": "reviewer"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"old\"\n    },\n    \"s2\": {\n      \"role\": \"reviewer\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s2",
+        "role": "reviewer"
+      }
+    },
+    {
+      "id": "no-session-id",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "__nosession__",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "null-session-id",
+      "args": [
+        {
+          "session_id": null,
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "__nosession__",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "padded",
+      "args": [
+        {
+          "session_id": "  s1 ",
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "role-missing",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1"
+      }
+    },
+    {
+      "id": "role-null",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": null
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": null,\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": null
+      }
+    },
+    {
+      "id": "role-number",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": 7
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": 7,\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": 7
+      }
+    },
+    {
+      "id": "prune",
+      "args": [
+        {
+          "session_id": "new",
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s01\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"new\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "new",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "no-prune-at-limit",
+      "args": [
+        {
+          "session_id": "s00",
+          "role": "reviewer"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expectThrows": true,
+      "rerecorded": "C3c: role pinned to the setting process"
+    },
+    {
+      "id": "corrupt-replaced",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{broken"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "newer-replaced",
+      "args": [
+        {
+          "session_id": "s1",
+          "role": "architect"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 5,\n  \"sessions\": {\n    \"keep\": {\n      \"role\": \"x\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "session_id": "s1",
+        "role": "architect"
+      }
+    }
+  ]
+}

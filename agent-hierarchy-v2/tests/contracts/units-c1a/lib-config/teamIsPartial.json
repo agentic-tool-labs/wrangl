@@ -1,0 +1,461 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "teamIsPartial",
+  "cases": [
+    {
+      "id": "complete",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            },
+            {
+              "name": "repo-reviewer"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "partial",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": true
+    },
+    {
+      "id": "renamed-counts",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "x",
+              "renamed_from": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "extra-records-ignored",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            },
+            {
+              "name": "adhoc"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "null-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        null,
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "no-members-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "members": "x"
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "no-cwd",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": []
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "no-roster",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": []
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "subagent-route-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"task-runner\",\"route\":\"subagent\",\"model\":\"haiku\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "legwork-handed-off",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"task-runner\"}]}}",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"task-gopher@m\":[{\"installPath\":\"$ROOT/tg\"}]}}",
+        "tg/agents/task-gopher.md": "x"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "legwork-not-handed-off-without-gopher",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"task-runner\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": true
+    },
+    {
+      "id": "legwork-with-model-launched",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"task-runner\",\"model\":\"haiku\"}]}}",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"task-gopher@m\":[{\"installPath\":\"$ROOT/tg\"}]}}",
+        "tg/agents/task-gopher.md": "x"
+      },
+      "cwd": "repo",
+      "expect": true
+    },
+    {
+      "id": "member-route-pane",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\",\"route\":\"pane\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": true
+    },
+    {
+      "id": "block-route-subagent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": []
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"subagent\",\"members\":[{\"role\":\"task-runner\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "recorded-block-missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            }
+          ],
+          "roster_key": "gone"
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[{\"name\":\"repo-architect\"}],\"roster_key\":\"gone\"}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "null-team-name-default",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "version": 1,
+          "team_id": "t",
+          "orchestrator": {
+            "pid": 1,
+            "session_id": "s"
+          },
+          "members": [
+            {
+              "name": "repo-architect"
+            },
+            {
+              "name": "repo-reviewer"
+            }
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"},{\"role\":\"reviewer\"}]}}",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[{\"name\":\"repo-architect\"},{\"name\":\"repo-reviewer\"}]}"
+      },
+      "cwd": "repo",
+      "expect": false
+    },
+    {
+      "id": "null-record-entries",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "$ROOT/repo",
+        null,
+        {
+          "members": [
+            null,
+            {
+              "name": "repo-architect"
+            },
+            5
+          ]
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roster\":{\"route\":\"peer\",\"members\":[{\"role\":\"architect\"}]}}"
+      },
+      "cwd": "repo",
+      "expect": false
+    }
+  ]
+}

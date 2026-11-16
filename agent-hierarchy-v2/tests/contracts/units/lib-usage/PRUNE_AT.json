@@ -1,0 +1,12 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "PRUNE_AT",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 50000
+    }
+  ]
+}

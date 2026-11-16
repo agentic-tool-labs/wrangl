@@ -1,0 +1,203 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "extractPendingRecord",
+  "cases": [
+    {
+      "id": "sentinel-first-line",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-peer-brief reply-to=\"orch [ref]\" task=\"do-it\"]\nbody\n</cross-session-message>"
+      ],
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "orch",
+        "task": "do-it",
+        "armed_by": "sentinel"
+      }
+    },
+    {
+      "id": "sentinel-after-blank-lines",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n\n\n  [hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]\n</cross-session-message>"
+      ],
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "orch",
+        "task": "do-it",
+        "armed_by": "sentinel"
+      }
+    },
+    {
+      "id": "sentinel-not-first-line-is-not-a-tasking",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nintro\n[hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]\n</cross-session-message>"
+      ],
+      "expect": null
+    },
+    {
+      "id": "sentinel-mid-line-is-not-a-tasking",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nplease [hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]\n</cross-session-message>"
+      ],
+      "expect": null
+    },
+    {
+      "id": "quoted-report-is-not-a-tasking",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n> [hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]\n</cross-session-message>"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-wrapper-from",
+      "args": [
+        "<cross-session-message from-name=\"x\">\n[hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-wrapper",
+      "args": [
+        "[hierarchy-peer-brief reply-to=\"orch\" task=\"do-it\"]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-wrapper-body",
+      "args": [
+        "<cross-session-message from=\"a\">\n\n  \n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "msg-token-first-line",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md]\nplease do\n</cross-session-message>"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "uds:/tmp/a.sock",
+        "task": "spec-it",
+        "armed_by": "msg-token"
+      }
+    },
+    {
+      "id": "msg-token-file-missing",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md]\n</cross-session-message>"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "msg-token-not-a-request",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--spec-it--response.md]\n</cross-session-message>"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--spec-it--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:59.000Z\n---\n\n## [0] tldr\n- [1] status: \n- [2] changes: \n- [3] evidence: \n- [4] gaps: \n- [5] open_questions: \n\n## [1] status\n- none\n\n## [2] changes\n- none\n\n## [3] evidence\n- none\n\n## [4] gaps\n- none\n\n## [5] open_questions\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "msg-token-mid-line-without-role",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nplease see [hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md] now\n</cross-session-message>"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "msg-token-mid-line-with-matching-role",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nplease see [hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md] now\n</cross-session-message>",
+        "architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "uds:/tmp/a.sock",
+        "task": "spec-it",
+        "armed_by": "msg-token"
+      }
+    },
+    {
+      "id": "msg-token-mid-line-with-other-role",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nplease see [hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md] now\n</cross-session-message>",
+        "reviewer"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "role-given-but-token-first-line",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md]\n</cross-session-message>",
+        "reviewer"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "uds:/tmp/a.sock",
+        "task": "spec-it",
+        "armed_by": "msg-token"
+      }
+    },
+    {
+      "id": "sentinel-wins-over-token",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n[hierarchy-peer-brief reply-to=\"a\" task=\"do-it\"] [hierarchy-msg $ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md]\n</cross-session-message>"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--spec-it--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:59:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": {
+        "from": "uds:/tmp/a.sock",
+        "from_name": "orch",
+        "reply_to": "a",
+        "task": "do-it",
+        "armed_by": "sentinel"
+      }
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    }
+  ]
+}

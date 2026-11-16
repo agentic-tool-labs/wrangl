@@ -1,0 +1,17 @@
+{
+  "team_id": "t-tm",
+  "mesh": {
+    "policy": "open"
+  },
+  "orchestrator": {
+    "pid": "<PID:runner>","pid_start":"<PIDSTART:runner>",
+    "session_id": "sess-contract"
+  },
+  "members": [
+    {
+      "role": "implementor",
+      "name": "tm-implementor",
+      "transport_id": "p-tm-implementor"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "kind": "wire",
+  "id": "register-ok",
+  "about": "a registration is accepted",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "session_id": "s-impl",
+      "addresses": [
+        "tm-implementor@tm"
+      ],
+      "boxes": {
+        "tm-implementor@tm": "<ROOT:proj>/boxes/tm-implementor"
+      },
+      "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+      "harness": "claude"
+    },
+    "path": "/v1/register"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "ok": true
+    }
+  },
+  "mutant": "a registration that writes no file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:06.944Z"
+  }
+}

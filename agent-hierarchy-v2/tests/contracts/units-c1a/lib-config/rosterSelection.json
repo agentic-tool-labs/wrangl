@@ -1,0 +1,365 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "rosterSelection",
+  "cases": [
+    {
+      "id": "default",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "no-options",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "flag",
+      "args": [
+        "$ROOT/repo",
+        {
+          "flag": "squad"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "squad",
+        "key": "squad",
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "flag-default-means-unnamed",
+      "args": [
+        "$ROOT/repo",
+        {
+          "flag": "default"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "flag-empty-ignored",
+      "args": [
+        "$ROOT/repo",
+        {
+          "flag": ""
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "env",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": "envr"
+      },
+      "expect": {
+        "roster": "envr",
+        "key": "envr",
+        "source": "env",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "env-default",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": "default"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "env",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "env-empty-ignored",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": ""
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "active",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"act\"}"
+      },
+      "expect": {
+        "roster": "act",
+        "key": "act",
+        "source": "activeRoster",
+        "level": "repo",
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "flag-beats-env",
+      "args": [
+        "$ROOT/repo",
+        {
+          "flag": "f"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "f",
+        "key": "f",
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "env-beats-active",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"act\"}"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "e",
+        "key": "e",
+        "source": "env",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "team-recorded-key",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": null
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "team-recorded-default",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": null
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":null}"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "team-without-file-falls-through",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": "nope"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "e",
+        "key": "e",
+        "source": "env",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "team-beats-env",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": null
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "flag-beats-team",
+      "args": [
+        "$ROOT/repo",
+        {
+          "flag": "f",
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": null
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "expect": {
+        "roster": "f",
+        "key": "f",
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "named-team-file",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": {
+            "dir": "$ROOT/repo/.claude/hierarchy",
+            "name": "alpha"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "expect": {
+        "roster": "alpha",
+        "key": "alpha",
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    }
+  ]
+}

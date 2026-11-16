@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "h3-transcript-outside-dropped",
+  "about": "a transcript path outside the projects directory is not kept",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "/etc/hosts",
+      "error": "rate_limit",
+      "error_message": "slow down"
+    }
+  },
+  "mutant": "transcript path not validated",
+  "expect": {
+    "stdout": "{\"terminalSequence\":\"\\u001b]9;ah: proj stopped on an API error (rate_limit). Open it to continue.\\u0007\\u0007\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:58.871Z"
+  }
+}

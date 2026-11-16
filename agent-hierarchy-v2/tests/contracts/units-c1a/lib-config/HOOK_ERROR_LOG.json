@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "HOOK_ERROR_LOG",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "$ROOT/home/.claude/hierarchy/hook-errors.jsonl"
+    }
+  ]
+}

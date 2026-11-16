@@ -1,0 +1,18 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "BUILTIN_HARNESSES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "claude",
+        "codex",
+        "claude-mod",
+        "stub",
+        "probe"
+      ]
+    }
+  ]
+}

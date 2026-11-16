@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h4-watch-events-delivered",
+  "about": "daemon findings are put in front of the orchestrator once",
+  "tree": "hook-orchestrator-watch-events",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "userpromptsubmit-peer-tracking",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "hello"
+    }
+  },
+  "mutant": "watch events not delivered",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"ahd resumed sess-x\\nahd: check in on r1\\n\\nah CLI root (v<VERSION>): <PLUGIN> — roster: `node <PLUGIN>/hooks/roster.mjs <verb> --cwd <abs cwd>`, messages: `node <PLUGIN>/hooks/msg.mjs <verb> --cwd <abs cwd>` (verbs: agent-hierarchy/docs/cli-tools.md)\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"watch-event\",\"kind\":\"RESUME\",\"session_id\":\"sess-contract\",\"subject\":\"sess-x\",\"text\":\"ahd resumed sess-x\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n{\"type\":\"watch-event\",\"kind\":\"CHECK-IN\",\"session_id\":\"sess-contract\",\"subject\":\"r1\",\"text\":\"ahd: check in on r1\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n{\"type\":\"user-prompt\",\"session_id\":\"sess-contract\",\"prompt_id\":\"<PROMPTID>\",\"ts\":\"<ISO:3>\",\"op_id\":\"<OPID:3>\"}\n{\"type\":\"watch-consumed\",\"session_id\":\"sess-contract\",\"ts\":\"<ISO:4>\",\"op_id\":\"<OPID:4>\"}\n{\"type\":\"cli-root\",\"session_id\":\"sess-contract\",\"digest\":\"<DIGEST>\",\"ts\":\"<ISO:5>\",\"op_id\":\"<OPID:5>\"}\n"
+        }
+      ]
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:37:12.188Z"
+  }
+}

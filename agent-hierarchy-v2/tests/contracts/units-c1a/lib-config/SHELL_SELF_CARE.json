@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "SHELL_SELF_CARE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "self-care"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "kind": "cli",
+  "id": "empty",
+  "about": "sweep of an empty pool archives nothing",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "sweep",
+      "--days",
+      "7"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"archived\":0}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a sweep that archives open requests",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:43.939Z"
+  }
+}

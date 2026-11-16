@@ -1,0 +1,90 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "responseFrontmatter",
+  "cases": [
+    {
+      "id": "fields-and-created",
+      "args": [
+        {
+          "id": "20260601-100000-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "spec-it"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expect": "---\nid: 20260601-100000-aaaa\ntype: response\nto: orchestrator\nfrom: architect\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n"
+    },
+    {
+      "id": "created-overrides",
+      "args": [
+        {
+          "id": "20260601-100000-aaaa",
+          "created": "old"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "---\nid: 20260601-100000-aaaa\ntype: null\nto: null\nfrom: null\nslug: null\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T08:00:00-04:00\n---\n"
+    },
+    {
+      "id": "unknown-keys-dropped",
+      "args": [
+        {
+          "id": "a",
+          "extra": "x"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expect": "---\nid: a\ntype: null\nto: null\nfrom: null\nslug: null\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n"
+    },
+    {
+      "id": "null-and-undefined-write-null",
+      "args": [
+        {
+          "id": "a",
+          "parent": null,
+          "reason": {
+            "$undefined": 1
+          }
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expect": "---\nid: a\ntype: null\nto: null\nfrom: null\nslug: null\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T12:00:00+00:00\n---\n"
+    },
+    {
+      "id": "default-now",
+      "args": [
+        {
+          "id": "a"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "env": {
+        "TZ": "Asia/Kolkata"
+      },
+      "expect": "---\nid: a\ntype: null\nto: null\nfrom: null\nslug: null\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T17:30:00+05:30\n---\n"
+    }
+  ]
+}

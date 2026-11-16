@@ -1,0 +1,74 @@
+{
+  "about": "Native behaviours the recast of the status, ahd and allow-hook suites assert where they differ from what Node did. None of these has a recorded Node row of its own (the recordings that touch them are listed under DV-Z1 of z-flag-day.json, whose Node-form commands the native hook no longer recognises), so rowsExercisingNode is empty and the tests named here are the pins.",
+  "rows": [
+    {
+      "id": "DV-ZR3",
+      "where": "ahd --help / ahd help",
+      "node": "`ahd-ctl.mjs --help` printed the usage block and exited 0",
+      "native": "`ahd --help` and `ahd help` print the same usage block (UsageText.Block, byte for byte the old doc block) and exit 0; any other first word that is not a verb is `ahd: unknown command '<word>'`, exit 2",
+      "reason": "the native binary advertises `(try: ahd --help)` in its own usage error; `help` is the word people try after a bare `ahd`",
+      "pinnedBy": [
+        "native/tests/Ah.Cli.Tests DelegationTests.HelpAndDashDashHelpPrintTheSameUsageBlockAndExitZero",
+        "native/tests/Ah.Cli.Tests DelegationTests.AVerbThatOnlyStartsLikeHelpIsAnUnknownCommand",
+        "tests/test-ahd-bin.sh"
+      ],
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-ZR4",
+      "where": "hook pretooluse-ah-cli, the daemon CLI's native command",
+      "node": "`node <root>/hooks/ahd-ctl.mjs <verb> ...` was the plugin's own command and was allowed",
+      "native": "`<root>/bin/ahd <verb> ...` is the plugin's own command (the form every role is now told to run) and is allowed under the same grammar and the same root rule as `<root>/bin/ah <group> ...`; a `bin/ahd` of another directory, a relative `bin/ahd`, a bare `<root>/bin/ahd` and a `bin/ahd-other` stay silent",
+      "reason": "the commands the native build prints for roles must not prompt: without the form the allow hook stayed silent for every `ahd` command the contract text names",
+      "pinnedBy": [
+        "native/tests/Ah.Hooks.Tests HooksHostTests.TheAllowHookLetsThePluginsOwnAhdCommandThroughAndNothingElse",
+        "tests/test-ah-cli.sh T1 and T2"
+      ],
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-ZR5",
+      "where": "hook pretooluse-ah-cli, a payload that is not a JSON object",
+      "node": "exit 0 with no output (the allow hook is silent on input it cannot read)",
+      "native": "exit 0 with no output and one hook-errors row: the ah-cli gate fails open on unreadable input, as node does (issue #21 narrowed the fail-closed ruling for the non-safety gates)",
+      "reason": "the allow hook only grants a permission shortcut; holding a call it cannot read costs the user a prompt, not safety, so it logs and leaves the normal permission flow in place",
+      "pinnedBy": [
+        "tests/test-ah-cli.sh T2 (a payload that is not JSON)"
+      ],
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-ZR6",
+      "where": "hook pretooluse-ah-cli, the forged-`--from` deny text",
+      "node": "`ah: msg.mjs fill may only write a response from your own role (<role>); --from names <value>` with the value as given",
+      "native": "`ah: ah msg fill may only write a response from your own role (<role>); --from names \"<value>\"`: the command is named in the native form and the value, which the caller chose, is rendered as quoted text",
+      "reason": "the value is the caller's own text, so it is quoted the way every other native deny quotes caller text; the command name follows the native command form",
+      "pinnedBy": [
+        "tests/test-ah-cli.sh T2 (spec 0090 forged --from rows)"
+      ],
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-ZR7",
+      "where": "tests/test-ahd-fallback.sh, fault injection",
+      "node": "AHD_CRASH_AT=after-append killed the daemon between its append and its reply, and AHD_TEST_LOCK_HOLD_MS held the append lock; both took effect only under AH_TEST=1",
+      "native": "the native daemon has neither environment hook (nothing in native/src reads either name); the same properties are tested without injection: the daemon is killed from outside after it answered and the same id sent again lands once, and six senders racing for the append lock all land once each",
+      "reason": "a fault-injection switch in a daemon that holds user mail is surface for no product purpose; killing the process from outside is the same fault",
+      "pinnedBy": [
+        "tests/test-ahd-fallback.sh (retry after the daemon died; senders racing for the append lock)"
+      ],
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-ZR8",
+      "where": "tests/lib-daemon-leak.sh, attributing a native daemon to a run",
+      "node": "a daemon spawn passed every AHD_* variable on, so the run marker AHD_LEAK_RUN reached the daemon and attributed it",
+      "native": "the native daemon spawn passes a fixed set of variables (PATH, HOME, AH_HOME, AH_PLUGIN_ROOT, AH_TEST) and not the marker; a native daemon (argv `ahd [--plugin-root <dir>] serve --ah-home <home>`) is this run's when it names this checkout's root and its home is under a temp root",
+      "reason": "the spawn's environment is a deliberate allow-list; the leak check adapts to it instead of widening it",
+      "pinnedBy": [
+        "tests/test-daemon-leak-check.sh L6 (this plugin root counts; another plugin root under a temp home does not)"
+      ],
+      "rowsExercisingNode": []
+    }
+  ]
+}

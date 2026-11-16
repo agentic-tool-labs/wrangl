@@ -1,0 +1,74 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "normalizeSessionId",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "abc"
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "padded",
+      "args": [
+        "  abc \n"
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "blank",
+      "args": [
+        "   "
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "object",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expect": "__nosession__"
+    },
+    {
+      "id": "inner-space",
+      "args": [
+        "a b"
+      ],
+      "expect": "a b"
+    }
+  ]
+}

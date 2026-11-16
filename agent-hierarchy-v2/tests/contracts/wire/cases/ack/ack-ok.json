@@ -1,0 +1,40 @@
+{
+  "kind": "wire",
+  "id": "ack-ok",
+  "about": "acking an unknown id is accepted and reported as unknown",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "address": "tm-implementor@tm",
+      "ids": [
+        "e-nope"
+      ],
+      "by": "cli",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/ack"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "acked": [],
+      "fresh": [],
+      "unknown": [
+        "e-nope"
+      ]
+    }
+  },
+  "mutant": "an unknown id reported as acked",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:56.361Z"
+  }
+}

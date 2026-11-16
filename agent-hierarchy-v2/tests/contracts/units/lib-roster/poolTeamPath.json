@@ -1,0 +1,38 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "poolTeamPath",
+  "cases": [
+    {
+      "id": "default",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "expect": "$ROOT/wt/.claude/hierarchy/team.json"
+    },
+    {
+      "id": "named",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "expect": "$ROOT/wt/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "empty-name-is-default",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        ""
+      ],
+      "expect": "$ROOT/wt/.claude/hierarchy/team.json"
+    },
+    {
+      "id": "null-name",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        null
+      ],
+      "expect": "$ROOT/wt/.claude/hierarchy/team.json"
+    }
+  ]
+}

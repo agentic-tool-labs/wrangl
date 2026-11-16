@@ -1,0 +1,19 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "CLASS_NAMES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "advise",
+        "design",
+        "review",
+        "implement",
+        "legwork",
+        "orchestrate"
+      ]
+    }
+  ]
+}

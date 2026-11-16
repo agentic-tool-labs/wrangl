@@ -1,0 +1,149 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "membersNamed",
+  "cases": [
+    {
+      "id": "one-team",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        },
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": [
+        {
+          "kind": "member",
+          "name": "a",
+          "team": "tm",
+          "role": "implementor",
+          "address": "a@tm"
+        }
+      ]
+    },
+    {
+      "id": "two-teams",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        },
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n",
+        "h/teams/t2.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "kind": "member",
+          "name": "a",
+          "team": "t2",
+          "role": "implementor",
+          "address": "a@t2"
+        },
+        {
+          "kind": "member",
+          "name": "a",
+          "team": "tm",
+          "role": "implementor",
+          "address": "a@tm"
+        }
+      ]
+    },
+    {
+      "id": "member-without-role",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        },
+        "plain"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"plain\"}]}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": [
+        {
+          "kind": "member",
+          "name": "plain",
+          "team": "tm",
+          "role": null,
+          "address": "plain@tm"
+        }
+      ]
+    },
+    {
+      "id": "no-such-member",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        },
+        "zz"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "the-orchestrator-is-not-a-member-row",
+      "args": [
+        {
+          "cwd": "$ROOT/h",
+          "hierarchy_dir": "$ROOT/h",
+          "main_hierarchy_dir": null,
+          "messaging_socket_dir": null
+        },
+        "orchestrator"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"codex\"},{\"name\":\"cz\",\"role\":\"builder\",\"kind\":\"custom\"},{\"name\":\"plain\",\"role\":\"architect\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n",
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "x\n",
+        "h/msgs/20260101-000000-aa11--orchestrator--work--response.md": "y\n"
+      },
+      "expect": []
+    }
+  ]
+}

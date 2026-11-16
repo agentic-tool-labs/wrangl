@@ -1,0 +1,206 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "append",
+  "cases": [
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "merge-line",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"kind\":\"merge\",\"pr\":12,\"sha\":\"0123456789abcdef0123456789abcdef01234567\",\"method\":\"squash\",\"time\":\"2026-06-01T12:00:00.000Z\",\"approval\":\"permission prompt\",\"ran\":true,\"op_id\":\"op-1\"}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "merge-line-without-op-id",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"kind\":\"merge\",\"pr\":12,\"sha\":\"0123456789abcdef0123456789abcdef01234567\",\"method\":\"squash\",\"time\":\"2026-06-01T12:00:00.000Z\",\"approval\":\"permission prompt\",\"ran\":true}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "no-merge-throws",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expectThrows": true,
+      "expectError": "decisions.append takes a merge line; a decided or parked line goes through decisions.add"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "empty-merge-object-is-still-a-line",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+          "merge": {}
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"kind\":\"merge\",\"time\":\"2026-06-01T12:00:00.000Z\",\"approval\":\"permission prompt\",\"ran\":true}\n"
+      },
+      "expect": {
+        "appended": true
+      }
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "path-is-not-a-log-throws",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/other.jsonl",
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/other.jsonl is not a decision log"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "log-not-under-pipeline-throws",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/20260601-000001-aaaa/decisions.jsonl",
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/20260601-000001-aaaa/decisions.jsonl is not a decision log"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "path-missing-throws",
+      "args": [
+        {
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "undefined is not a decision log"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "numeric-path-throws",
+      "args": [
+        {
+          "path": 5,
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "5 is not a decision log"
+    },
+    {
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "id": "null-path-throws",
+      "args": [
+        {
+          "path": null,
+          "merge": {
+            "pr": 12,
+            "sha": "0123456789abcdef0123456789abcdef01234567",
+            "method": "squash"
+          }
+        },
+        null,
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "null is not a decision log"
+    }
+  ]
+}

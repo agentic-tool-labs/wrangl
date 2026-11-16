@@ -1,0 +1,25 @@
+ah › repoW · pid 4242 › work
+────────────────────────────────────────────────────────────
+transport herdr  mesh star  owed 0
+no open work
+links:
+  w-l1  w-impl@work  active  20 min left
+  w-l2  w-blk@work  revoked
+
+  name         role        kind   state doing            ctx
+> w-arch       architect   claude stale unknown –          –
+  w-impl       implementor claude stale unknown –          –
+  w-blk        implementor claude stale unknown –          –
+  w-idle       reviewer    claude stale unknown –          –
+  w-free       implementor claude stale unknown –          –
+  ──────────────────────────────────────────────────────────
+  + newbie     reviewer    codex  join  expires 9m         –
+  + 20261011-… –           codex  join  expires –          –
+  ◐ s-work     stream      –      open  2 peers            –
+  × s-blocked  stream      –      open  1 peers            –
+  ○ s-idle     stream      –      open  1 peers            –
+  ✓ s-done     stream      –      done  0 peers            –
+  · s-none     stream      –      open  0 peers            –
+  · a/b%c      stream      –      open  0 peers            –
+────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane…

@@ -1,0 +1,45 @@
+{
+  "kind": "wire",
+  "id": "register-conform-orchestrator-not-admitted",
+  "about": "the registration conform seeds for its sandbox Orchestrator, sent to the register route instead, is still 403 not_admitted",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "session_id": "orch-tm",
+      "addresses": [
+        "orchestrator@tm"
+      ],
+      "boxes": {
+        "orchestrator@tm": "<ROOT:proj>/boxes/orchestrator"
+      },
+      "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+      "harness": "conform",
+      "pid": "<PID:runner>",
+      "pid_start": "<PIDSTART:runner>",
+      "cwd": "<ROOT:proj>"
+    },
+    "path": "/v1/register"
+  },
+  "expect": {
+    "status": 403,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_admitted",
+        "message": "harness conform is not admitted: orchestrator@tm is not a custom member admitted under that harness"
+      }
+    }
+  },
+  "mutant": "the conform Orchestrator admitted through the register route",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-17T00:00:00.000Z",
+    "note": "a route behaviour the Node implementation never had, so there is no Node recording"
+  }
+}

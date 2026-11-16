@@ -1,0 +1,1016 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamFacts",
+  "cases": [
+    {
+      "id": "full",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "transport_id": "%2",
+            "tab_id": "own"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "working"
+          },
+          {
+            "name": "b",
+            "status": "idle"
+          }
+        ],
+        [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          },
+          {
+            "id": "e3",
+            "slug": "three",
+            "to_name": "zzz",
+            "from_name": "yyy",
+            "age_sec": 30
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "files": {
+        "wt/x": ""
+      },
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": true
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "working",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          },
+          {
+            "name": "b",
+            "role": "reviewer",
+            "status": "idle",
+            "pane_id": "%2",
+            "tab_id": "t2",
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          }
+        ],
+        "waiting_on": [
+          {
+            "on": "a",
+            "request": "e1",
+            "age_sec": 10
+          },
+          {
+            "on": "zzz",
+            "request": "e2",
+            "age_sec": 20
+          }
+        ]
+      }
+    },
+    {
+      "id": "worktree-missing",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "worktree-null",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": null,
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": null,
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "worktree-empty-string",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": null,
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "worktree-not-a-string",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": 5,
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": 5,
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "closed-included",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1",
+          "closed": "2026-02-01T00:00:00+00:00"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "closed": "2026-02-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "closed-empty-omitted",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1",
+          "closed": ""
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "opened-missing-omitted",
+      "args": [
+        {
+          "branch": "b"
+        },
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "b",
+        "base": null,
+        "worktree": null,
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "branch-and-base-default-null",
+      "args": [
+        {},
+        [],
+        [],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": null,
+        "base": null,
+        "worktree": null,
+        "peers": [],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "tab-from-member-row-without-agent-list",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "transport_id": "%1",
+            "tab_id": "t1"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "unknown"
+          }
+        ],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "unknown",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "tab-from-agent-wins",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "role": "architect",
+            "transport_id": "%2",
+            "tab_id": "t1"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "role": "architect",
+            "status": "idle",
+            "pane_id": "%2",
+            "tab_id": "t2",
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "in-stream-tab-needs-record-tab",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00"
+        },
+        [
+          {
+            "name": "a",
+            "role": "r",
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "role": "r",
+            "status": "idle",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "agent-without-tab-id",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "role": "r",
+            "transport_id": "%9"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "gone"
+          }
+        ],
+        [],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "role": "r",
+            "status": "gone",
+            "pane_id": "%9",
+            "tab_id": null,
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "exchanges-to-or-from-a-member",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          },
+          {
+            "name": "b",
+            "status": "idle"
+          }
+        ],
+        [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          },
+          {
+            "id": "e3",
+            "slug": "three",
+            "to_name": "zzz",
+            "from_name": "yyy",
+            "age_sec": 30
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "status": "idle",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          },
+          {
+            "name": "b",
+            "status": "idle",
+            "pane_id": "%2",
+            "tab_id": "t2",
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          }
+        ],
+        "waiting_on": [
+          {
+            "on": "a",
+            "request": "e1",
+            "age_sec": 10
+          },
+          {
+            "on": "zzz",
+            "request": "e2",
+            "age_sec": 20
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-exchange-for-nonmembers",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "q",
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "name": "q",
+            "status": "idle"
+          }
+        ],
+        [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          },
+          {
+            "id": "e3",
+            "slug": "three",
+            "to_name": "zzz",
+            "from_name": "yyy",
+            "age_sec": 30
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "q",
+            "status": "idle",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "exchange-with-null-names",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [
+          {
+            "id": "e9",
+            "slug": null,
+            "to_name": null,
+            "from_name": null,
+            "age_sec": 5
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "name": "a",
+            "status": "idle",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "member-without-name-matches-no-exchange",
+      "args": [
+        {
+          "branch": "feat/x",
+          "base": "main",
+          "worktree": "$ROOT/wt",
+          "opened": "2026-01-01T00:00:00+00:00",
+          "tab_id": "t1"
+        },
+        [
+          {
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "status": "idle"
+          }
+        ],
+        [
+          {
+            "id": "e1",
+            "slug": "one",
+            "to_name": "a",
+            "from_name": "orchestrator",
+            "age_sec": 10
+          },
+          {
+            "id": "e2",
+            "slug": "two",
+            "to_name": "zzz",
+            "from_name": "b",
+            "age_sec": 20
+          },
+          {
+            "id": "e3",
+            "slug": "three",
+            "to_name": "zzz",
+            "from_name": "yyy",
+            "age_sec": 30
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": {
+        "branch": "feat/x",
+        "base": "main",
+        "worktree": {
+          "path": "$ROOT/wt",
+          "exists": false
+        },
+        "opened": "2026-01-01T00:00:00+00:00",
+        "peers": [
+          {
+            "status": "idle",
+            "pane_id": "%1",
+            "tab_id": "t1",
+            "in_stream_tab": true
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    },
+    {
+      "id": "null-tabs-are-not-the-same-tab",
+      "args": [
+        {
+          "branch": "b",
+          "tab_id": null
+        },
+        [
+          {
+            "name": "a",
+            "role": "r"
+          }
+        ],
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        [],
+        null
+      ],
+      "expect": {
+        "branch": "b",
+        "base": null,
+        "worktree": null,
+        "peers": [
+          {
+            "name": "a",
+            "role": "r",
+            "status": "idle",
+            "pane_id": null,
+            "tab_id": null,
+            "in_stream_tab": false
+          }
+        ],
+        "exchanges": [],
+        "waiting_on": []
+      }
+    }
+  ]
+}

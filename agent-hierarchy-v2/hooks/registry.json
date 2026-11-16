@@ -1,0 +1,371 @@
+{
+  "description": "Wrangl: Agent Hierarchy — SessionStart injects the resolved role→model table and the orchestration protocol on startup, resume, clear, fork, and post-compaction (so it survives compaction). It classifies the session three ways: a subagent (agent_id set) gets nothing, which is the intent here, since role agents carry their own instructions in agents/*.md and an Implementor that starts orchestrating would defeat the hierarchy; a top-level `claude --agent <hierarchy role>` session that a team claims gets a short notice that it is NOT the Orchestrator; a session that is in (flagged by /wrangl:orchestrator or by an ah2 act of its own, owning a team, or under alwaysOrchestrator) gets the ordinary directive; everything else stays bare, with no output from any hook that talks to the model. PostToolUse on Skill|Bash, PostToolUseFailure on Bash and UserPromptSubmit opt a session in on an ah2 command or skill, or an ah call that leaves it owning a team; any other ah call leaves it bare. Every unit but the ways in does nothing for a session that is not part of ah, and a deny needs a positively identified session: no binary, a refused home, an unknown unit, unusable input, or a failure while identifying passes the call with one hook-errors row. The discriminator is agent_id, not agent_type — a top-level --agent session sets agent_type too, so testing it misclassifies a genuine main session as a subagent. Silent when the config sets enabled:false; with no config at all a session that is in gets a one-line nudge to run /hierarchy init. PreToolUse runs one process, ah-hook pretooluse-chain, which runs every gate whose matcher fits the tool. There is no Ultra-Advisor gate: `ah gate` only prints a removal notice. SubagentStop runs the usage collector: it sums the finished subagent's transcript (token counts the harness already logged) into ~/.claude/ah2/agent-hierarchy.usage.jsonl — plain code, zero model cost — which /hierarchy usage or ah usage-report renders as session/day/week/month reports. UserPromptSubmit also tracks the peer report-back contract: a delivered prompt carrying a `[hierarchy-peer-brief reply-to=\"...\" task=\"...\"]` sentinel inside its `<cross-session-message>` wrapper records a pending obligation in ~/.claude/ah2/agent-hierarchy.peer-pending.jsonl. PostToolUse (matcher SendMessage) resolves that obligation once a reply is sent to the recorded address, its name, or an explicit third-party reply-to. Stop blocks the session's turn from ending while an obligation is still owed, nudging at most twice before waiving it and allowing the stop regardless — fail-open throughout, and inert for subagents, exactly like the other hooks above. Enforcement arms only on a peer-delivered turn: UserPromptSubmit also arms a per-session turn marker whenever a wrapped message (a brief, a ping, or anything else carrying the cross-session-message envelope) leaves a pending obligation behind, and Stop's nudge/waive logic runs only on an armed turn, disarming it afterward either way — so a user directly chatting with a tasked peer neither triggers a nudge nor spends one. Two more mechanisms, both fail-open and inert for subagents. Message files: PreToolUse on SendMessage (ah-hook pretooluse-msg-gate) records a bare send after it is sent (PostToolUse): a follow-up links to the open request, other sends become a request whose clock arms when the member works; never denies; SubagentStop runs the response nudge — a hierarchy role subagent briefed by file whose final message lacks `[hierarchy-msg <response path>]` is blocked ONCE (per agent_id, recorded in gates.jsonl) with instructions to write its response file; the peer-side resolver likewise requires the response pointer when the obligation was recorded with one. Peer roster: a top-level `--agent <role>` session appends `up` at SessionStart and `down` at SessionEnd (ah-hook sessionend-roster) to `<hierarchy dir>/peers.jsonl`; PostToolUse on ListAgents|SendMessage (ah-hook posttooluse-roster) records `seen` (parsed from the ListAgents listing, role-matching names only) and `briefed`; SessionStart appends a HIERARCHY STATE block (open exchanges, roster, tier line) on every matcher including compact, and sweeps closed exchanges older than 7 days on startup. `msgs:\"off\"` in agent-hierarchy.json disables the two message gates; the CLI and the state listing stay. Streams: ah-hook stream-label runs on UserPromptSubmit, Stop and Notification (matcher permission_prompt) only in a roster-spawned herdr peer whose team row is tagged into an open stream, and re-renders that stream's tab glyph through `ah roster stream-label`, the same CLI that holds the other stream verbs (`stream-open`, `stream-status`, `stream-done`) and `--stream` on `spawn-one`/`spawn-ad-hoc`. ah blocks no push or merge; it records them, and \"do not push\" is an instruction in a member's brief. PostToolUse on Bash (ah-hook posttooluse-merge-record) appends a merge line to the run's decision log when the pinned merge command of a /pipeline run ran. The activity hook (ah-hook activity) records a Claude role session's own activity for the hierarchy status file: UserPromptSubmit working, Stop idle, a permission prompt or an AskUserQuestion blocked, and PostToolUse (async) working again; UserPromptSubmit and Stop also refresh status.json in a session that is part of ah.",
+  "registry": "The one registry of Wrangl's hook rows, read by hooks/register.ts (the mod that runs each row through bin/ah-hook on the mod event below) and by every test that checks the wiring. `hooks` keeps the classic shape: one command per row, the same matchers, the same order within an event. `mod` names the mod event each classic event runs on.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" sessionstart"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" session-rules"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" pretooluse-chain",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagentstart-cli-root"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagent-inflight"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagentstop-usage"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagentstop-msg-nudge"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagent-inflight"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" userpromptsubmit-peer-tracking"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagent-inflight"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stream-label"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-peer-resolve"
+          }
+        ]
+      },
+      {
+        "matcher": "ListAgents|SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-roster"
+          }
+        ]
+      },
+      {
+        "matcher": "TaskStop|Bash|Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" subagent-inflight"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-merge-record"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-commit-log"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          }
+        ]
+      },
+      {
+        "matcher": "Skill|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-implicit-opt-in"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-ask-record"
+          }
+        ]
+      },
+      {
+        "matcher": "PushNotification",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-push-record"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" permission-denied-alarm"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-ask-record"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stopfailure-recovery"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-implicit-opt-in"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" posttooluse-ask-record"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-chain-down"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-peer-nudge"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-orchestrator-liveness"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-member-liveness"
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" job-track"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stream-label"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stream-label"
+          }
+        ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" sessionend-roster"
+          }
+        ]
+      }
+    ]
+  },
+  "mod": {
+    "SessionStart": "session.start",
+    "PreToolUse": "tool.call",
+    "PostToolUse": "tool.call",
+    "PostToolUseFailure": "tool.call",
+    "PermissionDenied": "tool.call",
+    "UserPromptSubmit": "prompt.submit",
+    "Stop": "turn.complete",
+    "StopFailure": "turn.complete",
+    "SubagentStart": "agent.spawn",
+    "SubagentStop": "turn.complete",
+    "Notification": "tool.check",
+    "SessionEnd": "session.end"
+  }
+}

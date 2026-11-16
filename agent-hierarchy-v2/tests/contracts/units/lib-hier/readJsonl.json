@@ -1,0 +1,119 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "readJsonl",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "expect": []
+    },
+    {
+      "id": "rows",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "a": 2
+        }
+      ]
+    },
+    {
+      "id": "corrupt-and-blank-skipped",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": "{\"a\":1}\n\n   \n{bad\n{\"a\":2}\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "a": 2
+        }
+      ]
+    },
+    {
+      "id": "scalars-skipped-arrays-kept",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": "5\n\"s\"\nnull\ntrue\n[1,2]\n{\"a\":1}\n"
+      },
+      "expect": [
+        [
+          1,
+          2
+        ],
+        {
+          "a": 1
+        }
+      ]
+    },
+    {
+      "id": "no-trailing-newline",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": "{\"a\":1}"
+      },
+      "expect": [
+        {
+          "a": 1
+        }
+      ]
+    },
+    {
+      "id": "crlf",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": "{\"a\":1}\r\n{\"a\":2}\r\n"
+      },
+      "expect": [
+        {
+          "a": 1
+        },
+        {
+          "a": 2
+        }
+      ]
+    },
+    {
+      "id": "directory-reads-empty",
+      "args": [
+        "$ROOT/d"
+      ],
+      "files": {
+        "d": {
+          "dir": true
+        }
+      },
+      "expect": []
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/x.jsonl"
+      ],
+      "files": {
+        "x.jsonl": ""
+      },
+      "expect": []
+    }
+  ]
+}

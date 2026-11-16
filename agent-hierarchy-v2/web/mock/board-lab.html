@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-accent="obsidian">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Board Lab</title>
+  <style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.bottom-8{bottom:2rem}.left-1\/2{left:50%}.left-10{left:2.5rem}.right-1\/4{right:25%}.right-10{right:2.5rem}.top-1\/2{top:50%}.top-1\/3{top:33.333333%}.top-8{top:2rem}.z-30{z-index:30}.mx-auto{margin-left:auto;margin-right:auto}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-2{height:0.5rem}.h-28{height:7rem}.h-3{height:0.75rem}.h-4{height:1rem}.h-48{height:12rem}.h-6{height:1.5rem}.h-64{height:16rem}.h-72{height:18rem}.max-h-44{max-height:11rem}.min-h-\[28px\]{min-height:28px}.min-h-\[520px\]{min-height:520px}.min-h-screen{min-height:100vh}.w-2{width:0.5rem}.w-3{width:0.75rem}.w-4{width:1rem}.w-48{width:12rem}.w-64{width:16rem}.w-72{width:18rem}.w-8{width:2rem}.w-\[90\%\]{width:90%}.w-full{width:100%}.max-w-none{max-width:none}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-\[-5deg\]{--tw-rotate:-5deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-\[auto_1fr\]{grid-template-columns:auto 1fr}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-x-4{column-gap:1rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-3\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.875rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.875rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.border-emerald-400{--tw-border-opacity:1;border-color:rgb(52 211 153 / var(--tw-border-opacity, 1))}.border-sky-400{--tw-border-opacity:1;border-color:rgb(56 189 248 / var(--tw-border-opacity, 1))}.border-sky-400\/30{border-color:rgb(56 189 248 / 0.3)}.border-sky-400\/35{border-color:rgb(56 189 248 / 0.35)}.border-sky-400\/40{border-color:rgb(56 189 248 / 0.4)}.border-sky-400\/60{border-color:rgb(56 189 248 / 0.6)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-slate-800\/80{border-color:rgb(30 41 59 / 0.8)}.border-slate-800\/90{border-color:rgb(30 41 59 / 0.9)}.border-slate-900\/15{border-color:rgb(15 23 42 / 0.15)}.border-white{--tw-border-opacity:1;border-color:rgb(255 255 255 / var(--tw-border-opacity, 1))}.border-white\/70{border-color:rgb(255 255 255 / 0.7)}.border-white\/15{border-color:rgb(255 255 255 / 0.15)}.bg-amber-950{--tw-bg-opacity:1;background-color:rgb(69 26 3 / var(--tw-bg-opacity, 1))}.bg-emerald-950{--tw-bg-opacity:1;background-color:rgb(2 44 34 / var(--tw-bg-opacity, 1))}.bg-sky-400{--tw-bg-opacity:1;background-color:rgb(56 189 248 / var(--tw-bg-opacity, 1))}.bg-sky-500\/15{background-color:rgb(14 165 233 / 0.15)}.bg-sky-500\/20{background-color:rgb(14 165 233 / 0.2)}.bg-sky-950{--tw-bg-opacity:1;background-color:rgb(8 47 73 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/85{background-color:rgb(15 23 42 / 0.85)}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-slate-900\/95{background-color:rgb(15 23 42 / 0.95)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-slate-950\/60{background-color:rgb(2 6 23 / 0.6)}.bg-slate-950\/65{background-color:rgb(2 6 23 / 0.65)}.bg-slate-950\/75{background-color:rgb(2 6 23 / 0.75)}.bg-slate-950\/90{background-color:rgb(2 6 23 / 0.9)}.bg-transparent{background-color:transparent}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/25{background-color:rgb(255 255 255 / 0.25)}.bg-white\/35{background-color:rgb(255 255 255 / 0.35)}.bg-slate-900\/35{background-color:rgb(15 23 42 / 0.35)}.p-1{padding:0.25rem}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.pb-3\.5{padding-bottom:0.875rem}.pt-1{padding-top:0.25rem}.pt-2{padding-top:0.5rem}.text-left{text-align:left}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-sky-100{--tw-text-opacity:1;color:rgb(224 242 254 / var(--tw-text-opacity, 1))}.text-sky-200{--tw-text-opacity:1;color:rgb(186 230 253 / var(--tw-text-opacity, 1))}.text-sky-300{--tw-text-opacity:1;color:rgb(125 211 252 / var(--tw-text-opacity, 1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-900\/35{color:rgb(15 23 42 / 0.35)}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.text-slate-900\/40{color:rgb(15 23 42 / 0.4)}.text-white\/30{color:rgb(255 255 255 / 0.3)}.accent-sky-400{accent-color:#38bdf8}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_12px_\#38bdf8\]{--tw-shadow:0 0 12px #38bdf8;--tw-shadow-colored:0 0 12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_6px_\#38bdf8\]{--tw-shadow:0 0 6px #38bdf8;--tw-shadow-colored:0 0 6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_6px_rgba\(255\2c 255\2c 255\2c 0\.6\)\]{--tw-shadow:0 0 6px rgba(255,255,255,0.6);--tw-shadow-colored:0 0 6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_\#10b981\]{--tw-shadow:0 0 8px #10b981;--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_\#38bdf8\]{--tw-shadow:0 0 8px #38bdf8;--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_\#f59e0b\]{--tw-shadow:0 0 8px #f59e0b;--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.blur-2xl{--tw-blur:blur(40px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-200{transition-duration:200ms}.duration-300{transition-duration:300ms}.selection\:bg-sky-500\/30 *::selection{background-color:rgb(14 165 233 / 0.3)}.selection\:bg-sky-500\/30::selection{background-color:rgb(14 165 233 / 0.3)}.hover\:border-sky-400\/40:hover{border-color:rgb(56 189 248 / 0.4)}.hover\:border-slate-700:hover{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.hover\:bg-sky-500\/30:hover{background-color:rgb(14 165 233 / 0.3)}.hover\:text-sky-300:hover{--tw-text-opacity:1;color:rgb(125 211 252 / var(--tw-text-opacity, 1))}.hover\:text-slate-200:hover{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}@media (min-width: 640px){.sm\:col-span-2{grid-column:span 2 / span 2}.sm\:block{display:block}.sm\:min-h-\[550px\]{min-height:550px}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.sm\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.sm\:p-6{padding:1.5rem}.sm\:p-8{padding:2rem}.sm\:px-8{padding-left:2rem;padding-right:2rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}}</style>
+  <style>
+    :root {
+      /* Real-Time Optical Sliders */
+      --halo-blur: 5.5px;
+      --halo-blur-tight: 2.3px;
+      --halo-opacity: 1;
+      --halo-overdrive-opacity: 0.45;
+      --halo-stroke: 1.35px;
+      --glass-blur: 18px;
+      --glass-opacity: 0.72;
+      --glass-rgb: 255, 255, 255;
+      --glass-texture: 0;
+
+      /* Default Swatch: Pure Obsidian Ink (Light) / Ice White-Cyan (Dark) */
+      --light-ink-core: #05070b;
+      --light-ink-bloom-rgb: 5, 7, 11;
+      --light-ink-tint-rgb: 15, 23, 42;
+      --dark-emissive-rgb: 56, 189, 248;
+      --dark-emissive-hot-rgb: 224, 242, 254;
+      --swatch-ui-hex: #38bdf8;
+      --light-emissive-core: #05070b;
+      --light-emissive-bloom-rgb: 148, 163, 184;
+    }
+
+    /* Swatch 1: Pure Obsidian Ink (Pitch Black #05070b in Light Mode / Ice White in Dark Mode) */
+    [data-accent="obsidian"] {
+      --light-ink-core: #05070b;
+      --light-ink-bloom-rgb: 5, 7, 11;
+      --light-ink-tint-rgb: 15, 23, 42;
+      --dark-emissive-rgb: 226, 232, 240;
+      --dark-emissive-hot-rgb: 255, 255, 255;
+      --swatch-ui-hex: #94a3b8;
+      --light-emissive-core: #05070b;
+      --light-emissive-bloom-rgb: 148, 163, 184;
+    }
+
+    /* Swatch 2: Midnight Cyan Ink (Deep Abyssal Navy-Cyan #082f49 in Light Mode / Electric Cyan in Dark Mode) */
+    [data-accent="cyan"] {
+      --light-ink-core: #040d1a;
+      --light-ink-bloom-rgb: 7, 24, 46;
+      --light-ink-tint-rgb: 8, 47, 73;
+      --dark-emissive-rgb: 56, 189, 248;
+      --dark-emissive-hot-rgb: 186, 230, 253;
+      --swatch-ui-hex: #38bdf8;
+      --light-emissive-core: #082f49;
+      --light-emissive-bloom-rgb: 56, 189, 248;
+    }
+
+    /* Swatch 3: Espresso Amber Ink (Deep Warm Umber-Black #271202 in Light Mode / Phosphor Amber in Dark Mode) */
+    [data-accent="amber"] {
+      --light-ink-core: #0f0702;
+      --light-ink-bloom-rgb: 31, 14, 3;
+      --light-ink-tint-rgb: 69, 26, 3;
+      --dark-emissive-rgb: 245, 158, 11;
+      --dark-emissive-hot-rgb: 254, 240, 138;
+      --swatch-ui-hex: #f59e0b;
+      --light-emissive-core: #451a03;
+      --light-emissive-bloom-rgb: 245, 158, 11;
+    }
+
+    /* Swatch 4: Forest Emerald Ink (Deep Pine-Black #022c22 in Light Mode / Vector Emerald in Dark Mode) */
+    [data-accent="emerald"] {
+      --light-ink-core: #02100c;
+      --light-ink-bloom-rgb: 3, 28, 21;
+      --light-ink-tint-rgb: 2, 44, 34;
+      --dark-emissive-rgb: 16, 185, 129;
+      --dark-emissive-hot-rgb: 167, 243, 208;
+      --swatch-ui-hex: #10b981;
+      --light-emissive-core: #022c22;
+      --light-emissive-bloom-rgb: 16, 185, 129;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #070b14;
+      color: #f8fafc;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* The stage backdrop (base gradient, wash, pattern, orb colours) is painted inline from the
+       per-mode backdrop settings: see applyBackdrop(). */
+
+    /* Floating Orbs & Rotating Reticle Animations */
+    @keyframes floatOrbSlow {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      33% { transform: translate3d(26px, -16px, 0) scale(1.05); }
+      66% { transform: translate3d(-20px, 18px, 0) scale(0.96); }
+    }
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .ambient-orb-a {
+      animation: floatOrbSlow 13s ease-in-out infinite;
+      will-change: transform;
+      pointer-events: none;
+    }
+    .ambient-orb-b {
+      animation: floatOrbSlow 17s ease-in-out infinite reverse;
+      will-change: transform;
+      pointer-events: none;
+    }
+    .reticle-spin {
+      transform-origin: 24px 24px;
+      animation: spinSlow 24s linear infinite;
+    }
+
+    /* =========================================================================
+       FROSTED GLASS SUBSTRATES (GPU-Promoted macOS Retina Safe)
+       ========================================================================= */
+    /* Light Mode Milk/Quartz Frosted Glass Card */
+    .glass-card-light {
+      background: rgba(var(--glass-rgb), var(--glass-opacity));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(calc(1 + 0.8 * var(--glass-frost)));
+      backdrop-filter: blur(var(--glass-blur)) saturate(calc(1 + 0.8 * var(--glass-frost)));
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow:
+        0 24px 54px rgba(15, 23, 42, 0.10),
+        0 4px 14px rgba(15, 23, 42, 0.05),
+        inset 0 1px 2px rgba(255, 255, 255, 1),
+        inset 0 -1px 1px rgba(15, 23, 42, 0.06);
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      will-change: backdrop-filter, transform;
+    }
+
+    /* Dark Mode Emissive Smoked Obsidian Glass Card */
+    .glass-card-dark-emissive {
+      background: rgba(var(--glass-rgb), var(--glass-opacity));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(calc(1 + 0.6 * var(--glass-frost)));
+      backdrop-filter: blur(var(--glass-blur)) saturate(calc(1 + 0.6 * var(--glass-frost)));
+      border: 1px solid rgba(var(--dark-emissive-hot-rgb), 0.28);
+      box-shadow:
+        0 26px 60px rgba(0, 0, 0, 0.68),
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.16),
+        0 0 26px rgba(var(--dark-emissive-rgb), 0.12);
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      will-change: backdrop-filter, transform;
+    }
+
+    /* =========================================================================
+       TRUE DUAL-LAYER DOM BLUR ARCHITECTURE
+       1. .bloom-ghost-layer (Gaussian-blurred clone directly behind)
+       2. .bloom-ghost-tight (Tight core ink/glow reinforcement when density > 100%)
+       3. .sharp-core-layer  (Razor-sharp unblurred foreground text & 1px lines)
+       ========================================================================= */
+    .optical-card-stack {
+      position: relative;
+    }
+
+    /* Frost texture: inline feTurbulence grain on the glass, under the ink layers. Opacity 0 by default. */
+    .optical-card-stack::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 160px 160px;
+      opacity: var(--glass-texture);
+      mix-blend-mode: overlay;
+    }
+
+    .bloom-ghost-layer {
+      position: absolute;
+      inset: 0;
+      padding: inherit;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+      filter: blur(var(--halo-blur));
+      -webkit-filter: blur(var(--halo-blur));
+      opacity: var(--halo-opacity);
+      transform: translate3d(0, 0, 0);
+      will-change: filter, opacity;
+    }
+
+    .bloom-ghost-tight {
+      position: absolute;
+      inset: 0;
+      padding: inherit;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+      filter: blur(var(--halo-blur-tight));
+      -webkit-filter: blur(var(--halo-blur-tight));
+      opacity: var(--halo-overdrive-opacity);
+      transform: translate3d(0, 0, 0);
+      will-change: filter, opacity;
+    }
+
+    .sharp-core-layer {
+      position: relative;
+      z-index: 2;
+      transform: translate3d(0, 0, 0);
+    }
+
+    /* =========================================================================
+       1. LIGHT MODE: INKY PITCH-BLACK TEXT + DARK INK BLOOM ON MILK GLASS
+       ========================================================================= */
+    /* Razor-Sharp Inky Pitch-Black Foreground (#05070b) */
+    .light-inky-sharp {
+      color: var(--light-ink-core);
+    }
+    .light-inky-sharp .muted-copy {
+      color: #0f172a;
+    }
+    .light-inky-sharp .accent-copy {
+      color: var(--light-ink-core);
+    }
+    .light-inky-sharp .hairline-divider {
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--light-ink-bloom-rgb), 0.78) 15%,
+        var(--light-ink-core) 50%,
+        rgba(var(--light-ink-bloom-rgb), 0.78) 85%,
+        transparent 100%
+      );
+    }
+    .light-inky-sharp .hairline-box {
+      border: 1px solid rgba(var(--light-ink-bloom-rgb), 0.48);
+      background: rgba(255, 255, 255, 0.36);
+    }
+    .light-inky-sharp .corner-bracket {
+      border-color: var(--light-ink-core);
+    }
+    .light-inky-sharp .vector-stroke,
+    .light-inky-sharp .vector-accent {
+      stroke: var(--light-ink-core);
+    }
+
+    /* Dark Inky Bloom Ghost Layer Behind the Sharp Black Text & 1px Lines */
+    .light-inky-ghost {
+      color: rgb(var(--light-ink-bloom-rgb));
+      -webkit-text-stroke: calc(var(--halo-stroke) + 0.9px) rgb(var(--light-ink-tint-rgb));
+      mix-blend-mode: multiply;
+    }
+    .light-inky-ghost .muted-copy,
+    .light-inky-ghost .accent-copy {
+      color: rgb(var(--light-ink-bloom-rgb));
+      -webkit-text-stroke: var(--halo-stroke) rgb(var(--light-ink-tint-rgb));
+    }
+    .light-inky-ghost .hairline-divider {
+      height: 3.5px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgb(var(--light-ink-tint-rgb)) 12%,
+        rgb(var(--light-ink-bloom-rgb)) 50%,
+        rgb(var(--light-ink-tint-rgb)) 88%,
+        transparent 100%
+      );
+    }
+    .light-inky-ghost .hairline-box {
+      border: 2.6px solid rgb(var(--light-ink-tint-rgb));
+      background: rgba(var(--light-ink-bloom-rgb), 0.08);
+    }
+    .light-inky-ghost .corner-bracket {
+      border-color: rgb(var(--light-ink-bloom-rgb));
+      border-width: 2.8px;
+    }
+    .light-inky-ghost .vector-stroke,
+    .light-inky-ghost .vector-accent {
+      stroke: rgb(var(--light-ink-bloom-rgb));
+      stroke-width: 3.6px;
+    }
+
+    /* =========================================================================
+       1B. LIGHT MODE (EMISSIVE): DEEP TINTED TEXT + COLOURED BLOOM ON MILK GLASS
+       Normal blending: screen washes out on light glass and multiply muddies the
+       tint, so the coloured halo sits behind the deep (950) tinted core as is.
+       ========================================================================= */
+    .light-emissive-sharp {
+      color: var(--light-emissive-core);
+    }
+    .light-emissive-sharp .muted-copy,
+    .light-emissive-sharp .accent-copy {
+      color: var(--light-emissive-core);
+    }
+    .light-emissive-sharp .hairline-divider {
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--light-emissive-bloom-rgb), 0.9) 15%,
+        var(--light-emissive-core) 50%,
+        rgba(var(--light-emissive-bloom-rgb), 0.9) 85%,
+        transparent 100%
+      );
+    }
+    .light-emissive-sharp .hairline-box {
+      border: 1px solid rgba(var(--light-emissive-bloom-rgb), 0.7);
+      background: rgba(255, 255, 255, 0.36);
+    }
+    .light-emissive-sharp .corner-bracket {
+      border-color: var(--light-emissive-core);
+    }
+    .light-emissive-sharp .vector-stroke,
+    .light-emissive-sharp .vector-accent {
+      stroke: var(--light-emissive-core);
+    }
+
+    .light-emissive-ghost {
+      color: rgb(var(--light-emissive-bloom-rgb));
+      -webkit-text-stroke: calc(var(--halo-stroke) + 0.9px) rgb(var(--light-emissive-bloom-rgb));
+    }
+    .light-emissive-ghost .muted-copy,
+    .light-emissive-ghost .accent-copy {
+      color: rgb(var(--light-emissive-bloom-rgb));
+      -webkit-text-stroke: var(--halo-stroke) rgb(var(--light-emissive-bloom-rgb));
+    }
+    .light-emissive-ghost .hairline-divider {
+      height: 3.5px;
+      background: linear-gradient(90deg, transparent 0%, rgb(var(--light-emissive-bloom-rgb)) 12%, rgb(var(--light-emissive-bloom-rgb)) 88%, transparent 100%);
+    }
+    .light-emissive-ghost .hairline-box {
+      border: 2.6px solid rgb(var(--light-emissive-bloom-rgb));
+      background: rgba(var(--light-emissive-bloom-rgb), 0.10);
+    }
+    .light-emissive-ghost .corner-bracket {
+      border-color: rgb(var(--light-emissive-bloom-rgb));
+      border-width: 2.8px;
+    }
+    .light-emissive-ghost .vector-stroke,
+    .light-emissive-ghost .vector-accent {
+      stroke: rgb(var(--light-emissive-bloom-rgb));
+      stroke-width: 3.6px;
+    }
+
+    /* =========================================================================
+       2A. DARK MODE (EMISSIVE BLOOM): BRIGHT TEXT + GLOWING HALO ON OBSIDIAN GLASS
+       ========================================================================= */
+    .dark-emissive-sharp {
+      color: #f8fafc;
+    }
+    .dark-emissive-sharp .muted-copy {
+      color: #cbd5e1;
+    }
+    .dark-emissive-sharp .accent-copy {
+      color: rgb(var(--dark-emissive-hot-rgb));
+    }
+    .dark-emissive-sharp .hairline-divider {
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--dark-emissive-rgb), 0.78) 15%,
+        rgb(var(--dark-emissive-hot-rgb)) 50%,
+        rgba(var(--dark-emissive-rgb), 0.78) 85%,
+        transparent 100%
+      );
+    }
+    .dark-emissive-sharp .hairline-box {
+      border: 1px solid rgba(var(--dark-emissive-hot-rgb), 0.36);
+      background: rgba(15, 23, 42, 0.35);
+    }
+    .dark-emissive-sharp .corner-bracket {
+      border-color: rgb(var(--dark-emissive-hot-rgb));
+    }
+    .dark-emissive-sharp .vector-stroke {
+      stroke: #f8fafc;
+    }
+    .dark-emissive-sharp .vector-accent {
+      stroke: rgb(var(--dark-emissive-hot-rgb));
+    }
+
+    .dark-emissive-ghost {
+      color: rgb(var(--dark-emissive-rgb));
+      -webkit-text-stroke: calc(var(--halo-stroke) + 0.7px) rgb(var(--dark-emissive-hot-rgb));
+      mix-blend-mode: screen;
+    }
+    .dark-emissive-ghost .muted-copy,
+    .dark-emissive-ghost .accent-copy {
+      color: rgb(var(--dark-emissive-rgb));
+      -webkit-text-stroke: var(--halo-stroke) rgb(var(--dark-emissive-rgb));
+    }
+    .dark-emissive-ghost .hairline-divider {
+      height: 3.2px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgb(var(--dark-emissive-rgb)) 12%,
+        rgb(var(--dark-emissive-hot-rgb)) 50%,
+        rgb(var(--dark-emissive-rgb)) 88%,
+        transparent 100%
+      );
+    }
+    .dark-emissive-ghost .hairline-box {
+      border: 2.5px solid rgb(var(--dark-emissive-rgb));
+      background: rgba(var(--dark-emissive-rgb), 0.08);
+    }
+    .dark-emissive-ghost .corner-bracket {
+      border-color: rgb(var(--dark-emissive-rgb));
+      border-width: 2.8px;
+    }
+    .dark-emissive-ghost .vector-stroke,
+    .dark-emissive-ghost .vector-accent {
+      stroke: rgb(var(--dark-emissive-rgb));
+      stroke-width: 3.4px;
+    }
+
+    /* =========================================================================
+       SINGLE-LAYER PURE CSS `text-shadow` / `drop-shadow` COMPARISON MODE
+       ========================================================================= */
+    .css-shadow-mode .bloom-ghost-layer,
+    .css-shadow-mode .bloom-ghost-tight {
+      display: none !important;
+    }
+
+    /* Light Mode Pure CSS Dark Ink Shadow */
+    .css-shadow-mode .light-inky-sharp {
+      text-shadow:
+        0 0 calc(var(--halo-blur) * 0.38) rgba(var(--light-ink-bloom-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--light-ink-tint-rgb), calc(var(--halo-opacity) * 0.88)),
+        0 0 calc(var(--halo-blur) * 1.65) rgba(var(--light-ink-tint-rgb), var(--halo-overdrive-opacity));
+    }
+    .css-shadow-mode .light-inky-sharp .hairline-divider,
+    .css-shadow-mode .light-inky-sharp .hairline-box {
+      box-shadow:
+        0 0 calc(var(--halo-blur) * 0.45) rgba(var(--light-ink-bloom-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--light-ink-tint-rgb), calc(var(--halo-opacity) * 0.82));
+    }
+    .css-shadow-mode .light-inky-sharp svg {
+      filter:
+        drop-shadow(0 0 calc(var(--halo-blur) * 0.4) rgba(var(--light-ink-bloom-rgb), var(--halo-opacity)))
+        drop-shadow(0 0 var(--halo-blur) rgba(var(--light-ink-tint-rgb), calc(var(--halo-opacity) * 0.75)));
+    }
+
+    /* Dark Mode Emissive Pure CSS Shadow */
+    .css-shadow-mode .dark-emissive-sharp[data-halo-type="dark-emissive"] {
+      text-shadow:
+        0 0 calc(var(--halo-blur) * 0.4) rgba(var(--dark-emissive-hot-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--dark-emissive-rgb), var(--halo-opacity)),
+        0 0 calc(var(--halo-blur) * 1.75) rgba(var(--dark-emissive-rgb), var(--halo-overdrive-opacity));
+    }
+    .css-shadow-mode .dark-emissive-sharp[data-halo-type="dark-emissive"] .hairline-divider,
+    .css-shadow-mode .dark-emissive-sharp[data-halo-type="dark-emissive"] .hairline-box {
+      box-shadow:
+        0 0 calc(var(--halo-blur) * 0.45) rgba(var(--dark-emissive-hot-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--dark-emissive-rgb), var(--halo-opacity));
+    }
+    .css-shadow-mode .dark-emissive-sharp[data-halo-type="dark-emissive"] svg {
+      filter:
+        drop-shadow(0 0 calc(var(--halo-blur) * 0.5) rgba(var(--dark-emissive-rgb), var(--halo-opacity)));
+    }
+
+    /* Light Mode Emissive Pure CSS Shadow */
+    .css-shadow-mode [data-halo-type="light-emissive"] {
+      text-shadow:
+        0 0 calc(var(--halo-blur) * 0.4) rgba(var(--light-emissive-bloom-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--light-emissive-bloom-rgb), var(--halo-opacity)),
+        0 0 calc(var(--halo-blur) * 1.75) rgba(var(--light-emissive-bloom-rgb), var(--halo-overdrive-opacity));
+    }
+    .css-shadow-mode [data-halo-type="light-emissive"] .hairline-divider,
+    .css-shadow-mode [data-halo-type="light-emissive"] .hairline-box {
+      box-shadow:
+        0 0 calc(var(--halo-blur) * 0.45) rgba(var(--light-emissive-bloom-rgb), var(--halo-opacity)),
+        0 0 var(--halo-blur) rgba(var(--light-emissive-bloom-rgb), var(--halo-opacity));
+    }
+    .css-shadow-mode [data-halo-type="light-emissive"] svg {
+      filter:
+        drop-shadow(0 0 calc(var(--halo-blur) * 0.5) rgba(var(--light-emissive-bloom-rgb), var(--halo-opacity)));
+    }
+
+    /* Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(148, 163, 184, 0.22);
+      height: 6px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 2px solid var(--swatch-ui-hex);
+      box-shadow: 0 0 10px var(--swatch-ui-hex);
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    /* ===== BOARD LAB: the Board's rules from web/ui/r6-plans-view.css, then the slab, lanes, lines and cards ===== */
+    :root { --board-zoom: 1; --sp-2: 2px; --sp-4: 4px; --sp-6: 6px; --sp-8: 8px; --sp-12: 12px; --sp-16: 16px; --sp-24: 24px; --radius: 4px; --radius-pane: 6px;
+      --text-11: 11px; --text-12: 12px; --text-13: 13px; --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace; }
+    .kb-wrap { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+    .kb-zoom { display: inline-flex; align-items: center; gap: var(--sp-4); margin-left: auto; }
+    .kb-zoom .kb-zoomlvl { min-width: 48px; }
+    .kb-zoom .tab:disabled { opacity: .5; cursor: default; }
+    .kb-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); margin: 0; padding: 0; list-style: none; }
+    .kb-crumbs li { display: flex; align-items: center; gap: var(--sp-4); min-width: 0; }
+    .kb-sep { color: var(--muted); }
+    .kb-kind { color: var(--muted); font-size: var(--text-11); }
+    .kb-caret { color: var(--ink-2); font-size: var(--text-11); }
+    .kb-mhead { padding: var(--sp-4) var(--sp-8); color: var(--muted); font-size: var(--text-11); }
+    .kb-lanehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-4) var(--sp-16); margin: 0; padding: var(--sp-6) var(--sp-12); border-bottom: 1px solid var(--line-soft); color: var(--ink-2); font-size: var(--text-12); }
+    .kb-lanehead b { color: var(--ink); }
+    .kb-note { margin: 0; padding: var(--sp-6) var(--sp-12); border-bottom: 1px solid var(--line-soft); color: var(--ink-2); font-size: var(--text-12); }
+    .kb-sub { color: var(--muted); font-size: var(--text-12); }
+    .kb-foot { margin: 0; padding: var(--sp-4) var(--sp-12); border-top: 1px solid var(--line-soft); }
+    .kb-foot .tab { height: 24px; padding: 0 var(--sp-8); font-size: var(--text-12); }
+    .kb-body { display: flex; flex: 1; min-height: 0; }
+    .kb-stage { --kb-zoom: 1; container-type: size; flex: 1; min-width: 0; overflow: auto; overscroll-behavior: contain; scroll-padding-top: calc(56px * var(--kb-zoom)); background-color: var(--bg); background-image: var(--board-grid-bg); background-size: calc(28px * var(--kb-zoom)) calc(28px * var(--kb-zoom)); background-attachment: local; }
+    .kb { --kb-col-min: 200px; display: grid; grid-template-rows: auto 1fr; gap: 0 var(--sp-12); align-items: stretch; box-sizing: border-box; width: 100cqw; min-width: min-content; min-height: 100cqh; padding: var(--sp-12) var(--sp-12) var(--sp-24); }
+    .kb-col { grid-row: span 2; display: grid; grid-template-rows: subgrid; min-width: 0; border: 1px solid var(--line-soft); border-radius: var(--radius-pane); background: var(--kb-col); }
+    .kb-col > * { min-width: 0; }
+    .kb-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-8); min-height: 40px; box-sizing: border-box; padding: var(--sp-12); border-bottom: 1px solid var(--line); border-radius: var(--radius-pane) var(--radius-pane) 0 0; background: var(--surface-2); }
+    .kb-label { display: flex; flex: 1; align-items: baseline; gap: 0 var(--sp-4); min-width: 0; white-space: nowrap; color: var(--ink); font-size: var(--text-13); font-weight: 600; }
+    .kb-scope { min-width: 0; overflow: hidden; color: var(--muted); font-size: var(--text-12); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+    .kb-count { flex: none; color: var(--ink); font-size: var(--text-13); font-weight: 600; white-space: nowrap; }
+    .kb-of { color: var(--muted); font-weight: 400; }
+    .kb-cards { display: flex; flex-direction: column; gap: var(--sp-8); padding: var(--sp-8); }
+    .kb-strip { grid-row: span 2; display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); min-height: 160px; box-sizing: border-box; margin: 0; padding: var(--sp-12) 0; border: 1px solid var(--line-soft); border-radius: var(--radius-pane); background: var(--kb-col); color: var(--muted); font: inherit; font-size: var(--text-12); }
+    .kb-stripin { position: sticky; top: var(--sp-12); display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); }
+    .kb-vl { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; }
+    .kb-tw { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--radius); background: none; color: var(--ink-2); font: inherit; font-size: var(--text-12); cursor: pointer; }
+    .kb-tw:hover { background: var(--surface-hover); }
+    .kb-wave { display: flex; align-items: baseline; justify-content: space-between; padding: var(--sp-4) var(--sp-4) var(--sp-2); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); font-size: var(--text-12); font-weight: 600; }
+    .kb-wave .num { color: var(--muted); font-weight: 400; }
+    .kb-card { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; padding: var(--sp-8) var(--sp-12); border: 1px solid var(--line-soft); border-radius: var(--radius-pane); background: var(--kb-card); box-shadow: var(--kb-card-shadow); color: var(--ink-2); font-size: var(--text-12); cursor: pointer; }
+    .kb-card:hover { border-color: var(--line-hover); }
+    .kb-card:hover .kb-title { text-decoration: underline; text-underline-offset: 3px; }
+    .kb-card:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+    .kb-card[aria-current="true"] { outline: 2px solid var(--ring); outline-offset: 1px; }
+    .kb-card.is-attn { border-left: 3px solid var(--attn); }
+    .kb-card.is-stalled { border-left: 3px solid var(--err); }
+    .kb-title { display: -webkit-box; margin: 0; overflow: hidden; color: var(--ink); font-size: var(--text-13); font-weight: 600; line-height: 20px; overflow-wrap: break-word; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .kb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4) var(--sp-8); min-height: 24px; color: var(--muted); font-size: var(--text-11); line-height: 16px; }
+    .kb-meta > * { flex: none; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .kb-where { padding: 0 var(--sp-6); border: 1px solid var(--line-control); border-radius: var(--radius); color: var(--ink-2); font-family: var(--font-mono); }
+    .kb-epic { flex: 0 1 auto; color: var(--ink-2); }
+    .kb-ref { flex: 1 1 0; color: var(--muted); font-size: var(--text-11); }
+    .kb-changed { color: var(--link); font-weight: 600; }
+    .kb-changed::before { content: "● "; }
+    .kb-who { font-family: var(--font-mono); color: var(--ink-2); }
+    .kb-who .mlink { display: inline-block; min-height: 24px; line-height: 24px; }
+    .kb-meta .chip { padding: 0 var(--sp-6); font-size: var(--text-11); line-height: 16px; }
+    .kb-meta .num { font-variant-numeric: tabular-nums; }
+    .kb-card.is-ask .kb-title { display: block; }
+    .kb-opts { margin: 0; color: var(--ink-2); font-size: var(--text-12); line-height: 16px; overflow-wrap: anywhere; }
+    .kb-answer { display: inline-flex; align-items: center; align-self: flex-start; min-height: 24px; color: var(--link); font-size: var(--text-12); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+    .kb-answer:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+    .kb-flag { font-family: var(--font-mono); font-size: var(--text-11); font-weight: 600; line-height: 16px; overflow-wrap: anywhere; }
+    .kb-flag.attn { color: var(--blocked-ink); }
+    .kb-flag.err { color: var(--err-ink); }
+    .kb-flag.wait { color: var(--ink-2); font-weight: 500; }
+    .kb-more { display: flex; justify-content: center; padding: var(--sp-4) 0; }
+    .kb-more .tab { height: 24px; padding: 0 var(--sp-8); font-size: var(--text-12); }
+    .kb-owner { display: inline-flex; align-items: center; gap: var(--sp-4); color: var(--muted); font-size: var(--text-12); }
+    .kb-owner select { height: 24px; border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--control); color: var(--ink); font: inherit; }
+    .sharp-core-layer, .bloom-ghost-layer, .bloom-ghost-tight { --ink: currentColor; --ink-2: currentColor; --muted: currentColor; --link: currentColor; --attn: #d97706; --err: #dc2626; --blocked-ink: currentColor; --err-ink: currentColor; --line: transparent; --line-soft: transparent; --line-control: transparent; --line-hover: transparent; --kb-col: transparent; --kb-card: transparent; --kb-card-shadow: none; }
+
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; flex-direction: column; min-height: 0; }
+    body > * { flex: none; }
+    body > main.grid { flex: 1 1 0; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--sp-12); min-height: 0; margin: 0; padding: var(--sp-12); }
+    .board-stage-col { display: flex; flex-direction: column; gap: var(--sp-8); min-width: 0; min-height: 0; height: 100%; }
+    .board-stage-col > * { flex: none; }
+    /* The viewport pans natively; two fingers zoom the canvas in script. No scrollbars, by the owner's direction. */
+    .board-stage-col > #stageContainer { position: relative; flex: 1 1 0; height: auto; min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; scrollbar-width: none; }
+    #stageContainer::-webkit-scrollbar { display: none; }
+    #stageContainer:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+    .board-zoom { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-4); }
+    .board-zoom button { min-width: 32px; height: 28px; padding: 0 var(--sp-8); border: 1px solid #334155; border-radius: var(--radius-pane); background: #0f172a; color: #e2e8f0; font-size: var(--text-12); font-variant-numeric: tabular-nums; }
+    .board-zoom button:hover { border-color: #38bdf8; }
+    .board-zoom button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+    .board-zoom button:disabled { color: #94a3b8; border-color: #1e293b; }
+    .board-zoom #zoomReset { min-width: 56px; }
+    /* The canvas: stage and slab zoom as one, and it always at least fills the viewport. */
+    #viewportBase { position: relative; inset: auto; zoom: var(--board-zoom); box-sizing: border-box; width: max-content; min-width: 100%; min-height: 100%; padding: 96px; overflow: hidden; align-items: center; justify-content: center; }
+    /* The slab is as big as its lanes; the viewport around it does the scrolling. */
+    .board-slab { flex: none; width: max-content; padding: 0; overflow: hidden; }
+    .board-scroll { position: relative; z-index: 1; display: flex; flex-direction: column; }
+    .board-scroll > .sharp-core-layer { flex: 1 0 auto; display: flex; transform: none; }
+    .board-scroll .kb { flex: 1; width: max-content; min-width: 0; min-height: 0; grid-template-rows: auto 1fr; }
+    .board-controls { min-width: 0; min-height: 0; height: 100%; overflow: hidden auto; overscroll-behavior: contain; }
+    .board-controls > * { flex: none; }
+    .board-copybar { position: sticky; top: -20px; z-index: 5; margin: -8px 0 0; padding: var(--sp-8) 0; background: #0f172a; }
+    .board-copyrow { display: flex; flex-wrap: wrap; gap: var(--sp-6); }
+    #copyStatus { margin: var(--sp-8) 0 var(--sp-4); color: #e2e8f0; font-size: var(--text-12); }
+    #copyOut { display: block; width: 100%; padding: var(--sp-8); border: 1px solid #334155; border-radius: var(--radius-pane); background: #020617; color: #e2e8f0; font: 11px/16px var(--font-mono); }
+    #copyBox > button { margin-top: var(--sp-4); min-height: 24px; color: #7dd3fc; font-size: var(--text-12); text-decoration: underline; }
+    .board-controls * { min-width: 0; }
+    .board-controls pre { max-width: 100%; overflow: auto; }
+    .board-controls .flex.shrink-0 { flex-wrap: wrap; flex-shrink: 1; }
+    .board-controls .sm\:grid-cols-4, .board-controls .sm\:grid-cols-3, .board-controls .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 899px) {
+      body > main.grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
+      /* The controls column has the same mode buttons, and this height is the Board's. */
+      .board-stage-col > :has(> .top-mode-btn) { display: none; }
+    }
+
+    /* Lanes are not surfaces: no fill, border or shadow; their heads scroll with them in this lab. */
+    .kb-col, .kb-strip { position: relative; background: none; border-color: transparent; }
+    .kb-head { position: static; background: none; border: 0; }
+    .kb-wave { border: 0; }
+    .kb-where { border-color: currentColor; }
+    .kb-line { position: absolute; inset-block: var(--sp-16); left: -7px; width: calc(1px / var(--board-zoom)); height: auto; pointer-events: none; opacity: var(--line-strength); }
+    .light-inky-sharp .kb-line {
+      
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(var(--light-ink-bloom-rgb), 0.78) 15%,
+        var(--light-ink-core) 50%,
+        rgba(var(--light-ink-bloom-rgb), 0.78) 85%,
+        transparent 100%
+      );
+    }
+    .light-inky-ghost .kb-line {
+      
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgb(var(--light-ink-tint-rgb)) 12%,
+        rgb(var(--light-ink-bloom-rgb)) 50%,
+        rgb(var(--light-ink-tint-rgb)) 88%,
+        transparent 100%
+      );
+    }
+    .light-emissive-sharp .kb-line {
+      
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(var(--light-emissive-bloom-rgb), 0.9) 15%,
+        var(--light-emissive-core) 50%,
+        rgba(var(--light-emissive-bloom-rgb), 0.9) 85%,
+        transparent 100%
+      );
+    }
+    .light-emissive-ghost .kb-line {
+      
+      background: linear-gradient(180deg, transparent 0%, rgb(var(--light-emissive-bloom-rgb)) 12%, rgb(var(--light-emissive-bloom-rgb)) 88%, transparent 100%);
+    }
+    .dark-emissive-sharp .kb-line {
+      
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(var(--dark-emissive-rgb), 0.78) 15%,
+        rgb(var(--dark-emissive-hot-rgb)) 50%,
+        rgba(var(--dark-emissive-rgb), 0.78) 85%,
+        transparent 100%
+      );
+    }
+    .dark-emissive-ghost .kb-line {
+      
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgb(var(--dark-emissive-rgb)) 12%,
+        rgb(var(--dark-emissive-hot-rgb)) 50%,
+        rgb(var(--dark-emissive-rgb)) 88%,
+        transparent 100%
+      );
+    }
+
+    /* Layer 2: flat, translucent, a thin border. The lab's mode rules give the border's colour; the control scales it. */
+    .sharp-core-layer .kb-card, .sharp-core-layer .chip { background: var(--l2-fill); border: 1px solid rgb(from currentColor r g b / var(--l2-border)); border-radius: 12px; box-shadow: none; }
+    .sharp-core-layer .chip { border-radius: var(--radius); }
+    /* A ghost keeps the sharp layer's box, or the two would not line up. */
+    :is(.bloom-ghost-layer, .bloom-ghost-tight) :is(.kb-card, .chip) { border-width: 1px; }
+    .board-scroll > :is(.bloom-ghost-layer, .bloom-ghost-tight) { display: flex; bottom: auto; min-height: 100%; }
+    .sharp-core-layer .kb-card.is-attn { border-left: 3px solid var(--attn); }
+    .sharp-core-layer .kb-card.is-stalled { border-left: 3px solid var(--err); }
+    .kb-top { display: flex; align-items: center; gap: var(--sp-6); font-size: var(--text-11); }
+    .kb-card .kb-who a, .kb-card a { color: inherit; }
+    .chip { display: inline-flex; padding: 0 var(--sp-6); font-size: var(--text-11); line-height: 16px; }
+    .tab { padding: 0 var(--sp-8); border: 1px solid currentColor; border-radius: var(--radius); }
+    .mono { font-family: var(--font-mono); }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-sky-500/30">
+
+  <!-- TOP HEADER & RENDERING TECHNIQUE SWITCHER -->
+  <header class="w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md z-30 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_12px_#38bdf8]"></div>
+      <div>
+        <h1 class="text-sm sm:text-base font-semibold tracking-tight text-slate-100 flex items-center gap-2">
+          Optical Frosted Glass &amp; True Dual-Layer Blur Visualizer
+        </h1>
+        <p class="text-xs text-slate-400 hidden sm:block">
+          Light Mode renders razor-sharp pitch-black ink (<code class="text-slate-200">#05070b</code>) over a dark inky blurred clone on milky frosted glass.
+        </p>
+      </div>
+    </div>
+
+    <!-- Toggle: Dual-Layer DOM Clone vs Pure CSS Shadows -->
+    <div class="flex items-center gap-1.5 bg-slate-900/95 p-1 rounded-xl border border-slate-800">
+      <button id="btnTechDual" onclick="setRenderTechnique('dual')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500/20 text-sky-200 border border-sky-400/40 shadow-sm">
+        True Dual-Layer DOM Blur Clone
+      </button>
+      <button id="btnTechShadow" onclick="setRenderTechnique('shadow')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-slate-200">
+        Pure CSS text-shadow / drop-shadow
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 grid grid-cols-1 gap-4 p-4 max-w-none w-full mx-auto items-start">
+
+    <!-- LEFT/CENTER: LIVE OPTICAL STAGE (7 Cols) -->
+    <section class="board-stage-col flex flex-col gap-4 w-full">
+
+      <!-- Quick Mode Bar Above Stage -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="top-mode-light-ink" onclick="setViewMode('light-ink')" class="top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-white text-slate-950 border-white shadow-md">
+          <div class="text-xs font-bold flex items-center justify-between">
+            <span>Light Mode (Inky)</span>
+            <span class="w-2 h-2 rounded-full bg-slate-950"></span>
+          </div>
+          <div class="text-[10px] text-slate-600 font-medium mt-0.5">Black text + dark ink bloom</div>
+        </button>
+
+        <button id="top-mode-light-emissive" onclick="setViewMode('light-emissive')" class="top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700">
+          <div class="text-xs font-semibold flex items-center justify-between">
+            <span>Light (Emissive)</span>
+            <span class="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_#38bdf8]"></span>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Tinted text + colour bloom</div>
+        </button>
+
+        <button id="top-mode-dark-emissive" onclick="setViewMode('dark-emissive')" class="top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700">
+          <div class="text-xs font-semibold flex items-center justify-between">
+            <span>Dark (Emissive)</span>
+            <span class="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_#38bdf8]"></span>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Bright text + glowing bloom</div>
+        </button>
+      </div>
+
+      <div class="board-zoom" role="group" aria-label="Board zoom"><button id="zoomOut" type="button" aria-label="Zoom out" onclick="setBoardZoom(boardZoom - 0.1)">&minus;</button><button id="zoomReset" type="button" aria-label="Reset zoom to 100%" onclick="setBoardZoom(1)">100%</button><button id="zoomIn" type="button" aria-label="Zoom in" onclick="setBoardZoom(boardZoom + 0.1)">+</button><button id="zoomFit" type="button" aria-label="Fit the whole slab" onclick="fitBoard()">Fit</button></div>
+      <!-- Interactive Stage Viewport -->
+      <div id="stageContainer" tabindex="0" aria-label="Board viewport" class="relative w-full min-h-[520px] sm:min-h-[550px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center select-none">
+
+        <!-- ===============================================================
+             BASE VIEWPORT LAYER (ACTIVE MODE)
+             =============================================================== -->
+        <div id="viewportBase" class="absolute inset-0 flex items-center justify-center p-4 sm:p-8 transition-colors duration-300">
+          <!-- Pastel Daylight Orbs (Light Mode) / Nocturnal Orbs (Dark Mode) -->
+          <div id="orbBaseA" class="ambient-orb-a absolute top-8 left-10 w-64 h-64 rounded-full blur-2xl"></div>
+          <div id="orbBaseB" class="ambient-orb-b absolute bottom-8 right-10 w-72 h-72 rounded-full blur-2xl"></div>
+          <div id="orbBaseC" class="ambient-orb-a absolute top-1/3 right-1/4 w-48 h-48 rounded-full blur-2xl"></div>
+
+          <div id="stageGrid" class="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+
+          <!-- Background Contrast Strip Behind Glass to Prove Real Frosted Blur -->
+          <div id="meshBannerBase" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-28 border border-slate-900/15 bg-white/25 rounded-xl rotate-[-5deg] pointer-events-none flex items-center justify-between px-6 font-mono-tech text-[11px] tracking-widest uppercase text-slate-900/35">
+            <span>// DAYLIGHT FROSTED REFRACTION TEST</span>
+            <span>ALABASTER SUBSTRATE 01</span>
+          </div>
+
+          <!-- PRIMARY GLASS TELEMETRY CARD -->
+          <div id="cardBase" class="glass-card-light optical-card-stack board-slab rounded-2xl transition-all duration-200">
+            <!-- Dynamically populated with synchronized .bloom-ghost-layer + .sharp-core-layer -->
+          </div>
+        </div>
+
+      </div>
+
+      </section>
+
+    <!-- RIGHT: THEME PICKER & PRECISION SLIDERS (5 Cols) -->
+    <aside class="board-controls flex flex-col gap-5 bg-slate-900/95 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl"><div class="board-copybar"><div class="board-copyrow"><button id="btnCopySettings" onclick="copyAllSettings()" class="px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/35 text-xs font-mono-tech font-medium transition-all whitespace-nowrap">
+              Copy all settings (JSON)
+            </button><button id="btnCopyMode" onclick="copyModeSettings()" class="px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/35 text-xs font-mono-tech font-medium transition-all whitespace-nowrap">
+              Copy this mode
+            </button></div><div id="copyBox" hidden><p id="copyStatus" role="status" aria-live="polite"></p><textarea id="copyOut" rows="6" readonly spellcheck="false" aria-label="Copied settings"></textarea><button type="button" onclick="document.getElementById('copyBox').hidden = true">Hide</button></div></div>
+
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
+        <div>
+          <h2 class="text-base font-semibold text-slate-100">Optical Glass Theme Picker</h2>
+          <p class="text-xs text-slate-400">Configure Light Inky, Light Emissive and Dark Emissive</p>
+        </div>
+        <button id="btnResetMode" onclick="resetMode()" class="shrink-0 whitespace-nowrap text-xs font-mono-tech text-slate-300 hover:text-sky-300 px-2.5 py-1 rounded-lg border border-slate-700 hover:border-sky-400/40 transition-colors">
+          Reset this mode
+        </button>
+      </div>
+
+      <!-- 1. PRIMARY MODE SELECTOR -->
+      <div class="space-y-2">
+        <label class="text-xs font-mono-tech uppercase tracking-wider text-slate-400 block">
+          1. Select Optical Theme Mode
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button id="side-mode-light-ink" onclick="setViewMode('light-ink')" class="side-mode-btn p-3 rounded-xl text-left border transition-all bg-sky-500/15 border-sky-400/60 text-sky-100">
+            <div class="text-xs font-bold">Light Mode (Inky Black)</div>
+            <div class="text-[11px] text-slate-300 mt-1">Light frosted glass + sharp black text &amp; dark ink bloom</div>
+          </button>
+
+          <button id="side-mode-light-emissive" onclick="setViewMode('light-emissive')" class="side-mode-btn p-3 rounded-xl text-left border transition-all bg-slate-950/65 border-slate-800 text-slate-300 hover:border-slate-700">
+            <div class="text-xs font-semibold">Light Mode (Emissive Colour)</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Light frosted glass + tinted text &amp; colour bloom</div>
+          </button>
+
+          <button id="side-mode-dark-emissive" onclick="setViewMode('dark-emissive')" class="side-mode-btn p-3 rounded-xl text-left border transition-all bg-slate-950/65 border-slate-800 text-slate-300 hover:border-slate-700 sm:col-span-2">
+            <div class="text-xs font-semibold">Dark Mode (Emissive Bloom)</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Smoked glass + bright text &amp; glowing halo</div>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- 2. INK / ACCENT TINT SWATCHES -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-mono-tech uppercase tracking-wider text-slate-400">
+            2. Ink &amp; Bloom Tint Swatch
+          </label>
+          <span id="swatchDesc" class="text-[11px] font-mono-tech text-sky-300">Pitch Black Ink (#05070b)</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button onclick="setAccent('obsidian')" id="swatch-obsidian" class="swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-sky-400/60 bg-sky-500/15 text-xs font-medium text-sky-100">
+            <span class="w-3 h-3 rounded-full bg-slate-950 border border-white/70 shadow-[0_0_6px_rgba(255,255,255,0.6)] shrink-0"></span>
+            <span class="truncate">Obsidian Ink</span>
+          </button>
+          <button onclick="setAccent('cyan')" id="swatch-cyan" class="swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs font-medium text-slate-300 hover:border-slate-700">
+            <span class="w-3 h-3 rounded-full bg-sky-950 border border-sky-400 shadow-[0_0_8px_#38bdf8] shrink-0"></span>
+            <span class="truncate">Midnight Cyan</span>
+          </button>
+          <button onclick="setAccent('amber')" id="swatch-amber" class="swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs font-medium text-slate-300 hover:border-slate-700">
+            <span class="w-3 h-3 rounded-full bg-amber-950 border border-amber-400 shadow-[0_0_8px_#f59e0b] shrink-0"></span>
+            <span class="truncate">Espresso Ink</span>
+          </button>
+          <button onclick="setAccent('emerald')" id="swatch-emerald" class="swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs font-medium text-slate-300 hover:border-slate-700">
+            <span class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-400 shadow-[0_0_8px_#10b981] shrink-0"></span>
+            <span class="truncate">Forest Ink</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. REAL-TIME 60FPS OPTICAL SLIDERS -->
+      <div class="space-y-3.5">
+        <label class="text-xs font-mono-tech uppercase tracking-wider text-slate-400 block">
+          3. Optical Halo &amp; Glass Sliders
+        </label>
+
+        <!-- Slider 1: Tight Bloom Spread (1px to 16px) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-200">Tight Bloom Spread (<code class="text-[11px] text-slate-400">--halo-blur</code>)</span>
+            <span id="valHaloBlur" class="font-mono-tech text-sky-300 font-semibold">5.5px</span>
+          </div>
+          <input id="sliderHaloBlur" type="range" min="1" max="16" step="0.5" value="5.5" class="w-full" oninput="updateOpticalParams(); capture()" />
+          <div class="flex justify-between text-[10px] font-mono-tech text-slate-500">
+            <span>1px (Crisp Edge)</span>
+            <span>5.5px (Ideal Ink Halo)</span>
+            <span>16px (Wide Soft Bleed)</span>
+          </div>
+        </div>
+
+        <!-- Slider 2: Ink / Bloom Density (20% to 200%) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-200">Ink / Bloom Density (<code class="text-[11px] text-slate-400">--halo-density</code>)</span>
+            <span id="valHaloIntensity" class="font-mono-tech text-sky-300 font-semibold">135%</span>
+          </div>
+          <input id="sliderHaloIntensity" type="range" min="20" max="200" step="5" value="135" class="w-full" oninput="updateOpticalParams(); capture()" />
+          <div class="flex justify-between text-[10px] font-mono-tech text-slate-500">
+            <span>20% (Faint)</span>
+            <span>100% (1x Clone)</span>
+            <span>200% (Velvet Dual-Pass Ink)</span>
+          </div>
+        </div>
+
+        <!-- Slider 3: Frosted Glass Blur (4px to 32px) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-200">Frosted Glass Blur (<code class="text-[11px] text-slate-400">backdrop-filter</code>)</span>
+            <span id="valGlassBlur" class="font-mono-tech text-sky-300 font-semibold">18px</span>
+          </div>
+          <input id="sliderGlassBlur" type="range" min="0" max="32" step="1" value="18" class="w-full" oninput="updateOpticalParams(); capture()" />
+        </div>
+
+        <!-- Slider 4: Glass Opacity (35% to 92%) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-200">Glass Surface Opacity</span>
+            <span id="valGlassOpacity" class="font-mono-tech text-sky-300 font-semibold">72%</span>
+          </div>
+          <input id="sliderGlassOpacity" type="range" min="0" max="92" step="1" value="72" class="w-full" oninput="updateOpticalParams(); capture()" />
+          <div class="flex justify-between items-center text-xs pt-1">
+            <label for="glassColor" class="font-medium text-slate-200">Glass Colour</label>
+            <span class="flex items-center gap-2">
+              <span id="valGlassColor" class="font-mono-tech text-sky-300 font-semibold">#ffffff</span>
+              <input id="glassColor" type="color" value="#ffffff" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="updateOpticalParams(); capture()" />
+            </span>
+          </div>
+        </div>
+
+        <!-- Slider 5: Frost Texture (0% to 100%) -->
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <label for="glassTexture" class="font-medium text-slate-200">Frost Texture (<code class="text-[11px] text-slate-400">feTurbulence</code>)</label>
+            <span id="valGlassTexture" class="font-mono-tech text-sky-300 font-semibold">0%</span>
+          </div>
+          <input id="glassTexture" type="range" min="0" max="100" step="1" value="0" class="w-full" oninput="updateOpticalParams(); capture()" />
+        </div>
+      </div>
+
+      <!-- 3b. LAYER 2 AND LANE LINES -->
+      <div class="space-y-3.5">
+        <div class="text-xs font-mono-tech uppercase tracking-wider text-slate-400">Cards and lane lines</div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 flex justify-between items-center text-xs">
+          <label for="l2FillColor" class="font-medium text-slate-200">Card fill colour</label>
+          <span class="flex items-center gap-2"><span id="valL2FillColor" class="font-mono-tech text-sky-300 font-semibold"></span>
+          <input id="l2FillColor" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="updateOpticalParams(); capture()" /></span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <label for="l2FillOpacity" class="font-medium text-slate-200">Card fill</label>
+            <span id="valL2FillOpacity" class="font-mono-tech text-sky-300 font-semibold"></span>
+          </div>
+          <input id="l2FillOpacity" type="range" min="0" max="100" step="1" class="w-full" oninput="updateOpticalParams(); capture()" />
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <label for="l2Border" class="font-medium text-slate-200">Card border</label>
+            <span id="valL2Border" class="font-mono-tech text-sky-300 font-semibold"></span>
+          </div>
+          <input id="l2Border" type="range" min="0" max="100" step="1" class="w-full" oninput="updateOpticalParams(); capture()" />
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <label for="lineStrength" class="font-medium text-slate-200">Lane line strength</label>
+            <span id="valLineStrength" class="font-mono-tech text-sky-300 font-semibold"></span>
+          </div>
+          <input id="lineStrength" type="range" min="0" max="100" step="1" class="w-full" oninput="updateOpticalParams(); capture()" />
+        </div>
+      </div>
+
+      <!-- 4. BACKDROP: the stage behind the glass, per mode, shared by both techniques -->
+      <div class="space-y-3.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono-tech uppercase tracking-wider text-slate-400">4. Backdrop</span>
+          <button id="btnResetBackdrop" onclick="resetBackdrop()" class="shrink-0 whitespace-nowrap text-xs font-mono-tech text-slate-300 hover:text-sky-300 px-2.5 py-1 rounded-lg border border-slate-700 hover:border-sky-400/40 transition-colors">
+            Reset backdrop
+          </button>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2.5">
+          <div class="flex justify-between items-center text-xs gap-3">
+            <label for="bd-pattern" class="font-medium text-slate-200">Pattern</label>
+            <select id="bd-pattern" class="min-h-[28px] px-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200" oninput="onBackdropInput()"><option value="grid">Grid</option><option value="dots">Dots</option><option value="diagonal">Diagonal lines</option><option value="blueprint">Blueprint</option><option value="mesh">Mesh</option><option value="noise">Noise</option><option value="plain">Plain</option></select>
+          </div>
+          <div class="flex flex-wrap gap-3"><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-patternColor" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Pattern colour" />Pattern colour</label></div>
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs"><label for="bd-patternOpacity" class="font-medium text-slate-200">Pattern opacity</label><span id="val-bd-patternOpacity" class="font-mono-tech text-sky-300 font-semibold"></span></div>
+            <input id="bd-patternOpacity" type="range" min="0" max="100" step="0.5" class="w-full" oninput="onBackdropInput()" />
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs"><label for="bd-patternSize" class="font-medium text-slate-200">Pattern size</label><span id="val-bd-patternSize" class="font-mono-tech text-sky-300 font-semibold"></span></div>
+            <input id="bd-patternSize" type="range" min="8" max="96" step="1" class="w-full" oninput="onBackdropInput()" />
+          </div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2.5">
+          <div class="text-xs font-medium text-slate-200">Base gradient</div>
+          <div class="flex flex-wrap gap-3"><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-baseFrom" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Start" />Start</label><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-baseTo" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="End" />End</label></div>
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs"><label for="bd-baseAngle" class="font-medium text-slate-200">Angle</label><span id="val-bd-baseAngle" class="font-mono-tech text-sky-300 font-semibold"></span></div>
+            <input id="bd-baseAngle" type="range" min="0" max="360" step="1" class="w-full" oninput="onBackdropInput()" />
+          </div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2.5">
+          <div class="text-xs font-medium text-slate-200">Wash (soft colour blobs in the backdrop)</div>
+          <div class="flex flex-wrap gap-3"><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-washA" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Wash 1" />Wash 1</label><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-washB" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Wash 2" />Wash 2</label><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-washC" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Wash 3" />Wash 3</label></div>
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs"><label for="bd-washIntensity" class="font-medium text-slate-200">Wash intensity</label><span id="val-bd-washIntensity" class="font-mono-tech text-sky-300 font-semibold"></span></div>
+            <input id="bd-washIntensity" type="range" min="0" max="200" step="1" class="w-full" oninput="onBackdropInput()" />
+          </div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800/90 space-y-2.5">
+          <label class="flex items-center gap-2 text-xs font-medium text-slate-200"><input id="bd-glow" type="checkbox" class="w-4 h-4 accent-sky-400" oninput="onBackdropInput()" />Accent glow (the floating orbs)</label>
+          <div class="flex flex-wrap gap-3"><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-glowA" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Orb 1" />Orb 1</label><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-glowB" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Orb 2" />Orb 2</label><label class="flex items-center gap-1.5 text-[11px] text-slate-300"><input id="bd-glowC" type="color" class="w-8 h-6 rounded border border-slate-700 bg-transparent cursor-pointer" oninput="onBackdropInput()" aria-label="Orb 3" />Orb 3</label></div>
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs"><label for="bd-glowIntensity" class="font-medium text-slate-200">Glow intensity</label><span id="val-bd-glowIntensity" class="font-mono-tech text-sky-300 font-semibold"></span></div>
+            <input id="bd-glowIntensity" type="range" min="0" max="200" step="1" class="w-full" oninput="onBackdropInput()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. LIVE COPYABLE CSS INSPECTOR -->
+      <div class="pt-2 border-t border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono-tech uppercase tracking-wider text-slate-400">Live CSS Inspector (Light &amp; Dark)</span>
+          <button id="btnCopyCode" onclick="copyGeneratedCode()" class="px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/35 text-xs font-mono-tech font-medium transition-all">
+            Copy CSS
+          </button>
+        </div>
+        <pre id="codeOutput" class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono-tech text-slate-300 overflow-x-auto leading-relaxed max-h-44"></pre>
+      </div>
+
+      <!-- 5. PER-MODE SETTINGS READOUT + SAVE STATUS -->
+      <div class="pt-2 border-t border-slate-800 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs font-mono-tech uppercase tracking-wider text-slate-400">Settings: <span id="settingsModeName" class="text-slate-200">Light Mode (Inky Black)</span></span>
+        </div>
+        <dl id="settingsReadout" class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono-tech text-slate-300 leading-relaxed grid grid-cols-[auto_1fr] gap-x-4"></dl>
+        <p id="saveStatus" role="status" aria-live="polite" class="text-[11px] font-mono-tech text-slate-400">Not saved: use Copy settings</p>
+        <details class="rounded-xl bg-slate-950 border border-slate-800 px-3 py-2">
+          <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400 cursor-pointer hover:text-sky-300 py-1">Paste settings (JSON)</summary>
+          <div class="mt-2 space-y-2">
+            <label for="settingsPaste" class="text-[11px] text-slate-400 block">Schema 2 or 3, as Copy all settings gives it. Applying saves it.</label>
+            <textarea id="settingsPaste" rows="4" spellcheck="false" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono-tech text-slate-300"></textarea>
+            <div class="flex items-center justify-between gap-2">
+              <p id="pasteStatus" role="status" aria-live="polite" class="text-[11px] font-mono-tech text-slate-400"></p>
+              <button id="btnApplyPaste" onclick="applyPastedSettings()" class="px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/35 text-xs font-mono-tech font-medium transition-all shrink-0">
+                Apply
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+    <!-- 3-Card Optical Architecture Breakdown -->
+      <div class="grid grid-cols-1 gap-3 text-xs">
+        <div class="p-3.5 rounded-xl bg-slate-900/85 border border-slate-800/90 flex items-start gap-3">
+          <span class="px-2 py-0.5 rounded bg-white text-slate-950 font-mono-tech font-bold">L1</span>
+          <div>
+            <div class="font-semibold text-slate-100">Light Milk Glass Substrate</div>
+            <p class="text-slate-400 mt-0.5 leading-relaxed">Daylight pearl <code class="text-sky-300">rgba(255,255,255,0.72)</code> with real <code class="text-sky-300">backdrop-filter: blur()</code>.</p>
+          </div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-900/85 border border-slate-800/90 flex items-start gap-3">
+          <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-200 border border-slate-700 font-mono-tech font-bold">L2</span>
+          <div>
+            <div class="font-semibold text-slate-100">Dark Ink Bloom Clone</div>
+            <p class="text-slate-400 mt-0.5 leading-relaxed">Synchronized dark ink under-layer (<code class="text-sky-300">#05070b</code>) blurred with <code class="text-sky-300">filter: blur()</code>.</p>
+          </div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-900/85 border border-slate-800/90 flex items-start gap-3">
+          <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 font-mono-tech font-bold">L3</span>
+          <div>
+            <div class="font-semibold text-slate-100">Razor-Sharp Black Core</div>
+            <p class="text-slate-400 mt-0.5 leading-relaxed">Unblurred pitch-black text, 1px lines &amp; SVG reticles stacked cleanly on top.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- INTERACTIVE ENGINE SCRIPT -->
+  <script>
+    const state = {
+      viewMode: 'light-ink',          // 'light-ink' | 'light-emissive' | 'dark-emissive'
+      accent: 'obsidian',             // 'obsidian' | 'cyan' | 'amber' | 'emerald'
+      technique: 'dual',              // 'dual' | 'shadow'
+      haloBlur: 5.5,
+      haloIntensity: 135,
+      glassBlur: 18,
+      glassOpacity: 72,
+      glassColor: '#ffffff',
+      glassTexture: 0
+    };
+
+    const SWATCH_DESCRIPTIONS = {
+      obsidian: 'Pure Pitch-Black Ink (#05070b) / Ice White (Dark)',
+      cyan: 'Midnight Navy-Cyan Ink (#082f49) / Electric Cyan (Dark)',
+      amber: 'Espresso Umber-Black Ink (#271202) / Phosphor Amber (Dark)',
+      emerald: 'Deep Forest-Black Ink (#022c22) / Vector Emerald (Dark)'
+    };
+
+    /**
+     * Generates the precision telemetry card inner markup.
+     * Rendered identically inside:
+     *  1. .bloom-ghost-layer (Gaussian-blurred clone directly behind)
+     *  2. .bloom-ghost-tight (Tight core ink/glow reinforcement behind)
+     *  3. .sharp-core-layer  (Razor-sharp unblurred foreground on top)
+     */
+    const BOARD_MARKUP = "<div class=\"kb\" role=\"region\" aria-label=\"Board, by state\" style=\"grid-template-columns: repeat(3, 206px)\"><section class=\"kb-col glass\" aria-label=\"Next, 6 cards\"><div class=\"kb-head\"><span class=\"kb-label\" data-text=\"Next\">Next<\/span><span class=\"kb-count num\" aria-label=\"6 cards\">6<\/span><\/div><div class=\"kb-cards\"><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6b\" tabindex=\"-1\" aria-label=\"R6b frame, ah/ui-r6 / r6b, team ship\"><h3 class=\"kb-title\" title=\"R6b frame\" data-text=\"R6b frame\">R6b frame<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6b\">ah/ui-r6 / r6b<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6c\" tabindex=\"-1\" aria-label=\"R6c graph view, ah/ui-r6 / r6c, team ship\"><h3 class=\"kb-title\" title=\"R6c graph view\" data-text=\"R6c graph view\">R6c graph view<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"num\">1 msg<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6c\">ah/ui-r6 / r6c<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6d\" tabindex=\"-1\" aria-label=\"R6d hover, click, expand, ah/ui-r6 / r6d, team ship\"><h3 class=\"kb-title\" title=\"R6d hover, click, expand\" data-text=\"R6d hover, click, expand\">R6d hover, click, expand<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6d\">ah/ui-r6 / r6d<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6f\" tabindex=\"-1\" aria-label=\"R6f timeline view, ah/ui-r6 / r6f, team ship\"><h3 class=\"kb-title\" title=\"R6f timeline view\" data-text=\"R6f timeline view\">R6f timeline view<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6f\">ah/ui-r6 / r6f<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:tag\" tabindex=\"-1\" aria-label=\"Tag 2.5.0, ah/ui-r6 / tag, team ship\"><h3 class=\"kb-title\" title=\"Tag 2.5.0\" data-text=\"Tag 2.5.0\">Tag 2.5.0<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / tag\">ah/ui-r6 / tag<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|docs-2.5|docs-2.5:d3\" tabindex=\"-1\" aria-label=\"Proofread, docs-2.5 / d3, team ship, owner docs-writer\"><h3 class=\"kb-title\" title=\"Proofread\" data-text=\"Proofread\">Proofread<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"docs-writer\"><a class=\"mlink\" href=\"#\">docs-writer<\/a><\/span><span class=\"kb-ref mono\" title=\"docs-2.5 / d3\">docs-2.5 / d3<\/span><\/div><\/article><\/div><\/section><section class=\"kb-col glass\" aria-label=\"In progress, 4 cards\"><i class=\"kb-line\" aria-hidden=\"true\"><\/i><div class=\"kb-head\"><span class=\"kb-label\" data-text=\"In progress\">In progress<\/span><span class=\"kb-count num\" aria-label=\"4 cards\">4<\/span><\/div><div class=\"kb-cards\"><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6a\" tabindex=\"-1\" aria-label=\"R6a data core, ah/ui-r6 / r6a, team ship, owner implementor-1\"><h3 class=\"kb-title\" title=\"R6a data core\" data-text=\"R6a data core\">R6a data core<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"implementor-1\"><a class=\"mlink\" href=\"#\">implementor-1<\/a><\/span><span class=\"num\">2 msgs<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6a\">ah/ui-r6 / r6a<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r6e\" tabindex=\"-1\" aria-label=\"R6e tree view, ah/ui-r6 / r6e, team ship, owner implementor-1, waiting on the Orchestrator\"><h3 class=\"kb-title\" title=\"R6e tree view\" data-text=\"R6e tree view\">R6e tree view<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"implementor-1\"><a class=\"mlink\" href=\"#\">implementor-1<\/a><\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r6e\">ah/ui-r6 / r6e<\/span><\/div><div class=\"kb-flag wait\" title=\"Waiting on the Orchestrator\">\u25f7 waiting on the Orchestrator<\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r3\" tabindex=\"-1\" aria-label=\"R3 tree composers, ah/ui-r6 / r3, team ship, owner implementor-2\"><h3 class=\"kb-title\" title=\"R3 tree composers\" data-text=\"R3 tree composers\">R3 tree composers<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"implementor-2\"><a class=\"mlink\" href=\"#\">implementor-2<\/a><\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r3\">ah/ui-r6 / r3<\/span><\/div><\/article><article class=\"hairline-box kb-card glass is-attn\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|ah/ui-r6|ah/ui-r6:r5b\" tabindex=\"-1\" aria-label=\"R5b progress lane, ah/ui-r6 / r5b, team ship, blocked 2 h\"><h3 class=\"kb-title\" title=\"R5b progress lane\" data-text=\"R5b progress lane\">R5b progress lane<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-ref mono\" title=\"ah/ui-r6 / r5b\">ah/ui-r6 / r5b<\/span><\/div><div class=\"kb-flag attn\" title=\"Blocked\">\u25b2 blocked 2 h<\/div><\/article><\/div><\/section><section class=\"kb-col glass\" aria-label=\"In review, 2 cards\"><i class=\"kb-line\" aria-hidden=\"true\"><\/i><div class=\"kb-head\"><span class=\"kb-label\" data-text=\"In review\">In review<\/span><span class=\"kb-count num\" aria-label=\"2 cards\">2<\/span><\/div><div class=\"kb-cards\"><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|docs-2.5|docs-2.5:d1\" tabindex=\"-1\" aria-label=\"Upgrade guide, docs-2.5 / d1, team ship, owner docs-writer\"><h3 class=\"kb-title\" title=\"Upgrade guide\" data-text=\"Upgrade guide\">Upgrade guide<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"docs-writer\"><a class=\"mlink\" href=\"#\">docs-writer<\/a><\/span><span class=\"kb-ref mono\" title=\"docs-2.5 / d1\">docs-2.5 / d1<\/span><\/div><\/article><article class=\"hairline-box kb-card glass\" data-nav=\"true\" data-id=\"team:a1b2c3d4/ship|docs-2.5|docs-2.5:d2\" tabindex=\"-1\" aria-label=\"Screenshots, docs-2.5 / d2, team ship, owner docs-writer\"><h3 class=\"kb-title\" title=\"Screenshots\" data-text=\"Screenshots\">Screenshots<\/h3><div class=\"kb-meta\"><span class=\"kb-where is-team\" title=\"team ship\">ship<\/span><span class=\"kb-who\" title=\"docs-writer\"><a class=\"mlink\" href=\"#\">docs-writer<\/a><\/span><span class=\"kb-ref mono\" title=\"docs-2.5 / d2\">docs-2.5 / d2<\/span><\/div><\/article><\/div><\/section><\/div>";
+    let boardZoom = 1;
+    const ZOOM_MIN = 0.25, ZOOM_MAX = 2;
+    // Zoom about a point of the viewport (its centre by default), so what is under the fingers stays there.
+    function setBoardZoom(z, x, y) {
+      const st = document.getElementById("stageContainer");
+      const px = x ?? st.clientWidth / 2, py = y ?? st.clientHeight / 2;
+      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+      const cx = (st.scrollLeft + px) / boardZoom, cy = (st.scrollTop + py) / boardZoom;
+      boardZoom = next;
+      document.documentElement.style.setProperty("--board-zoom", boardZoom);
+      st.scrollLeft = cx * boardZoom - px;
+      st.scrollTop = cy * boardZoom - py;
+      document.getElementById("zoomReset").textContent = `${Math.round(boardZoom * 100)}%`;
+      document.getElementById("zoomOut").disabled = boardZoom <= ZOOM_MIN;
+      document.getElementById("zoomIn").disabled = boardZoom >= ZOOM_MAX;
+    }
+    // The whole slab and the stage around it, never above 100%.
+    function fitBoard() {
+      const st = document.getElementById("stageContainer"), c = document.getElementById("viewportBase"), r = document.getElementById("cardBase").getBoundingClientRect();
+      const pad = 2 * parseFloat(getComputedStyle(c).paddingLeft);
+      setBoardZoom(Math.min(1, st.clientWidth / (r.width / boardZoom + pad), st.clientHeight / (r.height / boardZoom + pad)));
+      st.scrollLeft = (st.scrollWidth - st.clientWidth) / 2;
+      st.scrollTop = (st.scrollHeight - st.clientHeight) / 2;
+    }
+    function wirePinch() {
+      const st = document.getElementById("stageContainer");
+      const at = (cx, cy) => { const r = st.getBoundingClientRect(); return [cx - r.left, cy - r.top]; };
+      st.addEventListener("wheel", (e) => {
+        if (!e.ctrlKey) return; // a trackpad pinch arrives as ctrl+wheel; plain wheel scrolls natively
+        e.preventDefault();
+        setBoardZoom(boardZoom * Math.exp(-e.deltaY / 100), ...at(e.clientX, e.clientY));
+      }, { passive: false });
+      let pinch = null;
+      const spread = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      st.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 2) { e.preventDefault(); pinch = { d: spread(e.touches), z: boardZoom }; }
+      }, { passive: false });
+      st.addEventListener("touchmove", (e) => {
+        if (!pinch || e.touches.length !== 2) return;
+        e.preventDefault();
+        setBoardZoom((pinch.z * spread(e.touches)) / pinch.d, ...at((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2));
+      }, { passive: false });
+      st.addEventListener("touchend", (e) => { if (e.touches.length < 2) pinch = null; });
+      // Safari's own pinch: on a Mac it has no touches, on iOS the touch path above has it.
+      let g = 1;
+      st.addEventListener("gesturestart", (e) => { e.preventDefault(); g = boardZoom; });
+      st.addEventListener("gesturechange", (e) => {
+        e.preventDefault();
+        if (!("ontouchstart" in window)) setBoardZoom(g * e.scale, ...at(e.clientX, e.clientY));
+      });
+    }
+    window.addEventListener("load", () => { wirePinch(); requestAnimationFrame(fitBoard); });
+    function getTelemetryMarkup() {
+      return BOARD_MARKUP;
+    }
+
+    const OPTICS = {
+      'light-ink': { ghost: 'light-inky-ghost', sharp: 'light-inky-sharp' },
+      'light-emissive': { ghost: 'light-emissive-ghost', sharp: 'light-emissive-sharp' },
+      'dark-emissive': { ghost: 'dark-emissive-ghost', sharp: 'dark-emissive-sharp' }
+    };
+
+    /**
+     * Populates a card container with the 3 synchronized optical layers:
+     *  - .bloom-ghost-layer (Primary Gaussian blur behind)
+     *  - .bloom-ghost-tight (Tight core boost behind when Density > 100%)
+     *  - .sharp-core-layer  (Razor-sharp unblurred foreground on top)
+     */
+    function buildDualLayerCard(containerEl, opticalMode) {
+      const innerHTML = getTelemetryMarkup();
+      const { ghost, sharp } = OPTICS[opticalMode];
+      containerEl.innerHTML = `<div class="board-scroll">
+        <div class="bloom-ghost-layer ${ghost}" aria-hidden="true">
+          ${innerHTML}
+        </div>
+        <div class="bloom-ghost-tight ${ghost}" aria-hidden="true">
+          ${innerHTML}
+        </div>
+        <div class="sharp-core-layer ${sharp}" data-halo-type="${opticalMode}">
+          ${innerHTML}
+        </div>
+      </div>`;
+    }
+
+    /**
+     * Configures the ambient background orbs and contrast test banner for a viewport
+     */
+    function configureStageEnvironment(viewportEl, mode) {
+      const orbA = document.getElementById('orbBaseA');
+      const orbB = document.getElementById('orbBaseB');
+      const orbC = document.getElementById('orbBaseC');
+      const banner = document.getElementById('meshBannerBase');
+
+      if (mode === 'dark-emissive') {
+        viewportEl.className = 'absolute inset-0 flex items-center justify-center p-4 sm:p-8 transition-colors duration-300';
+        orbA.className = 'ambient-orb-a absolute top-8 left-10 w-64 h-64 rounded-full blur-2xl';
+        orbB.className = 'ambient-orb-b absolute bottom-8 right-10 w-72 h-72 rounded-full blur-2xl';
+        orbC.className = 'ambient-orb-a absolute top-1/3 right-1/4 w-48 h-48 rounded-full blur-2xl';
+        banner.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-28 border border-white/15 bg-slate-900/35 rounded-xl rotate-[-5deg] pointer-events-none flex items-center justify-between px-6 font-mono-tech text-[11px] tracking-widest uppercase text-white/30';
+        banner.innerHTML = '<span>// NOCTURNAL FROSTED REFRACTION TEST</span><span>SMOKED OBSIDIAN SUBSTRATE</span>';
+      } else {
+        // 'light-ink' | 'light-emissive': the daylight stage
+        viewportEl.className = 'absolute inset-0 flex items-center justify-center p-4 sm:p-8 transition-colors duration-300';
+        orbA.className = 'ambient-orb-a absolute top-8 left-10 w-64 h-64 rounded-full blur-2xl';
+        orbB.className = 'ambient-orb-b absolute bottom-8 right-10 w-72 h-72 rounded-full blur-2xl';
+        orbC.className = 'ambient-orb-a absolute top-1/3 right-1/4 w-48 h-48 rounded-full blur-2xl';
+        banner.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-28 border border-slate-900/15 bg-white/35 rounded-xl rotate-[-5deg] pointer-events-none flex items-center justify-between px-6 font-mono-tech text-[11px] tracking-widest uppercase text-slate-900/40';
+        banner.innerHTML = '<span>// DAYLIGHT FROSTED REFRACTION TEST</span><span>MILK QUARTZ SUBSTRATE</span>';
+      }
+    }
+
+    function renderStage() {
+      const cardBase = document.getElementById('cardBase');
+      configureStageEnvironment(document.getElementById('viewportBase'), state.viewMode);
+      cardBase.className = `${state.viewMode === 'dark-emissive' ? 'glass-card-dark-emissive' : 'glass-card-light'} optical-card-stack board-slab rounded-2xl`;
+      applyBackdrop();
+      buildDualLayerCard(cardBase, state.viewMode);
+      updateOpticalParams();
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+
+      // Update Top Mode Bar buttons
+      MODES.forEach(m => {
+        const btn = document.getElementById(`top-mode-${m}`);
+        if (m === mode) {
+          if (m === 'light-ink') {
+            btn.className = 'top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-white text-slate-950 border-white shadow-md';
+          } else {
+            btn.className = 'top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-sky-500/20 border-sky-400/60 text-sky-100 shadow-md';
+          }
+        } else {
+          btn.className = 'top-mode-btn px-3 py-2.5 rounded-xl text-left border transition-all bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700';
+        }
+      });
+
+      // Update Sidebar Mode buttons (Dark Emissive spans the second row)
+      MODES.forEach(m => {
+        const sideBtn = document.getElementById(`side-mode-${m}`);
+        const span = m === 'dark-emissive' ? ' sm:col-span-2' : '';
+        if (m === mode) {
+          sideBtn.className = 'side-mode-btn p-3 rounded-xl text-left border transition-all bg-sky-500/15 border-sky-400/60 text-sky-100' + span;
+        } else {
+          sideBtn.className = 'side-mode-btn p-3 rounded-xl text-left border transition-all bg-slate-950/65 border-slate-800 text-slate-300 hover:border-slate-700' + span;
+        }
+      });
+
+      restoreMode(mode);
+      renderStage();
+      renderReadout();
+      if (!booting) scheduleSave('_meta');
+    }
+
+    function setAccent(accent) {
+      state.accent = accent;
+      document.documentElement.setAttribute('data-accent', accent);
+      document.getElementById('swatchDesc').textContent = SWATCH_DESCRIPTIONS[accent] || '';
+
+      ['obsidian', 'cyan', 'amber', 'emerald'].forEach(sw => {
+        const btn = document.getElementById(`swatch-${sw}`);
+        if (!btn) return;
+        if (sw === accent) {
+          btn.className = 'swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-sky-400/60 bg-sky-500/15 text-xs font-medium text-sky-100';
+        } else {
+          btn.className = 'swatch-btn flex items-center gap-2 py-2 px-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs font-medium text-slate-300 hover:border-slate-700';
+        }
+      });
+
+      if (!restoring) { updateOpticalParams(); capture(); }
+    }
+
+    function setRenderTechnique(tech) {
+      state.technique = tech;
+      const stage = document.getElementById('stageContainer');
+      const btnDual = document.getElementById('btnTechDual');
+      const btnShadow = document.getElementById('btnTechShadow');
+
+      if (tech === 'shadow') {
+        stage.classList.add('css-shadow-mode');
+        btnShadow.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500/20 text-sky-200 border border-sky-400/40 shadow-sm';
+        btnDual.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-slate-200';
+      } else {
+        stage.classList.remove('css-shadow-mode');
+        btnDual.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500/20 text-sky-200 border border-sky-400/40 shadow-sm';
+        btnShadow.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-slate-200';
+      }
+      if (!restoring) switchTechnique(tech);
+    }
+
+    function updateOpticalParams() {
+      state.haloBlur = parseFloat(document.getElementById('sliderHaloBlur').value);
+      state.haloIntensity = parseFloat(document.getElementById('sliderHaloIntensity').value);
+      state.glassBlur = parseFloat(document.getElementById('sliderGlassBlur').value);
+      state.glassOpacity = parseFloat(document.getElementById('sliderGlassOpacity').value);
+      state.glassColor = document.getElementById('glassColor').value;
+      state.glassTexture = parseFloat(document.getElementById('glassTexture').value);
+
+      document.getElementById('valHaloBlur').textContent = `${state.haloBlur.toFixed(1)}px`;
+      document.getElementById('valHaloIntensity').textContent = `${Math.round(state.haloIntensity)}%`;
+      document.getElementById('valGlassBlur').textContent = `${state.glassBlur}px`;
+      document.getElementById('valGlassOpacity').textContent = `${state.glassOpacity}%`;
+      document.getElementById('valGlassColor').textContent = state.glassColor;
+      document.getElementById('valGlassTexture').textContent = `${state.glassTexture}%`;
+
+      const primaryOpacity = Math.min(1, state.haloIntensity / 100);
+      const overdriveOpacity = state.haloIntensity > 100 ? ((state.haloIntensity - 100) / 100) * 0.95 : 0;
+      const strokeBoost = 0.55 + (state.haloIntensity / 100) * 0.85;
+      const hex = state.glassColor;
+
+      const rootStyle = document.documentElement.style;
+      rootStyle.setProperty('--halo-blur', `${state.haloBlur}px`);
+      rootStyle.setProperty('--halo-blur-tight', `${Math.max(1.2, state.haloBlur * 0.42).toFixed(1)}px`);
+      rootStyle.setProperty('--halo-opacity', primaryOpacity.toFixed(2));
+      rootStyle.setProperty('--halo-overdrive-opacity', overdriveOpacity.toFixed(2));
+      rootStyle.setProperty('--halo-stroke', `${strokeBoost.toFixed(2)}px`);
+      const glassFrost = Math.min(1, state.glassOpacity / 35);
+      rootStyle.setProperty('--glass-frost', glassFrost);
+      rootStyle.setProperty('--glass-blur', `${state.glassBlur * glassFrost}px`);
+      rootStyle.setProperty('--glass-opacity', (state.glassOpacity / 100).toFixed(2));
+      rootStyle.setProperty('--glass-rgb', [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', '));
+      rootStyle.setProperty('--glass-texture', (state.glassTexture / 100).toFixed(2));
+
+      const l2 = document.getElementById('l2FillColor').value;
+      const pct = (id) => parseFloat(document.getElementById(id).value);
+      document.getElementById('valL2FillOpacity').textContent = `${pct('l2FillOpacity')}%`;
+      document.getElementById('valL2Border').textContent = `${pct('l2Border')}%`;
+      document.getElementById('valLineStrength').textContent = `${pct('lineStrength')}%`;
+      document.getElementById('valL2FillColor').textContent = l2;
+      rootStyle.setProperty('--l2-fill', `rgba(${[1, 3, 5].map(i => parseInt(l2.slice(i, i + 2), 16)).join(', ')}, ${pct('l2FillOpacity') / 100})`);
+      rootStyle.setProperty('--l2-border', pct('l2Border') / 100);
+      rootStyle.setProperty('--line-strength', pct('lineStrength') / 100);
+
+      updateCodeInspector(primaryOpacity, overdriveOpacity, strokeBoost);
+    }
+
+    function updateCodeInspector(primaryOpacity, overdriveOpacity, strokeBoost) {
+      const codeEl = document.getElementById('codeOutput');
+      if (state.technique === 'dual') {
+        codeEl.textContent = `/* 1. Light Mode: Milky Frosted Glass + Inky Black Text & Dark Ink Bloom */
+.glass-card-light {
+  background: rgba(255, 255, 255, ${(state.glassOpacity / 100).toFixed(2)});
+  backdrop-filter: blur(${+(state.glassBlur * Math.min(1, state.glassOpacity / 35)).toFixed(1)}px) saturate(${Math.round(100 + 80 * Math.min(1, state.glassOpacity / 35))}%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+}
+.light-inky-sharp {
+  position: relative; z-index: 2;
+  color: #05070b; /* Razor-sharp pitch-black foreground text & 1px lines */
+}
+.light-inky-ghost {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  color: #05070b;
+  -webkit-text-stroke: ${(strokeBoost + 0.9).toFixed(2)}px rgb(var(--light-ink-tint-rgb));
+  filter: blur(${state.haloBlur.toFixed(1)}px);
+  opacity: ${primaryOpacity.toFixed(2)};
+  mix-blend-mode: multiply;
+}
+
+/* 2. Dark Mode: Smoked Glass + Emissive or Dark Ink Blur */
+.glass-card-dark {
+  background: rgba(10, 15, 28, ${(state.glassOpacity / 100).toFixed(2)});
+  backdrop-filter: blur(${+(state.glassBlur * Math.min(1, state.glassOpacity / 35)).toFixed(1)}px) saturate(${Math.round(100 + 60 * Math.min(1, state.glassOpacity / 35))}%);
+}`;
+      } else {
+        codeEl.textContent = `/* Pure CSS Single-Layer Equivalent (Light Mode Inky Black + Dark Bloom) */
+.light-inky-text {
+  color: #05070b;
+  text-shadow:
+    0 0 ${(state.haloBlur * 0.38).toFixed(1)}px rgba(5, 7, 11, ${primaryOpacity.toFixed(2)}),
+    0 0 ${state.haloBlur.toFixed(1)}px rgba(15, 23, 42, ${(primaryOpacity * 0.88).toFixed(2)}),
+    0 0 ${(state.haloBlur * 1.65).toFixed(1)}px rgba(15, 23, 42, ${overdriveOpacity.toFixed(2)});
+}
+.light-inky-line {
+  background: #05070b;
+  box-shadow:
+    0 0 ${(state.haloBlur * 0.45).toFixed(1)}px rgba(5, 7, 11, ${primaryOpacity.toFixed(2)}),
+    0 0 ${state.haloBlur.toFixed(1)}px rgba(15, 23, 42, ${(primaryOpacity * 0.82).toFixed(2)});
+}`;
+      }
+    }
+
+    function copyGeneratedCode() {
+      copyText(document.getElementById('codeOutput').textContent, document.getElementById('btnCopyCode'));
+    }
+
+    async function copyText(text, btn) {
+      const out = document.getElementById('copyOut'), status = document.getElementById('copyStatus');
+      document.getElementById('copyBox').hidden = false;
+      out.value = text;
+      out.focus();
+      out.select();
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch (e) {
+        out.focus();
+        out.select();
+        try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      }
+      out.focus();
+      out.select();
+      document.querySelector('.board-controls').scrollTop = 0;
+      status.textContent = ok ? 'Copied. The same text is here too:' : 'This page could not reach your clipboard. The text is selected: press Cmd+C.';
+      if (ok) {
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1600);
+      }
+    }
+
+    // Subtle 60fps Live Waveform Animation Synchronized Across All Cloned Layers
+    (function animateSynchronizedWaveform() {
+      let t = 0;
+      function tick() {
+        t += 0.045;
+        const y1 = (6 + Math.sin(t) * 5).toFixed(1);
+        const y2 = (18 + Math.cos(t * 1.3) * 6).toFixed(1);
+        const y3 = (27 + Math.sin(t * 0.9 + 1) * 5).toFixed(1);
+        const y4 = (11 + Math.cos(t * 1.5 + 2) * 6).toFixed(1);
+        const d = `M 2 24 Q 18 ${y1}, 32 24 T 62 ${y2} T 92 ${y3} T 122 ${y4} T 158 22`;
+
+        const paths = document.querySelectorAll('.waveform-path');
+        for (let i = 0; i < paths.length; i++) {
+          paths[i].setAttribute('d', d);
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+
+    // =========================================================================
+    // LOOK LAB: every optical theme mode keeps two profiles, one per technique
+    // (dual-layer clone / pure CSS shadow), and remembers which one it was on.
+    // Saved per mode to the Artifact db (looks/<mode>, looks/_meta) so Claude can
+    // read them back; localStorage is the per-browser fallback when db is absent.
+    // Schema 3. Schema-2 settings migrate into both profiles.
+    // Old looks/split and looks/dark-ink docs are ignored, never deleted.
+    // =========================================================================
+    const SCHEMA = 3;
+    const MODES = ['light-ink', 'light-emissive', 'dark-emissive'];
+    const TECHNIQUES = ['dual', 'shadow'];
+    const MODE_NAMES = {
+      'light-ink': 'Light Mode (Inky Black)',
+      'light-emissive': 'Light Mode (Emissive Colour)',
+      'dark-emissive': 'Dark Mode (Emissive Bloom)'
+    };
+    const TECHNIQUE_NAMES = { dual: 'Dual-layer', shadow: 'Pure CSS' };
+    const SLIDERS = ['sliderHaloBlur', 'sliderHaloIntensity', 'sliderGlassBlur', 'sliderGlassOpacity', 'glassTexture', 'l2FillOpacity', 'l2Border', 'lineStrength'];
+    const ACCENTS = ['obsidian', 'cyan', 'amber', 'emerald'];
+    // One technique's profile: the source file's defaults; Light Emissive starts on a swatch that shows colour.
+    function defaultsFor(mode) {
+      return {
+        sliderHaloBlur: 5.5, sliderHaloIntensity: 135, sliderGlassBlur: 18, sliderGlassOpacity: 72,
+        glassColor: mode === 'dark-emissive' ? '#0a0f1c' : '#ffffff',
+        glassTexture: 0,
+        l2FillColor: mode === 'dark-emissive' ? '#0f172a' : '#ffffff',
+        l2FillOpacity: mode === 'dark-emissive' ? 35 : 36,
+        l2Border: { 'light-ink': 48, 'light-emissive': 70, 'dark-emissive': 36 }[mode],
+        lineStrength: 100,
+        accent: mode === 'light-emissive' ? 'cyan' : 'obsidian'
+      };
+    }
+    // ---- Backdrop: the stage behind the glass. Per mode, shared by both techniques. -------------------
+    // Painted as one inline background list on #viewportBase (pattern on top, then the soft wash blobs,
+    // then the base gradient) plus the three floating orbs (the accent glow). Defaults reproduce the
+    // look before round 5: daylight gradient + grid + pastel wash + orbs for light; grid on the dark
+    // page + orbs for dark.
+    const PATTERNS = ['grid', 'dots', 'diagonal', 'blueprint', 'mesh', 'noise', 'plain'];
+    const PATTERN_NAMES = { grid: 'Grid', dots: 'Dots', diagonal: 'Diagonal lines', blueprint: 'Blueprint', mesh: 'Mesh', noise: 'Noise', plain: 'Plain' };
+    const BD_COLORS = ['patternColor', 'baseFrom', 'baseTo', 'washA', 'washB', 'washC', 'glowA', 'glowB', 'glowC'];
+    const BD_NUMBERS = ['patternOpacity', 'patternSize', 'baseAngle', 'washIntensity', 'glowIntensity'];
+    // Each blob's and orb's share of its colour at 100% intensity, as the pre-round-5 stage drew them.
+    const WASH = [['circle at 18% 22%', 48], ['circle at 82% 26%', 46], ['circle at 75% 78%', 52]];
+    const WEIGHTS = {
+      light: { wash: [0.55, 0.45, 0.50], glow: [0.65, 0.55, 0.60] },
+      dark: { wash: [0.30, 0.26, 0.20], glow: [0.35, 0.35, 0.20] }
+    };
+    const weightsFor = (mode) => WEIGHTS[mode === 'dark-emissive' ? 'dark' : 'light'];
+    function backdropDefaults(mode) {
+      return mode === 'dark-emissive'
+        ? { pattern: 'grid', patternColor: '#ffffff', patternOpacity: 5.5, patternSize: 28, baseFrom: '#070b14', baseTo: '#070b14', baseAngle: 135,
+            washA: '#38bdf8', washB: '#6366f1', washC: '#22d3ee', washIntensity: 0, glow: true, glowA: '#0ea5e9', glowB: '#6366f1', glowC: '#22d3ee', glowIntensity: 100 }
+        : { pattern: 'grid', patternColor: '#0f172a', patternOpacity: 6.5, patternSize: 28, baseFrom: '#f8fafc', baseTo: '#e2e8f0', baseAngle: 135,
+            washA: '#7dd3fc', washB: '#fdba8c', washC: '#c4b5fd', washIntensity: 100, glow: true, glowA: '#7dd3fc', glowB: '#c4b5fd', glowC: '#fde68a', glowIntensity: 100 };
+    }
+    const bdEl = (k) => document.getElementById(`bd-${k}`);
+    function normalizeBackdrop(mode, raw) {
+      const out = backdropDefaults(mode);
+      if (!raw || typeof raw !== 'object') return out;
+      for (const k of Object.keys(out)) {
+        const v = raw[k];
+        if (BD_NUMBERS.includes(k)) {
+          const n = Number(v);
+          if (v !== null && v !== '' && Number.isFinite(n)) out[k] = Math.min(Number(bdEl(k).max), Math.max(Number(bdEl(k).min), n));
+        } else if (BD_COLORS.includes(k)) {
+          if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) out[k] = v.toLowerCase();
+        } else if (k === 'pattern') {
+          if (PATTERNS.includes(v)) out[k] = v;
+        } else if (typeof v === 'boolean') {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+    const rgba = (hex, a) => `rgba(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, ${+a.toFixed(3)})`;
+    function patternLayers(b) {
+      const c = rgba(b.patternColor, b.patternOpacity / 100), s = b.patternSize, tile = (n) => `${n}px ${n}px`;
+      switch (b.pattern) {
+        case 'grid': return [[`linear-gradient(to right, ${c} 1px, transparent 1px)`, tile(s)], [`linear-gradient(to bottom, ${c} 1px, transparent 1px)`, tile(s)]];
+        case 'dots': return [[`radial-gradient(circle, ${c} 1.5px, transparent 2px)`, tile(s)]];
+        case 'diagonal': return [[`repeating-linear-gradient(45deg, ${c} 0px, ${c} 1px, transparent 1px, transparent ${s / 2}px)`, 'auto']];
+        case 'blueprint': {
+          const minor = rgba(b.patternColor, b.patternOpacity / 200);
+          return [[`linear-gradient(to right, ${c} 1px, transparent 1px)`, tile(s * 4)], [`linear-gradient(to bottom, ${c} 1px, transparent 1px)`, tile(s * 4)],
+                  [`linear-gradient(to right, ${minor} 1px, transparent 1px)`, tile(s)], [`linear-gradient(to bottom, ${minor} 1px, transparent 1px)`, tile(s)]];
+        }
+        case 'mesh': return [[`radial-gradient(circle, ${c} 0%, transparent 70%)`, tile(s * 6)]];
+        case 'noise': {
+          // Grain in the pattern colour: alpha from the turbulence, scaled by the pattern opacity.
+          const [r, g, bl] = [1, 3, 5].map(i => (parseInt(b.patternColor.slice(i, i + 2), 16) / 255).toFixed(3));
+          const o = (b.patternOpacity / 100) * 3;
+          const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${s * 6}' height='${s * 6}'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${bl} ${o.toFixed(3)} 0 0 0 ${(-o / 2).toFixed(3)}'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`;
+          return [[`url("data:image/svg+xml,${encodeURIComponent(svg)}")`, tile(s * 6)]];
+        }
+        default: return [];   // plain
+      }
+    }
+    function applyBackdrop() {
+      const b = modeSettings[state.viewMode].backdrop;
+      const w = weightsFor(state.viewMode);
+      const layers = [
+        ...WASH.map(([at, stop], i) => [`radial-gradient(${at}, ${rgba(b[`wash${'ABC'[i]}`], w.wash[i] * b.washIntensity / 100)} 0%, transparent ${stop}%)`, 'auto']),
+        [`linear-gradient(${b.baseAngle}deg, ${b.baseFrom} 0%, ${b.baseTo} 100%)`, 'auto']
+      ];
+      const stage = document.getElementById('viewportBase');
+      stage.style.backgroundImage = layers.map(l => l[0]).join(', ');
+      stage.style.backgroundSize = layers.map(l => l[1]).join(', ');
+      const pattern = patternLayers(b), grid = document.getElementById('stageGrid');
+      grid.style.backgroundImage = pattern.map(l => l[0]).join(', ');
+      grid.style.backgroundSize = pattern.map(l => l[1]).join(', ');
+      ['orbBaseA', 'orbBaseB', 'orbBaseC'].forEach((id, i) => {
+        const orb = document.getElementById(id);
+        orb.style.display = b.glow ? '' : 'none';
+        orb.style.backgroundColor = rgba(b[`glow${'ABC'[i]}`], Math.min(1, w.glow[i] * b.glowIntensity / 100));
+      });
+      BD_NUMBERS.forEach(k => { document.getElementById(`val-bd-${k}`).textContent = `${b[k]}${k === 'baseAngle' ? '°' : k === 'patternSize' ? 'px' : '%'}`; });
+    }
+    function writeBackdropControls(b) {
+      for (const [k, v] of Object.entries(b)) {
+        if (k === 'glow') bdEl(k).checked = v; else bdEl(k).value = v;
+      }
+    }
+    function readBackdropControls() {
+      const b = backdropDefaults(state.viewMode);
+      for (const k of Object.keys(b)) {
+        b[k] = k === 'glow' ? bdEl(k).checked : BD_NUMBERS.includes(k) ? parseFloat(bdEl(k).value) : bdEl(k).value.toLowerCase();
+      }
+      return b;
+    }
+    function onBackdropInput() {
+      if (restoring) return;
+      modeSettings[state.viewMode].backdrop = readBackdropControls();
+      applyBackdrop();
+      renderReadout();
+      scheduleSave(state.viewMode);
+    }
+    function resetBackdrop() {
+      modeSettings[state.viewMode].backdrop = normalizeMode(state.viewMode, JIM_LOOK.modes[state.viewMode]).backdrop;
+      writeBackdropControls(modeSettings[state.viewMode].backdrop);
+      applyBackdrop();
+      renderReadout();
+      scheduleSave(state.viewMode);
+    }
+
+    const freshMode = (mode) => ({ technique: 'dual', profiles: { dual: defaultsFor(mode), shadow: defaultsFor(mode) }, backdrop: backdropDefaults(mode) });
+    // Saved or pasted data is untrusted: keep only known keys, clamp numbers to the control's range.
+    // Missing keys (schema 1/2 docs lack glassColor/glassTexture) take their defaults.
+    function normalizeProfile(mode, raw) {
+      const out = defaultsFor(mode);
+      if (!raw || typeof raw !== 'object') return out;
+      for (const k of Object.keys(out)) {
+        const v = raw[k];
+        if (SLIDERS.includes(k)) {
+          const el = document.getElementById(k);
+          const n = Number(v);
+          if (v !== null && v !== '' && Number.isFinite(n)) out[k] = Math.min(Number(el.max), Math.max(Number(el.min), n));
+        } else if (k === 'glassColor' || k === 'l2FillColor') {
+          if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) out[k] = v.toLowerCase();
+        } else if (ACCENTS.includes(v)) {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+    // Schema 3 {technique, profiles, backdrop?} or schema 2 flat settings {…, technique}. A schema-2 entry fills
+    // BOTH profiles with its tuned values (not defaults) and keeps its technique. A missing backdrop defaults.
+    function normalizeMode(mode, raw) {
+      const technique = TECHNIQUES.includes(raw && raw.technique) ? raw.technique : 'dual';
+      const un = (p) => (p && typeof p === 'object' && p.controls ? p.controls : p);   // export shape: {controls, resolved}
+      const backdrop = normalizeBackdrop(mode, un(raw && raw.backdrop));
+      if (raw && raw.profiles && typeof raw.profiles === 'object') {
+        const dual = un(raw.profiles.dual), shadow = un(raw.profiles.shadow);
+        return { technique, profiles: { dual: normalizeProfile(mode, dual || shadow), shadow: normalizeProfile(mode, shadow || dual) }, backdrop };
+      }
+      return { technique, profiles: { dual: normalizeProfile(mode, raw), shadow: normalizeProfile(mode, raw) }, backdrop };
+    }
+
+    const modeSettings = Object.fromEntries(MODES.map(m => [m, freshMode(m)]));
+    const profileOf = (mode) => modeSettings[mode].profiles[modeSettings[mode].technique];
+    let restoring = false;
+    let booting = true;
+
+    // Pushes a mode's current-technique profile into the controls and state (a render follows).
+    function restoreMode(mode) {
+      const ms = modeSettings[mode];
+      const p = ms.profiles[ms.technique];
+      restoring = true;
+      SLIDERS.forEach(id => { document.getElementById(id).value = p[id]; });
+      document.getElementById('glassColor').value = p.glassColor;
+      document.getElementById('l2FillColor').value = p.l2FillColor;
+      writeBackdropControls(ms.backdrop);
+      if (p.accent !== state.accent) setAccent(p.accent); // keeps the source's boot caption
+      setRenderTechnique(ms.technique);
+      restoring = false;
+    }
+
+    // The technique switch: remember it for this mode and load that technique's profile.
+    function switchTechnique(tech) {
+      modeSettings[state.viewMode].technique = tech;
+      restoreMode(state.viewMode);
+      updateOpticalParams();
+      renderReadout();
+      scheduleSave(state.viewMode);
+    }
+
+    // Reads the controls back into the current mode's current technique only.
+    function capture() {
+      if (restoring) return;
+      const p = profileOf(state.viewMode);
+      SLIDERS.forEach(id => { p[id] = parseFloat(document.getElementById(id).value); });
+      p.glassColor = document.getElementById('glassColor').value.toLowerCase();
+      p.l2FillColor = document.getElementById('l2FillColor').value.toLowerCase();
+      p.accent = state.accent;
+      renderReadout();
+      scheduleSave(state.viewMode);
+    }
+
+    function resetMode() {
+      const ms = modeSettings[state.viewMode];
+      ms.profiles[ms.technique] = normalizeMode(state.viewMode, JIM_LOOK.modes[state.viewMode]).profiles[ms.technique];
+      setViewMode(state.viewMode);
+      scheduleSave(state.viewMode);
+    }
+
+    const LABELS = {
+      sliderHaloBlur: ['Halo blur', v => `${v} px`],
+      sliderHaloIntensity: ['Ink / bloom density', v => `${v}%`],
+      sliderGlassBlur: ['Glass blur', v => `${v} px`],
+      sliderGlassOpacity: ['Glass opacity', v => `${v}%`],
+      glassColor: ['Glass colour', v => v],
+      glassTexture: ['Frost texture', v => `${v}%`],
+      l2FillColor: ['Card fill colour', v => v],
+      l2FillOpacity: ['Card fill', v => `${v}%`],
+      l2Border: ['Card border', v => `${v}%`],
+      lineStrength: ['Lane line strength', v => `${v}%`],
+      accent: ['Ink & bloom tint', v => ({ obsidian: 'Obsidian Ink', cyan: 'Midnight Cyan', amber: 'Espresso Ink', emerald: 'Forest Ink' })[v]]
+    };
+    function renderReadout() {
+      const tech = TECHNIQUE_NAMES[modeSettings[state.viewMode].technique];
+      const p = profileOf(state.viewMode);
+      document.getElementById('settingsModeName').textContent = `${MODE_NAMES[state.viewMode]} · ${tech}`;
+      document.getElementById('btnResetMode').textContent = `Reset this mode (${tech})`;
+      const dl = document.getElementById('settingsReadout');
+      const b = modeSettings[state.viewMode].backdrop;
+      const rows = [
+        ...Object.keys(p).map(k => [k, LABELS[k][0], LABELS[k][1](p[k])]),
+        ['backdrop', 'Backdrop', `${PATTERN_NAMES[b.pattern]} · ${b.patternColor} ${b.patternOpacity}% · ${b.patternSize} px`],
+        ['base', 'Backdrop base', b.baseFrom === b.baseTo ? b.baseFrom : `${b.baseFrom} → ${b.baseTo} at ${b.baseAngle}°`],
+        ['wash', 'Backdrop wash', `${b.washA} ${b.washB} ${b.washC} · ${b.washIntensity}%`],
+        ['glow', 'Accent glow', b.glow ? `${b.glowA} ${b.glowB} ${b.glowC} · ${b.glowIntensity}%` : 'off']
+      ];
+      dl.replaceChildren(...rows.flatMap(([k, label, value]) => {
+        const dt = document.createElement('dt');
+        dt.className = 'text-slate-400';
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.className = 'text-sky-300 text-right';
+        dd.dataset.key = k;
+        dd.textContent = value;
+        return [dt, dd];
+      }));
+    }
+
+    const modeBody = (m) => ({
+      technique: modeSettings[m].technique,
+      profiles: { dual: { ...modeSettings[m].profiles.dual }, shadow: { ...modeSettings[m].profiles.shadow } },
+      backdrop: { ...modeSettings[m].backdrop }
+    });
+    function allSettings() {
+      return { schema: SCHEMA, current_mode: state.viewMode, modes: Object.fromEntries(MODES.map(m => [m, modeBody(m)])) };
+    }
+    // ---- Export: every value the page applies, read back from the live page -----------------------
+    // Each profile is applied for real, then read with getComputedStyle, so the export cannot drift from
+    // what is drawn. Applying is synchronous (no paint in between), saves are muted, and the visible state
+    // is put back afterwards.
+    let exporting = false;
+    const cssVarNames = () => {
+      // The custom properties the stylesheet declares on :root and the swatches, plus the ones JS sets.
+      const names = new Set(Object.values(document.documentElement.style).filter(n => n.startsWith('--')));
+      for (const sheet of document.styleSheets) {
+        let rules;
+        try { rules = sheet.cssRules; } catch (e) { continue; }
+        for (const r of rules) {
+          if (r.selectorText && /^(:root|\[data-accent=)/.test(r.selectorText)) {
+            for (const p of r.style) if (p.startsWith('--')) names.add(p);
+          }
+        }
+      }
+      return [...names].sort();
+    };
+    function readPart(el) {
+      if (!el) return null;
+      const c = getComputedStyle(el);
+      return {
+        color: c.color, webkitTextStroke: `${c.webkitTextStrokeWidth} ${c.webkitTextStrokeColor}`,
+        textShadow: c.textShadow, boxShadow: c.boxShadow, filter: c.filter, stroke: c.stroke, strokeWidth: c.strokeWidth,
+        background: c.backgroundImage !== 'none' ? c.backgroundImage : c.backgroundColor, height: c.height,
+        border: `${c.borderTopWidth} ${c.borderTopStyle} ${c.borderTopColor}`
+      };
+    }
+    function readLayer(el) {
+      if (!el) return null;
+      const c = getComputedStyle(el);
+      const part = (sel) => readPart(el.querySelector(sel));
+      return {
+        className: el.className, display: c.display, mixBlendMode: c.mixBlendMode, filter: c.filter, opacity: c.opacity,
+        color: c.color, webkitTextStroke: `${c.webkitTextStrokeWidth} ${c.webkitTextStrokeColor}`, textShadow: c.textShadow,
+        parts: {
+          heading: part('h3'), accentCopy: part('.accent-copy'), mutedCopy: part('.muted-copy'),
+          hairlineDivider: part('.hairline-divider'), hairlineBox: part('.hairline-box'), cornerBracket: part('.corner-bracket'),
+          vectorStroke: part('.vector-stroke'), vectorAccent: part('.vector-accent'), svg: part('svg')
+        }
+      };
+    }
+    function resolveCurrent() {
+      const root = getComputedStyle(document.documentElement);
+      const card = document.getElementById('cardBase');
+      const cc = getComputedStyle(card);
+      const tex = getComputedStyle(card, '::before');
+      const svg = decodeURIComponent(tex.backgroundImage);
+      const attr = (name) => (new RegExp(`${name}='([^']*)'`).exec(svg) || [])[1] || null;
+      return {
+        accent: document.documentElement.getAttribute('data-accent'),
+        cssVars: Object.fromEntries(cssVarNames().map(n => [n, root.getPropertyValue(n).trim()])),
+        glassCard: {
+          className: card.className, backgroundColor: cc.backgroundColor,
+          backdropFilter: cc.backdropFilter || cc.webkitBackdropFilter,
+          border: `${cc.borderTopWidth} ${cc.borderTopStyle} ${cc.borderTopColor}`, borderRadius: cc.borderTopLeftRadius,
+          boxShadow: cc.boxShadow, padding: cc.padding
+        },
+        text: {
+          technique: document.getElementById('stageContainer').classList.contains('css-shadow-mode') ? 'shadow' : 'dual',
+          ghost: readLayer(card.querySelector('.bloom-ghost-layer')),
+          tight: readLayer(card.querySelector('.bloom-ghost-tight')),
+          sharp: readLayer(card.querySelector('.sharp-core-layer'))
+        },
+        frostTexture: {
+          opacity: tex.opacity, mixBlendMode: tex.mixBlendMode, backgroundSize: tex.backgroundSize,
+          type: attr('type'), baseFrequency: attr('baseFrequency'), numOctaves: attr('numOctaves'),
+          colorMatrix: attr('values'), svg: svg.replace(/^url\("data:image\/svg\+xml,|"\)$/g, '')
+        },
+        stage: resolveStage()
+      };
+    }
+    function resolveStage() {
+      const stage = document.getElementById('viewportBase');
+      const sc = getComputedStyle(stage);
+      const bg = (id) => { const c = getComputedStyle(document.getElementById(id)); return { className: document.getElementById(id).className, display: c.display, backgroundColor: c.backgroundColor, opacity: c.opacity, filter: c.filter, width: c.width, height: c.height }; };
+      const banner = getComputedStyle(document.getElementById('meshBannerBase'));
+      return {
+        className: stage.className, backgroundColor: sc.backgroundColor, backgroundImage: sc.backgroundImage, backgroundSize: sc.backgroundSize,
+        orbs: ['orbBaseA', 'orbBaseB', 'orbBaseC'].map(bg),
+        banner: { className: document.getElementById('meshBannerBase').className, backgroundColor: banner.backgroundColor, color: banner.color, border: `${banner.borderTopWidth} ${banner.borderTopStyle} ${banner.borderTopColor}`, transform: banner.transform, text: document.getElementById('meshBannerBase').textContent }
+      };
+    }
+    // Applies mode/technique, runs fn, and puts the visible state back. Never writes to the store.
+    function withProfile(mode, tech, fn) {
+      const ms = modeSettings[mode];
+      const prevMode = state.viewMode;
+      const prevTech = ms.technique;
+      const caption = document.getElementById('swatchDesc').textContent;
+      exporting = true;
+      try {
+        ms.technique = tech;
+        setViewMode(mode);
+        return fn();
+      } finally {
+        ms.technique = prevTech;
+        setViewMode(prevMode);
+        document.getElementById('swatchDesc').textContent = caption;
+        exporting = false;
+      }
+    }
+    function exportSettings(onlyMode) {
+      const modes = onlyMode ? [onlyMode] : MODES;
+      return {
+        schema: SCHEMA,
+        current_mode: state.viewMode,
+        exported_at: new Date().toISOString(),
+        board: { zoom: boardZoom },
+        modes: Object.fromEntries(modes.map(m => [m, {
+          technique: modeSettings[m].technique,
+          backdrop: { controls: { ...modeSettings[m].backdrop }, resolved: withProfile(m, modeSettings[m].technique, resolveStage) },
+          profiles: Object.fromEntries(TECHNIQUES.map(t => [t, {
+            controls: { ...modeSettings[m].profiles[t] },
+            resolved: withProfile(m, t, resolveCurrent)
+          }]))
+        }]))
+      };
+    }
+    function copyAllSettings() {
+      copyText(JSON.stringify(exportSettings(), null, 2), document.getElementById('btnCopySettings'));
+    }
+    function copyModeSettings() {
+      copyText(JSON.stringify(exportSettings(state.viewMode), null, 2), document.getElementById('btnCopyMode'));
+    }
+
+    // Copy-all / localStorage / Paste share one shape: {schema, current_mode, modes: {<mode>: …}} (schema 2 or 3).
+    // Returns the mode to show, or null.
+    function adoptAll(saved) {
+      MODES.forEach(m => { if (saved.modes[m]) modeSettings[m] = normalizeMode(m, saved.modes[m]); });
+      return MODES.includes(saved.current_mode) ? saved.current_mode : null;
+    }
+    function applyPastedSettings() {
+      const out = document.getElementById('pasteStatus');
+      let saved;
+      try { saved = JSON.parse(document.getElementById('settingsPaste').value); } catch (e) { out.textContent = 'Not applied: that is not valid JSON'; return; }
+      if (!saved || typeof saved !== 'object' || !saved.modes || typeof saved.modes !== 'object') { out.textContent = 'Not applied: no "modes" object'; return; }
+      if (saved.schema !== 2 && saved.schema !== 3) { out.textContent = `Not applied: schema ${saved.schema} (2 or 3 expected)`; return; }
+      const applied = MODES.filter(m => saved.modes[m]);
+      if (Number.isFinite(saved.board?.zoom)) setBoardZoom(saved.board.zoom);
+      const mode = adoptAll(saved);
+      applied.forEach(m => scheduleSave(m));
+      setViewMode(mode || state.viewMode);
+      out.textContent = `Applied ${applied.length} mode${applied.length === 1 ? '' : 's'} (schema ${saved.schema})`;
+    }
+
+    // ---- Saving -------------------------------------------------------------
+    const STORE_KEY = 'look-lab:v1';
+    const LOAD_TIMEOUT_MS = 10000;
+    let db = null;
+    let loaded = false;            // no writes until saved values are in (or the 10 s fallback)
+    let saveTimer = null;
+    const dirty = new Set();       // a mode id or '_meta'
+    const inflight = {};
+    const lastWritten = {};        // key -> JSON of the last body the store holds
+
+    function setStatus(text) { document.getElementById('saveStatus').textContent = text; }
+
+    function bodyFor(key) {
+      return key === '_meta'
+        ? { current_mode: state.viewMode, schema: SCHEMA }
+        : { mode: key, ...modeBody(key), schema: SCHEMA };
+    }
+
+    function scheduleSave(key) {
+      if (exporting) return;
+      dirty.add(key);
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(flush, 600);
+    }
+
+    function flush() {
+      if (!loaded) return;
+      if (!db) { saveLocal(); dirty.clear(); return; }
+      for (const key of [...dirty]) {
+        if (inflight[key]) continue;           // re-flushed when that write settles
+        dirty.delete(key);
+        const body = bodyFor(key);
+        const sig = JSON.stringify(body);
+        if (sig === lastWritten[key]) continue;
+        inflight[key] = true;
+        setStatus('Saving…');
+        const doc = key === '_meta' ? body : { ...body, updated_at: Date.now() };
+        db.doc('looks/' + key).set(doc).then(
+          () => { lastWritten[key] = sig; setStatus('Saved'); },
+          e => setStatus(`Not saved: ${e && (e.code || e.message) || 'unknown error'}`)
+        ).finally(() => {
+          inflight[key] = false;
+          if (dirty.has(key)) flush();
+        });
+      }
+    }
+
+    function saveLocal() {}
+    const JIM_LOOK = {"schema":3,"current_mode":"dark-emissive","modes":{"light-ink":{"technique":"dual","profiles":{"dual":{"sliderHaloBlur":14,"sliderHaloIntensity":100,"sliderGlassBlur":18,"sliderGlassOpacity":6,"glassColor":"#ffffff","glassTexture":27,"l2FillColor":"#ffffff","l2FillOpacity":52,"l2Border":48,"lineStrength":25,"accent":"cyan"},"shadow":{"sliderHaloBlur":5.5,"sliderHaloIntensity":135,"sliderGlassBlur":18,"sliderGlassOpacity":72,"glassColor":"#ffffff","glassTexture":0,"l2FillColor":"#ffffff","l2FillOpacity":36,"l2Border":48,"lineStrength":100,"accent":"obsidian"}},"backdrop":{"pattern":"grid","patternColor":"#0f172a","patternOpacity":16,"patternSize":28,"baseFrom":"#577898","baseTo":"#485970","baseAngle":135,"washA":"#7dd3fc","washB":"#fdba8c","washC":"#c4b5fd","washIntensity":100,"glow":true,"glowA":"#7dd3fc","glowB":"#c4b5fd","glowC":"#fde68a","glowIntensity":100}},"light-emissive":{"technique":"dual","profiles":{"dual":{"sliderHaloBlur":14,"sliderHaloIntensity":50,"sliderGlassBlur":10,"sliderGlassOpacity":6,"glassColor":"#ffffff","glassTexture":25,"l2FillColor":"#ffffff","l2FillOpacity":52,"l2Border":70,"lineStrength":100,"accent":"cyan"},"shadow":{"sliderHaloBlur":5.5,"sliderHaloIntensity":135,"sliderGlassBlur":18,"sliderGlassOpacity":72,"glassColor":"#ffffff","glassTexture":0,"l2FillColor":"#ffffff","l2FillOpacity":36,"l2Border":70,"lineStrength":100,"accent":"cyan"}},"backdrop":{"pattern":"grid","patternColor":"#0f172a","patternOpacity":24.5,"patternSize":28,"baseFrom":"#648cb4","baseTo":"#39577f","baseAngle":135,"washA":"#7dd3fc","washB":"#fdba8c","washC":"#c4b5fd","washIntensity":100,"glow":true,"glowA":"#7dd3fc","glowB":"#c4b5fd","glowC":"#fde68a","glowIntensity":100}},"dark-emissive":{"technique":"dual","profiles":{"dual":{"sliderHaloBlur":16,"sliderHaloIntensity":45,"sliderGlassBlur":18,"sliderGlassOpacity":6,"glassColor":"#0a0f1c","glassTexture":8,"l2FillColor":"#111c36","l2FillOpacity":36,"l2Border":36,"lineStrength":63,"accent":"amber"},"shadow":{"sliderHaloBlur":5.5,"sliderHaloIntensity":135,"sliderGlassBlur":18,"sliderGlassOpacity":72,"glassColor":"#0a0f1c","glassTexture":0,"l2FillColor":"#0f172a","l2FillOpacity":35,"l2Border":36,"lineStrength":100,"accent":"obsidian"}},"backdrop":{"pattern":"grid","patternColor":"#ffffff","patternOpacity":5.5,"patternSize":28,"baseFrom":"#070b14","baseTo":"#070b14","baseAngle":135,"washA":"#38bdf8","washB":"#6366f1","washC":"#22d3ee","washIntensity":0,"glow":true,"glowA":"#0ea5e9","glowB":"#6366f1","glowC":"#22d3ee","glowIntensity":100}}}};
+    function loadLocal() { return adoptAll(JIM_LOOK); }
+
+    // First snapshot seeds every mode; later ones adopt docs changed elsewhere (not ones being edited here).
+    function onLooks(snap) {
+      clearTimeout(loadTimer);
+      let mode = null;
+      let currentChanged = false;
+      for (const d of snap.docs) {
+        const data = d.data();
+        if (!data) continue;
+        if (d.id === '_meta') {
+          const cm = MODES.includes(data.current_mode) ? data.current_mode : 'light-ink';  // a removed mode falls back
+          if (cm === data.current_mode) lastWritten._meta = JSON.stringify({ current_mode: cm, schema: SCHEMA });  // older schema: upgraded on next change
+          if (!loaded) mode = cm;
+          continue;
+        }
+        if (!MODES.includes(d.id) || dirty.has(d.id) || inflight[d.id]) continue;   // looks/split, looks/dark-ink: ignored, kept
+        // Schema 3 carries {technique, profiles}; schema 1/2 carry flat settings with technique inside.
+        const ms = normalizeMode(d.id, data.profiles ? data : data.settings);
+        const sig = JSON.stringify({ mode: d.id, ...ms, schema: SCHEMA });
+        if (sig === lastWritten[d.id]) continue;
+        if (data.schema === SCHEMA) lastWritten[d.id] = sig;  // an older doc is rewritten as schema 3 on its next change
+        modeSettings[d.id] = ms;
+        if (d.id === state.viewMode) currentChanged = true;
+      }
+      const first = !loaded;
+      loaded = true;
+      if (first) setStatus('Saved');
+      if (first && mode && mode !== state.viewMode) setViewMode(mode);
+      else if (currentChanged) setViewMode(state.viewMode);
+      flush();
+    }
+
+    let loadTimer = null;
+    async function boot() {
+      setViewMode('light-ink');
+      booting = false;
+      try {
+        db = null;
+      } catch (e) {
+        db = null;
+      }
+      if (!db) {
+        const mode = loadLocal();
+        loaded = true;
+        setViewMode(mode || state.viewMode);
+        setStatus('Not saved: use Copy settings');
+        flush();
+        return;
+      }
+      loadTimer = setTimeout(() => {
+        if (loaded) return;
+        loaded = true;
+        setStatus('Not saved: no answer from the store in 10 s');
+        flush();
+      }, LOAD_TIMEOUT_MS);
+      db.collection('looks').onSnapshot(onLooks, e => {
+        clearTimeout(loadTimer);
+        loaded = true;
+        setStatus(`Not saved: ${e && (e.code || e.message) || 'store unavailable'}`);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+</html>

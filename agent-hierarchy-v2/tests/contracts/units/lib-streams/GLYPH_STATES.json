@@ -1,0 +1,18 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "GLYPH_STATES",
+  "cases": [
+    {
+      "id": "table",
+      "args": [],
+      "expect": {
+        "✓": "done",
+        "×": "blocked",
+        "◐": "working",
+        "○": "idle",
+        "·": "none"
+      }
+    }
+  ]
+}

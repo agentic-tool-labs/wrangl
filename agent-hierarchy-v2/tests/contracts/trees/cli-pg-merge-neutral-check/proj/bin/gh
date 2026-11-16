@@ -1,0 +1,8 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/gh.log"
+case "$*" in
+  'pr view 7 --json state,isDraft,headRefName,headRefOid,baseRefName,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup') printf '%s' '{"state":"OPEN","isDraft":false,"headRefName":"ah/issue-7","headRefOid":"0123456789abcdef0123456789abcdef01234567","baseRefName":"main","mergeable":"MERGEABLE","mergeStateStatus":"CLEAN","reviewDecision":"APPROVED","statusCheckRollup":[{"__typename":"CheckRun","status":"COMPLETED","conclusion":"NEUTRAL"}]}'; exit 0;;
+  'api graphql '*) printf '%s' '{"data":{"repository":{"pullRequest":{"reviewThreads":{"totalCount":0,"nodes":[]}}}}}'; exit 0;;
+  *) exit 1;;
+esac

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Ah.Abstractions/Ah.Abstractions.csproj" />
+    <ProjectReference Include="../Ah.Core/Ah.Core.csproj" />
+  </ItemGroup>
+
+</Project>

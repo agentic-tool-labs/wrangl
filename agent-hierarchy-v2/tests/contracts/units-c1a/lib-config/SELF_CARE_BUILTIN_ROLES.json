@@ -1,0 +1,14 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "SELF_CARE_BUILTIN_ROLES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "architect"
+      ]
+    }
+  ]
+}

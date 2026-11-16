@@ -1,0 +1,602 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "listExchanges",
+  "cases": [
+    {
+      "id": "no-msgs-dir",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h": {
+          "dir": true
+        }
+      },
+      "expect": []
+    },
+    {
+      "id": "empty-msgs-dir",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs": {
+          "dir": true
+        }
+      },
+      "expect": []
+    },
+    {
+      "id": "request-only",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-skeleton-open",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: \n- [2] x: \n\n## [1] status\n- none\n\n## [2] x\n- none\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-reported-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: done\n\n## [1] status\n- finished it\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "to-orchestrator-skeleton-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--orchestrator--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--orchestrator--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: \n- [2] x: \n\n## [1] status\n- none\n\n## [2] x\n- none\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--orchestrator--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "orchestrator",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--orchestrator--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "orchestrator",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "orchestrator",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-id-mismatch-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143202-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: done\n\n## [1] status\n- finished it\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-no-frontmatter-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "just text\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-big-skeleton-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: \n- [2] x: \n\n## [1] status\n- none\n\n## [2] x\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n- none\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-just-under-cap-still-skeleton-open",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: \n- [2] x: \n\n## [1] status\n- none\n\n## [2] x\n- none\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-one-over-cap-closed",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: \n- [2] x: \n\n## [1] status\n- none\n\n## [2] x\n- none\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--response.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "response"
+            }
+          },
+          "open": false,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "response-without-request-ignored",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--response.md": "---\nid: 20260816-143201-ab12\ntype: response\n---\n\n## [0] tldr\n- [1] status: done\n\n## [1] status\n- finished it\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "sorted-newest-first",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143203-ab12--reviewer--c--request.md": "x",
+        "h/msgs/20260816-143202-ab12--implementor--b--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143203-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143203-ab12--reviewer--c--request.md",
+            "meta": {
+              "id": "20260816-143203-ab12",
+              "to": "reviewer",
+              "slug": "c",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "reviewer",
+          "slug": "c"
+        },
+        {
+          "id": "20260816-143202-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143202-ab12--implementor--b--request.md",
+            "meta": {
+              "id": "20260816-143202-ab12",
+              "to": "implementor",
+              "slug": "b",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "implementor",
+          "slug": "b"
+        },
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "sort-by-id-string-not-time",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-zzzz--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-aaaa--architect--b--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-zzzz",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-zzzz--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-zzzz",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        },
+        {
+          "id": "20260816-143201-aaaa",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-aaaa--architect--b--request.md",
+            "meta": {
+              "id": "20260816-143201-aaaa",
+              "to": "architect",
+              "slug": "b",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "b"
+        }
+      ]
+    },
+    {
+      "id": "notes-attach-to-exchange",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--note.md": "n",
+        "h/msgs/20260816-143201-ab12--architect--a--link-note.md": "l"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "link-note": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--link-note.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "link-note"
+            }
+          },
+          "note": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--note.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "note"
+            }
+          },
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "note-only-ignored",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--architect--a--note.md": "n"
+      },
+      "expect": []
+    },
+    {
+      "id": "non-matching-names-ignored",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/README.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a.md": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "subdirectory-entries-ignored",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/archive/x": "x",
+        "h/msgs/20260816-143201-ab12--architect--a--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--architect--a--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "architect",
+              "slug": "a",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "architect",
+          "slug": "a"
+        }
+      ]
+    },
+    {
+      "id": "slug-and-to-from-request",
+      "args": [
+        "$ROOT/h"
+      ],
+      "files": {
+        "h/msgs/20260816-143201-ab12--ultra-advisor--deep-dive--request.md": "x"
+      },
+      "expect": [
+        {
+          "id": "20260816-143201-ab12",
+          "request": {
+            "path": "$ROOT/h/msgs/20260816-143201-ab12--ultra-advisor--deep-dive--request.md",
+            "meta": {
+              "id": "20260816-143201-ab12",
+              "to": "ultra-advisor",
+              "slug": "deep-dive",
+              "type": "request"
+            }
+          },
+          "response": null,
+          "open": true,
+          "to": "ultra-advisor",
+          "slug": "deep-dive"
+        }
+      ]
+    }
+  ]
+}

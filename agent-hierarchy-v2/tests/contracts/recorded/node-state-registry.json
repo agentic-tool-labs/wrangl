@@ -1,0 +1,622 @@
+{
+ "session-roles": {
+  "set": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "get": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "orchestrator": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "team": {
+  "write": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "clear": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "snapshot": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "history": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "peers": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "msgs": {
+  "create": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "settle": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "fill": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path",
+    "dir"
+   ]
+  },
+  "archive": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "list": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "index": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "peer-records": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": []
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "gates": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "links": {
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "grant": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "revoke": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "use": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "release": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "extend": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "pend": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "sweep": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "deny": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "ultra-gate": {
+  "write": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "import": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": false,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "decisions": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": [
+    "path"
+   ]
+  },
+  "add": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path"
+   ]
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "path"
+   ]
+  }
+ },
+ "activity": {
+  "record": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir",
+    "mirror_dir"
+   ]
+  },
+  "clear": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir",
+    "mirror_dir"
+   ]
+  },
+  "sweep": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "status": {
+  "refresh": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "usage": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": []
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "import": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": false,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "session-pids": {
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "known-dirs": {
+  "note": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "progress": {
+  "create-if-absent": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "journal-append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "state-cas": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "nudged-append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "session-append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "plan-append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "checklist-rewrite": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "rollup-resume-point": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "rollup-block-upsert": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "mailbox": {
+  "register": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "unregister": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "append": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  },
+  "attempt": {
+   "kind": "write",
+   "style": "append",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": []
+  },
+  "heartbeat": {
+   "kind": "write",
+   "style": "overwrite",
+   "daemon": true,
+   "lockOptional": true,
+   "pathArgs": []
+  },
+  "ack": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": []
+  }
+ },
+ "worktree-grants": {
+  "assign": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "allow": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "revoke": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "gate": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "audit": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "unassign": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "status": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ },
+ "checkpoint": {
+  "write": {
+   "kind": "write",
+   "style": "replace",
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  },
+  "read": {
+   "kind": "read",
+   "style": null,
+   "daemon": true,
+   "lockOptional": false,
+   "pathArgs": [
+    "dir"
+   ]
+  }
+ }
+}

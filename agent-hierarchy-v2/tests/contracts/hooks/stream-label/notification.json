@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "notification",
+  "about": "a permission prompt re-renders the stream label as blocked",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stream-label",
+    "event": {
+      "hook_event_name": "Notification",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "message": "needs permission",
+      "notification_type": "permission_prompt"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a blocked label not set",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:35.164Z"
+  }
+}

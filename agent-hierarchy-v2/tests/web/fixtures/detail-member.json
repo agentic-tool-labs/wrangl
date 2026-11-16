@@ -1,0 +1,333 @@
+{
+  "view_schema": 1,
+  "kind": "detail",
+  "id": "/o/o.101/t/boxes/m/impl",
+  "path": "/detail/o/o.101/t/boxes/m/impl",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "member",
+      "id": "/o/o.101/t/boxes/m/impl",
+      "label": "impl",
+      "path": "/o/o.101/t/boxes/m/impl"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "member",
+      "path": "/o/o.101/t/boxes/m/impl"
+    },
+    "fields": [
+      {
+        "key": "name",
+        "label": "name",
+        "present": true,
+        "value": "impl",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "role",
+        "label": "role",
+        "present": true,
+        "value": "implementor",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "model",
+        "label": "model",
+        "present": true,
+        "value": "sonnet",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "harness",
+        "label": "harness",
+        "present": true,
+        "value": "claude",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "team",
+        "label": "team",
+        "present": true,
+        "value": "(default)",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "repo",
+        "label": "repo",
+        "present": true,
+        "value": "repo",
+        "source": "hierarchy directory",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "state",
+        "label": "state",
+        "present": true,
+        "value": {
+          "live": true,
+          "activity": "working",
+          "blocked_by": null
+        },
+        "source": "status document (activity record)",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "state_since",
+        "label": "in this state since",
+        "present": true,
+        "value": "2026-06-02T09:55:48.000Z",
+        "source": "activity record",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "doing",
+        "label": "doing",
+        "present": true,
+        "value": {
+          "activity": "working",
+          "at": "2026-06-02T10:00:00.000Z",
+          "tool": "Read",
+          "tool_at": "2026-06-02T10:00:10.000Z"
+        },
+        "source": "status document (activity record)",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "brief",
+        "label": "brief",
+        "present": true,
+        "value": {
+          "id": "req-1",
+          "slug": "view-model",
+          "sent_at": "2026-06-02T09:00:00.000Z"
+        },
+        "source": "open request",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "spec",
+        "label": "spec",
+        "present": true,
+        "value": ".claude/ah2/specs/tui-design-pass.md",
+        "source": "request text",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "context",
+        "label": "context",
+        "present": true,
+        "value": {
+          "pct": 46,
+          "used": 92000,
+          "level": 0
+        },
+        "source": "status document (activity record)",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "context_window",
+        "label": "tokens of window",
+        "present": false,
+        "value": null,
+        "source": "model",
+        "verified": false,
+        "reason": "window size unknown"
+      },
+      {
+        "key": "compactions",
+        "label": "compactions",
+        "present": false,
+        "value": null,
+        "source": "transcript",
+        "verified": false,
+        "reason": "no reader"
+      },
+      {
+        "key": "tokens",
+        "label": "tokens this session",
+        "present": false,
+        "value": null,
+        "source": "transcript usage",
+        "verified": false,
+        "reason": "pending usage dedupe (journal E1)"
+      },
+      {
+        "key": "work_tree",
+        "label": "work tree",
+        "present": true,
+        "value": "rc3-tui",
+        "source": "team file, registration",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "stream",
+        "label": "stream",
+        "present": false,
+        "value": null,
+        "source": "team file",
+        "verified": false,
+        "reason": "not in a stream"
+      },
+      {
+        "key": "pid",
+        "label": "pid",
+        "present": true,
+        "value": 4242,
+        "source": "registration",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "session",
+        "label": "session",
+        "present": true,
+        "value": "sess-impl",
+        "source": "status document",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "started",
+        "label": "started",
+        "present": false,
+        "value": null,
+        "source": "registration",
+        "verified": false,
+        "reason": "registration carries no start time"
+      },
+      {
+        "key": "activity",
+        "label": "activity, last 60 minutes",
+        "present": true,
+        "value": {
+          "end_minute": 30000000,
+          "cells": [
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy",
+            "busy"
+          ]
+        },
+        "source": "activity record",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "mail",
+        "label": "mail",
+        "present": true,
+        "value": [
+          {
+            "id": "req-1",
+            "time": "2026-06-02T09:00:00.000Z",
+            "kind": "request",
+            "from": "orchestrator@t",
+            "to": "impl@t",
+            "slug": null,
+            "direction": "in",
+            "path": "/o/o.101/t/boxes/m/impl/mail/req-1",
+            "state": "acked",
+            "changed_since_delivery": false
+          }
+        ],
+        "source": "mailbox entries",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "subagents",
+        "label": "subagents",
+        "present": true,
+        "value": [],
+        "source": "inflight records",
+        "verified": true,
+        "reason": null
+      }
+    ]
+  },
+  "rev": "53917671341c49b2"
+}

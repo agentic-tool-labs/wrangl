@@ -1,0 +1,115 @@
+<!-- The landing page body. build.mjs wraps it in the page layout, replaces {{href:<slug>}} with that page's URL
+     (an unknown slug fails the build), {{repo:<path>}} with that file on the repository, and {{sections}} with the doc sections from docs.json. Every claim and
+     command here comes from agent-hierarchy-v2/README.md and agent-hierarchy-v2/docs/; keep it that way. -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-text">
+    <h1 id="hero-title"><span>Wrangl:</span> <span>Agent Hierarchy</span></h1>
+    <p class="lede">A Claude Code plugin that turns one Claude Code session into a small software team, coordinated by a
+      local daemon. Its commands are <code>ah</code> and <code>ahd</code>.</p>
+    <div class="callout callout-warn" role="note">
+      <p><strong>Early testing: use with caution.</strong> Wrangl 2.0.0 is an early public release and is still being
+        tested. It starts and controls other agent sessions that edit files and run commands in your repository, so use
+        it only on work you have committed or backed up. Expect bugs, and expect commands, settings and screens to
+        change between releases. Wrangl is provided “as is”, without warranties of any kind; see the
+        <a href="{{repo:LICENSE}}">LICENSE</a>. Report problems at
+        <a href="https://github.com/agentic-tool-labs/wrangl/issues">github.com/agentic-tool-labs/wrangl/issues</a>.</p>
+    </div>
+    <p class="hero-actions">
+      <a class="btn btn-primary" href="{{href:getting-started}}">Get started</a>
+      <a class="btn" href="{{href:how-it-works}}">How it works</a>
+    </p>
+  </div>
+  <div class="hero-art">
+    <img src="assets/wrangl.svg" width="240" height="240" alt="Wrangl mascot: a groundhog in a cowboy hat">
+    <svg class="fence" viewBox="0 0 60 10" preserveAspectRatio="none" aria-hidden="true" shape-rendering="crispEdges">
+      <path d="M0 3h60v2H0zM0 7h60v2H0zM2 1h2v9H2zM20 1h2v9h-2zM38 1h2v9h-2zM56 1h2v9h-2z"/>
+    </svg>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="get-title">
+  <h2 id="get-title">What you get</h2>
+  <div class="get">
+    <div class="get-team">
+      <h3>A team from one session</h3>
+      <p>Your session becomes the <strong>Chief Orchestrator</strong>. It breaks a job into pieces and hands each piece
+        to a specialist. Each specialist runs on the model that suits its job, so design gets a strong model and
+        routine legwork gets a cheap one.</p>
+      <dl class="roster">
+        <div><dt>Architect</dt><dd>writes the design (a “spec” file)</dd></div>
+        <div><dt>Implementor</dt><dd>builds exactly what the spec says</dd></div>
+        <div><dt>Reviewer</dt><dd>checks the work against the spec</dd></div>
+        <div><dt>QA</dt><dd>runs the heavy test suites and reports failures</dd></div>
+        <div><dt>Ultra-Advisor</dt><dd>settles the hardest calls</dd></div>
+        <div><dt>Docs-Writer</dt><dd>writes READMEs, guides and changelogs</dd></div>
+        <div><dt>UX-Engineer</dt><dd>builds web UI and proves it with screenshots</dd></div>
+        <div><dt>Sub-Orchestrator</dt><dd>runs one separate line of work (a “lane”)</dd></div>
+        <div><dt>Task-Runner</dt><dd>cheap legwork: run builds, search, read logs</dd></div>
+        <div><dt>Backlog-Groomer</dt><dd>triage, ranking, dedupe, proven-done items</dd></div>
+      </dl>
+      <p class="more"><a href="{{href:overview#the-team}}">The team, and what each role never does</a></p>
+    </div>
+    <div class="get-side">
+      <h3>A daemon that carries the mail</h3>
+      <p><code>ahd</code> is a small background program that runs on your machine, once per user. Teams, message
+        files and the roster work from plain files without it; timers, wake-ups, the delivery ladder, links between
+        teammates and the terminal view need it.</p>
+      <p>Around the team, Wrangl passes messages between members, keeps them from writing outside their own work
+        area, tells you when someone is stuck, and brings the team back after a crash or reboot.</p>
+      <p class="more"><a href="{{href:daemon}}">The daemon</a></p>
+      <h3>Three ways to watch</h3>
+      <ul class="views">
+        <li><a href="{{href:web-ui}}">The web page</a>: your whole team at once, on your machine only.
+          Open it with <code>ahd ui</code>.</li>
+        <li><a href="{{href:tui}}">The terminal view</a>: <code>ahd tui</code>, for a second pane beside Claude Code or
+          over SSH.</li>
+        <li><a href="{{href:herdr-desktop}}">Herdr desktop</a>: the team sitrep in the Herdr desktop app’s
+          sidebar.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band" aria-labelledby="install-title">
+  <h2 id="install-title">Install</h2>
+  <p>You need Claude Code 2.1.289 or later, a .NET 10 SDK (the installer offers to install one) and a C toolchain, on
+    macOS or Linux. If you have the older <code>ah</code> plugin (v1), turn it off first: see
+    <a href="{{href:overview#ah2-and-ah-v1}}">Wrangl and ah v1</a>. Then, in a terminal:</p>
+  <div class="code"><button type="button" class="copy" hidden>Copy</button><pre tabindex="0"><code>curl -fsSL https://raw.githubusercontent.com/agentic-tool-labs/wrangl/main/install.sh | bash</code></pre></div>
+  <p>It shows its plan and asks before it changes anything. Piping a script into <code>bash</code> runs code you have
+    not read; to read it first, see <a href="{{href:overview#install-with-one-command}}">Install with one command</a>.
+    Or do it by hand, inside Claude Code:</p>
+  <div class="code"><button type="button" class="copy" hidden>Copy</button><pre tabindex="0"><code>/plugin marketplace add agentic-tool-labs/wrangl
+/plugin install wrangl@wrangl
+/wrangl:hierarchy install</code></pre></div>
+  <p>Turn it on with <code>/wrangl:hierarchy init</code>, then <code>/clear</code>. Check it in a terminal with
+    <code>ah roster doctor --brief</code>: no line should start with <code>red</code>. The
+    <a href="{{href:overview#install}}">full install guide</a> covers every step and how to uninstall.</p>
+</section>
+
+<section class="band" aria-labelledby="quick-title">
+  <h2 id="quick-title">Quick start, in about ten minutes</h2>
+  <ol class="steps">
+    <li><strong>Turn the hierarchy on.</strong> Run <code>/wrangl:hierarchy init</code> once, choose user or
+      project, then run <code>/clear</code> or start a new session.</li>
+    <li><strong>Pick your team.</strong> With no roster yet, <code>init</code> hands you on to the
+      <code>/wrangl:agent-roster</code> wizard, which asks which roles you want and which model each runs.</li>
+    <li><strong>Start the team.</strong> Ask in plain words: “set up my team”.</li>
+    <li><strong>Say what the team is for (optional).</strong> Tell the Orchestrator the goal in one sentence, for
+      example “our goal is a working login page”. Every member sees it.</li>
+    <li><strong>Give the Orchestrator a job.</strong> Describe the change you want. A small one it does itself; a
+      bigger one goes to the Architect, the Implementor and the Reviewer.</li>
+    <li><strong>Check on the team</strong> at any time with <code>ah roster teams</code> and
+      <code>ah roster status --plain</code>.</li>
+    <li><strong>Wrap up.</strong> When the work is merged, ask the Orchestrator to wrap up the stream and dismiss
+      the team.</li>
+  </ol>
+  <p class="more"><a href="{{href:getting-started}}">The full walk-through in Getting started</a></p>
+</section>
+
+<section class="band" aria-labelledby="docs-title">
+  <h2 id="docs-title">The docs</h2>
+  <div class="map">
+{{sections}}
+  </div>
+</section>

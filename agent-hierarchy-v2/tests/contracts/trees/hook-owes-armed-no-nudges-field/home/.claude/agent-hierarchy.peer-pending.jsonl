@@ -1,0 +1,2 @@
+{"session_id": "sess-contract", "from": "tm-orchestrator", "from_name": null, "reply_to": "sender", "task": "demo", "status": "pending", "msg": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-abcd--implementor--demo--request.md", "ts": "2026-01-01T00:00:00.000Z"}
+{"type": "turn", "session_id": "sess-contract", "status": "armed", "ts": "2026-01-01T00:00:00.000Z"}

@@ -1,0 +1,539 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "codexTrust",
+  "cases": [
+    {
+      "id": "no-config-file",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": ""
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "trusted-exact",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "trusted-ancestor-of-the-root-is-not-trusted",
+      "args": [
+        "$ROOT/work/repo/sub"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "trusted-subdirectory-entry-is-not-trusted",
+      "args": [
+        "$ROOT/work/repo/sub"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo/sub\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "trusted-via-checkout-root",
+      "args": [
+        "$ROOT/work/repo/sub"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "untrusted-level",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"untrusted\"\n"
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "unrelated-project",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/elsewhere\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "child-of-trusted-sibling-not-trusted",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo/sub\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": ""
+      },
+      "expect": {
+        "verdict": "untrusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "comments-and-other-tables",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "# c\n[model]\nname = \"x\"\n\n[projects.\"$ROOT/work/repo\"] # c\ntrust_level = \"trusted\" # c\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "crlf",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\r\ntrust_level = \"trusted\"\r\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "bom",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "﻿[projects.\"$ROOT/work/repo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "projects-dotted-key-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "projects.\"$ROOT/work/repo\".trust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "projects-inline-table-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "projects = { \"$ROOT/work/repo\" = { trust_level = \"trusted\" } }\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "projects-bare-table-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects]\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "projects-literal-string-header-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.'$ROOT/work/repo']\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "projects-array-table-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[[projects]]\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "unknown-escape-in-header",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"a\\qb\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "unicode-escape-in-header",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/\\u0072epo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "long-unicode-escape-in-header",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/\\U00000072epo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "bad-hex-escape",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"a\\u00zz\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "escape-over-limit",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"a\\U00110000\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "value-single-quoted-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = 'trusted'\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "value-with-escape-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"tru\\qsted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "value-escaped-trusted",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"\\u0074rusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "other-key-ignored",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\nother = 1\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "codex-home-env",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "alt/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "env": {
+        "CODEX_HOME": "$ROOT/alt"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/alt/config.toml",
+        "codexHome": "$ROOT/alt",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "codex-home-env-empty-uses-home",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/work/repo\"]\ntrust_level = \"trusted\"\n"
+      },
+      "env": {
+        "CODEX_HOME": ""
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    },
+    {
+      "id": "cwd-without-git",
+      "args": [
+        "$ROOT/plain"
+      ],
+      "files": {
+        "plain/x": "",
+        "home/.codex/config.toml": "[projects.\"$ROOT/plain\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/plain"
+      }
+    },
+    {
+      "id": "worktree-trust-root-is-main-checkout",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "home/.codex/config.toml": "[projects.\"$ROOT/main\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "trusted",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/main"
+      }
+    },
+    {
+      "id": "trailing-backslash-header-unknown",
+      "args": [
+        "$ROOT/work/repo"
+      ],
+      "files": {
+        "work/repo/.git/HEAD": "ref: refs/heads/main\n",
+        "work/repo/sub/x": "",
+        "home/.codex/config.toml": "[projects.\"a\\\"]\ntrust_level = \"trusted\"\n"
+      },
+      "expect": {
+        "verdict": "unknown",
+        "configPath": "$ROOT/home/.codex/config.toml",
+        "codexHome": "$ROOT/home/.codex",
+        "trustRoot": "$ROOT/work/repo"
+      }
+    }
+  ]
+}

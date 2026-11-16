@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "PIPELINE_ANCHOR_SLUG",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "pipeline-run-anchor"
+    }
+  ]
+}

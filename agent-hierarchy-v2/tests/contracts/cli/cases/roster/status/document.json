@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "document",
+  "about": "status computes the status document and writes status.json",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "status"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"schema\": 1,\n  \"written_at\": \"<ISO:1>\",\n  \"expires_at\": \"<ISO:2>\",\n  \"enabled\": true,\n  \"member_sessions\": [],\n  \"teams\": [],\n  \"timeline\": [\n    {\n      \"at\": \"<ISO:3>\",\n      \"visible\": false,\n      \"tone\": \"idle\",\n      \"live\": 0,\n      \"out\": 0,\n      \"blocked\": 0,\n      \"overdue\": 0,\n      \"stalled\": 0,\n      \"text\": \"0 live · 0 out\",\n      \"short\": \"0/0\"\n    }\n  ],\n  \"owners\": []\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a status document that is not written",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:51.251Z"
+  }
+}

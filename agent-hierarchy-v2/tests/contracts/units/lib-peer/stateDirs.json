@@ -1,0 +1,14 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "stateDirs",
+  "cases": [
+    {
+      "id": "beside-the-pending-file",
+      "args": [],
+      "expect": [
+        "$ROOT/home/.claude/agent-hierarchy.peer-records.state"
+      ]
+    }
+  ]
+}

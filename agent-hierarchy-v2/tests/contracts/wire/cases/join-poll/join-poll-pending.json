@@ -1,0 +1,49 @@
+{
+  "kind": "wire",
+  "id": "join-poll-pending",
+  "about": "the poll of a pending join",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/join/{{id}}",
+    "before": [
+      {
+        "method": "POST",
+        "path": "/v1/join",
+        "body": {
+          "team": "tm",
+          "harness": "custom-x",
+          "session_id": "s-custom",
+          "why": "to help",
+          "cwd": "<ROOT:proj>",
+          "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+        },
+        "capture": {
+          "id": "json.join_id"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "join_id": "<MSGID:1>",
+      "status": "pending"
+    }
+  },
+  "mutant": "a pending join reported expired",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:05.679Z"
+  }
+}

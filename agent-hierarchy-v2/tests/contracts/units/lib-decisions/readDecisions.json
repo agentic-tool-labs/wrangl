@@ -1,0 +1,268 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "readDecisions",
+  "cases": [
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "decisions": [],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": ""
+      },
+      "expect": {
+        "decisions": [],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "lines-in-order",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"decided\"}\n{\"id\":\"d2\",\"kind\":\"parked\"}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "id": "d1",
+            "kind": "decided"
+          },
+          {
+            "id": "d2",
+            "kind": "parked"
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "blank-lines-are-not-counted",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\n\n   \n{\"a\":2}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "torn-last-line-is-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\n{\"a\":"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          }
+        ],
+        "skipped": 1
+      }
+    },
+    {
+      "id": "non-object-lines-are-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\n[1,2]\n5\n\"s\"\nnull\ntrue\n{\"a\":2}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          }
+        ],
+        "skipped": 5
+      }
+    },
+    {
+      "id": "op-id-duplicate-is-dropped-not-counted",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1,\"op_id\":\"x\"}\n{\"a\":2,\"op_id\":\"x\"}\n{\"a\":3,\"op_id\":\"y\"}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1,
+            "op_id": "x"
+          },
+          {
+            "a": 3,
+            "op_id": "y"
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "empty-op-id-is-never-a-duplicate",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1,\"op_id\":\"\"}\n{\"a\":2,\"op_id\":\"\"}\n{\"a\":3,\"op_id\":0}\n{\"a\":4,\"op_id\":0}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1,
+            "op_id": ""
+          },
+          {
+            "a": 2,
+            "op_id": ""
+          },
+          {
+            "a": 3,
+            "op_id": 0
+          },
+          {
+            "a": 4,
+            "op_id": 0
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "numeric-op-id-dedupes",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1,\"op_id\":7}\n{\"a\":2,\"op_id\":7}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1,
+            "op_id": 7
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "crlf-lines",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\r\n{\"a\":2}\r\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "no-trailing-newline",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1}\n{\"a\":2}"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          }
+        ],
+        "skipped": 0
+      }
+    },
+    {
+      "id": "garbage-then-valid",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "not json\n{\"a\":1}\n{broken\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 1
+          }
+        ],
+        "skipped": 2
+      }
+    },
+    {
+      "id": "duplicate-keys-last-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"a\":1,\"a\":2}\n"
+      },
+      "expect": {
+        "decisions": [
+          {
+            "a": 2
+          }
+        ],
+        "skipped": 0
+      }
+    }
+  ]
+}

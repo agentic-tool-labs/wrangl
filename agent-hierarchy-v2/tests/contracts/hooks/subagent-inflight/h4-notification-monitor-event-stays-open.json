@@ -1,0 +1,37 @@
+{
+  "kind": "hook",
+  "id": "h4-notification-monitor-event-stays-open",
+  "about": "a mid-stream Monitor event leaves it open",
+  "tree": "hook-owes-bg-started",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "<task-notification>\n<task-id>bg-1</task-id>\n<event>line of output</event>\n</task-notification>"
+    }
+  },
+  "mutant": "monitor event closes",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:40.582Z"
+  }
+}

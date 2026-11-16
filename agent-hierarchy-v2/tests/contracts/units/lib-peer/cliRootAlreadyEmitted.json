@@ -1,0 +1,162 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "cliRootAlreadyEmitted",
+  "cases": [
+    {
+      "id": "no-rows",
+      "args": [
+        "s1",
+        "ah root v1 /x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-session",
+      "args": [
+        "",
+        "ah root v1 /x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined-session",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        "ah root v1 /x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "not-a-string-session",
+      "args": [
+        5,
+        "ah root v1 /x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "same-line-recorded",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "other-line-recorded",
+      "args": [
+        "s1",
+        "M"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "latest-row-of-the-session-decides-true",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"08f271887ce94707\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "latest-row-of-the-session-decides-false",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"08f271887ce94707\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-sessions-row-does-not-count",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s2\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-row-type-does-not-count",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"turn\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "row-without-a-type-does-not-count",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-session-never-matches-a-row",
+      "args": [
+        "",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "numeric-line-is-stringified",
+      "args": [
+        "s1",
+        5
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"ef2d127de37b942b\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "row-without-a-digest",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "earlier-matching-row-is-skipped-for-a-later-other-session",
+      "args": [
+        "s1",
+        "L"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"cli-root\",\"session_id\":\"s1\",\"digest\":\"72dfcfb0c470ac25\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n{\"type\":\"cli-root\",\"session_id\":\"s2\",\"digest\":\"08f271887ce94707\",\"ts\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": true
+    }
+  ]
+}

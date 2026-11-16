@@ -1,0 +1,75 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packRecords",
+  "cases": [
+    {
+      "id": "none-installed",
+      "args": [],
+      "expect": []
+    },
+    {
+      "id": "with-manifest",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"installPath\":\"$ROOT/p/demo\"}]}}",
+        "p/demo/ah-roles.json": "{}"
+      },
+      "expect": [
+        {
+          "key": "demo@mkt",
+          "plugin": "demo",
+          "marketplace": "mkt",
+          "installPath": "$ROOT/p/demo",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "without-manifest",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"installPath\":\"$ROOT/p/demo\"}]}}",
+        "p/demo/readme": "x"
+      },
+      "expect": []
+    },
+    {
+      "id": "mixed",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"a@m\":[{\"installPath\":\"$ROOT/p/a\"}],\"b@m\":[{\"installPath\":\"$ROOT/p/b\"}]}}",
+        "p/b/ah-roles.json": "{}"
+      },
+      "expect": [
+        {
+          "key": "b@m",
+          "plugin": "b",
+          "marketplace": "m",
+          "installPath": "$ROOT/p/b",
+          "version": null,
+          "scope": null
+        }
+      ]
+    },
+    {
+      "id": "manifest-is-a-directory",
+      "args": [],
+      "files": {
+        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"a@m\":[{\"installPath\":\"$ROOT/p/a\"}]}}",
+        "p/a/ah-roles.json/x": "y"
+      },
+      "expect": [
+        {
+          "key": "a@m",
+          "plugin": "a",
+          "marketplace": "m",
+          "installPath": "$ROOT/p/a",
+          "version": null,
+          "scope": null
+        }
+      ]
+    }
+  ]
+}

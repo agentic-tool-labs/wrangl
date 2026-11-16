@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "empty",
+  "about": "downstream of an empty pool prints no chain",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "downstream"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "[]\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a chain invented",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:40.872Z"
+  }
+}

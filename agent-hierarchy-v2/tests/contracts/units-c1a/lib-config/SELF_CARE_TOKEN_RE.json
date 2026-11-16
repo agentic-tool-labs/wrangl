@@ -1,0 +1,70 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "SELF_CARE_TOKEN_RE",
+  "cases": [
+    {
+      "id": "path",
+      "args": [
+        "/a/b-c.d_e"
+      ],
+      "expect": true
+    },
+    {
+      "id": "colon-at",
+      "args": [
+        "x:y@z+1,2"
+      ],
+      "expect": true
+    },
+    {
+      "id": "space",
+      "args": [
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "quote",
+      "args": [
+        "a'b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "ab\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "tilde",
+      "args": [
+        "~a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "unicode",
+      "args": [
+        "é"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dollar",
+      "args": [
+        "$A"
+      ],
+      "expect": false
+    }
+  ]
+}

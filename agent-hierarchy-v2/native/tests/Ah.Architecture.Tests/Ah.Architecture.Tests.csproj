@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.Abstractions/Ah.Abstractions.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Core/Ah.Core.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Platform/Ah.Platform.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Config/Ah.Config.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Roster/Ah.Roster.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Hierarchy/Ah.Hierarchy.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Mesh/Ah.Mesh.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Codex/Ah.Codex.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Launch/Ah.Launch.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Watch/Ah.Watch.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.State/Ah.State.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.DaemonClient/Ah.DaemonClient.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Daemon/Ah.Daemon.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Hooks/Ah.Hooks.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Commands/Ah.Commands.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Cli/Ah.Cli.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Tui/Ah.Tui.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Ah.Generators/Ah.Generators.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../fixtures/Ah.Fixture.Violations/Ah.Fixture.Violations.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="store-owners.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

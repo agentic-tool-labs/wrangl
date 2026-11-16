@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "h3-retryable-unowned-notifies",
+  "about": "a retryable error the daemon does not own still notifies",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "error": "overloaded",
+      "error_message": "slow down"
+    }
+  },
+  "mutant": "owned check dropped",
+  "expect": {
+    "stdout": "{\"terminalSequence\":\"\\u001b]9;ah: proj stopped on an API error (overloaded). Open it to continue.\\u0007\\u0007\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:58.152Z"
+  }
+}

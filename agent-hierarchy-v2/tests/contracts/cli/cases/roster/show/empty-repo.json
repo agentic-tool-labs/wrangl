@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "empty-repo",
+  "about": "show on a repo with no roster prints the empty template",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "show",
+      "repo"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"level\": \"repo\",\n  \"path\": \"<ROOT:proj>/.claude/agent-hierarchy.json\",\n  \"container\": \"roster\",\n  \"roster\": null,\n  \"shadowed\": null,\n  \"selection\": {\n    \"roster\": \"default\",\n    \"source\": \"default\",\n    \"level\": null,\n    \"path\": null\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a roster shown for a repo that has none",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.594Z"
+  }
+}

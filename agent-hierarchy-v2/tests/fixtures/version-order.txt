@@ -1,0 +1,22 @@
+# The version order every compare in this plugin follows (Ah.DaemonClient Versions.Compare and scripts/lib-version.sh ah_version_cmp).
+# Both are tested against this one file.
+#
+# A line of versions is a chain in strictly ascending order: every version is lower than each one after it.
+# A line that starts with "=" lists versions that compare equal.
+# Rules: major.minor.patch (any number of dotted parts) numerically, a missing part is 0; a version with a prerelease is lower than the
+# same core without one; prerelease identifiers left to right, numeric ones numerically, others in ASCII order, numeric below others,
+# more identifiers higher when all else is equal; build metadata after "+" is ignored.
+
+2.5.0-pre.1 2.5.0-pre.1.9 2.5.0-pre.1.10 2.5.0-pre.2 2.5.0 2.5.1-pre.1 2.5.1
+2.4.0 2.5.0-pre.1
+2.5.0-pre.1.1873 2.5.0-pre.1.1874 2.5.0-pre.2
+2.5.0 2.5.0.1 2.5.1-pre.1
+1.0.0-alpha 1.0.0-alpha.1 1.0.0-alpha.beta 1.0.0-beta 1.0.0-beta.2 1.0.0-beta.11 1.0.0-rc.1 1.0.0
+0.134.4 0.134.10
+1.9.9 2
+1.0.0-d1 1.0.0-dev
+1.0.0-1e5 1.0.0-2e1
+= 1.0 1.0.0 1.0.0.0
+= 2.5.0+a 2.5.0+b 2.5.0
+= 2.5.0-pre.1+a 2.5.0-pre.1
+= x 0

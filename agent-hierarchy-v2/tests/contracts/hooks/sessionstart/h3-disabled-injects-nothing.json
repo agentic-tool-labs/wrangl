@@ -1,0 +1,37 @@
+{
+  "kind": "hook",
+  "id": "h3-disabled-injects-nothing",
+  "about": "a disabled hierarchy injects nothing",
+  "tree": "hook-disabled",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "sessionstart",
+    "event": {
+      "hook_event_name": "SessionStart",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "source": "startup"
+    }
+  },
+  "mutant": "enabled check dropped",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:43.184Z"
+  }
+}

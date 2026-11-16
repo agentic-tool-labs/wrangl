@@ -1,0 +1,186 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "listSnapshots",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "two-newest-first",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260102T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/alpha-20260102T120000123Z.json",
+          "file": "alpha-20260102T120000123Z.json",
+          "ts": "20260102T120000123Z"
+        },
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json",
+          "file": "alpha-20260101T120000123Z.json",
+          "ts": "20260101T120000123Z"
+        }
+      ]
+    },
+    {
+      "id": "other-team-not-listed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/beta-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json",
+          "file": "alpha-20260101T120000123Z.json",
+          "ts": "20260101T120000123Z"
+        }
+      ]
+    },
+    {
+      "id": "prefix-of-another-team-not-listed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/alpha-2-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": []
+    },
+    {
+      "id": "name-with-dot-is-literal",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "a.b"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/a.b-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/axb-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/a.b-20260101T120000123Z.json",
+          "file": "a.b-20260101T120000123Z.json",
+          "ts": "20260101T120000123Z"
+        }
+      ]
+    },
+    {
+      "id": "bad-stamps-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.claude/hierarchy/snapshots/alpha-2026.json": "{}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T12000012Z.json": "{}",
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json.bak": "{}",
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "non-ascii-digits-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.claude/hierarchy/snapshots/alpha-٢٠٢٦٠١٠١T120000123Z.json": "{}",
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "worktree-reads-home",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": [
+        {
+          "path": "$ROOT/main/.claude/hierarchy/snapshots/alpha-20260101T120000123Z.json",
+          "file": "alpha-20260101T120000123Z.json",
+          "ts": "20260101T120000123Z"
+        }
+      ]
+    },
+    {
+      "id": "same-ts-different-case-sorted-by-code-unit",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "A"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/snapshots/A-20260101T120000123Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}",
+        "repo/.claude/hierarchy/snapshots/A-20260101T120000124Z.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/A-20260101T120000124Z.json",
+          "file": "A-20260101T120000124Z.json",
+          "ts": "20260101T120000124Z"
+        },
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/snapshots/A-20260101T120000123Z.json",
+          "file": "A-20260101T120000123Z.json",
+          "ts": "20260101T120000123Z"
+        }
+      ]
+    },
+    {
+      "id": "wrong-final-letter-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.claude/hierarchy/snapshots/alpha-20260101T120000123X.json": "{}",
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "wrong-t-separator-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.claude/hierarchy/snapshots/alpha-20260101X120000123Z.json": "{}",
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    }
+  ]
+}

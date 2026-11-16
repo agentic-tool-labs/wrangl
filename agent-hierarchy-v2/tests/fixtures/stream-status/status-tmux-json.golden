@@ -1,0 +1,30 @@
+{
+  "team": "myrepo",
+  "transport": "tmux",
+  "streams": [
+    {
+      "name": "nt",
+      "state": "open",
+      "label": null,
+      "tab": null,
+      "branch": null,
+      "base": null,
+      "worktree": null,
+      "opened": "T",
+      "peers": [],
+      "exchanges": [],
+      "waiting_on": [],
+      "progress": {
+        "checklist": true,
+        "done": 0,
+        "in_progress": 0,
+        "not_started": 0,
+        "state": "open",
+        "updated": "T",
+        "newest_entry": null,
+        "stale": false
+      }
+    }
+  ],
+  "degraded": "no-tabs"
+}

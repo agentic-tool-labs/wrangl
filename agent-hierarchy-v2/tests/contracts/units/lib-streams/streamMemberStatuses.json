@@ -1,0 +1,506 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamMemberStatuses",
+  "cases": [
+    {
+      "id": "matched-by-pane",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          },
+          {
+            "name": "c",
+            "transport_id": "%3"
+          },
+          {
+            "name": "d",
+            "transport_id": "%9"
+          },
+          {
+            "name": "e"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "status": "working"
+        },
+        {
+          "name": "b",
+          "status": "idle"
+        },
+        {
+          "name": "c",
+          "status": "unknown"
+        },
+        {
+          "name": "d",
+          "status": "gone"
+        },
+        {
+          "name": "e",
+          "status": "gone"
+        }
+      ]
+    },
+    {
+      "id": "no-agent-list-is-unknown",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          },
+          {
+            "name": "c",
+            "transport_id": "%3"
+          },
+          {
+            "name": "d",
+            "transport_id": "%9"
+          },
+          {
+            "name": "e"
+          }
+        ],
+        null
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "status": "unknown"
+        },
+        {
+          "name": "b",
+          "status": "unknown"
+        },
+        {
+          "name": "c",
+          "status": "unknown"
+        },
+        {
+          "name": "d",
+          "status": "unknown"
+        },
+        {
+          "name": "e",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "empty-members",
+      "args": [
+        [],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "self-overrides",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          },
+          {
+            "name": "c",
+            "transport_id": "%3"
+          },
+          {
+            "name": "d",
+            "transport_id": "%9"
+          },
+          {
+            "name": "e"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ],
+        {
+          "pane": "%2",
+          "state": "blocked"
+        }
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "status": "working"
+        },
+        {
+          "name": "b",
+          "status": "blocked"
+        },
+        {
+          "name": "c",
+          "status": "unknown"
+        },
+        {
+          "name": "d",
+          "status": "gone"
+        },
+        {
+          "name": "e",
+          "status": "gone"
+        }
+      ]
+    },
+    {
+      "id": "self-without-match-changes-nothing",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          },
+          {
+            "name": "c",
+            "transport_id": "%3"
+          },
+          {
+            "name": "d",
+            "transport_id": "%9"
+          },
+          {
+            "name": "e"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ],
+        {
+          "pane": "%99",
+          "state": "blocked"
+        }
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "status": "working"
+        },
+        {
+          "name": "b",
+          "status": "idle"
+        },
+        {
+          "name": "c",
+          "status": "unknown"
+        },
+        {
+          "name": "d",
+          "status": "gone"
+        },
+        {
+          "name": "e",
+          "status": "gone"
+        }
+      ]
+    },
+    {
+      "id": "self-applies-even-without-agent-list",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          },
+          {
+            "name": "b",
+            "transport_id": "%2"
+          },
+          {
+            "name": "c",
+            "transport_id": "%3"
+          },
+          {
+            "name": "d",
+            "transport_id": "%9"
+          },
+          {
+            "name": "e"
+          }
+        ],
+        null,
+        {
+          "pane": "%1",
+          "state": "done"
+        }
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "status": "done"
+        },
+        {
+          "name": "b",
+          "status": "unknown"
+        },
+        {
+          "name": "c",
+          "status": "unknown"
+        },
+        {
+          "name": "d",
+          "status": "unknown"
+        },
+        {
+          "name": "e",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "member-without-pane-never-self",
+      "args": [
+        [
+          {
+            "name": "x"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ],
+        {
+          "state": "done"
+        }
+      ],
+      "expect": [
+        {
+          "name": "x",
+          "status": "gone"
+        }
+      ]
+    },
+    {
+      "id": "empty-agent-status-is-unknown",
+      "args": [
+        [
+          {
+            "name": "d",
+            "transport_id": "%4"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "name": "d",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "member-without-name",
+      "args": [
+        [
+          {
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "status": "working"
+        }
+      ]
+    },
+    {
+      "id": "self-state-missing",
+      "args": [
+        [
+          {
+            "name": "a",
+            "transport_id": "%1"
+          }
+        ],
+        [
+          {
+            "pane_id": "%1",
+            "agent_status": "working",
+            "tab_id": "t1"
+          },
+          {
+            "pane_id": "%2",
+            "agent_status": "idle",
+            "tab_id": "t2"
+          },
+          {
+            "pane_id": "%3",
+            "tab_id": "t3"
+          },
+          {
+            "pane_id": "%4",
+            "agent_status": "",
+            "tab_id": "t4"
+          }
+        ],
+        {
+          "pane": "%1"
+        }
+      ],
+      "expect": [
+        {
+          "name": "a"
+        }
+      ]
+    }
+  ]
+}

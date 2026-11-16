@@ -1,0 +1,169 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "fmtAge",
+  "cases": [
+    {
+      "id": "n-0",
+      "args": [
+        0
+      ],
+      "expect": "0s"
+    },
+    {
+      "id": "n-0_5",
+      "args": [
+        0.5
+      ],
+      "expect": "0s"
+    },
+    {
+      "id": "n-1",
+      "args": [
+        1
+      ],
+      "expect": "1s"
+    },
+    {
+      "id": "n-59",
+      "args": [
+        59
+      ],
+      "expect": "59s"
+    },
+    {
+      "id": "n-59_9",
+      "args": [
+        59.9
+      ],
+      "expect": "59s"
+    },
+    {
+      "id": "n-60",
+      "args": [
+        60
+      ],
+      "expect": "1m"
+    },
+    {
+      "id": "n-61",
+      "args": [
+        61
+      ],
+      "expect": "1m"
+    },
+    {
+      "id": "n-3599",
+      "args": [
+        3599
+      ],
+      "expect": "59m"
+    },
+    {
+      "id": "n-3600",
+      "args": [
+        3600
+      ],
+      "expect": "1h"
+    },
+    {
+      "id": "n-3661",
+      "args": [
+        3661
+      ],
+      "expect": "1h"
+    },
+    {
+      "id": "n-86399",
+      "args": [
+        86399
+      ],
+      "expect": "23h"
+    },
+    {
+      "id": "n-86400",
+      "args": [
+        86400
+      ],
+      "expect": "1d"
+    },
+    {
+      "id": "n-172800",
+      "args": [
+        172800
+      ],
+      "expect": "2d"
+    },
+    {
+      "id": "n-1000000000",
+      "args": [
+        1000000000
+      ],
+      "expect": "11574d"
+    },
+    {
+      "id": "n-_1",
+      "args": [
+        -1
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "n-_0_001",
+      "args": [
+        -0.001
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "nan",
+      "args": [
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "infinity",
+      "args": [
+        {
+          "$inf": 1
+        }
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "neg-infinity",
+      "args": [
+        {
+          "$neginf": 1
+        }
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "numeric-string",
+      "args": [
+        "5"
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "?"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "?"
+    }
+  ]
+}

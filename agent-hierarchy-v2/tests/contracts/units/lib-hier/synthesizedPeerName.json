@@ -1,0 +1,75 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "synthesizedPeerName",
+  "cases": [
+    {
+      "id": "role-and-session",
+      "args": [
+        {
+          "role": "architect",
+          "session_id": "0123456789abcdef"
+        }
+      ],
+      "expect": "architect@01234567"
+    },
+    {
+      "id": "short-session",
+      "args": [
+        {
+          "role": "architect",
+          "session_id": "abc"
+        }
+      ],
+      "expect": "architect@abc"
+    },
+    {
+      "id": "eight-chars",
+      "args": [
+        {
+          "role": "r",
+          "session_id": "12345678"
+        }
+      ],
+      "expect": "r@12345678"
+    },
+    {
+      "id": "no-role",
+      "args": [
+        {
+          "session_id": "abc"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-session",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-role",
+      "args": [
+        {
+          "role": "",
+          "session_id": "abc"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "numeric-session",
+      "args": [
+        {
+          "role": "r",
+          "session_id": 1234567890
+        }
+      ],
+      "expect": "r@12345678"
+    }
+  ]
+}

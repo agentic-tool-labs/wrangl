@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "activity": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string"
+    },
+    "blocked_by": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "note": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "tool": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "tool_at": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "context": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "activity",
+    "at",
+    "blocked_by",
+    "note",
+    "tool",
+    "tool_at"
+  ],
+  "additionalProperties": true
+}

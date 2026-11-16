@@ -1,0 +1,37 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.modelArgs",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "gpt-5"
+      ],
+      "expect": [
+        "--model",
+        "gpt-5"
+      ]
+    },
+    {
+      "id": "with-space",
+      "args": [
+        "a b"
+      ],
+      "expect": [
+        "--model",
+        "a b"
+      ]
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": [
+        "--model",
+        ""
+      ]
+    }
+  ]
+}

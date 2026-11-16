@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h3-owed-armed-first-nudge",
+  "about": "an armed turn: the first block spends one nudge",
+  "tree": "hook-owes-armed",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-peer-nudge",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "nudge count not incremented",
+  "expect": {
+    "stdout": "{\"decision\":\"block\",\"reason\":\"ah: your report to null has not been sent yet:\\n- you were tasked as a peer (task demo) by null. Call SendMessage now with to:\\\"tm-orchestrator\\\". Filing the response is not delivery and neither is printing the token in your own output — your text is invisible to another session, so nothing has reached null until SendMessage returns. The message you send must carry [hierarchy-msg <MSGID:1> response]. File it with `msg.mjs fill --id <MSGID:1> --from implementor --body-file -` — then SEND it.\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"pending\",\"nudges\":0,\"msg\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n{\"type\":\"turn\",\"session_id\":\"sess-contract\",\"status\":\"armed\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"pending\",\"nudges\":1,\"msg\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:3>\",\"op_id\":\"<OPID:3>\"}\n"
+        }
+      ]
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:15:57.830Z"
+  }
+}

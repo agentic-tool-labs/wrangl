@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "unknown",
+  "about": "stream-done of an unknown stream is refused",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-done",
+      "nope",
+      "--dry-run",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"ok\": false,\n  \"refused\": \"unknown-stream\",\n  \"stream\": \"nope\",\n  \"message\": \"stream-done: no stream named \\\"nope\\\" in <ROOT:proj>/.claude/hierarchy/teams/tm.json\"\n}\n",
+    "stderr": "roster.mjs: stream-done: no stream named \"nope\" in <ROOT:proj>/.claude/hierarchy/teams/tm.json\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown stream marked done",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:52.061Z"
+  }
+}

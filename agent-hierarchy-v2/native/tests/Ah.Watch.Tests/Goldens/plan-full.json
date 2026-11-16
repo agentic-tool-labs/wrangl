@@ -1,0 +1,37 @@
+{
+  "node": { "kind": "orchestrator", "path": "/o/o1" },
+  "generated_at": "2026-10-17T03:10:00Z",
+  "source": { "present": true, "reason": null },
+  "releases": [
+    { "tag": "ah2-2.4.1", "date": "2026-10-17T01:30:00Z" },
+    { "tag": "ah2-2.4.0", "date": "2026-10-15T18:00:00Z" }
+  ],
+  "streams": [
+    {
+      "team": "ah2-tm3", "stream": "suborch-p1", "title": "sub-orchestrators Phase 1 (ah2 2.5.0)", "owner": "ah2-tm3-implementor", "branch": "ah/suborch-p1",
+      "state": "open", "updated_at": "2026-10-17T02:56:36Z", "stale": false, "planned": true,
+      "counts": { "done": 2, "in_progress": 1, "not_started": 1, "dropped": 1 },
+      "items": [
+        { "item": "live-trial", "title": "Live trial after 2.4.2 ships", "state": "in_progress", "added_at": "2026-10-17T02:00:00Z", "started_at": "2026-10-17T03:00:00Z", "done_at": null,
+          "commits": [], "branch": null, "release": null, "release_state": "no commits", "branches": [], "pushed": null, "issue": { "number": 77, "url": "https://github.com/example/agent-tools/issues/77" }, "note": null },
+        { "item": "push-branches", "title": "Push ah/suborch-p1 when 2.5.0 is assembled", "state": "not_started", "added_at": "2026-10-17T02:00:00Z", "started_at": null, "done_at": null,
+          "commits": [], "branch": null, "release": null, "release_state": "no commits", "branches": [], "pushed": null, "issue": null, "note": null },
+        { "item": "rev8-registered-state", "title": "Rev 8: SO limits keyed on registered state", "state": "done", "added_at": "2026-10-17T01:40:00Z", "started_at": "2026-10-17T01:45:00Z", "done_at": "2026-10-17T02:26:28Z",
+          "commits": ["2869a26e"], "branch": "ah/suborch-p1", "release": null, "release_state": "unreleased", "branches": ["ah/suborch-p1"], "pushed": false, "issue": null, "note": null },
+        { "item": "stage-1", "title": "Stage 1: orchestrate class, spawn rules, create --parent", "state": "done", "added_at": "2026-10-16T12:00:00Z", "started_at": "2026-10-16T12:05:00Z", "done_at": "2026-10-16T16:19:22Z",
+          "commits": ["6dacf39e"], "branch": "ah/suborch-p1", "release": { "tag": "ah2-2.4.1", "date": "2026-10-17T01:30:00Z" }, "release_state": "released", "branches": ["ah/suborch-p1", "ah/v2"], "pushed": true, "issue": null, "note": null },
+        { "item": "void-stub", "title": "Clear void stub request", "state": "dropped", "added_at": "2026-10-16T21:00:00Z", "started_at": null, "done_at": null,
+          "commits": [], "branch": null, "release": null, "release_state": "no commits", "branches": [], "pushed": null, "issue": null, "note": "not needed after rev 8" }
+      ],
+      "more": 0
+    },
+    {
+      "team": "ah2-tm3", "stream": "docs-241", "title": "docs pass for 2.4.1", "owner": "ah2-tm3-docs-writer-2", "branch": "ah/docs-241",
+      "state": "open", "updated_at": "2026-10-17T02:10:00Z", "stale": true, "planned": false,
+      "counts": { "done": 1, "in_progress": 1, "not_started": 0, "dropped": 0 },
+      "items": [],
+      "more": 0
+    }
+  ],
+  "unknown_events": 0
+}

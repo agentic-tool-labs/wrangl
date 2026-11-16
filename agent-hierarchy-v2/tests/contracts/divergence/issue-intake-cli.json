@@ -1,0 +1,35 @@
+{
+  "about": "Divergences of the native `ah issue-intake` command from hooks/issue-intake.mjs. A row named under rowsExercisingNode is recorded from Node, run natively, and counted as diverged (never as a failure) when it differs; an xUnit row pins the native answer.",
+  "ruling": "accepted by the Orchestrator (note 20261012): IN-1, IN-2 and IN-3 are named divergences; runtime-produced stack and error text cannot match V8/Node, and the {\"error\"} line and the exit code do match",
+  "divergences": [
+    {
+      "id": "IN-1",
+      "about": "The hook-errors.jsonl row a failed intake run leaves carries \"stack\": []; Node writes the first three V8 frames of the throw site (file:line:column inside issue-intake.mjs and node internals), which a native binary cannot reproduce. Hook name, message and every other field are identical.",
+      "rowsExercisingNode": [
+        "cli/issue-intake/fetch-fails"
+      ],
+      "pinnedBy": [
+        "Ah.Commands.Tests IssueIntakeTests.AFailedFetchIsARunLevelFailureCarryingNeitherGhStream",
+        "Ah.Commands.Tests IssueIntakeTests.AnUnreadableOwnerFailsTheRunAndLogsGhsFirstErrorLine"
+      ],
+      "ruling": "accepted"
+    },
+    {
+      "id": "IN-2",
+      "about": "The diagnostic of a snapshot write or stale-snapshot removal failure is the .NET exception's message where Node logs its errno text (`EACCES: permission denied, open '<path>'`). The printed {\"error\": ...} line is identical.",
+      "rowsExercisingNode": [],
+      "pinnedBy": [
+        "Ah.Commands.Tests IssueIntakeTests.ANestedOutDirIsCreatedAndAnUnwritableOneFailsTheRun"
+      ],
+      "ruling": "accepted"
+    },
+    {
+      "id": "IN-3",
+      "about": "For a conventions file that is not JSON the conventions-invalid detail carries the shared Conventions library's parser message (System.Text.Json) where Node prints V8's; a file that parses but breaks the schema is worded identically. No recorded case exercises the unparseable form.",
+      "rowsExercisingNode": [],
+      "pinnedBy": [],
+      "ruling": "accepted"
+    }
+  ],
+  "usageText": "The usage text names `ah issue-intake` where Node prints `node issue-intake.mjs`; mapped by cli-form-intake-usage under the cli-command-form family (0114 4c). Option errors keep parseArgs' own words."
+}

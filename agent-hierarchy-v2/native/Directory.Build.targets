@@ -1,0 +1,57 @@
+<Project>
+
+  <!-- Every src project: tests see internals. -->
+  <ItemGroup Condition="'$(AhIsSrc)' == 'true'">
+    <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+  </ItemGroup>
+
+  <!-- Layers 4-17 get the registry generator as an analyzer; Abstractions, Core and Platform declare no registrations. -->
+  <ItemGroup Condition="'$(AhIsSrc)' == 'true' and '$(MSBuildProjectName)' != 'Ah.Abstractions' and '$(MSBuildProjectName)' != 'Ah.Core' and '$(MSBuildProjectName)' != 'Ah.Platform' and '$(MSBuildProjectName)' != 'Ah.Generators'">
+    <ProjectReference Include="$(AhNativeRoot)src/Ah.Generators/Ah.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The two executables embed the plugin's identity as assembly metadata; a publish must be given a real version and contract. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Ah.Cli' or '$(MSBuildProjectName)' == 'Ah.Tui'">
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AhVersion</_Parameter1>
+      <_Parameter2>$(AhVersion)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AhContract</_Parameter1>
+      <_Parameter2>$(AhContract)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AhPluginName</_Parameter1>
+      <_Parameter2>$(AhPluginName)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <Target Name="AhRequireBuildPropertiesOnPublish" BeforeTargets="PrepareForPublish"
+          Condition="'$(MSBuildProjectName)' == 'Ah.Cli' or '$(MSBuildProjectName)' == 'Ah.Tui'">
+    <Error Condition="'$(AhBuildPropertiesGiven)' != 'true'" Text="AhVersion and AhContract must be set (AhPluginName defaults to the name in .claude-plugin/plugin.json)" />
+  </Target>
+
+  <Target Name="AhRequireBuildPropertiesWhenPublishing" BeforeTargets="BeforeBuild"
+          Condition="('$(MSBuildProjectName)' == 'Ah.Cli' or '$(MSBuildProjectName)' == 'Ah.Tui') and '$(_IsPublishing)' == 'true'">
+    <Error Condition="'$(AhBuildPropertiesGiven)' != 'true'" Text="AhVersion and AhContract must be set (AhPluginName defaults to the name in .claude-plugin/plugin.json)" />
+  </Target>
+
+  <!-- Test projects are xUnit v3 executables: not AOT, reflection allowed. -->
+  <PropertyGroup Condition="'$(AhIsTests)' == 'true'">
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(AhIsTests)' == 'true'">
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <Using Include="Xunit" />
+    <Compile Include="$(AhNativeRoot)tests/ProcessSandbox.cs" Link="ProcessSandbox.cs" />
+    <Compile Include="$(AhNativeRoot)tests/SandboxDirectory.cs" Link="SandboxDirectory.cs" />
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AhNativeRoot</_Parameter1>
+      <_Parameter2>$(AhNativeRoot)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

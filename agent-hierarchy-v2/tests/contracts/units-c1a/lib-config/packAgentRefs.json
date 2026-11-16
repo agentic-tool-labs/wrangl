@@ -1,0 +1,68 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packAgentRefs",
+  "cases": [
+    {
+      "id": "from-rows",
+      "args": [
+        {
+          "roles": {
+            "architect": {
+              "agent": "plug:arch",
+              "from": "plug@m:arch"
+            },
+            "x-role": {
+              "class": "implement",
+              "agent": "plug:x",
+              "from": "plug@m:x"
+            },
+            "y-role": {
+              "class": "review",
+              "agent": "plain"
+            },
+            "reviewer": {
+              "from": "plug@m:r"
+            }
+          }
+        }
+      ],
+      "expect": [
+        "plug:arch",
+        "ah:reviewer",
+        "plug:x"
+      ]
+    },
+    {
+      "id": "none",
+      "args": [
+        {
+          "roles": {}
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "duplicates",
+      "args": [
+        {
+          "roles": {
+            "a-role": {
+              "class": "implement",
+              "agent": "p:s",
+              "from": "p@m:s"
+            },
+            "b-role": {
+              "class": "implement",
+              "agent": "p:s",
+              "from": "p@m:s"
+            }
+          }
+        }
+      ],
+      "expect": [
+        "p:s"
+      ]
+    }
+  ]
+}

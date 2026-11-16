@@ -1,0 +1,218 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "latestByKey",
+  "cases": [
+    {
+      "id": "last-per-key",
+      "args": [
+        [
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "orch",
+            "status": "pending",
+            "n": 1
+          },
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "orch",
+            "status": "pending",
+            "n": 2
+          },
+          {
+            "session_id": "s1",
+            "task": "t2",
+            "from": "orch",
+            "status": "pending",
+            "n": 3
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "orch",
+          "status": "pending",
+          "n": 2
+        },
+        {
+          "session_id": "s1",
+          "task": "t2",
+          "from": "orch",
+          "status": "pending",
+          "n": 3
+        }
+      ]
+    },
+    {
+      "id": "typed-rows-skipped",
+      "args": [
+        [
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "orch",
+            "status": "pending",
+            "n": 1
+          },
+          {
+            "type": "turn",
+            "session_id": "s1"
+          },
+          {
+            "type": "",
+            "n": 5
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "orch",
+          "status": "pending",
+          "n": 1
+        },
+        {
+          "type": "",
+          "n": 5
+        }
+      ]
+    },
+    {
+      "id": "key-includes-from",
+      "args": [
+        [
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "a",
+            "status": "pending"
+          },
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "b",
+            "status": "pending"
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "a",
+          "status": "pending"
+        },
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "b",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "missing-fields-read-undefined",
+      "args": [
+        [
+          {
+            "n": 1
+          },
+          {
+            "n": 2
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "n": 2
+        }
+      ]
+    },
+    {
+      "id": "null-field-differs-from-missing",
+      "args": [
+        [
+          {
+            "session_id": null,
+            "n": 1
+          },
+          {
+            "n": 2
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "session_id": null,
+          "n": 1
+        },
+        {
+          "n": 2
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "args": [
+        []
+      ],
+      "expect": []
+    },
+    {
+      "id": "null-row-throws",
+      "args": [
+        [
+          null
+        ]
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "first-position-kept",
+      "args": [
+        [
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "orch",
+            "status": "pending",
+            "n": 1
+          },
+          {
+            "session_id": "s1",
+            "task": "t2",
+            "from": "orch",
+            "status": "pending"
+          },
+          {
+            "session_id": "s1",
+            "task": "t1",
+            "from": "orch",
+            "status": "pending",
+            "n": 3
+          }
+        ]
+      ],
+      "expect": [
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "orch",
+          "status": "pending",
+          "n": 3
+        },
+        {
+          "session_id": "s1",
+          "task": "t2",
+          "from": "orch",
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,812 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "resolveHierarchyRole",
+  "cases": [
+    {
+      "id": "builtin-agent-type",
+      "args": [
+        {
+          "agent_type": "ah:architect",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": "architect",
+        "direct": true
+      }
+    },
+    {
+      "id": "builtin-implementor",
+      "args": [
+        {
+          "agent_type": "ah:implementor",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": "implementor",
+        "direct": true
+      }
+    },
+    {
+      "id": "foreign-plugin-suffix-reads-as-builtin",
+      "args": [
+        {
+          "agent_type": "other:reviewer",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": true,
+        "resolved": {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "docs-writer": {
+              "model": "sonnet",
+              "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+            },
+            "qa": {
+              "model": "sonnet"
+            },
+            "ux-engineer": {
+              "model": "opus",
+              "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "backlog-groomer": {
+              "model": "sonnet",
+              "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+            },
+            "sub-orchestrator": {
+              "model": "sonnet"
+            },
+            "deputy-chief": {
+              "model": "sonnet"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "docs-writer": "default",
+            "qa": "default",
+            "ux-engineer": "default",
+            "task-runner": "default",
+            "backlog-groomer": "default",
+            "sub-orchestrator": "default",
+            "deputy-chief": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      }
+    },
+    {
+      "id": "bare-role-name",
+      "args": [
+        {
+          "agent_type": "architect",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": "architect",
+        "direct": true,
+        "resolved": {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "docs-writer": {
+              "model": "sonnet",
+              "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+            },
+            "qa": {
+              "model": "sonnet"
+            },
+            "ux-engineer": {
+              "model": "opus",
+              "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "backlog-groomer": {
+              "model": "sonnet",
+              "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+            },
+            "sub-orchestrator": {
+              "model": "sonnet"
+            },
+            "deputy-chief": {
+              "model": "sonnet"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "docs-writer": "default",
+            "qa": "default",
+            "ux-engineer": "default",
+            "task-runner": "default",
+            "backlog-groomer": "default",
+            "sub-orchestrator": "default",
+            "deputy-chief": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      }
+    },
+    {
+      "id": "unknown-type-no-session",
+      "args": [
+        {
+          "agent_type": "stranger:thing",
+          "cwd": "$ROOT/repo",
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "unknown-type-falls-back-to-persisted",
+      "args": [
+        {
+          "agent_type": "stranger:thing",
+          "cwd": "$ROOT/repo",
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"reviewer\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": false
+      }
+    },
+    {
+      "id": "persisted-session-role",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"implementor\"}}}"
+      },
+      "expect": {
+        "role": "implementor",
+        "direct": false
+      }
+    },
+    {
+      "id": "persisted-session-id-trimmed",
+      "args": [
+        {
+          "session_id": "  s1  "
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"architect\"}}}"
+      },
+      "expect": {
+        "role": "architect",
+        "direct": false
+      }
+    },
+    {
+      "id": "no-session-key-bucket",
+      "args": [
+        {}
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"__nosession__\":{\"role\":\"reviewer\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": false
+      }
+    },
+    {
+      "id": "blank-session-id-is-no-session",
+      "args": [
+        {
+          "session_id": "   "
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"__nosession__\":{\"role\":\"reviewer\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": false
+      }
+    },
+    {
+      "id": "session-role-file-newer-version-ignored",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":2,\"sessions\":{\"s1\":{\"role\":\"architect\"}}}"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "session-role-file-invalid",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{nope"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "session-role-not-string",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":5}}}"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "session-role-sessions-not-object",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":[1]}"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "custom-role-agent-from-config",
+      "args": [
+        {
+          "agent_type": "mydev",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roles\":{\"devsmith\":{\"class\":\"implement\",\"agent\":\"mydev\",\"model\":\"sonnet\"}}}"
+      },
+      "expect": {
+        "role": "devsmith",
+        "direct": true,
+        "resolved": {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "architect": {
+              "model": "opus",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "reviewer": {
+              "model": "opus",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "implementor": {
+              "model": "inherit",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "docs-writer": {
+              "model": "sonnet",
+              "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "qa": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "ux-engineer": {
+              "model": "opus",
+              "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "backlog-groomer": {
+              "model": "sonnet",
+              "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+            },
+            "sub-orchestrator": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "deputy-chief": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "devsmith": {
+              "class": "implement",
+              "agent": "mydev",
+              "label": "Devsmith",
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "docs-writer": "default",
+            "qa": "default",
+            "ux-engineer": "default",
+            "task-runner": "default",
+            "backlog-groomer": "default",
+            "sub-orchestrator": "default",
+            "deputy-chief": "default",
+            "devsmith": "project"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [
+            {
+              "scope": "project",
+              "path": "$ROOT/repo/.claude/ah2/agent-hierarchy.json",
+              "data": {
+                "roles": {
+                  "devsmith": {
+                    "class": "implement",
+                    "agent": "mydev",
+                    "model": "sonnet"
+                  }
+                }
+              }
+            }
+          ],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      }
+    },
+    {
+      "id": "custom-role-from-resolved-arg",
+      "args": [
+        {
+          "agent_type": "mydev"
+        },
+        {
+          "roles": {
+            "devsmith": {
+              "class": "implement",
+              "agent": "mydev"
+            }
+          }
+        }
+      ],
+      "files": {},
+      "expect": {
+        "role": "devsmith",
+        "direct": true,
+        "resolved": {
+          "roles": {
+            "devsmith": {
+              "class": "implement",
+              "agent": "mydev"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "builtin-agent-override-in-config",
+      "args": [
+        {
+          "agent_type": "myarch",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roles\":{\"architect\":{\"agent\":\"myarch\",\"model\":\"opus\"}}}"
+      },
+      "expect": {
+        "role": "architect",
+        "direct": true,
+        "resolved": {
+          "configured": true,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "architect": {
+              "agent": "myarch",
+              "model": "opus",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "reviewer": {
+              "model": "opus",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "implementor": {
+              "model": "inherit",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "docs-writer": {
+              "model": "sonnet",
+              "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "qa": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "ux-engineer": {
+              "model": "opus",
+              "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "backlog-groomer": {
+              "model": "sonnet",
+              "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+            },
+            "sub-orchestrator": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            },
+            "deputy-chief": {
+              "model": "sonnet",
+              "dispatch": "peer",
+              "peer": "auto"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "project",
+            "reviewer": "default",
+            "implementor": "default",
+            "docs-writer": "default",
+            "qa": "default",
+            "ux-engineer": "default",
+            "task-runner": "default",
+            "backlog-groomer": "default",
+            "sub-orchestrator": "default",
+            "deputy-chief": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [
+            {
+              "scope": "project",
+              "path": "$ROOT/repo/.claude/ah2/agent-hierarchy.json",
+              "data": {
+                "roles": {
+                  "architect": {
+                    "agent": "myarch",
+                    "model": "opus"
+                  }
+                }
+              }
+            }
+          ],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      }
+    },
+    {
+      "id": "agent-type-not-string",
+      "args": [
+        {
+          "agent_type": 5,
+          "cwd": "$ROOT/repo",
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"reviewer\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": false
+      }
+    },
+    {
+      "id": "agent-type-empty-string",
+      "args": [
+        {
+          "agent_type": "",
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"reviewer\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": false
+      }
+    },
+    {
+      "id": "input-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {},
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "direct-role-wins-over-persisted",
+      "args": [
+        {
+          "agent_type": "ah:reviewer",
+          "cwd": "$ROOT/repo",
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.session-roles.json": "{\"version\":1,\"sessions\":{\"s1\":{\"role\":\"architect\"}}}"
+      },
+      "expect": {
+        "role": "reviewer",
+        "direct": true
+      }
+    },
+    {
+      "id": "ah-prefix-unknown-builtin",
+      "args": [
+        {
+          "agent_type": "ah:nonesuch",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": null,
+        "direct": false
+      }
+    },
+    {
+      "id": "ultra-advisor-token",
+      "args": [
+        {
+          "agent_type": "x:ultra-advisor",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "role": "ultra-advisor",
+        "direct": true,
+        "resolved": {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "docs-writer": {
+              "model": "sonnet",
+              "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+            },
+            "qa": {
+              "model": "sonnet"
+            },
+            "ux-engineer": {
+              "model": "opus",
+              "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "backlog-groomer": {
+              "model": "sonnet",
+              "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+            },
+            "sub-orchestrator": {
+              "model": "sonnet"
+            },
+            "deputy-chief": {
+              "model": "sonnet"
+            }
+          },
+          "sources": {
+            "ultra-advisor": "default",
+            "architect": "default",
+            "reviewer": "default",
+            "implementor": "default",
+            "docs-writer": "default",
+            "qa": "default",
+            "ux-engineer": "default",
+            "task-runner": "default",
+            "backlog-groomer": "default",
+            "sub-orchestrator": "default",
+            "deputy-chief": "default"
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "layers": [],
+          "warnings": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      }
+    }
+  ]
+}

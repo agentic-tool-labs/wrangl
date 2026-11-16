@@ -1,0 +1,215 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "saveStatus",
+  "cases": [
+    {
+      "id": "writes-the-document",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "{\"schema\":1,\"written_at\":\"2026-06-01T12:00:00.000Z\",\"expires_at\":\"2026-06-02T12:00:00.000Z\",\"enabled\":true,\"member_sessions\":[],\"teams\":[],\"timeline\":[],\"owners\":[]}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "replaces-the-previous",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/status.json": "old\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "{\"schema\":1,\"written_at\":\"2026-06-01T12:00:00.000Z\",\"expires_at\":\"2026-06-02T12:00:00.000Z\",\"enabled\":true,\"member_sessions\":[],\"teams\":[],\"timeline\":[],\"owners\":[]}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "dir-missing",
+      "args": [
+        "$ROOT/nowhere",
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "nowhere/status.json": null
+      },
+      "expect": false
+    },
+    {
+      "id": "no-dir",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-dir",
+      "args": [
+        "",
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "undefined-values-are-dropped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "a": {
+            "$undefined": 1
+          },
+          "b": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "{\"b\":1}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "null-document",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "null\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "string-document",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "text"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "\"text\"\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "unicode-document",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "t": "é字🙂"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": "{\"t\":\"é字🙂\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "link-at-status-json-is-replaced-not-followed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "schema": 1,
+          "written_at": "2026-06-01T12:00:00.000Z",
+          "expires_at": "2026-06-02T12:00:00.000Z",
+          "enabled": true,
+          "member_sessions": [],
+          "teams": [],
+          "timeline": [],
+          "owners": []
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "elsewhere/target.json": "keep\n"
+      },
+      "links": {
+        "repo/.claude/hierarchy/status.json": "$ROOT/elsewhere/target.json"
+      },
+      "expectFiles": {
+        "elsewhere/target.json": "keep\n",
+        "repo/.claude/hierarchy/status.json": "{\"schema\":1,\"written_at\":\"2026-06-01T12:00:00.000Z\",\"expires_at\":\"2026-06-02T12:00:00.000Z\",\"enabled\":true,\"member_sessions\":[],\"teams\":[],\"timeline\":[],\"owners\":[]}\n"
+      },
+      "expect": true
+    }
+  ]
+}

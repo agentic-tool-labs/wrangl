@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "open",
+  "about": "list --open shows the request that has a response skeleton but no filled body",
+  "tree": "cli-msgs",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "list",
+      "--open"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "[{\"id\":\"<MSGID:1>\",\"to\":\"implementor\",\"slug\":\"sample-a\",\"age\":\"<AGE>\",\"title\":null,\"title_source\":null,\"state\":\"open\",\"request\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--sample-a--request.md\",\"response\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--sample-a--response.md\",\"has_response\":true}]\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a closed request listed as open",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:42.440Z"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "EFFORT_VALUES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
+    }
+  ]
+}

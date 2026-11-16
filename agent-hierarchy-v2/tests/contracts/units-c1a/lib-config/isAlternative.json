@@ -1,0 +1,115 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isAlternative",
+  "cases": [
+    {
+      "id": "alt",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "routes": "docs"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-routes",
+      "args": [
+        "x-role",
+        {
+          "class": "implement"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-routes",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "routes": ""
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "non-string-routes",
+      "args": [
+        "x-role",
+        {
+          "class": "implement",
+          "routes": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "legwork",
+      "args": [
+        "x-role",
+        {
+          "class": "legwork",
+          "routes": "docs"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "unknown-class",
+      "args": [
+        "x-role",
+        {
+          "class": "bogus",
+          "routes": "docs"
+        }
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-class",
+      "args": [
+        "x-role",
+        {
+          "routes": "docs"
+        }
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "builtin",
+      "args": [
+        "architect",
+        {
+          "class": "design",
+          "routes": "x"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-entry",
+      "args": [
+        "x-role",
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-entry",
+      "args": [
+        "x-role",
+        {}
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

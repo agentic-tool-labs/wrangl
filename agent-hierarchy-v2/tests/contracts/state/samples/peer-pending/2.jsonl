@@ -1,0 +1,4 @@
+{"session_id":"p-s","from":"p-peer","from_name":"p","reply_to":"p-peer","task":"t","status":"pending","nudges":0,"msg":null,"ts":"2026-01-01T00:00:00.000Z","op_id":"97b213cb-568b-4806-b367-42c9f3cf7cc3"}
+{"type":"turn","session_id":"p-s","status":"armed","ts":"2026-01-01T00:00:00.000Z","op_id":"13aa5225-2b89-43da-b526-4bac062169ba"}
+{"type":"watch-event","session_id":"p-s","request_id":"r-1","kind":"CHECK-IN","text":"x","ts":"2026-01-01T00:00:00.000Z","op_id":"8d1cdd59-6457-4921-a25f-9b3883058445"}
+{"type":"cli-root","session_id":"p-s","digest":"0123456789abcdef","ts":"2026-01-01T00:00:00.000Z","op_id":"1925961e-852c-44c9-b6a2-46acceaf87a9"}

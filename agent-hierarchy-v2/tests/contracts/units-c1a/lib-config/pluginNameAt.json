@@ -1,0 +1,94 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "pluginNameAt",
+  "cases": [
+    {
+      "id": "from-plugin-json",
+      "args": [
+        "$ROOT/p"
+      ],
+      "files": {
+        "p/.claude-plugin/plugin.json": "{\"name\":\"fancy\"}"
+      },
+      "expect": "fancy"
+    },
+    {
+      "id": "no-plugin-json",
+      "args": [
+        "$ROOT/p/dirname"
+      ],
+      "files": {
+        "p/dirname/readme": "x"
+      },
+      "expect": "dirname"
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "$ROOT/p/bad"
+      ],
+      "files": {
+        "p/bad/.claude-plugin/plugin.json": "{nope"
+      },
+      "expect": "bad"
+    },
+    {
+      "id": "empty-name",
+      "args": [
+        "$ROOT/p/empty"
+      ],
+      "files": {
+        "p/empty/.claude-plugin/plugin.json": "{\"name\":\"\"}"
+      },
+      "expect": "empty"
+    },
+    {
+      "id": "number-name",
+      "args": [
+        "$ROOT/p/num"
+      ],
+      "files": {
+        "p/num/.claude-plugin/plugin.json": "{\"name\":5}"
+      },
+      "expect": "num"
+    },
+    {
+      "id": "no-name-key",
+      "args": [
+        "$ROOT/p/nokey"
+      ],
+      "files": {
+        "p/nokey/.claude-plugin/plugin.json": "{\"version\":\"1\"}"
+      },
+      "expect": "nokey"
+    },
+    {
+      "id": "json-array",
+      "args": [
+        "$ROOT/p/arr"
+      ],
+      "files": {
+        "p/arr/.claude-plugin/plugin.json": "[\"x\"]"
+      },
+      "expect": "arr"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "$ROOT/p/slash/"
+      ],
+      "files": {
+        "p/slash/readme": "x"
+      },
+      "expect": "slash"
+    },
+    {
+      "id": "missing-dir",
+      "args": [
+        "$ROOT/p/never-made"
+      ],
+      "expect": "never-made"
+    }
+  ]
+}

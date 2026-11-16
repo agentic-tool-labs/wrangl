@@ -1,0 +1,153 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "hierarchyRoleOf",
+  "cases": [
+    {
+      "id": "ah-builtin",
+      "args": [
+        "ah:architect"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "ah-unknown",
+      "args": [
+        "ah:nobody"
+      ],
+      "expect": null
+    },
+    {
+      "id": "bare-builtin",
+      "args": [
+        "architect"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "namespaced-builtin",
+      "args": [
+        "plug:reviewer"
+      ],
+      "expect": "reviewer"
+    },
+    {
+      "id": "substring-no-match",
+      "args": [
+        "xarchitect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "non-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "resolved-custom",
+      "args": [
+        "plug:ui",
+        {
+          "resolved": {
+            "roles": {
+              "ui-role": {
+                "class": "implement",
+                "agent": "plug:ui"
+              }
+            }
+          }
+        }
+      ],
+      "expect": "ui-role"
+    },
+    {
+      "id": "resolved-override",
+      "args": [
+        "plug:arch",
+        {
+          "resolved": {
+            "roles": {
+              "architect": {
+                "model": "opus",
+                "agent": "plug:arch"
+              }
+            }
+          }
+        }
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "resolved-miss-falls-to-builtin",
+      "args": [
+        "plug:architect",
+        {
+          "resolved": {
+            "roles": {
+              "ui-role": {
+                "class": "implement",
+                "agent": "plug:ui"
+              }
+            }
+          }
+        }
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "cwd-resolves-config",
+      "args": [
+        "plug:ui",
+        {
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roles\":{\"ui-role\":{\"class\":\"implement\",\"agent\":\"plug:ui\"}}}"
+      },
+      "expect": "ui-role"
+    },
+    {
+      "id": "cwd-empty-ignored",
+      "args": [
+        "plug:ui",
+        {
+          "cwd": ""
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"roles\":{\"ui-role\":{\"class\":\"implement\",\"agent\":\"plug:ui\"}}}"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "resolved-without-roles",
+      "args": [
+        "plug:ui",
+        {
+          "resolved": {}
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

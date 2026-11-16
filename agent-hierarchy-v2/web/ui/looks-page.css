@@ -1,0 +1,123 @@
+/* The Looks page (ah-ui-looks §6). House tokens only; the preview's look comes from looks.js apply() on .looks-pv, and the
+   preview's theme from the .looks-pv[data-theme] scope in ui.css. */
+
+.r6 .stage-wrap > .looks-page { display: flex; flex-direction: column; gap: var(--sp-16); padding: var(--sp-16) var(--sp-24) var(--sp-24); }
+
+.looks-bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-8) var(--sp-16); }
+.looks-bar h2 { margin: 0; color: var(--ink-strong); font-size: var(--text-20); font-weight: 600; }
+.looks-bar .hint { flex: 1 1 320px; margin: 0; color: var(--muted); font-size: var(--text-13); }
+.looks-import { position: relative; display: inline-flex; align-items: center; }
+.looks-import:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.looks-io { margin: 0; font-size: var(--text-13); }
+
+.looks-body { flex: 1 1 0; min-height: 320px; display: grid; grid-template-columns: 224px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--sp-24); }
+.looks-list { min-height: 0; overflow-y: auto; }
+
+/* The list: Light and Dark built-ins (House in both), then Custom. */
+.looks-list h3 { margin: var(--sp-16) 0 var(--sp-4); color: var(--muted); font-size: var(--text-12); font-weight: 600; }
+.looks-list h3:first-child { margin-top: 0; }
+.looks-list ul { margin: 0; padding: 0; list-style: none; }
+.looks-item { display: flex; align-items: center; gap: var(--sp-8); width: 100%; min-height: 32px; padding: 0 var(--sp-8); border: 1px solid transparent; border-radius: var(--radius); background: none; color: var(--ink); font-size: var(--text-13); text-align: start; cursor: pointer; }
+.looks-item:hover { background: var(--surface-hover); }
+.looks-item[aria-current="true"] { background: var(--row-sel); border-color: var(--line-hover); box-shadow: inset 2px 0 0 var(--accent); }
+.looks-item-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.looks-tag { flex: none; padding: 0 var(--sp-4); border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); font-size: var(--text-11); }
+.looks-warn { flex: none; color: var(--err-ink); }
+.looks-empty { margin: var(--sp-4) 0; font-size: var(--text-13); }
+
+/* The name and preview hold still on the left; the settings scroll in their own column beside them. */
+.looks-main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: auto minmax(0, 1fr); gap: var(--sp-16) var(--sp-24); min-width: 0; min-height: 0; }
+.looks-main > .looks-head { grid-area: 1 / 1; }
+.looks-main > .looks-pv { grid-area: 2 / 1; min-height: 0; }
+.looks-main > :is(.looks-controls, .looks-empty) { grid-column: 2; grid-row: 1 / -1; }
+
+/* The selected look's name, state and actions. */
+.looks-head { display: grid; gap: var(--sp-8); min-width: 0; }
+.looks-title { margin: 0; overflow: hidden; color: var(--ink-strong); font-size: var(--text-18); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.looks-sub { margin: 0; color: var(--muted); font-size: var(--text-12); }
+.looks-unsaved { color: var(--ink); font-weight: 600; }
+.looks-actions { display: flex; flex-wrap: wrap; gap: var(--sp-8); }
+.r6 .action.danger { border-color: var(--err-line); color: var(--err-ink); }
+.r6 .action.danger:hover { border-color: var(--err-ink); }
+.looks-rename { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8); }
+.looks-rename input { width: min(320px, 100%); min-height: 28px; padding: var(--sp-4) var(--sp-8); border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--surface-1); color: var(--ink); font-size: var(--text-13); }
+.looks-rename input[aria-invalid="true"] { border-color: var(--err-line); }
+.looks-err { flex-basis: 100%; margin: 0; color: var(--err-ink); font-size: var(--text-12); }
+
+/* In-page confirms: delete, and leaving with unsaved changes. */
+.looks-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8); padding: var(--sp-12); border: 1px solid var(--err-line); border-radius: var(--radius-pane); background: var(--tint-err); }
+.looks-confirm p { flex: 1 1 100%; margin: 0; color: var(--ink); font-size: var(--text-13); }
+
+/* The preview: the app's own frame, Header, Board cards and Footer, on their own stage, zoomed as a whole so it reads as a small window of the app.
+   Only its size is set here: how it looks comes from the same rules as the app. The container carries the theme tokens, so it re-states the
+   colour that the body would otherwise pass down already resolved in the page's theme. */
+.looks-pv { position: relative; isolation: isolate; zoom: .8; height: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-pane); background: var(--bg); color: var(--ink); }
+.looks-pv .r6.looks-pv-frame { position: relative; height: 100%; min-height: 0; }
+.looks-pv .r6 .kb-stage { overflow: hidden; }
+.looks-pv .r6 .rail { flex: 0 0 240px; max-width: 240px; overflow: hidden; }
+.looks-pv .r6 .rail > * + * { margin-block-start: var(--sp-8); }
+.looks-pv .r6 .panel p { margin: var(--sp-8) var(--sp-12); }
+.looks-pv-ink2 { color: var(--ink-2); }
+.looks-pv-muted { color: var(--muted); }
+.looks-pv-dim { color: var(--dim); }
+.looks-pv .member-rail ul { margin: 0; padding: 0; list-style: none; }
+
+/* The controls: the profile tabs, the contrast line, then Halo, Glass and Backdrop. */
+.looks-controls { display: grid; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: var(--sp-16); align-items: start; align-content: start; min-height: 0; overflow-y: auto; padding: var(--sp-4); scrollbar-gutter: stable; }
+/* A classic scrollbar, so it shows there is more even where the system hides scrollbars until they move. Custom bars only draw with the
+   standard scrollbar properties left at auto. */
+.r6 .looks-main .looks-controls { scrollbar-width: auto; scrollbar-color: auto; }
+.looks-controls::-webkit-scrollbar { width: var(--sp-8); }
+.looks-controls::-webkit-scrollbar-thumb { border-radius: var(--radius); background: var(--muted); }
+.looks-tabs, .looks-graph, .looks-profile-note, .looks-contrast { grid-column: 1 / -1; }
+.looks-tabs { display: flex; gap: var(--sp-8); }
+.looks-tabs .chip { min-height: 28px; padding: 0 var(--sp-12); }
+.looks-profile-note, .looks-contrast { margin: 0; color: var(--muted); font-size: var(--text-12); }
+.looks-contrast.warn { color: var(--err-ink); }
+.looks-contrast .num, .looks-val { font-variant-numeric: tabular-nums; }
+.looks-controls fieldset { display: grid; gap: var(--sp-12); min-width: 0; margin: 0; padding: var(--sp-12); border: 1px solid var(--line); border-radius: var(--radius-pane); }
+.looks-controls legend { padding: 0 var(--sp-4); color: var(--ink-2); font-size: var(--text-12); font-weight: 600; }
+.looks-controls legend .hint { color: var(--muted); font-weight: 400; }
+.looks-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--sp-4) var(--sp-8); }
+.looks-field label { color: var(--ink-2); font-size: var(--text-12); }
+.looks-val { color: var(--muted); font-size: var(--text-12); }
+.looks-field input[type="range"] { grid-column: 1 / -1; width: 100%; min-height: 24px; margin: 0; accent-color: var(--accent); }
+.looks-colour { grid-template-columns: minmax(0, 1fr) auto auto; }
+.looks-colour input[type="color"] { width: 32px; height: 24px; padding: 0; border: 1px solid var(--line-control); border-radius: var(--radius); background: none; cursor: pointer; }
+.looks-field select { min-height: 28px; padding: 0 var(--sp-8); border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--surface-1); color: var(--ink); font-size: var(--text-13); }
+.looks-knob { grid-template-columns: minmax(0, 1fr) auto auto; }
+.looks-check.looks-knob { grid-template-columns: auto minmax(0, 1fr) auto; }
+.looks-size input[type="range"] { grid-column: 1 / -1; }
+.looks-reset { min-height: 24px; padding: 0 var(--sp-8); border: 1px solid transparent; border-radius: var(--radius); background: none; color: var(--ink); font-size: var(--text-12); cursor: pointer; }
+.looks-reset:hover:not(:disabled) { border-color: var(--line-hover); }
+.looks-reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Hidden, not disabled-looking: a knob left alone has nothing to reset, and keeping the box stops the row moving when it first changes. */
+.looks-reset:disabled { visibility: hidden; }
+.looks-ink { grid-template-columns: minmax(0, 1fr) auto 56px 64px; }
+.looks-ratio { text-align: end; font-variant-numeric: tabular-nums; }
+.looks-ratio.warn { color: var(--err-ink); }
+.looks-check { grid-template-columns: auto minmax(0, 1fr); }
+.looks-check input { width: 16px; height: 16px; margin: var(--sp-4); accent-color: var(--accent); }
+.looks-controls fieldset:disabled :is(input, select) { cursor: not-allowed; }
+
+/* Tight beside the settings: a slimmer list, and the preview without its rail, so the Board stays whole. */
+@media (max-width: 1200px) {
+  .looks-body { grid-template-columns: 176px minmax(0, 1fr); }
+  .looks-main { grid-template-columns: minmax(0, 1fr) 288px; }
+  .looks-pv .r6 :is(.rail, .shell-head .views) { display: none; }
+  .looks-pv .r6 .shell-head > :not(.crumbs) { flex-shrink: 0; }
+  .looks-pv .r6 .shell-head .crumbs { min-width: 0; overflow: hidden; }
+}
+
+/* Too narrow for the settings beside the preview: one column in the page's scroll, with the preview pinned and the settings passing under it.
+   The scroll padding keeps a focused control clear of the pinned preview. */
+@media (max-width: 1000px) {
+  .r6 .stage-wrap > .looks-page { --looks-pv-h: min(320px, 45vh); scroll-padding-top: calc(var(--looks-pv-h) + var(--sp-16)); }
+  .looks-body { flex: none; min-height: 0; grid-template-columns: 224px minmax(0, 1fr); grid-template-rows: none; align-items: start; }
+  .looks-list { overflow-y: visible; }
+  .looks-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .looks-main > :is(.looks-head, .looks-pv, .looks-controls, .looks-empty) { grid-area: auto; }
+  .looks-main > .looks-pv { position: sticky; top: calc(var(--sp-16) * -1); z-index: 1; height: var(--looks-pv-h); }
+  .looks-controls { overflow-y: visible; padding: 0; scrollbar-gutter: auto; }
+}
+@media (max-width: 800px) { .looks-body { grid-template-columns: minmax(0, 1fr); } }

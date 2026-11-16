@@ -1,0 +1,184 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packPin",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "agent text\n",
+        [
+          [
+            "a.txt",
+            "11"
+          ],
+          [
+            "b.txt",
+            "22"
+          ]
+        ]
+      ],
+      "expect": "sha256:c3dd0f0c6096c88ff9cebcc1c3a8fea7280db7c5b9bc09fa8e23330537e2653a"
+    },
+    {
+      "id": "key-order-irrelevant",
+      "args": [
+        {
+          "routes": "r",
+          "description": "d",
+          "label": "QA",
+          "class": "review"
+        },
+        "agent text\n",
+        [
+          [
+            "a.txt",
+            "11"
+          ],
+          [
+            "b.txt",
+            "22"
+          ]
+        ]
+      ],
+      "expect": "sha256:c3dd0f0c6096c88ff9cebcc1c3a8fea7280db7c5b9bc09fa8e23330537e2653a"
+    },
+    {
+      "id": "empty-files",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "x",
+        []
+      ],
+      "expect": "sha256:af3d91fe97f33107bc0dd280034436eb011960f862e8f98b2a14371fdb1a63a4"
+    },
+    {
+      "id": "empty-text",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "",
+        []
+      ],
+      "expect": "sha256:cb12a33641551dfa8d7bcc177f270461c8a8b228a8b2f433eed12c5cdc7937c4"
+    },
+    {
+      "id": "quotes-and-newlines",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "say \"hi\"\n\ttab \\ slash",
+        []
+      ],
+      "expect": "sha256:e24421d40e8265d77ccb55c29aa2befb4e9cfcea3524285d72f03d720726ed92"
+    },
+    {
+      "id": "unicode-text",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "café 😀   end",
+        []
+      ],
+      "expect": "sha256:238222b35154197851347dd5cd50956746757ca50360cd18f3a41a4efac3271e"
+    },
+    {
+      "id": "control-chars",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "a\u0001b\u001fcd",
+        []
+      ],
+      "expect": "sha256:563f8e24353610b1e8509d22bcec82837c92e3c32094f9ae3c9ec3b718b3c182"
+    },
+    {
+      "id": "nested-row-keys-keep-order",
+      "args": [
+        {
+          "class": "review",
+          "extra": {
+            "z": 1,
+            "a": 2
+          }
+        },
+        "t",
+        []
+      ],
+      "expect": "sha256:6269eb5867d1b0d253f468184313ed5d81760faea527615d58252246379755b9"
+    },
+    {
+      "id": "files-order-kept",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "t",
+        [
+          [
+            "b",
+            "2"
+          ],
+          [
+            "a",
+            "1"
+          ]
+        ]
+      ],
+      "expect": "sha256:944747645768ba26ce05c890ea73d1f2a54ad155804c6ee525a7f4edc0e72363"
+    },
+    {
+      "id": "different-text-differs",
+      "args": [
+        {
+          "class": "review",
+          "label": "QA",
+          "description": "d",
+          "routes": "r"
+        },
+        "agent text!\n",
+        [
+          [
+            "a.txt",
+            "11"
+          ],
+          [
+            "b.txt",
+            "22"
+          ]
+        ]
+      ],
+      "expect": "sha256:f9570b3fdfc4da5d46ae56f7abae2f54eebc875cbdf54bb3ba27016c4003cc2d"
+    }
+  ]
+}

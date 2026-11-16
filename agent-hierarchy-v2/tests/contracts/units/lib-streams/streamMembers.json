@@ -1,0 +1,129 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamMembers",
+  "cases": [
+    {
+      "id": "tagged",
+      "args": [
+        {
+          "members": [
+            {
+              "name": "a",
+              "stream": "s1"
+            },
+            {
+              "name": "b",
+              "stream": "s2"
+            },
+            {
+              "name": "c",
+              "stream": "s1"
+            }
+          ]
+        },
+        "s1"
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "stream": "s1"
+        },
+        {
+          "name": "c",
+          "stream": "s1"
+        }
+      ]
+    },
+    {
+      "id": "none",
+      "args": [
+        {
+          "members": [
+            {
+              "name": "a",
+              "stream": "s2"
+            }
+          ]
+        },
+        "s1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "untagged-members-skipped",
+      "args": [
+        {
+          "members": [
+            {
+              "name": "a"
+            },
+            {
+              "name": "b",
+              "stream": null
+            }
+          ]
+        },
+        "s1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "non-object-rows-skipped",
+      "args": [
+        {
+          "members": [
+            null,
+            5,
+            "x",
+            [],
+            {
+              "name": "a",
+              "stream": "s1"
+            }
+          ]
+        },
+        "s1"
+      ],
+      "expect": [
+        {
+          "name": "a",
+          "stream": "s1"
+        }
+      ]
+    },
+    {
+      "id": "no-team",
+      "args": [
+        null,
+        "s1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        {
+          "members": {}
+        },
+        "s1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "name-compared-strictly",
+      "args": [
+        {
+          "members": [
+            {
+              "name": "a",
+              "stream": 1
+            }
+          ]
+        },
+        "1"
+      ],
+      "expect": []
+    }
+  ]
+}

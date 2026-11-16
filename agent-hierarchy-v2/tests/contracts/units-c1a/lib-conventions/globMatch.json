@@ -1,0 +1,679 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "globMatch",
+  "cases": [
+    {
+      "id": "star-same-segment",
+      "args": [
+        "*.md",
+        "a.md"
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-not-across-slash",
+      "args": [
+        "*.md",
+        "dir/a.md"
+      ],
+      "expect": false
+    },
+    {
+      "id": "star-empty-text",
+      "args": [
+        "*",
+        ""
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-no-slash",
+      "args": [
+        "*",
+        "a/b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "question-one-char",
+      "args": [
+        "a?c",
+        "abc"
+      ],
+      "expect": true
+    },
+    {
+      "id": "question-not-slash",
+      "args": [
+        "a?c",
+        "a/c"
+      ],
+      "expect": false
+    },
+    {
+      "id": "question-needs-a-char",
+      "args": [
+        "a?c",
+        "ac"
+      ],
+      "expect": false
+    },
+    {
+      "id": "double-star-alone-anything",
+      "args": [
+        "**",
+        "a/b/c"
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-alone-empty",
+      "args": [
+        "**",
+        ""
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-alone-newline-no-match",
+      "args": [
+        "**",
+        "a\nb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "double-star-alone-cr-no-match",
+      "args": [
+        "**",
+        "a\rb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "double-star-alone-line-separator-no-match",
+      "args": [
+        "**",
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "star-matches-newline",
+      "args": [
+        "a*",
+        "a\nb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-double-star-dir",
+      "args": [
+        "docs/**",
+        "docs/a/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-double-star-bare-dir",
+      "args": [
+        "docs/**",
+        "docs"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-double-star-dir-slash",
+      "args": [
+        "docs/**",
+        "docs/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-double-star-other",
+      "args": [
+        "docs/**",
+        "docs2/a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-double-star-root",
+      "args": [
+        "**/x.js",
+        "x.js"
+      ],
+      "expect": true
+    },
+    {
+      "id": "leading-double-star-deep",
+      "args": [
+        "**/x.js",
+        "a/b/x.js"
+      ],
+      "expect": true
+    },
+    {
+      "id": "leading-double-star-suffix-only",
+      "args": [
+        "**/x.js",
+        "ax.js"
+      ],
+      "expect": false
+    },
+    {
+      "id": "middle-double-star-zero",
+      "args": [
+        "a/**/b",
+        "a/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "middle-double-star-one",
+      "args": [
+        "a/**/b",
+        "a/x/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "middle-double-star-two",
+      "args": [
+        "a/**/b",
+        "a/x/y/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "middle-double-star-glued",
+      "args": [
+        "a/**/b",
+        "ab"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-dot",
+      "args": [
+        "a.b",
+        "a.b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-dot-not-wildcard",
+      "args": [
+        "a.b",
+        "axb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-plus",
+      "args": [
+        "a+b",
+        "a+b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-plus-not-quantifier",
+      "args": [
+        "a+b",
+        "aab"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-parens",
+      "args": [
+        "(x)",
+        "(x)"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-brackets",
+      "args": [
+        "[x]",
+        "x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-brackets-itself",
+      "args": [
+        "[x]",
+        "[x]"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-braces",
+      "args": [
+        "a{1}",
+        "a{1}"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-braces-not-quantifier",
+      "args": [
+        "a{1}",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-pipe",
+      "args": [
+        "a|b",
+        "a|b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-pipe-not-alternation",
+      "args": [
+        "a|b",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "literal-caret-dollar",
+      "args": [
+        "a^b$",
+        "a^b$"
+      ],
+      "expect": true
+    },
+    {
+      "id": "literal-backslash",
+      "args": [
+        "a\\b",
+        "a\\b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "segment-star-middle",
+      "args": [
+        "src/*/index.ts",
+        "src/app/index.ts"
+      ],
+      "expect": true
+    },
+    {
+      "id": "segment-star-middle-deeper-no",
+      "args": [
+        "src/*/index.ts",
+        "src/app/x/index.ts"
+      ],
+      "expect": false
+    },
+    {
+      "id": "test-glob",
+      "args": [
+        "**/*.test.*",
+        "pkg/a.test.ts"
+      ],
+      "expect": true
+    },
+    {
+      "id": "release-branch",
+      "args": [
+        "release/*",
+        "release/1.0"
+      ],
+      "expect": true
+    },
+    {
+      "id": "release-branch-deeper-no",
+      "args": [
+        "release/*",
+        "release/1/0"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-pattern-empty-text",
+      "args": [
+        "",
+        ""
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty-pattern-text",
+      "args": [
+        "",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-slash-pattern",
+      "args": [
+        "docs/",
+        "docs/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-slash-pattern-no-slash",
+      "args": [
+        "docs/",
+        "docs"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-slash-pattern",
+      "args": [
+        "/abs",
+        "/abs"
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-inside-segment-is-two-stars",
+      "args": [
+        "a**b",
+        "axyb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-inside-segment-no-slash",
+      "args": [
+        "a**b",
+        "ax/yb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "anchored-both-ends",
+      "args": [
+        "a",
+        "ba"
+      ],
+      "expect": false
+    },
+    {
+      "id": "anchored-end",
+      "args": [
+        "a",
+        "ab"
+      ],
+      "expect": false
+    },
+    {
+      "id": "anchored-no-trailing-newline",
+      "args": [
+        "a",
+        "a\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "star-segment-no-trailing-newline",
+      "args": [
+        "a*",
+        "ab\n"
+      ],
+      "expect": true
+    },
+    {
+      "id": "case-sensitive",
+      "args": [
+        "ReadMe.md",
+        "readme.md"
+      ],
+      "expect": false
+    },
+    {
+      "id": "unicode-literal",
+      "args": [
+        "café/*",
+        "café/x"
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-then-double-star",
+      "args": [
+        "**/**",
+        "a/b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "double-star-first-and-last-with-middle",
+      "args": [
+        "**/mid/**",
+        "a/mid/b/c"
+      ],
+      "expect": true
+    },
+    {
+      "id": "backtrack-stars-match",
+      "args": [
+        "*a*b*c",
+        "xaxbxc"
+      ],
+      "expect": true
+    },
+    {
+      "id": "backtrack-stars-many-no-match",
+      "args": [
+        "*a*a*a*a*a*a*b",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "star-empty-middle-segment",
+      "args": [
+        "a/*/c",
+        "a//c"
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty-segment-pattern-exact",
+      "args": [
+        "a//b",
+        "a//b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty-segment-pattern-single-slash",
+      "args": [
+        "a//b",
+        "a/b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "question-matches-newline",
+      "args": [
+        "a?c",
+        "a\nc"
+      ],
+      "expect": true
+    },
+    {
+      "id": "question-one-utf16-unit",
+      "args": [
+        "a?c",
+        "a😀c"
+      ],
+      "expect": false
+    },
+    {
+      "id": "question-two-utf16-units",
+      "args": [
+        "a??c",
+        "a😀c"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-double-star-newline-below",
+      "args": [
+        "docs/**",
+        "docs/a\nb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-double-star-leading-slash",
+      "args": [
+        "**/x",
+        "/x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-double-star-empty-directory",
+      "args": [
+        "**/x",
+        "a//x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "middle-double-star-empty-directory",
+      "args": [
+        "a/**/b",
+        "a//b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "middle-double-star-then-star",
+      "args": [
+        "a/**/*.js",
+        "a/b/c/d.js"
+      ],
+      "expect": true
+    },
+    {
+      "id": "three-double-stars",
+      "args": [
+        "**/**/**",
+        "a/b/c"
+      ],
+      "expect": false
+    },
+    {
+      "id": "lone-slash",
+      "args": [
+        "/",
+        "/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "rooted-double-star-below",
+      "args": [
+        "/**",
+        "/a/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "rooted-double-star-relative-text",
+      "args": [
+        "/**",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "rooted-double-star-empty",
+      "args": [
+        "/**",
+        ""
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-matches-line-separator",
+      "args": [
+        "a*",
+        "a b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "double-star-alone-paragraph-separator-no-match",
+      "args": [
+        "**",
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "two-star-segments",
+      "args": [
+        "*/*",
+        "a/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "two-star-segments-too-deep",
+      "args": [
+        "*/*",
+        "a/b/c"
+      ],
+      "expect": false
+    },
+    {
+      "id": "star-segment-empty-text",
+      "args": [
+        "*/*",
+        "/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "question-segment",
+      "args": [
+        "?/?",
+        "a/b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-question-slash-match",
+      "args": [
+        "*?/",
+        "aa/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-question-slash-other-letters",
+      "args": [
+        "*?/",
+        "ba/"
+      ],
+      "expect": true
+    },
+    {
+      "id": "star-question-slash-too-short",
+      "args": [
+        "*?/",
+        "/"
+      ],
+      "expect": false
+    }
+  ]
+}

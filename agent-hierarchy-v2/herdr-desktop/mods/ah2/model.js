@@ -1,0 +1,418 @@
+// The ah2 mod's data side: no herdr or gpui imports, so the fixture render (herdr-desktop/preview/render.mjs) runs the same code.
+// Input: the slices `ah view events` serves (spec-herdr-desktop.md §4). Output: plain rows the views draw.
+// The Q&A fields are read only by the web's own questions-model.js (shipped beside this file as a byte-identical copy of web/ui's, kept honest by a test), spec P3.1.
+import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
+import { itemDescId } from "./plans-model.js";
+import { paneOf } from "./target-model.js";
+import { goalOf, ownGoal } from "./select.js";
+
+// State words and glyphs, as the web UI says them (web/ui/select.js STATE_WORD). `tone` is the Herdr theme() token.
+export const STATES = {
+  working: { glyph: "●", word: "Working", tone: "working" },
+  running: { glyph: "●", word: "Running", tone: "working" },
+  idle: { glyph: "○", word: "Idle", tone: "idle" },
+  blocked: { glyph: "❚❚", word: "Blocked", tone: "blocked" },
+  gone: { glyph: "×", word: "Gone", tone: "unknown" },
+  unknown: { glyph: "?", word: "No signal", tone: "unknown" },
+  done: { glyph: "✓", word: "Done", tone: "done" },
+};
+
+// Sitrep regions in the order the overlay shows them (spec §4.1), keyed by the slice's `list` names.
+export const REGION_ORDER = ["waiting_on_you", "blocked", "in_progress", "up_next", "completed"];
+
+// One /events reply into the store (a Map of slice id -> slice). Slices are replaced whole (web/ui/store.js apply).
+// Returns true when anything changed; on resync or a new epoch the store is emptied and the cursor reset.
+// `st.gone` holds the ids a reply removed (and no later reply brought back), so a vanished team reads as closed.
+export function applyReply(st, reply) {
+  st.gone ??= new Set();
+  if (reply.resync || (st.epoch !== null && reply.epoch !== st.epoch)) {
+    st.slices.clear();
+    st.gone.clear();
+    st.epoch = reply.epoch;
+    st.seq = 0;
+    return true;
+  }
+  st.epoch = reply.epoch;
+  st.seq = reply.seq;
+  for (const s of reply.slices ?? []) {
+    st.slices.set(s.id, s);
+    st.gone.delete(s.id);
+  }
+  for (const id of reply.removed ?? []) {
+    st.slices.delete(id);
+    st.gone.add(id);
+  }
+  return (reply.slices?.length ?? 0) + (reply.removed?.length ?? 0) > 0;
+}
+
+// A window loads only until the first reply that answered its whole sub set (v.ready, set by the poll, never cleared); after
+// that a grown sub set keeps the last model drawn while it catches up, so nothing blinks.
+export const loadingOf = (v, loaded) => v.status === "loading" || !loaded || !v.ready;
+
+export function age(ms) {
+  if (!(ms >= 0)) return "";
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
+}
+
+const since = (iso, now) => {
+  const t = typeof iso === "number" ? iso : Date.parse(iso ?? "");
+  return Number.isFinite(t) ? age(now - t) : "";
+};
+
+const body = (slices, id) => slices.get(id)?.body ?? null;
+const memberName = (key) => key.slice(key.lastIndexOf("/") + 1).replace(/^@/, "");
+
+// A member's row. An orchestrator that is live but idle/unknown reads "Working" while its turn is open (turn_open) and "Running"
+// between turns, as in the web UI (select.js orchestratorRuns).
+function memberRow(key, m, now) {
+  const name = memberName(key);
+  let state = STATES[m.state] ? m.state : "unknown";
+  if (key.endsWith("/@orchestrator") && m.liveness === "live" && (state === "idle" || state === "unknown")) state = m.turn_open === true ? "working" : "running";
+  const s = STATES[state];
+  const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
+  return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
+    pane: m.liveness === "live" ? m.pane_id ?? null : null };
+}
+
+// Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.
+export { inert } from "./select.js";
+
+// Running teams of every dir, in list order, with their summary body; closed and ended teams left out.
+function runningTeams(slices) {
+  const out = [];
+  for (const t of body(slices, "list:teams")?.teams ?? []) {
+    const id = `${t.dir_id}/${t.name}`;
+    const b = body(slices, `team-summary:${id}`);
+    if (b && b.running && !b.closed_mark) out.push({ t, id, b });
+  }
+  return out;
+}
+
+// The sidebar: running teams of every dir, lanes nested under their parent (same dir), closed and ended teams left out.
+export function sidebarModel(slices, now) {
+  const teams = [];
+  for (const { t, id, b } of runningTeams(slices)) {
+    const members = Object.entries(b.member_states ?? {})
+      .map(([k, m]) => memberRow(k, m, now))
+      .sort((x, y) => (x.name === "orchestrator" ? -1 : y.name === "orchestrator" ? 1 : 0));
+    // Orchestrator-audience stuck alerts are the orchestrator's, not the user's (select.js summaryRow).
+    const alerts = (b.alerts ?? []).filter((a) => a.audience !== "orchestrator").map((a) => ({ key: `${a.kind}|${a.since ?? a.text ?? a.title}`, kind: a.kind, text: a.text || a.title, age: since(a.since, now), at: Date.parse(a.since ?? "") || 0 }));
+    // ah2-53: only the team's own goal; a lane's inherited one is already on its parent's row above
+    const own = ownGoal(goalOf(b), b.name ?? t.name);
+    teams.push({ id, dir: t.dir_id, name: b.name ?? t.name, parent: b.lane?.parent_team ?? null, needsYou: b.waiting_on_you ?? 0, blockers: b.waiting_blockers ?? 0, working: b.working ?? 0, blocked: b.blocked ?? 0, members, alerts, lanes: [], goal: own?.text ?? null, goalFull: own?.full ?? null });
+  }
+  const byName = new Map(teams.map((t) => [`${t.dir}/${t.name}`, t]));
+  const top = [];
+  for (const t of teams) {
+    const parent = t.parent && byName.get(`${t.dir}/${t.parent}`);
+    if (parent && parent !== t) parent.lanes.push(t);
+    else top.push(t);
+  }
+  // Every "Needs you" counts what Q&A lists (waiting_on_you), not the served needs_you, which also counts blocked rows Q&A never
+  // shows (a badge over an empty Q&A, atp-1724); those show as "blocked" (atp-1736), the served `blocked`, as the web's (atp-1749).
+  const needsYou = teams.reduce((n, t) => n + t.needsYou, 0);
+  return { teams: top, count: teams.length, needsYou, blocked: teams.reduce((n, t) => n + t.blocked, 0) };
+}
+
+// The live terminal a member row focuses: the one a live member registered from (the orchestrator's own, which ah never spawned
+// and so never labelled; a gone or stale member serves no pane), else, E3 (docs/herdr-desktop/evidence.md), the one live
+// terminal labelled ah.name=<member>; null otherwise. On a herdr machine `target` (target-model.js), ah's pane id is the address with
+// the machine's prefix stripped; the address returned is the one terminals() gave.
+export function terminalFinder(terms, target = null) {
+  const live = new Map();
+  const byName = new Map();
+  for (const term of terms) {
+    if (term.state !== "live") continue;
+    live.set(paneOf(target, term.address), term.address);
+    const n = term.labels?.["ah.name"];
+    if (n) byName.set(n, byName.has(n) ? null : term.address);
+  }
+  return (mb) => live.get(mb.pane) ?? byName.get(mb.name) ?? null;
+}
+
+// A team header's counts: needs you first, then working and blocked; zeros say nothing.
+export function counts(t) {
+  return [t.needsYou && `${t.needsYou} needs you`, t.working && `${t.working} working`, t.blocked && `${t.blocked} blocked`].filter(Boolean).join(" · ");
+}
+
+// A Needs-you count as a badge reads it: the total, with "!" when a blocker is among them.
+export const needsMark = (n, blockers = 0) => `${n}${blockers > 0 ? "!" : ""}`;
+// " · B blocked" after a Needs you count, nothing at zero (the web's blockedText, atp-1749).
+export const blockedText = (b) => (b > 0 ? ` · ${b} blocked` : "");
+
+// The desk (layouts/wrangl.json): what its status segment, peek drawer and Q&A tab show, from the one view:summary poll. Totals over
+// every running team and lane; `needing` the teams with anything needing you; `newest` the latest member state change or alert.
+// Plain data with times, not ages, so the published copy changes only when the data does.
+export function deskModel(slices, now) {
+  const m = sidebarModel(slices, now);
+  const all = [];
+  const walk = (list) => list.forEach((t) => { all.push(t); walk(t.lanes); });
+  walk(m.teams);
+  let newest = null;
+  const seen = (at, text, team) => { if (at > (newest?.at ?? 0)) newest = { at, text, team }; };
+  for (const t of all) {
+    for (const mb of t.members) seen(mb.at, mb.what === mb.word.toLowerCase() ? `${mb.name} ${mb.what}` : `${mb.name} ${mb.word.toLowerCase()}: ${mb.what}`, t.name);
+    for (const a of t.alerts) seen(a.at, `⚠ ${a.text}`, t.name);
+  }
+  return {
+    working: all.reduce((n, t) => n + t.working, 0),
+    blocked: all.reduce((n, t) => n + t.blocked, 0),
+    needsYou: m.needsYou,
+    blockers: all.reduce((n, t) => n + t.blockers, 0),
+    waiting: qaModel(slices, now).count,
+    needing: all.filter((t) => t.needsYou > 0).map((t) => ({ id: t.id, name: t.name, n: t.needsYou, blockers: t.blockers, blocked: t.blocked })),
+    newest,
+  };
+}
+
+// The overlay: one team's sitrep regions. null while the slice has not arrived; { closed: true } once the team is gone,
+// including when its summary or sitrep slice was removed (`gone`, applyReply's st.gone).
+export function sitrepModel(slices, id, now, gone = null) {
+  const sum = body(slices, `team-summary:${id}`);
+  if (sum && (sum.closed_mark || !sum.running)) return { closed: true };
+  if (gone?.has(`team-summary:${id}`) || gone?.has(`sitrep:${id}`)) return { closed: true };
+  const b = body(slices, `sitrep:${id}`);
+  if (!b) return null;
+  const labels = new Map((b.regions ?? []).map((r) => [r.list, r]));
+  const regions = REGION_ORDER.filter((k) => labels.has(k)).map((k) => {
+    const r = labels.get(k);
+    const rows = (b[k] ?? []).map((x) => sitrepRow(k, x, now));
+    const total = r.total ? b[r.total] ?? rows.length : rows.length;
+    return { list: k, label: r.label, optional: r.optional, rows, total, more: Math.max(0, total - rows.length) };
+  }).filter((r) => !r.optional || r.rows.length > 0);
+  // `lane`: a lane closes with its parent team, never alone, so its sitrep offers no Dismiss
+  return { name: sum?.name ?? id.split("/")[1], lane: Boolean(sum?.lane?.parent_team), needsYou: sum?.waiting_on_you ?? 0, blocked: sum?.blocked ?? 0, regions };
+}
+
+function sitrepRow(list, x, now) {
+  if (list === "completed") {
+    if (x.kind === "item") return { key: "✓", title: x.title, who: since(x.done_at, now), done: true };
+    const what = x.kind === "ship" ? "Shipped" : "Merged";
+    return { key: "✓", title: `${what} ${x.ref ?? ""} · ${(x.sha ?? "").slice(0, 7)}`.trim(), who: since(x.at, now), done: true };
+  }
+  if (x.kind === "decision") return { key: x.key, title: x.title, who: since(x.since, now), question: true };
+  const key = (x.key ?? "").split(":").pop();
+  if (list === "up_next") {
+    const who = x.stall_at ? `queued ${since(x.queued_since, now)} · no one` : x.role || "next";
+    return { key, title: x.title, who };
+  }
+  // a row waiting on the user names who asked (its team is the section's), never the member who last held it
+  const who = [x.asker?.split("@")[0] || x.lane || x.holder || x.role, since(x.since, now)].filter(Boolean).join(" · ");
+  return { key, title: x.title, who };
+}
+
+// ---- Q&A (spec P3.1-P3.3) ----
+
+// The Q&A window's extra subscriptions: one `questions:` slice per running team, and with `descs` the small `item-desc:` slice of each
+// waiting item registered as work, whose description its card shows (the feed draws none, so it leaves them out). The sidebar copy never adds these.
+const descId = (t, item) => itemDescId(t.dir_id, item.work_id);
+export const qaSubs = (slices, descs = true) => runningTeams(slices).flatMap(({ t, id }) =>
+  [questionsId(`team:${id}`), ...(descs ? body(slices, questionsId(`team:${id}`))?.items ?? [] : []).map((i) => descId(t, i)).filter(Boolean)]);
+
+const HISTORY_CAP = 20;
+
+// A question-log row's first reply as its History row shows it (spec qa-history-replies §8): its time (`reply_at`), and its head
+// folded to one line (`reply`, when the slice row carries one; the questions lane keeps only the time in `recent` today).
+export const historyReply = (x) => ({
+  replyAt: x?.reply_at || null,
+  preview: typeof x?.reply === "string" && x.reply.trim() !== "" ? x.reply.replace(/\s+/g, " ").trim() : null,
+});
+
+// The Q&A window: For you cards grouped by team (oldest first within a team), History across teams (newest first, at most 20),
+// and the count, the sum of `waiting_on_you` (never `needs_you`, which also counts blocked members). A team with nothing open
+// or no slice yet has no group. `loaded` is false until the team list has arrived.
+export function qaModel(slices, now) {
+  const all = runningTeams(slices);
+  const teams = [];
+  const history = [];
+  let count = 0;
+  for (const { t, id, b } of all) {
+    count += b.waiting_on_you ?? 0;
+    const teamId = `team:${id}`;
+    const raw = body(slices, questionsId(teamId));
+    const q = attentionOf(raw);
+    if (!q) continue;
+    // the web's recentRow drops `header` and the first reply's time and head; History shows them, so they are carried from the raw
+    // row by id. The question log's rows come with or without an open run.
+    const raws = new Map((raw.recent ?? []).map((x) => [x.id, x]));
+    for (const r of q.recent) {
+      const x = raws.get(r.id);
+      history.push({ ...r, header: x?.header ?? null, ...historyReply(x), team: b.name ?? t.name, age: since(r.at, now), hierDir: raw.dir ?? null, dirId: t.dir_id ?? null });
+    }
+    // no run is no reason to hide: a waiting item (a groom's question, a solo Orchestrator's park) has no run behind it
+    if (q.open.length === 0 && q.hidden === 0) continue;
+    teams.push({
+      id, name: b.name ?? t.name, lane: b.lane?.parent_team ?? null, run: q.run,
+      cards: q.open.map((c) => qaCard(teamId, q.run, c, now, c.workId ? body(slices, itemDescId(t.dir_id, c.workId))?.description : null)),
+      hidden: q.hidden, truncated: q.truncated,
+    });
+  }
+  history.sort((x, y) => (y.at ?? -Infinity) - (x.at ?? -Infinity));
+  return { loaded: slices.has("list:teams"), count, teams, history: history.slice(0, HISTORY_CAP), empty: teams.length === 0 };
+}
+
+// The Q&A window's list never blanks on a refresh (atp-1708). `qa` is {shown, pending}: `shown` the slices drawn (a copy, so
+// ages stay live), `pending` whether the live slices give a different list ("Updates available"). Live slices that are not a
+// whole answer yet (`ready` false: first load, a resync that cleared them) change nothing. `take` (auto-update on, or the
+// Updates available click) takes them at once.
+const qaSig = (m) => JSON.stringify([m.count, m.teams, m.history], (k, x) => (k === "age" ? undefined : x));
+export function qaRefresh(qa, slices, now, take, ready) {
+  const next = qaModel(slices, now);
+  if (!ready || !next.loaded) return qa;
+  if (!qa?.shown || take) return { shown: new Map(slices), pending: false };
+  return { shown: qa.shown, pending: qaSig(qaModel(qa.shown, now)) !== qaSig(next) };
+}
+
+// One For you card. `key` keeps a card's local state (selection, sending) across polls: team + run + id, or the item key.
+// `recommended` is the default's option index, -1 when it names none or several; `start` is the pick the card opens with.
+function qaCard(teamId, run, c, now, desc = null) {
+  const item = c.kind === "item";
+  return {
+    key: item ? `${teamId}|item|${c.id}` : `${teamId}|${run}|${c.id}`,
+    teamId, run, q: c, kind: item ? "item" : "decision", cls: c.cls,
+    header: c.item, text: c.text, asker: c.asker, age: since(c.at, now),
+    options: c.options.map((o) => o.label), multi: c.multi, more: c.more,
+    recommended: item ? -1 : defaultAt(c), start: startPick(c),
+    desc: typeof desc === "string" && desc.trim() !== "" ? desc : null,
+  };
+}
+
+// What a folded description shows: its blocks (plans-model descriptionBlocks) up to about `lines` lines of `cols` characters, the
+// last row cut with "…", and `cut` when anything was left out. Herdr cannot measure text, so the lines are estimated.
+export function descFold(blocks, lines = 4, cols = 80) {
+  const rowsOf = (b) => (b.kind === "list" || b.kind === "olist" ? b.items : b.text.split("\n"));
+  const height = (r) => Math.max(1, Math.ceil(r.length / cols));
+  if (blocks.flatMap(rowsOf).reduce((n, r) => n + height(r), 0) <= lines) return { blocks, cut: false };
+  const out = [];
+  let left = lines;
+  for (const b of blocks) {
+    const take = [];
+    for (const r of rowsOf(b)) {
+      if (left <= 0) break;
+      take.push(height(r) > left ? `${r.slice(0, left * cols - 1)}…` : r);
+      left -= height(r);
+    }
+    if (take.length > 0) out.push(b.kind === "list" || b.kind === "olist" ? { ...b, items: take } : { ...b, text: take.join("\n") });
+    if (left <= 0) break;
+  }
+  // a fold never ends on a heading with nothing under it
+  while (out.length > 1 && out.at(-1).kind === "head") out.pop();
+  return { blocks: out, cut: true };
+}
+
+// Whether Send can go for this pick (a multi with nothing on, or an item with no pick, cannot).
+export const canSend = (card, pick) => answerBody(card.teamId, card.run, card.q, pick) !== null;
+
+// How an open History thread starts (ah2-58 S2 ruling): a thread with no reply in its own turn says what it has instead, and when
+// it was answered in a later turn its Later replies start open; every other fold starts closed.
+export function threadStart(th) {
+  const later = (th?.later?.length ?? 0) > 0;
+  return { note: th?.reply ? null : later ? "Answered in a later turn" : "No reply yet", laterOpen: !th?.reply && later };
+}
+
+// A History row of the question log, whole: GET /ui/v1/history on ahd's bridge (`read`, link-model.js Link read), else
+// `ah msg history --json --id` in the row's hierarchy dir, as argv with no shell; both give the same body. Called only from the
+// row's on_click. Resolves to {text, ...threadOf}: reply, final, more and later with their times, or {error}.
+export async function readThread(exec, row, sleep = null, read = null) {
+  if (!row.hierDir) return { error: "No directory for this row" };
+  let r = null;
+  let text = null;
+  try {
+    if (read && row.dirId) text = await read(`/ui/v1/history?dir=${encodeURIComponent(row.dirId)}&id=${encodeURIComponent(row.id)}`, 15000);
+    if (text === null) {
+      r = await within(exec("ah", ["msg", "history", "--json", "--id", row.id, "--dir", row.hierDir], { timeout: 15000 }), sleep, 15000);
+      text = r.stdout;
+    }
+  } catch (e) {
+    return { error: `Could not read: ${e?.down ?? (late(e) ? NO_ANSWER : e?.message ?? String(e))}` };
+  }
+  let doc = null;
+  try {
+    doc = JSON.parse(text)?.threads?.[0] ?? null;
+  } catch {
+    doc = null;
+  }
+  if ((r && r.code !== 0) || !doc) return { error: (r?.stderr ?? "").trim().split("\n")[0] || "Thread not found" };
+  return { text: doc.prompt?.text ?? "", ...threadOf(doc) };
+}
+
+export const NO_REPLY = { kind: "timeout", text: "No reply after 30 s. Check History before sending again.", done: false };
+
+// The answer call: the web's own body for the pick (or for a dismiss reason), sent through `ah msg decision ui-answer` as argv
+// with no shell. Called only from a Send or Not-needed on_click. `exec` is herdr's (passed in, so this file stays free of herdr).
+// Resolves to the card state: replyState's recorded / refused / error, or NO_REPLY when the 30 s exec cap stopped it.
+// `post` (link-model.js Link answer) sends the same body to the bridge first: its reply goes through replyState with the HTTP status,
+// as the web's does; null (nothing reached ahd) sends through ah instead; a throw (no reply in time) is NO_REPLY, never sent again.
+export async function sendAnswer(exec, card, { pick = null, dismiss = null }, post = null, sleep = null) {
+  const body = dismiss ? dismissBody(card.teamId, card.run, card.q, dismiss) : answerBody(card.teamId, card.run, card.q, pick);
+  if (!body) return { kind: "error", text: "Could not send: nothing picked", done: false };
+  if (post) {
+    let got;
+    try {
+      got = await post(body);
+    } catch {
+      return NO_REPLY;
+    }
+    if (got) return replyState(got.status, got.reply);
+  }
+  let r;
+  try {
+    r = await within(exec("ah", ["msg", "decision", "ui-answer", "--json", JSON.stringify(body)], { timeout: 30000 }), sleep, 30000);
+  } catch (e) {
+    return late(e) ? NO_REPLY : { kind: "error", text: `Could not send: ${e?.message ?? String(e)}`, done: false };
+  }
+  return answerState(r);
+}
+
+// The verb's exit and stdout -> the card state, through the web's replyState: exit 0 is the 200 body, exit 2 with `refused` the
+// 409, any other exit (2 bad request, 3 unproven, 1 internal) a could-not-send with the body's detail or the stderr line.
+export function answerState(r) {
+  let reply = null;
+  try {
+    reply = JSON.parse(r.stdout);
+  } catch {
+    reply = null;
+  }
+  const status = r.code === 0 ? 200 : r.code === 2 && reply?.refused ? 409 : 400;
+  return replyState(status, reply ?? { detail: (r.stderr ?? "").trim().split("\n")[0] || `ah exited ${r.code}` });
+}
+
+// The poll's one call to ah (main.js fetch), bounded twice: `start` runs herdr's exec with `timeout` ms, after which herdr stops
+// `ah`, and a deadline 5 s later gives up on an exec that never settles (herdr joins ah's pipe readers, so a grandchild holding
+// the pipe would hold the exec for good). A given-up exec cannot be cancelled: it counts in `held.abandoned` until it settles,
+// and its late result is dropped. At ABANDON_CAP `start` is not called. `sleep` is herdr's (passed in, so this file stays free
+// of herdr). Resolves to the exec result; throws an Error whose message is the down reason.
+export const ABANDON_CAP = 2;
+export const STUCK = "ah is stuck (restart ahd)";
+export const NO_ANSWER = "ah did not answer";
+// herdr's own timeout ("took longer than"), or the deadline below.
+export const late = (e) => /longer than|did not answer/.test(e?.message ?? String(e));
+
+// A click's one call to ah (a thread, an item's log, an answer), bounded as the poll's is: herdr's exec `timeout` stops ah, and
+// this deadline 5 s later gives up on an exec that never settles. `sleep` is herdr's cx.sleep; without one (a node test) the
+// call is awaited as it is.
+export async function within(call, sleep, timeout) {
+  if (!sleep) return call;
+  const won = await Promise.race([Promise.resolve(call).then((r) => ({ r }), (e) => ({ e })), sleep(timeout + 5000).then(() => null)]);
+  if (!won) throw new Error(NO_ANSWER);
+  if (won.e) throw won.e;
+  return won.r;
+}
+export async function pollExec(start, sleep, timeout, held) {
+  if (held.abandoned >= ABANDON_CAP) throw new Error(STUCK);
+  const call = Promise.resolve().then(start).then((r) => ({ r }), (e) => ({ e }));
+  const won = await Promise.race([call, sleep(timeout + 5000).then(() => null)]);
+  if (!won) {
+    held.abandoned++;
+    call.then(() => held.abandoned--);
+    throw new Error(NO_ANSWER);
+  }
+  // a runner's own reason (target-model.js: where ah runs is unset, or WSL is down) is shown as it is
+  if (won.e) throw new Error(won.e?.down ?? (/longer than/.test(won.e?.message ?? String(won.e)) ? NO_ANSWER : "ah is not on Herdr's PATH"));
+  if (won.r.code !== 0) throw new Error("ahd not running");
+  return won.r;
+}

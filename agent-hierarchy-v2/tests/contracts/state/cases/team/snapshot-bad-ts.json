@@ -1,0 +1,45 @@
+{
+  "kind": "state-op",
+  "id": "snapshot-bad-ts",
+  "about": "snapshot with a malformed ts is refused",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "snapshot",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team_name": "tm",
+        "ts": "bad",
+        "doc": {}
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-team-snapshot-bad-ts"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": false,
+      "code": null,
+      "message": "snapshot needs a team_name and a ts like <ISOC:1>"
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a snapshot accepted with ts bad",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:23.923Z"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "CLOSE_VERBS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "dismiss",
+        "disband"
+      ]
+    }
+  ]
+}

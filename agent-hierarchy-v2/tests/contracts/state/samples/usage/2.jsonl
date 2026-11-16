@@ -1,0 +1,2 @@
+{"ts":"2026-01-01T00:00:00.000Z","session_id":"u-s","agent_id":"a1","agent_type":"ah:implementor","project_dir":"/work/one","found":false,"model":"","calls":0,"in":0,"out":0,"cache_read":0,"cache_create":0,"op_id":"7be62e93-05b1-4762-af6b-162f66427c41"}
+{"ts":"2026-01-01T00:00:00.000Z","session_id":"u-s","agent_id":"a2","agent_type":"ah:implementor","project_dir":"/work/one","found":true,"model":"m","calls":2,"in":10,"out":5,"cache_read":1,"cache_create":1,"op_id":"fcb9bc04-90b7-483c-845f-0e979c195526"}

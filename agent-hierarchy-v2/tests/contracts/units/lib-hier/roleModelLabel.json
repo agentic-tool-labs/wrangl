@@ -1,0 +1,161 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "roleModelLabel",
+  "cases": [
+    {
+      "id": "known-model",
+      "args": [
+        "architect",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "opus(3)"
+    },
+    {
+      "id": "inherit-has-no-tier",
+      "args": [
+        "implementor",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "inherit(?)"
+    },
+    {
+      "id": "unknown-role",
+      "args": [
+        "wizard",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        }
+      ],
+      "expect": "undefined(?)"
+    },
+    {
+      "id": "unknown-model",
+      "args": [
+        "architect",
+        {
+          "roles": {
+            "architect": {
+              "model": "mystery"
+            }
+          }
+        }
+      ],
+      "expect": "mystery(?)"
+    },
+    {
+      "id": "explicit-model-id",
+      "args": [
+        "architect",
+        {
+          "roles": {
+            "architect": {
+              "model": "claude-opus-4-7"
+            }
+          }
+        }
+      ],
+      "expect": "claude-opus-4-7(3)"
+    }
+  ]
+}

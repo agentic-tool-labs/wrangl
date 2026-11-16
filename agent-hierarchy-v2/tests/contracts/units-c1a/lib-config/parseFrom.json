@@ -1,0 +1,142 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "parseFrom",
+  "cases": [
+    {
+      "id": "full",
+      "args": [
+        "demo@mkt:qa"
+      ],
+      "expect": {
+        "plugin": "demo",
+        "marketplace": "mkt",
+        "role": "qa"
+      }
+    },
+    {
+      "id": "no-marketplace",
+      "args": [
+        "demo:qa"
+      ],
+      "expect": {
+        "plugin": "demo",
+        "marketplace": null,
+        "role": "qa"
+      }
+    },
+    {
+      "id": "dots-hyphens",
+      "args": [
+        "my.plug-in_x@mk-1.x:role_1"
+      ],
+      "expect": {
+        "plugin": "my.plug-in_x",
+        "marketplace": "mk-1.x",
+        "role": "role_1"
+      }
+    },
+    {
+      "id": "leading-dot-plugin",
+      "args": [
+        ".demo@mkt:qa"
+      ],
+      "expect": null
+    },
+    {
+      "id": "leading-hyphen-plugin",
+      "args": [
+        "-demo@mkt:qa"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-marketplace",
+      "args": [
+        "demo@:qa"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-role",
+      "args": [
+        "demo@mkt:"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-plugin",
+      "args": [
+        "@mkt:qa"
+      ],
+      "expect": null
+    },
+    {
+      "id": "second-colon",
+      "args": [
+        "demo@mkt:qa:x"
+      ],
+      "expect": null
+    },
+    {
+      "id": "second-at",
+      "args": [
+        "demo@mkt@x:qa"
+      ],
+      "expect": null
+    },
+    {
+      "id": "space-in-role",
+      "args": [
+        "demo@mkt:q a"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "demo@mkt:qa\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "uppercase",
+      "args": [
+        "Demo@Mkt:QA"
+      ],
+      "expect": {
+        "plugin": "Demo",
+        "marketplace": "Mkt",
+        "role": "QA"
+      }
+    },
+    {
+      "id": "no-colon",
+      "args": [
+        "demo@mkt"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        42
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    }
+  ]
+}

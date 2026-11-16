@@ -1,0 +1,35 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "markerIds",
+  "cases": [
+    {
+      "id": "both-forms",
+      "args": [
+        "[ah-entry a1,b2] [ah-entry c3 to tm-x@tm]"
+      ],
+      "expect": [
+        "c3",
+        "a1",
+        "b2"
+      ]
+    },
+    {
+      "id": "none",
+      "args": [
+        "no markers"
+      ],
+      "expect": []
+    },
+    {
+      "id": "to-forms-come-first",
+      "args": [
+        "[ah-entry a] [ah-entry b to o@t]"
+      ],
+      "expect": [
+        "b",
+        "a"
+      ]
+    }
+  ]
+}

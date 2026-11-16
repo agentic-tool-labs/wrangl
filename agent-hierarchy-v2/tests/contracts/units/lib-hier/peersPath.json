@@ -1,0 +1,35 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "peersPath",
+  "cases": [
+    {
+      "id": "absolute",
+      "args": [
+        "/a/b"
+      ],
+      "expect": "/a/b/peers.jsonl"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "/a/b/"
+      ],
+      "expect": "/a/b/peers.jsonl"
+    },
+    {
+      "id": "relative",
+      "args": [
+        "a"
+      ],
+      "expect": "a/peers.jsonl"
+    },
+    {
+      "id": "dotdot-normalised",
+      "args": [
+        "/a/b/../c"
+      ],
+      "expect": "/a/c/peers.jsonl"
+    }
+  ]
+}

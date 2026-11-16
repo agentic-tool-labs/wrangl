@@ -1,0 +1,63 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "pendingFor",
+  "cases": [
+    {
+      "id": "pending-rows-of-the-session",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"task\":\"t1\",\"from\":\"orch\",\"status\":\"pending\"}\n{\"session_id\":\"s2\",\"task\":\"t9\",\"from\":\"orch\",\"status\":\"pending\"}\n{\"session_id\":\"s1\",\"task\":\"t2\",\"from\":\"orch\",\"status\":\"resolved\"}\n"
+      },
+      "expect": [
+        {
+          "session_id": "s1",
+          "task": "t1",
+          "from": "orch",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "latest-row-decides",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"task\":\"t1\",\"from\":\"orch\",\"status\":\"pending\"}\n{\"session_id\":\"s1\",\"task\":\"t1\",\"from\":\"orch\",\"status\":\"resolved\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "typed-rows-never-pending",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"turn\",\"session_id\":\"s1\",\"status\":\"pending\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "no-file",
+      "args": [
+        "s1"
+      ],
+      "expect": []
+    },
+    {
+      "id": "undefined-session",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"task\":\"t1\",\"from\":\"orch\",\"status\":\"pending\"}\n"
+      },
+      "expect": []
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "roles": {
+    "scribe": {
+      "class": "design",
+      "agent": "scribe",
+      "label": "Scribe",
+      "description": "d",
+      "routes": "r",
+      "model": "opus"
+    }
+  }
+}

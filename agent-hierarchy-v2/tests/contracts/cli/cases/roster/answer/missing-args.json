@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "missing-args",
+  "about": "answer without its arguments is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "answer",
+      "tm-implementor"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: answer: there is no team at <ROOT:proj>/.claude/hierarchy/teams/proj.json — pass --team <name> for the team tm-implementor is in\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an answer sent with no choice",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.542Z"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "kind": "wire",
+  "id": "register-bad-session-id",
+  "about": "a session id outside [A-Za-z0-9._-]+ is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "session_id": "bad/id",
+      "addresses": [
+        "tm-implementor@tm"
+      ],
+      "boxes": {
+        "tm-implementor@tm": "<ROOT:proj>/boxes/tm-implementor"
+      },
+      "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+      "harness": "claude"
+    },
+    "path": "/v1/register"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "session_id must match [A-Za-z0-9._-]+"
+      }
+    }
+  },
+  "mutant": "a path-like session id accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:06.173Z"
+  }
+}

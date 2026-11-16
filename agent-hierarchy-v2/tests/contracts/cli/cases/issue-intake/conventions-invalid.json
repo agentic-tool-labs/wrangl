@@ -1,0 +1,45 @@
+{
+  "kind": "cli",
+  "id": "conventions-invalid",
+  "about": "conventions that break the schema",
+  "tree": "cli-intake-badconv",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "1"
+    ],
+    "stdin": null
+  },
+  "mutant": "the invalid refusal drifted",
+  "expect": {
+    "stdout": "{\"error\":\"conventions-invalid: unknown key `issues.bogus`\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n-C <ROOT:proj> symbolic-ref -q refs/remotes/origin/HEAD\n-C <ROOT:proj> rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C <ROOT:proj> cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C <ROOT:proj> cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:26.372Z"
+  }
+}

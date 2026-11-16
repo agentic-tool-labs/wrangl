@@ -1,0 +1,148 @@
+{
+  "view_schema": 1,
+  "kind": "actions",
+  "id": "/o/o.101",
+  "path": "/actions/o/o.101",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "orchestrator",
+      "id": "/o/o.101",
+      "label": "repo · pid 101",
+      "path": "/o/o.101"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "actions": 12
+  },
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "orchestrator",
+      "path": "/o/o.101"
+    },
+    "actions": [
+      {
+        "id": "orchestrator.detail",
+        "label": "Detail",
+        "key": "enter",
+        "group": "open",
+        "kind": "read",
+        "target": "graph_node",
+        "help": "Show everything known about this orchestrator.",
+        "invoke": {
+          "get": "/detail/o/o.101"
+        }
+      },
+      {
+        "id": "orchestrator.explode",
+        "label": "Explode into graph",
+        "key": "enter",
+        "group": "open",
+        "kind": "read",
+        "target": "orchestrator",
+        "help": "Open this orchestrator as a graph of its team.",
+        "invoke": {
+          "get": "/graph/o/o.101"
+        }
+      },
+      {
+        "id": "orchestrator.status",
+        "label": "Team status",
+        "key": "S",
+        "group": "read",
+        "kind": "read",
+        "target": "orchestrator",
+        "help": "Show the status of every team.",
+        "invoke": {
+          "get": "/status/o/o.101"
+        }
+      },
+      {
+        "id": "orchestrator.mail",
+        "label": "Show waiting mail",
+        "key": "M",
+        "group": "read",
+        "kind": "read",
+        "target": "orchestrator",
+        "help": "Show the mail waiting in this orchestrator's box.",
+        "invoke": {
+          "get": "/inbox/o/o.101"
+        }
+      },
+      {
+        "id": "node.show_subagents",
+        "label": "Show subagents",
+        "key": "a",
+        "group": "graph",
+        "kind": "view",
+        "target": "graph_node",
+        "help": "Show or hide the subagents running under this node.",
+        "invoke": {
+          "view": "show_subagents",
+          "target": "/o/o.101"
+        }
+      },
+      {
+        "id": "node.highlight_edges",
+        "label": "Highlight edges",
+        "key": "H",
+        "group": "graph",
+        "kind": "view",
+        "target": "graph_node",
+        "help": "Highlight the edges touching this node.",
+        "invoke": {
+          "view": "highlight_edges",
+          "target": "/o/o.101"
+        }
+      },
+      {
+        "id": "orchestrator.copy_repo",
+        "label": "Copy repo path",
+        "key": "y",
+        "group": "copy",
+        "kind": "copy",
+        "target": "orchestrator",
+        "help": "Copy the path of the repo this orchestrator works in.",
+        "invoke": {
+          "copy": "/m/repo/.claude/ah2"
+        }
+      },
+      {
+        "id": "orchestrator.copy_pid",
+        "label": "Copy pid",
+        "key": "Y",
+        "group": "copy",
+        "kind": "copy",
+        "target": "orchestrator",
+        "help": "Copy this orchestrator's process id.",
+        "invoke": {
+          "copy": "101"
+        }
+      },
+      {
+        "id": "orchestrator.ask_snapshot",
+        "label": "Ask Orchestrator: snapshot…",
+        "key": null,
+        "group": "ask",
+        "kind": "owner",
+        "target": "orchestrator",
+        "help": "Copy a request asking the Orchestrator to snapshot the team.",
+        "confirm": "Only the Orchestrator can run this. This copies the command; nothing is run from here.",
+        "invoke": {
+          "ask_orchestrator": {
+            "command": "ah roster snapshot --team alpha",
+            "request_text": "Please run this for me and tell me what it prints: ah roster snapshot --team alpha"
+          }
+        }
+      }
+    ]
+  },
+  "rev": "8c7155871eb1e4c7"
+}

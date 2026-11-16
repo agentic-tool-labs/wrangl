@@ -1,0 +1,35 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "archiveDir",
+  "cases": [
+    {
+      "id": "absolute",
+      "args": [
+        "/a/b"
+      ],
+      "expect": "/a/b/msgs/archive"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "/a/b/"
+      ],
+      "expect": "/a/b/msgs/archive"
+    },
+    {
+      "id": "relative",
+      "args": [
+        "a"
+      ],
+      "expect": "a/msgs/archive"
+    },
+    {
+      "id": "dotdot-normalised",
+      "args": [
+        "/a/b/../c"
+      ],
+      "expect": "/a/c/msgs/archive"
+    }
+  ]
+}

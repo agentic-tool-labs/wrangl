@@ -1,0 +1,270 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "validateTeamAlias",
+  "cases": [
+    {
+      "id": "alias-proj",
+      "args": [
+        "proj"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-a",
+      "args": [
+        "a"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-team-1",
+      "args": [
+        "team-1"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-advisor",
+      "args": [
+        "advisor"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-ultra",
+      "args": [
+        "ultra"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-architect",
+      "args": [
+        "architect"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"reviewer\" peer name derived from it would not resolve back to role \"reviewer\""
+      }
+    },
+    {
+      "id": "alias-implementor",
+      "args": [
+        "implementor"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"docs-writer\" peer name derived from it would not resolve back to role \"docs-writer\""
+      }
+    },
+    {
+      "id": "alias-reviewer",
+      "args": [
+        "reviewer"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"implementor\" peer name derived from it would not resolve back to role \"implementor\""
+      }
+    },
+    {
+      "id": "alias-my-reviewer",
+      "args": [
+        "my-reviewer"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"implementor\" peer name derived from it would not resolve back to role \"implementor\""
+      }
+    },
+    {
+      "id": "alias-implementor-x",
+      "args": [
+        "implementor-x"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"docs-writer\" peer name derived from it would not resolve back to role \"docs-writer\""
+      }
+    },
+    {
+      "id": "alias-task-runner",
+      "args": [
+        "task-runner"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-orchestrator",
+      "args": [
+        "orchestrator"
+      ],
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "alias-ultra-advisor",
+      "args": [
+        "ultra-advisor"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"architect\" peer name derived from it would not resolve back to role \"architect\""
+      }
+    },
+    {
+      "id": "alias-qa",
+      "args": [
+        "qa"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"ux-engineer\" peer name derived from it would not resolve back to role \"ux-engineer\""
+      }
+    },
+    {
+      "id": "alias-my-qa",
+      "args": [
+        "my-qa"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"ux-engineer\" peer name derived from it would not resolve back to role \"ux-engineer\""
+      }
+    },
+    {
+      "id": "alias--lead",
+      "args": [
+        "-lead"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must start with a letter or digit, be 1-32 characters, and contain only letters, digits, and -"
+      }
+    },
+    {
+      "id": "alias-a_b",
+      "args": [
+        "a_b"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must start with a letter or digit, be 1-32 characters, and contain only letters, digits, and -"
+      }
+    },
+    {
+      "id": "alias-empty",
+      "args": [
+        ""
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must be a non-empty string"
+      }
+    },
+    {
+      "id": "alias-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must start with a letter or digit, be 1-32 characters, and contain only letters, digits, and -"
+      }
+    },
+    {
+      "id": "non-string-number",
+      "args": [
+        7
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must be a non-empty string"
+      }
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias must be a non-empty string"
+      }
+    },
+    {
+      "id": "custom-registry-qa",
+      "args": [
+        "qa",
+        {
+          "roles": {
+            "qa": {
+              "class": "review",
+              "label": "QA",
+              "routes": "qa work",
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"ux-engineer\" peer name derived from it would not resolve back to role \"ux-engineer\""
+      }
+    },
+    {
+      "id": "custom-registry-proj-qa",
+      "args": [
+        "proj-qa",
+        {
+          "roles": {
+            "qa": {
+              "class": "review",
+              "label": "QA",
+              "routes": "qa work",
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"ux-engineer\" peer name derived from it would not resolve back to role \"ux-engineer\""
+      }
+    },
+    {
+      "id": "custom-registry-reviewer",
+      "args": [
+        "reviewer",
+        {
+          "roles": {
+            "qa": {
+              "class": "review",
+              "label": "QA",
+              "routes": "qa work",
+              "agent": "qa"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "ok": false,
+        "why": "alias collides with role-token matching: a \"implementor\" peer name derived from it would not resolve back to role \"implementor\""
+      }
+    }
+  ]
+}

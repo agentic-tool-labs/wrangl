@@ -1,0 +1,15 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "DISPATCH_MODES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "peer",
+        "model"
+      ]
+    }
+  ]
+}

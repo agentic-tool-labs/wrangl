@@ -1,0 +1,12 @@
+ah › repoA · pid 4242 › alpha
+────────────────────────────────────────
+transport herdr  mesh star  owed 1
+open work:
+  do-the-thing → alpha-architect  worki…
+
+  name          role        kind   state
+> alpha-archit… architect   claude live
+  alpha-review… reviewer    codex  live
+  alpha-impl    implementor claude live
+────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/clo…

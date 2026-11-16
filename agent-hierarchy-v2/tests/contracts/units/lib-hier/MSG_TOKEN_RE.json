@@ -1,0 +1,70 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "MSG_TOKEN_RE",
+  "cases": [
+    {
+      "id": "token",
+      "args": [
+        "[hierarchy-msg /a/b.md]"
+      ],
+      "expect": true
+    },
+    {
+      "id": "token-inside-text",
+      "args": [
+        "see [hierarchy-msg /a/b.md] now"
+      ],
+      "expect": true
+    },
+    {
+      "id": "extra-space-before-close",
+      "args": [
+        "[hierarchy-msg /a/b.md  ]"
+      ],
+      "expect": true
+    },
+    {
+      "id": "tab-separator",
+      "args": [
+        "[hierarchy-msg\t/a/b.md]"
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-separator",
+      "args": [
+        "[hierarchy-msg/a/b.md]"
+      ],
+      "expect": false
+    },
+    {
+      "id": "path-with-space-is-not-one-token",
+      "args": [
+        "[hierarchy-msg /a b.md]"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-path",
+      "args": [
+        "[hierarchy-msg ]"
+      ],
+      "expect": false
+    },
+    {
+      "id": "other-tag",
+      "args": [
+        "[hierarchy-peer-brief reply-to=x]"
+      ],
+      "expect": false
+    },
+    {
+      "id": "unclosed",
+      "args": [
+        "[hierarchy-msg /a/b.md"
+      ],
+      "expect": false
+    }
+  ]
+}

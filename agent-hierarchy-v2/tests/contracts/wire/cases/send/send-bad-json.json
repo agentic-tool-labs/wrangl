@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "send-bad-json",
+  "about": "a body that is not JSON is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{not json",
+    "path": "/v1/send"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "body must be a JSON object"
+      }
+    }
+  },
+  "mutant": "a parse error answered 500",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:07.941Z"
+  }
+}

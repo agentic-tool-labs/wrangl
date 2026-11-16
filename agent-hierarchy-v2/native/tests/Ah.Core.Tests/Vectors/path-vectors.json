@@ -1,0 +1,1282 @@
+{
+ "normalize": [
+  {
+   "p": "",
+   "out": "."
+  },
+  {
+   "p": ".",
+   "out": "."
+  },
+  {
+   "p": "..",
+   "out": ".."
+  },
+  {
+   "p": "/",
+   "out": "/"
+  },
+  {
+   "p": "//",
+   "out": "/"
+  },
+  {
+   "p": "///",
+   "out": "/"
+  },
+  {
+   "p": "a",
+   "out": "a"
+  },
+  {
+   "p": "a/",
+   "out": "a/"
+  },
+  {
+   "p": "a/b",
+   "out": "a/b"
+  },
+  {
+   "p": "a//b",
+   "out": "a/b"
+  },
+  {
+   "p": "a/./b",
+   "out": "a/b"
+  },
+  {
+   "p": "a/../b",
+   "out": "b"
+  },
+  {
+   "p": "a/b/..",
+   "out": "a"
+  },
+  {
+   "p": "a/b/../..",
+   "out": "."
+  },
+  {
+   "p": "a/../..",
+   "out": ".."
+  },
+  {
+   "p": "../a",
+   "out": "../a"
+  },
+  {
+   "p": "../../a/b",
+   "out": "../../a/b"
+  },
+  {
+   "p": "./a",
+   "out": "a"
+  },
+  {
+   "p": "./",
+   "out": "./"
+  },
+  {
+   "p": "/a",
+   "out": "/a"
+  },
+  {
+   "p": "/a/",
+   "out": "/a/"
+  },
+  {
+   "p": "/a/b/c",
+   "out": "/a/b/c"
+  },
+  {
+   "p": "/a/b/../c",
+   "out": "/a/c"
+  },
+  {
+   "p": "/a/../..",
+   "out": "/"
+  },
+  {
+   "p": "/..",
+   "out": "/"
+  },
+  {
+   "p": "/../a",
+   "out": "/a"
+  },
+  {
+   "p": "/a/./b/./c/",
+   "out": "/a/b/c/"
+  },
+  {
+   "p": "//a",
+   "out": "/a"
+  },
+  {
+   "p": "//a//b",
+   "out": "/a/b"
+  },
+  {
+   "p": "/a/b/",
+   "out": "/a/b/"
+  },
+  {
+   "p": "/a/b//",
+   "out": "/a/b/"
+  },
+  {
+   "p": "a b/c d",
+   "out": "a b/c d"
+  },
+  {
+   "p": "é/日本/😀",
+   "out": "é/日本/😀"
+  },
+  {
+   "p": "/x/.hidden",
+   "out": "/x/.hidden"
+  },
+  {
+   "p": "/x/.",
+   "out": "/x"
+  },
+  {
+   "p": "/x/..",
+   "out": "/"
+  },
+  {
+   "p": "...",
+   "out": "..."
+  },
+  {
+   "p": "/a/...",
+   "out": "/a/..."
+  },
+  {
+   "p": "a/.../b",
+   "out": "a/.../b"
+  },
+  {
+   "p": "/.claude/hierarchy",
+   "out": "/.claude/hierarchy"
+  },
+  {
+   "p": "/Users/x/.claude/hierarchy/",
+   "out": "/Users/x/.claude/hierarchy/"
+  },
+  {
+   "p": "x\\y/z",
+   "out": "x\\y/z"
+  }
+ ],
+ "dirname": [
+  {
+   "p": "",
+   "out": "."
+  },
+  {
+   "p": ".",
+   "out": "."
+  },
+  {
+   "p": "..",
+   "out": "."
+  },
+  {
+   "p": "/",
+   "out": "/"
+  },
+  {
+   "p": "//",
+   "out": "/"
+  },
+  {
+   "p": "///",
+   "out": "/"
+  },
+  {
+   "p": "a",
+   "out": "."
+  },
+  {
+   "p": "a/",
+   "out": "."
+  },
+  {
+   "p": "a/b",
+   "out": "a"
+  },
+  {
+   "p": "a//b",
+   "out": "a/"
+  },
+  {
+   "p": "a/./b",
+   "out": "a/."
+  },
+  {
+   "p": "a/../b",
+   "out": "a/.."
+  },
+  {
+   "p": "a/b/..",
+   "out": "a/b"
+  },
+  {
+   "p": "a/b/../..",
+   "out": "a/b/.."
+  },
+  {
+   "p": "a/../..",
+   "out": "a/.."
+  },
+  {
+   "p": "../a",
+   "out": ".."
+  },
+  {
+   "p": "../../a/b",
+   "out": "../../a"
+  },
+  {
+   "p": "./a",
+   "out": "."
+  },
+  {
+   "p": "./",
+   "out": "."
+  },
+  {
+   "p": "/a",
+   "out": "/"
+  },
+  {
+   "p": "/a/",
+   "out": "/"
+  },
+  {
+   "p": "/a/b/c",
+   "out": "/a/b"
+  },
+  {
+   "p": "/a/b/../c",
+   "out": "/a/b/.."
+  },
+  {
+   "p": "/a/../..",
+   "out": "/a/.."
+  },
+  {
+   "p": "/..",
+   "out": "/"
+  },
+  {
+   "p": "/../a",
+   "out": "/.."
+  },
+  {
+   "p": "/a/./b/./c/",
+   "out": "/a/./b/."
+  },
+  {
+   "p": "//a",
+   "out": "//"
+  },
+  {
+   "p": "//a//b",
+   "out": "//a/"
+  },
+  {
+   "p": "/a/b/",
+   "out": "/a"
+  },
+  {
+   "p": "/a/b//",
+   "out": "/a"
+  },
+  {
+   "p": "a b/c d",
+   "out": "a b"
+  },
+  {
+   "p": "é/日本/😀",
+   "out": "é/日本"
+  },
+  {
+   "p": "/x/.hidden",
+   "out": "/x"
+  },
+  {
+   "p": "/x/.",
+   "out": "/x"
+  },
+  {
+   "p": "/x/..",
+   "out": "/x"
+  },
+  {
+   "p": "...",
+   "out": "."
+  },
+  {
+   "p": "/a/...",
+   "out": "/a"
+  },
+  {
+   "p": "a/.../b",
+   "out": "a/..."
+  },
+  {
+   "p": "/.claude/hierarchy",
+   "out": "/.claude"
+  },
+  {
+   "p": "/Users/x/.claude/hierarchy/",
+   "out": "/Users/x/.claude"
+  },
+  {
+   "p": "x\\y/z",
+   "out": "x\\y"
+  }
+ ],
+ "basename": [
+  {
+   "p": "",
+   "out": ""
+  },
+  {
+   "p": ".",
+   "out": "."
+  },
+  {
+   "p": "..",
+   "out": ".."
+  },
+  {
+   "p": "/",
+   "out": ""
+  },
+  {
+   "p": "//",
+   "out": ""
+  },
+  {
+   "p": "///",
+   "out": ""
+  },
+  {
+   "p": "a",
+   "out": "a"
+  },
+  {
+   "p": "a/",
+   "out": "a"
+  },
+  {
+   "p": "a/b",
+   "out": "b"
+  },
+  {
+   "p": "a//b",
+   "out": "b"
+  },
+  {
+   "p": "a/./b",
+   "out": "b"
+  },
+  {
+   "p": "a/../b",
+   "out": "b"
+  },
+  {
+   "p": "a/b/..",
+   "out": ".."
+  },
+  {
+   "p": "a/b/../..",
+   "out": ".."
+  },
+  {
+   "p": "a/../..",
+   "out": ".."
+  },
+  {
+   "p": "../a",
+   "out": "a"
+  },
+  {
+   "p": "../../a/b",
+   "out": "b"
+  },
+  {
+   "p": "./a",
+   "out": "a"
+  },
+  {
+   "p": "./",
+   "out": "."
+  },
+  {
+   "p": "/a",
+   "out": "a"
+  },
+  {
+   "p": "/a/",
+   "out": "a"
+  },
+  {
+   "p": "/a/b/c",
+   "out": "c"
+  },
+  {
+   "p": "/a/b/../c",
+   "out": "c"
+  },
+  {
+   "p": "/a/../..",
+   "out": ".."
+  },
+  {
+   "p": "/..",
+   "out": ".."
+  },
+  {
+   "p": "/../a",
+   "out": "a"
+  },
+  {
+   "p": "/a/./b/./c/",
+   "out": "c"
+  },
+  {
+   "p": "//a",
+   "out": "a"
+  },
+  {
+   "p": "//a//b",
+   "out": "b"
+  },
+  {
+   "p": "/a/b/",
+   "out": "b"
+  },
+  {
+   "p": "/a/b//",
+   "out": "b"
+  },
+  {
+   "p": "a b/c d",
+   "out": "c d"
+  },
+  {
+   "p": "é/日本/😀",
+   "out": "😀"
+  },
+  {
+   "p": "/x/.hidden",
+   "out": ".hidden"
+  },
+  {
+   "p": "/x/.",
+   "out": "."
+  },
+  {
+   "p": "/x/..",
+   "out": ".."
+  },
+  {
+   "p": "...",
+   "out": "..."
+  },
+  {
+   "p": "/a/...",
+   "out": "..."
+  },
+  {
+   "p": "a/.../b",
+   "out": "b"
+  },
+  {
+   "p": "/.claude/hierarchy",
+   "out": "hierarchy"
+  },
+  {
+   "p": "/Users/x/.claude/hierarchy/",
+   "out": "hierarchy"
+  },
+  {
+   "p": "x\\y/z",
+   "out": "z"
+  }
+ ],
+ "isAbsolute": [
+  {
+   "p": "",
+   "out": false
+  },
+  {
+   "p": ".",
+   "out": false
+  },
+  {
+   "p": "..",
+   "out": false
+  },
+  {
+   "p": "/",
+   "out": true
+  },
+  {
+   "p": "//",
+   "out": true
+  },
+  {
+   "p": "///",
+   "out": true
+  },
+  {
+   "p": "a",
+   "out": false
+  },
+  {
+   "p": "a/",
+   "out": false
+  },
+  {
+   "p": "a/b",
+   "out": false
+  },
+  {
+   "p": "a//b",
+   "out": false
+  },
+  {
+   "p": "a/./b",
+   "out": false
+  },
+  {
+   "p": "a/../b",
+   "out": false
+  },
+  {
+   "p": "a/b/..",
+   "out": false
+  },
+  {
+   "p": "a/b/../..",
+   "out": false
+  },
+  {
+   "p": "a/../..",
+   "out": false
+  },
+  {
+   "p": "../a",
+   "out": false
+  },
+  {
+   "p": "../../a/b",
+   "out": false
+  },
+  {
+   "p": "./a",
+   "out": false
+  },
+  {
+   "p": "./",
+   "out": false
+  },
+  {
+   "p": "/a",
+   "out": true
+  },
+  {
+   "p": "/a/",
+   "out": true
+  },
+  {
+   "p": "/a/b/c",
+   "out": true
+  },
+  {
+   "p": "/a/b/../c",
+   "out": true
+  },
+  {
+   "p": "/a/../..",
+   "out": true
+  },
+  {
+   "p": "/..",
+   "out": true
+  },
+  {
+   "p": "/../a",
+   "out": true
+  },
+  {
+   "p": "/a/./b/./c/",
+   "out": true
+  },
+  {
+   "p": "//a",
+   "out": true
+  },
+  {
+   "p": "//a//b",
+   "out": true
+  },
+  {
+   "p": "/a/b/",
+   "out": true
+  },
+  {
+   "p": "/a/b//",
+   "out": true
+  },
+  {
+   "p": "a b/c d",
+   "out": false
+  },
+  {
+   "p": "é/日本/😀",
+   "out": false
+  },
+  {
+   "p": "/x/.hidden",
+   "out": true
+  },
+  {
+   "p": "/x/.",
+   "out": true
+  },
+  {
+   "p": "/x/..",
+   "out": true
+  },
+  {
+   "p": "...",
+   "out": false
+  },
+  {
+   "p": "/a/...",
+   "out": true
+  },
+  {
+   "p": "a/.../b",
+   "out": false
+  },
+  {
+   "p": "/.claude/hierarchy",
+   "out": true
+  },
+  {
+   "p": "/Users/x/.claude/hierarchy/",
+   "out": true
+  },
+  {
+   "p": "x\\y/z",
+   "out": false
+  }
+ ],
+ "join": [
+  {
+   "a": "/a",
+   "b": "b",
+   "out": "/a/b"
+  },
+  {
+   "a": "/a/",
+   "b": "/b",
+   "out": "/a/b"
+  },
+  {
+   "a": "",
+   "b": "b",
+   "out": "b"
+  },
+  {
+   "a": "a",
+   "b": "",
+   "out": "a"
+  },
+  {
+   "a": "",
+   "b": "",
+   "out": "."
+  },
+  {
+   "a": ".",
+   "b": "x",
+   "out": "x"
+  },
+  {
+   "a": "/a/b",
+   "b": "../c",
+   "out": "/a/c"
+  },
+  {
+   "a": "/a",
+   "b": "../../c",
+   "out": "/c"
+  },
+  {
+   "a": "a",
+   "b": "../../c",
+   "out": "../c"
+  },
+  {
+   "a": "/a/",
+   "b": "msgs",
+   "out": "/a/msgs"
+  },
+  {
+   "a": "/a//",
+   "b": "msgs",
+   "out": "/a/msgs"
+  },
+  {
+   "a": "/",
+   "b": "x",
+   "out": "/x"
+  },
+  {
+   "a": "a/b/",
+   "b": "c/",
+   "out": "a/b/c/"
+  },
+  {
+   "a": "..",
+   "b": "..",
+   "out": "../.."
+  },
+  {
+   "a": "/a/b",
+   "b": "./c/./d",
+   "out": "/a/b/c/d"
+  },
+  {
+   "a": "x",
+   "b": "/y",
+   "out": "x/y"
+  },
+  {
+   "a": "/a",
+   "b": "b",
+   "c": "c",
+   "out": "/a/b/c"
+  },
+  {
+   "a": "/home/u",
+   "b": ".claude",
+   "c": "agent-hierarchy",
+   "out": "/home/u/.claude/agent-hierarchy"
+  }
+ ],
+ "resolve": [
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    ""
+   ],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "."
+   ],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    ".."
+   ],
+   "out": "/work"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/"
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "//"
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "///"
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a"
+   ],
+   "out": "/work/dir/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/"
+   ],
+   "out": "/work/dir/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/b"
+   ],
+   "out": "/work/dir/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a//b"
+   ],
+   "out": "/work/dir/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/./b"
+   ],
+   "out": "/work/dir/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/../b"
+   ],
+   "out": "/work/dir/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/b/.."
+   ],
+   "out": "/work/dir/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/b/../.."
+   ],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/../.."
+   ],
+   "out": "/work"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "../a"
+   ],
+   "out": "/work/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "../../a/b"
+   ],
+   "out": "/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "./a"
+   ],
+   "out": "/work/dir/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "./"
+   ],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a"
+   ],
+   "out": "/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/"
+   ],
+   "out": "/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b/c"
+   ],
+   "out": "/a/b/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b/../c"
+   ],
+   "out": "/a/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/../.."
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/.."
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/../a"
+   ],
+   "out": "/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/./b/./c/"
+   ],
+   "out": "/a/b/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "//a"
+   ],
+   "out": "/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "//a//b"
+   ],
+   "out": "/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b/"
+   ],
+   "out": "/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b//"
+   ],
+   "out": "/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a b/c d"
+   ],
+   "out": "/work/dir/a b/c d"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "é/日本/😀"
+   ],
+   "out": "/work/dir/é/日本/😀"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/x/.hidden"
+   ],
+   "out": "/x/.hidden"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/x/."
+   ],
+   "out": "/x"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/x/.."
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "..."
+   ],
+   "out": "/work/dir/..."
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/..."
+   ],
+   "out": "/a/..."
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/.../b"
+   ],
+   "out": "/work/dir/a/.../b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/.claude/hierarchy"
+   ],
+   "out": "/.claude/hierarchy"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/Users/x/.claude/hierarchy/"
+   ],
+   "out": "/Users/x/.claude/hierarchy"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "x\\y/z"
+   ],
+   "out": "/work/dir/x\\y/z"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a",
+    "b"
+   ],
+   "out": "/a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/",
+    "/b"
+   ],
+   "out": "/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "",
+    "b"
+   ],
+   "out": "/work/dir/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a",
+    ""
+   ],
+   "out": "/work/dir/a"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "",
+    ""
+   ],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    ".",
+    "x"
+   ],
+   "out": "/work/dir/x"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b",
+    "../c"
+   ],
+   "out": "/a/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a",
+    "../../c"
+   ],
+   "out": "/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a",
+    "../../c"
+   ],
+   "out": "/work/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/",
+    "msgs"
+   ],
+   "out": "/a/msgs"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a//",
+    "msgs"
+   ],
+   "out": "/a/msgs"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/",
+    "x"
+   ],
+   "out": "/x"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "a/b/",
+    "c/"
+   ],
+   "out": "/work/dir/a/b/c"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "..",
+    ".."
+   ],
+   "out": "/"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "/a/b",
+    "./c/./d"
+   ],
+   "out": "/a/b/c/d"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [
+    "x",
+    "/y"
+   ],
+   "out": "/y"
+  },
+  {
+   "cwd": "/work/dir",
+   "parts": [],
+   "out": "/work/dir"
+  },
+  {
+   "cwd": "/",
+   "parts": [
+    "a",
+    "..",
+    ".."
+   ],
+   "out": "/"
+  }
+ ],
+ "relative": [
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b",
+   "to": "/a/b/c",
+   "out": "c"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b/c",
+   "to": "/a/b",
+   "out": ".."
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b",
+   "to": "/a/c",
+   "out": "../c"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a",
+   "to": "/a",
+   "out": ""
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/",
+   "to": "/a/b",
+   "out": "a/b"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b",
+   "to": "/",
+   "out": "../.."
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "a",
+   "to": "b",
+   "out": "../b"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b/",
+   "to": "/a/b/c/",
+   "out": "c"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/x/y",
+   "to": "/x/y/../z",
+   "out": "../z"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/b",
+   "to": "/a/bc",
+   "out": "../bc"
+  },
+  {
+   "cwd": "/work/dir",
+   "from": "/a/bc",
+   "to": "/a/b",
+   "out": "../b"
+  }
+ ]
+}

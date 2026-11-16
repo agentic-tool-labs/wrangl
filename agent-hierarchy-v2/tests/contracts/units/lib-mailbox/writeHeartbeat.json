@@ -1,0 +1,164 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "writeHeartbeat",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": "s1",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-session-is-anon",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/anon.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":null,\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "null-session-is-anon",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": null,
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/anon.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":null,\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "invalid-session-id-is-anon-but-recorded",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": "a/b",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/anon.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"a/b\",\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "acked-through-counts-the-acked-prefix",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": "s1",
+          "poll_ms": 2500
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n{\"v\":1,\"id\":\"e2\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e2--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"prompt-hook\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s1\",\"poll_ms\":2500,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":136}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "replaces-the-previous-heartbeat",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": "s1",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"old\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "other-sessions-untouched",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        {
+          "adapter": "pull",
+          "session_id": "s2",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s1.json": "{\"v\":1,\"adapter\":\"x\",\"session_id\":\"s1\",\"poll_ms\":5000,\"at\":\"2026-01-01T11:59:50.000Z\",\"acked_through\":0}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/adapters/s2.json": "{\"v\":1,\"adapter\":\"pull\",\"session_id\":\"s2\",\"poll_ms\":5000,\"at\":\"2026-01-01T12:00:00.000Z\",\"acked_through\":0}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

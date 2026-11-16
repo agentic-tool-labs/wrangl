@@ -1,0 +1,97 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "expectedRootFor",
+  "cases": [
+    {
+      "id": "member-row-wins",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        {
+          "expected_root": "/m"
+        },
+        "/e"
+      ],
+      "expect": "/m"
+    },
+    {
+      "id": "env-root-next",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        {},
+        "/e"
+      ],
+      "expect": "/e"
+    },
+    {
+      "id": "team-root-last",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        {},
+        null
+      ],
+      "expect": "/t"
+    },
+    {
+      "id": "none",
+      "args": [
+        {},
+        {},
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-team-and-member",
+      "args": [
+        null,
+        null,
+        "/e"
+      ],
+      "expect": "/e"
+    },
+    {
+      "id": "empty-strings-fall-through",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        {
+          "expected_root": ""
+        },
+        ""
+      ],
+      "expect": "/t"
+    },
+    {
+      "id": "non-string-env-root-ignored",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        null,
+        5
+      ],
+      "expect": "/t"
+    },
+    {
+      "id": "non-string-member-root-wins-when-truthy",
+      "args": [
+        {
+          "expected_root": "/t"
+        },
+        {
+          "expected_root": 5
+        },
+        "/e"
+      ],
+      "expect": 5
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "lib": "lib-blocked",
+  "module": "hooks/lib-blocked.mjs",
+  "fn": "readVisibleScreen",
+  "cases": [
+    {
+      "id": "returns-stdout",
+      "args": [
+        "p-implementor"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nprintf 'screen for %s\\n' \"$3\"\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "screen for p-implementor\n"
+    },
+    {
+      "id": "passes-the-source-flag",
+      "args": [
+        "p-implementor"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nprintf '%s' \"$*\"\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": "agent read p-implementor --source visible"
+    },
+    {
+      "id": "failure-is-empty",
+      "args": [
+        "p-implementor"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho partial; exit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": ""
+    },
+    {
+      "id": "missing-binary-is-empty",
+      "args": [
+        "p-implementor"
+      ],
+      "env": {
+        "PATH": "$ROOT/empty"
+      },
+      "expect": ""
+    },
+    {
+      "id": "timeout-is-empty",
+      "args": [
+        "p-implementor"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nsleep 5\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "AH_HERDR_TIMEOUT_MS": "300"
+      },
+      "expect": ""
+    }
+  ]
+}

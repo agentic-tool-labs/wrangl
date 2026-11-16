@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "plain",
+  "about": "list --plain renders text",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "list",
+      "--plain"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a plain list that is JSON",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:42.604Z"
+  }
+}

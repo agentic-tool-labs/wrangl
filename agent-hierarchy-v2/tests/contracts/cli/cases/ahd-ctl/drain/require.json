@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "require",
+  "about": "drain --require with no daemon exits 3",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "drain",
+      "--require"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"source\":\"files\",\"status\":\"not-running\",\"error\":{\"code\":\"daemon_down\",\"message\":\"the daemon is not running\"}}\n",
+    "stderr": "",
+    "exit": 3,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a required drain that exits 0",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.318Z"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "kind": "state-op",
+  "id": "create-twice",
+  "about": "a second create of the same path is refused",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "msgs",
+    "op": "create",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "msgs",
+        "op": "create",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "path": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--tm-architect--probe--request.md",
+            "content": "---\ntype: request\nid: 20260101-120000-ab12\nto: tm-architect\nfrom: orchestrator\nslug: probe\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-01-01T12:00:00+00:00\n---\n\n## [0] tldr\n"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-req"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "path": "<ROOT:proj>/.claude/hierarchy/msgs/20260101-120000-ab12--tm-architect--probe--request.md",
+        "content": "---\ntype: request\nid: 20260101-120000-ab12\nto: tm-architect\nfrom: orchestrator\nslug: probe\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-01-01T12:00:00+00:00\n---\n\n## [0] tldr\n"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-msgs-create-twice"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "ok": true,
+        "existing": true,
+        "id": "<MSGID:1>",
+        "path": "<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--tm-architect--probe--request.md"
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a create that overwrites an existing message",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:16.553Z"
+  }
+}

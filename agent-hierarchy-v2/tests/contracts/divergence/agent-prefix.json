@@ -1,0 +1,36 @@
+{
+  "about": "The plugin names its own agents, skills and mod commands: every `ah:<name>` the Node recordings carry is `<plugin>:<name>` here, where <plugin> is the name the build embedded (ah2). The recordings are not rewritten; the replay reads them with the namespace mapped, so a case's input and its expectation both carry the native name.",
+  "ruling": "0118 §1.2",
+  "rows": [
+    {
+      "id": "agent-type-prefix",
+      "recorded": "agent types, dispatch names and --agent values `ah:architect`, `ah:implementor`, `ah:reviewer`, `ah:ultra-advisor`, `ah:task-runner`, `ah:orchestrator`, `ah:secret-scanner`",
+      "native": "`<plugin>:<role>` through IConfigCore.Qualified / BuiltinRoleOf and IAhEnvironment.PluginName(); a build that embedded no name uses wrangl",
+      "reason": "a second plugin named `ah` would collide with the v1 plugin's agents in Claude Code; gates, the route gate and usage attribution match the plugin's own namespace and ignore `ah:<role>`"
+    },
+    {
+      "id": "skill-and-command-refs",
+      "recorded": "`ah:agent-team`, `ah:agent-roster`, `/ah:agent-role`, `/ah:pipeline`, `ah:*` (the built-in agents' namespace)",
+      "native": "`<plugin>:agent-team`, `<plugin>:agent-roster`, `/<plugin>:agent-role`, `/<plugin>:pipeline`, `<plugin>:*`",
+      "reason": "skills and commands are namespaced by the plugin that ships them"
+    },
+    {
+      "id": "install-record-key",
+      "recorded": "installed_plugins.json keys `ah@<marketplace>` and `agent-hierarchy@<marketplace>`",
+      "native": "`<plugin>@<marketplace>`",
+      "reason": "doctor finds this plugin's install record by its own name"
+    },
+    {
+      "id": "mod-command-and-state",
+      "recorded": "mod command `hierarchy-pane`, mod state and mount keys `plugin: 'ah'`",
+      "native": "`wrangl-hierarchy-pane`, `plugin: 'wrangl'`",
+      "reason": "the v1 mod's commands carry no plugin prefix, so the v2 mod's are prefixed; its state is keyed by its own name"
+    },
+    {
+      "id": "replay-mapping",
+      "recorded": "case files and fixture trees under tests/contracts spelled with `ah:`",
+      "native": "read through tests/contract-tools/lib-case.mjs toPluginNamespace (lanes) and Ah.TestKit RecordedNamespace (unit tables and goldens), which rewrite `ah:` followed by a letter, `*`, `<`, `{` or a closing quote when it is not part of a longer word",
+      "reason": "the Node recordings stay the oracle for every other byte of the output"
+    }
+  ]
+}

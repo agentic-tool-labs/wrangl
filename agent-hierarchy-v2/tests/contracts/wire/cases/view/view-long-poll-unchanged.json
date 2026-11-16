@@ -1,0 +1,46 @@
+{
+  "kind": "wire",
+  "id": "view-long-poll-unchanged",
+  "about": "wait=1 with the current rev returns the unchanged body",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "path": "/",
+      "since": "{{rev}}",
+      "wait": "1"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view",
+    "before": [
+      {
+        "method": "GET",
+        "path": "/v1/view",
+        "query": {
+          "path": "/"
+        },
+        "capture": {
+          "rev": "json.rev"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "rev": "<REV:1>",
+      "unchanged": true,
+      "view_schema": 1
+    }
+  },
+  "mutant": "unchanged returned as a full view",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:12.881Z"
+  }
+}

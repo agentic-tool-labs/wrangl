@@ -1,0 +1,224 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "delaySec",
+  "cases": [
+    {
+      "id": "rate-limit-1",
+      "args": [
+        "rate_limit",
+        1
+      ],
+      "expect": 120
+    },
+    {
+      "id": "rate-limit-2",
+      "args": [
+        "rate_limit",
+        2
+      ],
+      "expect": 480
+    },
+    {
+      "id": "rate-limit-3",
+      "args": [
+        "rate_limit",
+        3
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "rate-limit-4-clamps",
+      "args": [
+        "rate_limit",
+        4
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "rate-limit-huge-clamps",
+      "args": [
+        "rate_limit",
+        1000000
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "rate-limit-infinity-clamps",
+      "args": [
+        "rate_limit",
+        {
+          "$inf": 1
+        }
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "server-error-1",
+      "args": [
+        "server_error",
+        1
+      ],
+      "expect": 10
+    },
+    {
+      "id": "server-error-2",
+      "args": [
+        "server_error",
+        2
+      ],
+      "expect": 60
+    },
+    {
+      "id": "server-error-3",
+      "args": [
+        "server_error",
+        3
+      ],
+      "expect": 300
+    },
+    {
+      "id": "overloaded-4-clamps",
+      "args": [
+        "overloaded",
+        4
+      ],
+      "expect": 600
+    },
+    {
+      "id": "unknown-error-1",
+      "args": [
+        "unknown",
+        1
+      ],
+      "expect": 10
+    },
+    {
+      "id": "error-case-sensitive",
+      "args": [
+        "Rate_limit",
+        1
+      ],
+      "expect": 10
+    },
+    {
+      "id": "error-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        2
+      ],
+      "expect": 60
+    },
+    {
+      "id": "streak-zero-is-one",
+      "args": [
+        "rate_limit",
+        0
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-negative-clamps-to-one",
+      "args": [
+        "rate_limit",
+        -5
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-nan-is-one",
+      "args": [
+        "rate_limit",
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-null-is-one",
+      "args": [
+        "rate_limit",
+        null
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-undefined-is-one",
+      "args": [
+        "rate_limit"
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-numeric-string",
+      "args": [
+        "rate_limit",
+        "2"
+      ],
+      "expect": 480
+    },
+    {
+      "id": "streak-garbage-string-is-one",
+      "args": [
+        "rate_limit",
+        "x"
+      ],
+      "expect": 120
+    },
+    {
+      "id": "streak-fraction-inside-range-is-undefined",
+      "args": [
+        "rate_limit",
+        1.5
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "streak-fraction-above-range-clamps",
+      "args": [
+        "rate_limit",
+        3.5
+      ],
+      "expect": 1200
+    },
+    {
+      "id": "streak-fraction-below-one-clamps",
+      "args": [
+        "rate_limit",
+        0.5
+      ],
+      "expect": 120
+    },
+    {
+      "id": "other-fraction-between-three-and-four-is-undefined",
+      "args": [
+        "server_error",
+        3.5
+      ],
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "other-fraction-above-range-clamps",
+      "args": [
+        "server_error",
+        4.5
+      ],
+      "expect": 600
+    },
+    {
+      "id": "other-huge-clamps",
+      "args": [
+        "server_error",
+        1000000
+      ],
+      "expect": 600
+    }
+  ]
+}

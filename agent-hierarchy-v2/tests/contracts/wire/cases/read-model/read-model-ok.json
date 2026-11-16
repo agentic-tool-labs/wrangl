@@ -1,0 +1,46 @@
+{
+  "kind": "wire",
+  "id": "read-model-ok",
+  "about": "GET /v1/read-model answers 200 with the read model's counters, the parked list and an as_of",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/read-model"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "as_of": "<EPOCHMS>",
+      "counters": {
+        "coalesce_ms": 100,
+        "decision_orphans": 0,
+        "drift": 1,
+        "full_passes": "<CLOCK>",
+        "last_pass_ms": "<CLOCK>",
+        "listings": "<CLOCK>",
+        "noncanonical_hint": 0,
+        "poller_faults": 0,
+        "projector_faults": 0,
+        "reread_retry": 0,
+        "timeline_append_failures": 0,
+        "timeline_archive_failures": 0,
+        "transcript_resets": 0,
+        "unclassified_hint": 0
+      },
+      "parked": []
+    }
+  },
+  "mutant": "the route is missing, or answers without counters",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-18T07:00:00.000Z",
+    "note": "native-only route (divergence/routes.json ui-perf-read-model-route): no Node recording exists"
+  }
+}

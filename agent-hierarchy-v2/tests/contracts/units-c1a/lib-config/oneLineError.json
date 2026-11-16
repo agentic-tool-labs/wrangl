@@ -1,0 +1,97 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "oneLineError",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "description",
+        "A fine line."
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        "description",
+        ""
+      ],
+      "expect": "description must be a non-empty string"
+    },
+    {
+      "id": "blank",
+      "args": [
+        "description",
+        "   "
+      ],
+      "expect": "description must be a non-empty string"
+    },
+    {
+      "id": "number",
+      "args": [
+        "routes",
+        5
+      ],
+      "expect": "routes must be a non-empty string"
+    },
+    {
+      "id": "too-long",
+      "args": [
+        "description",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": "description must be at most 160 characters"
+    },
+    {
+      "id": "max",
+      "args": [
+        "description",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": null
+    },
+    {
+      "id": "newline",
+      "args": [
+        "routes",
+        "a\nb"
+      ],
+      "expect": "routes must be one line with no backticks"
+    },
+    {
+      "id": "cr",
+      "args": [
+        "routes",
+        "a\rb"
+      ],
+      "expect": "routes must be one line with no backticks"
+    },
+    {
+      "id": "backtick",
+      "args": [
+        "description",
+        "a `b` c"
+      ],
+      "expect": "description must be one line with no backticks"
+    },
+    {
+      "id": "null",
+      "args": [
+        "description",
+        null
+      ],
+      "expect": "description must be a non-empty string"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        "description",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "description must be a non-empty string"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "cli",
+  "id": "implementor",
+  "about": "add writes a member row and spawns nothing",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "add",
+      "repo",
+      "--role",
+      "implementor",
+      "--model",
+      "sonnet"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"level\": \"repo\",\n  \"path\": \"<ROOT:proj>/.claude/agent-hierarchy.json\",\n  \"wasDefaulted\": false,\n  \"container\": \"roster\",\n  \"member\": {\n    \"role\": \"implementor\",\n    \"model\": \"sonnet\",\n    \"kind\": \"claude\",\n    \"name\": \"proj-implementor\"\n  },\n  \"spawned\": false,\n  \"next_step\": \"config only — nothing was launched. To start this member: roster.mjs spawn-one implementor --member proj-implementor\"\n}\n",
+    "stderr": "roster.mjs: no roster existed — created a minimal one at level \"repo\": <ROOT:proj>/.claude/agent-hierarchy.json\nroster.mjs: added implementor to <ROOT:proj>/.claude/agent-hierarchy.json\nroster.mjs: config only — nothing was launched. To start this member: roster.mjs spawn-one implementor --member proj-implementor\n",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/agent-hierarchy.json",
+          "mode": "0644",
+          "content": "{\n  \"version\": 1,\n  \"roster\": {\n    \"route\": \"peer\",\n    \"members\": [\n      {\n        \"role\": \"implementor\",\n        \"model\": \"sonnet\"\n      }\n    ]\n  }\n}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a member row that is not written",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.016Z"
+  }
+}

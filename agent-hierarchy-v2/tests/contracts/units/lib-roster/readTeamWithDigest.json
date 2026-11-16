@@ -1,0 +1,112 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "readTeamWithDigest",
+  "cases": [
+    {
+      "id": "record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "doc": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "digest": "0c69ded8ba887f317e33404f9f54f5a67667b1df8862f8dcdade5574e411278c"
+      }
+    },
+    {
+      "id": "absent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "doc": null,
+        "digest": "absent"
+      }
+    },
+    {
+      "id": "absent-parent-dir",
+      "args": [
+        "$ROOT/nowhere/team.json"
+      ],
+      "expect": {
+        "doc": null,
+        "digest": "absent"
+      }
+    },
+    {
+      "id": "not-a-record-keeps-digest",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "[1]"
+      },
+      "expect": {
+        "doc": null,
+        "digest": "080a9ed428559ef602668b4c00f114f1a11c3f6b02a435f0bdc154578e4d7f22"
+      }
+    },
+    {
+      "id": "invalid-json-keeps-digest",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{x"
+      },
+      "expect": {
+        "doc": null,
+        "digest": "3e6ef57cd8daf6802e79223289e4499933f1ad71404b27959cf86d022522220b"
+      }
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": ""
+      },
+      "expect": {
+        "doc": null,
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "bom-is-bytes-in-the-digest",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/team.json"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "﻿{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "doc": null,
+        "digest": "b45dcb6b1faf286bd603c05012420bbf9438f54fcd50df7e74a98f4357c36cb0"
+      }
+    }
+  ]
+}

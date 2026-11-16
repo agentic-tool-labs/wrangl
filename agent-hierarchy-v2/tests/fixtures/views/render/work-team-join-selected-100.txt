@@ -1,0 +1,30 @@
+ah › repoW · pid 4242 › work
+────────────────────────────────────────────────────────────────────────────────────────────────────
+transport herdr  mesh star  owed 0
+no open work
+links:
+  w-l1  w-impl@work  active  20 min left
+  w-l2  w-blk@work  revoked
+
+  name                         role        kind   state doing            ctx owed blocked        pid
+  w-arch                       architect   claude stale unknown –          –    0 –                –
+  w-impl                       implementor claude stale unknown –          –    0 –                –
+  w-blk                        implementor claude stale unknown –          –    0 –                –
+  w-idle                       reviewer    claude stale unknown –          –    0 –                –
+  w-free                       implementor claude stale unknown –          –    0 –                –
+  ──────────────────────────────────────────────────────────────────────────────────────────────────
+> + newbie                     reviewer    codex  join  expires 9m         –    – –                –
+  + 20261011-100200-dddd       –           codex  join  expires –          –    – –                –
+  ◐ s-work                     stream      –      open  2 peers            –    1 –                –
+  × s-blocked                  stream      –      open  1 peers            –    0 blocked          –
+  ○ s-idle                     stream      –      open  1 peers            –    0 –                –
+  ✓ s-done                     stream      –      done  0 peers            –    0 –                –
+  · s-none                     stream      –      open  0 peers            –    0 –                –
+  · a/b%c                      stream      –      open  0 peers            –    0 –                –
+why: wants to review the stream  (asked 1m ago)
+y copies: msg.mjs join accept 20261011-100100-cccc --basis user-approved --why '<edit: why you appro
+ve>'
+Y copies: msg.mjs join deny 20261011-100100-cccc --basis user-declined --why '<edit: why you decline
+>'
+────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓ select  ⏎/→ open  esc/← back  g root  y copy cmd  r refresh  ? help  q quit

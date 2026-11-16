@@ -1,0 +1,110 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ownedRosterSelections",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "one-owned",
+      "args": [
+        "$ROOT/repo",
+        {
+          "sessionId": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s1\"},\"members\":[]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "two-owned",
+      "args": [
+        "$ROOT/repo",
+        {
+          "sessionId": "s1",
+          "pid": {
+            "$selfpid": true
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"s1\"},\"members\":[]}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"s1\"},\"members\":[]}"
+      },
+      "expect": [
+        {
+          "team": null,
+          "selection": {
+            "roster": "default",
+            "key": null,
+            "source": "team",
+            "level": null,
+            "path": null
+          }
+        },
+        {
+          "team": "alpha",
+          "selection": {
+            "roster": "alpha",
+            "key": "alpha",
+            "source": "team",
+            "level": null,
+            "path": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "two-owned-recorded-keys",
+      "args": [
+        "$ROOT/repo",
+        {
+          "sessionId": "s1",
+          "pid": {
+            "$selfpid": true
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"a\",\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"s1\"},\"members\":[],\"roster_key\":\"x\"}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"version\":1,\"team_id\":\"b\",\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"s1\"},\"members\":[],\"roster_key\":\"y\"}"
+      },
+      "expect": [
+        {
+          "team": "alpha",
+          "selection": {
+            "roster": "alpha",
+            "key": "alpha",
+            "source": "team",
+            "level": null,
+            "path": null
+          }
+        },
+        {
+          "team": "beta",
+          "selection": {
+            "roster": "beta",
+            "key": "beta",
+            "source": "team",
+            "level": null,
+            "path": null
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "view_schema": 1,
+  "kind": "orchestrator",
+  "id": "o.101",
+  "path": "/o/o.101",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "orchestrator",
+      "id": "o.101",
+      "label": "repo · pid 101",
+      "path": "/o/o.101"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "teams": 1,
+    "members": 2,
+    "live": 2,
+    "working": 1,
+    "blocked": 0,
+    "owed": 0,
+    "ctx_high": 0,
+    "overdue": 0,
+    "joins_pending": 0,
+    "streams_stuck": 0
+  },
+  "children": [
+    {
+      "kind": "team",
+      "id": "boxes",
+      "label": "alpha",
+      "path": "/o/o.101/t/boxes",
+      "state": "live",
+      "summary": {
+        "teams": 1,
+        "members": 2,
+        "live": 2,
+        "working": 1,
+        "blocked": 0,
+        "owed": 0,
+        "ctx_high": 0,
+        "overdue": 0,
+        "joins_pending": 0,
+        "streams_stuck": 0
+      },
+      "command": "ah roster disband --plan --team alpha"
+    }
+  ],
+  "body": {
+    "dir": "/m/repo/.claude/ah2",
+    "pid": 101,
+    "session_id": "sess-orch",
+    "orchestrator_live": true
+  },
+  "rev": "37fb62b2ee49603f"
+}

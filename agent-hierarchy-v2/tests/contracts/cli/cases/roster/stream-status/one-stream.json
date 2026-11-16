@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "one-stream",
+  "about": "stream-status lists the open stream with its glyph state",
+  "tree": "cli-stream",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-status",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"team\": \"tm\",\n  \"transport\": \"terminal\",\n  \"streams\": [\n    {\n      \"name\": \"s-one\",\n      \"state\": \"open\",\n      \"label\": null,\n      \"tab\": null,\n      \"branch\": \"s-one\",\n      \"base\": \"main\",\n      \"worktree\": null,\n      \"opened\": \"<ISO:1>\",\n      \"peers\": [],\n      \"exchanges\": [],\n      \"waiting_on\": [],\n      \"progress\": {\n        \"checklist\": false,\n        \"journal\": false\n      }\n    }\n  ],\n  \"degraded\": \"no-tabs\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an open stream shown done",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:54.031Z"
+  }
+}

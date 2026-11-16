@@ -1,0 +1,39 @@
+{
+  "kind": "cli",
+  "id": "empty-json",
+  "about": "no usage file as JSON",
+  "tree": "cli-usage-empty",
+  "env": {
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "usage-report",
+    "argv": [
+      "--json"
+    ],
+    "stdin": null
+  },
+  "mutant": "the empty document drifted",
+  "expect": {
+    "stdout": "{\n  \"generated\": \"<ISO:1>\",\n  \"records\": 0,\n  \"latest_session\": null,\n  \"session\": {\n    \"roles\": {},\n    \"otherTypes\": {}\n  },\n  \"window\": \"default\",\n  \"windowed\": {\n    \"roles\": {},\n    \"otherTypes\": {}\n  },\n  \"daily\": {}\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/ah2/agent-hierarchy.usage-cache.json",
+          "mode": "0644",
+          "content": "{\"v\":2,\"files\":{}}"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:11:04.761Z"
+  }
+}

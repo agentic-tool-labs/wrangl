@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "view-bad-path",
+  "about": "a path that does not start with / is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "path": "nope"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "path must be a view path starting with /"
+      }
+    }
+  },
+  "mutant": "a relative view path accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:11.612Z"
+  }
+}

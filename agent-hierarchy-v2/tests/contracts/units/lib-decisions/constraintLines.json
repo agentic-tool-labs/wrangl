@@ -1,0 +1,233 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "constraintLines",
+  "cases": [
+    {
+      "id": "bullets",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- merge: ask\n- pipeline: on\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask",
+        "pipeline": "on"
+      }
+    },
+    {
+      "id": "plain-and-star-bullets",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\nreview: strict\n* depth: 2\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "review": "strict",
+        "depth": "2"
+      }
+    },
+    {
+      "id": "backticks",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- `merge: ask`\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "first-occurrence-wins",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- merge: ask\n- merge: auto\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "other-sections-ignored",
+      "args": [
+        "## [3] constraints\n- a: 1\n## [4] files\n- b: 2\n"
+      ],
+      "expect": {
+        "a": "1"
+      }
+    },
+    {
+      "id": "section-without-number",
+      "args": [
+        "## constraints\n- a: 1\n"
+      ],
+      "expect": {
+        "a": "1"
+      }
+    },
+    {
+      "id": "section-with-suffix",
+      "args": [
+        "## [3] constraints (hard)\n- a: 1\n"
+      ],
+      "expect": {
+        "a": "1"
+      }
+    },
+    {
+      "id": "word-boundary-constraintsx-is-not-the-section",
+      "args": [
+        "## constraintsx\n- a: 1\n"
+      ],
+      "expect": {}
+    },
+    {
+      "id": "second-constraints-section-continues",
+      "args": [
+        "## constraints\n- a: 1\n## files\n- b: 2\n## [9] constraints\n- c: 3\n"
+      ],
+      "expect": {
+        "a": "1",
+        "c": "3"
+      }
+    },
+    {
+      "id": "key-must-start-with-a-letter",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- 1a: x\n- -a: y\n- a: z\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "a": "z"
+      }
+    },
+    {
+      "id": "uppercase-key-never-matches",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- Merge: ask\n- merge: ok\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ok"
+      }
+    },
+    {
+      "id": "hyphenated-key",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- run-cap: 3\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "run-cap": "3"
+      }
+    },
+    {
+      "id": "empty-value",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- merge:\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": ""
+      }
+    },
+    {
+      "id": "value-trims-trailing-backtick-and-space",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- merge: `ask`  \n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "`ask"
+      }
+    },
+    {
+      "id": "value-keeps-inner-colons",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- url: http://x/y:1\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "url": "http://x/y:1"
+      }
+    },
+    {
+      "id": "constructor-key-is-skipped",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n- constructor: x\n- merge: ask\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "indented-bullet",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\n   - merge: ask\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "line-without-colon",
+      "args": [
+        "## [1] goal\ndo it\n\n## [3] constraints\njust prose\n- merge: ask\n\n## [4] files\n- x: y"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "crlf-text",
+      "args": [
+        "## constraints\r\n- merge: ask\r\n"
+      ],
+      "expect": {
+        "merge": "ask"
+      }
+    },
+    {
+      "id": "empty-text",
+      "args": [
+        ""
+      ],
+      "expect": {}
+    },
+    {
+      "id": "undefined-text-is-the-word-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": {}
+    },
+    {
+      "id": "null-text",
+      "args": [
+        null
+      ],
+      "expect": {}
+    },
+    {
+      "id": "number-text",
+      "args": [
+        5
+      ],
+      "expect": {}
+    },
+    {
+      "id": "array-text-is-comma-joined",
+      "args": [
+        [
+          "## constraints",
+          "- a: 1"
+        ]
+      ],
+      "expect": {}
+    },
+    {
+      "id": "constraints-header-needs-hash-space",
+      "args": [
+        "##constraints\n- a: 1\n"
+      ],
+      "expect": {}
+    },
+    {
+      "id": "h3-is-not-the-section",
+      "args": [
+        "### constraints\n- a: 1\n"
+      ],
+      "expect": {}
+    }
+  ]
+}

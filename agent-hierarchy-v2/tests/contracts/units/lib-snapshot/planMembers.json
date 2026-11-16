@@ -1,0 +1,1969 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "planMembers",
+  "cases": [
+    {
+      "id": "resume",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "subagent-route-skipped",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "subagent",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "skipped",
+          "why": "no pane (subagent route): not resumable"
+        }
+      ]
+    },
+    {
+      "id": "null-route-skipped",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": null,
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "skipped",
+          "why": "no pane (subagent route): not resumable"
+        }
+      ]
+    },
+    {
+      "id": "pane-route-resumable",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "pane",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "no-expected-root",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": null,
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "(no expected_root) does not exist"
+        }
+      ]
+    },
+    {
+      "id": "expected-root-missing-dir",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/gone",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "$ROOT/gone does not exist"
+        }
+      ]
+    },
+    {
+      "id": "expected-root-is-a-file",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt/x",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "$ROOT/wt/x does not exist"
+        }
+      ]
+    },
+    {
+      "id": "expected-root-not-a-string",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": 5,
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "5 does not exist"
+        }
+      ]
+    },
+    {
+      "id": "expected-root-empty-string",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "(no expected_root) does not exist"
+        }
+      ]
+    },
+    {
+      "id": "no-session-id-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": null,
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "no session id recorded"
+        }
+      ]
+    },
+    {
+      "id": "empty-session-id-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "no session id recorded"
+        }
+      ]
+    },
+    {
+      "id": "codex-kind-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "codex",
+              "route": "pane",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "codex",
+          "status": "fresh",
+          "why": "kind codex: resume is Claude-only for now"
+        }
+      ]
+    },
+    {
+      "id": "missing-kind-is-claude",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "null-kind-is-claude",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": null,
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "short-session-id-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abc1234",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "min-length-session-id-resume",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abcd1234",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "max-length-session-id-resume",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "too-long-session-id-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "leading-hyphen-session-id-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "-abcdefgh",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "session-id-with-space-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abcd 1234",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "session-id-with-trailing-newline-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abcd1234\n",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "session-id-non-ascii-fresh",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "abcdé1234",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "the recorded session id is not a usable id"
+        }
+      ]
+    },
+    {
+      "id": "numeric-session-id",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": 123456789,
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "model-missing-is-null",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": null,
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "several-members-keep-order",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "a",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            },
+            {
+              "name": "b",
+              "role": "architect",
+              "kind": "claude",
+              "route": "subagent",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            },
+            {
+              "name": "c",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": null,
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "a",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        },
+        {
+          "name": "b",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "skipped",
+          "why": "no pane (subagent route): not resumable"
+        },
+        {
+          "name": "c",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "no session id recorded"
+        }
+      ]
+    },
+    {
+      "id": "empty-members",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": []
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": []
+    },
+    {
+      "id": "alive-by-claude-process",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "/bin/zsh\nclaude --resume 0123456789abcdef --x\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "alive-claude-path-prefix",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "/usr/local/bin/claude 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "alive-claude-first-word",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude 0123456789abcdef"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "not-alive-id-without-claude-word",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "not-alive-claude-glued-to-word",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "myclaude 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "not-alive-claude-followed-by-hyphen",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude-code 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "alive-id-is-a-substring-of-a-longer-token",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude --resume 0123456789abcdefXYZ\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "not-alive-id-and-claude-on-different-lines",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude\n0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "resume"
+        }
+      ]
+    },
+    {
+      "id": "alive-claude-then-tab",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude\t0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "ps-failure-is-doubt-so-alive",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n",
+        "bin/ps.fail": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "alive",
+          "why": "ps failed"
+        }
+      ]
+    },
+    {
+      "id": "ps-failure-irrelevant-when-no-pane",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "subagent",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n",
+        "bin/ps.fail": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "skipped",
+          "why": "no pane (subagent route): not resumable"
+        }
+      ]
+    },
+    {
+      "id": "ps-failure-irrelevant-when-no-session",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": null,
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n",
+        "bin/ps.fail": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "fresh",
+          "why": "no session id recorded"
+        }
+      ]
+    },
+    {
+      "id": "ps-failure-irrelevant-when-no-worktree",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "claude",
+              "route": "peer",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/gone",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n",
+        "bin/ps.fail": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "claude",
+          "status": "no-worktree",
+          "why": "$ROOT/gone does not exist"
+        }
+      ]
+    },
+    {
+      "id": "alive-wins-over-codex-kind",
+      "args": [
+        {
+          "v": 1,
+          "kind": "ah-team-snapshot",
+          "team": null,
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "codex",
+              "route": "pane",
+              "model": "opus",
+              "effort": null,
+              "autoMode": null,
+              "args": null,
+              "stream": null,
+              "expected_root": "$ROOT/wt",
+              "session_id": "0123456789abcdef",
+              "thread_id": null
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "model": "opus",
+          "kind": "codex",
+          "status": "alive",
+          "why": "claude process"
+        }
+      ]
+    },
+    {
+      "id": "members-missing",
+      "args": [
+        {
+          "v": 1
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "null-member-throws",
+      "args": [
+        {
+          "members": [
+            null
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "name-and-role-missing-omitted",
+      "args": [
+        {
+          "members": [
+            {
+              "route": "subagent"
+            }
+          ]
+        }
+      ],
+      "files": {
+        "wt/x": "",
+        "bin/ps": {
+          "text": "#!/bin/sh\nif [ -e \"$0.fail\" ]; then exit 1; fi\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "model": null,
+          "kind": "claude",
+          "status": "skipped",
+          "why": "no pane (subagent route): not resumable"
+        }
+      ]
+    }
+  ]
+}

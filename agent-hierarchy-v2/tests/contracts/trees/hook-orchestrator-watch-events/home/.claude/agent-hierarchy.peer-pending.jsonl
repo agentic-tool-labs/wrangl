@@ -1,0 +1,2 @@
+{"type": "watch-event", "kind": "RESUME", "session_id": "sess-contract", "subject": "sess-x", "text": "ahd resumed sess-x", "ts": "2026-01-02T00:00:00.000Z"}
+{"type": "watch-event", "kind": "CHECK-IN", "session_id": "sess-contract", "subject": "r1", "text": "ahd: check in on r1", "ts": "2026-01-03T00:00:00.000Z"}

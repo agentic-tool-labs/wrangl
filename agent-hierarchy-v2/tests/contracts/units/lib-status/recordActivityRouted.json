@@ -1,0 +1,189 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "recordActivityRouted",
+  "cases": [
+    {
+      "id": "writes",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA",
+        {
+          "activity": "working"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": {
+          "$json": {
+            "activity": "working",
+            "at": "$any",
+            "blocked_by": null,
+            "note": null,
+            "tool": null,
+            "tool_at": null
+          }
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "unchanged-is-false",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA",
+        {
+          "activity": "working",
+          "at": "2026-06-01T11:58:20.000Z"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-01-01T00:00:00.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-01-01T00:00:00.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "fields-pass-through",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA",
+        {
+          "activity": "blocked",
+          "blocked_by": "user",
+          "note": "n"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": {
+          "$json": {
+            "activity": "blocked",
+            "at": "$any",
+            "blocked_by": "user",
+            "note": "n",
+            "tool": null,
+            "tool_at": null
+          }
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "extra-passes-through",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA",
+        {
+          "activity": "failed",
+          "extra": {
+            "error": "x"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": {
+          "$json": {
+            "activity": "failed",
+            "at": "$any",
+            "blocked_by": null,
+            "note": null,
+            "tool": null,
+            "tool_at": null,
+            "error": "x"
+          }
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "no-dir",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        "sA",
+        {
+          "activity": "working"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expect": false
+    },
+    {
+      "id": "dir-missing",
+      "args": [
+        "$ROOT/nowhere",
+        "sA",
+        {
+          "activity": "working"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "invalid-subject",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "a/b",
+        {
+          "activity": "working"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expect": false
+    },
+    {
+      "id": "options-accepted",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "sA",
+        {
+          "activity": "idle"
+        },
+        {
+          "hook": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": {
+          "$json": {
+            "activity": "idle",
+            "at": "$any",
+            "blocked_by": null,
+            "note": null,
+            "tool": null,
+            "tool_at": null
+          }
+        }
+      },
+      "expect": true
+    }
+  ]
+}

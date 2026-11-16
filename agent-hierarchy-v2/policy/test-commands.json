@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "rows": [
+    { "id": "npm-test", "program": "npm|pnpm|yarn", "match": "^(test|run\\s+test\\S*)(\\s|$)", "tokens": "half", "light_if": "(^|\\s)(-t|--testNamePattern)(\\s|=)", "measured": false },
+    { "id": "jest", "program": "jest", "tokens": "half", "light_if": "(^|\\s)(-t|--testNamePattern|--findRelatedTests|--onlyChanged|-o)(\\s|=|$)|\\.(test|spec)\\.", "adapter": { "args": [ { "unless": "^--maxWorkers|^-w$", "add": ["--maxWorkers={k}"], "at": "end" } ] }, "measured": false },
+    { "id": "vitest", "program": "vitest", "match": "^(run)?(\\s|$)", "tokens": "half", "light_if": "(^|\\s)(-t|--testNamePattern)(\\s|=)|\\.(test|spec)\\.", "adapter": { "args": [ { "unless": "^--maxWorkers|^--max-workers", "add": ["--maxWorkers={k}"], "at": "end" } ] }, "measured": false },
+    { "id": "pytest", "program": "pytest|py\\.test|python[0-9.]*\\s+-m\\s+pytest", "tokens": "half", "light_if": "(^|\\s)(-k|--lf|--last-failed|--ff)(\\s|=|$)|::", "adapter": { "env": { "PYTEST_XDIST_AUTO_NUM_WORKERS": "{k}" }, "args": [ { "unless": "^-n$|^-n[0-9a-z]|^--numprocesses", "requires": "(^|\\s)-p\\s*xdist(\\s|$)", "add": ["-n", "{k}"], "at": "end" } ] }, "measured": false },
+    { "id": "tox", "program": "tox|nox", "tokens": "half", "light_if": "(^|\\s)-k(\\s|=)|::", "adapter": { "env": { "TOX_PARALLEL_NO_SPINNER": "1" } }, "measured": false },
+    { "id": "go-test", "program": "go", "match": "^test(\\s|$)", "tokens": "half", "light_if": "(^|\\s)-run(\\s|=)", "adapter": { "args": [ { "unless": "^-p$|^-p=|^-parallel", "add": ["-p", "{k}"], "at": "start", "skip": 1 } ] }, "measured": false },
+    { "id": "cargo-test", "program": "cargo", "match": "^(test|nextest\\s+run)(\\s|$)", "tokens": "half", "light_if": "^(test|nextest\\s+run)\\s+[A-Za-z_][A-Za-z0-9_:]*(\\s|$)|(^|\\s)--(test|bin|lib|doc|example)(\\s|=|$)", "adapter": { "env": { "RUST_TEST_THREADS": "{k}" }, "args": [ { "requires": "^nextest\\s+run", "unless": "^-j$|^--test-threads|^--jobs", "add": ["-j", "{k}"], "at": "start", "skip": 2 } ] }, "measured": false },
+    { "id": "maven", "program": "mvn|mvnw", "match": "(^|\\s)(test|verify)(\\s|$)", "tokens": "half", "light_if": "(^|\\s)-Dtest(=|\\s)", "adapter": { "args": [ { "unless": "^-T", "add": ["-T", "{k}"], "at": "start" } ] }, "measured": false },
+    { "id": "gradle", "program": "gradle|gradlew", "match": "(^|\\s)(test|check)(\\s|$)", "tokens": "half", "light_if": "(^|\\s)--tests(\\s|=)", "adapter": { "args": [ { "unless": "^--max-workers", "add": ["--max-workers={k}"], "at": "start" } ] }, "measured": false },
+    { "id": "rspec", "program": "rspec|bundle\\s+exec\\s+rspec", "tokens": "half", "light_if": "(^|\\s)(-e|--example|--only-failures|--next-failure)(\\s|=|$)|_spec\\.rb", "measured": false },
+    { "id": "phpunit", "program": "phpunit|vendor/bin/phpunit", "tokens": "half", "light_if": "(^|\\s)--filter(\\s|=)", "measured": false },
+    { "id": "dotnet-test", "program": "dotnet", "match": "^test(\\s|$)", "tokens": "half", "light_if": "(^|\\s)--filter(\\s|=)", "adapter": { "args": [ { "unless": "^-m($|:)|^--maxcpucount|^-maxcpucount", "add": ["-m:{k}"], "at": "start", "skip": 1 }, { "unless": "^xUnit\\.MaxParallelThreads", "add": ["xUnit.MaxParallelThreads={k}"], "at": "after_dashdash" } ] }, "measured": false },
+    { "id": "swift-test", "program": "swift", "match": "^test(\\s|$)", "tokens": "half", "light_if": "(^|\\s)--filter(\\s|=)", "adapter": { "args": [ { "unless": "^--num-workers|^--no-parallel", "add": ["--parallel", "--num-workers", "{k}"], "at": "start", "skip": 1 } ] }, "measured": false },
+    { "id": "make-check", "program": "make|just", "match": "(^|\\s)(test|check|ci)(\\s|$)", "tokens": "half", "adapter": { "env_append": { "MAKEFLAGS": "-j{k}" } }, "measured": false },
+    { "id": "godot-headless", "program": "(?i:godot[0-9._a-z-]*)", "match": "(^|\\s)--headless(\\s|$)", "tokens": 1, "light_if": ".", "measured": false },
+    { "id": "ctest", "program": "ctest", "tokens": "half", "light_if": "(^|\\s)(-R|--tests-regex|-I|--tests-information)(\\s|=|$)", "adapter": { "args": [ { "unless": "^-j|^--parallel", "add": ["-j", "{k}"], "at": "start" } ] }, "measured": false }
+  ]
+}

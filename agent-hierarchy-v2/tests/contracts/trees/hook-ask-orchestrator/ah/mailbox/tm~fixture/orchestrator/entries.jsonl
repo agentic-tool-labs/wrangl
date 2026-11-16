@@ -1,0 +1,1 @@
+{"id": "20260101-000000-ev01", "kind": "event", "from": "ahd", "to": "orchestrator@tm", "text": "ahd: check in on 20260101-000000-ev01", "created": "<NOW-1s>", "event": "check-in", "data": {"request_id": "20260101-000000-ev01"}}

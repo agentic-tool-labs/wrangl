@@ -1,0 +1,8 @@
+[
+  { "name": "single team_file", "registration": { "team_file": "/h/teams/t.json" }, "address": "a@t", "mailbox": "/h/teams/t.json", "state_db": "/h/teams/t.json" },
+  { "name": "team_files entry for the address", "registration": { "team_file": "/h/teams/other.json", "team_files": { "a@t": "/h/teams/t.json", "b@o": "/h/teams/other.json" } }, "address": "a@t", "mailbox": "/h/teams/t.json", "state_db": "/h/teams/t.json" },
+  { "name": "several teams, no entry for the address", "registration": { "team_file": "/h/teams/other.json", "team_files": { "b@o": "/h/teams/other.json" } }, "address": "a@t", "mailbox": "/h/teams/other.json", "state_db": null },
+  { "name": "empty team_files map falls back to team_file", "registration": { "team_file": "/h/teams/t.json", "team_files": {} }, "address": "a@t", "mailbox": "/h/teams/t.json", "state_db": "/h/teams/t.json" },
+  { "name": "no team file", "registration": { "session_id": "s" }, "address": "a@t", "mailbox": null, "state_db": null },
+  { "name": "empty team_file", "registration": { "team_file": "" }, "address": "a@t", "mailbox": null, "state_db": null }
+]

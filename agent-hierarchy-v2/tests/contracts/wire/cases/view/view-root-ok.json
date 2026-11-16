@@ -1,0 +1,371 @@
+{
+  "kind": "wire",
+  "id": "view-root-ok",
+  "about": "the root view lists the orchestrators",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "path": "/"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "at": "<ISO:1>",
+      "body": {
+        "theme": {
+          "schema": 1,
+          "tokens": [
+            {
+              "c256": 180,
+              "hex": "#E5C07B",
+              "mono": {
+                "bold": true,
+                "dim": false,
+                "glyph": "◆",
+                "reverse": false
+              },
+              "token": "role.orchestrator"
+            },
+            {
+              "c256": 147,
+              "hex": "#A9A4F2",
+              "mono": {
+                "bold": true,
+                "dim": false,
+                "glyph": "◇",
+                "reverse": false
+              },
+              "token": "role.sub-orchestrator"
+            },
+            {
+              "c256": 176,
+              "hex": "#C678DD",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "▲",
+                "reverse": false
+              },
+              "token": "role.architect"
+            },
+            {
+              "c256": 75,
+              "hex": "#61AFEF",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "■",
+                "reverse": false
+              },
+              "token": "role.implementor"
+            },
+            {
+              "c256": 114,
+              "hex": "#98C379",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "✓",
+                "reverse": false
+              },
+              "token": "role.reviewer"
+            },
+            {
+              "c256": 73,
+              "hex": "#56B6C2",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "¶",
+                "reverse": false
+              },
+              "token": "role.docs-writer"
+            },
+            {
+              "c256": 215,
+              "hex": "#FA9D68",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "◈",
+                "reverse": false
+              },
+              "token": "role.ux-engineer"
+            },
+            {
+              "c256": 168,
+              "hex": "#E06C75",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "✦",
+                "reverse": false
+              },
+              "token": "role.ultra-advisor"
+            },
+            {
+              "c256": 145,
+              "hex": "#ABB2BF",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "·",
+                "reverse": false
+              },
+              "token": "role.task-runner"
+            },
+            {
+              "c256": 179,
+              "hex": "#D7BA7D",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "◇",
+                "reverse": false
+              },
+              "token": "role.custom"
+            },
+            {
+              "c256": 114,
+              "hex": "#98C379",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "●",
+                "reverse": false
+              },
+              "token": "state.live"
+            },
+            {
+              "c256": 180,
+              "hex": "#E5C07B",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "◐",
+                "reverse": false
+              },
+              "token": "state.busy"
+            },
+            {
+              "c256": 59,
+              "hex": "#5C6370",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "○",
+                "reverse": false
+              },
+              "token": "state.idle"
+            },
+            {
+              "c256": 168,
+              "hex": "#E06C75",
+              "mono": {
+                "bold": true,
+                "dim": false,
+                "glyph": "×",
+                "reverse": false
+              },
+              "token": "state.blocked"
+            },
+            {
+              "c256": 173,
+              "hex": "#D19A66",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "⊘",
+                "reverse": false
+              },
+              "token": "state.orphaned"
+            },
+            {
+              "c256": 240,
+              "hex": "#4B5263",
+              "mono": {
+                "bold": false,
+                "dim": true,
+                "glyph": "·",
+                "reverse": false
+              },
+              "token": "state.notlive"
+            },
+            {
+              "c256": 131,
+              "hex": "#BE5046",
+              "mono": {
+                "bold": true,
+                "dim": false,
+                "glyph": "✗",
+                "reverse": false
+              },
+              "token": "state.failed"
+            },
+            {
+              "c256": 139,
+              "hex": "#B294BB",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "‖",
+                "reverse": false
+              },
+              "token": "state.held"
+            },
+            {
+              "c256": 234,
+              "hex": "#1E2127",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": null,
+                "reverse": false
+              },
+              "token": "surface"
+            },
+            {
+              "c256": 236,
+              "hex": "#2C313A",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": null,
+                "reverse": false
+              },
+              "token": "rail"
+            },
+            {
+              "c256": 238,
+              "hex": "#3E4451",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "─│╭╮╰╯",
+                "reverse": false
+              },
+              "token": "border"
+            },
+            {
+              "c256": 69,
+              "hex": "#528BFF",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": null,
+                "reverse": true
+              },
+              "token": "accent"
+            },
+            {
+              "c256": 173,
+              "hex": "#D19A66",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "✉",
+                "reverse": false
+              },
+              "token": "mail.waiting"
+            },
+            {
+              "c256": 222,
+              "hex": "#F0C674",
+              "mono": {
+                "bold": true,
+                "dim": false,
+                "glyph": "✉",
+                "reverse": false
+              },
+              "token": "mail.fresh"
+            },
+            {
+              "c256": 95,
+              "hex": "#8A6F45",
+              "mono": {
+                "bold": false,
+                "dim": true,
+                "glyph": "✉",
+                "reverse": false
+              },
+              "token": "mail.aged"
+            },
+            {
+              "c256": 102,
+              "hex": "#7F848E",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "─",
+                "reverse": false
+              },
+              "token": "edge.mesh"
+            },
+            {
+              "c256": 60,
+              "hex": "#636D83",
+              "mono": {
+                "bold": false,
+                "dim": false,
+                "glyph": "·",
+                "reverse": false
+              },
+              "token": "edge.subagent"
+            },
+            {
+              "c256": 240,
+              "hex": "#4B5263",
+              "mono": {
+                "bold": false,
+                "dim": true,
+                "glyph": "─",
+                "reverse": false
+              },
+              "token": "edge.team"
+            }
+          ]
+        }
+      },
+      "breadcrumb": [
+        {
+          "id": "",
+          "kind": "root",
+          "label": "ah",
+          "path": "/"
+        }
+      ],
+      "children": [],
+      "id": "",
+      "kind": "root",
+      "path": "/",
+      "rev": "<REV:1>",
+      "summary": {
+        "blocked": 0,
+        "ctx_high": 0,
+        "joins_pending": 0,
+        "live": 0,
+        "members": 0,
+        "overdue": 0,
+        "owed": 0,
+        "streams_stuck": 0,
+        "teams": 0,
+        "working": 0
+      },
+      "view_schema": 1
+    }
+  },
+  "mutant": "an orchestrator row missing",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:14.649Z"
+  }
+}

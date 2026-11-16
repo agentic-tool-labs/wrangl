@@ -1,0 +1,21 @@
+ ▐▛███▛█   Claude Code v2.1.295
+▝▜██████▀  Haiku 5.5 · Claude API
+ ▝▝   ▝▝   <T>/ws/claude
+
+  Get to finished work sooner with Opus 5.5. Switch anytime with /model.
+
+❯ ah mail from boss@tm: [hierarchy-msg
+  /private/tmp/ahprobe.example/agent-hierarchy/.claude/hiera | reply ok, use no
+  tools
+
+⏺ ok
+
+✻ Crunched for 1s · done 4:19 PM
+
+────────────────────────────────────────────────────────────────────────────────
+❯ ah mail from boss@tm: [hierarchy-msg
+  /private/tmp/ahprobe.example/agent-hierarchy/.claude/hierarchy/msgs/20261008
+  -120000-abcd--implementor--example-slug--request.md] [ah-entry
+  20261008-120000-abcd] note alpha-bravo-charlie-de | reply ok, use no tools
+────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on                                          ◐ medium · /effort

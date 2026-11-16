@@ -1,0 +1,40 @@
+{
+  "node": { "kind": "orchestrator", "path": "/o/o1" },
+  "fields": [
+    { "key": "name", "label": "name", "present": true, "value": "agent-tools · no team", "source": "view", "verified": true, "reason": null },
+    { "key": "state", "label": "state", "present": true, "value": "none", "source": "pid liveness", "verified": true, "reason": null },
+    { "key": "repo", "label": "repo", "present": true, "value": "agent-tools", "source": "hierarchy directory", "verified": true, "reason": null },
+    { "key": "pid", "label": "pid", "present": false, "value": null, "source": "team file", "verified": false, "reason": "no orchestrator recorded" },
+    { "key": "session", "label": "session", "present": false, "value": null, "source": "team file", "verified": false, "reason": "no session recorded" },
+    { "key": "teams", "label": "teams", "present": true, "value": 0, "source": "view", "verified": true, "reason": null },
+    { "key": "started", "label": "started", "present": false, "value": null, "source": "team file (pid_start)", "verified": false, "reason": "no start time recorded" },
+    {
+      "key": "vitals", "label": "Session vitals", "present": true, "source": "composite", "verified": false, "reason": null,
+      "value": [
+        { "key": "model", "label": "model", "present": false, "value": null, "source": "statusline", "verified": false, "reason": "tap off" },
+        { "key": "effort", "label": "effort", "present": false, "value": null, "source": "statusline", "verified": false, "reason": "tap off" },
+        { "key": "cwd", "label": "cwd", "present": false, "value": null, "source": "registration", "verified": false, "reason": "not registered" },
+        { "key": "branch", "label": "branch", "present": false, "value": null, "source": "git HEAD file", "verified": false, "reason": "no git" },
+        { "key": "context", "label": "context", "present": false, "value": null, "source": "activity record; window assumed 200k", "verified": false, "reason": "no activity record" },
+        { "key": "rate_limits", "label": "rate limits", "present": false, "value": null, "source": "statusline", "verified": false, "reason": "tap off" }
+      ]
+    },
+    { "key": "roster", "label": "Team roster", "present": true, "value": { "members": [], "more": 0 }, "source": "member facts", "verified": true, "reason": null },
+    {
+      "key": "flight", "label": "Work in flight", "present": true, "source": "dispatch clock, mailbox, peer records", "verified": true, "reason": null,
+      "value": { "requests": [], "requests_more": 0, "mail": [], "held": [], "resumed": [], "outage": null, "unavailable": ["pool", "held", "resumed", "outage"] }
+    },
+    { "key": "feed", "label": "Events", "present": false, "value": null, "source": "peer records", "verified": false, "reason": "peer records unreadable" },
+    { "key": "activity", "label": "Activity", "present": false, "value": null, "source": "activity record", "verified": false, "reason": "no activity record" },
+    {
+      "key": "pipeline", "label": "Pipeline / release", "present": true, "source": "composite", "verified": false, "reason": null,
+      "value": [
+        { "key": "run", "label": "run", "present": false, "value": null, "source": "pipeline anchor", "verified": false, "reason": "no pipeline run" },
+        { "key": "branches", "label": "branches", "present": false, "value": null, "source": "worktrees", "verified": false, "reason": "view unavailable" },
+        { "key": "release_tag", "label": "last release tag", "present": false, "value": null, "source": "git", "verified": false, "reason": "reading git…" }
+      ]
+    },
+    { "key": "decisions", "label": "Issues & decisions", "present": false, "value": null, "source": "pipeline decisions log", "verified": false, "reason": "no pipeline run" },
+    { "key": "worktrees", "label": "Worktrees", "present": false, "value": null, "source": "pool enumeration, git", "verified": false, "reason": "view unavailable" }
+  ]
+}

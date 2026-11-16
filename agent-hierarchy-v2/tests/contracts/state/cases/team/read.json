@@ -1,0 +1,83 @@
+{
+  "kind": "state-op",
+  "id": "read",
+  "about": "read returns the team record",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "read",
+    "kind": "read",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "team",
+        "op": "write",
+        "kind": "write",
+        "body": {
+          "args": {
+            "path": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "team": {
+              "team_id": "tm-1",
+              "name": "tm",
+              "created_at": "2026-01-01T00:00:00.000Z",
+              "members": [
+                {
+                  "role": "architect",
+                  "name": "tm-architect",
+                  "model": "opus"
+                }
+              ]
+            },
+            "expect": "absent"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-team"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "path": "<ROOT:proj>/.claude/hierarchy/teams/tm.json"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": null
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "team_id": "tm-1",
+        "name": "tm",
+        "created_at": "<ISO:1>",
+        "members": [
+          {
+            "role": "architect",
+            "name": "tm-architect",
+            "model": "opus"
+          }
+        ]
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a read that returns the raw file text",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:23.537Z"
+  }
+}

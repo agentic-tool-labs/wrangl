@@ -1,0 +1,28 @@
+{
+  "kind": "wire",
+  "id": "inspect-events-ok",
+  "about": "the events waiting for the Orchestrator",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/events"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "events": []
+    }
+  },
+  "mutant": "a wrong shape for an empty list",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:02.921Z"
+  }
+}

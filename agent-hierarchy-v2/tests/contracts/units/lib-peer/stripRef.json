@@ -1,0 +1,77 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "stripRef",
+  "cases": [
+    {
+      "id": "no-ref",
+      "args": [
+        "orchestrator"
+      ],
+      "expect": "orchestrator"
+    },
+    {
+      "id": "trailing-ref",
+      "args": [
+        "orchestrator [3fa9c1]"
+      ],
+      "expect": "orchestrator"
+    },
+    {
+      "id": "ref-and-spaces",
+      "args": [
+        "name   [ref]  "
+      ],
+      "expect": "name"
+    },
+    {
+      "id": "only-last-ref-stripped",
+      "args": [
+        "a [x] [y]"
+      ],
+      "expect": "a [x]"
+    },
+    {
+      "id": "bracket-mid-name",
+      "args": [
+        "a [x] b"
+      ],
+      "expect": "a [x] b"
+    },
+    {
+      "id": "empty-brackets",
+      "args": [
+        "name []"
+      ],
+      "expect": "name"
+    },
+    {
+      "id": "name-is-a-ref",
+      "args": [
+        "[x]"
+      ],
+      "expect": ""
+    },
+    {
+      "id": "unclosed",
+      "args": [
+        "name [x"
+      ],
+      "expect": "name [x"
+    },
+    {
+      "id": "newline-before-ref",
+      "args": [
+        "name\n[x]"
+      ],
+      "expect": "name"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    }
+  ]
+}

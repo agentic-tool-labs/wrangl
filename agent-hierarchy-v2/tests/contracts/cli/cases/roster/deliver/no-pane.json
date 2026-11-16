@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "no-pane",
+  "about": "deliver to a member that has no pane is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "deliver",
+      "tm-implementor",
+      "--req",
+      "<ROOT:proj>/.claude/hierarchy/msgs/none.md",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: deliver: tm-implementor (kind claude) is recorded with route undefined, not \"pane\"\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a delivery to nowhere reported as sent",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:45.249Z"
+  }
+}

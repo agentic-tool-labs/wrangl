@@ -1,0 +1,89 @@
+{
+ "view_schema": 1,
+ "kind": "root",
+ "id": "",
+ "path": "/",
+ "breadcrumb": [
+  {
+   "kind": "root",
+   "id": "",
+   "label": "ah",
+   "path": "/"
+  }
+ ],
+ "children": [
+  {
+   "kind": "orchestrator",
+   "id": "<oid:0>",
+   "label": "repoA · no orchestrator",
+   "path": "/o/<oid:0>",
+   "state": "none",
+   "dir": "<ROOT>/repoA/.claude/hierarchy",
+   "summary": {
+    "teams": 1,
+    "members": 1,
+    "live": 0,
+    "working": 0,
+    "blocked": 0,
+    "owed": 0,
+    "ctx_high": 0,
+    "overdue": 0,
+    "joins_pending": 0,
+    "streams_stuck": 0
+   }
+  },
+  {
+   "kind": "orchestrator",
+   "id": "<oid:1>",
+   "label": "repoA · pid <LIVEPID>",
+   "path": "/o/<oid:1>",
+   "state": "live",
+   "dir": "<ROOT>/repoA/.claude/hierarchy",
+   "summary": {
+    "teams": 3,
+    "members": 5,
+    "live": 3,
+    "working": 1,
+    "blocked": 2,
+    "owed": 1,
+    "ctx_high": 1,
+    "overdue": 0,
+    "joins_pending": 0,
+    "streams_stuck": 0
+   }
+  },
+  {
+   "kind": "orchestrator",
+   "id": "<oid:2>",
+   "label": "repoB · pid <DEADPID>",
+   "path": "/o/<oid:2>",
+   "state": "orphaned",
+   "dir": "<ROOT>/repoB/.claude/hierarchy",
+   "summary": {
+    "teams": 1,
+    "members": 1,
+    "live": 0,
+    "working": 0,
+    "blocked": 0,
+    "owed": 0,
+    "ctx_high": 0,
+    "overdue": 0,
+    "joins_pending": 0,
+    "streams_stuck": 0
+   }
+  }
+ ],
+ "summary": {
+  "teams": 5,
+  "members": 7,
+  "live": 3,
+  "working": 1,
+  "blocked": 2,
+  "owed": 1,
+  "ctx_high": 1,
+  "overdue": 0,
+  "joins_pending": 0,
+  "streams_stuck": 0
+ },
+ "body": {}
+}

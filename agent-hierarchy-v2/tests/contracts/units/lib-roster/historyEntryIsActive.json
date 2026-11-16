@@ -1,0 +1,201 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "historyEntryIsActive",
+  "cases": [
+    {
+      "id": "live-team-same-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T1",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"T1\"}"
+      },
+      "expect": true
+    },
+    {
+      "id": "live-team-other-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T2",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"T1\"}"
+      },
+      "expect": false
+    },
+    {
+      "id": "dead-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T1",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":999999999},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"T1\"}"
+      },
+      "expect": false
+    },
+    {
+      "id": "no-team-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T1",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "named-alias",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T1",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"T1\"}"
+      },
+      "expect": true
+    },
+    {
+      "id": "both-ids-missing-are-equal",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\"}"
+      },
+      "expect": true
+    },
+    {
+      "id": "old-live-team-is-not-live-by-age",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "id": "id1",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "label": "default (1 role)",
+          "created_at": "2026-01-01T00:00:00+00:00",
+          "last_used": "2026-01-01T00:00:00+00:00",
+          "last_team_id": "T1",
+          "roster_level": null,
+          "transport": null,
+          "members": [
+            {
+              "role": "architect"
+            }
+          ]
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2025-12-30T00:00:00+00:00\",\"team_id\":\"T1\"}"
+      },
+      "expect": false
+    }
+  ]
+}

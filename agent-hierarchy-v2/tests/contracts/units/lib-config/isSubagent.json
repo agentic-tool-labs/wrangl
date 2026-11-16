@@ -1,0 +1,100 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isSubagent",
+  "cases": [
+    {
+      "id": "agent-id",
+      "args": [
+        {
+          "agent_id": "a1"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty-agent-id",
+      "args": [
+        {
+          "agent_id": ""
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "numeric-agent-id",
+      "args": [
+        {
+          "agent_id": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-agent-id",
+      "args": [
+        {
+          "agent_id": null
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "agent-type-only",
+      "args": [
+        {
+          "agent_type": "ah:architect"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-object",
+      "args": [
+        {}
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-input",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined-input",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "string-input",
+      "args": [
+        "agent_id"
+      ],
+      "expect": false
+    },
+    {
+      "id": "array-input",
+      "args": [
+        [
+          "x"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "whitespace-agent-id",
+      "args": [
+        {
+          "agent_id": " "
+        }
+      ],
+      "expect": true
+    }
+  ]
+}

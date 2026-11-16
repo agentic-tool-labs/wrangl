@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "inbox-long-poll-unchanged",
+  "about": "wait=1 on an empty mailbox returns empty entries after the wait",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "since": "0",
+      "wait": "1",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inbox"
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "address": "tm-implementor@tm",
+      "entries": [],
+      "next": 0
+    }
+  },
+  "mutant": "a long-poll that returns at once",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:00.271Z"
+  }
+}

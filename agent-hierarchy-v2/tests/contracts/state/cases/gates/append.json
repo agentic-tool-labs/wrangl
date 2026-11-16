@@ -1,0 +1,48 @@
+{
+  "kind": "state-op",
+  "id": "append",
+  "about": "append writes one gate row",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "gates",
+    "op": "append",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "rec": {
+          "type": "route",
+          "session_id": "sess-1",
+          "value": "peers"
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-gates-append"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "appended": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a row without ts",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:10.318Z"
+  }
+}

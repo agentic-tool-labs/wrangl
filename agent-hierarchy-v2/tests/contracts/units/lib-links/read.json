@@ -1,0 +1,135 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "read",
+  "cases": [
+    {
+      "id": "judged-links",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"},{\"id\":\"b\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "links": [
+          {
+            "id": "lk1",
+            "task": "20260101-000000-aa11",
+            "task_home": "$ROOT/h",
+            "peers": [
+              "b@fx"
+            ],
+            "direction": "both",
+            "requester": "a@fx",
+            "granted_by": "orchestrator",
+            "granted_at": "2026-01-01T00:00:00.000Z",
+            "limits": {
+              "messages": 3,
+              "minutes": 30
+            },
+            "used": 0,
+            "extensions": 0,
+            "state": "active"
+          },
+          {
+            "id": "b",
+            "task": "20260101-000000-aa11",
+            "task_home": "$ROOT/h",
+            "peers": [
+              "b@fx"
+            ],
+            "direction": "both",
+            "requester": "a@fx",
+            "granted_by": "orchestrator",
+            "granted_at": "2026-01-01T00:00:00.000Z",
+            "limits": {
+              "messages": 3,
+              "minutes": 30
+            },
+            "used": 3,
+            "extensions": 0,
+            "state": "expired",
+            "ended_at": "2026-01-01T00:10:00.000Z",
+            "end_reason": "message_cap"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nothing-written",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "links": [
+          {
+            "id": "lk1",
+            "task": "20260101-000000-aa11",
+            "task_home": "$ROOT/h",
+            "peers": [
+              "b@fx"
+            ],
+            "direction": "both",
+            "requester": "a@fx",
+            "granted_by": "orchestrator",
+            "granted_at": "2026-01-01T00:00:00.000Z",
+            "limits": {
+              "messages": 3,
+              "minutes": 30
+            },
+            "used": 3,
+            "extensions": 0,
+            "state": "expired",
+            "ended_at": "2026-01-01T00:10:00.000Z",
+            "end_reason": "message_cap"
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-file",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "links": []
+      }
+    },
+    {
+      "id": "dir-missing-reads-nothing",
+      "args": [
+        {
+          "team": "fx"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "links": []
+      }
+    }
+  ]
+}

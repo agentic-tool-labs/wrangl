@@ -1,0 +1,251 @@
+{
+  "slices": [
+    {
+      "id": "list:plan-changes:f28aaefa/t",
+      "version": 1,
+      "as_of": 1792296000000,
+      "body": {
+        "rows": [
+          {
+            "at": "2026-10-18T04:00:00Z",
+            "seq": 2,
+            "stream": "b",
+            "item": "z",
+            "kind": "state",
+            "from": "not_started",
+            "to": "blocked",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T03:00:00Z",
+            "seq": 1,
+            "stream": "b",
+            "item": "z",
+            "kind": "priority",
+            "from": null,
+            "to": "1",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T03:00:00Z",
+            "seq": 4,
+            "stream": "a",
+            "item": "x",
+            "kind": "state",
+            "from": "not_started",
+            "to": "in_progress",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T02:00:00Z",
+            "seq": 0,
+            "stream": "b",
+            "item": "z",
+            "kind": "added",
+            "from": null,
+            "to": "Build z",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T02:00:00Z",
+            "seq": 2,
+            "stream": "a",
+            "item": "x",
+            "kind": "priority",
+            "from": null,
+            "to": "5",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T01:00:00Z",
+            "seq": 1,
+            "stream": "a",
+            "item": "y",
+            "kind": "added",
+            "from": null,
+            "to": "Build y",
+            "by": "orchestrator@t"
+          },
+          {
+            "at": "2026-10-18T01:00:00Z",
+            "seq": 0,
+            "stream": "a",
+            "item": "x",
+            "kind": "added",
+            "from": null,
+            "to": "Build x",
+            "by": "orchestrator@t"
+          }
+        ],
+        "total": 7,
+        "tail_cursor": "MjAyNi0xMC0xOFQwMTowMDowMFofYR8w"
+      }
+    },
+    {
+      "id": "list:plan:f28aaefa/t",
+      "version": 1,
+      "as_of": 1792296000000,
+      "body": {
+        "team": "t",
+        "items": [
+          {
+            "item": "x",
+            "stream": "a",
+            "seq": 0,
+            "area": "a",
+            "title": "Build x",
+            "state": "in_progress",
+            "holder": null,
+            "rank": 5,
+            "added_at": "2026-10-18T01:00:00Z",
+            "started_at": "2026-10-18T03:00:00Z",
+            "done_at": null,
+            "note": null,
+            "commits": [],
+            "branch": null,
+            "issue": null
+          },
+          {
+            "item": "z",
+            "stream": "b",
+            "seq": 0,
+            "area": "b",
+            "title": "Build z",
+            "state": "blocked",
+            "holder": null,
+            "rank": 1,
+            "added_at": "2026-10-18T02:00:00Z",
+            "started_at": null,
+            "done_at": null,
+            "note": "waiting",
+            "commits": [],
+            "branch": null,
+            "issue": null
+          },
+          {
+            "item": "y",
+            "stream": "a",
+            "seq": 1,
+            "area": "zeta",
+            "title": "Build y",
+            "state": "not_started",
+            "holder": null,
+            "rank": null,
+            "added_at": "2026-10-18T01:00:00Z",
+            "started_at": null,
+            "done_at": null,
+            "note": null,
+            "commits": [],
+            "branch": null,
+            "issue": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "plan:f28aaefa/t",
+      "version": 1,
+      "as_of": 1792296000000,
+      "body": {
+        "team": "t",
+        "streams": [
+          {
+            "stream": "a",
+            "owner": "impl-1",
+            "branch": "ah/a",
+            "work_tree": "tree-a",
+            "goal": "Goal A",
+            "state": "open",
+            "source": "jsonl",
+            "counts": {
+              "done": 0,
+              "in_progress": 1,
+              "next": 0,
+              "blocked": 0,
+              "waiting_user": 0,
+              "waiting_orch": 0,
+              "not_started": 1,
+              "dropped": 0
+            },
+            "as_of": 1792292400000,
+            "blockers": 0,
+            "warnings": 0,
+            "truncated": false,
+            "total": 2,
+            "review_open": false,
+            "status": "in_progress"
+          },
+          {
+            "stream": "b",
+            "owner": "impl-2",
+            "branch": "ah/b",
+            "work_tree": "tree-b",
+            "goal": "",
+            "state": "open",
+            "source": "jsonl",
+            "counts": {
+              "done": 0,
+              "in_progress": 0,
+              "next": 0,
+              "blocked": 1,
+              "waiting_user": 0,
+              "waiting_orch": 0,
+              "not_started": 0,
+              "dropped": 0
+            },
+            "as_of": 1792296000000,
+            "blockers": 0,
+            "warnings": 0,
+            "truncated": false,
+            "total": 1,
+            "review_open": false,
+            "status": "blocked"
+          }
+        ],
+        "counts": {
+          "done": 0,
+          "in_progress": 1,
+          "next": 0,
+          "blocked": 1,
+          "waiting_user": 0,
+          "waiting_orch": 0,
+          "not_started": 1,
+          "dropped": 0
+        },
+        "as_of": 1792296000000,
+        "dir_id": "f28aaefa",
+        "work_root": null,
+        "decisions": {
+          "by_user": 0,
+          "by_team": 0,
+          "waiting": 0,
+          "scope": "dir"
+        }
+      }
+    },
+    {
+      "id": "plan-items:f28aaefa/t/a",
+      "as_of": 1792296000000,
+      "body": {
+        "items": [
+          { "key": "a:x", "title": "Build x", "state": "in_progress", "owner": "impl-1", "column": "progress", "checklist_rank": 3 },
+          { "key": "a:y", "title": "Build y", "state": "not_started", "owner": "qa-1", "holder": "qa-1", "column": "next", "checklist_rank": 7 }
+        ]
+      }
+    },
+    {
+      "id": "backlog:f28aaefa",
+      "as_of": 1792296000000,
+      "body": {
+        "open": 3,
+        "total": 4,
+        "items": [
+          { "key": "g1", "title": "Golden now", "wave": "now", "open": true, "planned": false },
+          { "key": "g2", "title": "Golden closed", "wave": "now", "open": false, "planned": false },
+          { "key": "g4", "title": "Golden planned", "wave": "now", "open": true, "planned": true },
+          { "key": "g3", "title": "Golden later", "wave": "later", "open": true, "planned": false }
+        ]
+      }
+    }
+  ]
+}

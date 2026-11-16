@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "boxes",
+  "about": "inspect boxes answers from the files",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "inspect",
+      "boxes"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"source\":\"files\",\"boxes\":[]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an inspect that starts the daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.519Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "NO_SESSION_KEY",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "__nosession__"
+    }
+  ]
+}

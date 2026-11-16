@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "teams": [
+    {
+      "id": "20261011-123929-rdwe",
+      "fingerprint": "ad451e57",
+      "alias": "proj",
+      "label": "proj (2 roles)",
+      "created_at": "2026-10-11T12:39:29-04:00",
+      "last_used": "2026-10-11T12:39:29-04:00",
+      "last_team_id": "20261011-123929-14yj",
+      "roster_level": "repo",
+      "transport": "herdr",
+      "members": [
+        {
+          "role": "implementor",
+          "model": "sonnet",
+          "effort": "high",
+          "route": "peer"
+        },
+        {
+          "role": "reviewer",
+          "model": "opus",
+          "route": "peer"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "roleFor",
+  "cases": [
+    {
+      "id": "ah-prefix",
+      "args": [
+        "ah:architect"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "ah-prefix-only",
+      "args": [
+        "ah:"
+      ],
+      "expect": ""
+    },
+    {
+      "id": "ah-prefix-case-sensitive",
+      "args": [
+        "AH:architect"
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "ah-without-colon-is-not-a-prefix",
+      "args": [
+        "ah-architect"
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "ah-letters-only-is-not-a-prefix",
+      "args": [
+        "ahead"
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "task-gopher-namespaced",
+      "args": [
+        "task-gopher:task-gopher"
+      ],
+      "expect": "task-runner"
+    },
+    {
+      "id": "task-gopher-bare",
+      "args": [
+        "task-gopher"
+      ],
+      "expect": "task-runner"
+    },
+    {
+      "id": "task-gopher-other-agent",
+      "args": [
+        "task-gopher:smart-gopher"
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "custom-role-hit",
+      "args": [
+        "my-agent",
+        {
+          "my-agent": "ui-implementor"
+        }
+      ],
+      "expect": "ui-implementor"
+    },
+    {
+      "id": "custom-role-miss",
+      "args": [
+        "other-agent",
+        {
+          "my-agent": "ui-implementor"
+        }
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "custom-role-null-value",
+      "args": [
+        "my-agent",
+        {
+          "my-agent": null
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "inherited-name-is-not-a-row",
+      "args": [
+        "toString",
+        {}
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "ah-prefix-wins-over-map",
+      "args": [
+        "ah:x",
+        {
+          "ah:x": "mapped"
+        }
+      ],
+      "expect": "x"
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "roles-null",
+      "args": [
+        "my-agent",
+        null
+      ],
+      "expect": "other"
+    },
+    {
+      "id": "no-roles",
+      "args": [
+        "my-agent"
+      ],
+      "expect": "other"
+    }
+  ]
+}

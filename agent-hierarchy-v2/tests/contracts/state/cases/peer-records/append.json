@@ -1,0 +1,56 @@
+{
+  "kind": "state-op",
+  "id": "append",
+  "about": "append writes one row with an op_id",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "peer-records",
+    "op": "append",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "rec": {
+          "type": "watch-event",
+          "session_id": "p-s",
+          "request_id": "r-1",
+          "kind": "CHECK-IN",
+          "text": "x",
+          "ts": "2026-01-01T00:00:00.000Z"
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-peer-records-append"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "ok": true
+      }
+    },
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"watch-event\",\"session_id\":\"p-s\",\"request_id\":\"r-1\",\"kind\":\"CHECK-IN\",\"text\":\"x\",\"ts\":\"<ISO:1>\",\"op_id\":\"op-peer-records-append\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a row without op_id",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:18.256Z"
+  }
+}

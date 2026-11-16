@@ -1,0 +1,162 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "pend",
+  "cases": [
+    {
+      "id": "notes-a-request",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1",
+          "request": "r1"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"lk1\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:00:00.000Z\",\n   \"limits\": {\n    \"messages\": 3,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\",\n   \"pending_extension\": \"r1\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "lk1"
+      }
+    },
+    {
+      "id": "clears-with-empty-request",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1",
+          "request": ""
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\",\"pending_extension\":\"r1\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"lk1\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:00:00.000Z\",\n   \"limits\": {\n    \"messages\": 3,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "lk1"
+      }
+    },
+    {
+      "id": "clears-with-missing-request",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\",\"pending_extension\":\"r1\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"lk1\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:00:00.000Z\",\n   \"limits\": {\n    \"messages\": 3,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "lk1"
+      }
+    },
+    {
+      "id": "different-pending-request-is-named",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1",
+          "request": "r2"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\",\"pending_extension\":\"r1\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\",\"pending_extension\":\"r1\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "existing": "r1"
+      }
+    },
+    {
+      "id": "same-request-again",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1",
+          "request": "r1"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\",\"pending_extension\":\"r1\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"lk1\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:00:00.000Z\",\n   \"limits\": {\n    \"messages\": 3,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\",\n   \"pending_extension\": \"r1\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "lk1"
+      }
+    },
+    {
+      "id": "unknown-id",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "zzz",
+          "request": "r1"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "zzz",
+        "found": false
+      }
+    },
+    {
+      "id": "dir-missing-unknown-id",
+      "args": [
+        {
+          "team": "fx",
+          "now": 1767226200000,
+          "id": "lk1",
+          "request": "r"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expect": {
+        "id": "lk1",
+        "found": false
+      }
+    }
+  ]
+}

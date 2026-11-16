@@ -1,0 +1,7 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/git.log"
+case "$*" in
+  *'rev-parse --show-toplevel') printf '%s\n' "$2"; exit 0;;
+  *) exit 1;;
+esac

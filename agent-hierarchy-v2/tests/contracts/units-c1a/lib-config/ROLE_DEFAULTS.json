@@ -1,0 +1,47 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROLE_DEFAULTS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "ultra-advisor": {
+          "model": "fable"
+        },
+        "architect": {
+          "model": "opus"
+        },
+        "reviewer": {
+          "model": "opus"
+        },
+        "implementor": {
+          "model": "inherit"
+        },
+        "docs-writer": {
+          "model": "sonnet"
+        },
+        "qa": {
+          "model": "sonnet"
+        },
+        "ux-engineer": {
+          "model": "opus"
+        },
+        "task-runner": {
+          "model": "haiku",
+          "delegate": "task-gopher"
+        },
+        "backlog-groomer": {
+          "model": "sonnet"
+        },
+        "sub-orchestrator": {
+          "model": "sonnet"
+        },
+        "deputy-chief": {
+          "model": "sonnet"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h-push-other-tool-records-nothing",
+  "about": "a tool other than PushNotification records nothing",
+  "tree": "hook-ask-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-push-record",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "ls"
+      },
+      "tool_response": {},
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "a Bash call marks parked questions as pushed",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-18T00:00:00.000Z",
+    "note": "native-only hook unit: no Node recording exists"
+  }
+}

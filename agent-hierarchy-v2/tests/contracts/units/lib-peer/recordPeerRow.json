@@ -1,0 +1,61 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "recordPeerRow",
+  "cases": [
+    {
+      "id": "appends-with-op-id",
+      "args": [
+        {
+          "type": "turn",
+          "session_id": "s1",
+          "status": "armed"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "turn",
+              "session_id": "s1",
+              "status": "armed",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "keeps-existing-rows",
+      "args": [
+        {
+          "a": 2
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "a": 1
+            },
+            {
+              "a": 2,
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

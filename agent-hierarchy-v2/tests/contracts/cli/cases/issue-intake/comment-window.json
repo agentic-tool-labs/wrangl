@@ -1,0 +1,55 @@
+{
+  "kind": "cli",
+  "id": "comment-window",
+  "about": "the newest hundred comments",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "35"
+    ],
+    "stdin": null
+  },
+  "mutant": "the comment window drifted",
+  "expect": {
+    "stdout": "{\"repo\":\"alice/proj\",\"trigger_label\":\"ready-for-agent\",\"trusted_actors\":[\"alice\"],\"items\":[{\"issue\":35,\"eligible\":true,\"snapshot\":\"<ROOT:proj>/out/issue-35.md\",\"sha256\":\"<SHA256>\",\"lines\":206}]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/gh.log",
+          "mode": "0644",
+          "content": "{\"args\":[\"auth\",\"status\",\"--hostname\",\"github.com\"],\"stdin\":\"\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeOwner($owner: String!, $name: String!) {\\\\n  repository(owner: $owner, name: $name) { owner { __typename login } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\"}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeMeta($owner: String!, $name: String!, $number: Int!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n      comments(last: 100) { nodes { id author { login } createdAt lastEditedAt } }\\\\n    }\\\\n  }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":35}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeFetch($owner: String!, $name: String!, $number: Int!, $ids: [ID!]!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      title\\\\n      bodyHTML\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n    }\\\\n  }\\\\n  nodes(ids: $ids) { ... on IssueComment { id bodyHTML lastEditedAt } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":35,\\\"ids\\\":[\\\"IC_35_002\\\",\\\"IC_35_003\\\",\\\"IC_35_004\\\",\\\"IC_35_005\\\",\\\"IC_35_006\\\",\\\"IC_35_007\\\",\\\"IC_35_008\\\",\\\"IC_35_009\\\",\\\"IC_35_010\\\",\\\"IC_35_011\\\",\\\"IC_35_012\\\",\\\"IC_35_013\\\",\\\"IC_35_014\\\",\\\"IC_35_015\\\",\\\"IC_35_016\\\",\\\"IC_35_017\\\",\\\"IC_35_018\\\",\\\"IC_35_019\\\",\\\"IC_35_020\\\",\\\"IC_35_021\\\",\\\"IC_35_022\\\",\\\"IC_35_023\\\",\\\"IC_35_024\\\",\\\"IC_35_025\\\",\\\"IC_35_026\\\",\\\"IC_35_027\\\",\\\"IC_35_028\\\",\\\"IC_35_029\\\",\\\"IC_35_030\\\",\\\"IC_35_031\\\",\\\"IC_35_032\\\",\\\"IC_35_033\\\",\\\"IC_35_034\\\",\\\"IC_35_035\\\",\\\"IC_35_036\\\",\\\"IC_35_037\\\",\\\"IC_35_038\\\",\\\"IC_35_039\\\",\\\"IC_35_040\\\",\\\"IC_35_041\\\",\\\"IC_35_042\\\",\\\"IC_35_043\\\",\\\"IC_35_044\\\",\\\"IC_35_045\\\",\\\"IC_35_046\\\",\\\"IC_35_047\\\",\\\"IC_35_048\\\",\\\"IC_35_049\\\",\\\"IC_35_050\\\",\\\"IC_35_051\\\",\\\"IC_35_052\\\",\\\"IC_35_053\\\",\\\"IC_35_054\\\",\\\"IC_35_055\\\",\\\"IC_35_056\\\",\\\"IC_35_057\\\",\\\"IC_35_058\\\",\\\"IC_35_059\\\",\\\"IC_35_060\\\",\\\"IC_35_061\\\",\\\"IC_35_062\\\",\\\"IC_35_063\\\",\\\"IC_35_064\\\",\\\"IC_35_065\\\",\\\"IC_35_066\\\",\\\"IC_35_067\\\",\\\"IC_35_068\\\",\\\"IC_35_069\\\",\\\"IC_35_070\\\",\\\"IC_35_071\\\",\\\"IC_35_072\\\",\\\"IC_35_073\\\",\\\"IC_35_074\\\",\\\"IC_35_075\\\",\\\"IC_35_076\\\",\\\"IC_35_077\\\",\\\"IC_35_078\\\",\\\"IC_35_079\\\",\\\"IC_35_080\\\",\\\"IC_35_081\\\",\\\"IC_35_082\\\",\\\"IC_35_083\\\",\\\"IC_35_084\\\",\\\"IC_35_085\\\",\\\"IC_35_086\\\",\\\"IC_35_087\\\",\\\"IC_35_088\\\",\\\"IC_35_089\\\",\\\"IC_35_090\\\",\\\"IC_35_091\\\",\\\"IC_35_092\\\",\\\"IC_35_093\\\",\\\"IC_35_094\\\",\\\"IC_35_095\\\",\\\"IC_35_096\\\",\\\"IC_35_097\\\",\\\"IC_35_098\\\",\\\"IC_35_099\\\",\\\"IC_35_100\\\",\\\"IC_35_101\\\"]}}\"}\n"
+        },
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n-C <ROOT:proj> symbolic-ref -q refs/remotes/origin/HEAD\n-C <ROOT:proj> rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C <ROOT:proj> cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C <ROOT:proj> cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+        },
+        {
+          "path": "proj/out/issue-35.md",
+          "mode": "0644",
+          "content": "UNTRUSTED ISSUE SNAPSHOT alice/proj#35 labelled-by=alice at=<ISO:1> fetched=<ISO:2>\n\nTITLE: Long thread\n\nBODY:\n| text\nCOMMENT alice <ISO:3>:\n| comment 002\nCOMMENT alice <ISO:4>:\n| comment 003\nCOMMENT alice <ISO:5>:\n| comment 004\nCOMMENT alice <ISO:6>:\n| comment 005\nCOMMENT alice <ISO:7>:\n| comment 006\nCOMMENT alice <ISO:8>:\n| comment 007\nCOMMENT alice <ISO:9>:\n| comment 008\nCOMMENT alice <ISO:10>:\n| comment 009\nCOMMENT alice <ISO:11>:\n| comment 010\nCOMMENT alice <ISO:12>:\n| comment 011\nCOMMENT alice <ISO:13>:\n| comment 012\nCOMMENT alice <ISO:14>:\n| comment 013\nCOMMENT alice <ISO:15>:\n| comment 014\nCOMMENT alice <ISO:16>:\n| comment 015\nCOMMENT alice <ISO:17>:\n| comment 016\nCOMMENT alice <ISO:18>:\n| comment 017\nCOMMENT alice <ISO:19>:\n| comment 018\nCOMMENT alice <ISO:20>:\n| comment 019\nCOMMENT alice <ISO:21>:\n| comment 020\nCOMMENT alice <ISO:22>:\n| comment 021\nCOMMENT alice <ISO:23>:\n| comment 022\nCOMMENT alice <ISO:24>:\n| comment 023\nCOMMENT alice <ISO:25>:\n| comment 024\nCOMMENT alice <ISO:26>:\n| comment 025\nCOMMENT alice <ISO:27>:\n| comment 026\nCOMMENT alice <ISO:28>:\n| comment 027\nCOMMENT alice <ISO:29>:\n| comment 028\nCOMMENT alice <ISO:30>:\n| comment 029\nCOMMENT alice <ISO:31>:\n| comment 030\nCOMMENT alice <ISO:32>:\n| comment 031\nCOMMENT alice <ISO:33>:\n| comment 032\nCOMMENT alice <ISO:34>:\n| comment 033\nCOMMENT alice <ISO:35>:\n| comment 034\nCOMMENT alice <ISO:36>:\n| comment 035\nCOMMENT alice <ISO:37>:\n| comment 036\nCOMMENT alice <ISO:38>:\n| comment 037\nCOMMENT alice <ISO:39>:\n| comment 038\nCOMMENT alice <ISO:40>:\n| comment 039\nCOMMENT alice <ISO:41>:\n| comment 040\nCOMMENT alice <ISO:42>:\n| comment 041\nCOMMENT alice <ISO:43>:\n| comment 042\nCOMMENT alice <ISO:44>:\n| comment 043\nCOMMENT alice <ISO:45>:\n| comment 044\nCOMMENT alice <ISO:46>:\n| comment 045\nCOMMENT alice <ISO:47>:\n| comment 046\nCOMMENT alice <ISO:48>:\n| comment 047\nCOMMENT alice <ISO:49>:\n| comment 048\nCOMMENT alice <ISO:50>:\n| comment 049\nCOMMENT alice <ISO:51>:\n| comment 050\nCOMMENT alice <ISO:52>:\n| comment 051\nCOMMENT alice <ISO:53>:\n| comment 052\nCOMMENT alice <ISO:54>:\n| comment 053\nCOMMENT alice <ISO:55>:\n| comment 054\nCOMMENT alice <ISO:56>:\n| comment 055\nCOMMENT alice <ISO:57>:\n| comment 056\nCOMMENT alice <ISO:58>:\n| comment 057\nCOMMENT alice <ISO:59>:\n| comment 058\nCOMMENT alice <ISO:60>:\n| comment 059\nCOMMENT alice <ISO:61>:\n| comment 060\nCOMMENT alice <ISO:62>:\n| comment 061\nCOMMENT alice <ISO:63>:\n| comment 062\nCOMMENT alice <ISO:64>:\n| comment 063\nCOMMENT alice <ISO:65>:\n| comment 064\nCOMMENT alice <ISO:66>:\n| comment 065\nCOMMENT alice <ISO:67>:\n| comment 066\nCOMMENT alice <ISO:68>:\n| comment 067\nCOMMENT alice <ISO:69>:\n| comment 068\nCOMMENT alice <ISO:70>:\n| comment 069\nCOMMENT alice <ISO:71>:\n| comment 070\nCOMMENT alice <ISO:72>:\n| comment 071\nCOMMENT alice <ISO:73>:\n| comment 072\nCOMMENT alice <ISO:74>:\n| comment 073\nCOMMENT alice <ISO:75>:\n| comment 074\nCOMMENT alice <ISO:76>:\n| comment 075\nCOMMENT alice <ISO:77>:\n| comment 076\nCOMMENT alice <ISO:78>:\n| comment 077\nCOMMENT alice <ISO:79>:\n| comment 078\nCOMMENT alice <ISO:80>:\n| comment 079\nCOMMENT alice <ISO:81>:\n| comment 080\nCOMMENT alice <ISO:82>:\n| comment 081\nCOMMENT alice <ISO:83>:\n| comment 082\nCOMMENT alice <ISO:84>:\n| comment 083\nCOMMENT alice <ISO:85>:\n| comment 084\nCOMMENT alice <ISO:86>:\n| comment 085\nCOMMENT alice <ISO:87>:\n| comment 086\nCOMMENT alice <ISO:88>:\n| comment 087\nCOMMENT alice <ISO:89>:\n| comment 088\nCOMMENT alice <ISO:90>:\n| comment 089\nCOMMENT alice <ISO:91>:\n| comment 090\nCOMMENT alice <ISO:92>:\n| comment 091\nCOMMENT alice <ISO:93>:\n| comment 092\nCOMMENT alice <ISO:94>:\n| comment 093\nCOMMENT alice <ISO:95>:\n| comment 094\nCOMMENT alice <ISO:96>:\n| comment 095\nCOMMENT alice <ISO:97>:\n| comment 096\nCOMMENT alice <ISO:98>:\n| comment 097\nCOMMENT alice <ISO:99>:\n| comment 098\nCOMMENT alice <ISO:100>:\n| comment 099\nCOMMENT alice <ISO:101>:\n| comment 100\nCOMMENT alice <ISO:102>:\n| newest comment\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:25.855Z"
+  }
+}

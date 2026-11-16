@@ -1,0 +1,35 @@
+{
+  "kind": "wire",
+  "id": "due-probe",
+  "about": "the probe `ah msg due` sends to find the route is 400 (so a daemon without the route, 404, is told apart)",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "wait": "1",
+      "in": "{}"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/due"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "session must be a non-empty string"
+      }
+    }
+  },
+  "mutant": "the route answers the probe 200 or 404",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T17:17:15.000Z",
+    "note": "native-only route (divergence/routes.json N5-mod-mail-push): no Node recording exists"
+  }
+}

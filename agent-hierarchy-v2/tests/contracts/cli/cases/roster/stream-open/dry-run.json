@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "dry-run",
+  "about": "stream-open --dry-run reports the branch and worktree it would create",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-open",
+      "s-one",
+      "--no-worktree",
+      "--dry-run",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"dry_run\": true,\n  \"stream\": {\n    \"name\": \"s-one\",\n    \"state\": \"open\",\n    \"branch\": null,\n    \"base\": null,\n    \"base_sha\": null,\n    \"worktree\": null,\n    \"tab_id\": null,\n    \"opened\": \"<ISOL:1>\"\n  },\n  \"would_run\": {\n    \"git\": [],\n    \"herdr\": []\n  },\n  \"transport\": \"terminal\",\n  \"degraded\": \"no-tabs\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a dry run that creates a branch",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:52.828Z"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamMembersForRole",
+  "cases": [
+    {
+      "id": "peer-and-pane-count-not-subagent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"route\":\"peer\",\"renamed_from\":\"old-architect\"},{\"role\":\"reviewer\",\"name\":\"p-reviewer\",\"route\":\"pane\"},{\"role\":\"task-runner\",\"name\":\"p-runner\",\"route\":\"subagent\"},{\"role\":\"architect\",\"name\":\"p-architect-2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": [
+        {
+          "role": "architect",
+          "name": "p-architect",
+          "route": "peer",
+          "renamed_from": "old-architect"
+        },
+        {
+          "role": "architect",
+          "name": "p-architect-2",
+          "route": "peer"
+        }
+      ]
+    },
+    {
+      "id": "pane-route",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "reviewer"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"route\":\"peer\",\"renamed_from\":\"old-architect\"},{\"role\":\"reviewer\",\"name\":\"p-reviewer\",\"route\":\"pane\"},{\"role\":\"task-runner\",\"name\":\"p-runner\",\"route\":\"subagent\"},{\"role\":\"architect\",\"name\":\"p-architect-2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": [
+        {
+          "role": "reviewer",
+          "name": "p-reviewer",
+          "route": "pane"
+        }
+      ]
+    },
+    {
+      "id": "subagent-excluded",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "task-runner"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"route\":\"peer\",\"renamed_from\":\"old-architect\"},{\"role\":\"reviewer\",\"name\":\"p-reviewer\",\"route\":\"pane\"},{\"role\":\"task-runner\",\"name\":\"p-runner\",\"route\":\"subagent\"},{\"role\":\"architect\",\"name\":\"p-architect-2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "implementor"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"route\":\"peer\",\"renamed_from\":\"old-architect\"},{\"role\":\"reviewer\",\"name\":\"p-reviewer\",\"route\":\"pane\"},{\"role\":\"task-runner\",\"name\":\"p-runner\",\"route\":\"subagent\"},{\"role\":\"architect\",\"name\":\"p-architect-2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": []
+    },
+    {
+      "id": "no-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "named",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "architect",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"route\":\"peer\",\"renamed_from\":\"old-architect\"},{\"role\":\"reviewer\",\"name\":\"p-reviewer\",\"route\":\"pane\"},{\"role\":\"task-runner\",\"name\":\"p-runner\",\"route\":\"subagent\"},{\"role\":\"architect\",\"name\":\"p-architect-2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": [
+        {
+          "role": "architect",
+          "name": "p-architect",
+          "route": "peer",
+          "renamed_from": "old-architect"
+        },
+        {
+          "role": "architect",
+          "name": "p-architect-2",
+          "route": "peer"
+        }
+      ]
+    },
+    {
+      "id": "null-row-throws",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "architect"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[null]}"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "route-mail-not-a-slot",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "implementor"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"implementor\",\"name\":\"x\",\"route\":\"mail\",\"kind\":\"custom\"}]}"
+      },
+      "expect": []
+    }
+  ]
+}

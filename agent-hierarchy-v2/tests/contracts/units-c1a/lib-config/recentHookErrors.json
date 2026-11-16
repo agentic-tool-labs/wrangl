@@ -1,0 +1,166 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "recentHookErrors",
+  "cases": [
+    {
+      "id": "none",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "expect": []
+    },
+    {
+      "id": "within-default-24h",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-01T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-04-30T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-04-30T12:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        },
+        {
+          "ts": "2026-04-30T12:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "custom-hours",
+      "args": [
+        2
+      ],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-01T11:30:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-05-01T09:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:30:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "zero-hours",
+      "args": [
+        0
+      ],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-01T12:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-05-01T11:59:59.999Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T12:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "bad-lines-skipped",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{nope\n{\"ts\":\"2026-05-01T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n5\nnull\n\"s\"\n[]"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "no-ts",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"hook\":\"h\"}\n{\"ts\":\"2026-05-01T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "invalid-ts",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"not a date\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-05-01T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "future-ts-kept",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-02T00:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-02T00:00:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    },
+    {
+      "id": "order-kept",
+      "args": [],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-01T11:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\",\"n\":1}\n{\"ts\":\"2026-05-01T10:00:00.000Z\",\"hook\":\"h\",\"message\":\"m\",\"n\":2}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:00:00.000Z",
+          "hook": "h",
+          "message": "m",
+          "n": 1
+        },
+        {
+          "ts": "2026-05-01T10:00:00.000Z",
+          "hook": "h",
+          "message": "m",
+          "n": 2
+        }
+      ]
+    },
+    {
+      "id": "fractional-hours",
+      "args": [
+        0.5
+      ],
+      "now": "2026-05-01T12:00:00.000Z",
+      "files": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-05-01T11:40:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}\n{\"ts\":\"2026-05-01T11:20:00.000Z\",\"hook\":\"h\",\"message\":\"m\"}"
+      },
+      "expect": [
+        {
+          "ts": "2026-05-01T11:40:00.000Z",
+          "hook": "h",
+          "message": "m"
+        }
+      ]
+    }
+  ]
+}

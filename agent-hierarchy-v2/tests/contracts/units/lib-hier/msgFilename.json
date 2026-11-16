@@ -1,0 +1,90 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "msgFilename",
+  "cases": [
+    {
+      "id": "all-parts",
+      "args": [
+        {
+          "id": "20260101-000000-abcd",
+          "to": "architect",
+          "slug": "s",
+          "type": "request"
+        }
+      ],
+      "expect": "20260101-000000-abcd--architect--s--request.md"
+    },
+    {
+      "id": "missing-part-reads-undefined",
+      "args": [
+        {
+          "id": "x",
+          "to": "y",
+          "slug": "z"
+        }
+      ],
+      "expect": "x--y--z--undefined.md"
+    },
+    {
+      "id": "empty-object",
+      "args": [
+        {}
+      ],
+      "expect": "undefined--undefined--undefined--undefined.md"
+    },
+    {
+      "id": "extra-keys-ignored",
+      "args": [
+        {
+          "id": "a",
+          "to": "b",
+          "slug": "c",
+          "type": "d",
+          "extra": 1
+        }
+      ],
+      "expect": "a--b--c--d.md"
+    },
+    {
+      "id": "numbers",
+      "args": [
+        {
+          "id": 1,
+          "to": 2,
+          "slug": 3,
+          "type": 4
+        }
+      ],
+      "expect": "1--2--3--4.md"
+    },
+    {
+      "id": "null-part",
+      "args": [
+        {
+          "id": null,
+          "to": "b",
+          "slug": "c",
+          "type": "d"
+        }
+      ],
+      "expect": "null--b--c--d.md"
+    },
+    {
+      "id": "undefined-throws",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "null-throws",
+      "args": [
+        null
+      ],
+      "expectThrows": true
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "wire",
+  "id": "inbox-long-poll-wakes",
+  "about": "a send during the wait returns early with the entry",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "since": "0",
+      "wait": "5",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inbox",
+    "during": {
+      "after_ms": 300,
+      "request": {
+        "method": "POST",
+        "path": "/v1/send",
+        "body": {
+          "to": "tm-implementor@tm",
+          "text": "wake",
+          "id": "e-w",
+          "cwd": "<ROOT:proj>",
+          "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+        }
+      }
+    }
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "address": "tm-implementor@tm",
+      "entries": [
+        {
+          "created": "<ISO:1>",
+          "from": "orchestrator@tm",
+          "id": "e-w",
+          "kind": "note",
+          "route": "fallback",
+          "text": "wake",
+          "to": "tm-implementor@tm",
+          "v": 1
+        }
+      ],
+      "next": 1
+    }
+  },
+  "mutant": "a wait that ignores a new entry",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:00.919Z"
+  }
+}

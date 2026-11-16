@@ -1,0 +1,862 @@
+{
+ "epoch": "5c1e09ab",
+ "seq": 842,
+ "resync": false,
+ "slices": [
+  {
+   "id": "list:teams",
+   "version": 812,
+   "as_of": 1794158400000,
+   "body": {
+    "teams": [
+     {
+      "id": "team:9f8e7d6c/engram-rc",
+      "name": "engram-rc",
+      "dir_id": "9f8e7d6c"
+     },
+     {
+      "id": "team:a1b2c3d4/ah2-tm4",
+      "name": "ah2-tm4",
+      "dir_id": "a1b2c3d4"
+     },
+     {
+      "id": "team:a1b2c3d4/lane-herdr",
+      "name": "lane-herdr",
+      "dir_id": "a1b2c3d4"
+     },
+     {
+      "id": "team:a1b2c3d4/old-spike",
+      "name": "old-spike",
+      "dir_id": "a1b2c3d4"
+     }
+    ]
+   }
+  },
+  {"id":"list:feed:team:a1b2c3d4/ah2-tm4","version":838,"as_of":1794158400000,"body":{"team":"team:a1b2c3d4/ah2-tm4","ids":["20261108-171500-q2ka","20261108-171000-n0dg","20261108-165200-p7ve","20261108-162000-m3tb","20261108-143000-k9wa"],"pairs":[],"unresolved":{"n":0}}},
+  {"id":"list:feed:team:a1b2c3d4/lane-herdr","version":839,"as_of":1794158400000,"body":{"team":"team:a1b2c3d4/lane-herdr","ids":["20261108-171800-f4yc","20261108-170500-c8hr"],"pairs":[],"unresolved":{"n":0}}},
+  {"id":"list:feed:team:9f8e7d6c/engram-rc","version":840,"as_of":1794158400000,"body":{"team":"team:9f8e7d6c/engram-rc","ids":["20261108-160500-w1pz"],"pairs":[],"unresolved":{"n":0}}},
+  {"id":"exchange:a1b2c3d4/20261108-171500-q2ka","version":830,"as_of":1794158100000,"body":{"dir_id":"a1b2c3d4","id":"20261108-171500-q2ka","slug":"herdr-view-feed","class":"work","title":"Build the herdr feed view","to":"sub-orchestrator","from":"orchestrator","to_name":"lane-herdr","from_name":null,"team":"ah2-tm4","parent":null,"created":"2026-11-08T17:15:00.000Z","has_request":true,"has_response":false,"open":true,"closed":false}},
+  {"id":"exchange:a1b2c3d4/20261108-171000-n0dg","version":831,"as_of":1794157800000,"body":{"dir_id":"a1b2c3d4","id":"20261108-171000-n0dg","slug":"nudge","class":"internal","title":"Check-in","to":"implementor","from":"ahd","to_name":null,"from_name":null,"team":"ah2-tm4","parent":null,"created":"2026-11-08T17:10:00.000Z","has_request":true,"has_response":true,"open":false,"closed":true}},
+  {"id":"exchange:a1b2c3d4/20261108-165200-p7ve","version":832,"as_of":1794156720000,"body":{"dir_id":"a1b2c3d4","id":"20261108-165200-p7ve","slug":"review-atp-1181","class":"work","title":"Review the questions-model copy","to":"reviewer","from":"orchestrator","to_name":null,"from_name":null,"team":"ah2-tm4","parent":null,"created":"2026-11-08T16:52:00.000Z","has_request":true,"has_response":false,"open":true,"closed":false,"state":"overdue","due_at":"2026-11-08T17:02:00.000Z","overdue_by":780}},
+  {"id":"exchange:a1b2c3d4/20261108-162000-m3tb","version":833,"as_of":1794154800000,"body":{"dir_id":"a1b2c3d4","id":"20261108-162000-m3tb","slug":"atp-1181","class":"work","title":"Replace the questions-model symlink with a copy","to":"implementor","from":"orchestrator","to_name":null,"from_name":null,"team":"ah2-tm4","parent":null,"created":"2026-11-08T16:20:00.000Z","has_request":true,"has_response":true,"open":false,"closed":true}},
+  {"id":"exchange:a1b2c3d4/20261108-143000-k9wa","version":834,"as_of":1794148200000,"body":{"dir_id":"a1b2c3d4","id":"20261108-143000-k9wa","slug":"backlog-groom","class":"work","title":"","to":"backlog-groomer","from":"orchestrator","to_name":null,"from_name":null,"team":"ah2-tm4","parent":null,"created":"2026-11-08T14:30:00.000Z","has_request":true,"has_response":true,"open":false,"closed":true}},
+  {"id":"exchange:a1b2c3d4/20261108-171800-f4yc","version":835,"as_of":1794158280000,"body":{"dir_id":"a1b2c3d4","id":"20261108-171800-f4yc","slug":"herdr-view-board","class":"work","title":"Build the herdr board view","to":"implementor","from":"sub-orchestrator","to_name":"ah2-tm4-lane-herdr-implementor","from_name":"lane-herdr","team":"lane-herdr","parent":null,"created":"2026-11-08T17:18:00.000Z","has_request":true,"has_response":false,"open":true,"closed":false}},
+  {"id":"exchange:a1b2c3d4/20261108-170500-c8hr","version":836,"as_of":1794157500000,"body":{"dir_id":"a1b2c3d4","id":"20261108-170500-c8hr","slug":"herdr-qa-proof","class":"work","title":"Screenshots for the Q&A view","to":"ux-engineer","from":"sub-orchestrator","to_name":null,"from_name":null,"team":"lane-herdr","parent":null,"created":"2026-11-08T17:05:00.000Z","has_request":true,"has_response":true,"open":false,"closed":true}},
+  {"id":"exchange:9f8e7d6c/20261108-160500-w1pz","version":837,"as_of":1794153900000,"body":{"dir_id":"9f8e7d6c","id":"20261108-160500-w1pz","slug":"recall-ranking","class":"work","title":"Rank pinned facts above long-term memory","to":"architect","from":"orchestrator","to_name":null,"from_name":null,"team":"engram-rc","parent":null,"created":"2026-11-08T16:05:00.000Z","has_request":true,"has_response":true,"open":false,"closed":true}},
+  {
+   "id": "team-summary:a1b2c3d4/ah2-tm4",
+   "version": 840,
+   "as_of": 1794158400000,
+   "body": {
+    "team": "team:a1b2c3d4/ah2-tm4",
+    "name": "ah2-tm4",
+    "work_root": "/Users/example/git/repos/agent-tools",
+    "branch": "main",
+    "running": true,
+    "members": 4,
+    "working": 2,
+    "blocked": 1,
+    "needs_you": 4,
+    "waiting_on_you": 3,
+    "waiting_rows": [],
+    "in_progress_now": 0,
+    "stuck": 0,
+    "unfinished": 0,
+    "stuck_tasks": 0,
+    "state": "needs_you",
+    "in_flight": 0,
+    "stale": 0,
+    "stale_ids": [],
+    "streams_open": 1,
+    "streams_total": 1,
+    "items_done": 0,
+    "items_total": 0,
+    "plan_loaded": true,
+    "worktrees": 1,
+    "oldest_in_flight_at": null,
+    "updated_at": "2026-11-08T17:20:00.000Z",
+    "feed_newest_at": "2026-11-08T17:19:00.000Z",
+    "stale_at": null,
+    "quiet_at": null,
+    "held": false,
+    "ended": false,
+    "status": "live",
+    "alerts": [
+     {
+      "kind": "stuck",
+      "member": "member:a1b2c3d4/ah2-tm4/@orchestrator",
+      "since": "2026-11-08T17:06:00.000Z",
+      "text": "up next queued 14m · no one on it",
+      "title": "stuck",
+      "detail": "",
+      "audience": "orchestrator"
+     },
+     {
+      "kind": "needs_you",
+      "member": "member:a1b2c3d4/ah2-tm4/reviewer",
+      "since": "2026-11-08T17:16:00.000Z",
+      "text": "reviewer is waiting on you",
+      "title": "Decision",
+      "detail": ""
+     }
+    ],
+    "member_states": {
+     "member:a1b2c3d4/ah2-tm4/@orchestrator": {
+      "state": "working",
+      "liveness": "live",
+      "pane_id": "t1",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:20:00.000Z",
+      "item": "dispatching b337"
+     },
+     "member:a1b2c3d4/ah2-tm4/implementor": {
+      "state": "working",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:08:00.000Z",
+      "item": "ah msg next re-checks idle alarms"
+     },
+     "member:a1b2c3d4/ah2-tm4/reviewer": {
+      "state": "blocked",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:16:00.000Z",
+      "item": "waiting on you"
+     },
+     "member:a1b2c3d4/ah2-tm4/architect": {
+      "state": "idle",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T16:59:00.000Z"
+     }
+    }
+   }
+  },
+  {
+   "id": "team-summary:a1b2c3d4/lane-herdr",
+   "version": 838,
+   "as_of": 1794158400000,
+   "body": {
+    "team": "team:a1b2c3d4/lane-herdr",
+    "name": "lane-herdr",
+    "work_root": "/Users/example/git/repos/agent-tools",
+    "branch": "main",
+    "running": true,
+    "members": 3,
+    "working": 2,
+    "blocked": 0,
+    "needs_you": 0,
+    "waiting_on_you": 0,
+    "waiting_rows": [],
+    "in_progress_now": 0,
+    "stuck": 0,
+    "unfinished": 0,
+    "stuck_tasks": 0,
+    "state": "working",
+    "in_flight": 0,
+    "stale": 0,
+    "stale_ids": [],
+    "streams_open": 1,
+    "streams_total": 1,
+    "items_done": 0,
+    "items_total": 0,
+    "plan_loaded": true,
+    "worktrees": 1,
+    "oldest_in_flight_at": null,
+    "updated_at": "2026-11-08T17:20:00.000Z",
+    "feed_newest_at": "2026-11-08T17:19:00.000Z",
+    "stale_at": null,
+    "quiet_at": null,
+    "held": false,
+    "ended": false,
+    "status": "live",
+    "alerts": [],
+    "lane": {
+     "stream": "herdr",
+     "parent_team": "ah2-tm4",
+     "state": "open",
+     "manager_rev": null
+    },
+    "member_states": {
+     "member:a1b2c3d4/lane-herdr/@orchestrator": {
+      "state": "working",
+      "liveness": "live",
+      "pane_id": "t7",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:12:00.000Z",
+      "item": "atp-1088 ah2 inside herdr desktop"
+     },
+     "member:a1b2c3d4/lane-herdr/architect": {
+      "state": "working",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:14:00.000Z",
+      "item": "atp-1096 herdr UI design"
+     },
+     "member:a1b2c3d4/lane-herdr/ux-engineer": {
+      "state": "unknown",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:14:00.000Z"
+     }
+    }
+   }
+  },
+  {
+   "id": "team-summary:a1b2c3d4/old-spike",
+   "version": 700,
+   "as_of": 1794158400000,
+   "body": {
+    "team": "team:a1b2c3d4/old-spike",
+    "name": "old-spike",
+    "work_root": "/Users/example/git/repos/agent-tools",
+    "branch": "main",
+    "running": false,
+    "members": 0,
+    "working": 0,
+    "blocked": 0,
+    "needs_you": 0,
+    "waiting_on_you": 0,
+    "waiting_rows": [],
+    "in_progress_now": 0,
+    "stuck": 0,
+    "unfinished": 0,
+    "stuck_tasks": 0,
+    "state": "ended",
+    "in_flight": 0,
+    "stale": 0,
+    "stale_ids": [],
+    "streams_open": 1,
+    "streams_total": 1,
+    "items_done": 0,
+    "items_total": 0,
+    "plan_loaded": true,
+    "worktrees": 1,
+    "oldest_in_flight_at": null,
+    "updated_at": "2026-11-08T17:20:00.000Z",
+    "feed_newest_at": "2026-11-08T17:19:00.000Z",
+    "stale_at": null,
+    "quiet_at": null,
+    "held": false,
+    "ended": true,
+    "status": "ended",
+    "alerts": [],
+    "closed_mark": "closed",
+    "closed_at": "2026-11-08T12:20:00.000Z",
+    "member_states": {}
+   }
+  },
+  {
+   "id": "team-summary:9f8e7d6c/engram-rc",
+   "version": 833,
+   "as_of": 1794158400000,
+   "body": {
+    "team": "team:9f8e7d6c/engram-rc",
+    "name": "engram-rc",
+    "work_root": "/Users/example/git/repos/agent-tools",
+    "branch": "main",
+    "running": true,
+    "members": 2,
+    "working": 1,
+    "blocked": 0,
+    "needs_you": 0,
+    "waiting_on_you": 0,
+    "waiting_rows": [],
+    "in_progress_now": 0,
+    "stuck": 0,
+    "unfinished": 0,
+    "stuck_tasks": 0,
+    "state": "working",
+    "in_flight": 0,
+    "stale": 0,
+    "stale_ids": [],
+    "streams_open": 1,
+    "streams_total": 1,
+    "items_done": 0,
+    "items_total": 0,
+    "plan_loaded": true,
+    "worktrees": 1,
+    "oldest_in_flight_at": null,
+    "updated_at": "2026-11-08T17:20:00.000Z",
+    "feed_newest_at": "2026-11-08T17:19:00.000Z",
+    "stale_at": null,
+    "quiet_at": null,
+    "held": false,
+    "ended": false,
+    "status": "live",
+    "alerts": [
+     {
+      "kind": "error",
+      "member": "member:9f8e7d6c/engram-rc/implementor",
+      "since": "2026-11-08T15:20:00.000Z",
+      "text": "implementor exited with code 1",
+      "title": "Error",
+      "detail": ""
+     }
+    ],
+    "member_states": {
+     "member:9f8e7d6c/engram-rc/@orchestrator": {
+      "state": "working",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:18:00.000Z",
+      "item": "eg-412 recall ranking"
+     },
+     "member:9f8e7d6c/engram-rc/implementor": {
+      "state": "gone",
+      "liveness": "proven_dead",
+      "process": "not running",
+      "tool": "claude",
+      "state_at": "2026-11-08T15:20:00.000Z"
+     }
+    }
+   }
+  },
+  {
+   "id": "sitrep:a1b2c3d4/ah2-tm4",
+   "version": 841,
+   "as_of": 1794158400000,
+   "body": {
+    "regions": [
+     {
+      "col": "c",
+      "list": "completed",
+      "total": "completed_total",
+      "label": "Completed",
+      "optional": false,
+      "folded": false
+     },
+     {
+      "col": "p",
+      "list": "in_progress",
+      "total": "in_progress_total",
+      "label": "In progress",
+      "optional": false,
+      "folded": false
+     },
+     {
+      "col": "n",
+      "list": "up_next",
+      "total": null,
+      "label": "Up next",
+      "optional": false,
+      "folded": false
+     },
+     {
+      "col": "w",
+      "list": "waiting_on_you",
+      "total": "waiting_on_you_total",
+      "label": "Waiting on you",
+      "optional": true,
+      "folded": false
+     },
+     {
+      "col": "b",
+      "list": "blocked",
+      "total": "blocked_total",
+      "label": "Blocked",
+      "optional": true,
+      "folded": false
+     },
+     {
+      "col": "s",
+      "list": "not_moving",
+      "total": "not_moving_total",
+      "label": "Report in, no one on it",
+      "optional": true,
+      "folded": true
+     },
+     {
+      "col": "t",
+      "list": "stale",
+      "total": "stale_total",
+      "label": "Stale",
+      "optional": true,
+      "folded": true
+     },
+     {
+      "col": "o",
+      "list": "up_next_old",
+      "total": "up_next_old_total",
+      "label": "Up next, old",
+      "optional": true,
+      "folded": true
+     }
+    ],
+    "as_of": 1794158400000,
+    "completed_total": 6,
+    "in_progress_total": 3,
+    "blocked_total": 0,
+    "stale_total": 0,
+    "waiting_on_you_total": 1,
+    "not_moving_total": 0,
+    "up_next_old_total": 0,
+    "waiting_on_you": [
+     {
+      "kind": "decision",
+      "key": "20261108-161200-q7",
+      "title": "Ship b336 (idle-capacity re-check) to main?",
+      "team": "ah2-tm4",
+      "since": 1794158160000
+     }
+    ],
+    "in_progress": [
+     {
+      "key": "core:atp-1091",
+      "title": "ah msg next re-checks idle alarms",
+      "team": "ah2-tm4",
+      "stream": "core",
+      "lane": null,
+      "holder": "implementor",
+      "role": "implementor",
+      "state": "in_progress",
+      "work": "working",
+      "note": null,
+      "since": 1794157680000,
+      "last_activity": 1794158340000
+     },
+     {
+      "key": "herdr:atp-1088",
+      "title": "ah2 inside herdr desktop",
+      "team": "lane-herdr",
+      "stream": "herdr",
+      "lane": "lane-herdr",
+      "holder": "orchestrator",
+      "role": null,
+      "state": "in_progress",
+      "work": "working",
+      "note": null,
+      "since": 1794157920000,
+      "last_activity": 1794158280000
+     },
+     {
+      "key": "core:atp-1090",
+      "title": "StallHost journal flake",
+      "team": "ah2-tm4",
+      "stream": "core",
+      "lane": null,
+      "holder": "reviewer",
+      "role": "reviewer",
+      "state": "in_review",
+      "work": "working",
+      "note": null,
+      "since": 1794158160000,
+      "last_activity": 1794158160000
+     }
+    ],
+    "blocked": [],
+    "stale": [],
+    "not_moving": [],
+    "completed": [
+     {
+      "kind": "ship",
+      "key": "ship:69ab044:ship-103",
+      "sha": "69ab044c9",
+      "ref": "ship-103",
+      "team": "ah2-tm4",
+      "lane": null,
+      "at": 1794154860000
+     },
+     {
+      "kind": "ship",
+      "key": "ship:bd01002:ship-102",
+      "sha": "bd010021a",
+      "ref": "ship-102",
+      "team": "ah2-tm4",
+      "lane": null,
+      "at": 1794150120000
+     }
+    ],
+    "up_next": [
+     {
+      "key": "core:atp-1093",
+      "title": "Queue stall shows owner role",
+      "team": "ah2-tm4",
+      "stream": "core",
+      "lane": null,
+      "role": null,
+      "queued_since": 1794157560000,
+      "stall_at": 1794158280000,
+      "idle_eligible": true,
+      "could_take": [],
+      "source": "queue"
+     },
+     {
+      "key": "core:atp-1094",
+      "title": "Rules dialog: Accept proposed",
+      "team": "ah2-tm4",
+      "stream": "core",
+      "lane": null,
+      "role": "implementor",
+      "queued_since": 1794157860000,
+      "stall_at": null,
+      "idle_eligible": false,
+      "could_take": [
+       "implementor"
+      ],
+      "source": "queue"
+     }
+    ],
+    "up_next_old": []
+   }
+  },
+  {"id":"sitrep:a1b2c3d4/lane-herdr","version":841,"as_of":1794158400000,"body":{"regions":[{"col":"c","list":"completed","total":"completed_total","label":"Completed","optional":false,"folded":false},{"col":"p","list":"in_progress","total":"in_progress_total","label":"In progress","optional":false,"folded":false},{"col":"n","list":"up_next","total":null,"label":"Up next","optional":false,"folded":false},{"col":"w","list":"waiting_on_you","total":"waiting_on_you_total","label":"Waiting on you","optional":true,"folded":false},{"col":"b","list":"blocked","total":"blocked_total","label":"Blocked","optional":true,"folded":false},{"col":"s","list":"not_moving","total":"not_moving_total","label":"Report in, no one on it","optional":true,"folded":true},{"col":"t","list":"stale","total":"stale_total","label":"Stale","optional":true,"folded":true},{"col":"o","list":"up_next_old","total":"up_next_old_total","label":"Up next, old","optional":true,"folded":true}],"as_of":1794158400000,"completed_total":1,"in_progress_total":1,"blocked_total":0,"stale_total":0,"waiting_on_you_total":0,"not_moving_total":0,"up_next_old_total":0,"waiting_on_you":[],"blocked":[],"not_moving":[],"stale":[],"up_next_old":[],"in_progress":[{"key":"herdr:atp-1088","title":"ah2 inside herdr desktop","team":"lane-herdr","stream":"herdr","lane":null,"holder":"ux-engineer","role":"ux-engineer","state":"in_progress","work":"working","note":null,"since":1794157920000,"last_activity":1794158340000}],"up_next":[{"key":"herdr:atp-1102","title":"Feed window keeps its scroll on redraw","team":"lane-herdr","stream":"herdr","lane":null,"role":"ux-engineer","queued_since":1794156600000,"stall_at":null,"idle_eligible":false,"could_take":["ux-engineer"],"source":"queue"}],"completed":[{"kind":"item","key":"herdr:atp-1087","title":"Sidebar tab strip","team":"lane-herdr","done_at":1794152700000}]}},
+  {"id":"sitrep:9f8e7d6c/engram-rc","version":841,"as_of":1794158400000,"body":{"regions":[{"col":"c","list":"completed","total":"completed_total","label":"Completed","optional":false,"folded":false},{"col":"p","list":"in_progress","total":"in_progress_total","label":"In progress","optional":false,"folded":false},{"col":"n","list":"up_next","total":null,"label":"Up next","optional":false,"folded":false},{"col":"w","list":"waiting_on_you","total":"waiting_on_you_total","label":"Waiting on you","optional":true,"folded":false},{"col":"b","list":"blocked","total":"blocked_total","label":"Blocked","optional":true,"folded":false},{"col":"s","list":"not_moving","total":"not_moving_total","label":"Report in, no one on it","optional":true,"folded":true},{"col":"t","list":"stale","total":"stale_total","label":"Stale","optional":true,"folded":true},{"col":"o","list":"up_next_old","total":"up_next_old_total","label":"Up next, old","optional":true,"folded":true}],"as_of":1794158400000,"completed_total":1,"in_progress_total":1,"blocked_total":0,"stale_total":0,"waiting_on_you_total":0,"not_moving_total":0,"up_next_old_total":0,"waiting_on_you":[],"blocked":[],"not_moving":[],"stale":[],"up_next_old":[],"in_progress":[{"key":"core:eng-412","title":"Recall ranks pinned facts first","team":"engram-rc","stream":"core","lane":null,"holder":"implementor","role":"implementor","state":"in_progress","work":"working","note":null,"since":1794157080000,"last_activity":1794158220000}],"up_next":[],"completed":[{"kind":"merge","key":"merge:1c2d3e4","sha":"1c2d3e4f5","ref":"eng-409","team":"engram-rc","lane":null,"at":1794064800000}]}},
+  {
+   "id": "questions:a1b2c3d4/ah2-tm4",
+   "version": 841,
+   "as_of": 1794158400000,
+   "body": {
+    "run": "20261108-150000-k3vd",
+    "dir": "/Users/example/git/repos/agent-tools/.claude/ah2",
+    "open": [
+     {
+      "id": "d7",
+      "at": 1794158160000,
+      "asker": "orchestrator@ah2-tm4",
+      "source": "b336",
+      "header": "b336",
+      "text": "Ship b336 (idle-capacity re-check) to main?",
+      "options": [{ "label": "Ship it" }, { "label": "Hold for QA" }, { "label": "Drop it" }],
+      "default": "Ship it"
+     },
+     {
+      "id": "d8",
+      "at": 1794157800000,
+      "asker": "orchestrator@ah2-tm4",
+      "header": "atp-1131",
+      "text": "Which surfaces get the new Needs-you badge?",
+      "options": [{ "label": "Sidebar" }, { "label": "Sitrep window" }, { "label": "Q&A window" }, { "label": "Status line" }],
+      "options_total": 6,
+      "multi": true
+     }
+    ],
+    "recent": [
+     { "id": "d6", "text": "Keep the sidebar width at 268 px?", "header": "atp-1088", "answer": "Yes", "by": "user", "at": 1794156000000 },
+     { "id": "d5", "text": "Merge lane-herdr into main after QA?", "header": "ship-106", "answer": "After QA", "by": "surrogate", "at": 1794154200000 },
+     { "id": "d4", "text": "Stamp herdr answers caller herdr?", "header": "atp-1136", "answer": "Yes", "by": "rule", "at": 1794152400000 }
+    ],
+    "open_total": 2,
+    "truncated": false,
+    "waiting_total": 3,
+    "items": [
+     {
+      "key": "core:atp-1140",
+      "item": "atp-1140",
+      "stream": "core",
+      "title": "Pick the Q&A history depth",
+      "text": "How many answered questions should History keep per team?",
+      "options": ["10 (open runs)", "50 (needs a list verb)"],
+      "since": "2026-11-08T17:05:00.000Z",
+      "owner": "architect",
+      "work_id": "atp-1140"
+     }
+    ]
+   }
+  },
+  {
+   "id": "plan:a1b2c3d4/ah2-tm4",
+   "version": 830,
+   "as_of": 1794158100000,
+   "body": {
+    "team": "ah2-tm4",
+    "dir_id": "a1b2c3d4",
+    "work_root": "/work/ah",
+    "streams": [
+     {
+      "stream": "core",
+      "owner": "implementor",
+      "branch": "ah/core",
+      "work_tree": ".",
+      "goal": "Herdr desktop: Q&A and board",
+      "state": "open",
+      "source": "checklist",
+      "counts": {
+       "in_progress": 1,
+       "in_review": 1,
+       "waiting_user": 1,
+       "next": 1,
+       "not_started": 1,
+       "done": 1
+      },
+      "total": 6,
+      "as_of": 1794158100000
+     },
+     {
+      "stream": "web",
+      "owner": "ux-engineer",
+      "branch": "ah/web",
+      "work_tree": ".",
+      "goal": "Web UI fixes",
+      "state": "open",
+      "source": "checklist",
+      "counts": {
+       "blocked": 1,
+       "in_progress": 1,
+       "done": 1
+      },
+      "total": 3,
+      "as_of": 1794158100000
+     }
+    ],
+    "as_of": 1794158100000
+   }
+  },
+  {
+   "id": "plan-items:a1b2c3d4/ah2-tm4/core",
+   "version": 830,
+   "as_of": 1794158100000,
+   "body": {
+    "stream": "core",
+    "items": [
+     {
+      "key": "core:atp-1136",
+      "title": "Q&A answer verb",
+      "state": "in_progress",
+      "column": "progress",
+      "owner": "implementor",
+      "holder": "implementor",
+      "state_since": "2026-11-08T16:30:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "core:atp-1138",
+      "title": "Sidebar foot strip",
+      "state": "in_review",
+      "column": "review",
+      "owner": "reviewer",
+      "holder": "reviewer",
+      "state_since": "2026-11-08T17:00:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "core:atp-1140",
+      "title": "Pick the Q&A history depth",
+      "state": "waiting_user",
+      "column": "waiting",
+      "owner": "architect",
+      "holder": "architect",
+      "state_since": "2026-11-08T17:05:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "core:atp-1142",
+      "title": "Board view in the mod",
+      "state": "next",
+      "column": "next",
+      "owner": "",
+      "state_since": "2026-11-08T15:50:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "core:atp-1143",
+      "title": "Feed view in the mod",
+      "state": "not_started",
+      "column": "next",
+      "owner": "",
+      "state_since": "2026-11-08T13:20:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "core:atp-1131",
+      "title": "Needs-you badge surfaces",
+      "state": "done",
+      "column": "done",
+      "owner": "implementor",
+      "holder": "implementor",
+      "state_since": "2026-11-08T15:20:00.000Z",
+      "done_seen_at": 1794151200000
+     }
+    ],
+    "truncated": false
+   }
+  },
+  {
+   "id": "plan-items:a1b2c3d4/ah2-tm4/web",
+   "version": 830,
+   "as_of": 1794158100000,
+   "body": {
+    "stream": "web",
+    "items": [
+     {
+      "key": "web:b341",
+      "title": "Merge-train flake on macOS runners",
+      "state": "blocked",
+      "column": "stuck",
+      "owner": "implementor",
+      "holder": "implementor",
+      "state_since": "2026-11-08T14:20:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "web:b338",
+      "title": "Long kanban titles wrap and keep their full text in the tooltip, never cut mid-word",
+      "state": "in_progress",
+      "column": "progress",
+      "owner": "ux-engineer",
+      "holder": "ux-engineer",
+      "state_since": "2026-11-08T16:45:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "web:b330",
+      "title": "Inbox row spacing",
+      "state": "done",
+      "column": "done",
+      "owner": "ux-engineer",
+      "holder": "ux-engineer",
+      "state_since": "2026-11-08T13:20:00.000Z",
+      "done_seen_at": 1794144000000
+     }
+    ],
+    "truncated": false
+   }
+  },
+  {
+   "id": "plan:a1b2c3d4/lane-herdr",
+   "version": 830,
+   "as_of": 1794158100000,
+   "body": {
+    "team": "lane-herdr",
+    "dir_id": "a1b2c3d4",
+    "work_root": "/work/ah/.claude/worktrees/lane-herdr",
+    "streams": [
+     {
+      "stream": "herdr",
+      "owner": "ux-engineer",
+      "branch": "ah/herdr",
+      "work_tree": ".",
+      "goal": "Herdr views",
+      "state": "open",
+      "source": "checklist",
+      "counts": {
+       "in_progress": 1,
+       "next": 1,
+       "done": 1
+      },
+      "total": 3,
+      "as_of": 1794158100000
+     }
+    ],
+    "as_of": 1794158100000
+   }
+  },
+  {
+   "id": "list:plan-changes:a1b2c3d4/lane-herdr",
+   "version": 3,
+   "as_of": 1794158400000,
+   "body": {
+    "rows": [
+     {
+      "at": "2026-11-08T17:18:00.000Z",
+      "seq": 3,
+      "stream": "herdr",
+      "item": "atp-1185",
+      "kind": "state",
+      "from": "next",
+      "to": "in_progress",
+      "by": "ux-engineer@lane-herdr"
+     },
+     {
+      "at": "2026-11-08T17:05:00.000Z",
+      "seq": 2,
+      "stream": "herdr",
+      "item": "atp-1180",
+      "kind": "state",
+      "from": "in_review",
+      "to": "done",
+      "by": "orchestrator@lane-herdr"
+     },
+     {
+      "at": "2026-11-08T16:20:00.000Z",
+      "seq": 1,
+      "stream": "herdr",
+      "item": "atp-1186",
+      "kind": "added",
+      "from": null,
+      "to": "next",
+      "by": "orchestrator@lane-herdr"
+     }
+    ],
+    "total": 3,
+    "tail_cursor": null
+   }
+  },
+  {
+   "id": "plan-items:a1b2c3d4/lane-herdr/herdr",
+   "version": 830,
+   "as_of": 1794158100000,
+   "body": {
+    "stream": "herdr",
+    "items": [
+     {
+      "key": "herdr:atp-1185",
+      "title": "Herdr board view",
+      "state": "in_progress",
+      "column": "progress",
+      "owner": "ux-engineer",
+      "holder": "ux-engineer",
+      "state_since": "2026-11-08T16:55:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "herdr:atp-1186",
+      "title": "Herdr feed view",
+      "state": "next",
+      "column": "next",
+      "owner": "",
+      "state_since": "2026-11-08T16:20:00.000Z",
+      "done_seen_at": null
+     },
+     {
+      "key": "herdr:atp-1180",
+      "title": "Questions model as a copy, not a symlink",
+      "state": "done",
+      "column": "done",
+      "owner": "implementor",
+      "holder": "implementor",
+      "state_since": "2026-11-08T16:20:00.000Z",
+      "done_seen_at": 1794154800000
+     }
+    ],
+    "truncated": false
+   }
+  },
+  {"id": "team:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"name": "ah2-tm4", "dir_id": "a1b2c3d4", "orchestrator": "member:a1b2c3d4/ah2-tm4/@orchestrator", "members": ["member:a1b2c3d4/ah2-tm4/implementor", "member:a1b2c3d4/ah2-tm4/reviewer", "member:a1b2c3d4/ah2-tm4/architect"], "worktrees": []}},
+  {"id": "member:a1b2c3d4/ah2-tm4/@orchestrator", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/ah2-tm4/@orchestrator", "name": "orchestrator", "role": "orchestrator", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:a1b2c3d4/ah2-tm4/implementor", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/ah2-tm4/implementor", "name": "implementor", "role": "implementor", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:a1b2c3d4/ah2-tm4/reviewer", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/ah2-tm4/reviewer", "name": "reviewer", "role": "reviewer", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:a1b2c3d4/ah2-tm4/architect", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/ah2-tm4/architect", "name": "architect", "role": "architect", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "flow:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"run": "ah-run-8f2", "start_ms": 1794147600000, "oldest_ms": 1794147600000, "truncated": false, "names": ["member:a1b2c3d4/ah2-tm4/@orchestrator", "member:a1b2c3d4/ah2-tm4/implementor", "member:a1b2c3d4/ah2-tm4/reviewer", "member:a1b2c3d4/ah2-tm4/architect"], "totals": [[0, 1, 9, 0], [1, 0, 0, 8], [1, 2, 4, 0], [0, 3, 3, 0], [3, 0, 0, 3], [2, 1, 0, 3], [0, 2, 1, 0], [-1, -1, 2, 1]], "page_size": 500, "pages_rev": "0", "pages": [], "tail": [[736, 2, 1, 1], [910, 1, 2, 0], [970, 0, 1, 0], [987, 0, 1, 0], [1001, 1, 2, 0], [1156, 0, 1, 0], [1193, 1, 0, 1], [1285, 0, 1, 0], [2974, 2, 1, 1], [3059, 0, 3, 0], [3448, 1, 0, 1], [3603, 3, 0, 1], [3617, 1, 0, 1], [5371, 1, 0, 1], [5475, 1, 0, 1], [5648, 3, 0, 1], [5652, 2, 1, 1], [5842, 0, 3, 0], [6144, 0, 1, 0], [8257, 3, 0, 1], [8350, 0, 2, 0], [8355, 0, 1, 0], [8428, 1, 0, 1], [8962, 0, 1, 0], [9614, 0, 3, 0], [9835, 1, 2, 0], [9894, 0, 1, 0], [9926, 1, 2, 0], [10145, 0, 1, 0], [10225, 1, 0, 1], [10433, 1, 0, 1]]}},
+  {"id": "list:open:team:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/ah2-tm4", "open": [{"id": "exchange:a1b2c3d4/20261108-171500-b337", "from_member": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to_member": "member:a1b2c3d4/ah2-tm4/implementor"}, {"id": "exchange:a1b2c3d4/20261108-171600-r337", "from_member": "member:a1b2c3d4/ah2-tm4/implementor", "to_member": "member:a1b2c3d4/ah2-tm4/reviewer"}]}},
+  {"id": "topology:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/ah2-tm4", "nodes": {"members": [], "worktrees": []}, "edges": {"brief": [{"id": "exchange:a1b2c3d4/20261108-171600-r337", "brief": "review"}]}}},
+  {"id": "exchange:a1b2c3d4/20261108-171500-b337", "version": 850, "as_of": 1794158400000, "body": {"slug": "b337-idle-alarms", "title": "b337-idle-alarms", "open": true, "dir_id": "a1b2c3d4", "team": "ah2-tm4"}},
+  {"id": "exchange:a1b2c3d4/20261108-171600-r337", "version": 850, "as_of": 1794158400000, "body": {"slug": "review-b337", "title": "review-b337", "open": true, "dir_id": "a1b2c3d4", "team": "ah2-tm4"}},
+  {"id": "team:a1b2c3d4/lane-herdr", "version": 850, "as_of": 1794158400000, "body": {"name": "lane-herdr", "dir_id": "a1b2c3d4", "orchestrator": "member:a1b2c3d4/lane-herdr/@orchestrator", "members": ["member:a1b2c3d4/lane-herdr/architect", "member:a1b2c3d4/lane-herdr/ux-engineer"], "worktrees": [], "lane": {"stream": "herdr", "parent_team": "ah2-tm4", "state": "open"}}},
+  {"id": "member:a1b2c3d4/lane-herdr/@orchestrator", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/lane-herdr/@orchestrator", "name": "orchestrator", "role": "sub-orchestrator", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:a1b2c3d4/lane-herdr/architect", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/lane-herdr/architect", "name": "architect", "role": "architect", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:a1b2c3d4/lane-herdr/ux-engineer", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/lane-herdr/ux-engineer", "name": "ux-engineer", "role": "ux-engineer", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "flow:a1b2c3d4/lane-herdr", "version": 850, "as_of": 1794158400000, "body": {"run": "ah-run-3c1", "start_ms": 1794147600000, "oldest_ms": 1794147600000, "truncated": false, "names": ["member:a1b2c3d4/lane-herdr/@orchestrator", "member:a1b2c3d4/lane-herdr/architect", "member:a1b2c3d4/lane-herdr/ux-engineer"], "totals": [[0, 1, 3, 0], [1, 0, 0, 2], [0, 2, 1, 0]], "page_size": 500, "pages_rev": "0", "pages": [], "tail": [[5267, 0, 1, 0], [9148, 0, 2, 0], [9415, 1, 0, 1], [9449, 0, 1, 0], [9555, 0, 1, 0], [9769, 1, 0, 1]]}},
+  {"id": "list:open:team:a1b2c3d4/lane-herdr", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/lane-herdr", "open": [{"id": "exchange:a1b2c3d4/20261108-171400-g191", "from_member": "member:a1b2c3d4/lane-herdr/@orchestrator", "to_member": "member:a1b2c3d4/lane-herdr/ux-engineer"}]}},
+  {"id": "topology:a1b2c3d4/lane-herdr", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/lane-herdr", "nodes": {"members": [], "worktrees": []}, "edges": {"brief": []}}},
+  {"id": "exchange:a1b2c3d4/20261108-171400-g191", "version": 850, "as_of": 1794158400000, "body": {"slug": "herdr-view-graph", "title": "herdr-view-graph", "open": true, "dir_id": "a1b2c3d4", "team": "lane-herdr"}},
+  {"id": "team:9f8e7d6c/engram-rc", "version": 850, "as_of": 1794158400000, "body": {"name": "engram-rc", "dir_id": "9f8e7d6c", "orchestrator": "member:9f8e7d6c/engram-rc/@orchestrator", "members": ["member:9f8e7d6c/engram-rc/implementor"], "worktrees": []}},
+  {"id": "member:9f8e7d6c/engram-rc/@orchestrator", "version": 850, "as_of": 1794158400000, "body": {"id": "member:9f8e7d6c/engram-rc/@orchestrator", "name": "orchestrator", "role": "orchestrator", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "member:9f8e7d6c/engram-rc/implementor", "version": 850, "as_of": 1794158400000, "body": {"id": "member:9f8e7d6c/engram-rc/implementor", "name": "implementor", "role": "implementor", "placement": {"stream": "main"}, "last_exchanges": []}},
+  {"id": "flow:9f8e7d6c/engram-rc", "version": 850, "as_of": 1794158400000, "body": {"run": null, "start_ms": 1794147600000, "oldest_ms": null, "truncated": false, "names": ["member:9f8e7d6c/engram-rc/@orchestrator", "member:9f8e7d6c/engram-rc/implementor"], "totals": [], "page_size": 500, "pages_rev": "0", "pages": [], "tail": []}},
+  {"id": "list:open:team:9f8e7d6c/engram-rc", "version": 850, "as_of": 1794158400000, "body": {"team": "team:9f8e7d6c/engram-rc", "open": []}},
+  {"id": "topology:9f8e7d6c/engram-rc", "version": 850, "as_of": 1794158400000, "body": {"team": "team:9f8e7d6c/engram-rc", "nodes": {"members": [], "worktrees": []}, "edges": {"brief": []}}},
+  {"id": "item-desc:a1b2c3d4/1140", "version": 843, "as_of": 1794158400000, "body": {"id": "atp-1140", "description": "**What is asked**\nHow many answered questions History keeps per team. It reaches you because it changes what you can look back on.\n\n**Options**\n- 10 (open runs): the slice as it is; no new verb.\n- 50 (needs a list verb): adds `ah msg history --team <t> --limit 50`.\n- Not needed: History stays at 10 and the item closes.\n\n**Where**\n`herdr-desktop/mods/ah2/qa.js` draws History; the cap is `HISTORY_CAP` in `model.js`.\n"}}
+ ],
+ "removed": [],
+ "data_stale": false,
+ "observed_at": "2026-11-08T17:20:00.000Z"
+}

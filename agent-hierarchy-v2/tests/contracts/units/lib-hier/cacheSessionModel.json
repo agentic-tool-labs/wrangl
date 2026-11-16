@@ -1,0 +1,86 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "cacheSessionModel",
+  "cases": [
+    {
+      "id": "records-a-model-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        "opus"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": {
+          "$jsonl": [
+            {
+              "type": "model",
+              "session_id": "s1",
+              "model": "opus",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-session-no-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "",
+        "opus"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-model-no-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "empty-model-no-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

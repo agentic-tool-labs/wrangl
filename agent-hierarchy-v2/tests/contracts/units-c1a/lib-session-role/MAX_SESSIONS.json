@@ -1,0 +1,12 @@
+{
+  "lib": "lib-session-role",
+  "module": "hooks/lib-session-role.mjs",
+  "fn": "MAX_SESSIONS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 50
+    }
+  ]
+}

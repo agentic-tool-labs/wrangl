@@ -1,0 +1,70 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "refExists",
+  "cases": [
+    {
+      "id": "exists",
+      "args": [
+        "$ROOT/repo",
+        "refs/remotes/origin/main"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/repo",
+        "refs/remotes/origin/nope"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/nope^{commit}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "sha-ref",
+      "args": [
+        "$ROOT/repo",
+        "abc123"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q abc123^{commit}') printf '%s' 'abc123\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo rev-parse --verify -q abc123^{commit}\n"
+      },
+      "expect": true
+    }
+  ]
+}

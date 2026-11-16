@@ -1,0 +1,166 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "entryMarkers",
+  "cases": [
+    {
+      "id": "both-forms",
+      "args": [
+        "x [ah-entry a1,b2] y [ah-entry c3 to tm-x@tm] [ah-entry bad id] [ah-entry d4 to nope]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "c3"
+          ],
+          "address": "tm-x@tm"
+        },
+        {
+          "ids": [
+            "a1",
+            "b2"
+          ],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": []
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "number-is-stringified",
+      "args": [
+        12345
+      ],
+      "expect": []
+    },
+    {
+      "id": "empty-pieces-dropped",
+      "args": [
+        "[ah-entry a,,b,]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "a",
+            "b"
+          ],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "only-commas-yield-empty-ids",
+      "args": [
+        "[ah-entry ,]"
+      ],
+      "expect": [
+        {
+          "ids": [],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "to-form-needs-an-at",
+      "args": [
+        "[ah-entry c3 to nope]"
+      ],
+      "expect": []
+    },
+    {
+      "id": "to-form-with-dots-and-dashes",
+      "args": [
+        "[ah-entry c.3-x_y to tm-x.y@tm-z]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "c.3-x_y"
+          ],
+          "address": "tm-x.y@tm-z"
+        }
+      ]
+    },
+    {
+      "id": "repeated-markers-keep-order",
+      "args": [
+        "[ah-entry a] [ah-entry b] [ah-entry c to o@t] [ah-entry d]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "c"
+          ],
+          "address": "o@t"
+        },
+        {
+          "ids": [
+            "a"
+          ],
+          "address": null
+        },
+        {
+          "ids": [
+            "b"
+          ],
+          "address": null
+        },
+        {
+          "ids": [
+            "d"
+          ],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "marker-inside-text-line",
+      "args": [
+        "see [ah-entry z9] and more"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "z9"
+          ],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "slash-in-id-is-not-a-marker",
+      "args": [
+        "[ah-entry ../x]"
+      ],
+      "expect": []
+    },
+    {
+      "id": "unclosed",
+      "args": [
+        "[ah-entry a1"
+      ],
+      "expect": []
+    }
+  ]
+}

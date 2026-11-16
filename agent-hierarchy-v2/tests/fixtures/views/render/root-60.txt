@@ -1,0 +1,8 @@
+ah
+────────────────────────────────────────────────────────────
+  orchestrator  state    #teams members live working blocked
+> repoA · no o… none          1       1    0       0       0
+  repoA · pid … live          3       5    3       1       2
+  repoB · pid … orphaned      1       1    0       0       0
+────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane…

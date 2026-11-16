@@ -1,0 +1,49 @@
+{
+  "kind": "hook",
+  "id": "h4-session-id-escapes-session-folder",
+  "about": "a session id that climbs out of its own folder reads a transcript the native hook refuses to follow (divergence ledger)",
+  "tree": "hook-subagent-usage-sibling-session",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagentstop-usage",
+    "event": {
+      "hook_event_name": "SubagentStop",
+      "session_id": "../other-session",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "agent_id": "a-1",
+      "agent_type": "ah:implementor"
+    }
+  },
+  "mutant": "path component not checked",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/agent-hierarchy.usage.jsonl",
+          "mode": "0644",
+          "content": "{\"ts\":\"<ISO:1>\",\"session_id\":\"../other-session\",\"agent_id\":\"a-1\",\"agent_type\":\"ah:implementor\",\"project_dir\":\"<ROOT:home>/.claude/projects/contract\",\"found\":true,\"model\":\"claude-opus\",\"calls\":1,\"in\":10,\"out\":1,\"cache_read\":0,\"cache_create\":0,\"op_id\":\"<OPID:1>\"}\n"
+        },
+        {
+          "path": "home/.claude/agent-hierarchy.usage.state/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"<OPID:1>\",\"at\":\"<ISO:2>\",\"result\":{\"appended\":true}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T06:24:53.830Z"
+  }
+}

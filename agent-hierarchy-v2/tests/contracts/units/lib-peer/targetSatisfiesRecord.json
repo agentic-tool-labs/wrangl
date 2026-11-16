@@ -1,0 +1,110 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "targetSatisfiesRecord",
+  "cases": [
+    {
+      "id": "to-matches-from",
+      "args": [
+        "uds:/tmp/a.sock",
+        {
+          "from": "uds:/tmp/a.sock",
+          "from_name": "orch",
+          "reply_to": "sender"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "to-matches-from-name",
+      "args": [
+        "orch",
+        {
+          "from": "uds:/tmp/a.sock",
+          "from_name": "orch",
+          "reply_to": "sender"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "to-matches-reply-to",
+      "args": [
+        "third",
+        {
+          "from": "uds:/tmp/a.sock",
+          "from_name": "orch",
+          "reply_to": "third"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "reply-to-sender-never-matches-by-name",
+      "args": [
+        "sender",
+        {
+          "from": "x",
+          "from_name": "y",
+          "reply_to": "sender"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "ref-stripped-from-to",
+      "args": [
+        "orch [3fa9c1]",
+        {
+          "from": "x",
+          "from_name": "orch",
+          "reply_to": "sender"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-match",
+      "args": [
+        "zzz",
+        {
+          "from": "x",
+          "from_name": "y",
+          "reply_to": "w"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "record-without-fields",
+      "args": [
+        "x",
+        {}
+      ],
+      "expect": false
+    },
+    {
+      "id": "to-not-a-string",
+      "args": [
+        5,
+        {
+          "from": "x",
+          "from_name": "y"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-to",
+      "args": [
+        "",
+        {
+          "from": "",
+          "from_name": "",
+          "reply_to": ""
+        }
+      ],
+      "expect": false
+    }
+  ]
+}

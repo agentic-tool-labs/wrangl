@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "to": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "eta": {
+      "type": "string"
+    },
+    "to_name": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "team": {
+      "type": "string"
+    },
+    "team_file": {
+      "type": "string"
+    },
+    "team_guide": {
+      "type": "string"
+    },
+    "created": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "created",
+    "eta",
+    "from",
+    "from_name",
+    "id",
+    "parent",
+    "reason",
+    "slug",
+    "team",
+    "team_file",
+    "team_guide",
+    "to",
+    "to_name",
+    "type"
+  ],
+  "additionalProperties": true,
+  "description": "the parsed frontmatter; line format in frontmatter.md"
+}

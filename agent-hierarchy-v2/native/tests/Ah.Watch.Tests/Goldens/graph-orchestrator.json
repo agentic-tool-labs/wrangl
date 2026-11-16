@@ -1,0 +1,141 @@
+{
+  "view_schema": 1,
+  "kind": "graph",
+  "id": "/o/o.101",
+  "path": "/graph/o/o.101",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "orchestrator",
+      "id": "/o/o.101",
+      "label": "repo · pid 101",
+      "path": "/o/o.101"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "nodes": 5,
+    "edges": 5
+  },
+  "children": [],
+  "body": {
+    "nodes": [
+      {
+        "id": "/o/o.101",
+        "kind": "orchestrator",
+        "role": "orchestrator",
+        "state": "live",
+        "label": "repo · pid 101",
+        "team": null,
+        "order": 0
+      },
+      {
+        "id": "/o/o.101/t/boxes/m/impl",
+        "kind": "member",
+        "role": "implementor",
+        "model": "sonnet",
+        "model_short": "sonnet",
+        "state": "busy",
+        "label": "impl",
+        "team": "boxes",
+        "order": 1
+      },
+      {
+        "id": "/o/o.101/t/boxes/m/rev",
+        "kind": "member",
+        "role": "reviewer",
+        "model": "sonnet",
+        "model_short": "sonnet",
+        "state": "idle",
+        "label": "rev",
+        "team": "boxes",
+        "order": 2
+      },
+      {
+        "id": "/o/o.101/t/boxes/s/tui",
+        "kind": "stream",
+        "role": null,
+        "state": "ok",
+        "label": "tui",
+        "team": "boxes",
+        "order": 3
+      },
+      {
+        "id": "peer:beta",
+        "kind": "peer",
+        "role": null,
+        "state": "unknown",
+        "label": "beta",
+        "team": null,
+        "order": 4
+      }
+    ],
+    "edges": [
+      {
+        "id": "mail:/o/o.101>/o/o.101/t/boxes/m/impl",
+        "kind": "mail",
+        "from": "/o/o.101",
+        "to": "/o/o.101/t/boxes/m/impl",
+        "direction": "out",
+        "age_ms": 120000,
+        "fresh": true,
+        "mail_id": "m1",
+        "mail_path": "/o/o.101/t/boxes/m/impl/mail/m1"
+      },
+      {
+        "id": "mesh:l1:peer:beta",
+        "kind": "mesh",
+        "from": "/o/o.101",
+        "to": "peer:beta",
+        "direction": "both",
+        "age_ms": 180000,
+        "fresh": false
+      },
+      {
+        "id": "stream:/o/o.101/t/boxes/s/tui>/o/o.101/t/boxes/m/impl",
+        "kind": "stream",
+        "from": "/o/o.101/t/boxes/s/tui",
+        "to": "/o/o.101/t/boxes/m/impl",
+        "direction": "both",
+        "age_ms": null,
+        "fresh": false
+      },
+      {
+        "id": "team:/o/o.101/t/boxes/m/impl",
+        "kind": "team",
+        "from": "/o/o.101",
+        "to": "/o/o.101/t/boxes/m/impl",
+        "direction": "out",
+        "age_ms": null,
+        "fresh": false
+      },
+      {
+        "id": "team:/o/o.101/t/boxes/m/rev",
+        "kind": "team",
+        "from": "/o/o.101",
+        "to": "/o/o.101/t/boxes/m/rev",
+        "direction": "out",
+        "age_ms": null,
+        "fresh": false
+      }
+    ],
+    "hints": {
+      "team_order": [
+        "boxes"
+      ],
+      "member_order_in_team": {
+        "boxes": [
+          "impl",
+          "rev"
+        ]
+      },
+      "centre": "/o/o.101"
+    }
+  },
+  "rev": "bb146abed27f7c06"
+}

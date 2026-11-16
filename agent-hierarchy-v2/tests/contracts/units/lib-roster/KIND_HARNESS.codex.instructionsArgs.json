@@ -1,0 +1,47 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.instructionsArgs",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "/tmp/x/instructions.md"
+      ],
+      "expect": [
+        "-c",
+        "model_instructions_file=\"/tmp/x/instructions.md\""
+      ]
+    },
+    {
+      "id": "quote-and-backslash",
+      "args": [
+        "/tmp/a\"b\\c"
+      ],
+      "expect": [
+        "-c",
+        "model_instructions_file=\"/tmp/a\\\"b\\\\c\""
+      ]
+    },
+    {
+      "id": "control-chars",
+      "args": [
+        "/tmp/a\nb\tcd\u0001"
+      ],
+      "expect": [
+        "-c",
+        "model_instructions_file=\"/tmp/a\\u000ab\\u0009c\\u007fd\\u0001\""
+      ]
+    },
+    {
+      "id": "non-ascii",
+      "args": [
+        "/tmp/é/中"
+      ],
+      "expect": [
+        "-c",
+        "model_instructions_file=\"/tmp/é/中\""
+      ]
+    }
+  ]
+}

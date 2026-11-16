@@ -1,0 +1,38 @@
+{
+  "kind": "cli",
+  "id": "no-orchestrator",
+  "about": "link-request names its target and the task",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "link-request",
+      "--to",
+      "tm-reviewer@tm",
+      "--task",
+      "20260101-000000-cccc",
+      "--why",
+      "contract",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "error: bad_request: link-request is a member's: it asks the Orchestrator of your team for a link\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a link request with no task",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:42.129Z"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "ID_RE",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "20260601-120000-abcd"
+      ],
+      "expect": true
+    },
+    {
+      "id": "digits-in-suffix",
+      "args": [
+        "20260601-120000-0a9z"
+      ],
+      "expect": true
+    },
+    {
+      "id": "uppercase-suffix",
+      "args": [
+        "20260601-120000-ABCD"
+      ],
+      "expect": false
+    },
+    {
+      "id": "short-suffix",
+      "args": [
+        "20260601-120000-abc"
+      ],
+      "expect": false
+    },
+    {
+      "id": "long-suffix",
+      "args": [
+        "20260601-120000-abcde"
+      ],
+      "expect": false
+    },
+    {
+      "id": "short-date",
+      "args": [
+        "2026061-120000-abcd"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "20260601-120000-abcd\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-space",
+      "args": [
+        " 20260601-120000-abcd"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    }
+  ]
+}

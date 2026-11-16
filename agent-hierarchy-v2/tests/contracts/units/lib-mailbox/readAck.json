@@ -1,0 +1,97 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "readAck",
+  "cases": [
+    {
+      "id": "acked",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"prompt-hook\",\"session_id\":\"s1\"}\n"
+      },
+      "expect": {
+        "v": 1,
+        "id": "e1",
+        "at": "2026-01-01T11:59:59.500Z",
+        "by": "prompt-hook",
+        "session_id": "s1"
+      }
+    },
+    {
+      "id": "missing",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "torn",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-file",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": ""
+      },
+      "expect": null
+    },
+    {
+      "id": "invalid-id",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "a/b"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": null
+    },
+    {
+      "id": "non-object-json",
+      "args": [
+        "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a",
+        "e1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "7\n"
+      },
+      "expect": 7
+    }
+  ]
+}

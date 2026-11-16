@@ -1,0 +1,517 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "grant",
+  "cases": [
+    {
+      "id": "new-link-with-id",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "lk9",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx",
+            "granted_by": "orchestrator"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"lk9\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "lk9",
+        "ended": []
+      }
+    },
+    {
+      "id": "generated-id",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx",
+            "granted_by": "orchestrator"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": {
+          "$json": {
+            "v": 1,
+            "links": [
+              {
+                "id": "$any",
+                "task": "20260101-000000-aa11",
+                "task_home": "$ROOT/h",
+                "peers": [
+                  "b@fx"
+                ],
+                "direction": "both",
+                "requester": "a@fx",
+                "granted_by": "orchestrator",
+                "granted_at": "2026-01-01T00:10:00.000Z",
+                "limits": {
+                  "messages": 12,
+                  "minutes": 30
+                },
+                "used": 0,
+                "extensions": 0,
+                "state": "active"
+              }
+            ],
+            "denied": []
+          }
+        }
+      },
+      "expect": {
+        "id": "$any",
+        "ended": []
+      },
+      "expectWild": true
+    },
+    {
+      "id": "existing-id-is-reported",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "lk1",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "id": "lk1",
+        "existed": true,
+        "ended": []
+      }
+    },
+    {
+      "id": "direction-out",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "direction": "out",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"out\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "direction-other-is-both",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "direction": "x",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "limits-from-link",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx",
+            "messages": 5,
+            "minutes": 7
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 5,\n    \"minutes\": 7\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "zero-limits-fall-back-to-table",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx",
+            "messages": 0,
+            "minutes": 0
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "task-home-given",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "task_home": "$ROOT/elsewhere",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/elsewhere\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "env-limits",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 7,\n    \"minutes\": 9\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "env": {
+        "AH_LINK_LIMITS": "{\"messages\":7,\"minutes\":9}"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "missing-fields-are-left-out",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task_home\": \"$ROOT/h\",\n   \"direction\": \"both\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "lapsed-links-are-expired-on-the-way",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"old\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"old\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_by\": \"orchestrator\",\n   \"granted_at\": \"2026-01-01T00:00:00.000Z\",\n   \"limits\": {\n    \"messages\": 3,\n    \"minutes\": 30\n   },\n   \"used\": 3,\n   \"extensions\": 0,\n   \"state\": \"expired\",\n   \"ended_at\": \"2026-01-01T00:10:00.000Z\",\n   \"end_reason\": \"message_cap\"\n  },\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": [
+          [
+            "old",
+            "message_cap",
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-id-string-generates",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": {
+          "$json": {
+            "v": 1,
+            "links": [
+              {
+                "id": "$any",
+                "task": "20260101-000000-aa11",
+                "task_home": "$ROOT/h",
+                "peers": [
+                  "b@fx"
+                ],
+                "direction": "both",
+                "requester": "a@fx",
+                "granted_at": "2026-01-01T00:10:00.000Z",
+                "limits": {
+                  "messages": 12,
+                  "minutes": 30
+                },
+                "used": 0,
+                "extensions": 0,
+                "state": "active"
+              }
+            ],
+            "denied": []
+          }
+        }
+      },
+      "expect": {
+        "id": "$any",
+        "ended": []
+      },
+      "expectWild": true
+    },
+    {
+      "id": "link-missing-fails",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": null
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "keeps-other-keys-of-the-file",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/links/fx.json": "{\"v\":1,\"note\":\"keep\",\"links\":[],\"denied\":[{\"request\":\"r\"}]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": [\n  {\n   \"request\": \"r\"\n  }\n ],\n \"note\": \"keep\"\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "now-defaults-to-clock",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "link": {
+            "id": "n",
+            "task": "20260101-000000-aa11",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [\n  {\n   \"id\": \"n\",\n   \"task\": \"20260101-000000-aa11\",\n   \"task_home\": \"$ROOT/h\",\n   \"peers\": [\n    \"b@fx\"\n   ],\n   \"direction\": \"both\",\n   \"requester\": \"a@fx\",\n   \"granted_at\": \"2026-01-01T00:10:00.000Z\",\n   \"limits\": {\n    \"messages\": 12,\n    \"minutes\": 30\n   },\n   \"used\": 0,\n   \"extensions\": 0,\n   \"state\": \"active\"\n  }\n ],\n \"denied\": []\n}\n"
+      },
+      "expect": {
+        "id": "n",
+        "ended": []
+      }
+    },
+    {
+      "id": "dir-missing-fails-to-write",
+      "args": [
+        {
+          "team": "fx",
+          "now": 1767226200000,
+          "link": {
+            "id": "n",
+            "task": "t",
+            "peers": [
+              "b@fx"
+            ],
+            "requester": "a@fx"
+          }
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expectThrows": true
+    }
+  ]
+}

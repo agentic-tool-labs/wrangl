@@ -1,0 +1,168 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "normalizeDescription",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "Reviews code."
+      ],
+      "expect": "Reviews code."
+    },
+    {
+      "id": "two-sentences",
+      "args": [
+        "Reviews code. Then reports back."
+      ],
+      "expect": "Reviews code."
+    },
+    {
+      "id": "no-terminator",
+      "args": [
+        "Reviews code and reports"
+      ],
+      "expect": "Reviews code and reports"
+    },
+    {
+      "id": "example-block",
+      "args": [
+        "Use when X. <example>user: do it\nassistant: ok</example> More text."
+      ],
+      "expect": "Use when X."
+    },
+    {
+      "id": "example-upper",
+      "args": [
+        "A. <EXAMPLE>x</EXAMPLE> B."
+      ],
+      "expect": "A."
+    },
+    {
+      "id": "unclosed-example",
+      "args": [
+        "Use <example>x never closed"
+      ],
+      "expect": "Use <example>x never closed"
+    },
+    {
+      "id": "literal-backslash-n",
+      "args": [
+        "Line one.\\nLine two."
+      ],
+      "expect": "Line one."
+    },
+    {
+      "id": "backticks",
+      "args": [
+        "Runs `git status` for you."
+      ],
+      "expect": "Runs git status for you."
+    },
+    {
+      "id": "whitespace-collapse",
+      "args": [
+        "  many   spaces\n\n and\ttabs  "
+      ],
+      "expect": "many spaces and tabs"
+    },
+    {
+      "id": "only-whitespace",
+      "args": [
+        "   \n  "
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "long-first-sentence",
+      "args": [
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. Next."
+      ],
+      "expect": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…"
+    },
+    {
+      "id": "long-no-sentence",
+      "args": [
+        "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+      ],
+      "expect": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word wo…"
+    },
+    {
+      "id": "exactly-160",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "id": "161",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…"
+    },
+    {
+      "id": "period-then-text-no-space",
+      "args": [
+        "version 1.5 is out. Done"
+      ],
+      "expect": "version 1.5 is out."
+    },
+    {
+      "id": "question",
+      "args": [
+        "Is it ok? Yes."
+      ],
+      "expect": "Is it ok?"
+    },
+    {
+      "id": "exclaim-end",
+      "args": [
+        "Stop!"
+      ],
+      "expect": "Stop!"
+    },
+    {
+      "id": "sentence-160",
+      "args": [
+        "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+      ],
+      "expect": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+    },
+    {
+      "id": "sentence-161",
+      "args": [
+        "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy. tail"
+      ],
+      "expect": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy…"
+    },
+    {
+      "id": "nbsp-spaces",
+      "args": [
+        "a  b. c"
+      ],
+      "expect": "a b."
+    }
+  ]
+}

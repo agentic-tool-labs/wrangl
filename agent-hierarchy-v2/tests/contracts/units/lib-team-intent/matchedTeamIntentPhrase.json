@@ -1,0 +1,112 @@
+{
+  "lib": "lib-team-intent",
+  "module": "hooks/lib-team-intent.mjs",
+  "fn": "matchedTeamIntentPhrase",
+  "cases": [
+    {
+      "id": "exact-phrase",
+      "args": [
+        "set up my team"
+      ],
+      "expect": "set up my team"
+    },
+    {
+      "id": "upper-case",
+      "args": [
+        "SET UP MY TEAM please"
+      ],
+      "expect": "set up my team"
+    },
+    {
+      "id": "mixed-case-inside-sentence",
+      "args": [
+        "Could you Spin Up The Team now?"
+      ],
+      "expect": "spin up the team"
+    },
+    {
+      "id": "first-phrase-in-skill-order-wins",
+      "args": [
+        "close the team and also set up a team"
+      ],
+      "expect": "set up a team"
+    },
+    {
+      "id": "later-phrase-only",
+      "args": [
+        "please wrap up the stream"
+      ],
+      "expect": "wrap up the stream"
+    },
+    {
+      "id": "no-phrase",
+      "args": [
+        "fix the failing test"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-prompt",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "phrase-split-by-extra-space",
+      "args": [
+        "set up  my team"
+      ],
+      "expect": null
+    },
+    {
+      "id": "phrase-split-by-newline",
+      "args": [
+        "set up\nmy team"
+      ],
+      "expect": null
+    },
+    {
+      "id": "partial-phrase",
+      "args": [
+        "set up my"
+      ],
+      "expect": null
+    },
+    {
+      "id": "phrase-inside-longer-word",
+      "args": [
+        "unset up my teams"
+      ],
+      "expect": "set up my team"
+    },
+    {
+      "id": "kelvin-sign-lowercases-to-k",
+      "args": [
+        "Kick the reviewer"
+      ],
+      "expect": "kick the reviewer"
+    },
+    {
+      "id": "kick-ascii",
+      "args": [
+        "kick the reviewer"
+      ],
+      "expect": "kick the reviewer"
+    },
+    {
+      "id": "dotted-capital-i",
+      "args": [
+        "dİsmiss the team"
+      ],
+      "expect": null
+    },
+    {
+      "id": "astral-neighbours",
+      "args": [
+        "😀 start the team 😀"
+      ],
+      "expect": "start the team"
+    }
+  ]
+}

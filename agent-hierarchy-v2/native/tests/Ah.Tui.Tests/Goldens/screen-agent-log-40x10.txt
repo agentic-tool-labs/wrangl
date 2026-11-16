@@ -1,0 +1,10 @@
+┌ Trim the terminal UI             [×] ┐
+│ Trim the terminal UI                 │
+│                                      │
+│ Item    atp-14                       │
+│ State   ▶ in progress                │
+│ Holder  impl-41                      │
+│                                      │
+│ LOG  atp-14        3 older not shown │
+│ 04:01    assignment  Assigned to im… │
+└─ esc close ──────────────────────────┘

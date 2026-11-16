@@ -1,0 +1,371 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "livePeerSlots",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"session_id\":\"s1\",\"pane_id\":\"%1\",\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"x-implementor\",\"role\":\"implementor\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"gone\",\"role\":\"architect\",\"status\":\"down\"}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": "%1",
+          "session_id": "s1",
+          "cwd": "/w",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "reviewer@s2",
+          "role": "reviewer",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "s2",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "named-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha",
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"session_id\":\"s1\",\"pane_id\":\"%1\",\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"x-implementor\",\"role\":\"implementor\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"gone\",\"role\":\"architect\",\"status\":\"down\"}\n"
+      },
+      "expect": [
+        {
+          "name": "x-implementor",
+          "role": "implementor",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "unknown-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "zzz",
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"session_id\":\"s1\",\"pane_id\":\"%1\",\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"x-implementor\",\"role\":\"implementor\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"gone\",\"role\":\"architect\",\"status\":\"down\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "no-peers",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "team-omitted",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"session_id\":\"s1\",\"pane_id\":\"%1\",\"cwd\":\"/w\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"x-implementor\",\"role\":\"implementor\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"gone\",\"role\":\"architect\",\"status\":\"down\"}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": "%1",
+          "session_id": "s1",
+          "cwd": "/w",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "reviewer@s2",
+          "role": "reviewer",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "s2",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "tag-undefined-reads-as-default",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n1\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": [
+        {
+          "name": "n1",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "no-team-scope-keeps-untagged-and-orphan-tags",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$export": "NO_TEAM_SCOPE"
+        },
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"name\":\"p-alpha\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-default\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-orphan\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"gone\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-tagged-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s9\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-down\",\"role\":\"architect\",\"status\":\"down\",\"team\":\"gone\"}\n"
+      },
+      "expect": [
+        {
+          "name": "n-default",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "n-orphan",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "reviewer@s9",
+          "role": "reviewer",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "s9",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "no-team-scope-with-no-team-files-keeps-every-tag",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$export": "NO_TEAM_SCOPE"
+        },
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-a\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-b\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": [
+        {
+          "name": "n-a",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "n-b",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "named-team-scope-for-contrast",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha",
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"name\":\"p-alpha\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-default\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-orphan\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"gone\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-tagged-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s9\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-down\",\"role\":\"architect\",\"status\":\"down\",\"team\":\"gone\"}\n"
+      },
+      "expect": [
+        {
+          "name": "p-alpha",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "n-tagged-alpha",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "default-scope-for-contrast",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"name\":\"p-alpha\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-default\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-orphan\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"gone\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-tagged-alpha\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"session_id\":\"s9\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"n-down\",\"role\":\"architect\",\"status\":\"down\",\"team\":\"gone\"}\n"
+      },
+      "expect": [
+        {
+          "name": "n-default",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": null,
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        },
+        {
+          "name": "reviewer@s9",
+          "role": "reviewer",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "s9",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 10
+        }
+      ]
+    },
+    {
+      "id": "nameless-row-with-a-team-tag-is-in-that-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha",
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"session_id\":\"n1\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"session_id\":\"n2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": [
+        {
+          "name": "architect@n1",
+          "role": "architect",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "n1",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 30
+        }
+      ]
+    },
+    {
+      "id": "nameless-row-with-a-team-tag-is-not-in-the-default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"session_id\":\"n1\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"team\":\"alpha\"}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"session_id\":\"n2\",\"role\":\"reviewer\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": [
+        {
+          "name": "reviewer@n2",
+          "role": "reviewer",
+          "pid": 1,
+          "pane_id": null,
+          "session_id": "n2",
+          "cwd": null,
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 30
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h4-one-character-transcript-path",
+  "about": "a one-character transcript path has a dot as its directory",
+  "tree": "hook-subagent-usage-relative-dir",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagentstop-usage",
+    "event": {
+      "hook_event_name": "SubagentStop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "x",
+      "agent_id": "a-1",
+      "agent_type": "ah:implementor"
+    }
+  },
+  "mutant": "transcript path length boundary off by one",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.usage_rows.jsonl",
+          "mode": "0644",
+          "content": "{\"ts\":\"<ISO:1>\",\"session_id\":\"sess-contract\",\"agent_id\":\"a-1\",\"agent_type\":\"wrangl:implementor\",\"project_dir\":\".\",\"found\":true,\"model\":\"claude-opus\",\"calls\":1,\"in\":3,\"out\":4,\"cache_read\":0,\"cache_create\":0,\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:16:17.856Z"
+  }
+}

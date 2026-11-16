@@ -1,0 +1,130 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "boxDirFor",
+  "cases": [
+    {
+      "id": "existing-team-file-prefix",
+      "args": [
+        "$ROOT/h/teams/tm.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{}"
+      },
+      "expectPrefix": "$ROOT/ah/mailbox/tm~"
+    },
+    {
+      "id": "team-file-is-a-directory-prefix",
+      "args": [
+        "$ROOT/h/teams/tm.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json/x": ""
+      },
+      "expectPrefix": "$ROOT/ah/mailbox/tm~"
+    },
+    {
+      "id": "literal-path",
+      "args": [
+        "/ahprobe-none/teams/tm.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm~9fddddc126/a"
+    },
+    {
+      "id": "no-json-suffix",
+      "args": [
+        "/ahprobe-none/teams/tm",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm~e978061731/a"
+    },
+    {
+      "id": "double-suffix-strips-one",
+      "args": [
+        "/ahprobe-none/teams/tm.json.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm.json~5c1fd485dd/a"
+    },
+    {
+      "id": "only-the-suffix-is-an-empty-team",
+      "args": [
+        "/ahprobe-none/teams/.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/~79ad8001b4/a"
+    },
+    {
+      "id": "other-directory-other-hash",
+      "args": [
+        "/ahprobe-none2/teams/tm.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm~59c697091b/a"
+    },
+    {
+      "id": "name-with-dots",
+      "args": [
+        "/ahprobe-none/teams/tm.json",
+        "a.b-c_d"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm~9fddddc126/a.b-c_d"
+    },
+    {
+      "id": "default-ah-home-under-home",
+      "args": [
+        "/ahprobe-none/teams/tm.json",
+        "a"
+      ],
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/home/.claude/agent-hierarchy/mailbox/tm~9fddddc126/a"
+    },
+    {
+      "id": "non-ascii-path",
+      "args": [
+        "/ahprobe-none/téams/tm.json",
+        "a"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "$ROOT/ah/mailbox/tm~d231b48f51/a"
+    }
+  ]
+}

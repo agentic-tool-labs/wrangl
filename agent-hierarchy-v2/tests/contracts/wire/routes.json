@@ -1,0 +1,1317 @@
+{
+  "about": "The daemon's /v1 HTTP surface as data. `hidden` routes are the daemon's own control surface. A test asserts this lists exactly the routes the Node daemon answers. max_body_bytes is per route; the message-write ops move to 256 KiB with W2 (0100 A8).",
+  "server": {
+    "headers_timeout_ms": 40000,
+    "request_timeout_ms": 60000,
+    "keep_alive_timeout_ms": 5000,
+    "socket_mode": "0600",
+    "drain_hard_ms": 5000,
+    "error_413": {
+      "connection": "close",
+      "discard_max_bytes": 1048576,
+      "discard_max_ms": 2000
+    }
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/v1/health",
+      "hidden": false,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inspect/boxes",
+      "hidden": false,
+      "query": {
+        "address": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inspect/entries",
+      "hidden": false,
+      "query": {
+        "address": {
+          "type": "string",
+          "required": true
+        },
+        "filter": {
+          "type": "string",
+          "required": false,
+          "enum": [
+            "pending",
+            "acked",
+            "all"
+          ]
+        },
+        "n": {
+          "type": "integer",
+          "required": false,
+          "min": 1
+        },
+        "cwd": {
+          "type": "string",
+          "required": false
+        },
+        "hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "main_hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "messaging_socket_dir": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inspect/registrations",
+      "hidden": false,
+      "query": {
+        "since": {
+          "type": "integer",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inspect/events",
+      "hidden": false,
+      "query": {
+        "address": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inspect/timers",
+      "hidden": false,
+      "query": {
+        "session": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/status",
+      "hidden": false,
+      "query": {
+        "dir": {
+          "type": "string",
+          "required": true
+        },
+        "since": {
+          "type": "integer",
+          "required": false
+        },
+        "wait": {
+          "type": "integer",
+          "required": false,
+          "min": 0,
+          "max": 25,
+          "note": "needs since"
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": {
+        "param": "wait",
+        "max_s": 25,
+        "unchanged_body": "the current status document (same rev)"
+      },
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/view",
+      "hidden": true,
+      "query": {
+        "path": {
+          "type": "string",
+          "required": false
+        },
+        "since": {
+          "type": "string",
+          "required": false
+        },
+        "wait": {
+          "type": "integer",
+          "required": false,
+          "min": 0,
+          "max": 25,
+          "note": "needs since"
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": {
+        "param": "wait",
+        "max_s": 25,
+        "unchanged_body": {
+          "view_schema": 1,
+          "unchanged": true,
+          "rev": "<rev>"
+        }
+      },
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/peers/pending",
+      "hidden": true,
+      "query": {
+        "dir": {
+          "type": "string",
+          "required": true
+        },
+        "session": {
+          "type": "string",
+          "required": true
+        },
+        "count": {
+          "type": "string",
+          "required": false,
+          "note": "1 answers the row count only"
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        403,
+        404
+      ],
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/read-model",
+      "hidden": true,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200,
+        404
+      ],
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/read-model/rebuild",
+      "hidden": true,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/actions",
+      "hidden": true,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200,
+        404
+      ],
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/actions/{*id}",
+      "hidden": true,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/due",
+      "hidden": true,
+      "query": {
+        "in": {
+          "type": "string",
+          "required": true,
+          "note": "the poll request as one JSON object, URL-encoded; at most the request line's budget"
+        },
+        "wait": {
+          "type": "integer",
+          "required": false,
+          "min": 1,
+          "max": 25,
+          "note": "clamped, not refused"
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400
+      ],
+      "long_poll": {
+        "param": "wait",
+        "max_s": 25,
+        "unchanged_body": null
+      },
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/send",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "reply_to": {
+            "type": "string"
+          },
+          "to_session": {
+            "type": "string"
+          },
+          "eta": {
+            "type": "string"
+          },
+          "supersedes": {
+            "type": "string"
+          },
+          "post_link": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "main_hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "messaging_socket_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          }
+        },
+        "required": [
+          "to"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        404,
+        413,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/inbox",
+      "hidden": false,
+      "query": {
+        "address": {
+          "type": "string",
+          "required": true
+        },
+        "since": {
+          "type": "integer",
+          "required": false
+        },
+        "wait": {
+          "type": "integer",
+          "required": false,
+          "min": 0,
+          "max": 25,
+          "note": "needs since"
+        },
+        "adapter": {
+          "type": "string",
+          "required": false
+        },
+        "session_id": {
+          "type": "string",
+          "required": false
+        },
+        "poll_ms": {
+          "type": "integer",
+          "required": false
+        },
+        "all": {
+          "type": "boolean",
+          "required": false
+        },
+        "overdue": {
+          "type": "boolean",
+          "required": false
+        },
+        "cwd": {
+          "type": "string",
+          "required": false
+        },
+        "hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "main_hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "messaging_socket_dir": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": {
+        "param": "wait",
+        "max_s": 25,
+        "unchanged_body": "{address, entries: [], next}"
+      },
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/ack",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "by": {
+            "type": "string",
+            "enum": [
+              "prompt-hook",
+              "adapter",
+              "cli",
+              "sendmessage",
+              "watcher",
+              "paste",
+              "stop-hook"
+            ]
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "main_hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "messaging_socket_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          }
+        },
+        "required": [
+          "address",
+          "ids",
+          "by"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        404,
+        413
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/decline",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "already-reported",
+              "superseded",
+              "withdrawn"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "main_hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "messaging_socket_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          }
+        },
+        "required": [
+          "address",
+          "id",
+          "reason",
+          "session_id"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        404,
+        413
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/codex/answer",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "member",
+          "team",
+          "request_id"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/load/admit-spawn",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "team": {
+            "type": "string"
+          },
+          "member": {
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/submit",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string"
+          },
+          "sha": {
+            "type": "string"
+          },
+          "set": {
+            "type": "string"
+          },
+          "base": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "fresh": {
+            "type": "boolean"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo",
+          "sha",
+          "set"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/next",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "max_set": {
+            "type": "string",
+            "enum": [
+              "full",
+              "other"
+            ]
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/done",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        404,
+        409,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/release",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        404,
+        409,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/status",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        404,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/qa/list",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/bare/recover",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "hierarchy_dir": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "member": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hierarchy_dir",
+          "team",
+          "member",
+          "op"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        404,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/register",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "boxes": {
+            "type": "object"
+          },
+          "team_file": {
+            "type": "string"
+          },
+          "harness": {
+            "type": "string"
+          },
+          "pid": {
+            "type": "integer"
+          },
+          "pane_id": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string"
+          },
+          "herdr_flavour": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "addresses",
+          "boxes"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        403,
+        413
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/drain",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/contract",
+      "hidden": false,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/contract/guide",
+      "hidden": false,
+      "query": {},
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/contract/join",
+      "hidden": false,
+      "query": {
+        "address": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/contract/role",
+      "hidden": false,
+      "query": {
+        "role": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        404
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/contract/teams",
+      "hidden": false,
+      "query": {
+        "cwd": {
+          "type": "string",
+          "required": false
+        },
+        "hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "main_hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "messaging_socket_dir": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/join",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "team": {
+            "type": "string"
+          },
+          "harness": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          },
+          "pid": {
+            "type": "integer"
+          },
+          "name_hint": {
+            "type": "string"
+          },
+          "role_wanted": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "main_hierarchy_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          },
+          "messaging_socket_dir": {
+            "type": "string",
+            "description": "absolute directory"
+          }
+        },
+        "required": [
+          "team",
+          "harness",
+          "session_id",
+          "why"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        202,
+        400,
+        404,
+        409,
+        429,
+        413
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/join/{id}",
+      "hidden": false,
+      "query": {
+        "wait": {
+          "type": "integer",
+          "required": false,
+          "min": 0,
+          "max": 25,
+          "note": "needs since"
+        },
+        "cwd": {
+          "type": "string",
+          "required": false
+        },
+        "hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "main_hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "messaging_socket_dir": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        404
+      ],
+      "long_poll": {
+        "param": "wait",
+        "max_s": 25,
+        "unchanged_body": "{join_id, status: \"pending\"}"
+      },
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "GET",
+      "path": "/v1/state/{domain}/{op}",
+      "hidden": false,
+      "query": {
+        "args": {
+          "type": "string",
+          "required": false
+        },
+        "cwd": {
+          "type": "string",
+          "required": false
+        },
+        "hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "main_hierarchy_dir": {
+          "type": "string",
+          "required": false
+        },
+        "messaging_socket_dir": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "body": null,
+      "statuses": [
+        200,
+        400,
+        404
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/state/{domain}/{op}",
+      "hidden": false,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "args": {
+            "type": "object"
+          },
+          "context": {
+            "type": "object"
+          },
+          "op_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "op_id"
+        ],
+        "additionalProperties": true
+      },
+      "statuses": [
+        200,
+        400,
+        404,
+        413,
+        422
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    },
+    {
+      "method": "POST",
+      "path": "/v1/rules",
+      "hidden": true,
+      "query": {},
+      "body": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "dir": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "said": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "dir",
+          "level",
+          "key"
+        ]
+      },
+      "statuses": [
+        200,
+        400,
+        503
+      ],
+      "long_poll": null,
+      "max_body_bytes": 65536
+    }
+  ]
+}

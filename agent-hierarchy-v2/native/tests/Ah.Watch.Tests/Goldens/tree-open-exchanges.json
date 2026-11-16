@@ -1,0 +1,26 @@
+{
+  "slices": {
+    "list:open:team:f28aaefa/default": {
+      "team": "team:f28aaefa/default",
+      "open": [
+        {
+          "id": "exchange:f28aaefa/d",
+          "to_member": null,
+          "from_member": "member:f28aaefa/default/@orchestrator",
+          "unattended_at": "2026-06-01T11:00:00Z"
+        },
+        {
+          "id": "exchange:f28aaefa/c",
+          "to_member": null,
+          "from_member": "member:f28aaefa/default/@orchestrator",
+          "unattended_at": "2026-06-01T11:00:00Z"
+        },
+        {
+          "id": "exchange:f28aaefa/a",
+          "to_member": "member:f28aaefa/default/dev",
+          "from_member": "member:f28aaefa/default/@orchestrator"
+        }
+      ]
+    }
+  }
+}

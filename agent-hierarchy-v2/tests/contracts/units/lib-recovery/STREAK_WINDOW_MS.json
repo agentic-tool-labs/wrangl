@@ -1,0 +1,12 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "STREAK_WINDOW_MS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 2700000
+    }
+  ]
+}

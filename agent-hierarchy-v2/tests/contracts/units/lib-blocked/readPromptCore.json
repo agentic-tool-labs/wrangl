@@ -1,0 +1,354 @@
+{
+  "lib": "lib-blocked",
+  "module": "hooks/lib-blocked.mjs",
+  "fn": "readPromptCore",
+  "cases": [
+    {
+      "id": "codex-idle-composer",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": true,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "screen_hash": "701ea325c62db8c736d024a2af1af7cf93aa4aee71ee85b7b529558cb82e4c3e",
+        "draft": false
+      }
+    },
+    {
+      "id": "codex-approval-prompt",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "blocked"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  Would you like to run the following command?\n\n  $ rm -rf build\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": "approval",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `rm` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ],
+        "blocked_by": "approval",
+        "screen": "  Would you like to run the following command?\n\n  $ rm -rf build\n\n› 1. Yes, proceed (y)\n  2. Yes, and don't ask again for commands that start with `rm` (p)\n  3. No, and tell Codex what to do differently (esc)\n\n  Press enter to confirm or esc to cancel\n",
+        "screen_hash": "bde3781a8787d34db94986fe3a5369d923b5b371a2257c756abcefc3d09b9baf",
+        "draft": false
+      }
+    },
+    {
+      "id": "blocked-with-unrecognised-screen-is-harness-prompt",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "blocked"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "something odd\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": "harness-prompt",
+        "screen": "something odd\n",
+        "screen_hash": "6552348621e8d1cd31e1bf828f006bca29a4016d8fce98828d3665019489c580",
+        "draft": false
+      }
+    },
+    {
+      "id": "working-status-hides-the-composer",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "working"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "screen_hash": "701ea325c62db8c736d024a2af1af7cf93aa4aee71ee85b7b529558cb82e4c3e",
+        "draft": false
+      }
+    },
+    {
+      "id": "unrecognised-screen",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "Loading...\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "Loading...\n",
+        "screen_hash": "47d2a515ef2f05b87d688656286a61e4f743da4b878684c7654969db17711c40",
+        "draft": false
+      }
+    },
+    {
+      "id": "empty-screen",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "",
+        "screen_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "draft": false
+      }
+    },
+    {
+      "id": "claude-kind-uses-the-claude-profile",
+      "args": [
+        {
+          "name": "p-architect",
+          "role": "architect"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  earlier output\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": true,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "  earlier output\n\n────────────────────────────────────────\n❯ \n────────────────────────────────────────\n  ? for shortcuts",
+        "screen_hash": "4814c3e6a5e3211bed9fd66f916323a57f53c524a4b9eb487c39c6e6e6fef044",
+        "draft": false
+      }
+    },
+    {
+      "id": "claude-permission-prompt",
+      "args": [
+        {
+          "name": "p-architect",
+          "role": "architect"
+        },
+        "blocked"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": " Do you want to proceed?\n ❯ 1. Yes\n   2. No\n\n Esc to cancel\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": "permission",
+        "block": [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No"
+          }
+        ],
+        "blocked_by": "permission",
+        "screen": " Do you want to proceed?\n ❯ 1. Yes\n   2. No\n\n Esc to cancel\n",
+        "screen_hash": "93eaf07d4ea5c1c29364a17b0681ba1d0d674f1619c31bcc47515c9032bc9462",
+        "draft": false
+      }
+    },
+    {
+      "id": "agent-status-undefined",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": true,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "  Some earlier output\n\n› Ask Codex to do anything\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "screen_hash": "701ea325c62db8c736d024a2af1af7cf93aa4aee71ee85b7b529558cb82e4c3e",
+        "draft": false
+      }
+    },
+    {
+      "id": "read-failure-gives-empty-screen",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "",
+        "screen_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "draft": false
+      }
+    },
+    {
+      "id": "draft-in-the-composer",
+      "args": [
+        {
+          "name": "p-implementor",
+          "kind": "codex"
+        },
+        "idle"
+      ],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat \"$0.txt\"\n",
+          "mode": 493
+        },
+        "bin/herdr.txt": "  Some earlier output\n\n› half typed brief\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "composer": false,
+        "recognized": null,
+        "block": [],
+        "blocked_by": null,
+        "screen": "  Some earlier output\n\n› half typed brief\n\n  gpt-5-codex high · ~/repo\n  ? for shortcuts",
+        "screen_hash": "0585d695df20d244c9e24269a44653ce82d639bb3fa0cfbe5c61f5b021edea98",
+        "draft": false
+      }
+    }
+  ]
+}

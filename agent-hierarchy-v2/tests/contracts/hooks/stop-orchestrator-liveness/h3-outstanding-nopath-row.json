@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h3-outstanding-nopath-row",
+  "about": "a dispatch row with no path is found by scanning the pool and names the pane member",
+  "tree": "hook-dispatch-open-nopath",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-orchestrator-liveness",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "pathless rows ignored",
+  "expect": {
+    "stdout": "{\"decision\":\"block\",\"reason\":\"ah: still waiting on these (check in, or close one with msg.mjs close <id> --reason abandoned):\\n- implementor \\\"tm-implementor\\\", request <MSGID:1>, sent <AGE> ago (<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md)\\nFor each: call ListAgents. If it shows the peer busy, send nothing: it is working. If it shows shell, it is not gone: a member with a background shell running shows that; send nothing. If it is idle, SendMessage it one short status query, with notify_when_idle:true. Before you call it gone, run `node \\\"<PLUGIN>/hooks/roster.mjs\\\" teams --members`: only a dead verdict is gone. If it is gone, tell the user.\\nIf it answers, work continues. If it is gone or silent after checking, tell the user; do not take over its work or re-dispatch it elsewhere without the user's go-ahead.\\nTo close one: get the response, or tell the user it is abandoned and run `msg.mjs close <id> --reason abandoned` (add `--team <team>` for a request that names no team). ah asks again later while these stay open.\\n\\nah: work is running; start the background watcher (run_in_background: true):\\n- node <PLUGIN>/hooks/roster.mjs overdue --cwd <ROOT:proj>\\nNot running: the overdue timer.\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.gates.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"wake-nudge\",\"session_id\":\"sess-contract\",\"key\":\"<MSGID:1>|the overdue timer|0\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n{\"type\":\"liveness-nudge\",\"session_id\":\"sess-contract\",\"request_id\":\"<MSGID:1>\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:16:03.589Z"
+  }
+}

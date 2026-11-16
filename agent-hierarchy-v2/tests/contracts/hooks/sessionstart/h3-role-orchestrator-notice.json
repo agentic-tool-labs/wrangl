@@ -1,0 +1,64 @@
+{
+  "kind": "hook",
+  "id": "h3-role-orchestrator-notice",
+  "about": "a top-level --agent orchestrator session gets the role notice and an up record",
+  "tree": "hook-plain-no-team",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "sessionstart",
+    "event": {
+      "hook_event_name": "SessionStart",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "source": "startup",
+      "agent_type": "ah:orchestrator"
+    }
+  },
+  "mutant": "role notice not given",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"agent-hierarchy is installed but not configured — run `/wrangl:hierarchy init` to assign a model to each role.\\n\\nah CLI root (v<VERSION>): <PLUGIN> — roster: `node <PLUGIN>/hooks/roster.mjs <verb> --cwd <abs cwd>`, messages: `node <PLUGIN>/hooks/msg.mjs <verb> --cwd <abs cwd>` (verbs: agent-hierarchy/docs/cli-tools.md)\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        },
+        {
+          "path": "ah/state/ah.db.meta-home.txt",
+          "mode": "0644",
+          "content": "home.session-roles {\"version\":1,\"sessions\":{\"sess-contract\":{\"orchestrator_by_command\":true,\"at\":\"<ISO:1>\",\"pid\":\"<PID>\",\"pid_start\":\"<PIDSTART>\"}}}\n"
+        },
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"cli-root\",\"session_id\":\"sess-contract\",\"digest\":\"<DIGEST>\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n"
+        },
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:47.916Z"
+  }
+}

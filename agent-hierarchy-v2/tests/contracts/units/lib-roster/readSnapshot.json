@@ -1,0 +1,89 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "readSnapshot",
+  "cases": [
+    {
+      "id": "good",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": {
+        "kind": "ah-team-snapshot",
+        "v": 1,
+        "members": [],
+        "team": "alpha"
+      }
+    },
+    {
+      "id": "absent",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "expect": null
+    },
+    {
+      "id": "wrong-kind",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{\"kind\":\"other\",\"v\":1,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": null
+    },
+    {
+      "id": "wrong-version",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{\"kind\":\"ah-team-snapshot\",\"v\":2,\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": null
+    },
+    {
+      "id": "version-string",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{\"kind\":\"ah-team-snapshot\",\"v\":\"1\",\"members\":[],\"team\":\"alpha\"}"
+      },
+      "expect": null
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{\"kind\":\"ah-team-snapshot\",\"v\":1,\"members\":{},\"team\":\"alpha\"}"
+      },
+      "expect": null
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "{x"
+      },
+      "expect": null
+    },
+    {
+      "id": "array",
+      "args": [
+        "$ROOT/s.json"
+      ],
+      "files": {
+        "s.json": "[]"
+      },
+      "expect": null
+    }
+  ]
+}

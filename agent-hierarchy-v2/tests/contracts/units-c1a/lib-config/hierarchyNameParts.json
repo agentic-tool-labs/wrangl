@@ -1,0 +1,278 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "hierarchyNameParts",
+  "cases": [
+    {
+      "id": "builtin",
+      "args": [
+        "repo-architect"
+      ],
+      "expect": {
+        "prefix": "repo",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "ordinal",
+      "args": [
+        "repo-architect-2"
+      ],
+      "expect": {
+        "prefix": "repo",
+        "role": "architect"
+      }
+    },
+    {
+      "id": "hyphenated-prefix",
+      "args": [
+        "my-repo-reviewer"
+      ],
+      "expect": {
+        "prefix": "my-repo",
+        "role": "reviewer"
+      }
+    },
+    {
+      "id": "orchestrator",
+      "args": [
+        "repo-orchestrator"
+      ],
+      "expect": {
+        "prefix": "repo",
+        "role": "orchestrator"
+      }
+    },
+    {
+      "id": "custom",
+      "args": [
+        "repo-ui-implementor",
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "prefix": "repo",
+        "role": "ui-implementor"
+      }
+    },
+    {
+      "id": "custom-ordinal",
+      "args": [
+        "repo-ui-implementor-12",
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "prefix": "repo",
+        "role": "ui-implementor"
+      }
+    },
+    {
+      "id": "no-role",
+      "args": [
+        "repo-nothing"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-prefix",
+      "args": [
+        "-architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "bare-role",
+      "args": [
+        "architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "ordinal-only",
+      "args": [
+        "-3"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ultra",
+      "args": [
+        "r-ultra-advisor"
+      ],
+      "expect": {
+        "prefix": "r",
+        "role": "ultra-advisor"
+      }
+    },
+    {
+      "id": "advisor-alone",
+      "args": [
+        "r-advisor"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-hyphen",
+      "args": [
+        "repo-architect-"
+      ],
+      "expect": null
+    }
+  ]
+}

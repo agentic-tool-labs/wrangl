@@ -1,0 +1,136 @@
+{
+  "view_schema": 1,
+  "kind": "actions",
+  "id": "/o/o.101/t/boxes/m/impl",
+  "path": "/actions/o/o.101/t/boxes/m/impl",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "member",
+      "id": "/o/o.101/t/boxes/m/impl",
+      "label": "impl",
+      "path": "/o/o.101/t/boxes/m/impl"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "actions": 11
+  },
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "member",
+      "path": "/o/o.101/t/boxes/m/impl"
+    },
+    "actions": [
+      {
+        "id": "member.detail",
+        "label": "Detail",
+        "key": "enter",
+        "group": "open",
+        "kind": "read",
+        "target": "member",
+        "help": "Show everything known about this member.",
+        "invoke": {
+          "get": "/detail/o/o.101/t/boxes/m/impl"
+        }
+      },
+      {
+        "id": "member.mail",
+        "label": "Show mail",
+        "key": "M",
+        "group": "read",
+        "kind": "read",
+        "target": "member",
+        "help": "Show the mail in this member's box.",
+        "invoke": {
+          "get": "/inbox/o/o.101/t/boxes/m/impl"
+        }
+      },
+      {
+        "id": "node.show_subagents",
+        "label": "Show subagents",
+        "key": "a",
+        "group": "graph",
+        "kind": "view",
+        "target": "graph_node",
+        "help": "Show or hide the subagents running under this node.",
+        "invoke": {
+          "view": "show_subagents",
+          "target": "/o/o.101/t/boxes/m/impl"
+        }
+      },
+      {
+        "id": "node.highlight_edges",
+        "label": "Highlight edges",
+        "key": "H",
+        "group": "graph",
+        "kind": "view",
+        "target": "graph_node",
+        "help": "Highlight the edges touching this node.",
+        "invoke": {
+          "view": "highlight_edges",
+          "target": "/o/o.101/t/boxes/m/impl"
+        }
+      },
+      {
+        "id": "member.copy_name",
+        "label": "Copy name",
+        "key": "y",
+        "group": "copy",
+        "kind": "copy",
+        "target": "member",
+        "help": "Copy this member's name.",
+        "invoke": {
+          "copy": "impl"
+        }
+      },
+      {
+        "id": "member.copy_pid",
+        "label": "Copy pid",
+        "key": "Y",
+        "group": "copy",
+        "kind": "copy",
+        "target": "member",
+        "help": "Copy this member's process id.",
+        "invoke": {
+          "copy": "4242"
+        }
+      },
+      {
+        "id": "member.copy_session",
+        "label": "Copy session id",
+        "key": null,
+        "group": "copy",
+        "kind": "copy",
+        "target": "member",
+        "help": "Copy this member's session id.",
+        "invoke": {
+          "copy": "sess-impl"
+        }
+      },
+      {
+        "id": "member.ask_dismiss",
+        "label": "Ask: dismiss…",
+        "key": "D",
+        "group": "ask",
+        "kind": "owner",
+        "target": "member",
+        "help": "Copy a request asking the Orchestrator for the plan to dismiss this member.",
+        "confirm": "Only the Orchestrator can run this. This copies the command; nothing is run from here.",
+        "invoke": {
+          "ask_orchestrator": {
+            "command": "ah roster dismiss impl --plan --team alpha",
+            "request_text": "Please run this for me and tell me what it prints: ah roster dismiss impl --plan --team alpha"
+          }
+        }
+      }
+    ]
+  },
+  "rev": "ccc8ae268cebd5e4"
+}

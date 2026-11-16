@@ -1,0 +1,46 @@
+{
+  "kind": "hook",
+  "id": "h4-bash-background-by-subagent",
+  "about": "a subagent's own background task is not this session's",
+  "tree": "hook-owes-response",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "sleep 100",
+        "run_in_background": true
+      },
+      "tool_response": {
+        "backgroundTaskId": "bg-1"
+      },
+      "agent_id": "a-1",
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "subagent guard dropped",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:39.759Z"
+  }
+}

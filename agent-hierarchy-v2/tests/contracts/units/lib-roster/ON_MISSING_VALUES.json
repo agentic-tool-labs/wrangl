@@ -1,0 +1,14 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "ON_MISSING_VALUES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "auto"
+      ]
+    }
+  ]
+}

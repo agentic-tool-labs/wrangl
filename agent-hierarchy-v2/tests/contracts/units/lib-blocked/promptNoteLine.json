@@ -1,0 +1,115 @@
+{
+  "lib": "lib-blocked",
+  "module": "hooks/lib-blocked.mjs",
+  "fn": "promptNoteLine",
+  "cases": [
+    {
+      "id": "codex-approval-heading-line",
+      "args": [
+        "codex",
+        "approval",
+        "  some header\n  Would you like to run the following command?  \n  $ rm -rf x\n› 1. Yes, proceed\n"
+      ],
+      "expect": "Would you like to run the following command?"
+    },
+    {
+      "id": "codex-trust-dialog",
+      "args": [
+        "codex",
+        "trust-dialog",
+        "Do you trust the contents of this directory? /repo\n› 1. Yes, continue"
+      ],
+      "expect": "Do you trust the contents of this directory? /repo"
+    },
+    {
+      "id": "codex-login",
+      "args": [
+        "codex",
+        "login",
+        "Welcome\nSign in with ChatGPT\n"
+      ],
+      "expect": "Sign in with ChatGPT"
+    },
+    {
+      "id": "first-matching-line-wins",
+      "args": [
+        "codex",
+        "approval",
+        "Would you like to run the following command? first\nWould you like to run the following command? second"
+      ],
+      "expect": "Would you like to run the following command? first"
+    },
+    {
+      "id": "claude-kind-has-no-prompts-here",
+      "args": [
+        "claude",
+        "permission",
+        "Do you want to proceed?\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unknown-kind",
+      "args": [
+        "gemini",
+        "approval",
+        "  some header\n  Would you like to run the following command?  \n  $ rm -rf x\n› 1. Yes, proceed\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unknown-prompt",
+      "args": [
+        "codex",
+        "nope",
+        "  some header\n  Would you like to run the following command?  \n  $ rm -rf x\n› 1. Yes, proceed\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "recognized-null",
+      "args": [
+        "codex",
+        null,
+        "  some header\n  Would you like to run the following command?  \n  $ rm -rf x\n› 1. Yes, proceed\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "recognized-empty",
+      "args": [
+        "codex",
+        "",
+        "  some header\n  Would you like to run the following command?  \n  $ rm -rf x\n› 1. Yes, proceed\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "heading-absent-from-screen",
+      "args": [
+        "codex",
+        "approval",
+        "nothing relevant\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-screen",
+      "args": [
+        "codex",
+        "approval",
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "heading-is-case-sensitive",
+      "args": [
+        "codex",
+        "approval",
+        "would you like to run the following command?"
+      ],
+      "expect": null
+    }
+  ]
+}

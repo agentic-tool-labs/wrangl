@@ -1,0 +1,12 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "CACHE_FILE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "$ROOT/home/.claude/agent-hierarchy.usage-cache.json"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packAgentFindings",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "---\nname: pk\ndescription: A pack agent.\nmodel: opus\ntools:\n  - Read\n  - SendMessage\n---\nbody\n",
+        "p"
+      ],
+      "expect": []
+    },
+    {
+      "id": "missing-tools",
+      "args": [
+        "---\nname: pk\n---\nbody\n",
+        "p"
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-agent-tools",
+          "path": "p",
+          "field": null,
+          "message": "tools is required: without it the agent inherits every tool, MCP tools and Agent included",
+          "fix": [
+            {
+              "kind": "edit-frontmatter",
+              "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "x",
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-agent-frontmatter",
+          "path": null,
+          "field": null,
+          "message": "no --- frontmatter block",
+          "fix": [
+            {
+              "kind": "edit-frontmatter",
+              "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

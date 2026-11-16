@@ -1,0 +1,48 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_AUTO_MODE_ARGS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "codex": {
+          "manual": [
+            "--sandbox",
+            "read-only",
+            "--ask-for-approval",
+            "on-request"
+          ],
+          "plan": [
+            "--sandbox",
+            "read-only",
+            "--ask-for-approval",
+            "never"
+          ],
+          "acceptEdits": [
+            "--sandbox",
+            "workspace-write",
+            "--ask-for-approval",
+            "on-request"
+          ],
+          "auto": [
+            "--sandbox",
+            "workspace-write",
+            "--ask-for-approval",
+            "never"
+          ],
+          "dontAsk": [
+            "--sandbox",
+            "workspace-write",
+            "--ask-for-approval",
+            "never"
+          ],
+          "bypassPermissions": [
+            "--dangerously-bypass-approvals-and-sandbox"
+          ]
+        }
+      }
+    }
+  ]
+}

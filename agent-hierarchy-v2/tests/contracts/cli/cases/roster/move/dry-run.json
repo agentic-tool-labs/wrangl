@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "dry-run",
+  "about": "move --dry-run on an unknown member name refuses with the pane member list",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "move",
+      "tm-nobody",
+      "--tab",
+      "t1",
+      "--dry-run"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: move: no member named \"tm-nobody\" — known members: tm-implementor, tm-reviewer\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a dry run that moves",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.150Z"
+  }
+}

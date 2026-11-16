@@ -1,0 +1,282 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "availabilityView",
+  "cases": [
+    {
+      "id": "mixed",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "ui-implementor": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "ui",
+              "label": "UI Implementor",
+              "description": "Builds UI."
+            },
+            "doc-reviewer": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "docrev",
+              "routes": "docs changes"
+            },
+            "broken-role": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "missing-agent"
+            },
+            "side-role": {
+              "model": "inherit",
+              "class": "legwork",
+              "agent": "side",
+              "description": ""
+            }
+          },
+          "handoffs": "auto"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "view": {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            },
+            "doc-reviewer": {
+              "model": "inherit",
+              "class": "review",
+              "agent": "docrev",
+              "routes": "docs changes",
+              "effectiveDescription": "Reviews docs."
+            },
+            "side-role": {
+              "model": "inherit",
+              "class": "legwork",
+              "agent": "side",
+              "description": "",
+              "effectiveDescription": "A side role does errands for the team."
+            }
+          },
+          "handoffs": "auto"
+        },
+        "unavailable": [
+          "broken-role",
+          "ui-implementor"
+        ]
+      }
+    },
+    {
+      "id": "all-good",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "architect": {
+              "model": "opus"
+            },
+            "ui-implementor": {
+              "model": "inherit",
+              "class": "implement",
+              "agent": "ui",
+              "label": "UI Implementor",
+              "description": "Builds UI."
+            }
+          },
+          "handoffs": "auto"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "view": {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "architect": {
+              "model": "opus"
+            }
+          },
+          "handoffs": "auto"
+        },
+        "unavailable": [
+          "ui-implementor"
+        ]
+      }
+    },
+    {
+      "id": "override-reverts",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "architect": {
+              "model": "opus",
+              "agent": "gone"
+            },
+            "reviewer": {
+              "model": "opus"
+            }
+          },
+          "handoffs": "auto"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "view": {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            }
+          },
+          "handoffs": "auto"
+        },
+        "unavailable": [
+          "architect (gone)"
+        ]
+      }
+    },
+    {
+      "id": "override-ok-kept",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "reviewer": {
+              "model": "opus",
+              "agent": "docrev"
+            }
+          },
+          "handoffs": "auto"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "view": {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "reviewer": {
+              "model": "opus",
+              "agent": "docrev"
+            }
+          },
+          "handoffs": "auto"
+        },
+        "unavailable": []
+      }
+    },
+    {
+      "id": "no-roles-key",
+      "args": [
+        {
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expectThrows": true
+    },
+    {
+      "id": "frontmatter-description-effective",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "side-role": {
+              "model": "inherit",
+              "class": "legwork",
+              "agent": "side",
+              "description": ""
+            }
+          },
+          "handoffs": "auto"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/ui.md": "---\nname: ui\ndescription: Implements user-interface work. More.\ntools: Read, SendMessage, Edit\n---\nbody\n",
+        "repo/.claude/agents/docrev.md": "---\nname: docrev\ndescription: Reviews docs.\ntools: Read, SendMessage\n---\nbody\n",
+        "repo/.claude/agents/side.md": "---\nname: side\ndescription: A side role does errands for the team.\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "view": {
+          "cwd": "$ROOT/repo",
+          "roles": {
+            "side-role": {
+              "model": "inherit",
+              "class": "legwork",
+              "agent": "side",
+              "description": "",
+              "effectiveDescription": "A side role does errands for the team."
+            }
+          },
+          "handoffs": "auto"
+        },
+        "unavailable": []
+      }
+    }
+  ]
+}

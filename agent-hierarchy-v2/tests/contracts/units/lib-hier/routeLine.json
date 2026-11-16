@@ -1,0 +1,50 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "routeLine",
+  "cases": [
+    {
+      "id": "session-route",
+      "args": [
+        {
+          "value": "peers",
+          "source": "session"
+        }
+      ],
+      "expect": "route: peers (from session) — chain roles run only as peers"
+    },
+    {
+      "id": "config-route",
+      "args": [
+        {
+          "value": "subagents",
+          "source": "config"
+        }
+      ],
+      "expect": "route: subagents (from config) — chain roles run only as peers"
+    },
+    {
+      "id": "no-route",
+      "args": [
+        null
+      ],
+      "expect": "route: unknown — chain roles run only as peers"
+    },
+    {
+      "id": "undefined-route",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "route: unknown — chain roles run only as peers"
+    },
+    {
+      "id": "empty-object-route",
+      "args": [
+        {}
+      ],
+      "expect": "route: undefined (from undefined) — chain roles run only as peers"
+    }
+  ]
+}

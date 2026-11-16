@@ -1,0 +1,391 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "resolveTeamByPane",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "teamName": null,
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "named-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%2"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "teamName": "alpha",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%2"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%2"
+        }
+      }
+    },
+    {
+      "id": "unknown-pane",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%9"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-pane-id-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-pane-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "two-teams-claim-one-pane",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "two-rows-in-one-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"a\",\"transport_id\":\"%1\"},{\"role\":\"reviewer\",\"name\":\"r\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "non-object-rows-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[null,5,\"x\",{\"role\":\"architect\",\"name\":\"a\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "teamName": null,
+        "team": {
+          "members": [
+            null,
+            5,
+            "x",
+            {
+              "role": "architect",
+              "name": "a",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "a",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "unreadable-team-skipped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{nope",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "teamName": "alpha",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "numeric-transport-id-not-equal",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"a\",\"transport_id\":1}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "liveonly-skips-dead-orchestrator",
+      "native_files": {
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":999999999,\"pid_start\":\"Mon Jan  1 00:00:00 2001\"}}"
+      },
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1",
+        {
+          "liveOnly": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":999999999}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "liveonly-keeps-live-orchestrator",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1",
+        {
+          "liveOnly": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\"}}"
+      },
+      "expect": {
+        "teamName": null,
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": true
+            },
+            "pid_start": {
+              "$selfstart": true
+            }
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "liveonly-false-keeps-dead-orchestrator",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1",
+        {
+          "liveOnly": false
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":999999999}}"
+      },
+      "expect": {
+        "teamName": null,
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": 999999999
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "liveonly-missing-pid-is-orphaned",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1",
+        {
+          "liveOnly": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"a\",\"transport_id\":\"%1\"}]}"
+      },
+      "expect": null
+    },
+    {
+      "id": "liveonly-dead-team-does-not-block-live-claim",
+      "native_files": {
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":999999999,\"pid_start\":\"Mon Jan  1 00:00:00 2001\"}}"
+      },
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "%1",
+        {
+          "liveOnly": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":999999999}}",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\"}}"
+      },
+      "expect": {
+        "teamName": "alpha",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": {
+              "$selfpid": true
+            },
+            "pid_start": {
+              "$selfstart": true
+            }
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    },
+    {
+      "id": "worktree-reads-home-teams",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "%1"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "teamName": "alpha",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "member": {
+          "role": "architect",
+          "name": "p-architect",
+          "transport_id": "%1"
+        }
+      }
+    }
+  ]
+}

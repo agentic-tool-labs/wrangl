@@ -1,0 +1,468 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "promptOptions",
+  "cases": [
+    {
+      "id": "approval-offers-approve-and-deny",
+      "args": [
+        "codex",
+        "approval",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `ls` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "approve",
+          "label": "Yes, once",
+          "description": "Codex runs the command shown above outside the member's sandbox, this one time. Its next command that needs approval asks again.",
+          "grants": true
+        },
+        {
+          "id": "deny",
+          "label": "No",
+          "description": "Codex does not run the command, and the member's turn ends. It then waits for its next brief.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "approval-only-deny-offered",
+      "args": [
+        "codex",
+        "approval",
+        [
+          {
+            "n": 3,
+            "marked": true,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "deny",
+          "label": "No",
+          "description": "Codex does not run the command, and the member's turn ends. It then waits for its next brief.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "approval-digit-must-match-position",
+      "args": [
+        "codex",
+        "approval",
+        [
+          {
+            "n": 2,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "approval-deny-has-no-digit-key",
+      "args": [
+        "codex",
+        "approval",
+        [
+          {
+            "n": 9,
+            "marked": true,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "deny",
+          "label": "No",
+          "description": "Codex does not run the command, and the member's turn ends. It then waits for its next brief.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "approval-wrong-label",
+      "args": [
+        "codex",
+        "approval",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "trust-same-root-as-cwd",
+      "args": [
+        "codex",
+        "trust-dialog",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "trust",
+          "label": "Yes, trust",
+          "description": "Codex saves `trust_level = \"trusted\"` for `/work/repo` in `/home/u/.codex/config.toml`. From then on, every Codex session anywhere under `/work/repo`, yours included, skips this question and loads that directory's own Codex config, hooks and exec policies.",
+          "grants": true
+        },
+        {
+          "id": "distrust",
+          "label": "No, quit",
+          "description": "Codex quits and saves nothing. The member doesn't start, and its pane is left at a shell. Nothing is written to `/home/u/.codex/config.toml`, so the next Codex launch in `/work/repo` asks again.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "trust-root-differs-from-cwd",
+      "args": [
+        "codex",
+        "trust-dialog",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work"
+        }
+      ],
+      "expect": [
+        {
+          "id": "trust",
+          "label": "Yes, trust",
+          "description": "Codex saves `trust_level = \"trusted\"` for `/work` in `/home/u/.codex/config.toml`. That is the whole repository, not only `/work/repo`. From then on, every Codex session anywhere under `/work`, yours included, skips this question and loads that repository's own Codex config, hooks and exec policies.",
+          "grants": true
+        },
+        {
+          "id": "distrust",
+          "label": "No, quit",
+          "description": "Codex quits and saves nothing. The member doesn't start, and its pane is left at a shell. Nothing is written to `/home/u/.codex/config.toml`, so the next Codex launch in `/work/repo` asks again.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "trust-root-and-cwd-missing",
+      "args": [
+        "codex",
+        "trust-dialog",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "configPath": "/c",
+          "codexHome": "/h"
+        }
+      ],
+      "expect": [
+        {
+          "id": "trust",
+          "label": "Yes, trust",
+          "description": "Codex saves `trust_level = \"trusted\"` for `,` in `/c`. From then on, every Codex session anywhere under `,`, yours included, skips this question and loads that directory's own Codex config, hooks and exec policies.",
+          "grants": true
+        },
+        {
+          "id": "distrust",
+          "label": "No, quit",
+          "description": "Codex quits and saves nothing. The member doesn't start, and its pane is left at a shell. Nothing is written to `/c`, so the next Codex launch in `,` asks again.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "trust-only-quit-offered",
+      "args": [
+        "codex",
+        "trust-dialog",
+        [
+          {
+            "n": 2,
+            "marked": true,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "distrust",
+          "label": "No, quit",
+          "description": "Codex quits and saves nothing. The member doesn't start, and its pane is left at a shell. Nothing is written to `/home/u/.codex/config.toml`, so the next Codex launch in `/work/repo` asks again.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "login-offered",
+      "args": [
+        "codex",
+        "login",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Sign in with ChatGPT"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Sign in with Device Code"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "sign-in",
+          "label": "Start ChatGPT sign-in",
+          "description": "Codex opens a ChatGPT sign-in in your browser. You finish it there, and the member waits until you do. The sign-in is saved for every Codex session that uses `/home/u/.codex`.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "login-description-substitutes-codex-home",
+      "args": [
+        "codex",
+        "login",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Sign in with ChatGPT"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/x/y",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "sign-in",
+          "label": "Start ChatGPT sign-in",
+          "description": "Codex opens a ChatGPT sign-in in your browser. You finish it there, and the member waits until you do. The sign-in is saved for every Codex session that uses `/x/y`.",
+          "grants": false
+        }
+      ]
+    },
+    {
+      "id": "unknown-prompt",
+      "args": [
+        "codex",
+        "mystery",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, continue"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "unknown-kind",
+      "args": [
+        "gemini",
+        "approval",
+        [
+          {
+            "n": 1,
+            "marked": true,
+            "label": "Yes, proceed (y)"
+          },
+          {
+            "n": 2,
+            "marked": false,
+            "label": "Yes, and don't ask again for commands that start with `ls` (p)"
+          },
+          {
+            "n": 3,
+            "marked": false,
+            "label": "No, and tell Codex what to do differently (esc)"
+          }
+        ],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "block-null",
+      "args": [
+        "codex",
+        "approval",
+        null,
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "block-empty",
+      "args": [
+        "codex",
+        "approval",
+        [],
+        {
+          "cwd": "/work/repo",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "context-placeholder-twice",
+      "args": [
+        "codex",
+        "trust-dialog",
+        [
+          {
+            "n": 2,
+            "marked": true,
+            "label": "No, quit"
+          }
+        ],
+        {
+          "cwd": "/a<b",
+          "configPath": "/home/u/.codex/config.toml",
+          "codexHome": "/home/u/.codex",
+          "trustRoot": "/work/repo"
+        }
+      ],
+      "expect": [
+        {
+          "id": "distrust",
+          "label": "No, quit",
+          "description": "Codex quits and saves nothing. The member doesn't start, and its pane is left at a shell. Nothing is written to `/home/u/.codex/config.toml`, so the next Codex launch in `/a<b` asks again.",
+          "grants": false
+        }
+      ]
+    }
+  ]
+}

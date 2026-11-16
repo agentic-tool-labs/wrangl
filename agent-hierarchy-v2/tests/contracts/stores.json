@@ -1,0 +1,611 @@
+[
+  {
+    "store": "registrations",
+    "path": "<AH_HOME>/registrations/<session_id>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-mailbox.mjs:122",
+      "hooks/lib-mailbox.mjs:133"
+    ],
+    "tmp_name": null,
+    "note": "an in-place write; deleted by unregister (:133)",
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "mailbox-adapters",
+    "path": "<AH_HOME>/mailbox/**/adapters/<name>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-mailbox.mjs:498-500"
+    ],
+    "tmp_name": "${name}.json.${pid}.tmp",
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "mailbox-entries",
+    "path": "<AH_HOME>/mailbox/**/entries.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-mailbox.mjs:319-346"
+    ],
+    "tmp_name": null,
+    "lock": "<box>/append.lock",
+    "lock_optional": false,
+    "samples": []
+  },
+  {
+    "store": "mailbox-attempts",
+    "path": "<AH_HOME>/mailbox/**/attempts.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-mailbox.mjs:353"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "mailbox-acks",
+    "path": "<AH_HOME>/mailbox/**/acks/<entry id>",
+    "class": "X",
+    "format": "json",
+    "writers": [
+      "hooks/lib-mailbox.mjs:531"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "created exclusively (flag wx)",
+    "samples": []
+  },
+  {
+    "store": "team",
+    "path": "<HIER>/teams/<name>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-roster.mjs:1044-1076",
+      "hooks/lib-roster.mjs:1093",
+      "hooks/lib-roster.mjs:1117"
+    ],
+    "tmp_name": "${path}.${pid}.${hex}.tmp",
+    "lock": "<HIER>/.state-team/.domain.lock",
+    "samples": [
+      "team/1.json",
+      "team/2.json"
+    ],
+    "json_style": {
+      "indent": 2,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "team-snapshots",
+    "path": "<HIER>/snapshots/<name>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-roster.mjs:1148"
+    ],
+    "tmp_name": "${path}.${pid}.${hex}.tmp",
+    "lock": "<HIER>/.state-team/.domain.lock",
+    "samples": []
+  },
+  {
+    "store": "team-history",
+    "path": "<HIER>/team-history.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-roster.mjs:1617"
+    ],
+    "tmp_name": "${path}.${pid}.${hex}.tmp",
+    "lock": null,
+    "note": "no lock today (0100 A4)",
+    "samples": [
+      "team-history/1.json",
+      "team-history/2.json"
+    ],
+    "json_style": {
+      "indent": 2,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "links",
+    "path": "<HIER>/links/<team>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-links.mjs:69-71"
+    ],
+    "tmp_name": "${path}.${pid}.tmp",
+    "lock": "<HIER>/.state-links/.domain.lock",
+    "samples": [
+      "links/1.json",
+      "links/2.json"
+    ],
+    "json_style": {
+      "indent": 1,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "status",
+    "path": "<HIER>/status.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-status.mjs:528-530"
+    ],
+    "tmp_name": "status.json.${pid}.tmp",
+    "lock": "<HIER>/.state-status/.domain.lock",
+    "samples": [
+      "status/1.json",
+      "status/2.json"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "activity",
+    "path": "<HIER>/activity/<subject>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-status.mjs:174-181",
+      "hooks/lib-status.mjs:195",
+      "hooks/lib-status.mjs:213"
+    ],
+    "tmp_name": "${file}.${pid}.tmp",
+    "lock": "<HIER>/.state-activity/.domain.lock",
+    "samples": [
+      "activity/1.json",
+      "activity/2.json"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "peers",
+    "path": "<HIER>/peers.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-hier.mjs:110"
+    ],
+    "tmp_name": null,
+    "lock": "<HIER>/.state-peers/.domain.lock",
+    "lock_optional": true,
+    "samples": [
+      "peers/1.jsonl",
+      "peers/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "gates",
+    "path": "<HIER>/gates.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-hier.mjs:110"
+    ],
+    "tmp_name": null,
+    "lock": "<HIER>/.state-gates/.domain.lock",
+    "lock_optional": true,
+    "samples": [
+      "gates/1.jsonl",
+      "gates/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "msgs",
+    "path": "<HIER>/msgs/<id>--<to>--<slug>--<type>.md",
+    "class": "X",
+    "format": "md-frontmatter",
+    "writers": [
+      "hooks/lib-hier.mjs:1096",
+      "hooks/lib-hier.mjs:470-476",
+      "hooks/lib-hier.mjs:1101-1103",
+      "hooks/lib-hier.mjs:1109"
+    ],
+    "tmp_name": ".${basename}.${pid}.tmp (replace at :470) and ${path}.${pid}.tmp (settle at :1101)",
+    "lock": "<HIER>/.state-msgs/.domain.lock",
+    "note": "create is exclusive (wx); fill and settle replace by tmp-and-rename; archive renames into msgs/archive/",
+    "samples": [
+      "msgs-request/1.md",
+      "msgs-request/2.md",
+      "msgs-response/1.md",
+      "msgs-response/2.md"
+    ]
+  },
+  {
+    "store": "decisions",
+    "path": "<HIER>/pipeline/<run>/decisions.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-decisions.mjs:245"
+    ],
+    "tmp_name": null,
+    "lock": "<HIER>/.state-decisions/.domain.lock",
+    "lock_optional": true,
+    "samples": []
+  },
+  {
+    "store": "asks",
+    "path": "<HIER>/asks.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "native: Ah.Hierarchy HierLib.AsksAppendOp (decisions.ask)"
+    ],
+    "tmp_name": null,
+    "lock": "<HIER>/.state-asks/.domain.lock",
+    "lock_optional": true,
+    "mode": "0600",
+    "note": "native-only: no Node writer; holds the user's answers unredacted, so it is created owner-only",
+    "samples": []
+  },
+  {
+    "store": "session-pids",
+    "path": "<HIER>/session-pids.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-status.mjs:438-446",
+      "hooks/lib-hier.mjs:110"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "reads, then appends with no lock (0100 A4)",
+    "samples": [
+      "session-pids/1.jsonl",
+      "session-pids/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "executed-ops",
+    "path": "<domain state dir>/.executed-ops.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-state.mjs:667",
+      "hooks/lib-state.mjs:670-672",
+      "hooks/lib-state.mjs:958"
+    ],
+    "tmp_name": "${file}.${pid}.tmp",
+    "lock": "the domain lock",
+    "note": "rewritten to its newest rows past the rotate cap",
+    "samples": [
+      "executed-ops/1.jsonl",
+      "executed-ops/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "level-file",
+    "path": "<repo>/.claude/agent-hierarchy.json, <HOME>/.claude/agent-hierarchy.json, ...",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/roster.mjs:2174",
+      "hooks/roster.mjs:1207"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "a direct write, no tmp (not atomic)",
+    "samples": [
+      "level-file/1.json",
+      "level-file/2.json"
+    ],
+    "json_style": {
+      "indent": 2,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "trusted-role",
+    "path": "<HOME>/.claude/agent-hierarchy/trusted/<pin>.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-config.mjs:2065"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "instructions",
+    "path": "<standing instructions path>/<member>.md",
+    "class": "S",
+    "format": "text",
+    "writers": [
+      "hooks/roster.mjs:4121"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "free text written at launch",
+    "samples": []
+  },
+  {
+    "store": "role-scaffold",
+    "path": "<scaffold path>",
+    "class": "S",
+    "format": "text",
+    "writers": [
+      "hooks/roster.mjs:539",
+      "hooks/roster.mjs:544"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "created with a roster init, removed on failure (:544)",
+    "samples": []
+  },
+  {
+    "store": "qa",
+    "path": "<HOME>/.claude/ah2/agent-hierarchy.qa.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "native: Ah.Hierarchy HierLib.QaAppendOp (qa.append), QaCompactOp (qa.compact)"
+    ],
+    "tmp_name": null,
+    "lock": "<HOME>/.claude/ah2/agent-hierarchy.qa.state/.domain.lock",
+    "lock_optional": true,
+    "note": "native-only: no Node writer; the QA job store, one full snapshot of a job per line",
+    "samples": [],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "peer-pending",
+    "path": "<HOME>/.claude/agent-hierarchy.peer-pending.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-peer.mjs:253"
+    ],
+    "tmp_name": null,
+    "lock": "<HOME>/.claude/agent-hierarchy.peer-records.state/.domain.lock",
+    "lock_optional": true,
+    "samples": [
+      "peer-pending/1.jsonl",
+      "peer-pending/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "usage",
+    "path": "<HOME>/.claude/agent-hierarchy.usage.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-usage.mjs:110",
+      "hooks/lib-usage.mjs:95-97"
+    ],
+    "tmp_name": "${file}.${pid}.tmp (the prune)",
+    "lock": "<HOME>/.claude/agent-hierarchy.usage.state/.domain.lock",
+    "lock_optional": true,
+    "samples": [
+      "usage/1.jsonl",
+      "usage/2.jsonl"
+    ],
+    "json_style": {
+      "indent": 0,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "usage-cache",
+    "path": "<HOME>/.claude/agent-hierarchy.usage-cache.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/usage-report.mjs:97-99"
+    ],
+    "tmp_name": "${file}.${pid}.tmp",
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "ultra-gate",
+    "path": "<HOME>/.claude/agent-hierarchy.gate.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-gate.mjs:93-95"
+    ],
+    "tmp_name": "${path}.tmp-${pid}",
+    "lock": "<HOME>/.claude/agent-hierarchy.ultra-gate.state/.domain.lock",
+    "samples": [
+      "ultra-gate/1.json",
+      "ultra-gate/2.json"
+    ],
+    "json_style": {
+      "indent": 2,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "session-roles",
+    "path": "<HOME>/.claude/agent-hierarchy.session-roles.json",
+    "class": "S",
+    "format": "json",
+    "writers": [
+      "hooks/lib-session-role.mjs:55-57"
+    ],
+    "tmp_name": "${path}.tmp-${pid}",
+    "lock": "<HOME>/.claude/agent-hierarchy.state/session-roles/.domain.lock",
+    "samples": [
+      "session-roles/1.json",
+      "session-roles/2.json"
+    ],
+    "json_style": {
+      "indent": 2,
+      "trailing_newline": true,
+      "key_order": "insertion"
+    }
+  },
+  {
+    "store": "hook-errors",
+    "path": "<HOME>/.claude/hierarchy/hook-errors.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-config.mjs:117-119"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "any process, directly; rotated past a cap",
+    "samples": []
+  },
+  {
+    "store": "fallback-log",
+    "path": "<AH_HOME>/logs/fallback.jsonl",
+    "class": "A",
+    "format": "jsonl",
+    "writers": [
+      "hooks/lib-ahd-client.mjs:340-350"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "any process, directly; rotated to .1 past 1 MB",
+    "samples": []
+  },
+  {
+    "store": "daemon-log",
+    "path": "<AH_HOME>/logs/ahd.log",
+    "class": "L",
+    "format": "text",
+    "writers": [
+      "hooks/lib-ahd-client.mjs:154-156",
+      "hooks/lib-ahd-client.mjs:198-199"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "the daemon's stdout and stderr, opened append by the client; rotated past 5 MB",
+    "samples": []
+  },
+  {
+    "store": "daemon-info",
+    "path": "<AH_HOME>/run/ahd.json",
+    "class": "L",
+    "format": "json",
+    "writers": [
+      "hooks/ahd.mjs:1030-1032",
+      "hooks/ahd.mjs:961"
+    ],
+    "tmp_name": "${INFO}.${pid}.tmp",
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "daemon-lock",
+    "path": "<AH_HOME>/run/ahd.lock",
+    "class": "L",
+    "format": "json",
+    "writers": [
+      "hooks/lib-lock.mjs:72-100"
+    ],
+    "tmp_name": "${lock}.${pid}.${rand}",
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "daemon-socket",
+    "path": "<AH_HOME>/run/ahd.sock",
+    "class": "L",
+    "format": "socket",
+    "writers": [
+      "hooks/ahd.mjs:1021-1028",
+      "hooks/lib-ahd-client.mjs:193"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "paste-payload",
+    "path": "<AH_HOME>/run/ah-paste-*.txt",
+    "class": "L",
+    "format": "text",
+    "writers": [
+      "hooks/lib-paste.mjs:129",
+      "hooks/lib-paste.mjs:138"
+    ],
+    "tmp_name": null,
+    "lock": "<AH_HOME>/run/paste/<team>-<member>.lock",
+    "note": "mode 0600; removed after the paste",
+    "samples": []
+  },
+  {
+    "store": "issue-snapshot",
+    "path": "<outDir>/<number>.md (the intake skill's output directory)",
+    "class": "S",
+    "format": "text",
+    "writers": [
+      "hooks/issue-intake.mjs:402"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "samples": []
+  },
+  {
+    "store": "hierarchy-gitignore",
+    "path": "<HIER>/.gitignore",
+    "class": "X",
+    "format": "text",
+    "writers": [
+      "hooks/lib-hier.mjs:73"
+    ],
+    "tmp_name": null,
+    "lock": null,
+    "note": "`*` written when absent",
+    "samples": []
+  }
+]

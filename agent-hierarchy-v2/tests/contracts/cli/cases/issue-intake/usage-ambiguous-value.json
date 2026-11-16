@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "usage-ambiguous-value",
+  "about": "an option value that looks like an option",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "--out-dir",
+      "x"
+    ],
+    "stdin": null
+  },
+  "mutant": "the ambiguity text drifted",
+  "expect": {
+    "stdout": "{\"error\":\"usage: Option '--cwd' argument is ambiguous.\\nDid you forget to specify the option argument for '--cwd'?\\nTo specify an option argument starting with a dash use '--cwd=-XYZ'.\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:34.236Z"
+  }
+}

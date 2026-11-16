@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "plan",
+  "about": "resume without --yes prints the plan and launches nothing",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "resume",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: resume: no snapshot of team \"tm\" in <ROOT:proj>/.claude/hierarchy/snapshots — take one with `snapshot`\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a resume that launches without --yes",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:49.921Z"
+  }
+}

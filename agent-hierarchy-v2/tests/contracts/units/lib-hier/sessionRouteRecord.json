@@ -1,0 +1,109 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "sessionRouteRecord",
+  "cases": [
+    {
+      "id": "latest-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"peers\"}\n{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"subagents\"}\n"
+      },
+      "expect": {
+        "ts": "2026-06-01T12:00:00.000Z",
+        "type": "route",
+        "session_id": "s1",
+        "value": "peers"
+      }
+    },
+    {
+      "id": "other-session-ignored",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s2\",\"value\":\"peers\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "invalid-value-ignored",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"carrier-pigeon\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "other-type-ignored",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"model\",\"session_id\":\"s1\",\"value\":\"peers\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"peers\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "undefined-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"peers\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"\",\"value\":\"peers\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-gates-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "responsePlan",
+  "cases": [
+    {
+      "id": "plain-request",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md": "---\nid: 20260601-100000-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": {
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--orchestrator--spec-it--response.md",
+        "fields": {
+          "id": "20260601-100000-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "spec-it",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null
+        }
+      }
+    },
+    {
+      "id": "request-with-team-and-names",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md": "---\nid: 20260601-100000-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: spec-it\nparent: 20260601-090000-pppp\nreason: null\neta: null\nto_name: p-architect\nfrom_name: o\nteam: alpha\nteam_file: $ROOT/repo/.claude/hierarchy/teams/alpha.json\nteam_guide: null\ncreated: 2026-06-01T10:00:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[],\"orchestrator\":{\"pid\":1,\"session_id\":\"sO\"}}"
+      },
+      "expect": {
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--orchestrator--spec-it--response.md",
+        "fields": {
+          "id": "20260601-100000-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "spec-it",
+          "parent": "20260601-090000-pppp",
+          "reason": null,
+          "eta": null,
+          "to_name": "o",
+          "from_name": "p-architect",
+          "team": "alpha",
+          "team_file": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "team_guide": "$AHROOT/docs/team-file.md"
+        }
+      }
+    },
+    {
+      "id": "request-file-missing-uses-filename",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--orchestrator--spec-it--response.md",
+        "fields": {
+          "id": "20260601-100000-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "spec-it",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null
+        }
+      }
+    },
+    {
+      "id": "relative-path",
+      "args": [
+        "msgs/20260601-100000-aaaa--architect--spec-it--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-a-request-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-a-message-name",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/notes.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "request-without-frontmatter",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-100000-aaaa--architect--spec-it--request.md": "plain"
+      },
+      "expect": {
+        "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-100000-aaaa--orchestrator--spec-it--response.md",
+        "fields": {
+          "id": "20260601-100000-aaaa",
+          "type": "response",
+          "to": "orchestrator",
+          "from": "architect",
+          "slug": "spec-it",
+          "parent": null,
+          "reason": null,
+          "eta": null,
+          "to_name": null,
+          "from_name": null,
+          "team": null,
+          "team_file": null,
+          "team_guide": null
+        }
+      }
+    }
+  ]
+}

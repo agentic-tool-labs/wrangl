@@ -1,0 +1,133 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "rosterMemberNames",
+  "cases": [
+    {
+      "id": "ordinals",
+      "args": [
+        [
+          {
+            "role": "architect"
+          },
+          {
+            "role": "reviewer"
+          },
+          {
+            "role": "architect"
+          },
+          {
+            "role": "architect"
+          }
+        ],
+        "repo"
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "kind": "claude",
+          "name": "repo-architect"
+        },
+        {
+          "role": "reviewer",
+          "kind": "claude",
+          "name": "repo-reviewer"
+        },
+        {
+          "role": "architect",
+          "kind": "claude",
+          "name": "repo-architect-2"
+        },
+        {
+          "role": "architect",
+          "kind": "claude",
+          "name": "repo-architect-3"
+        }
+      ]
+    },
+    {
+      "id": "kind-default-and-null",
+      "args": [
+        [
+          {
+            "role": "a",
+            "kind": null
+          },
+          {
+            "role": "b",
+            "kind": "codex"
+          },
+          {
+            "role": "c"
+          }
+        ],
+        "p"
+      ],
+      "expect": [
+        {
+          "role": "a",
+          "kind": "claude",
+          "name": "p-a"
+        },
+        {
+          "role": "b",
+          "kind": "codex",
+          "name": "p-b"
+        },
+        {
+          "role": "c",
+          "kind": "claude",
+          "name": "p-c"
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "args": [
+        [],
+        "p"
+      ],
+      "expect": []
+    },
+    {
+      "id": "extra-keys-kept",
+      "args": [
+        [
+          {
+            "role": "architect",
+            "model": "opus",
+            "effort": "high"
+          }
+        ],
+        "p"
+      ],
+      "expect": [
+        {
+          "role": "architect",
+          "model": "opus",
+          "effort": "high",
+          "kind": "claude",
+          "name": "p-architect"
+        }
+      ]
+    },
+    {
+      "id": "hyphenated-prefix",
+      "args": [
+        [
+          {
+            "role": "ui-implementor"
+          }
+        ],
+        "my-repo"
+      ],
+      "expect": [
+        {
+          "role": "ui-implementor",
+          "kind": "claude",
+          "name": "my-repo-ui-implementor"
+        }
+      ]
+    }
+  ]
+}

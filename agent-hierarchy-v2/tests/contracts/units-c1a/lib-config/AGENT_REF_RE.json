@@ -1,0 +1,77 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "AGENT_REF_RE",
+  "cases": [
+    {
+      "id": "bare",
+      "args": [
+        "my-agent"
+      ],
+      "expect": true
+    },
+    {
+      "id": "namespaced",
+      "args": [
+        "plug:agent"
+      ],
+      "expect": true
+    },
+    {
+      "id": "two-colons",
+      "args": [
+        "a:b:c"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-dot",
+      "args": [
+        ".a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dots",
+      "args": [
+        "a.b_c-d"
+      ],
+      "expect": true
+    },
+    {
+      "id": "64",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "65",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "a\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "space",
+      "args": [
+        "a b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    }
+  ]
+}

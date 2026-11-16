@@ -1,0 +1,114 @@
+{
+  "lib": "lib-session-role",
+  "module": "hooks/lib-session-role.mjs",
+  "fn": "readSessionRole",
+  "cases": [
+    {
+      "id": "no-file",
+      "args": [
+        "s1"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ok",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\",\n      \"at\": \"t\"\n    }\n  }\n}\n"
+      },
+      "expect": "architect"
+    },
+    {
+      "id": "role-not-string",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": 5\n    }\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "role-missing",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"at\": \"t\"\n    }\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "entry-null",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": null\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "other-session",
+      "args": [
+        "s2"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\"\n    }\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "null-id",
+      "args": [
+        null
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"role\": \"reviewer\"\n    }\n  }\n}\n"
+      },
+      "expect": "reviewer"
+    },
+    {
+      "id": "padded-id",
+      "args": [
+        " s1 "
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"reviewer\"\n    }\n  }\n}\n"
+      },
+      "expect": "reviewer"
+    },
+    {
+      "id": "newer-file",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 2,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\"\n    }\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "bad-json",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "nope"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-role-string",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"\"\n    }\n  }\n}\n"
+      },
+      "expect": ""
+    }
+  ]
+}

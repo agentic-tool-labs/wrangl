@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "h3-role-orchestrator-notifies",
+  "about": "a session persisted as orchestrator notifies without owning a team",
+  "tree": "hook-bare-orchestrator-role",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stopfailure-recovery",
+    "event": {
+      "hook_event_name": "StopFailure",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "error": "invalid_request",
+      "error_message": "slow down"
+    }
+  },
+  "mutant": "role orchestrator ignored",
+  "expect": {
+    "stdout": "{\"terminalSequence\":\"\\u001b]9;ah: proj stopped on an API error (invalid_request). Open it to continue.\\u0007\\u0007\"}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:36:58.246Z"
+  }
+}

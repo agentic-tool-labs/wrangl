@@ -1,0 +1,116 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "mainCheckoutRoot",
+  "cases": [
+    {
+      "id": "worktree",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main"
+    },
+    {
+      "id": "normal-dir",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-dotgit",
+      "args": [
+        "$ROOT/none"
+      ],
+      "files": {},
+      "expect": null
+    },
+    {
+      "id": "relative-pointer",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: ../main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main"
+    },
+    {
+      "id": "no-commondir-falls-back",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/HEAD": "y",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main"
+    },
+    {
+      "id": "pointer-not-worktrees",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "wt/.git": "gitdir: $ROOT/main/.git/modules/wt\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "same-root",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "wt/.git": "gitdir: $ROOT/other/worktrees/x\n",
+        "other/worktrees/x/commondir": "$ROOT/wt/.git\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "garbage-file",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "wt/.git": "not a pointer\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "pointer-with-spaces",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir:   $ROOT/main/.git/worktrees/wt   \n"
+      },
+      "expect": "$ROOT/main"
+    },
+    {
+      "id": "multiline-file",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "first\ngitdir: $ROOT/main/.git/worktrees/wt\nlast\n"
+      },
+      "expect": "$ROOT/main"
+    }
+  ]
+}

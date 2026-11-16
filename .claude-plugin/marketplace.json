@@ -1,0 +1,33 @@
+{
+  "name": "wrangl",
+  "owner": {
+    "name": "Jim Cline",
+    "url": "https://github.com/JimCline"
+  },
+  "metadata": {
+    "description": "Wrangl: Agent Hierarchy, a multi-agent role hierarchy for Claude Code, driven by the ahd daemon.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "wrangl",
+      "source": "./agent-hierarchy-v2",
+      "description": "Wrangl: Agent Hierarchy. Turns one Claude Code session into a team of agent roles (an Orchestrator that dispatches an Architect, Implementor, Reviewer and others), each on the right model, coordinated by a local daemon. Commands: ah and ahd. Disable or uninstall ah (v1) before enabling Wrangl; running both in one session doubles every hook. State lives in ~/.claude/ah2 and <repo>/.claude/ah2.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Jim Cline"
+      },
+      "license": "Apache-2.0",
+      "keywords": [
+        "subagent",
+        "delegation",
+        "orchestration",
+        "models",
+        "review",
+        "cost",
+        "herdr"
+      ],
+      "category": "productivity"
+    }
+  ]
+}

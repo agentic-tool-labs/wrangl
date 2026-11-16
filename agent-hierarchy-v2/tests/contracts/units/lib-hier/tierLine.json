@@ -1,0 +1,217 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "tierLine",
+  "cases": [
+    {
+      "id": "known-session-model",
+      "args": [
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "opus"
+      ],
+      "expect": "tier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "unknown-session-model",
+      "args": [
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "mystery"
+      ],
+      "expect": "tier: model unknown — see TIER RULE; architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "no-session-model",
+      "args": [
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        null
+      ],
+      "expect": "tier: model unknown — see TIER RULE; architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "full-model-id",
+      "args": [
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "claude-sonnet-4-5"
+      ],
+      "expect": "tier: you are claude-sonnet-4-5(2); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "empty-model",
+      "args": [
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        ""
+      ],
+      "expect": "tier: model unknown — see TIER RULE; architect opus(3); ultra-advisor fable(4)"
+    }
+  ]
+}

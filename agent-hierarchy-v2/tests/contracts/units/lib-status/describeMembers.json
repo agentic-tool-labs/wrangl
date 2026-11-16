@@ -1,0 +1,2889 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "describeMembers",
+  "cases": [
+    {
+      "id": "live-peer-working",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "live-peer-without-a-record-is-unknown",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "peer-down",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-reviewer",
+              "role": "reviewer"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sR.json": "{\"activity\":\"idle\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-reviewer",
+          "role": "reviewer",
+          "label": "reviewer",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sR",
+          "live": false,
+          "activity": "idle",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "peer-seen-recently",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-seen",
+              "role": "seen-role"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sS.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-seen",
+          "role": "seen-role",
+          "label": "seen-role",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sS",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "peer-not-in-the-roster",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "stranger",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "stranger",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": null,
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "peer-blocked-shows-reason",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":\"user\",\"note\":\"n\",\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "blocked",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": "user",
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "blocked-reason-only-when-blocked",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":\"user\",\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "unknown-activity-name-is-unknown",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"dancing\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "failed-activity-is-known",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"failed\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "failed",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "unknown-activity-is-known",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"unknown\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "activity-non-string",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":5,\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "last-tool-and-time",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":\"Bash\",\"tool_at\":\"2026-06-01T11:59:55.000Z\"}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": "Bash",
+          "last_tool_at": "2026-06-01T11:59:55.000Z",
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "last-tool-time-non-string",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":\"Bash\",\"tool_at\":5}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": "Bash",
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "a-legacy-context-reports-tokens-and-no-percent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null,\"context\":{\"used\":84000,\"window\":200000,\"pct\":42,\"window_source\":\"table\",\"at\":\"2026-06-01T11:59:30.000Z\"}}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null,
+          "context_used": 84000
+        }
+      ]
+    },
+    {
+      "id": "a-context-without-used-reports-nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null,\"context\":{\"pct\":0}}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "context-pct-fraction-absent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null,\"context\":{\"pct\":4.2}}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "context-pct-string-absent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null,\"context\":{\"pct\":\"42\"}}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "pane-member-with-record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "x-impl",
+              "role": "implementor",
+              "kind": "codex",
+              "route": "pane",
+              "transport": "herdr",
+              "transport_id": "%3"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/pane-x-impl.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "x-impl",
+          "role": "implementor",
+          "label": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "session_id": null,
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "pane-member-without-record-has-no-liveness",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "x-impl",
+              "role": "implementor",
+              "kind": "codex",
+              "route": "pane",
+              "transport": "herdr",
+              "transport_id": "%3"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "x-impl",
+          "role": "implementor",
+          "label": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "session_id": null,
+          "live": null,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "pane-member-unknown-activity-is-not-live",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "x-impl",
+              "role": "implementor",
+              "kind": "codex",
+              "route": "pane",
+              "transport": "herdr",
+              "transport_id": "%3"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/pane-x-impl.json": "{\"activity\":\"unknown\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "x-impl",
+          "role": "implementor",
+          "label": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "session_id": null,
+          "live": false,
+          "activity": "unknown",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "pane-blocked-carries-the-note",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "x-impl",
+              "role": "implementor",
+              "kind": "codex",
+              "route": "pane",
+              "transport": "herdr",
+              "transport_id": "%3"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/pane-x-impl.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":\"user\",\"note\":\"enter password\",\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "x-impl",
+          "role": "implementor",
+          "label": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "session_id": null,
+          "live": true,
+          "activity": "blocked",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": "user",
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": "enter password"
+        }
+      ]
+    },
+    {
+      "id": "pane-note-is-cut-at-80",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "x-impl",
+              "role": "implementor",
+              "kind": "codex",
+              "route": "pane",
+              "transport": "herdr",
+              "transport_id": "%3"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/pane-x-impl.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":\"nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\",\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "x-impl",
+          "role": "implementor",
+          "label": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "session_id": null,
+          "live": true,
+          "activity": "blocked",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+        }
+      ]
+    },
+    {
+      "id": "peer-blocked-has-no-note",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":\"n\",\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "blocked",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "focusable-member-transport",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "transport": "herdr",
+              "transport_id": "%1"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "focusable-team-transport",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "transport_id": "%1"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": true,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "member-transport-overrides-the-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "transport": "tmux",
+              "transport_id": "%1"
+            }
+          ],
+          "transport": "herdr"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "not-focusable-without-transport-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "transport": "herdr"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "not-focusable-with-empty-transport-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "transport": "herdr",
+              "transport_id": ""
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "not-focusable-with-a-name-herdr-rejects",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "Bad_Name",
+              "role": "architect",
+              "transport": "herdr",
+              "transport_id": "%1"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "Bad_Name",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": null,
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "kind-defaults-to-claude",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "kind-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": "codex"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "codex",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "empty-kind-is-claude",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "kind": ""
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "stream-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "stream": "left"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": "left",
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "empty-stream-is-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "stream": ""
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "non-string-stream-is-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect",
+              "stream": 5
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "role-non-string-is-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": 5
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": null,
+          "label": null,
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "names-are-cleaned-and-cut",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "\u001b[31mp-architect",
+              "role": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "label": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": null,
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "label-is-the-role-when-alone",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            },
+            {
+              "name": "p-reviewer",
+              "role": "reviewer"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        },
+        {
+          "name": "p-reviewer",
+          "role": "reviewer",
+          "label": "reviewer",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sR",
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "label-is-the-name-when-a-live-peer-shares-the-role",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            },
+            {
+              "name": "p-architect-2",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          },
+          {
+            "name": "p-architect-2",
+            "role": "architect",
+            "session_id": "sA2",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "p-architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        },
+        {
+          "name": "p-architect-2",
+          "role": "architect",
+          "label": "p-architect-2",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA2",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "label-stays-role-when-the-sharer-is-down",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-reviewer",
+              "role": "reviewer"
+            },
+            {
+              "name": "p-reviewer-2",
+              "role": "reviewer"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-reviewer",
+          "role": "reviewer",
+          "label": "reviewer",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sR",
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        },
+        {
+          "name": "p-reviewer-2",
+          "role": "reviewer",
+          "label": "reviewer",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": null,
+          "live": false,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "members-not-an-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": "x"
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "members-skip-non-records",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            null,
+            5,
+            "x",
+            {
+              "role": "a"
+            },
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-reviewer",
+            "role": "reviewer",
+            "session_id": "sR",
+            "status": "down",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "p-seen",
+            "role": "seen-role",
+            "session_id": "sS",
+            "status": "seen",
+            "ts": "2026-06-01T11:58:20.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "roster-row-with-non-string-session-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "p-architect",
+              "role": "architect"
+            }
+          ]
+        },
+        [
+          {
+            "name": "p-architect",
+            "role": "architect",
+            "session_id": 5,
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "p-architect",
+          "role": "architect",
+          "label": "architect",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": null,
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": null,
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "one-character-names-and-roles-are-kept",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "a",
+              "role": "r",
+              "kind": "c",
+              "stream": "s"
+            }
+          ]
+        },
+        [
+          {
+            "name": "a",
+            "role": "r",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+            "role": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+            "session_id": "sB",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":\"u\",\"note\":null,\"tool\":\"t\",\"tool_at\":null}\n"
+      },
+      "expect": [
+        {
+          "name": "a",
+          "role": "r",
+          "label": "r",
+          "kind": "c",
+          "route": "peer",
+          "session_id": "sA",
+          "live": true,
+          "activity": "blocked",
+          "activity_at": "2026-06-01T11:58:20.000Z",
+          "blocked_by": "u",
+          "focusable": false,
+          "stream": "s",
+          "last_tool": "t",
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    },
+    {
+      "id": "astral-names-are-cut-at-64-code-points",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "members": [
+            {
+              "name": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+              "role": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+              "stream": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂"
+            }
+          ]
+        },
+        [
+          {
+            "name": "a",
+            "role": "r",
+            "session_id": "sA",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          },
+          {
+            "name": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+            "role": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+            "session_id": "sB",
+            "status": "up",
+            "pid": 1,
+            "ts": "2026-06-01T11:59:50.000Z"
+          }
+        ]
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": [
+        {
+          "name": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+          "role": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+          "label": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sB",
+          "live": true,
+          "activity": "unknown",
+          "activity_at": null,
+          "blocked_by": null,
+          "focusable": false,
+          "stream": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂",
+          "last_tool": null,
+          "last_tool_at": null,
+          "blocked_note": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,607 @@
+{
+  "lib": "lib-herdr",
+  "module": "hooks/lib-herdr.mjs",
+  "fn": "agentsFromList",
+  "cases": [
+    {
+      "id": "full-rows",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "name": "p-architect",
+                "terminal_title_stripped": "claude",
+                "agent_session": {
+                  "value": "sess-1"
+                },
+                "pane_id": "1-1",
+                "tab_id": "1",
+                "workspace_id": "w1",
+                "cwd": "/repo",
+                "agent_status": "idle"
+              },
+              {
+                "name": "p-implementor",
+                "terminal_title_stripped": "codex",
+                "agent_session": {
+                  "value": "sess-2"
+                },
+                "pane_id": "1-2",
+                "tab_id": "1",
+                "workspace_id": "w1",
+                "foreground_cwd": "/repo/wt",
+                "agent_status": "working"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": "p-architect",
+          "title": "claude",
+          "session_id": "sess-1",
+          "pane_id": "1-1",
+          "tab_id": "1",
+          "workspace_id": "w1",
+          "cwd": "/repo",
+          "agent_status": "idle"
+        },
+        {
+          "name": "p-implementor",
+          "title": "codex",
+          "session_id": "sess-2",
+          "pane_id": "1-2",
+          "tab_id": "1",
+          "workspace_id": "w1",
+          "cwd": "/repo/wt",
+          "agent_status": "working"
+        }
+      ]
+    },
+    {
+      "id": "nameless-pane",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "2-1",
+                "tab_id": "2",
+                "workspace_id": "w1",
+                "terminal_title_stripped": "p-orchestrator"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": "p-orchestrator",
+          "session_id": null,
+          "pane_id": "2-1",
+          "tab_id": "2",
+          "workspace_id": "w1",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "empty-agents",
+      "args": [
+        {
+          "result": {
+            "agents": []
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "falsy-name-is-null",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "name": "",
+                "pane_id": "a"
+              },
+              {
+                "name": 0,
+                "pane_id": "b"
+              },
+              {
+                "name": false,
+                "pane_id": "c"
+              },
+              {
+                "name": null,
+                "pane_id": "d"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "a",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "b",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "c",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "d",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "non-string-title-is-stringified",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "a",
+                "terminal_title_stripped": 123
+              },
+              {
+                "pane_id": "b",
+                "terminal_title_stripped": ""
+              },
+              {
+                "pane_id": "c",
+                "terminal_title_stripped": 0
+              },
+              {
+                "pane_id": "d",
+                "terminal_title_stripped": []
+              },
+              {
+                "pane_id": "e",
+                "terminal_title_stripped": [
+                  "x",
+                  "y"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": "123",
+          "session_id": null,
+          "pane_id": "a",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "b",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "c",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "d",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": "x,y",
+          "session_id": null,
+          "pane_id": "e",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "session-value-must-be-a-nonempty-string",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "a",
+                "agent_session": {
+                  "value": "s"
+                }
+              },
+              {
+                "pane_id": "b",
+                "agent_session": {
+                  "value": 5
+                }
+              },
+              {
+                "pane_id": "c",
+                "agent_session": {
+                  "value": ""
+                }
+              },
+              {
+                "pane_id": "d",
+                "agent_session": {}
+              },
+              {
+                "pane_id": "e",
+                "agent_session": null
+              },
+              {
+                "pane_id": "f",
+                "agent_session": "text"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": null,
+          "session_id": "s",
+          "pane_id": "a",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "b",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "c",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "d",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "e",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "f",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "cwd-falls-back-to-foreground-cwd",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "a",
+                "cwd": "",
+                "foreground_cwd": "/fg"
+              },
+              {
+                "pane_id": "b",
+                "cwd": "/c",
+                "foreground_cwd": "/fg"
+              },
+              {
+                "pane_id": "c"
+              },
+              {
+                "pane_id": "d",
+                "cwd": null,
+                "foreground_cwd": null
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "a",
+          "cwd": "/fg",
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "b",
+          "cwd": "/c",
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "c",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "d",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "pane-id-missing-key-is-omitted",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "name": "n"
+              },
+              {
+                "name": "m",
+                "pane_id": null
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": "n",
+          "title": null,
+          "session_id": null,
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": "m",
+          "title": null,
+          "session_id": null,
+          "pane_id": null,
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "status-falsy-is-null",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "a",
+                "agent_status": ""
+              },
+              {
+                "pane_id": "b",
+                "agent_status": "blocked"
+              },
+              {
+                "pane_id": "c"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "a",
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "b",
+          "cwd": null,
+          "agent_status": "blocked"
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "pane_id": "c",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "extra-fields-are-dropped",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              {
+                "pane_id": "a",
+                "name": "n",
+                "revision": 7,
+                "labels": [
+                  "x"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": "n",
+          "title": null,
+          "session_id": null,
+          "pane_id": "a",
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "element-number-gives-a-null-row",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              5,
+              "text",
+              true
+            ]
+          }
+        }
+      ],
+      "expect": [
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "cwd": null,
+          "agent_status": null
+        },
+        {
+          "name": null,
+          "title": null,
+          "session_id": null,
+          "cwd": null,
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "null-element-throws",
+      "args": [
+        {
+          "result": {
+            "agents": [
+              null
+            ]
+          }
+        }
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "missing-result-throws",
+      "args": [
+        {}
+      ],
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unexpected shape (missing .result.agents)"
+    },
+    {
+      "id": "agents-not-an-array-throws",
+      "args": [
+        {
+          "result": {
+            "agents": {
+              "a": 1
+            }
+          }
+        }
+      ],
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unexpected shape (missing .result.agents)"
+    },
+    {
+      "id": "result-null-throws",
+      "args": [
+        null
+      ],
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unexpected shape (missing .result.agents)"
+    },
+    {
+      "id": "result-agents-null-throws",
+      "args": [
+        {
+          "result": {
+            "agents": null
+          }
+        }
+      ],
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unexpected shape (missing .result.agents)"
+    },
+    {
+      "id": "top-level-array-throws",
+      "args": [
+        []
+      ],
+      "expectThrows": true,
+      "expectError": "herdr agent list produced unexpected shape (missing .result.agents)"
+    }
+  ]
+}

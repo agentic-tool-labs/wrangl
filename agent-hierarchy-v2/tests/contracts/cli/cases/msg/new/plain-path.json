@@ -1,0 +1,38 @@
+{
+  "kind": "cli",
+  "id": "plain-path",
+  "about": "new --plain prints `<path>  <id>`, the plain form callers parse",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "new",
+      "--to",
+      "implementor",
+      "--from",
+      "orchestrator",
+      "--slug",
+      "contract",
+      "--title",
+      "Contract title",
+      "--id",
+      "20260101-000000-cccc",
+      "--plain"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--contract--request.md  <MSGID:1>\n",
+    "stderr": "note: <MSGID:1> was not on the checklist; added item _run/auto-contract-title and linked it. Next time link it yourself: `roster.mjs checklist add \"<what>\" --ref <request id>` (new item) or `roster.mjs checklist set <item> --ref <request id>` (existing item), or `msg.mjs new --item <id>` at dispatch.\n",
+    "exit": 0
+  },
+  "mutant": "a plain new that prints the id alone",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored (keep every API: the plain `<path>  <id>` form changed in 7902a3827); stdout only"
+  }
+}

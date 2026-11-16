@@ -1,0 +1,95 @@
+#!/bin/bash
+# agent-hierarchy — roster.mjs `move`'s requireAllowGlobal guard (spec 0016 §4.4): `move` relocates
+# a live agent pane and was unguarded on every path before this change. The guard must match sites
+# 624 (create --spawn) / 1135 (spawn-one) exactly — same helper, same argument shape, same message.
+# HOME-redirected; real state untouched.
+# Usage: bash tests/test-roster-move-guard.sh   (exits 0 iff all cases pass)
+
+. "$(dirname "$0")/lib-hermetic.sh"
+. "$(cd "$(dirname "$0")" && pwd)/lib-test-env.sh"
+PLUGIN="$(cd "$(dirname "$0")/.." && pwd)"
+H="$PLUGIN/hooks"
+SANDBOX="$(mktemp -d "${TMPDIR:-/tmp}/agent-hierarchy-move-guard-test.XXXXXX")"
+export AH_TEST_FAKE_BIN="$SANDBOX/nolaunch:$SANDBOX/bin"
+hermetic_on_exit 'rm -rf "$SANDBOX"'
+SANDBOX="$(cd "$SANDBOX" && pwd -P)"
+# No test may reach the real herdr or tmux: a stub that fails every call sits first on PATH, and
+# the session's pane environment is dropped. A wrapper that sets PATH to its own fakes still wins.
+mkdir -p "$SANDBOX/nolaunch"; printf '#!/bin/sh\nexit 1\n' > "$SANDBOX/nolaunch/herdr"; cp "$SANDBOX/nolaunch/herdr" "$SANDBOX/nolaunch/tmux"; chmod +x "$SANDBOX/nolaunch/herdr" "$SANDBOX/nolaunch/tmux"
+export PATH="$SANDBOX/nolaunch:$PATH"; unset WRANGL_TEAM_FILE
+unset CLAUDE_PID  # every Claude session exports one; a test must not inherit it
+FAKEHOME="$SANDBOX/home"
+PROJ="$SANDBOX/myrepo"
+mkdir -p "$FAKEHOME/.claude/ah2" "$PROJ/.claude/ah2" "$SANDBOX/bin"
+(cd "$PROJ" && git init -q)
+NODE_DIR="$(dirname "$(command -v node)")"
+PASS=0; FAIL=0
+ah_test_prove_self orchestrator myrepo > /dev/null  # this shell is the Orchestrator of the team the verbs below create
+
+check() {
+  local name=$1; shift
+  if eval "$@"; then PASS=$((PASS+1)); echo "PASS: $name"; else FAIL=$((FAIL+1)); echo "FAIL: $name (RC=$RC OUT=${OUT:0:400})"; fi
+}
+
+echo '[]' > "$SANDBOX/agents.json"
+cat > "$SANDBOX/bin/herdr" <<'EOF'
+#!/usr/bin/env node
+const fs = require("fs");
+const args = process.argv.slice(2);
+if (args[0] === "agent" && args[1] === "list") {
+  const agents = JSON.parse(fs.readFileSync(process.env.FAKE_HERDR_STATE, "utf8"));
+  console.log(JSON.stringify({ id: "cli:agent:list", result: { agents, type: "agent_list" } }));
+  process.exit(0);
+}
+if (args[0] === "pane" && args[1] === "move") {
+  console.log(JSON.stringify({ id: "cli:pane:move", result: { ok: true } }));
+  process.exit(0);
+}
+process.stderr.write("fake herdr: unhandled args " + JSON.stringify(args) + "\n");
+process.exit(1);
+EOF
+chmod +x "$SANDBOX/bin/herdr"
+
+run() { OUT=$(HOME="$FAKEHOME" PATH="$SANDBOX/bin:$NODE_DIR" FAKE_HERDR_STATE="$SANDBOX/agents.json" "$PLUGIN/bin/ah" roster "$@" --cwd "$PROJ" 2>&1); RC=$?; }
+
+TEAM_FILE="$PROJ/.claude/ah2/team.json"
+mkdir -p "$(dirname "$TEAM_FILE")"
+cat > "$TEAM_FILE" <<EOF
+{
+  "version": 1, "team_id": "t1", "created": "2026-01-01T00:00:00Z",
+  "roster_level": "repo", "transport": "herdr",
+  "orchestrator": { "session_id": null, "pid": null },
+  "members": [
+    {"role": "architect", "name": "myrepo-architect", "ref": "r1", "route": "peer", "model": "opus", "transport_id": "PANE1", "checked_in": "2026-01-01T00:00:00Z"}
+  ],
+  "partial": false
+}
+EOF
+ah_test_prove_self orchestrator myrepo "$TEAM_FILE" > /dev/null
+
+# ---- no roster configured at all: move is not gated (requireAllowGlobal no-ops when resolveRoster returns null)
+run move myrepo-architect --new-workspace
+check "move (no roster resolves anywhere): not global-gated, succeeds" '[ "$RC" -eq 0 ]'
+
+# ---- a repo-level roster: not global, no guard fires
+cat > "$PROJ/.claude/ah2/agent-hierarchy.json" <<'EOF'
+{"version":1,"enabled":true,"roster":{"route":"peer","members":[{"role":"architect","model":"opus"}]}}
+EOF
+run move myrepo-architect --new-workspace
+check "move (repo-level roster): not global, succeeds without --allow-global" '[ "$RC" -eq 0 ]'
+rm -f "$PROJ/.claude/ah2/agent-hierarchy.json"
+
+# ---- a global-level roster needs no flag; --allow-global is still accepted
+cat > "$FAKEHOME/.claude/ah2/agent-hierarchy.json" <<'EOF'
+{"version":1,"enabled":true,"roster":{"route":"peer","members":[{"role":"architect","model":"opus"}]}}
+EOF
+run move myrepo-architect --new-workspace
+check "move (global roster, no --allow-global): succeeds" '[ "$RC" -eq 0 ]'
+
+run move myrepo-architect --new-workspace --allow-global
+check "move --allow-global: still accepted against the global roster" '[ "$RC" -eq 0 ]'
+rm -f "$FAKEHOME/.claude/ah2/agent-hierarchy.json"
+
+echo
+echo "passed: $PASS  failed: $FAIL"
+[ "$FAIL" -eq 0 ]

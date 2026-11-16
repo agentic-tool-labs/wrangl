@@ -1,0 +1,66 @@
+{
+  "lib": "lib-mesh",
+  "module": "hooks/lib-mesh.mjs",
+  "fn": "notLinkedText",
+  "cases": [
+    {
+      "id": "all-fields",
+      "args": [
+        {
+          "team": "tm",
+          "to": "b@tm",
+          "task": {
+            "id": "20260101-000000-aa11",
+            "path": "/p/msgs/x--request.md"
+          }
+        }
+      ],
+      "expect": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task 20260101-000000-aa11 --why \"<reason>\" (/p/msgs/x--request.md).\nOr send through orchestrator@tm."
+    },
+    {
+      "id": "no-recipient",
+      "args": [
+        {
+          "team": "tm"
+        }
+      ],
+      "expect": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to <recipient> --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+    },
+    {
+      "id": "no-task",
+      "args": [
+        {
+          "team": "tm",
+          "to": "b@tm"
+        }
+      ],
+      "expect": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\".\nOr send through orchestrator@tm."
+    },
+    {
+      "id": "task-without-path",
+      "args": [
+        {
+          "team": "tm",
+          "to": "b@tm",
+          "task": {
+            "id": "t1"
+          }
+        }
+      ],
+      "expect": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task t1 --why \"<reason>\".\nOr send through orchestrator@tm."
+    },
+    {
+      "id": "task-without-id",
+      "args": [
+        {
+          "team": "tm",
+          "to": "b@tm",
+          "task": {
+            "path": "/p/x.md"
+          }
+        }
+      ],
+      "expect": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task <request id> --why \"<reason>\" (/p/x.md).\nOr send through orchestrator@tm."
+    }
+  ]
+}

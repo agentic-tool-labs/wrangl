@@ -1,0 +1,215 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "missingIntent",
+  "cases": [
+    {
+      "id": "both-missing-in-skeleton",
+      "args": [
+        {
+          "path": "p",
+          "text": "---\nid: 20260601-000001-aaaa\ntype: null\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "goal-in-tldr",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: ship it\n- [5] acceptance: \n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "acceptance-in-tldr",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: \n- [5] acceptance: tests pass\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal"
+      ]
+    },
+    {
+      "id": "both-in-tldr",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: g\n- [5] acceptance: a\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "goal-in-section-bullet",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: \n\n## [1] goal\n- ship it\n\n## [5] acceptance\n- none\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "star-bullet",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: \n\n## [1] goal\n* ship it\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "indented-bullet",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: \n\n## [1] goal\n   - ship it\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "blank-markers-do-not-count",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: none\n- [5] acceptance: TBD\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "marker-forms",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: n/a\n- [5] acceptance: -\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "marker-na-uppercase",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: NA\n- [5] acceptance:   \n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "text-after-none-counts",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: none of the above\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "bullet-in-other-section-ignored",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: \n\n## [2] context\n- ship it\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "section-without-bullet-text",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n\n\n## [1] goal\nplain text\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "crlf-tldr-line-does-not-match",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [0] tldr\n- [1] goal: ship it\r\n- [5] acceptance: a\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "goal"
+      ]
+    },
+    {
+      "id": "no-text-throws",
+      "args": [
+        {
+          "path": "p"
+        }
+      ],
+      "expectThrows": true
+    }
+  ]
+}

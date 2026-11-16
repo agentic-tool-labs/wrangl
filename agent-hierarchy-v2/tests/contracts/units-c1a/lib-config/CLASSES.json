@@ -1,0 +1,169 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "CLASSES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "advise": {
+          "builtin": "ultra-advisor",
+          "step": "Escalate",
+          "models": [
+            "fable",
+            "opus"
+          ],
+          "chain": true,
+          "tier": true,
+          "owesResponse": false,
+          "ultraGate": true,
+          "roleDispatchable": false,
+          "contract": {
+            "required": [
+              "Read",
+              "SendMessage"
+            ],
+            "forbidden": [],
+            "discouraged": [
+              "Edit",
+              "NotebookEdit",
+              "advisor"
+            ],
+            "missingRecommended": []
+          }
+        },
+        "design": {
+          "builtin": "architect",
+          "step": "Design",
+          "models": [
+            "opus",
+            "sonnet",
+            "fable",
+            "inherit"
+          ],
+          "chain": true,
+          "tier": true,
+          "owesResponse": true,
+          "ultraGate": false,
+          "roleDispatchable": false,
+          "contract": {
+            "required": [
+              "Read",
+              "SendMessage",
+              "Write"
+            ],
+            "forbidden": [],
+            "discouraged": [
+              "Bash",
+              "NotebookEdit",
+              "advisor"
+            ],
+            "missingRecommended": []
+          }
+        },
+        "review": {
+          "builtin": "reviewer",
+          "step": "Review",
+          "models": [
+            "opus",
+            "sonnet",
+            "fable",
+            "inherit"
+          ],
+          "chain": true,
+          "tier": false,
+          "owesResponse": false,
+          "ultraGate": false,
+          "roleDispatchable": false,
+          "contract": {
+            "required": [
+              "Read",
+              "SendMessage"
+            ],
+            "forbidden": [
+              "Edit",
+              "Write",
+              "NotebookEdit"
+            ],
+            "discouraged": [
+              "advisor"
+            ],
+            "missingRecommended": [
+              "Bash"
+            ]
+          }
+        },
+        "implement": {
+          "builtin": "implementor",
+          "step": "Implement",
+          "models": [
+            "opus",
+            "sonnet",
+            "fable",
+            "inherit"
+          ],
+          "chain": true,
+          "tier": false,
+          "owesResponse": true,
+          "ultraGate": false,
+          "roleDispatchable": false,
+          "contract": {
+            "required": [
+              "Read",
+              "SendMessage",
+              [
+                "Edit",
+                "Write"
+              ],
+              [
+                "Write",
+                "Bash"
+              ]
+            ],
+            "forbidden": [],
+            "discouraged": [
+              "advisor"
+            ],
+            "missingRecommended": [
+              "Bash"
+            ]
+          }
+        },
+        "legwork": {
+          "builtin": "task-runner",
+          "step": null,
+          "models": [
+            "opus",
+            "sonnet",
+            "fable",
+            "inherit",
+            "haiku"
+          ],
+          "chain": false,
+          "tier": false,
+          "owesResponse": false,
+          "ultraGate": false,
+          "roleDispatchable": true,
+          "contract": null
+        },
+        "orchestrate": {
+          "builtin": "sub-orchestrator",
+          "step": "Orchestrate",
+          "models": [
+            "opus",
+            "sonnet",
+            "fable",
+            "inherit"
+          ],
+          "chain": true,
+          "tier": false,
+          "owesResponse": true,
+          "ultraGate": false,
+          "roleDispatchable": false,
+          "contract": null
+        }
+      }
+    }
+  ]
+}

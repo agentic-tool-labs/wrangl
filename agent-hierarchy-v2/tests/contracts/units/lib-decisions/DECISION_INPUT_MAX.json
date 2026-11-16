@@ -1,0 +1,12 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "DECISION_INPUT_MAX",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 65536
+    }
+  ]
+}

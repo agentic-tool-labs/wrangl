@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "view-wait-without-since",
+  "about": "wait without since is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "wait": "1"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "wait needs since: without a cursor the current view is always new, so a long-poll would return at once"
+      }
+    }
+  },
+  "mutant": "wait without since accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:15.140Z"
+  }
+}

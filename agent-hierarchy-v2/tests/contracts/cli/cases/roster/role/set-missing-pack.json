@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "set-missing-pack",
+  "about": "role set from a pack that is not installed is refused",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "role",
+      "set",
+      "x",
+      "--from",
+      "nope@nowhere:role",
+      "--dry-run"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: role set x --from nope@nowhere:role: pack-missing: plugin nope is not installed\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a role adopted from a missing pack",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.130Z"
+  }
+}

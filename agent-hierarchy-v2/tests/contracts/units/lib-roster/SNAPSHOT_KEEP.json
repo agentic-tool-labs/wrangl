@@ -1,0 +1,12 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "SNAPSHOT_KEEP",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 10
+    }
+  ]
+}

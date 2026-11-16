@@ -1,0 +1,151 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "isGatedPeerTarget",
+  "cases": [
+    {
+      "id": "exact",
+      "args": [
+        "repo-ultra-advisor",
+        "repo-ultra-advisor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "with-ref",
+      "args": [
+        "repo-ultra-advisor [3fa9c1]",
+        "repo-ultra-advisor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-space-ref",
+      "args": [
+        "repo-ultra-advisor[3fa9c1]",
+        "repo-ultra-advisor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "padded",
+      "args": [
+        "  repo-ultra-advisor  ",
+        "repo-ultra-advisor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "different",
+      "args": [
+        "other",
+        "repo-ultra-advisor"
+      ],
+      "expect": false
+    },
+    {
+      "id": "partial",
+      "args": [
+        "repo-ultra-advisor-2",
+        "repo-ultra-advisor"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-to",
+      "args": [
+        "",
+        "x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "blank-to",
+      "args": [
+        "   ",
+        "x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-expected",
+      "args": [
+        "x",
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-to",
+      "args": [
+        null,
+        "x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "number-expected",
+      "args": [
+        "x",
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "two-refs",
+      "args": [
+        "a [1] [2]",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "ref-with-bracket",
+      "args": [
+        "a [x[y]",
+        "a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "empty-ref",
+      "args": [
+        "a []",
+        "a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "ref-in-middle",
+      "args": [
+        "a [1] b",
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "ref-tab",
+      "args": [
+        "a\t[1]",
+        "a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "ref-only",
+      "args": [
+        "[1]",
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "nested-close",
+      "args": [
+        "a [b]c]",
+        "a"
+      ],
+      "expect": false
+    }
+  ]
+}

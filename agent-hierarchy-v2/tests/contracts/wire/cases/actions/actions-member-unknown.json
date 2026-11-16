@@ -1,0 +1,29 @@
+{
+  "kind": "wire",
+  "id": "actions-member-unknown",
+  "about": "GET /v1/actions/<id> with a well-formed member id the hierarchy does not hold answers 404 no_node",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/actions/member:00000000/tm/ghost"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": "no_node"
+    }
+  },
+  "mutant": "the route is missing, or answers an unknown member with 200 or 400",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-18T07:00:00.000Z",
+    "note": "native-only route (divergence/routes.json ui-actions-member-route): no Node recording exists"
+  }
+}

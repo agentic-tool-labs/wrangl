@@ -1,0 +1,51 @@
+{
+  "view_schema": 1,
+  "kind": "stream-status",
+  "id": "/o/o.101/t/boxes",
+  "path": "/stream-status/o/o.101/t/boxes",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "team",
+      "id": "/o/o.101/t/boxes",
+      "label": "alpha",
+      "path": "/o/o.101/t/boxes"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "team": "alpha",
+    "transport": null,
+    "streams": [
+      {
+        "state": "open",
+        "branch": "ah/tui",
+        "base": null,
+        "worktree": {
+          "path": null,
+          "exists": false
+        },
+        "glyph_state": "ok",
+        "peers": [
+          {
+            "name": "impl",
+            "role": "implementor",
+            "status": "live",
+            "in_stream_tab": true
+          }
+        ],
+        "waiting_on": [],
+        "reason": null,
+        "name": "tui"
+      }
+    ]
+  },
+  "rev": "236494cac66cb70a"
+}

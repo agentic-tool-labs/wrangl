@@ -1,0 +1,36 @@
+{
+  "kind": "cli",
+  "id": "commit-bad-verified",
+  "about": "create --commit with a malformed --verified is refused",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "create",
+      "--commit",
+      "--verified",
+      "not-json",
+      "--transport",
+      "herdr"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: Unexpected token 'o', \"not-json\" is not valid JSON\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a commit of unverified members",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.818Z"
+  }
+}

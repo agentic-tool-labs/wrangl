@@ -1,0 +1,134 @@
+{
+  "note": "Native tests the flag-day commit retires because each compared the native result with a live Node process or a Node source file, neither of which exists after the cutover (0114 §3.3). Each names what it covered; a row is recast against a recording taken from the parity branch, not restored.",
+  "methods": [
+    {
+      "file": "native/tests/Ah.Platform.Tests/LockTests.cs",
+      "tests": [
+        "ALockCSharpHoldsIsFreshToNodeAndFreeAfterRelease",
+        "ALockNodeHoldsIsFreshToCSharpAndFreeAfterNodeReleases",
+        "CSharpTakesOverANodeLockLeftBehindOnceItIsStale",
+        "NodeTakesOverACSharpLockLeftBehindOnceItIsStaleAndTheSlowHolderDoesNotRemoveIt",
+        "CSharpAndNodeJudgeEveryKindOfLockFileTheSame",
+        "TwoNodeProcessesAndTwoCSharpThreadsNeverOverlapAndLoseNoIncrement"
+      ],
+      "reason": "a live Node lock holder (D2-9, Node half); the lock-file bytes and stale rule stay covered by the native-only lock tests"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/FileTests.cs",
+      "tests": [
+        "TwoNodeProcessesAndTwoCSharpWritersAppendWithoutLossOrTearing"
+      ],
+      "reason": "live Node appenders (D2-10, Node half); the native-only append test remains"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/HookErrorLogTests.cs",
+      "tests": [
+        "LinesAreByteIdenticalToNodes",
+        "AnOverCapLogIsMovedAsideBeforeTheNextLineAndTheNewFileHoldsOnlyNewLines"
+      ],
+      "reason": "compared the hook-error log with a Node process; the native-only log tests remain"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/SystemTests.cs",
+      "tests": [
+        "LocalIsoOfTheRealClockEqualsNodesInTheHostZoneAcrossItsDstEdges"
+      ],
+      "reason": "compared the local ISO text with Node's lib-hier over DST edges"
+    },
+    {
+      "file": "native/tests/Ah.Commands.Tests/RosterCommonTests.cs",
+      "tests": [
+        "TheBooleanFlagsEqualTheNodeCliLists",
+        "TheUsageTextIsTheHeaderBlockOfTheNodeCli"
+      ],
+      "reason": "read the text of the Node roster.mjs and lib-ah-cli.mjs"
+    },
+    {
+      "file": "native/tests/Ah.Watch.Tests/ProductionSourceTests.cs",
+      "tests": [
+        "RegisteredDirsAreTheNodeOnesAndAnUnnamedRegistrationAddsNone",
+        "TeamNamesTeamDocumentsAndPathsAreTheNodeOnes",
+        "BoxDirectoriesRealPathsAndLinksAreTheNodeOnes"
+      ],
+      "reason": "compared the production view source with the Node view fixture's answers (a live Node snapshot)"
+    }
+  ],
+  "files": [
+    {
+      "file": "native/tests/Ah.Cli.Tests/WatchHostParityTests.cs",
+      "reason": "the native watch host against the Node watch tick over the same staged files (a live Node snapshot)"
+    },
+    {
+      "file": "native/tests/Ah.Watch.Tests/ViewParityTests.cs",
+      "reason": "the native views against the Node views, bytes and rev (a live Node snapshot)"
+    },
+    {
+      "file": "native/tests/Ah.Mesh.Tests/Delivery/LadderParityTests.cs",
+      "reason": "the native delivery ladder against the Node ladder pass by pass (a live Node snapshot)"
+    }
+  ],
+  "generators": [
+    {
+      "file": "native/tests/Ah.Codex.Tests/gen-goldens.mjs",
+      "reason": "imports the Node lib-codex-proto; its output is the committed golden data"
+    },
+    {
+      "file": "native/tests/Ah.Codex.Tests/gen-wire-goldens.mjs",
+      "reason": "imports the Node lib-codex-proto; its output is the committed golden data"
+    },
+    {
+      "file": "native/tests/Ah.Config.Tests/gen-contract-text.mjs",
+      "reason": "imports lib-config and lib-contract; its output is the committed golden data"
+    },
+    {
+      "file": "native/tests/Ah.Core.Tests/Vectors/gen-vectors.mjs",
+      "reason": "imports lib-hier and lib-digest; its output is the committed vectors"
+    },
+    {
+      "file": "native/tests/Ah.Mesh.Tests/gen-contract.mjs",
+      "reason": "imports lib-contract; its output is the committed contract data (ContractData.cs)"
+    },
+    {
+      "file": "native/tests/Ah.Mesh.Tests/gen-join.mjs",
+      "reason": "imports lib-join, lib-mailbox and lib-roster; its output is the committed join goldens"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/Interop/node-append.mjs",
+      "reason": "Node half of the retired interop tests"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/Interop/node-hook-error.mjs",
+      "reason": "Node half of the retired interop tests"
+    },
+    {
+      "file": "native/tests/Ah.Platform.Tests/Interop/node-lock.mjs",
+      "reason": "Node half of the retired interop tests"
+    }
+  ],
+  "recast": [
+    {
+      "what": "NodeStateRegistry (TestKit)",
+      "now": "reads tests/contracts/recorded/node-state-registry.json, the Node DOMAINS table recorded from the tree before the Node files were removed",
+      "tests": "ServiceGraphTests, StatePathArgsConformanceTests, the Hierarchy and Mesh StateDomainConformanceTests"
+    },
+    {
+      "what": "tests/lib-codex-proto.mjs",
+      "now": "the Node wire-framing helper the fake Codex app-server needs, kept beside it as test tooling",
+      "tests": "Ah.Codex.Tests WireTests"
+    }
+  ],
+  "unitTables": [
+    {
+      "file": "tests/contracts/units-c1a/lib-config/MSG_CLI.json",
+      "reason": "the property it pinned (the plugin's hooks/msg.mjs path) is gone; the root derivations use IConfigCore.PluginRoot and the command text is CliCommand(Msg)"
+    },
+    {
+      "file": "tests/contracts/units-c1a/lib-config/ROSTER_CLI.json",
+      "reason": "the property it pinned (the plugin's hooks/roster.mjs path) is gone; the root derivations use IConfigCore.PluginRoot and the command text is CliCommand(Roster)"
+    },
+    {
+      "file": "tests/contracts/units-c1a/lib-config/AHD_CTL_CLI.json",
+      "reason": "the property it pinned (the plugin's hooks/ahd-ctl.mjs path) is gone; the root derivations use IConfigCore.PluginRoot and the command text is CliCommand(AhdCtl)"
+    }
+  ]
+}

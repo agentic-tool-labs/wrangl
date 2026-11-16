@@ -1,0 +1,35 @@
+{
+  "kind": "wire",
+  "id": "send-missing-to",
+  "about": "a body without `to` is 400",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "text": "x",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/send"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_address",
+        "message": "address \"\" must be name@team (letters, digits, . _ -)"
+      }
+    }
+  },
+  "mutant": "a send with no recipient accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:08.188Z"
+  }
+}

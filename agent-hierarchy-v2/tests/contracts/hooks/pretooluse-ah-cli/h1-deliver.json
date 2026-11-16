@@ -1,0 +1,53 @@
+{
+  "kind": "hook",
+  "id": "h1-deliver",
+  "about": "ah-cli command deliver misjudged",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-ah-cli",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Bash",
+      "tool_input": {
+        "command": "node <PLUGIN>/hooks/roster.mjs deliver tm-implementor --req /x/20260101-000000-abcd--implementor--demo--request.md",
+        "description": "contract"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "ah-cli command deliver misjudged",
+  "expect": {
+    "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"ah: plugin-shipped CLI — roster.mjs deliver\"}}",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/agent-hierarchy.peer-pending.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"dispatch\",\"session_id\":\"sess-contract\",\"request_id\":\"<MSGID:1>\",\"to\":\"implementor\",\"created\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n"
+        },
+        {
+          "path": "home/.claude/agent-hierarchy.peer-records.state/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"<OPID:1>\",\"at\":\"<ISO:2>\",\"result\":{\"ok\":true}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:26:56.024Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "MEMBER_ASK_TAIL",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "No one is at this session's prompt, so ah does not ask here. Do not retry this command. Put what you needed in your report as BLOCKED or NEEDS-DECISION for your Orchestrator, who will ask the user."
+    }
+  ]
+}

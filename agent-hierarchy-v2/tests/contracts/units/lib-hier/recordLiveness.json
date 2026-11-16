@@ -1,0 +1,225 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "recordLiveness",
+  "cases": [
+    {
+      "id": "up-with-live-pid",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "up",
+          "pid": 1
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": true,
+        "how": "up-pid",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "up-with-dead-pid",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "up",
+          "pid": 99999999
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "up-pid",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "up-without-pid",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "up"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "up-pid",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "up-with-string-pid",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "up",
+          "pid": "1"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "up-pid",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "seen-fresh",
+      "args": [
+        {
+          "ts": "2026-06-01T11:30:01.000Z",
+          "status": "seen"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": true,
+        "how": "seen",
+        "ageSec": 1799
+      }
+    },
+    {
+      "id": "seen-at-the-limit",
+      "args": [
+        {
+          "ts": "2026-06-01T11:30:00.000Z",
+          "status": "seen"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "seen",
+        "ageSec": 1800
+      }
+    },
+    {
+      "id": "seen-stale",
+      "args": [
+        {
+          "ts": "2026-06-01T11:00:00.000Z",
+          "status": "seen"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "seen",
+        "ageSec": 3600
+      }
+    },
+    {
+      "id": "briefed-fresh",
+      "native_expect": {
+        "live": false,
+        "how": "briefed",
+        "ageSec": 60
+      },
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:00.000Z",
+          "status": "briefed"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": true,
+        "how": "briefed",
+        "ageSec": 60
+      }
+    },
+    {
+      "id": "down",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "down"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "down",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "unknown-status",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z",
+          "status": "weird"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "weird",
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "no-status",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:50.000Z"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "ageSec": 10
+      }
+    },
+    {
+      "id": "invalid-ts",
+      "args": [
+        {
+          "status": "seen",
+          "ts": "never"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": false,
+        "how": "seen",
+        "ageSec": {
+          "$inf": 1
+        }
+      }
+    },
+    {
+      "id": "future-ts-is-age-zero",
+      "args": [
+        {
+          "ts": "2026-06-01T12:00:05.000Z",
+          "status": "seen"
+        },
+        1780315200000
+      ],
+      "expect": {
+        "live": true,
+        "how": "seen",
+        "ageSec": 0
+      }
+    },
+    {
+      "id": "now-default",
+      "args": [
+        {
+          "ts": "2026-06-01T11:59:00.000Z",
+          "status": "seen"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expect": {
+        "live": true,
+        "how": "seen",
+        "ageSec": 60
+      }
+    }
+  ]
+}

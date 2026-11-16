@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "TASK_GOPHER",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "task-gopher:task-gopher"
+    }
+  ]
+}

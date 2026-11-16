@@ -1,0 +1,50 @@
+{
+  "kind": "cli",
+  "id": "other-repo-url",
+  "about": "another repository's URL is never queried",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "https://github.com/bob/other/issues/14"
+    ],
+    "stdin": null
+  },
+  "mutant": "another repo's issue was fetched",
+  "expect": {
+    "stdout": "{\"repo\":\"alice/proj\",\"trigger_label\":\"ready-for-agent\",\"trusted_actors\":[\"alice\"],\"items\":[{\"issue\":14,\"eligible\":false,\"reason\":\"other-repo\"}]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/gh.log",
+          "mode": "0644",
+          "content": "{\"args\":[\"auth\",\"status\",\"--hostname\",\"github.com\"],\"stdin\":\"\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeOwner($owner: String!, $name: String!) {\\\\n  repository(owner: $owner, name: $name) { owner { __typename login } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\"}}\"}\n"
+        },
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n-C <ROOT:proj> symbolic-ref -q refs/remotes/origin/HEAD\n-C <ROOT:proj> rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C <ROOT:proj> cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C <ROOT:proj> cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:32.410Z"
+  }
+}

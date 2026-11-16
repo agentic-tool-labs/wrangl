@@ -1,0 +1,94 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "recordCliRootEmitted",
+  "cases": [
+    {
+      "id": "records-a-row",
+      "args": [
+        "s1",
+        "ah root v1 /x"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "cli-root",
+              "session_id": "s1",
+              "digest": "68bbae6e2c4bbe00",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-session-no-row",
+      "args": [
+        "",
+        "ah root v1 /x"
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "line-as-number-is-stringified",
+      "args": [
+        "s1",
+        5
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "cli-root",
+              "session_id": "s1",
+              "digest": "ef2d127de37b942b",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "line-undefined",
+      "args": [
+        "s1",
+        {
+          "$undefined": 1
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "cli-root",
+              "session_id": "s1",
+              "digest": "eb045d78d2731073",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

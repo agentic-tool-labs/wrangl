@@ -1,0 +1,1800 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packAgentParse",
+  "cases": [
+    {
+      "id": "valid",
+      "args": [
+        "---\nname: pk\ndescription: A pack agent.\nmodel: opus\ntools:\n  - Read\n  - SendMessage\n---\nbody\n",
+        "agents/pk.md"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "A pack agent.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "valid-csv",
+      "args": [
+        "---\nname: pk\ntools: Read, Grep\n---\nbody\n",
+        "agents/pk.md"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "Grep"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "no-path",
+      "args": [
+        "---\nname: pk\ntools: Read\n---\nbody\n"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "text\n",
+        "agents/pk.md"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-frontmatter",
+            "path": "agents/pk.md",
+            "field": null,
+            "message": "no --- frontmatter block",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "missing-tools",
+      "args": [
+        "---\nname: pk\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools is required: without it the agent inherits every tool, MCP tools and Agent included",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "empty-tools",
+      "args": [
+        "---\nname: pk\ntools:\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "unknown-key",
+      "args": [
+        "---\nname: pk\ntools: Read\npermissionMode: bypass\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-key",
+            "path": "p",
+            "field": null,
+            "message": "key permissionMode isn't allowed in a pack agent",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "duplicate-key",
+      "args": [
+        "---\nname: pk\nname: other\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-duplicate-key",
+            "path": "p",
+            "field": null,
+            "message": "key name appears twice",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "other",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "quoted-key",
+      "args": [
+        "---\n\"name\": pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-quoted-key",
+            "path": "p",
+            "field": null,
+            "message": "quoted key: \"\\\"name\\\": pk\"",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "comment-line",
+      "args": [
+        "---\nname: pk # trailing\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"name: pk # trailing\" holds a # comment, which YAML would drop",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "hash-without-space",
+      "args": [
+        "---\nname: pk#x\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk#x",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tab-indent",
+      "args": [
+        "---\nname: pk\ntools:\n\t- Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+0009 at line 4, column 1 is outside printable ASCII, which a pack agent's frontmatter keeps to outside its description",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"\\t- Read\" is indented with a tab",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "anchor-value",
+      "args": [
+        "---\nname: &a pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-yaml",
+            "path": "p",
+            "field": null,
+            "message": "YAML anchor or alias: \"name: &a pk\"",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "&a pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "alias-list-item",
+      "args": [
+        "---\nname: pk\ntools:\n  - *a\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-yaml",
+            "path": "p",
+            "field": null,
+            "message": "YAML anchor, alias or merge key: \"- *a\"",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "merge-key",
+      "args": [
+        "---\n<<: *base\nname: pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-yaml",
+            "path": "p",
+            "field": null,
+            "message": "YAML merge key: \"<<: *base\"",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "merge-key-spaced",
+      "args": [
+        "---\n<< : x\nname: pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-yaml",
+            "path": "p",
+            "field": null,
+            "message": "YAML merge key: \"<< : x\"",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "list-indent-mismatch",
+      "args": [
+        "---\nname: pk\ntools:\n  - Read\n    - Grep\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"    - Grep\" isn't indented like the list's first item",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "list-not-item",
+      "args": [
+        "---\nname: pk\ntools:\n  Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"  Read\" isn't a \"- item\" of the list above",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "continues-no-key",
+      "args": [
+        "---\n  stray\nname: pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"  stray\" continues no key",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "continues-one-line-value",
+      "args": [
+        "---\nname: pk\n  more\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"  more\" continues a one-line value — use \"- item\" lines under an empty tools or disallowedTools, or a | or > block under description",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "block-on-non-description",
+      "args": [
+        "---\nname: pk\nmodel: |\n  x\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "only description may use a | or > block, not model",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"  x\" continues a one-line value — use \"- item\" lines under an empty tools or disallowedTools, or a | or > block under description",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-block",
+      "args": [
+        "---\nname: pk\ndescription: |\n  one\n  two\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "one\ntwo",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-block-dedent",
+      "args": [
+        "---\nname: pk\ndescription: |\n    one\n  two\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"  two\" is indented less than the block's first line, which ends the block, yet it isn't a key",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "one",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-block-not-indented",
+      "args": [
+        "---\nname: pk\ndescription: |\nno indent\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"no indent\" can't be classified",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-colon",
+      "args": [
+        "---\nname: pk\ndescription: a: b\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: a: b\": a plain value can't hold \": \" or end in \":\" (quote it)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a: b",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-trailing-colon",
+      "args": [
+        "---\nname: pk\ndescription: ends:\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: ends:\": a plain value can't hold \": \" or end in \":\" (quote it)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "ends:",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-indicator",
+      "args": [
+        "---\nname: pk\ndescription: @at\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: @at\": a plain value can't start with a YAML indicator (quote it)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "@at",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-dash-start",
+      "args": [
+        "---\nname: pk\ndescription: - x\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: - x\": a plain value can't start with a YAML indicator (quote it)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "- x",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-null-word",
+      "args": [
+        "---\nname: pk\ndescription: Null\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: Null\": a plain value YAML reads as null or a boolean (quote it)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "Null",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-quoted-ok",
+      "args": [
+        "---\nname: pk\ndescription: \"ok: fine\"\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "ok: fine",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-quoted-escape",
+      "args": [
+        "---\nname: pk\ndescription: \"a\\nb\"\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: \\\"a\\\\nb\\\"\": a quoted value must close at the end of the line, with no escape inside (no \\ or '')",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a\nb",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-single-quoted",
+      "args": [
+        "---\nname: pk\ndescription: 'it''s'\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: 'it''s'\": a quoted value must close at the end of the line, with no escape inside (no \\ or '')",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "it's",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-nbsp",
+      "args": [
+        "---\nname: pk\ndescription: a b\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+00A0 at line 3, column 15 can't be in a pack agent's description (a space other than U+0020, a private-use character, U+FFFE or U+FFFF)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a b",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-private-use",
+      "args": [
+        "---\nname: pk\ndescription: ab\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+E000 at line 3, column 15 can't be in a pack agent's description (a space other than U+0020, a private-use character, U+FFFE or U+FFFF)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "ab",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-astral-private",
+      "args": [
+        "---\nname: pk\ndescription: a󰀁b\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+F0001 at line 3, column 15 can't be in a pack agent's description (a space other than U+0020, a private-use character, U+FFFE or U+FFFF)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a󰀁b",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "description-ideographic-space",
+      "args": [
+        "---\nname: pk\ndescription: a　b\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+3000 at line 3, column 15 can't be in a pack agent's description (a space other than U+0020, a private-use character, U+FFFE or U+FFFF)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a　b",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "name-non-ascii",
+      "args": [
+        "---\nname: pké\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+00E9 at line 2, column 9 is outside printable ASCII, which a pack agent's frontmatter keeps to outside its description",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pké",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "name-emoji",
+      "args": [
+        "---\nname: pk😀\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "U+1F600 at line 2, column 9 is outside printable ASCII, which a pack agent's frontmatter keeps to outside its description",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk😀",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "maxTurns-ok",
+      "args": [
+        "---\nname: pk\nmaxTurns: 12\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "maxTurns-negative",
+      "args": [
+        "---\nname: pk\nmaxTurns: -3\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "maxTurns-leading-zero",
+      "args": [
+        "---\nname: pk\nmaxTurns: 012\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"maxTurns: 012\": maxTurns must be a plain decimal integer",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "maxTurns-float",
+      "args": [
+        "---\nname: pk\nmaxTurns: 1.5\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"maxTurns: 1.5\": maxTurns must be a plain decimal integer",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tool-scoped",
+      "args": [
+        "---\nname: pk\ntools: Read, Bash(git:*)\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools entry \"Bash(git:*)\" isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tool-null-word",
+      "args": [
+        "---\nname: pk\ntools: Read, null\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools entry \"null\" isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tool-yes",
+      "args": [
+        "---\nname: pk\ntools: Read, Yes\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools entry \"Yes\" isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tool-underscore-hyphen",
+      "args": [
+        "---\nname: pk\ntools: Read, mcp__x-y\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "mcp__x-y"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tool-digit-first",
+      "args": [
+        "---\nname: pk\ntools: 9lives\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools entry \"9lives\" isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "tools-quoted-flow",
+      "args": [
+        "---\nname: pk\ntools: \"Read\"\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools entry \"\\\"Read\\\"\" isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": null,
+            "message": "tools must be a non-empty list",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "disallowed-list",
+      "args": [
+        "---\nname: pk\ntools: Read, Edit\ndisallowedTools:\n  - Edit\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "Edit"
+          ],
+          "disallowedTools": [
+            "Edit"
+          ],
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "key-no-space",
+      "args": [
+        "---\nname:pk\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"name:pk\" can't be classified",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "crlf-file",
+      "args": [
+        "---\r\nname: pk\r\ntools: Read\r\n---\r\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-frontmatter",
+            "path": "p",
+            "field": null,
+            "message": "no --- frontmatter block",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "quoted-value-quote-inside",
+      "args": [
+        "---\nname: pk\ndescription: \"a\"b\"\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: \\\"a\\\"b\\\"\": a quoted value must close at the end of the line, with no escape inside (no \\ or '')",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "a\"b",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    },
+    {
+      "id": "quoted-value-unclosed",
+      "args": [
+        "---\nname: pk\ndescription: \"a\ntools: Read\n---\nbody\n",
+        "p"
+      ],
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "pack-agent-line",
+            "path": "p",
+            "field": null,
+            "message": "line \"description: \\\"a\": a quoted value must close at the end of the line, with no escape inside (no \\ or '')",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+              }
+            ]
+          }
+        ],
+        "fm": {
+          "frontmatter": true,
+          "name": "pk",
+          "description": "\"a",
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": []
+        }
+      }
+    }
+  ]
+}

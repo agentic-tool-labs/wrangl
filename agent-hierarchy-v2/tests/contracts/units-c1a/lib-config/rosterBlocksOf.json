@@ -1,0 +1,81 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "rosterBlocksOf",
+  "cases": [
+    {
+      "id": "default-only",
+      "args": [
+        {
+          "roster": {
+            "members": []
+          }
+        }
+      ],
+      "expect": [
+        [
+          "roster",
+          null,
+          {
+            "members": []
+          }
+        ]
+      ]
+    },
+    {
+      "id": "named",
+      "args": [
+        {
+          "roster": {
+            "route": "peer"
+          },
+          "rosters": {
+            "a": {
+              "members": []
+            },
+            "b": null
+          }
+        }
+      ],
+      "expect": [
+        [
+          "roster",
+          null,
+          {
+            "route": "peer"
+          }
+        ],
+        [
+          "rosters.a",
+          "a",
+          {
+            "members": []
+          }
+        ],
+        [
+          "rosters.b",
+          "b",
+          null
+        ]
+      ]
+    },
+    {
+      "id": "rosters-array-ignored",
+      "args": [
+        {
+          "roster": {},
+          "rosters": [
+            1
+          ]
+        }
+      ],
+      "expect": [
+        [
+          "roster",
+          null,
+          {}
+        ]
+      ]
+    }
+  ]
+}

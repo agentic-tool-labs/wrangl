@@ -1,0 +1,14 @@
+# Written into the plugin by Claude Code on every --plugin-dir load, and specific to the client version.
+/tsconfig.json
+/.claude-plugin/types/
+
+# Written into the mod folder by `herdr-app check`.
+/herdr-desktop/mods/ah2/gpui-kit.d.ts
+/herdr-desktop/mods/ah2/jsconfig.json
+
+# contract fixture trees hold their own .claude/ directories (the hooks read them); they are test data, not local state
+!tests/contracts/trees/**/.claude/
+.state-*/
+
+# in-tree publish outputs of tests/publish-bin.sh built for a lane run
+/native/.train-bin*/

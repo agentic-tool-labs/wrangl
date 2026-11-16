@@ -1,0 +1,137 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "chainRoles",
+  "cases": [
+    {
+      "id": "fixture",
+      "args": [
+        {
+          "roles": {
+            "ui-implementor": {
+              "class": "implement",
+              "label": "UI Implementor",
+              "agent": "ui:impl",
+              "dispatch": "model",
+              "peer": "auto"
+            },
+            "doc-writer": {
+              "class": "legwork",
+              "label": "",
+              "peer": [
+                "doc-writer-1",
+                " ",
+                "x"
+              ],
+              "agent": ""
+            },
+            "deep-reviewer": {
+              "class": "review",
+              "peer": [
+                "rev-a",
+                " ",
+                "rev-b",
+                5
+              ],
+              "dispatch": "peer"
+            },
+            "single-peer": {
+              "class": "design",
+              "peer": "named-peer"
+            },
+            "auto-peer": {
+              "class": "implement",
+              "peer": "auto"
+            },
+            "bad-class": {
+              "class": "bogus"
+            },
+            "numeric-label": {
+              "class": "design",
+              "label": 7
+            },
+            "architect": {
+              "class": "design",
+              "agent": "over:architect",
+              "label": "Mine"
+            }
+          },
+          "roster": {
+            "members": [
+              null,
+              {
+                "role": "architect",
+                "name": "a-1"
+              },
+              {
+                "role": "reviewer",
+                "name": "r-1"
+              },
+              {
+                "role": "architect",
+                "name": "a-2"
+              },
+              5
+            ]
+          }
+        }
+      ],
+      "expect": [
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "sub-orchestrator",
+        "deputy-chief",
+        "auto-peer",
+        "deep-reviewer",
+        "numeric-label",
+        "single-peer",
+        "ui-implementor"
+      ]
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": [
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    },
+    {
+      "id": "only-legwork",
+      "args": [
+        {
+          "roles": {
+            "w": {
+              "class": "legwork"
+            }
+          }
+        }
+      ],
+      "expect": [
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    }
+  ]
+}

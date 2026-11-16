@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "daemon-off",
+  "about": "check with AH_DAEMON=off runs the conformance self-check or refuses",
+  "tree": null,
+  "env": {
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "check"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"source\":\"files\",\"sandbox\":\"/tmp/<PROBE:1>\",\"checked\":7,\"cases\":[\"status\",\"inspect boxes\",\"inspect entries\",\"inspect registrations\",\"inspect timers\",\"inspect events\",\"inspect status\"]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a check that passes with no daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:38.924Z"
+  }
+}

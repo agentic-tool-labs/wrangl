@@ -1,0 +1,189 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "pathException",
+  "cases": [
+    {
+      "id": "create-beside-request",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "fill-beside-request",
+      "args": [
+        "msgs",
+        "fill",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "other-op",
+      "args": [
+        "msgs",
+        "settle",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-domain",
+      "args": [
+        "peers",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "request-in-another-dir",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/o/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "dir-is-not-the-pool-of-path",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/elsewhere",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "request-missing",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "request-relative",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--orchestrator--s1--response.md",
+          "req": "msgs/x--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "path-is-a-request-name",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "id-differs",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "path": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000002-aaaa--orchestrator--s1--response.md",
+          "req": "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "missing-fields",
+      "args": [
+        "msgs",
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": false
+    }
+  ]
+}

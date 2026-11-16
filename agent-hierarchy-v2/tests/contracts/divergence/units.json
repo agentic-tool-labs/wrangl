@@ -1,0 +1,109 @@
+{
+  "about": "Where a native unit intentionally differs from the recorded Node oracle. Every row is a ruling, not an accident; the native behaviour is held by a test of its own, and the recorded Node table row it departs from is replayed with the native-only field removed.",
+  "units": [
+    {
+      "unit": "lib-hier.buildStateBlock (the orphaned-team line)",
+      "node": "the line ends `reap` to list, `reap --commit` to remove",
+      "native": "the line also says to ask the user and then adopt the team with `ah roster adopt --orchestrator-pid <your pid> --team <name>` via /wrangl:agent-team, before naming `reap` to list and `reap --commit` to remove",
+      "why": "a fresh session that finds an orphan was steered toward deleting it; taking one over needs the user's word, and a restarted Orchestrator is rebound automatically so an orphan seen at a new session is someone else's",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/HierarchyUnitTableTests.cs, case lib-hier/buildStateBlock.json orphaned-team-record",
+      "replayed_with": "the recorded sentence is rewritten to the native one when a table is read (RecordedNamespace.Map)"
+    },
+    {
+      "unit": "lib-mailbox-client.joinDeciderBoxes",
+      "node": "a registration whose pid is alive, is this process or one of its ancestors, and holds orchestrator@<team> decides the join; the process's identity is the pid alone",
+      "native": "the start time recorded with the registration (pid_start, as ps -o lstart= printed it) must also equal the start time the pid has now; a registration with no recorded start time, or a pid ps cannot answer for, does not decide",
+      "why": "an unrelated live process that reuses a recorded orchestrator pid and sits among the caller's ancestors satisfied the pid test",
+      "held_by": "native/tests/Ah.Mesh.Tests/JoinDeciderStartTimeTests.cs",
+      "replayed_with": "the register step of the Node table records the start time of its own pid; the registration step drops pid_start before comparing"
+    },
+    {
+      "unit": "lib-mailbox.writeRegistration (every registration file the native writer produces)",
+      "node": "a registration file has no bound key",
+      "native": "the file carries a boolean bound, written on every registration, that says whether the claimed pid was authenticated as the registrant's own or an ancestor's (DV-13)",
+      "why": "anything that acts on which process a session is (live attach) must not trust a pid a registrant merely claimed",
+      "held_by": "native/tests/Ah.Mesh.Tests/RegistrationBindingTests.cs",
+      "replayed_with": "the file comparison and the registration step drop bound from files directly under ah/registrations before comparing; the shell lane drops it by the registration-bound normalize rule"
+    },
+    {
+      "unit": "lib-config.mainCheckoutRoot (and every unit that follows a worktree pointer)",
+      "node": "a repo's .git file whose gitdir: points at <main>/.git/worktrees/<name> names that main checkout, whether or not the worktree's own back-pointer exists",
+      "native": "the pointer is followed only when <gitdir> exists and <gitdir>/gitdir (the back-pointer git writes) names <worktreeRoot>/.git by realpath; otherwise there is no main checkout",
+      "why": "a malicious repo could point its .git file at a victim's .git/worktrees/x and make the main hierarchy directory the victim's (DV-9)",
+      "held_by": "native/tests/Ah.Config.Tests/MainCheckoutRootTests.cs",
+      "replayed_with": "a recorded fixture that fabricates a pointer whose git directory exists is given the <gitdir>/gitdir back-pointer git would have written (UnitSandbox.WriteBackPointers)"
+    },
+    {
+      "unit": "lib-config.hierarchyDir / mainHierarchyDir with WRANGL_HIERARCHY_DIR set",
+      "node": "WRANGL_HIERARCHY_DIR is honoured whenever set",
+      "native": "honoured only in test mode, or when its realpath is a counted entry of trusted-hierarchy-dirs; otherwise ignored (0115 TA-2.3)",
+      "why": "a project-settings environment must not choose the hierarchy directory that gates and launch commands read",
+      "held_by": "native/tests/Ah.Config.Tests/HierarchyOverrideTests.cs",
+      "replayed_with": "a recorded case whose environment sets WRANGL_HIERARCHY_DIR is replayed with AH_TEST=1 (UnitSandbox.Environment)"
+    },
+    {
+        "unit": "lib-conventions.loadConventions",
+        "node": "the team conventions are the committed .claude/ah-conventions.json on origin's default branch; absent when that blob does not exist",
+        "native": "the ah2 file (.claude/ah2/ah-conventions.json, or .claude/ah2/project/ah-conventions.json when the repository is the user's home) is read; only when no blob exists there is ah v1's .claude/ah-conventions.json read, read-only and never merged. A present but invalid ah2 file is the answer and never falls back. The result carries the path the file belongs at and whether v1's path was the source",
+        "why": "a repository that opted in under v1 would otherwise lose its push rules under ah2 with no signal, which fails open (spec 0118 R5)",
+        "held_by": "native/tests/Ah.Config.Tests/ConventionsFallbackTests.cs",
+        "replayed_with": "a recorded git log is compared without the line that probes v1's path, which the recording predates (UnitCase file comparison)"
+    },
+    {
+      "unit": "roster-launch create-plan (the launch shape of every member that has a pane)",
+      "node": "a member's environment names its team file and expected root (claude settings), its address and home (a custom command), and its temp directory (a Codex app-server launch); nothing names the member itself",
+      "native": "also AH_MEMBER_NAME=<member name>: in the claude launch's --settings env, in a custom command's environment prefix, and as a shell_environment_policy.set setting of a Codex launch (plain and app-server)",
+      "why": "the worktree gate and the owner-only verbs identify a member by a marker the launcher exports, which overrides whatever its process ancestry says",
+      "held_by": "native/tests/Ah.Launch.Tests/MemberMarkerTests.cs",
+      "replayed_with": "the native plan is compared with the marker removed (LaunchTableFns.WithoutMemberMarker); the recorded case is otherwise unchanged"
+    },
+    {
+      "unit": "lib-mailbox.relayLine (the text a send prints for a SendMessage, and the paste text)",
+      "node": "the link envelope when there is one, the body, then the entry marker",
+      "native": "the text begins `ah mail from <from> to <to> (<kind>): ` (no parentheses when the entry has no kind), then the Node text; the entry marker stays last and byte-identical",
+      "why": "a message relayed or pasted into a session did not say who sent it or to whom, so a peer's mail could not be told from anything else in the conversation",
+      "held_by": "native/tests/Ah.Mesh.Tests/MailRelayHeaderTests.cs",
+      "replayed_with": "MailboxRoutingUnitTableTests removes the header from a native relay line before it compares a recorded row"
+    },
+    {
+      "unit": "lib-status.recordActivity (every activity record the native writer produces)",
+      "node": "an activity record holds activity, at, blocked_by, note, tool, tool_at and optionally streak, transcript_path, extra keys and context",
+      "native": "the record also carries state_since (the instant the recorded activity last changed, kept while it holds) and minutes (at most 60 entries {m, busy:true}, m being a UTC epoch minute in which a busy write was recorded, entries older than 60 minutes dropped on the same write)",
+      "why": "the view serves how long a member has been in its state and a 60-minute busy strip, and no other record holds either",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/ActivityMinutesTests.cs",
+      "replayed_with": "HierarchyUnitTableTests removes state_since and minutes from an activity file before it compares a recorded row"
+    },
+    {
+      "unit": "lib-roster.isComposer (codex status line)",
+      "node": "the status line allows exactly one ` · `-separated segment before the cwd segment, so a line with two (`  a · b · ~/repo`) is not a composer, and only a shortcuts line may follow the status line",
+      "native": "the status line allows one or more segments before a cwd segment that starts with `~` or `/`, and the line after it may also be Codex's `  esc again to edit previous message` hint; the indent and the cwd segment are still required",
+      "why": "a real Codex status line has several segments before the cwd, and the line under the composer after an Esc interrupt is a hint, so an idle member read as blocked and deliver refused it (fix-codex F7)",
+      "held_by": "native/tests/Ah.Roster.Tests/RosterUnitTableTests.cs case lib-roster/isComposer.json status-two-segments-before-cwd, and native/tests/Ah.Roster.Tests/CodexIdleComposerTests.cs",
+      "replayed_with": "none: the case in lib-roster/isComposer.json expects the native answer"
+    },
+    {
+      "unit": "lib-status.recordActivity (working_at and working_since on the activity records the native writer produces)",
+      "node": "an activity record has no working_at and no working_since",
+      "native": "the record also carries working_at (the instant of the last working write, carried forward by every other write, not refreshed by a compaction); a working record also carries working_since (when the current stretch of working began, kept by later working writes, absent once the activity is anything but working)",
+      "why": "a stop after a compaction is a stall only when the member did not work between the compaction and the stop, and no other field tells that",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/ActivityWorkingAtTests.cs and native/tests/Ah.Hierarchy.Tests/ActivityWorkingSinceTests.cs",
+      "replayed_with": "HierarchyUnitTableTests removes working_at and working_since from an activity file before it compares a recorded row"
+    },
+    {
+      "unit": "lib-status.computeStatus (owner sessions read from session_pids)",
+      "node": "owner sessions come from session-pids.jsonl lines newest first, so a later duplicate line of a session with the same pid moves it to the front",
+      "native": "session pids live in the session_pids table (per-dir-files-to-db S1); a row is written only when the session's pid changed, so a repeated same-pid row is never stored and does not move the session",
+      "why": "per-dir-files-to-db S1: `at` does not move on hooks where the pid is unchanged; the recorded input holds a line the writer never writes",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/HierarchyReadOpsTests.cs (AHundredAppendsOfOnePidAreOneRowAndNoFileAppears, APidThatComesBackKeepsTwoRowsAndOfPidStillListsTheSession)",
+      "replayed_with": "lib-status/computeStatus.json owner-sessions-from-the-pid-log-newest-first carries native_files without the duplicate line, written in the order that gives the recorded owner sessions; HierarchyTableFns seeds every session-pids.jsonl input through session-pids.append"
+    },
+    {
+      "unit": "lib-status.recordActivity (an activity path that is a file or a link)",
+      "node": "the write is refused (false) when <dir>/activity is a file or a link to another directory",
+      "native": "the record is a row of the activity table (per-dir-files-to-db S2), so no path under the hierarchy dir is involved and the write succeeds (true); nothing is written through the link",
+      "why": "per-dir-files-to-db S2: activity records leave the tree, so the link and file hazards the refusal guarded do not exist",
+      "held_by": "native/tests/Ah.Hierarchy.Tests/HierarchyReadOpsTests.cs (ARecordedActivityIsOneRowAndNoFile)",
+      "replayed_with": "lib-status/recordActivity.json activity-path-is-a-file and activity-dir-is-a-link carry native_expect true; HierarchyTableFns seeds every activity/*.json input (not through a link) through activity.put and writes each expected record's row out to its file"
+    }
+  ]
+}

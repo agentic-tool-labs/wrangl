@@ -1,0 +1,91 @@
+{
+  "about": "Divergence of the command forms the native source prints from the Node recordings. Every command line, usage block and deny text that named a Node script (`node <root>/hooks/roster.mjs ...`) names the native command instead (`<root>/bin/ah roster ...`). Nothing else about those outputs differs, so the recorded cases stay in the byte-equality diff: the lanes map the native spelling back to the recorded one with the cli-form-* rules of normalize.json, and the unit tables do the same through TestKit RecordedCliForm.Map, which reads those very rules from normalize.json at run time (RecordedCliFormTests runs their examples and counterexamples). The family rewrites stdout, stderr and file contents only, never a `path` kind, so a renamed file is never hidden.",
+  "ruling": "0114 §4c (flag day: native forms), 0110 §3.2",
+  "forms": [
+    {
+      "recorded": "node [\"]<root>/hooks/roster.mjs[\"] <verb>",
+      "native": "[\"]<root>/bin/ah[\"] roster <verb>",
+      "rule": "cli-form-path-quoted | cli-form-path-bare"
+    },
+    {
+      "recorded": "node [\"]<root>/hooks/msg.mjs[\"] <verb>",
+      "native": "[\"]<root>/bin/ah[\"] msg <verb>",
+      "rule": "cli-form-path-quoted | cli-form-path-bare"
+    },
+    {
+      "recorded": "node [\"]<root>/hooks/gate.mjs[\"] <verb>",
+      "native": "[\"]<root>/bin/ah[\"] gate <verb>",
+      "rule": "cli-form-path-quoted | cli-form-path-bare"
+    },
+    {
+      "recorded": "node [\"]<root>/hooks/ahd-ctl.mjs[\"] <verb>",
+      "native": "[\"]<root>/bin/ahd[\"] <verb>",
+      "rule": "cli-form-ahd-path-quoted | cli-form-ahd-path-bare"
+    },
+    {
+      "recorded": "hooks/roster.mjs (plugin file named without a root)",
+      "native": "bin/ah roster",
+      "rule": "cli-form-bin"
+    },
+    {
+      "recorded": "hooks/ahd-ctl.mjs (named without a root)",
+      "native": "bin/ahd",
+      "rule": "cli-form-ahd-bin"
+    },
+    {
+      "recorded": "roster.mjs <verb>, msg.mjs <verb>, and the `roster.mjs:` / `msg.mjs:` error prefixes",
+      "native": "ah roster <verb>, ah msg <verb>, `ah roster:` / `ah msg:`",
+      "rule": "cli-form-name"
+    },
+    {
+      "recorded": "  ahd-ctl.mjs <verb> (the ahd --help block)",
+      "native": "  ahd <verb>",
+      "rule": "cli-form-ahd-usage"
+    },
+    {
+      "recorded": "plugin-shipped CLI — roster.mjs <verb> | msg.mjs <verb> | ahd-ctl.mjs <verb> (the allow hook's reason)",
+      "native": "plugin-shipped CLI — ah roster <verb> | ah msg <verb> | ahd <verb>",
+      "rule": "cli-form-name | cli-form-ahd-reason"
+    },
+    {
+      "recorded": "  node gate.mjs set|status|reset (the gate CLI usage)",
+      "native": "  ah gate set|status|reset",
+      "rule": "cli-form-gate-usage"
+    },
+    {
+      "recorded": "`node hooks/ahd-ctl.mjs contract` inside the contract guide (`ahd contract --plain`)",
+      "native": "`ahd contract`",
+      "rule": "cli-form-ahd-contract"
+    },
+    {
+      "recorded": "usage: node issue-intake.mjs --cwd <abs> --out-dir <abs> (...) (the issue intake usage text)",
+      "native": "usage: ah issue-intake --cwd <abs> --out-dir <abs> (...)",
+      "rule": "cli-form-intake-usage"
+    },
+    {
+      "recorded": "  Reply when done: msg.mjs send <from> --ref <your response path>",
+      "native": "  Reply when done: ah msg send <from> --ref <your response path>",
+      "rule": "none: the mail core's own text (MailCore.BuildPrompt), recorded in tests/contracts/units/lib-mail-core/buildPrompt.json and in tests/contracts/mail-due/cases.json from the Node library",
+      "reason": "a member reads this line in its prompt and runs it; the Node script no longer exists, so the line names the command that does (parity policy: the better behaviour wins, as a named row)",
+      "id": "mail-prompt-reply-line"
+    },
+    {
+      "recorded": "(verbs: agent-hierarchy/docs/cli-tools.md) (the ah CLI root line's pointer to the verb reference, a path relative to a repo checkout)",
+      "native": "(verbs: <plugin root>/docs/cli-tools.md) (the absolute path of the reference in the running plugin)",
+      "rule": "cli-form-docs-path",
+      "reason": "a path relative to a checkout names nothing when the plugin runs from the install cache (<marketplace>/<plugin>/<version>/), so the line carries the absolute path, which is right in every layout; the rule maps it back to the recorded text (parity policy: the better behaviour wins, as a named row)",
+      "id": "cli-root-docs-path"
+    }
+  ],
+  "unchanged": [
+    "the hook-error log's script identities (`<name>.mjs`): the row names the hook, not a command a role runs",
+    "`contracts/common.md`: the file Node also reads keeps `node \"<msg-cli>\"`; the native build substitutes the whole token with the native command"
+  ],
+  "pinnedBy": [
+    "Ah.Config.Tests RecordedCliFormTests (the mapper is the rules file; examples, counterexamples, Unicode and quoted-path rows; no path kind)",
+    "xUnit rows asserting the native form is present at each emitting site (Config, Hooks self-care / ultra / msg gates, Commands, Cli, Mesh, Watch, Launch)",
+    "Ah.Architecture.Tests CliFormScanTests (no `node ... .mjs` emission in src; every emitter builds through CliCommand; the pin projects are in the solution the build gate runs)",
+    "Ah.Watch.Tests ViewParityTests (a view that prints a command keeps every other byte, and its rev is present, of Node's shape and different)",
+    "Ah.Commands.Tests IssueIntakeTests.HelpPrintsTheUsageTextInTheNativeFormAndExitsZero"
+  ]
+}

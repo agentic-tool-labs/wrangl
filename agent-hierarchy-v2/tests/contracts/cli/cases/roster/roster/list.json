@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "list",
+  "about": "roster list on an empty home prints no rosters",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "roster",
+      "list"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "selection: default (nothing selected)\n* default (roster) · not defined · 0 members · route -\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a roster listed that does not exist",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.213Z"
+  }
+}

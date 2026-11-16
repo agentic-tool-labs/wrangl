@@ -1,0 +1,79 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "unwrapCrossSession",
+  "cases": [
+    {
+      "id": "whole-prompt",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nhello\nworld\n</cross-session-message>"
+      ],
+      "expect": "\nhello\nworld\n"
+    },
+    {
+      "id": "surrounding-whitespace",
+      "args": [
+        "\n  <cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nhello\n</cross-session-message>  \n"
+      ],
+      "expect": "\nhello\n"
+    },
+    {
+      "id": "text-before-tag",
+      "args": [
+        "intro <cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nhello\n</cross-session-message>"
+      ],
+      "expect": null
+    },
+    {
+      "id": "text-after-close",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\nhello\n</cross-session-message> tail"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-close",
+      "args": [
+        "<cross-session-message from=\"x\">hello"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-from-is-not-a-wrapper",
+      "args": [
+        "<cross-session-message>hello</cross-session-message>"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-body",
+      "args": [
+        "<cross-session-message from=\"uds:/tmp/a.sock\" from-name=\"orch\">\n\n</cross-session-message>"
+      ],
+      "expect": "\n\n"
+    },
+    {
+      "id": "not-a-wrapper",
+      "args": [
+        "plain"
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

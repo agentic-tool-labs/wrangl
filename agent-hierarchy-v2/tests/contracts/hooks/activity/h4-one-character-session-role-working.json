@@ -1,0 +1,38 @@
+{
+  "kind": "hook",
+  "id": "h4-one-character-session-role-working",
+  "about": "a one-character session id with a role records working",
+  "tree": "hook-implementor-one-char-session",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off",
+    "AH_MEMBER_NAME": "contract-member"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "s",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "prompt": "go"
+    }
+  },
+  "mutant": "one-character session role not read",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T06:09:11.737Z"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "team",
+  "about": "roster prints the team's members as the message CLI sees them",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "roster"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"dir\":\"<ROOT:proj>/.claude/ah2\",\"summary\":\"ultra-advisor: none; architect: none; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none\",\"roles\":{\"ultra-advisor\":[],\"architect\":[],\"reviewer\":[],\"implementor\":[],\"docs-writer\":[],\"qa\":[],\"ux-engineer\":[],\"sub-orchestrator\":[],\"deputy-chief\":[],\"unattributed\":[]}}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a member missing from the roster",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:43.347Z"
+  }
+}

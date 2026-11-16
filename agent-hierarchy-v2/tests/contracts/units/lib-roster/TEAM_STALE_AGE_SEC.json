@@ -1,0 +1,12 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "TEAM_STALE_AGE_SEC",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 86400
+    }
+  ]
+}

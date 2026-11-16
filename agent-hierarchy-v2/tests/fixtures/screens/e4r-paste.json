@@ -1,0 +1,159 @@
+{
+  "kinds": {
+    "claude": {
+      "pastes": [
+        {
+          "n": 1,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 2,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 3,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 4,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 5,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 6,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 7,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 8,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 9,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 10,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 11,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 12,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 13,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 14,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 15,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 16,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 17,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 18,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 19,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        },
+        {
+          "n": 20,
+          "outcome": "confirmed",
+          "reason": "turn-started",
+          "transcript_turns": 1,
+          "clean": true
+        }
+      ],
+      "clean": 20,
+      "total": 20,
+      "gate_19_of_20": true,
+      "draft_refused": true,
+      "draft": "refused/busy",
+      "picker_refused": true,
+      "picker": "refused/blocked"
+    },
+    "codex": {
+      "status": "not-run",
+      "reason": "auth-undecided"
+    }
+  }
+}

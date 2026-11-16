@@ -1,0 +1,38 @@
+{
+  "kind": "cli",
+  "id": "accept-unknown",
+  "about": "join accept of an unknown join id is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "join",
+      "accept",
+      "j-nope",
+      "--basis",
+      "user-approved",
+      "--why",
+      "x",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "error: unknown_request: no join request j-nope\n",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an unknown join accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.842Z"
+  }
+}

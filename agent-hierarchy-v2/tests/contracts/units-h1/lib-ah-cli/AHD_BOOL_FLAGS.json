@@ -1,0 +1,21 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "AHD_BOOL_FLAGS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "plain",
+        "pending",
+        "acked",
+        "all",
+        "require",
+        "once",
+        "hook",
+        "follow"
+      ]
+    }
+  ]
+}

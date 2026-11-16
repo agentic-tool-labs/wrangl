@@ -1,0 +1,141 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "ackPaste",
+  "cases": [
+    {
+      "id": "null-entry",
+      "args": [
+        null
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "already"
+    },
+    {
+      "id": "no-box",
+      "args": [
+        {
+          "id": "e1"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "already"
+    },
+    {
+      "id": "empty-box",
+      "args": [
+        {
+          "id": "e1",
+          "box": ""
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": "already"
+    },
+    {
+      "id": "unacked-gets-a-paste-ack",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T12:00:00.000Z\",\"by\":\"paste\"}\n"
+      },
+      "expect": "paste"
+    },
+    {
+      "id": "already-acked-stands",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"prompt-hook\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": "{\"v\":1,\"id\":\"e1\",\"at\":\"2026-01-01T11:59:59.500Z\",\"by\":\"prompt-hook\"}\n"
+      },
+      "expect": "already"
+    },
+    {
+      "id": "entry-not-in-mailbox-reports-paste-and-writes-nothing",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e2\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e2--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks/e1": null
+      },
+      "expect": "paste"
+    },
+    {
+      "id": "acks-path-is-a-file-fails",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/acks": "x"
+      },
+      "expect": "failed"
+    },
+    {
+      "id": "invalid-id-writes-nothing",
+      "args": [
+        {
+          "id": "../x",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "{\"v\":1,\"id\":\"e1\",\"from\":\"orchestrator@tm\",\"kind\":\"brief\",\"route\":\"pull\",\"ref\":\"/m/e1--request.md\",\"created\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expect": "paste"
+    }
+  ]
+}

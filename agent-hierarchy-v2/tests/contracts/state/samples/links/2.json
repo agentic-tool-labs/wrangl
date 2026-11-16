@@ -1,0 +1,27 @@
+{
+ "v": 1,
+ "links": [
+  {
+   "id": "l-1",
+   "task": "t",
+   "task_home": "<ROOT:proj>/.claude/hierarchy",
+   "peers": [
+    "b@tm"
+   ],
+   "direction": "both",
+   "requester": "a@tm",
+   "granted_by": "orchestrator",
+   "granted_at": "2026-01-01T00:00:00.000Z",
+   "limits": {
+    "messages": 4,
+    "minutes": 40
+   },
+   "used": 1,
+   "extensions": 1,
+   "state": "active",
+   "last_used_at": "2026-01-01T00:00:02.000Z",
+   "pending_extension": "r-ext"
+  }
+ ],
+ "denied": []
+}

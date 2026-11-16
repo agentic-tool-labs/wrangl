@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h4-taskstop-unknown-resolved-id",
+  "about": "a resolved id with no record leaves the siblings in flight",
+  "tree": "hook-owes-two-started",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "TaskStop",
+      "tool_input": {
+        "task_id": "zzz"
+      },
+      "tool_response": {
+        "task_id": "zzz",
+        "task_type": "local_agent"
+      }
+    }
+  },
+  "mutant": "unknown id closes siblings",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:41.996Z"
+  }
+}

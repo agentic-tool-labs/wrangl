@@ -1,0 +1,190 @@
+{
+  "lib": "lib-streams",
+  "module": "hooks/lib-streams.mjs",
+  "fn": "streamGlyph",
+  "cases": [
+    {
+      "id": "done",
+      "args": [
+        "done",
+        [
+          {
+            "name": "a",
+            "status": "blocked"
+          }
+        ],
+        []
+      ],
+      "expect": "✓"
+    },
+    {
+      "id": "blocked",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          },
+          {
+            "name": "b",
+            "status": "blocked"
+          }
+        ],
+        []
+      ],
+      "expect": "×"
+    },
+    {
+      "id": "owed-to-gone",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "gone"
+          },
+          {
+            "name": "b",
+            "status": "idle"
+          }
+        ],
+        [
+          "a"
+        ]
+      ],
+      "expect": "×"
+    },
+    {
+      "id": "gone-but-not-owed",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "gone"
+          },
+          {
+            "name": "b",
+            "status": "idle"
+          }
+        ],
+        []
+      ],
+      "expect": "○"
+    },
+    {
+      "id": "owed-to-live",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "working"
+          }
+        ],
+        [
+          "a"
+        ]
+      ],
+      "expect": "◐"
+    },
+    {
+      "id": "working",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "working"
+          },
+          {
+            "name": "b",
+            "status": "idle"
+          }
+        ],
+        []
+      ],
+      "expect": "◐"
+    },
+    {
+      "id": "idle",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        []
+      ],
+      "expect": "○"
+    },
+    {
+      "id": "done-member",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "done"
+          }
+        ],
+        []
+      ],
+      "expect": "○"
+    },
+    {
+      "id": "unknown-only",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "unknown"
+          }
+        ],
+        []
+      ],
+      "expect": "·"
+    },
+    {
+      "id": "no-members",
+      "args": [
+        "open",
+        [],
+        []
+      ],
+      "expect": "·"
+    },
+    {
+      "id": "closed-state-is-not-done",
+      "args": [
+        "closed",
+        [
+          {
+            "name": "a",
+            "status": "idle"
+          }
+        ],
+        []
+      ],
+      "expect": "○"
+    },
+    {
+      "id": "gone-only-not-owed",
+      "args": [
+        "open",
+        [
+          {
+            "name": "a",
+            "status": "gone"
+          }
+        ],
+        []
+      ],
+      "expect": "·"
+    }
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "lib": "lib-gate-target",
+  "module": "hooks/lib-gate-target.mjs",
+  "fn": "herdrCalls",
+  "cases": [
+    {
+      "id": "agent-prompt-pane-flag",
+      "args": [
+        "herdr agent prompt worker --pane p_1 hello",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_1",
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-prompt-pane-eq",
+      "args": [
+        "herdr agent prompt worker --pane=p_1 hello",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_1",
+          "args": [
+            "hello"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pane-send-text",
+      "args": [
+        "herdr pane send-text p_3 'hello world'",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "pane-run",
+      "args": [
+        "herdr pane run p_3 -- ls",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-name",
+      "args": [
+        "herdr agent prompt",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "pane-flag-no-value",
+      "args": [
+        "herdr agent prompt worker --pane",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "agent-start-name",
+      "args": [
+        "herdr agent start Bad_Name --pane p_2",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "start",
+          "name": "Bad_Name",
+          "pane": "p_2",
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "agent-start-ok",
+      "args": [
+        "herdr agent start good-name",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "start",
+          "name": "good-name",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "group-pane-verbs",
+      "args": [
+        "herdr pane close p_1; herdr pane run p_2 x",
+        "pane",
+        [
+          "close",
+          "run"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "pane",
+          "verb": "close",
+          "name": "p_1",
+          "pane": null,
+          "args": []
+        },
+        {
+          "group": "pane",
+          "verb": "run",
+          "name": "p_2",
+          "pane": null,
+          "args": [
+            "x"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-word-verb-first-word-only",
+      "args": [
+        "herdr terminal session x",
+        "terminal",
+        [
+          "session control"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "verb-not-listed",
+      "args": [
+        "herdr agent get w",
+        "agent",
+        [
+          "start"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "non-string-command",
+      "args": [
+        null,
+        "agent",
+        [
+          "start"
+        ]
+      ],
+      "expect": []
+    },
+    {
+      "id": "double-dash-before-pane-flag",
+      "args": [
+        "herdr agent prompt worker -- --pane p_9 hello",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": null,
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "pane-flag-before-double-dash",
+      "args": [
+        "herdr agent prompt worker --pane p_9 -- hello",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_9",
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "single-dash-word-not-stop",
+      "args": [
+        "herdr agent prompt worker - --pane p_9 hello",
+        "agent",
+        [
+          "start",
+          "prompt"
+        ]
+      ],
+      "expect": [
+        {
+          "group": "agent",
+          "verb": "prompt",
+          "name": "worker",
+          "pane": "p_9",
+          "args": [
+            "-",
+            "hello"
+          ]
+        }
+      ]
+    }
+  ]
+}

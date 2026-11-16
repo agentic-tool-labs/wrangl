@@ -1,0 +1,709 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "rootOf",
+  "cases": [
+    {
+      "id": "self-is-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": {
+        "id": "a",
+        "fm": {
+          "parent": null,
+          "from": "orchestrator"
+        }
+      }
+    },
+    {
+      "id": "one-hop",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": "b",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "b",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": {
+        "id": "b",
+        "fm": {
+          "parent": null,
+          "from": "orchestrator"
+        }
+      }
+    },
+    {
+      "id": "empty-string-parent-is-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": "",
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": {
+        "id": "a",
+        "fm": {
+          "parent": "",
+          "from": "orchestrator"
+        }
+      }
+    },
+    {
+      "id": "missing-parent-is-no-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": "zzz",
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": null
+    },
+    {
+      "id": "cycle-is-no-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": "b",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "b",
+              {
+                "parent": "a",
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": null
+    },
+    {
+      "id": "self-parent-is-no-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": "a",
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": null
+    },
+    {
+      "id": "chain-of-32-hops",
+      "args": [
+        {
+          "$map": [
+            [
+              "n0",
+              {
+                "parent": "n1",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n1",
+              {
+                "parent": "n2",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n2",
+              {
+                "parent": "n3",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n3",
+              {
+                "parent": "n4",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n4",
+              {
+                "parent": "n5",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n5",
+              {
+                "parent": "n6",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n6",
+              {
+                "parent": "n7",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n7",
+              {
+                "parent": "n8",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n8",
+              {
+                "parent": "n9",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n9",
+              {
+                "parent": "n10",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n10",
+              {
+                "parent": "n11",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n11",
+              {
+                "parent": "n12",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n12",
+              {
+                "parent": "n13",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n13",
+              {
+                "parent": "n14",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n14",
+              {
+                "parent": "n15",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n15",
+              {
+                "parent": "n16",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n16",
+              {
+                "parent": "n17",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n17",
+              {
+                "parent": "n18",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n18",
+              {
+                "parent": "n19",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n19",
+              {
+                "parent": "n20",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n20",
+              {
+                "parent": "n21",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n21",
+              {
+                "parent": "n22",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n22",
+              {
+                "parent": "n23",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n23",
+              {
+                "parent": "n24",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n24",
+              {
+                "parent": "n25",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n25",
+              {
+                "parent": "n26",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n26",
+              {
+                "parent": "n27",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n27",
+              {
+                "parent": "n28",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n28",
+              {
+                "parent": "n29",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n29",
+              {
+                "parent": "n30",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n30",
+              {
+                "parent": "n31",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n31",
+              {
+                "parent": "n32",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n32",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "n0"
+      ],
+      "expect": {
+        "id": "n32",
+        "fm": {
+          "parent": null,
+          "from": "orchestrator"
+        }
+      }
+    },
+    {
+      "id": "chain-of-33-hops-is-capped",
+      "args": [
+        {
+          "$map": [
+            [
+              "n0",
+              {
+                "parent": "n1",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n1",
+              {
+                "parent": "n2",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n2",
+              {
+                "parent": "n3",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n3",
+              {
+                "parent": "n4",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n4",
+              {
+                "parent": "n5",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n5",
+              {
+                "parent": "n6",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n6",
+              {
+                "parent": "n7",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n7",
+              {
+                "parent": "n8",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n8",
+              {
+                "parent": "n9",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n9",
+              {
+                "parent": "n10",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n10",
+              {
+                "parent": "n11",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n11",
+              {
+                "parent": "n12",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n12",
+              {
+                "parent": "n13",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n13",
+              {
+                "parent": "n14",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n14",
+              {
+                "parent": "n15",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n15",
+              {
+                "parent": "n16",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n16",
+              {
+                "parent": "n17",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n17",
+              {
+                "parent": "n18",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n18",
+              {
+                "parent": "n19",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n19",
+              {
+                "parent": "n20",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n20",
+              {
+                "parent": "n21",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n21",
+              {
+                "parent": "n22",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n22",
+              {
+                "parent": "n23",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n23",
+              {
+                "parent": "n24",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n24",
+              {
+                "parent": "n25",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n25",
+              {
+                "parent": "n26",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n26",
+              {
+                "parent": "n27",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n27",
+              {
+                "parent": "n28",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n28",
+              {
+                "parent": "n29",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n29",
+              {
+                "parent": "n30",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n30",
+              {
+                "parent": "n31",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n31",
+              {
+                "parent": "n32",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n32",
+              {
+                "parent": "n33",
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "n33",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "n0"
+      ],
+      "expect": null
+    },
+    {
+      "id": "numeric-parent-never-resolves",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": 5,
+                "from": "orchestrator"
+              }
+            ],
+            [
+              "5",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unknown-start-throws",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "parent": null,
+                "from": "orchestrator"
+              }
+            ]
+          ]
+        },
+        "zzz"
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "parent-absent-is-root",
+      "args": [
+        {
+          "$map": [
+            [
+              "a",
+              {
+                "from": "x"
+              }
+            ]
+          ]
+        },
+        "a"
+      ],
+      "expect": {
+        "id": "a",
+        "fm": {
+          "from": "x"
+        }
+      }
+    }
+  ]
+}

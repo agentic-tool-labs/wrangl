@@ -1,0 +1,146 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "afterWrite",
+  "cases": [
+    {
+      "id": "create-refreshes-status",
+      "args": [
+        "create",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        },
+        null,
+        null,
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": {
+          "$json": {
+            "schema": 1,
+            "written_at": "$any",
+            "expires_at": "$any",
+            "enabled": true,
+            "member_sessions": [],
+            "teams": [],
+            "timeline": [
+              {
+                "at": "$any",
+                "visible": false,
+                "tone": "idle",
+                "live": 0,
+                "out": 0,
+                "blocked": 0,
+                "overdue": 0,
+                "stalled": 0,
+                "text": "0 live · 0 out",
+                "short": "0/0"
+              }
+            ],
+            "owners": []
+          }
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "archive-does-not-refresh",
+      "args": [
+        "archive",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        },
+        null,
+        null,
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "append-refreshes-status",
+      "args": [
+        "append",
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "rec": {}
+        },
+        null,
+        null,
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "repo/.claude/hierarchy/status.json": {
+          "$json": {
+            "schema": 1,
+            "written_at": "$any",
+            "expires_at": "$any",
+            "enabled": true,
+            "member_sessions": [],
+            "teams": [],
+            "timeline": [
+              {
+                "at": "$any",
+                "visible": false,
+                "tone": "idle",
+                "live": 0,
+                "out": 0,
+                "blocked": 0,
+                "overdue": 0,
+                "stalled": 0,
+                "text": "0 live · 0 out",
+                "short": "0/0"
+              }
+            ],
+            "owners": []
+          }
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-hierarchy-dir-writes-nothing",
+      "args": [
+        "create",
+        {
+          "dir": "$ROOT/nowhere/.claude/hierarchy"
+        },
+        null,
+        null,
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "nowhere/.claude/hierarchy/status.json": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

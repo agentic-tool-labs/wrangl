@@ -1,0 +1,44 @@
+{
+  "kind": "state-op",
+  "id": "refresh",
+  "about": "refresh saves the pool's status document",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "status",
+    "op": "refresh",
+    "kind": "write",
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "enabled": true,
+        "event": false
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-status-refresh"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "written": false
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a refresh that writes a status file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:21.429Z"
+  }
+}

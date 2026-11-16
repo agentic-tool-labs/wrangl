@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "status-not-found",
+  "about": "a hierarchy dir the daemon does not watch is 404 not_found",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/status"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_found",
+        "message": "no status document is served for <ROOT:proj>/.claude/hierarchy"
+      }
+    }
+  },
+  "mutant": "a document invented for an unwatched dir",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:10.878Z"
+  }
+}

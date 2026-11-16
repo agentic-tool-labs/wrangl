@@ -1,0 +1,70 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROLE_NAME_RE",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "ui-implementor"
+      ],
+      "expect": true
+    },
+    {
+      "id": "max-31",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "32",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "digit-first",
+      "args": [
+        "1a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "upper",
+      "args": [
+        "Ab"
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "a_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "ab\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "hyphen-end",
+      "args": [
+        "ab-"
+      ],
+      "expect": true
+    }
+  ]
+}

@@ -1,0 +1,288 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "aliveReason",
+  "cases": [
+    {
+      "id": "no-session-id",
+      "args": [
+        null
+      ],
+      "files": {},
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-session-id",
+      "args": [
+        ""
+      ],
+      "files": {},
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "registration-with-live-pid-started-before-write",
+      "args": [
+        "sess-aaaa1111"
+      ],
+      "files": {
+        "ah/registrations/sess-aaaa1111.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-aaaa1111\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":1}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'Wed Sep 30 09:00:00 2026' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "registration pid 1"
+    },
+    {
+      "id": "registration-pid-started-after-write-is-a-reused-pid",
+      "args": [
+        "sess-aaaa1111"
+      ],
+      "files": {
+        "ah/registrations/sess-aaaa1111.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-aaaa1111\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":1}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'Mon Dec 31 23:00:00 2035' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "registration-pid-started-within-slack",
+      "args": [
+        "sess-aaaa1111"
+      ],
+      "files": {
+        "ah/registrations/sess-aaaa1111.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-aaaa1111\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":1}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'Wed Sep 30 09:00:00 2026' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude --resume sess-aaaa1111\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "registration pid 1"
+    },
+    {
+      "id": "registration-dead-pid-then-claude-process",
+      "args": [
+        "sess-bbbb2222"
+      ],
+      "files": {
+        "ah/registrations/sess-bbbb2222.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-bbbb2222\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":999999}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'Wed Sep 30 09:00:00 2026' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude --resume sess-bbbb2222\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "claude process"
+    },
+    {
+      "id": "registration-dead-pid-and-no-process",
+      "args": [
+        "sess-cccc3333"
+      ],
+      "files": {
+        "ah/registrations/sess-cccc3333.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-cccc3333\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":999999}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'Wed Sep 30 09:00:00 2026' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node x\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-registration-process-found",
+      "args": [
+        "sess-dddd4444"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'x' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude --resume sess-dddd4444\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "claude process"
+    },
+    {
+      "id": "no-registration-no-process",
+      "args": [
+        "sess-eeee5555"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'x' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node y\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "ps-failure-is-doubt",
+      "args": [
+        "sess-ffff6666"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\nexit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "ps failed"
+    },
+    {
+      "id": "lstart-unparseable-counts-as-registrant",
+      "args": [
+        "sess-gggg7777"
+      ],
+      "files": {
+        "ah/registrations/sess-gggg7777.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-gggg7777\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":1}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'not a date' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "registration pid 1"
+    },
+    {
+      "id": "lstart-empty-counts-as-registrant",
+      "args": [
+        "sess-hhhh8888"
+      ],
+      "files": {
+        "ah/registrations/sess-hhhh8888.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-hhhh8888\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":1}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' '' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": "registration pid 1"
+    },
+    {
+      "id": "registration-without-pid-is-not-alive",
+      "args": [
+        "sess-iiii9999"
+      ],
+      "files": {
+        "ah/registrations/sess-iiii9999.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"sess-iiii9999\",\"address\":\"p-x@proj\",\"addresses\":[\"p-x@proj\"],\"at\":\"2026-10-01T10:00:00.000Z\",\"pid\":null}\n",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'x' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "registration-without-address-is-not-read",
+      "args": [
+        "sess-jjjj0000"
+      ],
+      "files": {
+        "ah/registrations/sess-jjjj0000.json": "{\"session_id\":\"sess-jjjj0000\",\"pid\":1}",
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'x' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    },
+    {
+      "id": "session-id-not-a-valid-name-reads-no-registration",
+      "args": [
+        "../etc"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncase \"$*\" in\n  *lstart*) printf '%s\\n' 'x' ;;\n  *) cat \"$0.out\" ;;\nesac\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin",
+        "TZ": "UTC"
+      },
+      "expect": null
+    }
+  ]
+}

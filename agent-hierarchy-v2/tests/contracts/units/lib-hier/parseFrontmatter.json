@@ -1,0 +1,234 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "parseFrontmatter",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        "---\nid: a\nto: b\n---\nbody"
+      ],
+      "expect": {
+        "fields": {
+          "id": "a",
+          "to": "b"
+        },
+        "end": 4
+      }
+    },
+    {
+      "id": "end-index",
+      "args": [
+        "---\nid: a\n---\nline1\nline2\n"
+      ],
+      "expect": {
+        "fields": {
+          "id": "a"
+        },
+        "end": 3
+      }
+    },
+    {
+      "id": "null-and-empty-read-as-null",
+      "args": [
+        "---\na: null\nb:\nc:    \nd: 'null'\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "a": null,
+          "b": null,
+          "c": null,
+          "d": "'null'"
+        },
+        "end": 6
+      }
+    },
+    {
+      "id": "trailing-comment-stripped",
+      "args": [
+        "---\na: v # c\nb: v#c\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "a": "v",
+          "b": "v#c"
+        },
+        "end": 4
+      }
+    },
+    {
+      "id": "comment-needs-whitespace",
+      "args": [
+        "---\na: x #y z\nb: #only\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "a": "x",
+          "b": "#only"
+        },
+        "end": 4
+      }
+    },
+    {
+      "id": "value-trimmed",
+      "args": [
+        "---\na:   spaced out  \n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "a": "spaced out"
+        },
+        "end": 3
+      }
+    },
+    {
+      "id": "non-field-lines-skipped",
+      "args": [
+        "---\n# c\njunk\nkey: v\n  indented: no\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "key": "v"
+        },
+        "end": 6
+      }
+    },
+    {
+      "id": "key-charset",
+      "args": [
+        "---\n_a-b9: ok\n9a: no\na.b: no\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "_a-b9": "ok"
+        },
+        "end": 5
+      }
+    },
+    {
+      "id": "duplicate-key-last-wins",
+      "args": [
+        "---\na: 1\na: 2\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "a": "2"
+        },
+        "end": 4
+      }
+    },
+    {
+      "id": "integer-like-key-orders-first",
+      "args": [
+        "---\nb: 1\n7: 2\na: 3\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "b": "1",
+          "a": "3"
+        },
+        "end": 5
+      }
+    },
+    {
+      "id": "fence-with-spaces",
+      "args": [
+        "  ---  \na: 1\n  ---  \n"
+      ],
+      "expect": {
+        "fields": {
+          "a": "1"
+        },
+        "end": 3
+      }
+    },
+    {
+      "id": "no-closing-fence",
+      "args": [
+        "---\na: 1\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-opening-fence",
+      "args": [
+        "a: 1\n---\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-text",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "crlf-lines",
+      "args": [
+        "---\r\na: 1\r\n---\r\n"
+      ],
+      "expect": {
+        "fields": {},
+        "end": 3
+      }
+    },
+    {
+      "id": "colon-in-value",
+      "args": [
+        "---\nurl: http://x:80/y\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "url": "http://x:80/y"
+        },
+        "end": 3
+      }
+    },
+    {
+      "id": "empty-frontmatter",
+      "args": [
+        "---\n---\n"
+      ],
+      "expect": {
+        "fields": {},
+        "end": 2
+      }
+    },
+    {
+      "id": "proto-key-is-not-an-own-property",
+      "args": [
+        "---\n__proto__: x\nb: 1\n---\n"
+      ],
+      "expect": {
+        "fields": {
+          "b": "1"
+        },
+        "end": 4
+      }
+    },
+    {
+      "id": "non-string-null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "non-string-number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

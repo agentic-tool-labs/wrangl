@@ -1,0 +1,1144 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "history",
+  "cases": [
+    {
+      "id": "insert-into-empty",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "ab12cd34",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "insert-default-alias-single-role",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": null,
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "ab12cd34",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "insert-falsy-fields-become-null",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "",
+          "roster_level": "",
+          "transport": 0,
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": ""
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "ab12cd34",
+                "alias": null,
+                "label": "default (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "refresh-existing-keeps-id-and-created-at",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T10"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"keep\",\"fingerprint\":\"ab12cd34\",\"alias\":\"old\",\"label\":\"old (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":\"T1\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "keep",
+                "fingerprint": "ab12cd34",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T10",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "refresh-reorders-by-last-used",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"newer\",\"fingerprint\":\"other\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T09:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"keep\",\"fingerprint\":\"ab12cd34\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T01:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "keep",
+                "fingerprint": "ab12cd34",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              {
+                "id": "newer",
+                "fingerprint": "other",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T09:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "tie-on-last-used-follows-v8-insertion-order",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-01T00:00:00.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"a\",\"fingerprint\":\"fa\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"b\",\"fingerprint\":\"fb\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"c\",\"fingerprint\":\"fc\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              {
+                "id": "c",
+                "fingerprint": "fc",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "b",
+                "fingerprint": "fb",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "a",
+                "fingerprint": "fa",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "tie-with-descending-run",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-01T00:00:00.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"a\",\"fingerprint\":\"fa\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:03+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"b\",\"fingerprint\":\"fb\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:02+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"c\",\"fingerprint\":\"fc\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:01+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "a",
+                "fingerprint": "fa",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:03+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "b",
+                "fingerprint": "fb",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:02+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "c",
+                "fingerprint": "fc",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:01+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "evicts-oldest-idle-beyond-five",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"e0\",\"fingerprint\":\"f0\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e1\",\"fingerprint\":\"f1\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:01+00:00\",\"last_used\":\"2026-01-01T00:00:01+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e2\",\"fingerprint\":\"f2\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:02+00:00\",\"last_used\":\"2026-01-01T00:00:02+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e3\",\"fingerprint\":\"f3\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:03+00:00\",\"last_used\":\"2026-01-01T00:00:03+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e4\",\"fingerprint\":\"f4\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:04+00:00\",\"last_used\":\"2026-01-01T00:00:04+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              {
+                "id": "e4",
+                "fingerprint": "f4",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:04+00:00",
+                "last_used": "2026-01-01T00:00:04+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e3",
+                "fingerprint": "f3",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:03+00:00",
+                "last_used": "2026-01-01T00:00:03+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e2",
+                "fingerprint": "f2",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:02+00:00",
+                "last_used": "2026-01-01T00:00:02+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e1",
+                "fingerprint": "f1",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:01+00:00",
+                "last_used": "2026-01-01T00:00:01+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "evicts-by-created-at-when-last-used-ties",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"e0\",\"fingerprint\":\"f0\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:04+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e1\",\"fingerprint\":\"f1\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:03+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e2\",\"fingerprint\":\"f2\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:02+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e3\",\"fingerprint\":\"f3\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:01+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e4\",\"fingerprint\":\"f4\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              {
+                "id": "e3",
+                "fingerprint": "f3",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:01+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e2",
+                "fingerprint": "f2",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:02+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e1",
+                "fingerprint": "f1",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:03+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e0",
+                "fingerprint": "f0",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:04+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "never-evicts-the-just-upserted-entry",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2020-01-01T00:00:00.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"e0\",\"fingerprint\":\"f0\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2030-01-01T00:00:00+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e1\",\"fingerprint\":\"f1\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2030-01-01T00:00:01+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e2\",\"fingerprint\":\"f2\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2030-01-01T00:00:02+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e3\",\"fingerprint\":\"f3\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2030-01-01T00:00:03+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e4\",\"fingerprint\":\"f4\",\"alias\":null,\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2030-01-01T00:00:04+00:00\",\"last_team_id\":null,\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "e4",
+                "fingerprint": "f4",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2030-01-01T00:00:04+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e3",
+                "fingerprint": "f3",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2030-01-01T00:00:03+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e2",
+                "fingerprint": "f2",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2030-01-01T00:00:02+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e1",
+                "fingerprint": "f1",
+                "alias": null,
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2030-01-01T00:00:01+00:00",
+                "last_team_id": null,
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2020-01-01T00:00:00+00:00",
+                "last_used": "2020-01-01T00:00:00+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "keeps-live-teams-and-exceeds-cap",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "new0new0",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{\"version\":1,\"teams\":[{\"id\":\"e0\",\"fingerprint\":\"f0\",\"alias\":\"t0\",\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:00+00:00\",\"last_team_id\":\"L0\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e1\",\"fingerprint\":\"f1\",\"alias\":\"t1\",\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:01+00:00\",\"last_team_id\":\"L1\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e2\",\"fingerprint\":\"f2\",\"alias\":\"t2\",\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:02+00:00\",\"last_team_id\":\"L2\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e3\",\"fingerprint\":\"f3\",\"alias\":\"t3\",\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:03+00:00\",\"last_team_id\":\"L3\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]},{\"id\":\"e4\",\"fingerprint\":\"f4\",\"alias\":\"t4\",\"label\":\"default (1 role)\",\"created_at\":\"2026-01-01T00:00:00+00:00\",\"last_used\":\"2026-01-01T00:00:04+00:00\",\"last_team_id\":\"L4\",\"roster_level\":null,\"transport\":null,\"members\":[{\"role\":\"architect\"}]}]}",
+        "repo/.claude/hierarchy/teams/t0.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"L0\"}",
+        "repo/.claude/hierarchy/teams/t1.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"L1\"}",
+        "repo/.claude/hierarchy/teams/t2.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"L2\"}",
+        "repo/.claude/hierarchy/teams/t3.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"L3\"}",
+        "repo/.claude/hierarchy/teams/t4.json": "{\"members\":[],\"orchestrator\":{\"pid\":1},\"created\":\"2026-01-02T03:00:00+00:00\",\"team_id\":\"L4\"}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "new0new0",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              },
+              {
+                "id": "e4",
+                "fingerprint": "f4",
+                "alias": "t4",
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:04+00:00",
+                "last_team_id": "L4",
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e3",
+                "fingerprint": "f3",
+                "alias": "t3",
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:03+00:00",
+                "last_team_id": "L3",
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e2",
+                "fingerprint": "f2",
+                "alias": "t2",
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:02+00:00",
+                "last_team_id": "L2",
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e1",
+                "fingerprint": "f1",
+                "alias": "t1",
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:01+00:00",
+                "last_team_id": "L1",
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              },
+              {
+                "id": "e0",
+                "fingerprint": "f0",
+                "alias": "t0",
+                "label": "default (1 role)",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "last_used": "2026-01-01T00:00:00+00:00",
+                "last_team_id": "L0",
+                "roster_level": null,
+                "transport": null,
+                "members": [
+                  {
+                    "role": "architect"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": true
+      }
+    },
+    {
+      "id": "corrupt-history-starts-fresh",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team-history.json": "{x"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "ab12cd34",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "worktree-writes-home-history",
+      "args": [
+        {
+          "dir": "$ROOT/wt/.claude/hierarchy",
+          "fingerprint": "ab12cd34",
+          "alias": "alpha",
+          "roster_level": "repo",
+          "transport": "herdr",
+          "members": [
+            {
+              "role": "architect"
+            },
+            {
+              "role": "reviewer"
+            }
+          ],
+          "team_id": "T9"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expectFiles": {
+        "main/.claude/hierarchy/team-history.json": {
+          "$json": {
+            "version": 1,
+            "teams": [
+              {
+                "id": "$any",
+                "fingerprint": "ab12cd34",
+                "alias": "alpha",
+                "label": "alpha (2 roles)",
+                "created_at": "2026-01-02T03:04:05+00:00",
+                "last_used": "2026-01-02T03:04:05+00:00",
+                "last_team_id": "T9",
+                "roster_level": "repo",
+                "transport": "herdr",
+                "members": [
+                  {
+                    "role": "architect"
+                  },
+                  {
+                    "role": "reviewer"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "wt/.claude/hierarchy/team-history.json": null
+      },
+      "expect": {
+        "capExceeded": false
+      }
+    },
+    {
+      "id": "members-missing-fails",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "fingerprint": "x"
+        }
+      ],
+      "now": "2026-01-02T03:04:05.000Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectThrows": true
+    }
+  ]
+}

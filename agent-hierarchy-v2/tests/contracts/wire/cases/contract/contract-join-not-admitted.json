@@ -1,0 +1,33 @@
+{
+  "kind": "wire",
+  "id": "contract-join-not-admitted",
+  "about": "an address that is not an admitted custom member is 404 not_admitted",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/contract/join"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_admitted",
+        "message": "tm-implementor@tm is not an admitted custom member of a team the daemon can see"
+      }
+    }
+  },
+  "mutant": "join values for a built-in member",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:56.855Z"
+  }
+}

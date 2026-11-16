@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "TEAM_GUIDE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "$AHROOT/docs/team-file.md"
+    }
+  ]
+}

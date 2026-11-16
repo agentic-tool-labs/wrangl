@@ -1,0 +1,19 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "RESPONSE_KEYS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "tldr",
+        "status",
+        "changes",
+        "evidence",
+        "gaps",
+        "open_questions"
+      ]
+    }
+  ]
+}

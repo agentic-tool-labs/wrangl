@@ -1,0 +1,79 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "clear",
+  "cases": [
+    {
+      "id": "removes",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": null
+      },
+      "expect": {
+        "cleared": true
+      }
+    },
+    {
+      "id": "absent-is-not-cleared",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": null
+      },
+      "expect": {
+        "cleared": false
+      }
+    },
+    {
+      "id": "path-missing",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "cleared": false
+      }
+    },
+    {
+      "id": "only-the-named-file",
+      "args": [
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/teams/alpha.json",
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}",
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/teams/alpha.json": null,
+        "repo/.claude/hierarchy/teams/beta.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "cleared": true
+      }
+    }
+  ]
+}

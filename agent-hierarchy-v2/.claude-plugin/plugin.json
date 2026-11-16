@@ -1,0 +1,41 @@
+{
+  "name": "wrangl",
+  "displayName": "Wrangl: Agent Hierarchy",
+  "version": "2.0.0",
+  "description": "Wrangl: Agent Hierarchy. Turns one Claude Code session into a team of agent roles (an Orchestrator that dispatches an Architect, Implementor, Reviewer and others), each on the right model, coordinated by a local daemon. Commands: ah and ahd. Disable or uninstall ah (v1) before enabling ah2; running both in one session doubles every hook. State lives in ~/.claude/ah2 and <repo>/.claude/ah2.",
+  "author": {
+    "name": "Jim Cline"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "subagent",
+    "delegation",
+    "orchestration",
+    "models",
+    "review",
+    "cost",
+    "herdr"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "types": "./mod/types/index.d.ts",
+  "userConfig": {
+    "status_entry": {
+      "type": "boolean",
+      "title": "Status entry",
+      "description": "Show the hierarchy line (⚠ ah: …) in the status area. Off by default; turn it on if claude-tui-line's ah item does not already show it.",
+      "default": false
+    },
+    "toast_seconds": {
+      "type": "number",
+      "title": "Toast seconds",
+      "description": "How long hierarchy notices stay on screen, in seconds (2-60); 0 turns them off. Click a notice to dismiss it early.",
+      "default": 10
+    },
+    "band": {
+      "type": "boolean",
+      "title": "Band",
+      "description": "Show the hierarchy band above the prompt, with its Pane and Dismiss buttons. On by default; set it to false to hide the band.",
+      "default": true
+    }
+  }
+}

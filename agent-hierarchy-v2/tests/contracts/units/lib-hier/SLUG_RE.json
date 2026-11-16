@@ -1,0 +1,70 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "SLUG_RE",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "spec-it"
+      ],
+      "expect": true
+    },
+    {
+      "id": "digits",
+      "args": [
+        "a1-b2"
+      ],
+      "expect": true
+    },
+    {
+      "id": "thirty-two",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": true
+    },
+    {
+      "id": "thirty-three",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "uppercase",
+      "args": [
+        "Spec"
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "spec_it"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "spec\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "leading-hyphen-allowed",
+      "args": [
+        "-x"
+      ],
+      "expect": true
+    }
+  ]
+}

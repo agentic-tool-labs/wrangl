@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "no-role",
+  "about": "add without --role is refused",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "add",
+      "repo",
+      "--model",
+      "sonnet"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: --role must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, backlog-groomer, sub-orchestrator, deputy-chief, got undefined\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a member added with no role",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.089Z"
+  }
+}

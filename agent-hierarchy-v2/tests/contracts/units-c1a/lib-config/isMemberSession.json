@@ -1,0 +1,36 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isMemberSession",
+  "cases": [
+    {
+      "id": "unset",
+      "args": [],
+      "expect": false
+    },
+    {
+      "id": "set",
+      "args": [],
+      "env": {
+        "WRANGL_TEAM_FILE": "/x/team.json"
+      },
+      "expect": true
+    },
+    {
+      "id": "empty",
+      "args": [],
+      "env": {
+        "WRANGL_TEAM_FILE": ""
+      },
+      "expect": false
+    },
+    {
+      "id": "space",
+      "args": [],
+      "env": {
+        "WRANGL_TEAM_FILE": " "
+      },
+      "expect": true
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "missing-route",
+  "about": "init without --route is refused",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "init",
+      "repo"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: --route must be \"peer\" or \"subagent\", got undefined\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "init accepted without a route",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:48.755Z"
+  }
+}

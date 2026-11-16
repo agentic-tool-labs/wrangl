@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "NOTE_RULE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "A peer note is news: it never closes a dispatch, and it needs no reply."
+    }
+  ]
+}

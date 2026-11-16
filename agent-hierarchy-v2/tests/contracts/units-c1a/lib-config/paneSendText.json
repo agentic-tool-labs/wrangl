@@ -1,0 +1,111 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "paneSendText",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        {
+          "name": "bob",
+          "kind": "codex"
+        },
+        "/r/req.md",
+        "/w"
+      ],
+      "expect": "ah: `bob` runs in `codex` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver bob --req /r/req.md --cwd /w`, run in the background."
+    },
+    {
+      "id": "no-req",
+      "args": [
+        {
+          "name": "bob",
+          "kind": "codex"
+        },
+        "",
+        "/w"
+      ],
+      "expect": "ah: `bob` runs in `codex` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver bob --req <request path> --cwd /w`, run in the background."
+    },
+    {
+      "id": "undefined-req",
+      "args": [
+        {
+          "name": "bob"
+        },
+        {
+          "$undefined": 1
+        },
+        "/w"
+      ],
+      "expect": "ah: `bob` runs in `claude` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver bob --req <request path> --cwd /w`, run in the background."
+    },
+    {
+      "id": "null-cwd",
+      "args": [
+        {
+          "name": "bob",
+          "kind": "codex"
+        },
+        "/r",
+        null
+      ],
+      "expect": "ah: `bob` runs in `codex` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver bob --req /r --cwd null`, run in the background."
+    },
+    {
+      "id": "undefined-cwd",
+      "args": [
+        {
+          "name": "bob",
+          "kind": "codex"
+        },
+        "/r",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "ah: `bob` runs in `codex` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver bob --req /r --cwd undefined`, run in the background."
+    },
+    {
+      "id": "number-name",
+      "args": [
+        {
+          "name": 7,
+          "kind": "x"
+        },
+        "/r",
+        "/w"
+      ],
+      "expect": "ah: `7` runs in `x` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver 7 --req /r --cwd /w`, run in the background."
+    },
+    {
+      "id": "array-name",
+      "args": [
+        {
+          "name": [
+            "a",
+            "b"
+          ],
+          "kind": "x"
+        },
+        "/r",
+        "/w"
+      ],
+      "expect": "ah: `a,b` runs in `x` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver a,b --req /r --cwd /w`, run in the background."
+    },
+    {
+      "id": "object-kind",
+      "args": [
+        {
+          "name": "n",
+          "kind": {
+            "a": 1
+          }
+        },
+        "/r",
+        "/w"
+      ],
+      "expect": "ah: `n` runs in `[object Object]` and cannot receive SendMessage. Brief it with `node \"$AHROOT/hooks/roster.mjs\" deliver n --req /r --cwd /w`, run in the background."
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+/* Needs your attention and the Q&A log. Tokens only; every colour comes from the shipped palette. */
+/* section.qa outranks r6-shell.css's later `.stage-wrap > :not(.panel-head)` overflow: auto */
+.r6 .stage-wrap > section.qa { display: flex; flex-direction: column; flex: 1; align-self: stretch; min-width: 0; min-height: 0; overflow: hidden; }
+.r6 .qa-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--bar); color: var(--muted); font-size: var(--text-12); }
+.r6 .qa-bar input[type="search"] { height: 28px; min-width: 16rem; padding: 0 8px; border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--control); color: var(--ink); font: inherit; }
+.r6 .qa-facets { display: inline-flex; gap: 4px; }
+.r6 .qa-facets .tab { height: 28px; padding: 0 12px; font-size: var(--type-tab-size, var(--text-12)); }
+.r6 .qa-tally { margin-left: auto; color: var(--muted-2); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.r6 .qa-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.r6 .qa-main { flex: 1 1 auto; min-width: 0; padding: 12px 16px 16px; overflow: auto; container-type: inline-size; }
+.r6 .qa-side { flex: 0 0 320px; box-sizing: border-box; padding: 12px 16px; border-left: 1px solid var(--line); overflow: auto; background: var(--panel-bg); }
+.r6 .qa-title { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--ink-strong); font-size: var(--text-15); font-weight: 600; }
+.r6 .qa-count, .r6 .tab .qa-badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: var(--radius); background: var(--pill-blocked-bg); color: var(--pill-blocked); font-size: var(--text-11); font-weight: 600; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+.r6 .tab .qa-badge { margin-left: 6px; line-height: 16px; }
+.r6 .qa-none { margin: 8px 0; }
+
+.r6 .qa-cards { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.r6 .qa-card { padding: 12px 16px; border: 1px solid var(--line); border-left: 4px solid var(--attn); border-radius: var(--radius-card); background: var(--surface-1); }
+.r6 .qa-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 4px; color: var(--muted-2); font-size: var(--text-12); }
+.r6 .qa-id { color: var(--ink-2); font-family: var(--type-code-font, var(--font-mono)); font-size: var(--type-code-size, var(--text-12)); font-style: var(--type-code-style, inherit); font-weight: var(--type-code-weight, inherit); }
+.r6 .qa-age { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r6 .qa-header { margin: 4px 0 8px; color: var(--ink); font-size: var(--text-14); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+/* A waiting item's description under its note: folded to four lines, More opens it whole. A code span (a path, a command) selects whole on
+   a click so it copies in one go; a code block keeps its lines and scrolls sideways. */
+.r6 .qa-desc { margin: 0 0 var(--sp-4); color: var(--ink-2); font-size: var(--text-13); line-height: 1.5; overflow-wrap: anywhere; }
+.r6 .qa-desc.folded { max-height: 4lh; overflow: hidden; }
+.r6 .qa-desc h4 { margin: var(--sp-8) 0 0; color: var(--ink); font-size: inherit; font-weight: 600; }
+.r6 .qa-desc p, .r6 .qa-desc pre, .r6 .qa-desc .kb-list { margin: 0 0 var(--sp-4); }
+.r6 .qa-desc > :first-child { margin-top: 0; }
+.r6 .qa-desc p { white-space: pre-wrap; }
+.r6 .qa-desc .kb-list { padding-left: var(--sp-24); }
+.r6 .qa-desc code, .r6 .item-detail .id-desc code { padding: 0 var(--sp-2); border-radius: var(--radius); background: var(--surface-code); font-family: var(--font-mono); font-size: var(--text-12); user-select: all; }
+.r6 .qa-desc pre, .r6 .item-detail .id-desc pre { padding: var(--sp-8); border-radius: var(--radius); background: var(--surface-code); overflow-x: auto; white-space: pre; }
+.r6 .qa-desc pre code, .r6 .item-detail .id-desc pre code { padding: 0; background: none; user-select: text; }
+.r6 .qa-card .qa-desc-more { min-height: 24px; margin: 0 0 var(--sp-8); padding: 0 var(--sp-8); font-size: var(--text-12); }
+.r6 .qa-class { padding: 0 6px; border: 1px solid var(--line, currentColor); border-radius: var(--radius); color: var(--ink-2); font-size: var(--text-12); }
+.r6 .qa-class-blocker { border-color: var(--pill-blocked); background: var(--pill-blocked-bg); color: var(--pill-blocked); font-weight: 600; }
+.r6 .qa-badge { padding: 0 6px; border: 1px solid var(--line, currentColor); border-radius: var(--radius); color: var(--ink-2); font-size: var(--text-12); }
+.r6 .qa-later > summary, .r6 .qa-more-reply > summary { cursor: pointer; color: var(--muted-2); font-size: var(--text-12); margin: 0 0 8px; }
+.r6 .qa-text, .r6 .qa-full { margin: 0 0 8px; color: var(--ink-2); font-size: var(--text-13); line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
+.r6 .qa-options { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; padding: 0; list-style: none; }
+.r6 .qa-options li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: baseline; gap: 0 8px; padding: 4px 8px; border: 1px solid var(--line-soft); border-radius: var(--radius); font-size: var(--text-13); }
+.r6 .qa-options li.on { border-color: var(--line-strong); background: var(--surface-2); }
+.r6 .qa-label { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.r6 .qa-default { color: var(--muted); font-size: var(--text-11); text-transform: uppercase; letter-spacing: .06em; }
+.r6 .qa-letter { color: var(--muted-2); font-size: var(--text-12); }
+/* the answer controls of an open card: the whole option row is the label, so its hit target is the row (≥ 28px) */
+.r6 .qa-pick { display: flex; flex-direction: column; gap: 4px; min-width: 0; margin: 8px 0; padding: 0; border: 0; }
+.r6 .qa-multi { margin: 0 0 4px; color: var(--muted); font-size: var(--text-12); }
+.r6 .qa-opt { display: grid; grid-template-columns: 16px 16px minmax(0, 1fr) auto; align-items: center; gap: 0 8px; min-height: 28px; box-sizing: border-box; padding: 4px 8px; border: 1px solid var(--line-soft); border-radius: var(--radius); font-size: var(--text-13); cursor: pointer; }
+.r6 .qa-opt:hover { background: var(--surface-hover); border-color: var(--line-hover); }
+.r6 .qa-opt.on { border-color: var(--line-strong); background: var(--surface-2); }
+.r6 .qa-opt input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: inherit; }
+.r6 .qa-pick:disabled .qa-opt { cursor: not-allowed; opacity: .6; }
+.r6 .qa-other { height: 28px; box-sizing: border-box; margin-left: 24px; padding: 0 8px; border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--control); color: var(--ink); font: inherit; font-size: var(--text-13); }
+.r6 .qa-send { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8) var(--sp-12); margin-top: var(--sp-8); }
+/* Dismiss sits beside Answer and wraps under it on a narrow form; the label is the reason sent */
+.r6 .qa-dismiss { display: flex; flex-wrap: wrap; gap: var(--sp-8); }
+/* Answer and Confirm keep one width, so the confirm step does not move the button row */
+.r6 .qa-send .action { flex: none; min-width: 11ch; }
+.r6 .qa-hint { margin: 0 0 0 24px; color: var(--err-ink); font-size: var(--text-12); }
+.r6 .qa-status { flex: 1; min-width: 0; margin: 0; color: var(--ink); font-size: var(--text-13); overflow-wrap: anywhere; }
+.r6 .qa-status.err { margin-top: 8px; color: var(--err-ink); }
+/* the confirm step: the answer in words beside Confirm and Back, cut to one line (its full text in the title and the tree) */
+.r6 .qa-ask { flex: 1; min-width: 0; margin: 0; overflow: hidden; color: var(--ink-2); font-size: var(--text-13); text-overflow: ellipsis; white-space: nowrap; }
+.r6 .qa-given { color: var(--ink); font-weight: 600; }
+/* a confirmed card collapses to this one line under its question: a mark, the state, the answer; it never wraps */
+.r6 .qa-status.qa-progress { display: flex; align-items: center; gap: 8px; min-height: 28px; overflow: hidden; white-space: nowrap; }
+.r6 .qa-progress .qa-state { flex: none; color: var(--ink); font-weight: 600; }
+.r6 .qa-progress .qa-given { min-width: 0; overflow: hidden; font-weight: 400; text-overflow: ellipsis; }
+.r6 .qa-progress .qa-note { flex: none; color: var(--err-ink); }
+.r6 .qa-mark { flex: none; box-sizing: border-box; width: 12px; height: 12px; }
+.r6 .qa-mark.spin { border: 2px solid var(--line-control); border-top-color: var(--accent); border-radius: 50%; }
+@media (prefers-reduced-motion: no-preference) { .r6 .qa-mark.spin { animation: qa-spin .9s linear infinite; } }
+@keyframes qa-spin { to { transform: rotate(360deg); } }
+/* a check drawn from two borders */
+.r6 .qa-mark.ok { width: 8px; height: 12px; margin: 0 2px 4px; border: solid var(--ok); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.r6 .qa-card.sent .qa-header { margin-bottom: 4px; }
+.r6 .qa-card .qa-full-btn { min-height: 24px; padding: 0 8px; font-size: var(--text-12); }
+.r6 .qa-cmd { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--muted-2); font-size: var(--text-12); }
+.r6 .qa-cmd input { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--surface-code); color: var(--ink); font-family: var(--font-mono); font-size: var(--text-12); }
+
+.r6 .qa-recent { margin: 0; padding: 0; list-style: none; }
+.r6 .qa-recent li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.r6 .qa-recent .qa-text { margin-bottom: 4px; }
+.r6 .qa-answer { margin: 0; color: var(--ink); font-size: var(--text-13); font-weight: 600; }
+
+.r6 .qa-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: var(--text-13); }
+.r6 .qa-table th { position: sticky; top: 0; padding: 8px; border-bottom: 1px solid var(--line); background: var(--panel-bg); color: var(--muted-2); font-size: var(--type-table-heading-size, var(--text-11)); font-weight: var(--type-table-heading-weight, 600); letter-spacing: .06em; text-align: left; text-transform: uppercase; font-family: var(--type-table-heading-font, inherit); font-style: var(--type-table-heading-style, inherit); }
+.r6 .qa-table th:nth-child(1) { width: 4.5rem; }
+.r6 .qa-table th:nth-child(2) { width: 6rem; }
+.r6 .qa-table th:nth-child(4) { width: 18%; }
+.r6 .qa-table th:nth-child(5) { width: 7.5rem; }
+.r6 .qa-table th:nth-child(6) { width: 9rem; }
+/* a narrow table (1024px with the panel open) keeps the question readable; the panel and the facets carry the hidden two */
+@container (max-width: 760px) { .r6 .qa-table :is(th, td):is(:nth-child(2), :nth-child(5)) { display: none; } }
+.r6 .qa-table td { padding: 0 8px; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 32px; }
+.r6 .qa-table tr:hover td, .r6 .qa-table tr.on td { background: var(--surface-hover); }
+.r6 .qa-table .num, .r6 .qa-detail .num { font-variant-numeric: tabular-nums; }
+.r6 .qa-table td.qa-q { padding: 0; }
+.r6 .qa-open { display: block; width: 100%; min-height: 32px; padding: 0 8px; border: 0; background: none; color: var(--ink-2); font: inherit; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.r6 .qa-open:focus-visible { outline-offset: -2px; }
+.r6 .qa-main:has(> .qa-table) { padding-top: 0; }
+.r6 .qa-more { margin: 12px 0 0; }
+
+.r6 .qa-detail { position: relative; flex: 0 0 380px; width: 380px; max-width: 100%; box-sizing: border-box; padding: 16px; border-left: 1px solid var(--line); overflow: auto; background: var(--panel-bg); font-size: var(--text-13); }
+.r6 .qa-detail h2 { margin: 4px 32px 8px 0; color: var(--ink-strong); font-size: var(--text-15); font-weight: 600; }
+.r6 .qa-detail h3 { margin: 16px 0 8px; color: var(--muted-2); font-size: var(--text-11); letter-spacing: .08em; text-transform: uppercase; }
+.r6 .qa-detail .close { position: absolute; top: 8px; right: 8px; min-width: 28px; min-height: 28px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--ink-2); font-size: var(--text-18); line-height: 1; cursor: pointer; }
+.r6 .qa-detail dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 12px 0; }
+.r6 .qa-detail dt { color: var(--muted-2); }
+.r6 .qa-detail dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }

@@ -1,0 +1,79 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "agentRefError",
+  "cases": [
+    {
+      "id": "bare",
+      "args": [
+        "agent"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ns",
+      "args": [
+        "plug:agent"
+      ],
+      "expect": null
+    },
+    {
+      "id": "bad",
+      "args": [
+        "a b"
+      ],
+      "expect": "agent \"a b\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": "agent \"\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": "agent 5 must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "agent null must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "agent undefined must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "quote-in-name",
+      "args": [
+        "a\"b"
+      ],
+      "expect": "agent \"a\\\"b\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "long",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": "agent \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    },
+    {
+      "id": "newline",
+      "args": [
+        "a\nb"
+      ],
+      "expect": "agent \"a\\nb\" must match /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,63})?$/"
+    }
+  ]
+}

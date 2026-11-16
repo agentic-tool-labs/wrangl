@@ -1,0 +1,535 @@
+{
+  "lib": "lib-mesh",
+  "module": "hooks/lib-mesh.mjs",
+  "fn": "meshOf",
+  "cases": [
+    {
+      "id": "no-team",
+      "args": [
+        null
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "undefined-team",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "no-mesh-field",
+      "args": [
+        {
+          "members": []
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "policy-open",
+      "args": [
+        {
+          "mesh": {
+            "policy": "open"
+          }
+        }
+      ],
+      "expect": {
+        "policy": "open",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "policy-star-warn",
+      "args": [
+        {
+          "mesh": {
+            "policy": "star-warn"
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star-warn",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "policy-star",
+      "args": [
+        {
+          "mesh": {
+            "policy": "star"
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "policy-unknown-falls-back",
+      "args": [
+        {
+          "mesh": {
+            "policy": "loose"
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "policy-not-a-string",
+      "args": [
+        {
+          "mesh": {
+            "policy": 5
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "mesh-null",
+      "args": [
+        {
+          "mesh": null
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "mesh-string",
+      "args": [
+        {
+          "mesh": "open"
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "mesh-array",
+      "args": [
+        {
+          "mesh": [
+            "open"
+          ]
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "auto-grant-replaces-default",
+      "args": [
+        {
+          "mesh": {
+            "auto_grant": [
+              [
+                "a",
+                "b"
+              ]
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "a",
+            "b"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "auto-grant-keeps-only-pairs",
+      "args": [
+        {
+          "mesh": {
+            "auto_grant": [
+              [
+                "a",
+                "b"
+              ],
+              [
+                "a"
+              ],
+              "x",
+              [
+                "a",
+                "b",
+                "c"
+              ],
+              null
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "a",
+            "b"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "auto-grant-empty-list",
+      "args": [
+        {
+          "mesh": {
+            "auto_grant": []
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": []
+      }
+    },
+    {
+      "id": "auto-grant-not-an-array",
+      "args": [
+        {
+          "mesh": {
+            "auto_grant": "x"
+          }
+        }
+      ],
+      "expect": {
+        "policy": "star",
+        "auto_grant": [
+          [
+            "implementor",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "implementor"
+          ],
+          [
+            "docs-writer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "docs-writer"
+          ],
+          [
+            "ux-engineer",
+            "reviewer"
+          ],
+          [
+            "architect",
+            "ux-engineer"
+          ]
+        ]
+      }
+    }
+  ]
+}

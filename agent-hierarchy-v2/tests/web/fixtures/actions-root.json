@@ -1,0 +1,216 @@
+{
+  "view_schema": 1,
+  "kind": "actions",
+  "id": "/",
+  "path": "/actions",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "root",
+      "id": "/",
+      "label": "ah",
+      "path": "/"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {
+    "actions": 16
+  },
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "root",
+      "path": "/"
+    },
+    "actions": [
+      {
+        "id": "view.refresh",
+        "label": "Refresh",
+        "key": "r",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Read the hierarchy again now.",
+        "invoke": {
+          "view": "refresh"
+        }
+      },
+      {
+        "id": "view.expand",
+        "label": "Expand",
+        "key": "right",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Open the selected node.",
+        "alt_key": "l",
+        "invoke": {
+          "view": "expand"
+        }
+      },
+      {
+        "id": "view.collapse",
+        "label": "Collapse",
+        "key": "left",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Close the selected node.",
+        "alt_key": "h",
+        "invoke": {
+          "view": "collapse"
+        }
+      },
+      {
+        "id": "view.expand_all",
+        "label": "Expand all",
+        "key": "e",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Open every node of the tree.",
+        "invoke": {
+          "view": "expand_all"
+        }
+      },
+      {
+        "id": "view.collapse_all",
+        "label": "Collapse all",
+        "key": "E",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Close every node of the tree.",
+        "invoke": {
+          "view": "collapse_all"
+        }
+      },
+      {
+        "id": "view.switch.tree",
+        "label": "Open as tree",
+        "key": "t",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Show the hierarchy as a tree, focused on the selection.",
+        "invoke": {
+          "view": "switch.tree"
+        }
+      },
+      {
+        "id": "view.switch.grid",
+        "label": "Grid layout",
+        "key": "g",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Lay the orchestrators out as a grid of tiles.",
+        "invoke": {
+          "view": "switch.grid"
+        }
+      },
+      {
+        "id": "view.switch.ledger",
+        "label": "Ledger layout",
+        "key": "L",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Lay the orchestrators out as a ledger of rows.",
+        "invoke": {
+          "view": "switch.ledger"
+        }
+      },
+      {
+        "id": "view.filter",
+        "label": "Filter…",
+        "key": "/",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Narrow what is shown to the nodes matching some text.",
+        "invoke": {
+          "view": "filter"
+        }
+      },
+      {
+        "id": "view.motion",
+        "label": "Toggle motion",
+        "key": "z",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Turn animation on or off.",
+        "invoke": {
+          "view": "motion"
+        }
+      },
+      {
+        "id": "view.pills",
+        "label": "Toggle agent types",
+        "key": "n",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Show or hide the type and model beside each name in the graph.",
+        "invoke": {
+          "view": "pills"
+        }
+      },
+      {
+        "id": "view.zoom_in",
+        "label": "Zoom in",
+        "key": "+",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Zoom the graph in.",
+        "invoke": {
+          "view": "zoom_in"
+        }
+      },
+      {
+        "id": "view.zoom_out",
+        "label": "Zoom out",
+        "key": "-",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Zoom the graph out.",
+        "invoke": {
+          "view": "zoom_out"
+        }
+      },
+      {
+        "id": "view.help",
+        "label": "Help",
+        "key": "?",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Show the keys and what they do.",
+        "invoke": {
+          "view": "help"
+        }
+      },
+      {
+        "id": "view.quit",
+        "label": "Quit",
+        "key": "q",
+        "group": "view",
+        "kind": "view",
+        "target": "sky",
+        "help": "Leave the viewer.",
+        "invoke": {
+          "view": "quit"
+        }
+      }
+    ]
+  },
+  "rev": "310e0c7cb471a7e0"
+}

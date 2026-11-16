@@ -1,0 +1,218 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packFindings",
+  "cases": [
+    {
+      "id": "ok-no-text",
+      "args": [
+        "r",
+        {
+          "status": "ok"
+        },
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "changed",
+      "args": [
+        "r",
+        {
+          "status": "pack-changed",
+          "from": "p@m:r",
+          "message": "changed",
+          "agentPath": "/x/a.md"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-changed",
+          "path": "/x/a.md",
+          "field": null,
+          "message": "r (from p@m:r): changed",
+          "fix": [
+            {
+              "kind": "trust",
+              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "untrusted",
+      "args": [
+        "r",
+        {
+          "status": "pack-untrusted-here",
+          "from": "p@m:r",
+          "message": "no copy",
+          "subcode": "no-stored-copy"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-untrusted-here",
+          "path": null,
+          "field": null,
+          "message": "r (from p@m:r): no copy [no-stored-copy]",
+          "fix": [
+            {
+              "kind": "trust",
+              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ambiguous",
+      "args": [
+        "r",
+        {
+          "status": "pack-ambiguous",
+          "from": "p@m:r",
+          "message": "two installs"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-ambiguous",
+          "path": null,
+          "field": null,
+          "message": "r (from p@m:r): two installs",
+          "fix": [
+            {
+              "kind": "uninstall",
+              "detail": "uninstall all but one install of the plugin"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "other-status",
+      "args": [
+        "r",
+        {
+          "status": "pack-missing",
+          "from": "p@m:r",
+          "message": "gone",
+          "subcode": "pack-missing"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-missing",
+          "path": null,
+          "field": null,
+          "message": "r (from p@m:r): gone",
+          "fix": [
+            {
+              "kind": "remove",
+              "detail": "`roster.mjs role remove r`, or reinstall the pack"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "with-text",
+      "args": [
+        "r",
+        {
+          "status": "ok",
+          "agentText": "---\nname: a\n---\nbody\n",
+          "agentPath": "/x"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-agent-tools",
+          "path": "/x",
+          "field": null,
+          "message": "tools is required: without it the agent inherits every tool, MCP tools and Agent included",
+          "fix": [
+            {
+              "kind": "edit-frontmatter",
+              "detail": "a pack agent's frontmatter may hold only name, description, model, tools, disallowedTools, color, effort, maxTurns, as plain unquoted keys"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "with-parsed",
+      "args": [
+        "r",
+        {
+          "status": "ok",
+          "agentText": "ignored"
+        },
+        {
+          "findings": [
+            {
+              "level": "error",
+              "code": "c",
+              "path": null,
+              "field": null,
+              "message": "m",
+              "fix": []
+            }
+          ],
+          "fm": {}
+        }
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "c",
+          "path": null,
+          "field": null,
+          "message": "m",
+          "fix": []
+        }
+      ]
+    },
+    {
+      "id": "changed-with-text",
+      "args": [
+        "r",
+        {
+          "status": "pack-changed",
+          "from": "p@m:r",
+          "message": "changed",
+          "agentText": "---\nname: a\ntools: Read\n---\nbody\n",
+          "agentPath": "/x"
+        },
+        null
+      ],
+      "expect": [
+        {
+          "level": "error",
+          "code": "pack-changed",
+          "path": "/x",
+          "field": null,
+          "message": "r (from p@m:r): changed",
+          "fix": [
+            {
+              "kind": "trust",
+              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

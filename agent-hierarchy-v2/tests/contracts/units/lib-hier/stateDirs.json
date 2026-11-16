@@ -1,0 +1,101 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "stateDirs",
+  "cases": [
+    {
+      "id": "msgs",
+      "args": [
+        "msgs",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-msgs"
+      ]
+    },
+    {
+      "id": "peers",
+      "args": [
+        "peers",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-peers"
+      ]
+    },
+    {
+      "id": "gates",
+      "args": [
+        "gates",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-gates"
+      ]
+    },
+    {
+      "id": "dir-with-trailing-slash",
+      "args": [
+        "msgs",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy/"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-msgs"
+      ]
+    },
+    {
+      "id": "dir-is-relative",
+      "args": [
+        "gates",
+        null,
+        {
+          "dir": "rel/dir"
+        }
+      ],
+      "expect": [
+        "rel/dir/.state-gates"
+      ]
+    },
+    {
+      "id": "dir-not-a-string-is-empty",
+      "args": [
+        "msgs",
+        null,
+        {
+          "dir": 5
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-dir-is-empty",
+      "args": [
+        "peers",
+        null,
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-args-is-empty",
+      "args": [
+        "peers",
+        null,
+        null
+      ],
+      "expect": []
+    }
+  ]
+}

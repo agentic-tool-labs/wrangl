@@ -1,0 +1,150 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "readLinks",
+  "cases": [
+    {
+      "id": "no-file",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": []
+      }
+    },
+    {
+      "id": "good",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": {
+        "v": 1,
+        "links": [
+          {
+            "id": "lk1",
+            "task": "20260101-000000-aa11",
+            "task_home": "$ROOT/h",
+            "peers": [
+              "b@fx"
+            ],
+            "direction": "both",
+            "requester": "a@fx",
+            "granted_by": "orchestrator",
+            "granted_at": "2026-01-01T00:00:00.000Z",
+            "limits": {
+              "messages": 3,
+              "minutes": 30
+            },
+            "used": 0,
+            "extensions": 0,
+            "state": "active"
+          }
+        ],
+        "denied": []
+      }
+    },
+    {
+      "id": "extra-keys-follow-the-known-ones",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{\"note\":\"x\",\"denied\":[{\"request\":\"r\"}],\"links\":[],\"v\":2,\"zzz\":1}"
+      },
+      "expect": {
+        "v": 2,
+        "links": [],
+        "denied": [
+          {
+            "request": "r"
+          }
+        ],
+        "note": "x",
+        "zzz": 1
+      }
+    },
+    {
+      "id": "links-not-array",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{\"v\":1,\"links\":{}}"
+      },
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": []
+      }
+    },
+    {
+      "id": "invalid-json",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{x"
+      },
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": []
+      }
+    },
+    {
+      "id": "array-document",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "[]"
+      },
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": []
+      }
+    },
+    {
+      "id": "missing-denied-and-v-are-filled",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{\"links\":[]}"
+      },
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": []
+      }
+    },
+    {
+      "id": "denied-not-array-is-kept",
+      "args": [
+        "$ROOT/h",
+        "fx"
+      ],
+      "files": {
+        "h/links/fx.json": "{\"links\":[],\"denied\":5}"
+      },
+      "expect": {
+        "v": 1,
+        "links": [],
+        "denied": 5
+      }
+    }
+  ]
+}

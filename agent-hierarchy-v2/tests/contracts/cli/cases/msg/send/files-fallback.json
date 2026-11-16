@@ -1,0 +1,53 @@
+{
+  "kind": "cli",
+  "id": "files-fallback",
+  "about": "send with the daemon off writes the entry through the files path",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "send",
+      "tm-implementor@tm",
+      "--text",
+      "hello",
+      "--id",
+      "e-contract",
+      "--json"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"entry\":{\"v\":1,\"id\":\"e-contract\",\"from\":\"user\",\"to\":\"tm-implementor@tm\",\"kind\":\"note\",\"route\":\"fallback\",\"created\":\"<ISO:1>\",\"text\":\"hello\"},\"address\":\"tm-implementor@tm\",\"delivery\":\"fallback\",\"carrier\":\"prompt\",\"receiver_unregistered\":true}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        },
+        {
+          "path": "ah/state/ah.db.mail_entries.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":1,\"id\":\"e-contract\",\"from\":\"user\",\"to\":\"tm-implementor@tm\",\"kind\":\"note\",\"route\":\"fallback\",\"created\":\"<ISO:2>\",\"text\":\"hello\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a send that writes no entry",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:43.633Z"
+  }
+}

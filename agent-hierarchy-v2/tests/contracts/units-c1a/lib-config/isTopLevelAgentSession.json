@@ -1,0 +1,77 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isTopLevelAgentSession",
+  "cases": [
+    {
+      "id": "top-level",
+      "args": [
+        {
+          "agent_type": "ah:architect"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "subagent",
+      "args": [
+        {
+          "agent_type": "ah:architect",
+          "agent_id": "a1"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-type",
+      "args": [
+        {}
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-type",
+      "args": [
+        {
+          "agent_type": ""
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "number-type",
+      "args": [
+        {
+          "agent_type": 5
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-agent-id-is-top",
+      "args": [
+        {
+          "agent_type": "x",
+          "agent_id": ""
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "null-input",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined-input",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    }
+  ]
+}

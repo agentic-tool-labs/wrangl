@@ -1,0 +1,198 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "teamPrefixInfo",
+  "cases": [
+    {
+      "id": "team-wins",
+      "args": [
+        "$ROOT/r",
+        "crew"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "prefix": "crew",
+        "source": "team"
+      }
+    },
+    {
+      "id": "empty-team-falls-through",
+      "args": [
+        "$ROOT/r",
+        ""
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "non-string-team",
+      "args": [
+        "$ROOT/r",
+        5
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "git-root-basename",
+      "args": [
+        "$ROOT/r/sub",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/sub/f": "1"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "cwd-basename-outside-checkout",
+      "args": [
+        "$ROOT/loose/dir",
+        null
+      ],
+      "files": {
+        "loose/dir/f": "1"
+      },
+      "expect": {
+        "prefix": "dir",
+        "source": "default"
+      }
+    },
+    {
+      "id": "cwd-missing-uses-process-cwd",
+      "args": [
+        null,
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "r",
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "legacy-team-json",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{\"team_id\":\"t-1\",\"transport\":\"herdr\",\"members\":[{\"role\":\"architect\",\"name\":\"alpha-architect\"},{\"role\":\"implementor\",\"name\":\"alpha-implementor-2\"}]}"
+      },
+      "expect": {
+        "prefix": "alpha",
+        "source": "legacy-team"
+      }
+    },
+    {
+      "id": "legacy-first-member-without-prefix-skipped",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{\"team_id\":\"t-1\",\"transport\":\"herdr\",\"members\":[{\"role\":\"architect\",\"name\":\"architect\"},{\"role\":\"reviewer\",\"name\":\"beta-reviewer\"}]}"
+      },
+      "expect": {
+        "prefix": "beta",
+        "source": "legacy-team"
+      }
+    },
+    {
+      "id": "legacy-name-not-ending-in-role",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{\"team_id\":\"t-1\",\"transport\":\"herdr\",\"members\":[{\"role\":\"architect\",\"name\":\"alpha-reviewer\"}]}"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "legacy-team-json-no-members",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{\"team_id\":\"t-1\",\"transport\":\"herdr\",\"members\":[]}"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "legacy-team-json-invalid",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{nope"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    },
+    {
+      "id": "legacy-ignored-when-team-given",
+      "args": [
+        "$ROOT/r",
+        "crew"
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/team.json": "{\"team_id\":\"t-1\",\"transport\":\"herdr\",\"members\":[{\"role\":\"architect\",\"name\":\"alpha-architect\"}]}"
+      },
+      "expect": {
+        "prefix": "crew",
+        "source": "team"
+      }
+    },
+    {
+      "id": "named-teams-dir-not-legacy",
+      "args": [
+        "$ROOT/r",
+        null
+      ],
+      "files": {
+        "r/.git/HEAD": "ref: refs/heads/main\n",
+        "r/.claude/hierarchy/teams/crew.json": "{\"team_id\":\"t\",\"members\":[{\"name\":\"crew-architect\"}]}"
+      },
+      "expect": {
+        "prefix": "r",
+        "source": "default"
+      }
+    }
+  ]
+}

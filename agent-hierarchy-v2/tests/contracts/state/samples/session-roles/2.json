@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "sessions": {
+    "s-one": {
+      "role": "architect",
+      "at": "2026-10-11T16:39:26.471Z"
+    },
+    "s-two": {
+      "role": "reviewer",
+      "at": "2026-10-11T16:39:26.514Z"
+    },
+    "s-three": {
+      "role": "implementor",
+      "at": "2026-10-11T16:39:26.559Z"
+    }
+  }
+}

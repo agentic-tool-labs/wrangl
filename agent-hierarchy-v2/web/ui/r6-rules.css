@@ -1,0 +1,67 @@
+/* The rules of engagement popup (rules-of-engagement §6). The glass is in looks.css, outside the house sheets' no-blur guard. The height is fixed, so a level with few rows does not move the frame. */
+.dialog-backdrop:has(> .rules-dialog) { place-items: center; padding: var(--sp-24); }
+.r6 .dialog.rules-dialog { display: flex; flex-direction: column; flex: none; box-sizing: border-box; width: min(720px, 100%); height: min(760px, calc(100dvh - var(--sp-24) * 2)); max-height: none; padding: 0; overflow: hidden; border: 1px solid var(--line-strong); font-size: var(--text-13); }
+.r6 .rules-dialog .dialog-head { flex: none; margin: 0; padding: var(--sp-16) var(--sp-24); }
+.r6 .rules-dialog .dialog-head h2 { margin: 0; font-size: var(--text-20); }
+.r6 .rules-dialog .close { position: static; min-width: 24px; min-height: 24px; }
+.r6 .rules-dialog .ru-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--sp-16) var(--sp-24) var(--sp-24); }
+
+.r6 .ru-levels { display: flex; flex-wrap: wrap; gap: var(--sp-4); min-width: 0; margin: 0 0 var(--sp-12); padding: 0; border: 0; }
+.r6 .ru-levels legend { padding: 0; margin-bottom: var(--sp-4); color: var(--muted); font-size: var(--text-12); line-height: 16px; }
+.r6 .ru-levels label { display: inline-flex; align-items: center; min-width: 0; min-height: 28px; box-sizing: border-box; padding: var(--sp-4) var(--sp-12); border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.r6 .ru-levels label span { overflow-wrap: anywhere; }
+.r6 .ru-levels label:hover { background: var(--surface-hover); border-color: var(--line-hover); }
+.r6 .ru-levels input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+/* Selected reads as a heavier word and a heavier edge, so it is not colour alone. */
+.r6 .ru-levels label.on { border-color: var(--accent-ink); box-shadow: inset 0 0 0 1px var(--accent-ink); font-weight: 600; }
+.r6 .ru-levels label:has(input:focus-visible) { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* A field's edge is what marks it, so it reads at 3:1 on the glass; --line-control does not. */
+.r6 .ru-field { display: grid; gap: var(--sp-4); }
+.r6 .ru-field > span { color: var(--muted); font-size: var(--text-12); line-height: 16px; }
+.r6 .ru-field :is(textarea, input, select) { box-sizing: border-box; width: 100%; min-height: 28px; padding: var(--sp-4) var(--sp-8); border: 1px solid var(--muted); border-radius: var(--radius); background: var(--control); color: var(--ink); font: inherit; line-height: 20px; }
+.r6 .ru-field textarea { display: block; resize: vertical; }
+.r6 .ru-item { margin-bottom: var(--sp-12); }
+
+/* A status line that is always there, so a change does not push the list down. */
+.r6 .ru-status { min-height: 20px; margin: 0 0 var(--sp-8); color: var(--ink-2); line-height: 20px; overflow-wrap: anywhere; }
+.r6 .ru-status:focus { outline: none; }
+/* A refusal is ink, bold and barred: --err-ink is 3.4:1 on the light Look's glass. */
+.r6 .ru-status.refused, .r6 .ru-error { padding-inline-start: var(--sp-8); border-inline-start: 2px solid var(--err-ink); color: var(--ink); font-weight: 600; }
+.r6 .ru-error { margin: 0; line-height: 20px; overflow-wrap: anywhere; }
+.r6 .ru-error:empty { display: none; }
+.r6 .ru-empty { margin: 0 0 var(--sp-16); color: var(--muted); line-height: 20px; }
+
+.r6 .ru-list { margin: 0 0 var(--sp-16); padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.r6 .ru-row { padding: var(--sp-12) 0; border-bottom: 1px solid var(--line); }
+.r6 .ru-text { margin: 0 0 var(--sp-4); color: var(--ink); line-height: 20px; overflow-wrap: anywhere; }
+.r6 .ru-text.off { color: var(--muted); font-style: italic; }
+.r6 .ru-meta { display: flex; flex-wrap: wrap; gap: var(--sp-4) var(--sp-12); margin: 0 0 var(--sp-8); color: var(--muted); font-size: var(--text-12); line-height: 16px; overflow-wrap: anywhere; }
+.r6 .ru-meta code { color: var(--ink-2); font-family: var(--font-mono); }
+.r6 .ru-acts { display: flex; flex-wrap: wrap; gap: var(--sp-8); }
+
+/* A decision rule (spec-b19): its question and answer as a term column and its text, on one baseline per pair. */
+.r6 .ru-decide { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: var(--sp-4) var(--sp-12); margin: 0 0 var(--sp-8); line-height: 20px; }
+.r6 .ru-decide dt { color: var(--muted); font-size: var(--text-12); }
+.r6 .ru-decide dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+/* "Proposed" is a framed word, so it is not colour alone; its edge is --muted, as the fields', to read at 3:1 on the glass. 14px plus the edge keeps the meta line at 16px. */
+.r6 .ru-tag { padding: 0 var(--sp-4); border: 1px solid var(--muted); border-radius: var(--radius); color: var(--ink); font-weight: 600; line-height: 14px; }
+.r6 .ru-row-error { margin-bottom: var(--sp-8); }
+
+.r6 .ru-form { display: grid; gap: var(--sp-8); }
+.r6 .ru-count { margin: calc(var(--sp-4) * -1) 0 0; color: var(--muted); font-size: var(--text-12); line-height: 16px; font-variant-numeric: tabular-nums; }
+.r6 .ru-count.over { color: var(--ink); font-weight: 600; }
+.r6 :is(.ru-add, .ru-standing) h3 { margin: 0 0 var(--sp-8); color: var(--ink-strong); font-size: var(--text-13); font-weight: 600; line-height: 20px; }
+.r6 .ru-note { margin: var(--sp-16) 0 0; padding-top: var(--sp-12); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--text-12); line-height: 16px; }
+
+@media (max-width: 600px) {
+  .dialog-backdrop:has(> .rules-dialog) { padding: var(--sp-8); }
+  .r6 .dialog.rules-dialog { height: calc(100dvh - var(--sp-8) * 2); }
+  .r6 .rules-dialog .dialog-head { padding: var(--sp-12) var(--sp-16); }
+  .r6 .rules-dialog .ru-body { padding: var(--sp-12) var(--sp-16) var(--sp-16); }
+  .r6 .rules-dialog .close { min-width: 44px; min-height: 44px; }
+}
+@media (pointer: coarse) {
+  .r6 .rules-dialog :is(.action, .close, .ru-levels label, .ru-field textarea, .ru-field input, .ru-field select) { min-height: 44px; }
+  .r6 .rules-dialog .ru-field :is(textarea, input, select) { font-size: 16px; }
+}

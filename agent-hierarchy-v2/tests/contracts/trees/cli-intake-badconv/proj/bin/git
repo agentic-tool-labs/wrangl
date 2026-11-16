@@ -1,0 +1,13 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+echo "$*" >> "$d/git.log"
+case "$*" in
+  *'remote get-url origin') printf '%s\n' 'https://github.com/alice/proj.git'; exit 0;;
+  *'rev-parse --show-toplevel') printf '%s\n' "$2"; exit 0;;
+  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/main
+'; exit 0;;
+  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;
+  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;
+  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{"version":1,"issues":{"bogus":true}}'; exit 0;;
+  *) exit 1;;
+esac

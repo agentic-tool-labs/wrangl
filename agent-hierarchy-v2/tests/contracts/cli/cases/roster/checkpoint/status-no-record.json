@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "status-no-record",
+  "about": "checkpoint --status for a team with no record is not safe to restart: exit 3, one blocker, nothing written",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "checkpoint",
+      "--status",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"teams\": [\n    {\n      \"team\": \"tm\",\n      \"record\": null,\n      \"safe_to_restart\": false,\n      \"blockers\": [\n        \"no checkpoint record for team tm\"\n      ]\n    }\n  ],\n  \"safe_to_restart\": false\n}\n",
+    "stderr": "",
+    "exit": 3,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a team with no record reported safe",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.4.3",
+    "at": "2026-10-17T00:00:00.000Z",
+    "note": "placeholder until rerecord.mjs writes it from the native binary"
+  }
+}

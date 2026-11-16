@@ -1,0 +1,127 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "stateDirs",
+  "cases": [
+    {
+      "id": "status",
+      "args": [
+        "status",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-status"
+      ]
+    },
+    {
+      "id": "session-pids",
+      "args": [
+        "session-pids",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-session-pids"
+      ]
+    },
+    {
+      "id": "activity",
+      "args": [
+        "activity",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-activity"
+      ]
+    },
+    {
+      "id": "unknown-domain-is-activity",
+      "args": [
+        "whatever",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-activity"
+      ]
+    },
+    {
+      "id": "trailing-slash-dir",
+      "args": [
+        "status",
+        null,
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy/"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-status"
+      ]
+    },
+    {
+      "id": "relative-dir",
+      "args": [
+        "activity",
+        null,
+        {
+          "dir": "rel/h"
+        }
+      ],
+      "expect": [
+        "rel/h/.state-activity"
+      ]
+    },
+    {
+      "id": "non-string-dir-is-empty",
+      "args": [
+        "status",
+        null,
+        {
+          "dir": 5
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-dir-is-empty",
+      "args": [
+        "status",
+        null,
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-args-is-empty",
+      "args": [
+        "status",
+        null,
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "empty-dir-names-the-current-directory",
+      "args": [
+        "status",
+        null,
+        {
+          "dir": ""
+        }
+      ],
+      "expect": [
+        ".state-status"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "cli",
+  "id": "missing-slug",
+  "about": "new without --slug is refused",
+  "tree": "wire-tm-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "new",
+      "--to",
+      "implementor",
+      "--from",
+      "orchestrator",
+      "--title",
+      "Contract title"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: --slug must match [a-z0-9-]{1,32}, got undefined\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/ah2/.gitignore",
+          "mode": "0644",
+          "content": "*\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a message written without a slug",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:42.795Z"
+  }
+}

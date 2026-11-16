@@ -1,0 +1,145 @@
+{
+  "about": "Where a native daemon route intentionally differs from the recorded Node oracle. Every row is a ruling of the review of the trust surfaces (20261011-195201-1rl4), stricter than Node, and says which recorded rows exercised the old behaviour.",
+  "register": [
+    {
+      "id": "F7-box-dir-every-harness",
+      "route": "POST /v1/register",
+      "node": "a built-in harness's boxes, team_file and pid are stored unchecked; only a custom harness is held to the box directory its team file gives it",
+      "native": "every harness must name an absolute team_file and each box must be the directory that team file gives its member (403 not_admitted otherwise)",
+      "rowsExercisingNode": [
+        "wire/register/register-ok",
+        "wire/register/register-bad-session-id",
+        "wire/inspect-registrations/inspect-registrations-ok",
+        "wire/view/view-long-poll-wakes"
+      ],
+      "note": "inspect-boxes-ok also registers first but its expected body is unaffected and it still passes. The recorded rows register boxes under <proj>/boxes, not the directory the team file gives; the recordings are not edited."
+    },
+    {
+      "id": "F7-pid-owned",
+      "route": "POST /v1/register",
+      "node": "pid is any integer; a registration with pid 1 stays live for ever",
+      "native": "an integer pid must be above 1 (400 bad_request) and a process this user may signal (403 not_admitted)",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-4",
+      "route": "ah msg / roster caller registration (MailCallers.RegisterCaller)",
+      "node": "a claim by session S with pid P rewrites S's registration whatever it holds",
+      "native": "a claim does not write when S's registration names a live pid Q and the claim names a different pid (or none); it still resolves boxes",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "MI-R2-register-route",
+      "route": "POST /v1/register",
+      "node": "a registration for session S replaces whatever S holds",
+      "native": "a claim whose pid differs from (or is absent beside) a LIVE registration of the same session is refused 403 not_admitted; a dead registration, the same pid, or the same pid with another pid_start (pid reuse) is written",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "DV-14",
+      "route": "POST /v1/register and ah msg / roster caller registration (MailCallers.RegisterCaller)",
+      "node": "the claimed pid is stored as given",
+      "native": "the registration carries bound: true only when the claimed pid is the registrant's own (the connection's peer pid on the route, this process in process) or one of its ancestors, is alive, and the claimed pid_start is the one it has now; otherwise bound: false, and the registration is written either way",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "RB-R4-no-downgrade",
+      "route": "POST /v1/register and ah msg / roster caller registration (MailCallers.RegisterCaller)",
+      "node": "a registration for session S replaces whatever S holds",
+      "native": "a claim that is not bound never replaces a LIVE bound registration (its pid alive and with the start time it recorded): the route refuses it 403 not_admitted (a bound registration already exists for this session) and the in-process claim is a silent no-op; a bound registration whose process has exited or whose pid was reused is replaced, stored unbound; a bound claim replaces a held registration that is not bound, whatever its pid",
+      "rowsExercisingNode": []
+    }
+  ],
+  "inbox": [
+    {
+      "id": "N4-since-long-range",
+      "route": "GET /v1/inbox",
+      "node": "since is a finite whole number; a value past the long range reads as a negative offset and the read throws (500)",
+      "native": "since at or above 2^63 is 400 bad_request, `since must be a byte offset`",
+      "rowsExercisingNode": []
+    }
+  ],
+  "cli": [
+    {
+      "id": "msg-daemon-error-text-inert",
+      "route": "ah msg send|inbox|ack (the daemon's error text)",
+      "node": "the daemon's error code and message are printed as received",
+      "native": "control and format characters are stripped before the text reaches the terminal",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "msg-daemon-stop-failed",
+      "route": "ah msg daemon stop",
+      "node": "a daemon that did not exit prints `not running` and exits 0, the same as no daemon",
+      "native": "a daemon that did not exit prints `error: stop_failed: the daemon (pid N) did not exit` on stderr and exits 1, as `ahd stop` reports it; a daemon that refuses prints `error: drain_refused: …` and exits 1",
+      "reason": "printing `not running` for a daemon that is still running sent the update-recovery step on as if the old daemon were gone",
+      "rowsExercisingNode": []
+    }
+  ],
+  "state": [
+    {
+      "id": "DV-5",
+      "route": "POST /v1/state/mailbox/{register,unregister,append,attempt,heartbeat,ack}",
+      "node": "served: the op writes entries, heartbeats, acks and registrations into a caller-supplied dir",
+      "native": "not served (Daemon = false): 400 bad_request, `<domain>.<op> is not served by the daemon`, the answer of every non-daemon state op; the dedicated routes derive the box from an address and the in-process writer still runs the ops",
+      "rowsExercisingNode": [],
+      "ruling": "400 accepted: consistency with every Daemon=false op over special-casing (orchestrator ruling after 14ss)"
+    }
+  ],
+  "view": [
+    {
+      "id": "TUI-team-view-member-stream",
+      "route": "GET /v1/view (a team view's member rows)",
+      "node": "a member row's summary has role, kind, route, activity, context and owed counts, and no stream; the stream a member belongs to is only in the member's own view",
+      "native": "a member row's summary also carries `stream`: the member's stream name, or null when it has none (the value the member view's body.stream holds)",
+      "reason": "lets the tree client group agents under their streams from the team view alone, without one request per member; additive, no field changes or moves",
+      "rowsExercisingNode": []
+    }
+  ],
+  "due": [
+    {
+      "id": "N5-mod-mail-push",
+      "route": "GET /v1/due",
+      "node": "no such route: the Claude mod polled the box files and GET /v1/inbox every 5 s itself, with its own copy of the mail rules",
+      "native": "a hidden route that answers what the mod's poll would hand over and holds the request until something is due (wait 1..25 s, re-checked every 200 ms), so the mod is pushed mail instead of polling; the same decision `ah msg due --json` makes for the mod's timer fallback",
+      "reason": "the mod cannot import native code and the user ruled that it talks to the native CLI and daemon only (0117)",
+      "rowsExercisingNode": []
+    }
+  ],
+  "read-model": [
+    {
+      "id": "ui-perf-read-model-route",
+      "route": "GET /v1/read-model",
+      "node": "no such route; the read model does not exist in Node, and /v1/health carries no read-model counters",
+      "native": "a hidden route: 200 {counters, parked, as_of} with the read model's counters read when the request arrives, or 404 {error: no_read_model} on a daemon with no read model. /v1/health is unchanged",
+      "reason": "ah2-only route (ui-perf §12.35): the counters are UI internals that keep changing, so they stay out of the recorded health contract",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "b459-read-model-rebuild-route",
+      "route": "POST /v1/read-model/rebuild",
+      "node": "no such route; the read model does not exist in Node",
+      "native": "a hidden route: 200 {rebuilt, as_of} after the held parsed slice bodies, job rows and checklist folds are dropped, so each next read reads the store again. `ah roster doctor` calls it",
+      "reason": "ah2-only route (b459 step 11): the on-demand rebuild of the read model's change-keyed memos; no timer rebuilds them",
+      "rowsExercisingNode": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "ui-actions-route",
+      "route": "GET /v1/actions",
+      "node": "no such route; the Node viewer built its action menus in the client",
+      "native": "a hidden route: 200 with the actions document body of the view builder ({node:{kind,path}, actions}) for the root, or 404 {error: no_node}",
+      "reason": "ah2-only route: the UI asks the daemon for a node's actions instead of composing them, so the menus have one implementation",
+      "rowsExercisingNode": []
+    },
+    {
+      "id": "ui-actions-member-route",
+      "route": "GET /v1/actions/{*id}",
+      "node": "no such route; the Node viewer built its action menus in the client",
+      "native": "a hidden route: the same actions document body for the member slice id member:<dirId>/<team>/<member> (the unnamed team is default, the reserved member @orchestrator is the orchestrator); 400 {error: bad_member} for an id that is not a full member id, 404 {error: no_node} for a member the hierarchy does not hold",
+      "reason": "ah2-only route: the UI asks the daemon for a node's actions instead of composing them, so the menus have one implementation",
+      "rowsExercisingNode": []
+    }
+  ]
+}

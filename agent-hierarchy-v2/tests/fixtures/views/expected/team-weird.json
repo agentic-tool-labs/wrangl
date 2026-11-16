@@ -1,0 +1,79 @@
+{
+ "view_schema": 1,
+ "kind": "team",
+ "id": "<tkey:weird>",
+ "path": "/o/<oid:1>/t/<tkey:weird>",
+ "breadcrumb": [
+  {
+   "kind": "root",
+   "id": "",
+   "label": "ah",
+   "path": "/"
+  },
+  {
+   "kind": "orchestrator",
+   "id": "<oid:1>",
+   "label": "repoA · pid <LIVEPID>",
+   "path": "/o/<oid:1>"
+  },
+  {
+   "kind": "team",
+   "id": "<tkey:weird>",
+   "label": "weird",
+   "path": "/o/<oid:1>/t/<tkey:weird>"
+  }
+ ],
+ "summary": {
+  "teams": 1,
+  "members": 1,
+  "live": 0,
+  "working": 0,
+  "blocked": 0,
+  "owed": 0,
+  "ctx_high": 0,
+  "overdue": 0,
+  "joins_pending": 0,
+  "streams_stuck": 0
+ },
+ "children": [
+  {
+   "kind": "member",
+   "id": "ok-one",
+   "label": "ok-one",
+   "path": "/o/<oid:1>/t/<tkey:weird>/m/ok-one",
+   "state": "stale",
+   "summary": {
+    "role": "implementor",
+    "kind": "claude",
+    "route": "peer",
+    "activity": "unknown",
+    "activity_at": null,
+    "context_pct": null,
+    "context_level": 0,
+    "blocked_by": null,
+    "owed": 0,
+    "last_report_at": null,
+     "stream": null
+   }
+  }
+ ],
+ "body": {
+  "transport": "herdr",
+  "mesh_policy": "star",
+  "open_dispatches": [],
+  "owed_total": 0,
+  "dispatches_truncated": 0,
+  "skipped_members": 4,
+  "commands": [
+   {
+    "label": "plan a disband",
+    "command": "roster.mjs disband --plan --team weird"
+   }
+  ],
+  "streams": [],
+  "links": [],
+  "links_truncated": 0,
+  "joins": [],
+  "reason": null
+ }
+}

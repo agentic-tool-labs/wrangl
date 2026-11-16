@@ -1,0 +1,368 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "buildSnapshot",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.123Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"name\": \"proj-implementor\",\n      \"role\": \"implementor\",\n      \"route\": \"peer\",\n      \"model\": \"sonnet\",\n      \"effort\": \"high\",\n      \"autoMode\": \"auto\",\n      \"expected_root\": \"$ROOT/proj\",\n      \"transport_id\": \"1-2\"\n    }\n  ]\n}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.123Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": "proj-implementor",
+            "role": "implementor",
+            "kind": "claude",
+            "route": "peer",
+            "model": "sonnet",
+            "effort": "high",
+            "autoMode": "auto",
+            "args": null,
+            "stream": null,
+            "expected_root": "$ROOT/proj",
+            "session_id": null,
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "named-team-with-session-from-registration",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        "alpha",
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/teams/alpha.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"name\": \"alpha-implementor\",\n      \"role\": \"implementor\",\n      \"route\": \"peer\",\n      \"model\": \"sonnet\",\n      \"effort\": \"high\",\n      \"autoMode\": \"auto\",\n      \"expected_root\": \"$ROOT/proj\",\n      \"transport_id\": \"1-2\"\n    }\n  ]\n}\n",
+        "ah/registrations/s-1.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-1\",\"address\":\"alpha-implementor@alpha\",\"addresses\":[\"alpha-implementor@alpha\"],\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": "alpha",
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": "alpha-implementor",
+            "role": "implementor",
+            "kind": "claude",
+            "route": "peer",
+            "model": "sonnet",
+            "effort": "high",
+            "autoMode": "auto",
+            "args": null,
+            "stream": null,
+            "expected_root": "$ROOT/proj",
+            "session_id": "s-1",
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-such-team-is-null",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        "ghost",
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "team-without-members-array-is-null",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\"team_id\":\"t\",\"orchestrator\":{\"pid\":1}}"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "non-pane-route-has-null-session",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"name\": \"proj-reviewer\",\n      \"role\": \"reviewer\",\n      \"route\": \"subagent\"\n    }\n  ]\n}\n",
+        "ah/registrations/s-9.json": "{\"v\":1,\"harness\":\"claude\",\"session_id\":\"s-9\",\"address\":\"proj-reviewer@proj\",\"pid\":1,\"at\":\"2026-10-01T10:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": "proj-reviewer",
+            "role": "reviewer",
+            "kind": "claude",
+            "route": "subagent",
+            "model": null,
+            "effort": null,
+            "autoMode": null,
+            "args": null,
+            "stream": null,
+            "expected_root": null,
+            "session_id": null,
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "full-member-fields-and-args-copied",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"tmux\",\n  \"layout\": \"columns\",\n  \"members\": [\n    {\n      \"name\": \"proj-implementor\",\n      \"role\": \"implementor\",\n      \"route\": \"pane\",\n      \"model\": \"sonnet\",\n      \"effort\": \"high\",\n      \"autoMode\": \"auto\",\n      \"expected_root\": \"$ROOT/proj\",\n      \"transport_id\": \"1-2\",\n      \"kind\": \"codex\",\n      \"args\": [\n        \"--search\",\n        \"-c\",\n        \"x=1\"\n      ],\n      \"stream\": \"s-1\"\n    }\n  ]\n}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "tmux",
+        "layout": "columns",
+        "members": [
+          {
+            "name": "proj-implementor",
+            "role": "implementor",
+            "kind": "codex",
+            "route": "pane",
+            "model": "sonnet",
+            "effort": "high",
+            "autoMode": "auto",
+            "args": [
+              "--search",
+              "-c",
+              "x=1"
+            ],
+            "stream": "s-1",
+            "expected_root": "$ROOT/proj",
+            "session_id": null,
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "member-missing-optional-fields",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"role\": \"architect\",\n      \"route\": \"peer\"\n    }\n  ]\n}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": null,
+            "role": "architect",
+            "kind": "claude",
+            "route": "peer",
+            "model": null,
+            "effort": null,
+            "autoMode": null,
+            "args": null,
+            "stream": null,
+            "expected_root": null,
+            "session_id": null,
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "args-not-an-array-is-null",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"name\": \"proj-implementor\",\n      \"role\": \"implementor\",\n      \"route\": \"peer\",\n      \"model\": \"sonnet\",\n      \"effort\": \"high\",\n      \"autoMode\": \"auto\",\n      \"expected_root\": \"$ROOT/proj\",\n      \"transport_id\": \"1-2\",\n      \"args\": \"--x\"\n    }\n  ]\n}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": "proj-implementor",
+            "role": "implementor",
+            "kind": "claude",
+            "route": "peer",
+            "model": "sonnet",
+            "effort": "high",
+            "autoMode": "auto",
+            "args": null,
+            "stream": null,
+            "expected_root": "$ROOT/proj",
+            "session_id": null,
+            "thread_id": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "team-record-without-id-transport-layout",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\"orchestrator\":{\"pid\":1},\"members\":[]}"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": null,
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": null,
+        "layout": null,
+        "members": []
+      }
+    },
+    {
+      "id": "session-from-peer-row-when-no-registration",
+      "args": [
+        "$ROOT/proj/.claude/hierarchy",
+        null,
+        {
+          "$date": "2026-10-11T12:00:00.000Z"
+        }
+      ],
+      "files": {
+        "proj/.claude/hierarchy/team.json": "{\n  \"team_id\": \"t-1\",\n  \"orchestrator\": {\n    \"pid\": 1\n  },\n  \"transport\": \"herdr\",\n  \"layout\": \"grid\",\n  \"members\": [\n    {\n      \"name\": \"proj-implementor\",\n      \"role\": \"implementor\",\n      \"route\": \"peer\",\n      \"model\": \"sonnet\",\n      \"effort\": \"high\",\n      \"autoMode\": \"auto\",\n      \"expected_root\": \"$ROOT/proj\",\n      \"transport_id\": \"1-2\"\n    }\n  ]\n}\n",
+        "proj/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"proj-implementor\",\"role\":\"implementor\",\"session_id\":\"s-from-peer\",\"status\":\"up\",\"pid\":1,\"at\":\"2026-10-11T11:00:00.000Z\",\"ts\":\"2026-10-11T11:00:00.000Z\"}\n"
+      },
+      "env": {
+        "AH_HOME": "$ROOT/ah",
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": {
+        "v": 1,
+        "kind": "ah-team-snapshot",
+        "team": null,
+        "team_id": "t-1",
+        "taken_at": "2026-10-11T12:00:00.000Z",
+        "transport": "herdr",
+        "layout": "grid",
+        "members": [
+          {
+            "name": "proj-implementor",
+            "role": "implementor",
+            "kind": "claude",
+            "route": "peer",
+            "model": "sonnet",
+            "effort": "high",
+            "autoMode": "auto",
+            "args": null,
+            "stream": null,
+            "expected_root": "$ROOT/proj",
+            "session_id": "s-from-peer",
+            "thread_id": null
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+/* Glass looks (ah-ui-looks §3). Every rule is scoped under [data-look-mode], so with House active this file does nothing.
+   The values come from variables apply() in looks.js sets; nothing here knows a control's formula.
+   Every rule skips the inside of a Looks-page preview that shows House (.looks-pv without a look), so a glass :root never
+   reaches into it.
+
+   The layers, the one map of them. A surface is listed under exactly one, in that layer's rule below; the tokens are in the block after it.
+   | layer | surfaces                                    | blur                                | fill          | edge                 | texture |
+   | 0     | .look-stage                                 | none, never                         | the stage     | none                 | none    |
+   | 1     | the view's slab, rail, head and foot strips, | --look-view: the stage with the blur | --layer-1-fill | --layer-1-edge,      | --layer-1-frost |
+   |       | and the sticky bars that must hide what      | worked into its gradients, so it     |               | --layer-1-shadow     |         |
+   |       | scrolls under them                           | costs no filter (static blur)        |               | (floating slabs only) |        |
+   | 2     | cards and panes on layer 1                   | none: compounds by adding its fill   | --layer-2-fill | --layer-2-edge      | none    |
+   | 3     | menus, dialogs, hover cards, toasts          | --layer-3-blur (live, they are few)  | --layer-3-fill | --layer-3-edge      | none    |
+   Text and 1px lines sit on top, sharp. */
+
+/* Layer 0, the stage: one fixed layer behind the frame, painted once from gradients. Sharp: no filter here, ever. */
+.look-stage {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+  background-image: var(--look-stage);
+  background-size: var(--look-stage-size);
+}
+[data-look-mode]:not(:root) > .look-stage { position: absolute; }
+
+/* The tokens. */
+[data-look-mode]:not(.looks-pv:not([data-look-mode]) *), :root[data-look-graph="shadow"] .r6 .view-graph {
+  --layer-1-fill: rgba(var(--glass-rgb), var(--glass-opacity));
+  --layer-1-frost: var(--look-frost);
+  --layer-1-edge: rgba(var(--look-edge-rgb), .95);
+  --layer-1-shadow: 0 24px 54px rgba(15, 23, 42, .1), 0 4px 14px rgba(15, 23, 42, .05);
+  --layer-1-radius: var(--sp-16);
+  --layer-1-gutter: var(--sp-12);
+  --layer-2-fill: var(--look-box);
+  --layer-2-edge: rgba(var(--look-s1-rgb), var(--look-hair));
+  --layer-2-radius: var(--sp-12);
+  --layer-3-blur: var(--glass-blur);
+  --layer-3-fill: linear-gradient(var(--layer-2-fill), var(--layer-2-fill)), color-mix(in srgb, var(--look-pane) 92%, transparent);
+  --layer-3-edge: rgba(var(--look-edge-rgb), .28);
+  --look-divider: linear-gradient(180deg, transparent 0%, rgba(var(--look-s2-rgb), .78) 15%, var(--look-core) 50%, rgba(var(--look-s2-rgb), .78) 85%, transparent 100%);
+}
+[data-look-mode="dark-emissive"]:not(.looks-pv:not([data-look-mode]) *) {
+  --layer-1-edge: rgba(var(--look-edge-rgb), .28);
+  --layer-1-shadow: 0 26px 60px rgba(0, 0, 0, .68), 0 0 26px rgba(var(--look-s2-rgb), .12);
+}
+
+/* Layer 1. Fixed attachment lines every surface up with the stage behind it, wherever it sits and however its content scrolls. */
+[data-look-mode] .r6 :is(.stage-wrap, .rail, .shell-head, .frame-head, .shell-foot, .kb-head, .rail .feed > h2, .teams-rail h2, .teams-table th, .bl-table th, .cl-table th, .qa-table th, .ov-table .row.head):not(.looks-pv[data-look-mode] *):not(.looks-pv:not([data-look-mode]) *) {
+  background-image: var(--layer-1-frost), linear-gradient(var(--layer-1-fill), var(--layer-1-fill)), var(--look-view);
+  background-size: 160px 160px, auto, var(--look-view-size);
+  background-attachment: fixed;
+}
+/* The slabs float on the stage, which shows around them. The edge is a border, never an outline: Chrome repaints a box with an outline whenever
+   anything inside it paints, so one age ticking in a table would re-rasterise the whole slab every second. */
+[data-look-mode] .r6 :is(.stage-wrap, .rail):not(.looks-pv:not([data-look-mode]) *) {
+  margin: var(--layer-1-gutter);
+  border: 1px solid var(--layer-1-edge);
+  border-radius: var(--layer-1-radius);
+  box-shadow: var(--layer-1-shadow);
+}
+[data-look-mode] .r6 .rail:not(.looks-pv:not([data-look-mode]) *) { margin-inline-start: 0; }
+/* A preview's stage is its own box, not the viewport, so fixed attachment would not line up: it takes the real filter instead, on a small page.
+   Filters do not see through one another, and nothing scrolls under a bar in here, so a bar inside a slab is clear: the same pixels as the app's bar. */
+.looks-pv[data-look-mode] .r6 :is(.kb-head, .rail .feed > h2, .teams-table th) { background: transparent; }
+.looks-pv[data-look-mode] .r6 :is(.stage-wrap, .rail, .shell-head, .frame-head, .shell-foot) {
+  background-color: transparent;
+  background-image: var(--layer-1-frost), linear-gradient(var(--layer-1-fill), var(--layer-1-fill));
+  background-size: 160px 160px, auto;
+  -webkit-backdrop-filter: blur(var(--look-view-blur)) saturate(var(--look-view-saturate));
+  backdrop-filter: blur(var(--look-view-blur)) saturate(var(--look-view-saturate));
+}
+
+/* Clear on the slab: canvases, the toolbars that nothing scrolls under, and the Board's columns, which are not surfaces at all. */
+[data-look-mode] .r6 :is(.kb-stage, .gflow, .sr-col, .panel-head, .teams-bar, .plans-bar, .ice-bar, .kb-bar, .bl-bar, .qa-bar, .cv-bar):not(.looks-pv:not([data-look-mode]) *) { background: transparent; }
+[data-look-mode] .r6 :is(.kb-col, .kb-strip):not(.looks-pv:not([data-look-mode]) *) { position: relative; border-color: transparent; background: transparent; box-shadow: none; }
+[data-look-mode] .r6 .kb-head:not(.looks-pv:not([data-look-mode]) *) { border-bottom: 0; border-radius: 0; }
+/* Between columns, the lab's hairline divider turned vertical: 1px in the middle of the gap, fading at both ends. */
+:is([data-look-mode] .r6 :is(.kb-col, .kb-strip):not(:first-child):not(.looks-pv:not([data-look-mode]) *))::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--sp-8);
+  inset-inline-start: calc(var(--sp-6) * -1 - 1px);
+  width: 1px;
+  background: var(--look-divider);
+  opacity: var(--look-line);
+  pointer-events: none;
+}
+
+/* Layer 2: the lab's .hairline-box, flat and translucent, so it adds its fill to what is under it. The border goes clear and its line is
+   drawn inset, as not every surface here has a border; an attention or stalled card keeps its coloured edge. */
+[data-look-mode] .r6 :is(.panel, .member-rail, .transcript, .ov-members, .qa-side, .qa-detail, .pl-detail, .conversation aside.ctx, .cards .card, .kb-card, .ctx-card, .mp-card, .qa-card, .need-card, .expand .card, .fcard:not(.active, .reviewing)):not(.looks-pv:not([data-look-mode]) *) {
+  border-color: transparent;
+  border-radius: var(--layer-2-radius);
+  background: var(--layer-2-fill);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px var(--layer-2-edge);
+  /* In the lab a card's fill lies over the ghosts of its text, which here sit inside the title: their opacity takes the same cut. */
+  --look-ghost-under: var(--look-box-under);
+}
+[data-look-mode] .r6 .kb-card:is(.is-attn):not(.looks-pv:not([data-look-mode]) *) { border-left-color: var(--attn); }
+[data-look-mode] .r6 .kb-card:is(.is-stalled):not(.looks-pv:not([data-look-mode]) *) { border-left-color: var(--err); }
+[data-look-mode] .r6 .kb-card:hover:not(.looks-pv:not([data-look-mode]) *) { box-shadow: inset 0 0 0 1px var(--line-hover); }
+
+/* The lab's chip on a card: the card's fill again and the card's line. */
+[data-look-mode] .r6 .kb-card :is(.chip, .kb-where.is-team):not(.looks-pv:not([data-look-mode]) *) {
+  background: var(--layer-2-fill);
+  border-color: var(--layer-2-edge);
+}
+
+/* The chrome: buttons, chips and search fields sit on a slab like its cards, the same fill and line, instead of a solid theme colour punched through
+   the glass. A selected tab, a primary or danger action and a chip that shows a state keep their own colours; the header's view tabs stay clear. */
+[data-look-mode] .r6 :is(.tab:not(.on, .primary, .views .tab, .panel > .tab), .action:not(.primary, .danger, :disabled), .chip:not(.amber, .attn, .res, .live, [aria-pressed="true"]), .switch-btn, .more-btn, input[type="search"]):not(.looks-pv:not([data-look-mode]) *) {
+  background: var(--layer-2-fill);
+  border-color: var(--layer-2-edge);
+}
+[data-look-mode] .r6 :is(.tab:not(.on, .primary, .views .tab, .panel > .tab), .action:not(.primary, .danger, :disabled), .switch-btn, .more-btn):hover:not(:disabled):not(.looks-pv:not([data-look-mode]) *) { border-color: var(--line-hover); }
+
+/* Layer 3: transient overlays frost whatever is behind them. */
+[data-look-mode] .r6 :is(.menu, .dialog, .kb-menu, .hover-card, .hover-strip, .toast):not(.looks-pv:not([data-look-mode]) *) {
+  background: var(--layer-3-fill);
+  -webkit-backdrop-filter: blur(var(--layer-3-blur)) saturate(var(--look-saturate));
+  backdrop-filter: blur(var(--layer-3-blur)) saturate(var(--look-saturate));
+  border-color: var(--layer-3-edge);
+}
+
+/* The work item dialog is glass in every theme, not only under a Look; a Look's layer 3 above wins by specificity. */
+.r6 .dialog.item-detail { background: var(--dialog-glass-fill); -webkit-backdrop-filter: blur(var(--dialog-glass-blur)); backdrop-filter: blur(var(--dialog-glass-blur)); }
+@media (prefers-reduced-transparency: reduce) { .r6 .dialog.item-detail { background: var(--sheet-bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* Halo headings (lab .css-shadow-mode): the mode's ink and a 3-stop text-shadow. Headings only: never body text, rows, the transcript or
+   graph labels. Dual keeps this rule on the headings it does not ghost below. */
+[data-look-mode] .r6 :is(.panel-head > span:first-child, .rail .feed > h2, .teams-rail h2, .sr-col h3, .card h3, .kb-label, .kb-title):not(.looks-pv:not([data-look-mode]) *) {
+  color: var(--look-core);
+  text-shadow:
+    0 0 calc(var(--halo-blur) * var(--look-k1)) rgba(var(--look-s1-rgb), var(--halo-opacity)),
+    0 0 var(--halo-blur) rgba(var(--look-s2-rgb), calc(var(--halo-opacity) * var(--look-a2))),
+    0 0 calc(var(--halo-blur) * var(--look-k3)) rgba(var(--look-s2-rgb), var(--halo-overdrive-opacity));
+}
+
+/* Dual (§3): the spec's halo headings and the Board's draw the lab's two ghosts instead of the shadow, from their own data-text; a heading without one keeps
+   the shadow. The root's technique reaches app headings and a preview's its own, so a preview never takes the app's. The look option
+   data-look-graph hands the Graph stage back to the shadow rule. z-index 0 keeps the ghosts behind the letters and in front of the pane,
+   which also leaves the lab's mix-blend-mode nothing to blend with, so it is not ported; nor is will-change, as these never animate. */
+:is(:root[data-look-tech="dual"] .r6 :is(.panel-head > span:first-child, .rail .feed > h2, .teams-rail h2, .sr-col h3, .card h3, .kb-label, .kb-title):not(.looks-pv *):not(:root[data-look-graph="shadow"] .view-graph *), .looks-pv[data-look-tech="dual"] .r6 :is(.panel-head > span:first-child, .rail .feed > h2, .teams-rail h2, .sr-col h3, .card h3, .kb-label, .kb-title))[data-text] {
+  text-shadow: none;
+  /* The Live feed bar is already sticky, so it anchors its ghosts and keeps sticking; its letters are centred, so its ghosts centre too. */
+  &:not(.rail .feed > h2) { position: relative; z-index: 0; }
+  &:is(.rail .feed > h2, .teams-rail h2, .sr-col h3)::before, &:is(.rail .feed > h2, .teams-rail h2, .sr-col h3)::after { display: flex; align-items: center; }
+  &::before, &::after {
+    content: attr(data-text);
+    content: attr(data-text) / "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: inherit;
+    pointer-events: none;
+    color: rgb(var(--look-ghost-rgb));
+    -webkit-text-stroke: calc(var(--halo-stroke) + var(--look-ghost-spread)) rgb(var(--look-ghost-edge-rgb));
+  }
+  &::before { filter: blur(var(--halo-blur)); opacity: calc(var(--halo-opacity) * var(--look-ghost-under, 1)); }
+  &::after { filter: blur(var(--halo-blur-tight)); opacity: calc(var(--halo-overdrive-opacity) * var(--look-ghost-under, 1)); }
+  /* A card title clamps its lines, so its box clips its ghosts: a wide blur would end in a hard-edged band. At 3px it stays inside the line box,
+     and the ghost's opacity falls as the blur narrows, or the same ink would pile up into a smudge. A Sitrep heading is as small, so a wide blur smudges it too. */
+  &:is(.kb-title, .kb-label, .sr-col h3, .rail .feed > h2, .teams-rail h2)::before { filter: blur(min(var(--halo-blur-tight), 3px)); opacity: calc(var(--halo-opacity) * var(--look-ghost-under, 1) * var(--look-title-ghost)); }
+  &:is(.kb-title, .kb-label, .sr-col h3, .rail .feed > h2, .teams-rail h2)::after { filter: blur(min(var(--halo-blur-tight), 3px)); }
+}
+
+/* "Draw the graph with Shadow": the Graph stage takes the Shadow profile's values, which apply() also sets as --look-graph-*. */
+:root[data-look-graph="shadow"] .r6 .view-graph {
+  --halo-blur: var(--look-graph-halo-blur);
+  --halo-blur-tight: var(--look-graph-halo-blur-tight);
+  --halo-opacity: var(--look-graph-halo-opacity);
+  --halo-overdrive-opacity: var(--look-graph-halo-overdrive-opacity);
+  --halo-stroke: var(--look-graph-halo-stroke);
+  --glass-blur: var(--look-graph-glass-blur);
+  --glass-opacity: var(--look-graph-glass-opacity);
+  --glass-rgb: var(--look-graph-glass-rgb);
+  --glass-texture: var(--look-graph-glass-texture);
+  --look-core: var(--look-graph-look-core);
+  --look-s1-rgb: var(--look-graph-look-s1-rgb);
+  --look-s2-rgb: var(--look-graph-look-s2-rgb);
+  --look-frost: var(--look-graph-look-frost);
+  --look-box: var(--look-graph-look-box);
+  --look-box-under: var(--look-graph-look-box-under);
+  --look-title-ghost: var(--look-graph-look-title-ghost);
+  --look-view: var(--look-graph-look-view);
+  --look-view-size: var(--look-graph-look-view-size);
+  --look-edge-rgb: var(--look-graph-look-edge-rgb);
+  --look-pane: var(--look-graph-look-pane);
+  --look-hair: var(--look-graph-look-hair);
+  --look-line: var(--look-graph-look-line);
+  --look-view-blur: var(--look-graph-look-view-blur);
+  --look-view-saturate: var(--look-graph-look-view-saturate);
+}
+
+/* The rules popup is glass in every theme, not only under a Look; a Look's layer 3 wins by specificity. */
+.r6 .dialog.rules-dialog { background: var(--dialog-glass-fill); -webkit-backdrop-filter: blur(var(--dialog-glass-blur)); backdrop-filter: blur(var(--dialog-glass-blur)); }
+@media (prefers-reduced-transparency: reduce) { .r6 .dialog.rules-dialog { background: var(--sheet-bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }

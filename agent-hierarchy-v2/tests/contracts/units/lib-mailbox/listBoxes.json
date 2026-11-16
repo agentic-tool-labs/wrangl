@@ -1,0 +1,144 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "listBoxes",
+  "cases": [
+    {
+      "id": "no-mailbox-dir",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": []
+    },
+    {
+      "id": "two-teams-sorted",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/b/entries.jsonl": "",
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "",
+        "ah/mailbox/other~bbbbbbbbbb/c/x": ""
+      },
+      "expect": [
+        {
+          "address": "c@other",
+          "dir": "$ROOT/ah/mailbox/other~bbbbbbbbbb/c"
+        },
+        {
+          "address": "a@tm",
+          "dir": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "address": "b@tm",
+          "dir": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/b"
+        }
+      ]
+    },
+    {
+      "id": "key-without-tilde",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/legacy/a/entries.jsonl": ""
+      },
+      "expect": [
+        {
+          "address": "a@legacy",
+          "dir": "$ROOT/ah/mailbox/legacy/a"
+        }
+      ]
+    },
+    {
+      "id": "file-at-key-level-after-valid-keys-keeps-earlier",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": "",
+        "ah/mailbox/zz": "x"
+      },
+      "expect": [
+        {
+          "address": "a@tm",
+          "dir": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        }
+      ]
+    },
+    {
+      "id": "file-at-key-level-before-valid-keys-aborts",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/aa-file": "x",
+        "ah/mailbox/tm~aaaaaaaaaa/a/entries.jsonl": ""
+      },
+      "expect": []
+    },
+    {
+      "id": "file-inside-key-dir-is-listed-as-a-box",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/notabox": "x"
+      },
+      "expect": [
+        {
+          "address": "notabox@tm",
+          "dir": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/notabox"
+        }
+      ]
+    },
+    {
+      "id": "byte-order-uppercase-first",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/t~1/a/x": "",
+        "ah/mailbox/T~1/b/x": ""
+      },
+      "expect": [
+        {
+          "address": "a@t",
+          "dir": "$ROOT/ah/mailbox/t~1/a"
+        },
+        {
+          "address": "b@t",
+          "dir": "$ROOT/ah/mailbox/t~1/b"
+        }
+      ]
+    },
+    {
+      "id": "empty-key-dir",
+      "args": [],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa": {
+          "dir": true
+        }
+      },
+      "expect": []
+    }
+  ]
+}

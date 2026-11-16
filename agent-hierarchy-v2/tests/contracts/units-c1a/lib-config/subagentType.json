@@ -1,0 +1,84 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "subagentType",
+  "cases": [
+    {
+      "id": "runner-delegate",
+      "args": [
+        "task-runner",
+        {
+          "delegate": "task-gopher"
+        }
+      ],
+      "expect": "task-gopher:task-gopher"
+    },
+    {
+      "id": "runner-overridden",
+      "args": [
+        "task-runner",
+        {
+          "delegate": "task-gopher",
+          "agent": "mine"
+        }
+      ],
+      "expect": "mine"
+    },
+    {
+      "id": "runner-other-delegate",
+      "args": [
+        "task-runner",
+        {
+          "delegate": "other"
+        }
+      ],
+      "expect": "ah:task-runner"
+    },
+    {
+      "id": "runner-no-entry",
+      "args": [
+        "task-runner",
+        null
+      ],
+      "expect": "ah:task-runner"
+    },
+    {
+      "id": "custom",
+      "args": [
+        "ui-implementor",
+        {
+          "agent": "ui"
+        }
+      ],
+      "expect": "ui"
+    },
+    {
+      "id": "architect",
+      "args": [
+        "architect",
+        {}
+      ],
+      "expect": "ah:architect"
+    },
+    {
+      "id": "architect-override",
+      "args": [
+        "architect",
+        {
+          "agent": "plug:a"
+        }
+      ],
+      "expect": "plug:a"
+    },
+    {
+      "id": "delegate-on-non-runner",
+      "args": [
+        "architect",
+        {
+          "delegate": "task-gopher"
+        }
+      ],
+      "expect": "ah:architect"
+    }
+  ]
+}

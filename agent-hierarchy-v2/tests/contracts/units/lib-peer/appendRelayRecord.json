@@ -1,0 +1,239 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "appendRelayRecord",
+  "cases": [
+    {
+      "id": "records-a-pending-row",
+      "args": [
+        "s1",
+        {
+          "entry": "e1",
+          "address": "w@t",
+          "dir": "/b",
+          "to": "peer-x",
+          "line": "send ok"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "session_id": "s1",
+              "from": "peer-x",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e1",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "$any",
+              "relay": {
+                "entry": "e1",
+                "address": "w@t",
+                "dir": "/b",
+                "to": "peer-x",
+                "line": "send ok"
+              },
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "repeat-is-a-no-op",
+      "args": [
+        "s1",
+        {
+          "entry": "e1",
+          "address": "w@t",
+          "dir": "/b",
+          "to": "peer-x",
+          "line": "send ok"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"from\":\"peer-x\",\"from_name\":null,\"reply_to\":null,\"task\":\"relay:e1\",\"status\":\"pending\",\"nudges\":0,\"msg\":null,\"ts\":\"2026-06-01T11:59:55.000Z\",\"relay\":{\"entry\":\"e1\",\"address\":\"w@t\",\"dir\":\"/b\",\"to\":\"peer-x\",\"line\":\"send ok\"}}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "session_id": "s1",
+              "from": "peer-x",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e1",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "$any",
+              "relay": {
+                "entry": "e1",
+                "address": "w@t",
+                "dir": "/b",
+                "to": "peer-x",
+                "line": "send ok"
+              }
+            }
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "id": "other-session-records-again",
+      "args": [
+        "s2",
+        {
+          "entry": "e1",
+          "address": "w@t",
+          "dir": "/b",
+          "to": "peer-x",
+          "line": "send ok"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"from\":\"peer-x\",\"task\":\"relay:e1\",\"status\":\"pending\"}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "session_id": "s1",
+              "from": "peer-x",
+              "task": "relay:e1",
+              "status": "pending"
+            },
+            {
+              "session_id": "s2",
+              "from": "peer-x",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e1",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "$any",
+              "relay": {
+                "entry": "e1",
+                "address": "w@t",
+                "dir": "/b",
+                "to": "peer-x",
+                "line": "send ok"
+              },
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "other-target-records-again",
+      "args": [
+        "s1",
+        {
+          "entry": "e1",
+          "address": "w@t",
+          "dir": "/b",
+          "to": "peer-y",
+          "line": "send ok"
+        },
+        {
+          "$date": "2026-06-01T12:00:00Z"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"from\":\"peer-x\",\"task\":\"relay:e1\",\"status\":\"pending\"}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "session_id": "s1",
+              "from": "peer-x",
+              "task": "relay:e1",
+              "status": "pending"
+            },
+            {
+              "session_id": "s1",
+              "from": "peer-y",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e1",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "$any",
+              "relay": {
+                "entry": "e1",
+                "address": "w@t",
+                "dir": "/b",
+                "to": "peer-y",
+                "line": "send ok"
+              },
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "id": "default-now",
+      "args": [
+        "s1",
+        {
+          "entry": "e1",
+          "address": "w@t",
+          "dir": "/b",
+          "to": "peer-x",
+          "line": "send ok"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "session_id": "s1",
+              "from": "peer-x",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e1",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "$any",
+              "relay": {
+                "entry": "e1",
+                "address": "w@t",
+                "dir": "/b",
+                "to": "peer-x",
+                "line": "send ok"
+              },
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": true
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "dispatchRecordsFor",
+  "cases": [
+    {
+      "id": "own-dispatches-only",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s2\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"seen\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": [
+        {
+          "type": "dispatch",
+          "session_id": "s1",
+          "request_id": "20260601-000001-aaaa",
+          "to": "architect",
+          "created": "2026-06-01T11:58:20.000Z"
+        }
+      ]
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1"
+      ],
+      "expect": []
+    }
+  ]
+}

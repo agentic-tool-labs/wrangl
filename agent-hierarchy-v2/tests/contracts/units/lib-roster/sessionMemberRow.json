@@ -1,0 +1,136 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "sessionMemberRow",
+  "cases": [
+    {
+      "id": "found",
+      "args": [
+        {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "%1"
+      ],
+      "expect": {
+        "role": "architect",
+        "name": "p-architect",
+        "transport_id": "%1",
+        "route": "peer"
+      }
+    },
+    {
+      "id": "other-pane",
+      "args": [
+        {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        "%2"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-pane-id",
+      "args": [
+        {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%1",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        },
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-team",
+      "args": [
+        null,
+        "%1"
+      ],
+      "expect": null
+    },
+    {
+      "id": "members-not-array",
+      "args": [
+        {
+          "members": {}
+        },
+        "%1"
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-row-skipped",
+      "args": [
+        {
+          "members": [
+            null,
+            {
+              "role": "a",
+              "name": "x",
+              "transport_id": "%1"
+            }
+          ]
+        },
+        "%1"
+      ],
+      "expect": {
+        "role": "a",
+        "name": "x",
+        "transport_id": "%1"
+      }
+    },
+    {
+      "id": "first-of-two",
+      "args": [
+        {
+          "members": [
+            {
+              "role": "a",
+              "name": "x",
+              "transport_id": "%1"
+            },
+            {
+              "role": "b",
+              "name": "y",
+              "transport_id": "%1"
+            }
+          ]
+        },
+        "%1"
+      ],
+      "expect": {
+        "role": "a",
+        "name": "x",
+        "transport_id": "%1"
+      }
+    }
+  ]
+}

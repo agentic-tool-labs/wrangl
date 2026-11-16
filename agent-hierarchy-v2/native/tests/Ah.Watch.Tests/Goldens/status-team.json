@@ -1,0 +1,67 @@
+{
+  "view_schema": 1,
+  "kind": "status",
+  "id": "/o/o.101/t/boxes",
+  "path": "/status/o/o.101/t/boxes",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "team",
+      "id": "/o/o.101/t/boxes",
+      "label": "alpha",
+      "path": "/o/o.101/t/boxes"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "team": "alpha",
+    "status": {
+      "team": "alpha",
+      "members": [
+        {
+          "name": "impl",
+          "role": "implementor",
+          "label": "impl",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sess-impl",
+          "live": true,
+          "activity": "working",
+          "activity_at": "2026-06-02T10:00:00.000Z",
+          "blocked_by": null,
+          "stream": null,
+          "last_tool": "Read",
+          "last_tool_at": "2026-06-02T10:00:10.000Z",
+          "context_pct": 46,
+          "context_used": 92000
+        },
+        {
+          "name": "rev",
+          "role": "reviewer",
+          "label": "rev",
+          "kind": "claude",
+          "route": "peer",
+          "session_id": "sess-rev",
+          "live": true,
+          "activity": "idle",
+          "activity_at": "2026-06-02T10:00:00.000Z",
+          "blocked_by": null,
+          "stream": null,
+          "last_tool": "Read",
+          "last_tool_at": "2026-06-02T10:00:10.000Z",
+          "context_pct": 46,
+          "context_used": 92000
+        }
+      ],
+      "dispatches": []
+    }
+  },
+  "rev": "214b1758db733619"
+}

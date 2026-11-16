@@ -1,0 +1,116 @@
+{
+  "lib": "lib-blocked",
+  "module": "hooks/lib-blocked.mjs",
+  "fn": "herdrAgentList",
+  "cases": [
+    {
+      "id": "maps-the-fields",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat <<'EOF'\n{\"result\":{\"agents\":[{\"name\":\"a\",\"pane_id\":\"1-1\",\"agent_status\":\"idle\",\"extra\":1},{\"pane_id\":\"1-2\"}]}}\nEOF\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": [
+        {
+          "name": "a",
+          "pane_id": "1-1",
+          "agent_status": "idle"
+        },
+        {
+          "name": null,
+          "pane_id": "1-2",
+          "agent_status": null
+        }
+      ]
+    },
+    {
+      "id": "not-an-array-is-null",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho '{\"result\":{\"agents\":{}}}'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "missing-result-is-null",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho '{}'\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "unparseable-is-null",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\necho nope\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "failure-is-null",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\nexit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "null-element-is-null",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat <<'EOF'\n{\"result\":{\"agents\":[null]}}\nEOF\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-list",
+      "args": [],
+      "files": {
+        "bin/herdr": {
+          "text": "#!/bin/sh\ncat <<'EOF'\n{\"result\":{\"agents\":[]}}\nEOF\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": []
+    }
+  ]
+}

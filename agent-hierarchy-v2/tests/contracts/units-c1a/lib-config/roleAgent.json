@@ -1,0 +1,63 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "roleAgent",
+  "cases": [
+    {
+      "id": "custom-agent",
+      "args": [
+        "ui-implementor",
+        {
+          "agent": "ui:impl"
+        }
+      ],
+      "expect": "ui:impl"
+    },
+    {
+      "id": "no-entry",
+      "args": [
+        "architect",
+        null
+      ],
+      "expect": "ah:architect"
+    },
+    {
+      "id": "empty-agent",
+      "args": [
+        "architect",
+        {
+          "agent": ""
+        }
+      ],
+      "expect": "ah:architect"
+    },
+    {
+      "id": "number-agent",
+      "args": [
+        "architect",
+        {
+          "agent": 5
+        }
+      ],
+      "expect": "ah:architect"
+    },
+    {
+      "id": "undefined-entry",
+      "args": [
+        "architect",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "ah:architect"
+    },
+    {
+      "id": "no-agent-key",
+      "args": [
+        "architect",
+        {}
+      ],
+      "expect": "ah:architect"
+    }
+  ]
+}

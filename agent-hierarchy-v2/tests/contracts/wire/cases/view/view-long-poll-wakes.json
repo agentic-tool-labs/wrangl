@@ -1,0 +1,110 @@
+{
+  "kind": "wire",
+  "id": "view-long-poll-wakes",
+  "about": "a state change during the wait returns early with the new view",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "path": "/",
+      "since": "{{rev}}",
+      "wait": "5"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/view",
+    "before": [
+      {
+        "method": "GET",
+        "path": "/v1/view",
+        "query": {
+          "path": "/"
+        },
+        "capture": {
+          "rev": "json.rev"
+        }
+      }
+    ],
+    "during": {
+      "after_ms": 300,
+      "request": {
+        "method": "POST",
+        "path": "/v1/register",
+        "body": {
+          "session_id": "s-impl",
+          "addresses": [
+            "tm-implementor@tm"
+          ],
+          "boxes": {
+            "tm-implementor@tm": "<ROOT:proj>/boxes/tm-implementor"
+          },
+          "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+          "harness": "claude"
+        }
+      }
+    }
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "at": "<ISO:1>",
+      "body": {},
+      "breadcrumb": [
+        {
+          "id": "",
+          "kind": "root",
+          "label": "ah",
+          "path": "/"
+        }
+      ],
+      "children": [
+        {
+          "dir": "<ROOT:proj>/.claude/hierarchy",
+          "id": "<OID:1>.<PID>",
+          "kind": "orchestrator",
+          "label": "proj · pid <PID>",
+          "path": "/o/<OID:1>.<PID>",
+          "state": "live",
+          "summary": {
+            "blocked": 0,
+            "ctx_high": 0,
+            "joins_pending": 0,
+            "live": 0,
+            "members": 2,
+            "overdue": 0,
+            "owed": 0,
+            "streams_stuck": 0,
+            "teams": 1,
+            "working": 0
+          }
+        }
+      ],
+      "id": "",
+      "kind": "root",
+      "path": "/",
+      "rev": "<REV:1>",
+      "summary": {
+        "blocked": 0,
+        "ctx_high": 0,
+        "joins_pending": 0,
+        "live": 0,
+        "members": 2,
+        "overdue": 0,
+        "owed": 0,
+        "streams_stuck": 0,
+        "teams": 1,
+        "working": 0
+      },
+      "view_schema": 1
+    }
+  },
+  "mutant": "a wait that ignores a change",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:14.151Z"
+  }
+}

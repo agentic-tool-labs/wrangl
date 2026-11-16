@@ -1,0 +1,140 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "record",
+  "cases": [
+    {
+      "id": "writes",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA",
+          "activity": "working"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T12:00:00.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": {
+        "written": true
+      }
+    },
+    {
+      "id": "unchanged",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA",
+          "activity": "working"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"working\",\"at\":\"2026-06-01T11:58:20.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null}\n"
+      },
+      "expect": {
+        "written": false
+      }
+    },
+    {
+      "id": "fields-come-from-the-args",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA",
+          "activity": "blocked",
+          "blocked_by": "user",
+          "note": "n",
+          "tool": "Bash",
+          "resetStreak": true
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"blocked\",\"at\":\"2026-06-01T12:00:00.000Z\",\"blocked_by\":\"user\",\"note\":\"n\",\"tool\":\"Bash\",\"tool_at\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "written": true
+      }
+    },
+    {
+      "id": "extra-and-context",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "sA",
+          "activity": "failed",
+          "extra": {
+            "error": "x"
+          },
+          "context": {
+            "used": 50000,
+            "window": 200000,
+            "pct": 25,
+            "window_source": "table",
+            "at": "2026-06-01T11:59:30.000Z"
+          }
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/activity/sA.json": "{\"activity\":\"failed\",\"at\":\"2026-06-01T12:00:00.000Z\",\"blocked_by\":null,\"note\":null,\"tool\":null,\"tool_at\":null,\"error\":\"x\",\"context\":{\"used\":50000,\"window_source\":\"unknown\",\"at\":\"2026-06-01T11:59:30.000Z\"}}\n"
+      },
+      "expect": {
+        "written": true
+      }
+    },
+    {
+      "id": "invalid-subject",
+      "args": [
+        {
+          "dir": "$ROOT/repo/.claude/hierarchy",
+          "subject": "a/b",
+          "activity": "working"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/.keep": ""
+      },
+      "expect": {
+        "written": false
+      }
+    },
+    {
+      "id": "dir-missing",
+      "args": [
+        {
+          "dir": "$ROOT/nowhere",
+          "subject": "sA",
+          "activity": "working"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "written": false
+      }
+    }
+  ]
+}

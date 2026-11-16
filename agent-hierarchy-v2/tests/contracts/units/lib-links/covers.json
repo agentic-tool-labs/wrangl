@@ -1,0 +1,420 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "covers",
+  "cases": [
+    {
+      "id": "both-directions",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "b@fx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "both-reverse",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "b@fx",
+        "a@fx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "outsider",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "c@fx",
+        "b@fx"
+      ],
+      "expect": false
+    },
+    {
+      "id": "same-address",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "a@fx"
+      ],
+      "expect": false
+    },
+    {
+      "id": "out-requester-to-peer",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "out",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "b@fx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "out-peer-to-requester-refused",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "out",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "b@fx",
+        "a@fx"
+      ],
+      "expect": false
+    },
+    {
+      "id": "out-to-non-peer",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "out",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "c@fx"
+      ],
+      "expect": false
+    },
+    {
+      "id": "two-peers-peer-to-peer",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx",
+            "c@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "b@fx",
+        "c@fx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "unknown-direction-is-both",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "sideways",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "b@fx",
+        "a@fx"
+      ],
+      "expect": true
+    },
+    {
+      "id": "both-undefined-addresses",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        {
+          "$undefined": 1
+        },
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "peers-not-iterable",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": 5,
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "b@fx"
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "peers-string-spreads-characters",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": "bc",
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "b"
+      ],
+      "expect": true
+    },
+    {
+      "id": "out-peers-string-uses-substring",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": "bc@fx",
+          "direction": "out",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "a@fx",
+        "c@"
+      ],
+      "expect": true
+    },
+    {
+      "id": "numeric-addresses-compare-strictly",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            2
+          ],
+          "direction": "both",
+          "requester": 1,
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        1,
+        2
+      ],
+      "expect": true
+    },
+    {
+      "id": "string-number-not-equal",
+      "args": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            2
+          ],
+          "direction": "both",
+          "requester": 1,
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        "1",
+        "2"
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-link-throws",
+      "args": [
+        null,
+        "a",
+        "b"
+      ],
+      "expectThrows": true
+    }
+  ]
+}

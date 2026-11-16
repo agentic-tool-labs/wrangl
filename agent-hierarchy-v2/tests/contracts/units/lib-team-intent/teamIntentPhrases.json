@@ -1,0 +1,42 @@
+{
+  "lib": "lib-team-intent",
+  "module": "hooks/lib-team-intent.mjs",
+  "fn": "teamIntentPhrases",
+  "cases": [
+    {
+      "id": "shipped-skill-description",
+      "args": [],
+      "expect": [
+        "set up my team",
+        "set up a team",
+        "spawn the team",
+        "spawn my team",
+        "spin up the team",
+        "start the team",
+        "spawn the architect",
+        "spawn just the reviewer",
+        "add a peer to the running team",
+        "dismiss a member",
+        "dismiss the architect",
+        "remove the architect",
+        "close that session",
+        "close the sessions",
+        "kick the reviewer",
+        "dismiss the team",
+        "close the team",
+        "disband the team",
+        "disband my team",
+        "shut down the team",
+        "tear down the team",
+        "end the team",
+        "stop tracking a member",
+        "leave it running but forget it",
+        "untrack the team",
+        "open a stream",
+        "start a stream",
+        "show stream status",
+        "wrap up the stream"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "reply_to": {
+      "type": "string"
+    },
+    "task": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "nudges": {
+      "type": "integer"
+    },
+    "msg": {
+      "type": "null"
+    },
+    "ts": {
+      "type": "string"
+    },
+    "op_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "digest": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "op_id",
+    "session_id",
+    "ts"
+  ],
+  "additionalProperties": true,
+  "description": "one row of the file"
+}

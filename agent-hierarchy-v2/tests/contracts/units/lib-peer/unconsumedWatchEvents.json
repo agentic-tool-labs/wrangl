@@ -1,0 +1,84 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "unconsumedWatchEvents",
+  "cases": [
+    {
+      "id": "all-when-nothing-consumed",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:58:20.000Z\",\"kind\":\"RESUME\"}\n{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:59:10.000Z\",\"kind\":\"RESUME\"}\n"
+      },
+      "expect": [
+        {
+          "session_id": "s1",
+          "type": "watch-event",
+          "ts": "2026-06-01T11:58:20.000Z",
+          "kind": "RESUME"
+        },
+        {
+          "session_id": "s1",
+          "type": "watch-event",
+          "ts": "2026-06-01T11:59:10.000Z",
+          "kind": "RESUME"
+        }
+      ]
+    },
+    {
+      "id": "after-the-consumed-mark",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:58:20.000Z\",\"kind\":\"RESUME\"}\n{\"session_id\":\"s1\",\"type\":\"watch-consumed\",\"ts\":\"2026-06-01T11:58:40.000Z\"}\n{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:59:00.000Z\",\"kind\":\"RESUME\"}\n"
+      },
+      "expect": [
+        {
+          "session_id": "s1",
+          "type": "watch-event",
+          "ts": "2026-06-01T11:59:00.000Z",
+          "kind": "RESUME"
+        }
+      ]
+    },
+    {
+      "id": "event-at-the-mark-is-consumed",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"type\":\"watch-consumed\",\"ts\":\"2026-06-01T11:58:40.000Z\"}\n{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:58:40.000Z\",\"kind\":\"RESUME\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "latest-mark-wins",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s1\",\"type\":\"watch-consumed\",\"ts\":\"2026-06-01T11:59:10.000Z\"}\n{\"session_id\":\"s1\",\"type\":\"watch-consumed\",\"ts\":\"2026-06-01T11:58:30.000Z\"}\n{\"session_id\":\"s1\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:59:00.000Z\",\"kind\":\"RESUME\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "other-session-rows-ignored",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"session_id\":\"s2\",\"type\":\"watch-event\",\"ts\":\"2026-06-01T11:58:20.000Z\",\"kind\":\"RESUME\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1"
+      ],
+      "expect": []
+    }
+  ]
+}

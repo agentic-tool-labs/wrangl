@@ -1,0 +1,52 @@
+{
+  "kind": "cli",
+  "id": "team",
+  "about": "checkin re-registers the session and reports the team",
+  "tree": "wire-tm",
+  "env": {
+    "CLAUDE_PID": "<PID:runner>",
+    "CLAUDE_CODE_SESSION_ID": "sess-contract"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "checkin",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"checked_in\": true,\n  \"pid\": \"<PID>\",\n  \"cwd\": \"<ROOT:proj>\",\n  \"expected_root\": null,\n  \"misplaced\": false,\n  \"adopted_by\": \"late\",\n  \"team\": \"tm\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        },
+        {
+          "path": "ah/state/ah.db.roster_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"peer\",\"status\":\"up\",\"role\":\"orchestrator\",\"session_id\":\"sess-contract\",\"pid\":\"<PID>\",\"ppid\":\"<PID>\",\"cwd\":\"<ROOT:proj>\",\"pane_id\":null,\"tab_id\":null,\"workspace_id\":null,\"pid_start\":\"<PIDSTART>\",\"team\":\"tm\",\"op_id\":\"<OPID:2>\",\"ts\":\"<ISO:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a checkin that writes no registration",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.685Z"
+  }
+}

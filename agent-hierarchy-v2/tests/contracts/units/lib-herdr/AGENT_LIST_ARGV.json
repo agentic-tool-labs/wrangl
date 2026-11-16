@@ -1,0 +1,15 @@
+{
+  "lib": "lib-herdr",
+  "module": "hooks/lib-herdr.mjs",
+  "fn": "AGENT_LIST_ARGV",
+  "cases": [
+    {
+      "id": "argv",
+      "args": [],
+      "expect": [
+        "agent",
+        "list"
+      ]
+    }
+  ]
+}

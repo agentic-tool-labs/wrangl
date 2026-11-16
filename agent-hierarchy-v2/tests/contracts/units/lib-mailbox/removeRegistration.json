@@ -1,0 +1,98 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "removeRegistration",
+  "cases": [
+    {
+      "id": "existing",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/registrations/s1.json": null
+      },
+      "expect": true
+    },
+    {
+      "id": "missing",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/registrations/s1.json": null
+      },
+      "expect": false
+    },
+    {
+      "id": "invalid-id",
+      "args": [
+        "a/b"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/b.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/registrations/b.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-id",
+      "args": [
+        ""
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": false
+    },
+    {
+      "id": "other-registrations-stay",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json": "{\"v\":1,\"session_id\":\"s1\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n",
+        "ah/registrations/s2.json": "{\"v\":1,\"session_id\":\"s2\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/registrations/s2.json": "{\"v\":1,\"session_id\":\"s2\",\"address\":\"a@tm\",\"addresses\":[\"a@tm\"],\"boxes\":{\"a@tm\":\"$ROOT/ah/mailbox/tm~aaaaaaaaaa/a\"},\"team_file\":null,\"harness\":\"claude\",\"pid\":1,\"pane_id\":null,\"at\":\"2026-01-01T00:00:00.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "directory-in-the-way",
+      "args": [
+        "s1"
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/registrations/s1.json/x": ""
+      },
+      "expect": false
+    }
+  ]
+}

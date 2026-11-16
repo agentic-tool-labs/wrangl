@@ -1,0 +1,54 @@
+{
+  "kind": "state-op",
+  "id": "history",
+  "about": "history upserts one entry by fingerprint",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "history",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "fingerprint": "ab12cd34",
+        "alias": "tm",
+        "roster_level": "repo",
+        "transport": "herdr",
+        "members": [
+          {
+            "role": "architect",
+            "model": "opus"
+          }
+        ],
+        "team_id": "tm-1"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-team-history"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "capExceeded": false
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a second entry for the same fingerprint",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:22.754Z"
+  }
+}

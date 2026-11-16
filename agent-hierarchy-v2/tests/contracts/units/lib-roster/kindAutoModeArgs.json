@@ -1,0 +1,114 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "kindAutoModeArgs",
+  "cases": [
+    {
+      "id": "codex-auto",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": "auto"
+        }
+      ],
+      "expect": [
+        "--sandbox",
+        "workspace-write",
+        "--ask-for-approval",
+        "never"
+      ]
+    },
+    {
+      "id": "codex-plan",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": "plan"
+        }
+      ],
+      "expect": [
+        "--sandbox",
+        "read-only",
+        "--ask-for-approval",
+        "never"
+      ]
+    },
+    {
+      "id": "codex-bypass",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": "bypassPermissions"
+        }
+      ],
+      "expect": [
+        "--dangerously-bypass-approvals-and-sandbox"
+      ]
+    },
+    {
+      "id": "codex-unknown-mode",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": "nope"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "codex-no-mode",
+      "args": [
+        {
+          "kind": "codex"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "claude-has-no-table",
+      "args": [
+        {
+          "autoMode": "auto"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "other-kind",
+      "args": [
+        {
+          "kind": "gemini",
+          "autoMode": "auto"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-member",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "numeric-mode",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": 5
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-mode",
+      "args": [
+        {
+          "kind": "codex",
+          "autoMode": ""
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

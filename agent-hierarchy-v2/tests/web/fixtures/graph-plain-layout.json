@@ -1,0 +1,300 @@
+{
+ "nodes": [
+  {
+   "id": "member:d/top/@orchestrator",
+   "role": "orchestrator",
+   "name": "@orchestrator"
+  },
+  {
+   "id": "member:d/top/arch",
+   "role": "architect",
+   "name": "arch"
+  },
+  {
+   "id": "member:d/top/dev-1",
+   "role": "implementor",
+   "name": "dev-1"
+  },
+  {
+   "id": "member:d/top/dev-2",
+   "role": "implementor",
+   "name": "dev-2"
+  },
+  {
+   "id": "member:d/top/dev-3",
+   "role": "implementor",
+   "name": "dev-3"
+  },
+  {
+   "id": "member:d/top/docs",
+   "role": "docs-writer",
+   "name": "docs"
+  },
+  {
+   "id": "member:d/top/rev",
+   "role": "reviewer",
+   "name": "rev"
+  },
+  {
+   "id": "member:d/top/runner",
+   "role": "task-runner",
+   "name": "runner"
+  },
+  {
+   "id": "member:d/top/ultra",
+   "role": "ultra-advisor",
+   "name": "ultra"
+  }
+ ],
+ "edges": [
+  {
+   "from": "member:d/top/@orchestrator",
+   "to": "member:d/top/arch"
+  },
+  {
+   "from": "member:d/top/@orchestrator",
+   "to": "member:d/top/dev-1"
+  },
+  {
+   "from": "member:d/top/@orchestrator",
+   "to": "member:d/top/dev-2"
+  },
+  {
+   "from": "member:d/top/@orchestrator",
+   "to": "member:d/top/dev-3"
+  },
+  {
+   "from": "member:d/top/dev-1",
+   "to": "member:d/top/runner"
+  },
+  {
+   "from": "member:d/top/@orchestrator",
+   "to": "member:d/top/rev"
+  }
+ ],
+ "active": [
+  "member:d/top/dev-1",
+  "member:d/top/rev"
+ ],
+ "map": {
+  "member:d/top/docs": {
+   "x": 500,
+   "y": 350,
+   "ring": 0
+  },
+  "member:d/top/@orchestrator": {
+   "x": 500,
+   "y": 203,
+   "ring": 1,
+   "angle": -1.5707963267948966
+  },
+  "member:d/top/arch": {
+   "x": 179.8,
+   "y": 271.2,
+   "ring": 2,
+   "angle": -2.8207963267948966
+  },
+  "member:d/top/dev-1": {
+   "x": 302.6,
+   "y": 147.3,
+   "ring": 2,
+   "angle": -2.1957963267948966
+  },
+  "member:d/top/dev-2": {
+   "x": 500,
+   "y": 100.1,
+   "ring": 2,
+   "angle": -1.5707963267948966
+  },
+  "member:d/top/dev-3": {
+   "x": 697.4,
+   "y": 147.3,
+   "ring": 2,
+   "angle": -0.9457963267948966
+  },
+  "member:d/top/rev": {
+   "x": 820.2,
+   "y": 271.2,
+   "ring": 2,
+   "angle": -0.32079632679489656
+  },
+  "member:d/top/ultra": {
+   "x": 500,
+   "y": 497,
+   "ring": 1,
+   "angle": 1.5707963267948966
+  }
+ },
+ "flowHorizontal": {
+  "pos": {
+   "member:d/top/@orchestrator": {
+    "x": 40,
+    "y": 182,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/arch": {
+    "x": 360,
+    "y": 90,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/docs": {
+    "x": 360,
+    "y": 142,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/ultra": {
+    "x": 360,
+    "y": 194,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/dev-1": {
+    "x": 680,
+    "y": 90,
+    "w": 220,
+    "h": 64
+   },
+   "member:d/top/dev-2": {
+    "x": 680,
+    "y": 170,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/dev-3": {
+    "x": 680,
+    "y": 222,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/runner": {
+    "x": 680,
+    "y": 274,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/rev": {
+    "x": 1000,
+    "y": 90,
+    "w": 220,
+    "h": 64
+   }
+  },
+  "labels": [
+   {
+    "text": "Lead",
+    "x": 40,
+    "y": 58
+   },
+   {
+    "text": "Advise · design",
+    "x": 360,
+    "y": 58
+   },
+   {
+    "text": "Implement",
+    "x": 680,
+    "y": 58
+   },
+   {
+    "text": "Review",
+    "x": 1000,
+    "y": 58
+   }
+  ],
+  "box": {
+   "x": 40,
+   "y": 58,
+   "w": 1180,
+   "h": 252
+  }
+ },
+ "flowVertical": {
+  "pos": {
+   "member:d/top/@orchestrator": {
+    "x": 374,
+    "y": 90,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/arch": {
+    "x": 40,
+    "y": 254,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/docs": {
+    "x": 256,
+    "y": 254,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/ultra": {
+    "x": 472,
+    "y": 254,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/dev-1": {
+    "x": 40,
+    "y": 418,
+    "w": 220,
+    "h": 64
+   },
+   "member:d/top/dev-2": {
+    "x": 276,
+    "y": 418,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/dev-3": {
+    "x": 492,
+    "y": 418,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/runner": {
+    "x": 708,
+    "y": 418,
+    "w": 200,
+    "h": 36
+   },
+   "member:d/top/rev": {
+    "x": 40,
+    "y": 582,
+    "w": 220,
+    "h": 64
+   }
+  },
+  "labels": [
+   {
+    "text": "Lead",
+    "x": 40,
+    "y": 66
+   },
+   {
+    "text": "Advise · design",
+    "x": 40,
+    "y": 230
+   },
+   {
+    "text": "Implement",
+    "x": 40,
+    "y": 394
+   },
+   {
+    "text": "Review",
+    "x": 40,
+    "y": 558
+   }
+  ],
+  "box": {
+   "x": 40,
+   "y": 66,
+   "w": 868,
+   "h": 580
+  }
+ }
+}

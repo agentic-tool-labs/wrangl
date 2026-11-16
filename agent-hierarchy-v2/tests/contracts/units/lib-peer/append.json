@@ -1,0 +1,170 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "append",
+  "cases": [
+    {
+      "id": "single-row",
+      "args": [
+        {
+          "rec": {
+            "a": 1
+          }
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "single-row-with-op-id",
+      "args": [
+        {
+          "rec": {
+            "a": 1
+          }
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1,\"op_id\":\"op-1\"}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "single-row-op-id-replaces-in-place",
+      "args": [
+        {
+          "rec": {
+            "op_id": "stale",
+            "a": 1
+          }
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"op_id\":\"op-1\",\"a\":1}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "array-rows-get-indexed-op-ids",
+      "args": [
+        {
+          "rec": [
+            {
+              "a": 1
+            },
+            {
+              "a": 2
+            }
+          ]
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1,\"op_id\":\"op-1:0\"}\n{\"a\":2,\"op_id\":\"op-1:1\"}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "array-rows-without-op-id",
+      "args": [
+        {
+          "rec": [
+            {
+              "a": 1
+            },
+            {
+              "a": 2
+            }
+          ]
+        },
+        null,
+        {}
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "empty-array-throws",
+      "args": [
+        {
+          "rec": []
+        },
+        null,
+        {
+          "opId": "op-1"
+        }
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": null
+      },
+      "expectThrows": true,
+      "expectError": "peer-records.append needs at least one row"
+    },
+    {
+      "id": "meta-missing",
+      "args": [
+        {
+          "rec": {
+            "a": 1
+          }
+        },
+        null,
+        null
+      ],
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "appends-after-existing",
+      "args": [
+        {
+          "rec": {
+            "a": 2
+          }
+        },
+        null,
+        {}
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"a\":1}\n{\"a\":2}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    }
+  ]
+}

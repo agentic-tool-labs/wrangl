@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "missing",
+  "about": "index of a path that is not a message is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "index",
+      "<ROOT:proj>/nope.md"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "msg.mjs: no body for <ROOT:proj>/nope.md\n",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an index of a missing file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.556Z"
+  }
+}

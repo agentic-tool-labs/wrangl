@@ -1,0 +1,37 @@
+{
+  "kind": "hook",
+  "id": "h4-transcript-outside-projects-dropped",
+  "about": "a transcript path outside the projects directory is not kept on the record",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "UserPromptSubmit",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "/etc/hosts",
+      "prompt": "go"
+    }
+  },
+  "mutant": "transcript path not validated",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:33.823Z"
+  }
+}

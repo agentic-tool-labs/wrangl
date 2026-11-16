@@ -1,0 +1,65 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "resolvedPeerTarget",
+  "cases": [
+    {
+      "id": "first",
+      "args": [
+        "architect",
+        {
+          "peer": [
+            "a",
+            "b"
+          ]
+        },
+        "repo"
+      ],
+      "expect": "a"
+    },
+    {
+      "id": "auto",
+      "args": [
+        "architect",
+        {
+          "peer": "auto"
+        },
+        "repo"
+      ],
+      "expect": "repo-architect"
+    },
+    {
+      "id": "none",
+      "args": [
+        "architect",
+        {
+          "dispatch": "model"
+        },
+        "repo"
+      ],
+      "expect": null
+    },
+    {
+      "id": "named",
+      "args": [
+        "reviewer",
+        {
+          "peer": "r-peer"
+        },
+        "repo"
+      ],
+      "expect": "r-peer"
+    },
+    {
+      "id": "empty-array",
+      "args": [
+        "architect",
+        {
+          "peer": []
+        },
+        "repo"
+      ],
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,527 @@
+{
+  "slices": [
+    {
+      "id": "exchange:f28aaefa/x1",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "dir_id": "f28aaefa",
+        "id": "x1",
+        "slug": "s",
+        "class": "work",
+        "title": null,
+        "title_source": null,
+        "to": "developer",
+        "from": "orchestrator",
+        "to_name": "dev",
+        "from_name": null,
+        "team": "default",
+        "parent": null,
+        "created": "2026-06-01T11:00:00Z",
+        "response_created": null,
+        "has_request": true,
+        "has_response": false,
+        "open": true,
+        "withdrawn": false,
+        "closed": false,
+        "closed_by": null,
+        "closed_reason": null,
+        "preview": null,
+        "request_bytes": null,
+        "response_bytes": null,
+        "excerpt_truncated": false,
+        "eta": null,
+        "eta_facts": null
+      }
+    },
+    {
+      "id": "exchange:f28aaefa/x2",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "dir_id": "f28aaefa",
+        "id": "x2",
+        "slug": "s",
+        "class": "work",
+        "title": null,
+        "title_source": null,
+        "to": "tester",
+        "from": "developer",
+        "to_name": "qa",
+        "from_name": "dev",
+        "team": "default",
+        "parent": null,
+        "created": "2026-06-01T11:00:00Z",
+        "response_created": null,
+        "has_request": true,
+        "has_response": false,
+        "open": true,
+        "withdrawn": false,
+        "closed": false,
+        "closed_by": null,
+        "closed_reason": null,
+        "preview": null,
+        "request_bytes": null,
+        "response_bytes": null,
+        "excerpt_truncated": false,
+        "eta": null,
+        "eta_facts": null
+      }
+    },
+    {
+      "id": "exchange:f28aaefa/x3",
+      "version": 1,
+      "as_of": 1780309800000,
+      "body": {
+        "dir_id": "f28aaefa",
+        "id": "x3",
+        "slug": "done",
+        "class": "work",
+        "title": null,
+        "title_source": null,
+        "to": "tester",
+        "from": "orchestrator",
+        "to_name": "qa",
+        "from_name": null,
+        "team": "default",
+        "parent": null,
+        "created": "2026-06-01T10:30:00Z",
+        "response_created": null,
+        "has_request": true,
+        "has_response": true,
+        "open": false,
+        "withdrawn": false,
+        "closed": false,
+        "closed_by": null,
+        "closed_reason": null,
+        "preview": "do it now",
+        "request_bytes": 120,
+        "response_bytes": 40,
+        "excerpt_truncated": false,
+        "eta": null,
+        "eta_facts": null
+      }
+    },
+    {
+      "id": "exchange:f28aaefa/x4",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "dir_id": "f28aaefa",
+        "id": "x4",
+        "slug": "s",
+        "class": "work",
+        "title": null,
+        "title_source": null,
+        "to": "developer",
+        "from": "orchestrator",
+        "to_name": "dev",
+        "from_name": null,
+        "team": "other",
+        "parent": null,
+        "created": "2026-06-01T11:00:00Z",
+        "response_created": null,
+        "has_request": true,
+        "has_response": false,
+        "open": true,
+        "withdrawn": false,
+        "closed": false,
+        "closed_by": null,
+        "closed_reason": null,
+        "preview": null,
+        "request_bytes": null,
+        "response_bytes": null,
+        "excerpt_truncated": false,
+        "eta": null,
+        "eta_facts": null
+      }
+    },
+    {
+      "id": "exchange:f28aaefa/x5",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "dir_id": "f28aaefa",
+        "id": "x5",
+        "slug": "s",
+        "class": "work",
+        "title": null,
+        "title_source": null,
+        "to": "developer",
+        "from": "orchestrator",
+        "to_name": "dev",
+        "from_name": null,
+        "team": null,
+        "parent": null,
+        "created": "2026-06-01T11:00:00Z",
+        "response_created": null,
+        "has_request": true,
+        "has_response": false,
+        "open": true,
+        "withdrawn": false,
+        "closed": false,
+        "closed_by": null,
+        "closed_reason": null,
+        "preview": null,
+        "request_bytes": null,
+        "response_bytes": null,
+        "excerpt_truncated": false,
+        "eta": null,
+        "eta_facts": null
+      }
+    },
+    {
+      "id": "list:exchanges:team:f28aaefa/default",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "team": "team:f28aaefa/default",
+        "ids": [
+          "x5",
+          "x3",
+          "x2",
+          "x1"
+        ],
+        "pairs": [
+          {
+            "a": "@orchestrator",
+            "b": "dev",
+            "n": 2,
+            "recent_1h": [],
+            "last_response": null
+          },
+          {
+            "a": "@orchestrator",
+            "b": "qa",
+            "n": 1,
+            "recent_1h": [],
+            "last_response": null
+          },
+          {
+            "a": "dev",
+            "b": "qa",
+            "n": 1,
+            "recent_1h": [],
+            "last_response": null
+          }
+        ],
+        "unresolved": {
+          "n": 0
+        }
+      }
+    },
+    {
+      "id": "list:feed:team:f28aaefa/default",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "team": "team:f28aaefa/default",
+        "ids": [
+          "x5",
+          "x3",
+          "x2",
+          "x1"
+        ],
+        "pairs": [
+          {
+            "a": "@orchestrator",
+            "b": "dev",
+            "n": 2,
+            "recent_1h": [],
+            "last_response": null
+          },
+          {
+            "a": "@orchestrator",
+            "b": "qa",
+            "n": 1,
+            "recent_1h": [],
+            "last_response": null
+          },
+          {
+            "a": "dev",
+            "b": "qa",
+            "n": 1,
+            "recent_1h": [],
+            "last_response": null
+          }
+        ],
+        "unresolved": {
+          "n": 0
+        }
+      }
+    },
+    {
+      "id": "list:teams",
+      "version": 1,
+      "as_of": 1780308000000,
+      "body": {
+        "teams": [
+          {
+            "id": "team:f28aaefa/default",
+            "name": "default",
+            "dir_id": "f28aaefa"
+          }
+        ]
+      }
+    },
+    {
+      "id": "member:f28aaefa/default/@orchestrator",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "id": "member:f28aaefa/default/@orchestrator",
+        "name": "orchestrator",
+        "role": "orchestrator",
+        "session": "so",
+        "activity": "activity:f28aaefa/so",
+        "liveness": {
+          "at": "2026-06-01T10:00:30Z",
+          "pid": 1,
+          "pid_start": "ps-1",
+          "session_start": null
+        },
+        "placement": {
+          "transport_id": null,
+          "stream": null
+        },
+        "last_exchanges": [
+          "exchange:f28aaefa/x5",
+          "exchange:f28aaefa/x3",
+          "exchange:f28aaefa/x1"
+        ],
+        "last_report_at": null,
+        "node_path": "/t/f28aaefa/default/m/%40orchestrator",
+        "column": 0,
+        "context_at": null,
+        "context_pct": null,
+        "context_text": "—",
+        "context_title": "context not reported",
+        "context_over": false
+      }
+    },
+    {
+      "id": "member:f28aaefa/default/dev",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "id": "member:f28aaefa/default/dev",
+        "name": "dev",
+        "role": "developer",
+        "session": "s-dev",
+        "activity": "activity:f28aaefa/s-dev",
+        "liveness": {
+          "at": "2026-06-01T10:05:00Z",
+          "pid": 42,
+          "pid_start": "ps-42",
+          "session_start": null
+        },
+        "placement": {
+          "transport_id": "p-dev",
+          "stream": null
+        },
+        "last_exchanges": [
+          "exchange:f28aaefa/x5",
+          "exchange:f28aaefa/x2",
+          "exchange:f28aaefa/x1"
+        ],
+        "last_report_at": null,
+        "node_path": "/t/f28aaefa/default/m/dev",
+        "column": 2,
+        "context_at": null,
+        "context_pct": null,
+        "context_text": "—",
+        "context_title": "context not reported",
+        "context_over": false
+      }
+    },
+    {
+      "id": "member:f28aaefa/default/qa",
+      "version": 1,
+      "as_of": 1780311600000,
+      "body": {
+        "id": "member:f28aaefa/default/qa",
+        "name": "qa",
+        "role": "tester",
+        "session": null,
+        "activity": null,
+        "liveness": {
+          "at": null,
+          "pid": null,
+          "pid_start": null,
+          "session_start": null
+        },
+        "placement": {
+          "transport_id": "p-qa",
+          "stream": null
+        },
+        "last_exchanges": [
+          "exchange:f28aaefa/x3",
+          "exchange:f28aaefa/x2"
+        ],
+        "last_report_at": null,
+        "node_path": "/t/f28aaefa/default/m/qa",
+        "column": 2,
+        "context_at": null,
+        "context_pct": null,
+        "context_text": "—",
+        "context_title": "context not reported",
+        "context_over": false
+      }
+    },
+    {
+      "id": "team-summary:f28aaefa/default",
+      "version": 1,
+      "as_of": 1780308000000,
+      "body": {
+        "team": "team:f28aaefa/default",
+        "name": "default",
+        "work_root": null,
+        "branch": null,
+        "running": true,
+        "members": 3,
+        "working": 0,
+        "blocked": 0,
+        "needs_you": 0,
+        "waiting_on_you": 0,
+        "waiting_blockers": 0,
+        "waiting_rows": [],
+        "in_progress_now": 0,
+        "stuck": 0,
+        "unfinished": 0,
+        "state": "idle",
+        "in_flight": 3,
+        "stale": 0,
+        "stale_ids": [],
+        "streams_open": 0,
+        "streams_total": 0,
+        "items_done": 0,
+        "items_total": 0,
+        "plan_loaded": true,
+        "worktrees": 0,
+        "oldest_in_flight_at": "2026-06-01T11:00:00.000Z",
+        "updated_at": "2026-06-01T11:00:00.000Z",
+        "feed_newest_at": "2026-06-01T11:00:00.000Z",
+        "alerts": [],
+        "member_states": {
+          "member:f28aaefa/default/@orchestrator": {
+            "state": "unknown",
+            "liveness": "unknown",
+            "process": "unknown",
+            "last_life_at": "2026-06-01T10:00:00.000Z"
+          },
+          "member:f28aaefa/default/dev": {
+            "state": "unknown",
+            "liveness": "unknown",
+            "process": "unknown",
+            "last_life_at": "2026-06-01T10:05:00.000Z"
+          },
+          "member:f28aaefa/default/qa": {
+            "state": "unknown",
+            "liveness": "unknown",
+            "process": "unknown"
+          }
+        },
+        "stale_at": "2026-06-02T11:00:00.000Z",
+        "held": false,
+        "ended": false,
+        "status": "live",
+        "quiet_at": "2026-06-02T11:00:00.000Z"
+      }
+    },
+    {
+      "id": "team:f28aaefa/default",
+      "version": 1,
+      "as_of": 1780309200000,
+      "body": {
+        "name": "default",
+        "dir_id": "f28aaefa",
+        "orchestrator": "member:f28aaefa/default/@orchestrator",
+        "members": [
+          "member:f28aaefa/default/dev",
+          "member:f28aaefa/default/qa"
+        ],
+        "plan": "plan:f28aaefa/_default",
+        "pipeline": {
+          "run": "run1",
+          "decisions_count": 2,
+          "last_decision_at": "2026-06-01T10:20:00Z",
+          "scope": "dir"
+        },
+        "worktrees": [
+          "worktree:f28aaefa/default/dev"
+        ]
+      }
+    },
+    {
+      "id": "topology:f28aaefa/default",
+      "version": 1,
+      "as_of": 1780308000000,
+      "body": {
+        "team": "team:f28aaefa/default",
+        "nodes": {
+          "members": [
+            "member:f28aaefa/default/@orchestrator",
+            "member:f28aaefa/default/dev",
+            "member:f28aaefa/default/qa"
+          ],
+          "worktrees": [
+            "worktree:f28aaefa/default/dev"
+          ],
+          "bands": {},
+          "band_teams": {}
+        },
+        "edges": {
+          "parent_child": [
+            {
+              "from": "member:f28aaefa/default/@orchestrator",
+              "to": "member:f28aaefa/default/dev"
+            },
+            {
+              "from": "member:f28aaefa/default/@orchestrator",
+              "to": "member:f28aaefa/default/qa"
+            }
+          ],
+          "member_worktree": [
+            {
+              "from": "member:f28aaefa/default/dev",
+              "to": "worktree:f28aaefa/default/dev"
+            }
+          ],
+          "brief": [
+            {
+              "id": "exchange:f28aaefa/x5",
+              "from": "member:f28aaefa/default/@orchestrator",
+              "to": "member:f28aaefa/default/dev",
+              "brief": "in_flight"
+            },
+            {
+              "id": "exchange:f28aaefa/x2",
+              "from": "member:f28aaefa/default/dev",
+              "to": "member:f28aaefa/default/qa",
+              "brief": "in_flight"
+            },
+            {
+              "id": "exchange:f28aaefa/x1",
+              "from": "member:f28aaefa/default/@orchestrator",
+              "to": "member:f28aaefa/default/dev",
+              "brief": "in_flight"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "worktree:f28aaefa/default/dev",
+      "version": 1,
+      "as_of": 0,
+      "body": {
+        "id": "worktree:f28aaefa/default/dev",
+        "team": "default",
+        "assigned_member": "dev",
+        "grant_state": "enforce",
+        "work_root": "/wt/dev",
+        "stream": "s1"
+      }
+    }
+  ]
+}

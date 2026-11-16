@@ -1,0 +1,212 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "oneLine",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "hello world",
+        100
+      ],
+      "expect": "hello world"
+    },
+    {
+      "id": "csi-sequence-removed",
+      "args": [
+        "a\u001b[31mred\u001b[0m b",
+        100
+      ],
+      "expect": "ared b"
+    },
+    {
+      "id": "osc-with-bel-removed",
+      "args": [
+        "x\u001b]0;title\u0007y",
+        100
+      ],
+      "expect": "xy"
+    },
+    {
+      "id": "osc-with-st-removed",
+      "args": [
+        "x\u001b]8;;http://e\u001b\\link\u001b]8;;\u001b\\y",
+        100
+      ],
+      "expect": "xlinky"
+    },
+    {
+      "id": "two-char-escape-removed",
+      "args": [
+        "a\u001bMb",
+        100
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "lone-escape-becomes-space",
+      "args": [
+        "a\u001b",
+        100
+      ],
+      "expect": "a"
+    },
+    {
+      "id": "control-chars-become-space",
+      "args": [
+        "a\u0000bcde",
+        100
+      ],
+      "expect": "a b c d e"
+    },
+    {
+      "id": "newlines-and-tabs-collapse",
+      "args": [
+        "a\n\n\tb \r\n c",
+        100
+      ],
+      "expect": "a b c"
+    },
+    {
+      "id": "nbsp-and-ideographic-space-collapse",
+      "args": [
+        "a 　b",
+        100
+      ],
+      "expect": "a b"
+    },
+    {
+      "id": "trims-both-ends",
+      "args": [
+        "  \n x \t ",
+        100
+      ],
+      "expect": "x"
+    },
+    {
+      "id": "cap-cuts",
+      "args": [
+        "abcdef",
+        3
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-equal-length-keeps",
+      "args": [
+        "abc",
+        3
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-one-over-keeps",
+      "args": [
+        "abc",
+        4
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-zero-empties",
+      "args": [
+        "abc",
+        0
+      ],
+      "expect": ""
+    },
+    {
+      "id": "cap-negative-drops-from-end",
+      "args": [
+        "abc",
+        -1
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "cap-fraction-truncates",
+      "args": [
+        "abcdef",
+        2.9
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "cap-undefined-keeps-all",
+      "args": [
+        "abc"
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-infinity-keeps-all",
+      "args": [
+        "abc",
+        {
+          "$inf": 1
+        }
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-nan-keeps-all",
+      "args": [
+        "abc",
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-splits-an-astral-pair",
+      "args": [
+        "a😀b",
+        2
+      ],
+      "expect": "a\ud83d"
+    },
+    {
+      "id": "cut-happens-after-collapse",
+      "args": [
+        "a    b",
+        3
+      ],
+      "expect": "a b"
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5,
+        10
+      ],
+      "expect": ""
+    },
+    {
+      "id": "undefined-value",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        10
+      ],
+      "expect": ""
+    },
+    {
+      "id": "null-value",
+      "args": [
+        null,
+        10
+      ],
+      "expect": ""
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        "",
+        10
+      ],
+      "expect": ""
+    }
+  ]
+}

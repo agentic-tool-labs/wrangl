@@ -1,0 +1,8 @@
+{
+  "view_schema": 1,
+  "kind": "events",
+  "path": "/events",
+  "cursor": "c0",
+  "resync": false,
+  "events": []
+}

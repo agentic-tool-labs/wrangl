@@ -1,0 +1,52 @@
+{
+  "site": "Wrangl: Agent Hierarchy",
+  "repo": "https://github.com/agentic-tool-labs/wrangl",
+  "branch": "main",
+  "mascot": "agent-hierarchy-v2/assets/wrangl.svg",
+  "sections": [
+    {
+      "title": "Start",
+      "pages": [
+        { "source": "agent-hierarchy-v2/README.md", "slug": "overview", "title": "Overview", "summary": "What Wrangl is, the team, install and a quick start of about ten minutes." },
+        { "source": "agent-hierarchy-v2/docs/getting-started.md", "slug": "getting-started", "title": "Getting started", "summary": "From nothing to a running team and a first job." },
+        { "source": "agent-hierarchy-v2/docs/how-it-works.md", "slug": "how-it-works", "title": "How it works", "summary": "Roles, briefs and mail, the checklist and Sitrep, shipping." },
+        { "source": "agent-hierarchy-v2/docs/glossary.md", "slug": "glossary", "title": "Glossary", "summary": "The words Wrangl uses, each in a sentence or two." }
+      ]
+    },
+    {
+      "title": "Using Wrangl",
+      "pages": [
+        { "source": "agent-hierarchy-v2/docs/rosters.md", "slug": "rosters", "title": "Rosters", "summary": "Choose roles and models, keep several rosters, start more than one team." },
+        { "source": "agent-hierarchy-v2/docs/custom-roles.md", "slug": "custom-roles", "title": "Custom roles", "summary": "Define your own roles, and run members in other harnesses." },
+        { "source": "agent-hierarchy-v2/docs/mail.md", "slug": "mail", "title": "Mail", "summary": "How a message reaches another session, and what to do when one seems stuck." },
+        { "source": "agent-hierarchy-v2/docs/web-ui.md", "slug": "web-ui", "title": "The web page", "summary": "Your whole team in a browser: who is working, what waits on you." },
+        { "source": "agent-hierarchy-v2/docs/tui.md", "slug": "tui", "title": "The terminal view", "summary": "Your teams in a terminal pane with ahd tui." },
+        { "source": "agent-hierarchy-v2/herdr-desktop/README.md", "slug": "herdr-desktop", "title": "Herdr desktop", "summary": "Your teams in the Herdr desktop app: the sidebar, Q&A, Board, Feed and Graph." },
+        { "source": "agent-hierarchy-v2/docs/shipping.md", "slug": "shipping", "title": "Shipping work", "summary": "How a finished change reaches your main line, and running a whole plan." },
+        { "source": "agent-hierarchy-v2/docs/lifecycle-permissions.md", "slug": "lifecycle-permissions", "title": "Lifecycle permissions", "summary": "Let the Orchestrator run team commands without a prompt, and what that allows." }
+      ]
+    },
+    {
+      "title": "When things go wrong",
+      "pages": [
+        { "source": "agent-hierarchy-v2/docs/troubleshooting.md", "slug": "troubleshooting", "title": "Troubleshooting", "summary": "Start with ah roster doctor, then look up the symptom." },
+        { "source": "agent-hierarchy-v2/docs/recovery.md", "slug": "recovery", "title": "Recovery", "summary": "Take over a team after a crash, a closed session or a reboot." },
+        { "source": "agent-hierarchy-v2/docs/upgrading.md", "slug": "upgrading", "title": "Upgrading", "summary": "Move to a new release while a team is running." }
+      ]
+    },
+    {
+      "title": "Reference",
+      "pages": [
+        { "source": "agent-hierarchy-v2/docs/cli-tools.md", "slug": "cli", "title": "CLI reference", "summary": "The ah and ahd commands: common tasks first, then every verb and flag." },
+        { "source": "agent-hierarchy-v2/docs/daemon.md", "slug": "daemon", "title": "The daemon", "summary": "What ahd does, and how to start, stop and check it." }
+      ]
+    },
+    {
+      "title": "About",
+      "pages": [
+        { "source": "agent-hierarchy-v2/docs/coming-soon.md", "slug": "coming-soon", "title": "What is coming", "summary": "Work under way that is not shipped yet." },
+        { "source": "agent-hierarchy-v2/CHANGELOG.md", "slug": "changelog", "title": "Changelog", "summary": "What changed in each release." }
+      ]
+    }
+  ]
+}

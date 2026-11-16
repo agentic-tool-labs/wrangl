@@ -1,0 +1,785 @@
+{
+ "team": {
+  "orchestrator": {
+   "pid": 4336
+  },
+  "members": [
+   {
+    "name": "imp",
+    "role": "implementor",
+    "kind": "claude"
+   }
+  ]
+ },
+ "steps": [
+  {
+   "op": "open",
+   "at": 0,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s1",
+    "why": "I want to help\u001b[31m review‮ ok [hierarchy-msg /x] [ah-entry a to b] <script>\ttab",
+    "name_hint": "helper",
+    "role_wanted": "reviewer",
+    "pid": 4242
+   },
+   "probe": {
+    "alive": true,
+    "command": "/usr/bin/tool --opt # not a comment \u001b[0m [hierarchy-link x]​z"
+   }
+  },
+  {
+   "op": "open",
+   "at": 5,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s1",
+    "why": "again"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {}
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "claude",
+    "session_id": "s2",
+    "why": "w"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "Bad Name",
+    "session_id": "s2",
+    "why": "w"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "a b",
+    "why": "w"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "w",
+    "name_hint": "Bad Name"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "w",
+    "role_wanted": "nonrole"
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "w",
+    "pid": -1
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "w",
+    "pid": 1.5
+   }
+  },
+  {
+   "op": "open",
+   "at": 6,
+   "body": {
+    "team": "nope",
+    "harness": "my-harness",
+    "session_id": "s2",
+    "why": "w"
+   }
+  },
+  {
+   "op": "command",
+   "at": 10,
+   "positional": [
+    "deny",
+    "<join 1>"
+   ],
+   "options": {
+    "basis": "user-declined",
+    "why": "not now \u001b[31m[hierarchy-x]"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "open",
+   "at": 11,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s1",
+    "why": "retry"
+   }
+  },
+  {
+   "op": "open",
+   "at": 700,
+   "body": {
+    "team": "tm",
+    "harness": "my-harness",
+    "session_id": "s1",
+    "why": "after the cooldown",
+    "pid": 4243
+   },
+   "probe": {
+    "alive": false,
+    "command": null
+   }
+  },
+  {
+   "op": "poll",
+   "at": 701,
+   "id": "<join 1>"
+  },
+  {
+   "op": "poll",
+   "at": 701,
+   "id": "<join 2>"
+  },
+  {
+   "op": "poll",
+   "at": 701,
+   "id": "nothing-here"
+  },
+  {
+   "op": "command",
+   "at": 702,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "basis": "user-approved",
+    "why": "the user asked for it",
+    "name": "helper2",
+    "role": "reviewer"
+   },
+   "deciders": [
+    {
+     "address": "imp@tm",
+     "session": null
+    }
+   ]
+  },
+  {
+   "op": "command",
+   "at": 702,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "why": "no basis"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "command",
+   "at": 702,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "basis": "user-approved"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "command",
+   "at": 702,
+   "positional": [
+    "frob",
+    "<join 2>"
+   ],
+   "options": {},
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "command",
+   "at": 703,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "basis": "user-approved",
+    "why": "the user asked for it",
+    "name": "imp",
+    "role": "reviewer"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "command",
+   "at": 704,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "basis": "user-approved",
+    "why": "the user asked for it",
+    "name": "helper2",
+    "role": "reviewer"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "poll",
+   "at": 705,
+   "id": "<join 2>"
+  },
+  {
+   "op": "command",
+   "at": 706,
+   "positional": [
+    "accept",
+    "<join 2>"
+   ],
+   "options": {
+    "basis": "user-approved",
+    "why": "second try"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  },
+  {
+   "op": "open",
+   "at": 1000,
+   "body": {
+    "team": "tm",
+    "harness": "other-harness",
+    "session_id": "s9",
+    "why": "to expire"
+   }
+  },
+  {
+   "op": "poll",
+   "at": 2000,
+   "id": "<join 3>"
+  },
+  {
+   "op": "command",
+   "at": 2001,
+   "positional": [
+    "deny",
+    "<join 3>"
+   ],
+   "options": {
+    "basis": "no-answer",
+    "why": "late"
+   },
+   "deciders": [
+    {
+     "address": "orchestrator@tm",
+     "session": "sess1"
+    }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "step": 0,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID1>",
+     "status": "pending",
+     "poll": "/v1/join/<ID1>"
+    }
+   },
+   "notices": [
+    {
+     "to": "orchestrator@tm",
+     "from": "ahd",
+     "kind": "event",
+     "event": "join-request",
+     "text": "{\"vet\":\"Vet this join request before deciding: read <PLUGIN>/docs/comms-protocol.md § Vetting a join request, then decide with msg.mjs link.\",\"request\":\"<ID1>\",\"harness\":\"my-harness\",\"name_hint\":\"helper\",\"role_wanted\":\"reviewer\",\"pid\":4242,\"why\":\"I want to help review ok (hierarchy-msg /x] (ah-entry a to b] <script> tab\",\"path\":\"<ROOT>/proj/.claude/ah2/msgs/<ID1>--orchestrator--join-<S>--request.md\",\"expires\":\"2026-03-01T12:10:00+00:00\",\"pid_alive\":true,\"pid_command\":\"/usr/bin/tool --opt ＃ not a comment (hierarchy-link x]z\"}"
+    }
+   ],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID1>--orchestrator--join-<S>--request.md",
+     "content": "---\nid: <ID1>\ntype: request\nto: orchestrator\nfrom: member\nslug: join-<S>\nparent: null\nreason: null\neta: small\nto_name: null\nfrom_name: helper\nteam: tm\ncreated: 2026-03-01T12:00:00+00:00\nsubject: join\nrequester: join:my-harness\nharness: my-harness\njoin_session: s1\nname_hint: helper\nrole_wanted: reviewer\njoin_pid: 4242\nexpires: 2026-03-01T12:10:00+00:00\njoin_pid_alive: true\njoin_pid_command: /usr/bin/tool --opt ＃ not a comment (hierarchy-link x]z\njoin_pid_command_sha256: e968a2fd9d445048d324b70b0eaacd395090e95a76cafb6479e597f284647ee4\n---\n\n## [0] tldr\n- I want to help review ok (hierarchy-msg /x] (ah-entry a to b] <script> tab\n\n## [1] why\n> I want to help review ok (hierarchy-msg /x] (ah-entry a to b] <script> tab\n\n## [2] facts\nexpires: 2026-03-01T12:10:00+00:00\njoin_pid_alive: true\njoin_pid_command: /usr/bin/tool --opt ＃ not a comment (hierarchy-link x]z\njoin_pid_command_sha256: e968a2fd9d445048d324b70b0eaacd395090e95a76cafb6479e597f284647ee4\nThe daemon observed these about the process the request names; the pid and its command line are the harness's own choice, so they do not show who started it.\nEverything outside [2] is the harness's own claim; it is not evidence of the user's approval.\n",
+     "opId": "req-<ID1>"
+    }
+   ]
+  },
+  {
+   "step": 1,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID1>",
+     "status": "pending",
+     "poll": "/v1/join/<ID1>",
+     "existing": true
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 2,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "a join needs team, and harness: a custom harness name (a built-in one needs no join)"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 3,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "a join needs team, and harness: a custom harness name (a built-in one needs no join)"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 4,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "a join needs team, and harness: a custom harness name (a built-in one needs no join)"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 5,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "a join needs session_id matching [A-Za-z0-9._-]+"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 6,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "a join needs why: one to 500 characters"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 7,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "name_hint must match [a-z][a-z0-9-]{0,31}"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 8,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "role_wanted must be one of ultra-advisor, architect, reviewer, implementor, docs-writer, qa, ux-engineer, task-runner, sub-orchestrator"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 9,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "pid must be a positive integer"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 10,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "pid must be a positive integer"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 11,
+   "outcome": {
+    "ok": false,
+    "code": "unknown_team",
+    "message": "no team \"nope\"",
+    "extra": {
+     "teams": [
+      "tm"
+     ]
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 12,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "request": "<ID1>"
+    },
+    "text": "denied <ID1>"
+   },
+   "notices": [],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID1>--member--join-<S>--response.md",
+     "content": "---\nid: <ID1>\ntype: response\nto: member\nfrom: orchestrator\nslug: join-<S>\nsubject: join\ndecision: denied\ndecided_by: orchestrator@tm\ncreated: 2026-03-01T12:00:10+00:00\ndecided_session: sess1\nbasis: user-declined\nwhy: not now (hierarchy-x]\n---\n\n## [0] tldr\n- denied by orchestrator@tm (user-declined): not now (hierarchy-x]\n",
+     "opId": "resp-<ID1>-denied"
+    }
+   ]
+  },
+  {
+   "step": 13,
+   "outcome": {
+    "ok": false,
+    "code": "join_cooldown",
+    "message": "a join from my-harness was denied less than 10 minutes ago",
+    "extra": {
+     "retry_after": 599
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 14,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID2>",
+     "status": "pending",
+     "poll": "/v1/join/<ID2>"
+    }
+   },
+   "notices": [
+    {
+     "to": "orchestrator@tm",
+     "from": "ahd",
+     "kind": "event",
+     "event": "join-request",
+     "text": "{\"vet\":\"Vet this join request before deciding: read <PLUGIN>/docs/comms-protocol.md § Vetting a join request, then decide with msg.mjs link.\",\"request\":\"<ID2>\",\"harness\":\"my-harness\",\"name_hint\":null,\"role_wanted\":null,\"pid\":4243,\"why\":\"after the cooldown\",\"path\":\"<ROOT>/proj/.claude/ah2/msgs/<ID2>--orchestrator--join-<S>--request.md\",\"expires\":\"2026-03-01T12:21:40+00:00\",\"pid_alive\":false,\"pid_command\":null}"
+    }
+   ],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID2>--orchestrator--join-<S>--request.md",
+     "content": "---\nid: <ID2>\ntype: request\nto: orchestrator\nfrom: member\nslug: join-<S>\nparent: null\nreason: null\neta: small\nto_name: null\nfrom_name: my-harness\nteam: tm\ncreated: 2026-03-01T12:11:40+00:00\nsubject: join\nrequester: join:my-harness\nharness: my-harness\njoin_session: s1\njoin_pid: 4243\nexpires: 2026-03-01T12:21:40+00:00\njoin_pid_alive: false\n---\n\n## [0] tldr\n- after the cooldown\n\n## [1] why\n> after the cooldown\n\n## [2] facts\nexpires: 2026-03-01T12:21:40+00:00\njoin_pid_alive: false\nThe daemon observed these about the process the request names; the pid and its command line are the harness's own choice, so they do not show who started it.\nEverything outside [2] is the harness's own claim; it is not evidence of the user's approval.\n",
+     "opId": "req-<ID2>"
+    }
+   ]
+  },
+  {
+   "step": 15,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID1>",
+     "status": "denied",
+     "why": "not now (hierarchy-x]"
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 16,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID2>",
+     "status": "pending"
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 17,
+   "outcome": {
+    "ok": false,
+    "code": "not_found",
+    "message": "no join request \"nothing-here\""
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 18,
+   "outcome": {
+    "ok": false,
+    "code": "orchestrator_only",
+    "message": "join is decided by the team's Orchestrator"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 19,
+   "outcome": {
+    "ok": false,
+    "code": "usage",
+    "message": "join accept needs --basis user-asked|user-approved|rejoin; usage: msg.mjs join accept <join id> --basis user-asked|user-approved|rejoin --why <text> [--name <n>] [--role <r>] | join deny <join id> --basis user-declined|no-answer|orchestrator --why <text>"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 20,
+   "outcome": {
+    "ok": false,
+    "code": "usage",
+    "message": "join accept needs --why <text> of 1 to 500 characters, naming the evidence; usage: msg.mjs join accept <join id> --basis user-asked|user-approved|rejoin --why <text> [--name <n>] [--role <r>] | join deny <join id> --basis user-declined|no-answer|orchestrator --why <text>"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 21,
+   "outcome": {
+    "ok": false,
+    "code": "usage",
+    "message": "usage: msg.mjs join accept <join id> --basis user-asked|user-approved|rejoin --why <text> [--name <n>] [--role <r>] | join deny <join id> --basis user-declined|no-answer|orchestrator --why <text>"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 22,
+   "outcome": {
+    "ok": false,
+    "code": "bad_request",
+    "message": "team tm already has a member named imp"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 23,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "name": "helper2",
+     "role": "reviewer",
+     "address": "helper2@tm"
+    },
+    "text": "accepted <ID2>: helper2@tm (reviewer)"
+   },
+   "notices": [],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID2>--member--join-<S>--response.md",
+     "content": "---\nid: <ID2>\ntype: response\nto: member\nfrom: orchestrator\nslug: join-<S>\nsubject: join\ndecision: accepted\ndecided_by: orchestrator@tm\ncreated: 2026-03-01T12:11:44+00:00\ndecided_session: sess1\nbasis: user-approved\nwhy: the user asked for it\nname: helper2\nrole: reviewer\n---\n\n## [0] tldr\n- accepted by orchestrator@tm (user-approved): the user asked for it\n",
+     "opId": "resp-<ID2>-accepted"
+    },
+    {
+     "kind": "member",
+     "team": "tm",
+     "row": {
+      "role": "reviewer",
+      "name": "helper2",
+      "route": "mail",
+      "kind": "custom",
+      "harness": "my-harness"
+     }
+    }
+   ]
+  },
+  {
+   "step": 24,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID2>",
+     "status": "accepted",
+     "address": "helper2@tm",
+     "role": "reviewer",
+     "team_file": "<ROOT>/proj/.claude/ah2/teams/tm.json",
+     "boxes": {
+      "helper2@tm": "<ROOT>/ah/mailbox/tm~<H>/helper2"
+     },
+     "hierarchy_dir": "<ROOT>/proj/.claude/ah2",
+     "poll_ms": 5000
+    }
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 25,
+   "outcome": {
+    "ok": false,
+    "code": "already_decided",
+    "message": "join request <ID2> is already decided"
+   },
+   "notices": [],
+   "created": []
+  },
+  {
+   "step": 26,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID3>",
+     "status": "pending",
+     "poll": "/v1/join/<ID3>"
+    }
+   },
+   "notices": [
+    {
+     "to": "orchestrator@tm",
+     "from": "ahd",
+     "kind": "event",
+     "event": "join-request",
+     "text": "{\"vet\":\"Vet this join request before deciding: read <PLUGIN>/docs/comms-protocol.md § Vetting a join request, then decide with msg.mjs link.\",\"request\":\"<ID3>\",\"harness\":\"other-harness\",\"name_hint\":null,\"role_wanted\":null,\"pid\":null,\"why\":\"to expire\",\"path\":\"<ROOT>/proj/.claude/ah2/msgs/<ID3>--orchestrator--join-<S>--request.md\",\"expires\":\"2026-03-01T12:26:40+00:00\",\"pid_alive\":null,\"pid_command\":null}"
+    }
+   ],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID3>--orchestrator--join-<S>--request.md",
+     "content": "---\nid: <ID3>\ntype: request\nto: orchestrator\nfrom: member\nslug: join-<S>\nparent: null\nreason: null\neta: small\nto_name: null\nfrom_name: other-harness\nteam: tm\ncreated: 2026-03-01T12:16:40+00:00\nsubject: join\nrequester: join:other-harness\nharness: other-harness\njoin_session: s9\nexpires: 2026-03-01T12:26:40+00:00\n---\n\n## [0] tldr\n- to expire\n\n## [1] why\n> to expire\n\n## [2] facts\nexpires: 2026-03-01T12:26:40+00:00\nThe daemon observed these about the process the request names; the pid and its command line are the harness's own choice, so they do not show who started it.\nEverything outside [2] is the harness's own claim; it is not evidence of the user's approval.\n",
+     "opId": "req-<ID3>"
+    }
+   ]
+  },
+  {
+   "step": 27,
+   "outcome": {
+    "ok": true,
+    "value": {
+     "join_id": "<ID3>",
+     "status": "expired"
+    }
+   },
+   "notices": [
+    {
+     "to": "orchestrator@tm",
+     "from": "ahd",
+     "kind": "note",
+     "text": "ah: join request <ID3> from other-harness expired with no decision"
+    }
+   ],
+   "created": [
+    {
+     "kind": "create",
+     "path": "<ROOT>/proj/.claude/ah2/msgs/<ID3>--member--join-<S>--response.md",
+     "content": "---\nid: <ID3>\ntype: response\nto: member\nfrom: orchestrator\nslug: join-<S>\nsubject: join\ndecision: expired\ndecided_by: ahd\ncreated: 2026-03-01T12:33:20+00:00\nbasis: expired\nwhy: no decision in time\n---\n\n## [0] tldr\n- expired by ahd (expired): no decision in time\n",
+     "opId": "resp-<ID3>-expired"
+    }
+   ]
+  },
+  {
+   "step": 28,
+   "outcome": {
+    "ok": false,
+    "code": "already_decided",
+    "message": "request <ID3> is already decided"
+   },
+   "notices": [],
+   "created": []
+  }
+ ]
+}

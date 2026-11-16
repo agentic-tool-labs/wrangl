@@ -1,0 +1,15 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "ADVISE_TIERS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "opus",
+        "fable"
+      ]
+    }
+  ]
+}

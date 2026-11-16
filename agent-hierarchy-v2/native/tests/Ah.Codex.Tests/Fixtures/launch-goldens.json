@@ -1,0 +1,4828 @@
+{
+ "checkLaunch": [
+  {
+   "args": [],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model",
+    "gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "-m",
+    "gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "--model=gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "-mgpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-m (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model",
+    "-x"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--model (bad value)",
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model",
+    ""
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model=gpt-5",
+    "-m",
+    "other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-m (repeated)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "--sandbox",
+    "read-only"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-s",
+    "workspace-write"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": "workspace-write",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--sandbox=read-only"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--sandbox",
+    "danger-full-access"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--sandbox"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--sandbox",
+    "read-only",
+    "-s",
+    "workspace-write"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-s (repeated)"
+    ],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--ask-for-approval",
+    "never"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "never",
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-a",
+    "on-request"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "on-request",
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-a",
+    "untrusted"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-a (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--ask-for-approval=on-failure"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--ask-for-approval (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir=/tmp/other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/other",
+    "--add-dir",
+    "/var/data"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other",
+     "/var/data"
+    ],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "relative/path"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home/sub"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home-sibling"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/ah-goldens-home-sibling"
+    ],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home/../ah-goldens-home/x"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "model_instructions_file=/x/y.md"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_instructions_file",
+      "value": "/x/y.md"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "approvals_reviewer=user"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "approvals_reviewer",
+      "value": "user"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "--config=model_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "  model_reasoning_effort =high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "sandbox_mode=danger-full-access"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c sandbox_mode"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "foo"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c=model_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-cmodel_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "model_reasoning_effort=high",
+    "-c",
+    "approvals_reviewer=auto",
+    "--model",
+    "m"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     },
+     {
+      "key": "approvals_reviewer",
+      "value": "auto"
+     },
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "bad-key=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c bad-key"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-c",
+    "=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-c "
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "positional"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--unknown"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--unknown",
+    "value",
+    "more"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--unknown",
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--unknown=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "-x",
+    "val"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  },
+  {
+   "args": [
+    "--model",
+    "m",
+    "stray"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   }
+  },
+  {
+   "args": [
+    "--full-auto"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": {
+    "violations": [
+     "--full-auto"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   }
+  }
+ ],
+ "violations": [
+  {
+   "args": [],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--model",
+    "gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-m",
+    "gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--model=gpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-mgpt-5"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-m (attached value)"
+   ]
+  },
+  {
+   "args": [
+    "--model"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--model (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--model",
+    "-x"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--model (bad value)",
+    "-x"
+   ]
+  },
+  {
+   "args": [
+    "--model",
+    ""
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--model (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--model=gpt-5",
+    "-m",
+    "other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-m (repeated)"
+   ]
+  },
+  {
+   "args": [
+    "--sandbox",
+    "read-only"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-s",
+    "workspace-write"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--sandbox=read-only"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--sandbox",
+    "danger-full-access"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--sandbox (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--sandbox"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--sandbox (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--sandbox",
+    "read-only",
+    "-s",
+    "workspace-write"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-s (repeated)"
+   ]
+  },
+  {
+   "args": [
+    "--ask-for-approval",
+    "never"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-a",
+    "on-request"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-a",
+    "untrusted"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-a (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--ask-for-approval=on-failure"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--ask-for-approval (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--add-dir=/tmp/other"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/other",
+    "--add-dir",
+    "/var/data"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--add-dir",
+    "relative/path"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--add-dir (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--add-dir (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home/sub"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--add-dir (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--add-dir (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home-sibling"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--add-dir",
+    "/tmp/ah-goldens-home/../ah-goldens-home/x"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--add-dir (bad value)"
+   ]
+  },
+  {
+   "args": [
+    "-c",
+    "model_instructions_file=/x/y.md"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--config",
+    "approvals_reviewer=user"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "--config=model_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-c",
+    "  model_reasoning_effort =high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-c",
+    "sandbox_mode=danger-full-access"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c sandbox_mode"
+   ]
+  },
+  {
+   "args": [
+    "-c",
+    "foo"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c"
+   ]
+  },
+  {
+   "args": [
+    "-c"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c"
+   ]
+  },
+  {
+   "args": [
+    "-c=model_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c (attached value)"
+   ]
+  },
+  {
+   "args": [
+    "-cmodel_reasoning_effort=high"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c (attached value)"
+   ]
+  },
+  {
+   "args": [
+    "-c",
+    "model_reasoning_effort=high",
+    "-c",
+    "approvals_reviewer=auto",
+    "--model",
+    "m"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": []
+  },
+  {
+   "args": [
+    "-c",
+    "bad-key=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c bad-key"
+   ]
+  },
+  {
+   "args": [
+    "-c",
+    "=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-c "
+   ]
+  },
+  {
+   "args": [
+    "positional"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "positional argument 1"
+   ]
+  },
+  {
+   "args": [
+    "-"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "positional argument 1"
+   ]
+  },
+  {
+   "args": [
+    "--unknown"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--unknown"
+   ]
+  },
+  {
+   "args": [
+    "--unknown",
+    "value",
+    "more"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--unknown",
+    "positional argument 3"
+   ]
+  },
+  {
+   "args": [
+    "--unknown=1"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--unknown"
+   ]
+  },
+  {
+   "args": [
+    "-x",
+    "val"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "-x"
+   ]
+  },
+  {
+   "args": [
+    "--model",
+    "m",
+    "stray"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "positional argument 3"
+   ]
+  },
+  {
+   "args": [
+    "--full-auto"
+   ],
+   "ahHome": "/tmp/ah-goldens-home",
+   "result": [
+    "--full-auto"
+   ]
+  }
+ ],
+ "launchModes": [
+  {
+   "checked": null,
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-m (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--model (bad value)",
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-m (repeated)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "read-only",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": "workspace-write",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "read-only",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-s (repeated)"
+    ],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "read-only",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "never",
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "never"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "on-request",
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-a (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--ask-for-approval (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other",
+     "/var/data"
+    ],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/ah-goldens-home-sibling"
+    ],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_instructions_file",
+      "value": "/x/y.md"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "approvals_reviewer",
+      "value": "user"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c sandbox_mode"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     },
+     {
+      "key": "approvals_reviewer",
+      "value": "auto"
+     },
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c bad-key"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-c "
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--unknown",
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  },
+  {
+   "checked": {
+    "violations": [
+     "--full-auto"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": {
+    "sandbox": "workspace-write",
+    "approval": "on-request"
+   }
+  }
+ ],
+ "serverArgs": [
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": null,
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model=\"gpt-5\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model=\"gpt-5\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model=\"gpt-5\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-m (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--model (bad value)",
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--model (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-m (repeated)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "gpt-5"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model=\"gpt-5\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"read-only\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": "workspace-write",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"read-only\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--sandbox (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-s (repeated)"
+    ],
+    "sandbox": "read-only",
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"read-only\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "never",
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"never\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": "on-request",
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-a (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--ask-for-approval (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\",\"/tmp/other\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other"
+    ],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\",\"/tmp/other\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/other",
+     "/var/data"
+    ],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\",\"/tmp/other\",\"/var/data\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/ah-goldens-home-sibling"
+    ],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\",\"/tmp/ah-goldens-home-sibling\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--add-dir (bad value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_instructions_file",
+      "value": "/x/y.md"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model_instructions_file=/x/y.md",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "approvals_reviewer",
+      "value": "user"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "approvals_reviewer=user",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model_reasoning_effort=high",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model_reasoning_effort=high",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c sandbox_mode"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c (attached value)"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model_reasoning_effort",
+      "value": "high"
+     },
+     {
+      "key": "approvals_reviewer",
+      "value": "auto"
+     },
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model_reasoning_effort=high",
+    "-c",
+    "approvals_reviewer=auto",
+    "-c",
+    "model=\"m\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c bad-key"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-c "
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "positional argument 1"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--unknown",
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--unknown"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "-x"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "positional argument 3"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": [
+     {
+      "key": "model",
+      "value": "m"
+     }
+    ]
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "-c",
+    "model=\"m\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member",
+   "checked": {
+    "violations": [
+     "--full-auto"
+    ],
+    "sandbox": null,
+    "approval": null,
+    "roots": [],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/ah-goldens-home/run/codex/tmp/team-member\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  }
+ ],
+ "serverArgsTmpQuoting": [
+  {
+   "sock": "/tmp/a b/s.sock",
+   "tmp": "/tmp/we\"ird\\dir",
+   "checked": null,
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/we\\\"ird\\\\dir\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/we\\\"ird\\\\dir\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/a b/s.sock"
+   ]
+  },
+  {
+   "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/é x",
+   "checked": {
+    "violations": [],
+    "sandbox": null,
+    "approval": null,
+    "roots": [
+     "/tmp/o\tther"
+    ],
+    "settings": []
+   },
+   "result": [
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "sandbox_workspace_write.network_access=false",
+    "-c",
+    "sandbox_workspace_write.writable_roots=[\"/tmp/é x\",\"/tmp/o\\tther\"]",
+    "-c",
+    "approval_policy=\"on-request\"",
+    "-c",
+    "sandbox_workspace_write.exclude_slash_tmp=true",
+    "-c",
+    "sandbox_workspace_write.exclude_tmpdir_env_var=true",
+    "-c",
+    "shell_environment_policy.set.TMPDIR=\"/tmp/é x\"",
+    "app-server",
+    "--listen",
+    "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+   ]
+  }
+ ],
+ "serverArgsRelativeTmpThrows": true,
+ "paths": [
+  {
+   "home": "/tmp/ah-goldens-home",
+   "team": "team",
+   "name": "member",
+   "socket": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/team-member"
+  },
+  {
+   "home": "/tmp/ah-goldens-home/",
+   "team": "t",
+   "name": "n",
+   "socket": "/tmp/ah-goldens-home/run/codex/t-n.sock",
+   "tmp": "/tmp/ah-goldens-home/run/codex/tmp/t-n"
+  },
+  {
+   "home": "/tmp/ah-goldens-home/../x//y/.",
+   "team": "tm",
+   "name": "o-r",
+   "socket": "/tmp/x/y/run/codex/tm-o-r.sock",
+   "tmp": "/tmp/x/y/run/codex/tmp/tm-o-r"
+  }
+ ],
+ "remote": {
+  "sock": "/tmp/ah-goldens-home/run/codex/team-member.sock",
+  "remote": [
+   "--remote",
+   "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+  ],
+  "tui": [
+   "resume",
+   "th-1",
+   "--remote",
+   "unix:///tmp/ah-goldens-home/run/codex/team-member.sock"
+  ]
+ },
+ "version": [
+  {
+   "text": "codex-cli 0.162.0-alpha.2",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.2",
+    "text": "0.162.0-alpha.2"
+   }
+  },
+  {
+   "text": "0.162.0-alpha.3",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.3",
+    "text": "0.162.0-alpha.3"
+   }
+  },
+  {
+   "text": "0.162.0-alpha.1",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.1",
+    "text": "0.162.0-alpha.1"
+   }
+  },
+  {
+   "text": "0.162.0-alpha.2.5",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.2.5",
+    "text": "0.162.0-alpha.2.5"
+   }
+  },
+  {
+   "text": "0.162.0-alpha.20",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.20",
+    "text": "0.162.0-alpha.20"
+   }
+  },
+  {
+   "text": "0.162.0",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": null,
+    "text": "0.162.0"
+   }
+  },
+  {
+   "text": "0.162.1",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     1
+    ],
+    "pre": null,
+    "text": "0.162.1"
+   }
+  },
+  {
+   "text": "0.161.9",
+   "parsed": {
+    "nums": [
+     0,
+     161,
+     9
+    ],
+    "pre": null,
+    "text": "0.161.9"
+   }
+  },
+  {
+   "text": "1.0.0",
+   "parsed": {
+    "nums": [
+     1,
+     0,
+     0
+    ],
+    "pre": null,
+    "text": "1.0.0"
+   }
+  },
+  {
+   "text": "v0.162.0-alpha.2-extra",
+   "parsed": {
+    "nums": [
+     0,
+     162,
+     0
+    ],
+    "pre": "alpha.2-extra",
+    "text": "0.162.0-alpha.2-extra"
+   }
+  },
+  {
+   "text": "garbage",
+   "parsed": null
+  },
+  {
+   "text": "",
+   "parsed": null
+  },
+  {
+   "text": null,
+   "parsed": null
+  },
+  {
+   "text": "codex 10.20.30-rc.1+build",
+   "parsed": {
+    "nums": [
+     10,
+     20,
+     30
+    ],
+    "pre": "rc.1",
+    "text": "10.20.30-rc.1"
+   }
+  }
+ ],
+ "gate": [
+  {
+   "ranges": "tested",
+   "text": "codex-cli 0.162.0-alpha.2",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2",
+    "note": null
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.0-alpha.3",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.3",
+    "note": "codex 0.162.0-alpha.3 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.0-alpha.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.1",
+    "note": "codex 0.162.0-alpha.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.0-alpha.2.5",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2.5",
+    "note": null
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.0-alpha.20",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.20",
+    "note": null
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.0",
+   "result": {
+    "ok": false,
+    "version": "0.162.0",
+    "note": "codex 0.162.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.162.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.1",
+    "note": "codex 0.162.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "0.161.9",
+   "result": {
+    "ok": false,
+    "version": "0.161.9",
+    "note": "codex 0.161.9 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "1.0.0",
+   "result": {
+    "ok": false,
+    "version": "1.0.0",
+    "note": "codex 1.0.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "v0.162.0-alpha.2-extra",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2-extra",
+    "note": null
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "garbage",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": null,
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": "tested",
+   "text": "codex 10.20.30-rc.1+build",
+   "result": {
+    "ok": false,
+    "version": "10.20.30-rc.1",
+    "note": "codex 10.20.30-rc.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0-alpha.3; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [],
+   "text": "codex-cli 0.162.0-alpha.2",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2",
+    "note": "codex 0.162.0-alpha.2 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.0-alpha.3",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.3",
+    "note": "codex 0.162.0-alpha.3 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.0-alpha.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.1",
+    "note": "codex 0.162.0-alpha.1 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.0-alpha.2.5",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2.5",
+    "note": "codex 0.162.0-alpha.2.5 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.0-alpha.20",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.20",
+    "note": "codex 0.162.0-alpha.20 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.0",
+   "result": {
+    "ok": false,
+    "version": "0.162.0",
+    "note": "codex 0.162.0 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.162.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.1",
+    "note": "codex 0.162.1 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "0.161.9",
+   "result": {
+    "ok": false,
+    "version": "0.161.9",
+    "note": "codex 0.161.9 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "1.0.0",
+   "result": {
+    "ok": false,
+    "version": "1.0.0",
+    "note": "codex 1.0.0 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "v0.162.0-alpha.2-extra",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2-extra",
+    "note": "codex 0.162.0-alpha.2-extra is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "garbage",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unreadable) is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unreadable) is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": null,
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unreadable) is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [],
+   "text": "codex 10.20.30-rc.1+build",
+   "result": {
+    "ok": false,
+    "version": "10.20.30-rc.1",
+    "note": "codex 10.20.30-rc.1 is outside the tested app-server range (none yet); launched without the app-server adapter"
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "codex-cli 0.162.0-alpha.2",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2",
+    "note": "codex 0.162.0-alpha.2 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.0-alpha.3",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.3",
+    "note": "codex 0.162.0-alpha.3 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.0-alpha.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.1",
+    "note": "codex 0.162.0-alpha.1 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.0-alpha.2.5",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2.5",
+    "note": "codex 0.162.0-alpha.2.5 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.0-alpha.20",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.20",
+    "note": "codex 0.162.0-alpha.20 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.0",
+   "result": {
+    "ok": false,
+    "version": "0.162.0",
+    "note": "codex 0.162.0 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.162.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.1",
+    "note": "codex 0.162.1 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "0.161.9",
+   "result": {
+    "ok": false,
+    "version": "0.161.9",
+    "note": "codex 0.161.9 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "1.0.0",
+   "result": {
+    "ok": false,
+    "version": "1.0.0",
+    "note": "codex 1.0.0 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "v0.162.0-alpha.2-extra",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.2-extra",
+    "note": "codex 0.162.0-alpha.2-extra is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "garbage",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": null,
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.1.0",
+     "max": "0.2.0"
+    }
+   ],
+   "text": "codex 10.20.30-rc.1+build",
+   "result": {
+    "ok": false,
+    "version": "10.20.30-rc.1",
+    "note": "codex 10.20.30-rc.1 is outside the tested app-server range >=0.1.0 <0.2.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "codex-cli 0.162.0-alpha.2",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2",
+    "note": null
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.0-alpha.3",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.3",
+    "note": null
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.0-alpha.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.0-alpha.1",
+    "note": "codex 0.162.0-alpha.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.0-alpha.2.5",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2.5",
+    "note": null
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.0-alpha.20",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.20",
+    "note": null
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.0",
+   "result": {
+    "ok": false,
+    "version": "0.162.0",
+    "note": "codex 0.162.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.162.1",
+   "result": {
+    "ok": false,
+    "version": "0.162.1",
+    "note": "codex 0.162.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "0.161.9",
+   "result": {
+    "ok": false,
+    "version": "0.161.9",
+    "note": "codex 0.161.9 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "1.0.0",
+   "result": {
+    "ok": false,
+    "version": "1.0.0",
+    "note": "codex 1.0.0 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "v0.162.0-alpha.2-extra",
+   "result": {
+    "ok": true,
+    "version": "0.162.0-alpha.2-extra",
+    "note": null
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "garbage",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "",
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": null,
+   "result": {
+    "ok": false,
+    "version": null,
+    "note": "codex (version unknown) is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  },
+  {
+   "ranges": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0"
+    }
+   ],
+   "text": "codex 10.20.30-rc.1+build",
+   "result": {
+    "ok": false,
+    "version": "10.20.30-rc.1",
+    "note": "codex 10.20.30-rc.1 is outside the tested app-server range >=0.162.0-alpha.2 <0.162.0; launched without the app-server adapter (mail is pasted into its pane). Set adapter \"off\" to silence this."
+   }
+  }
+ ],
+ "rangeSets": {
+  "tested": [
+   {
+    "min": "0.162.0-alpha.2",
+    "max": "0.162.0-alpha.3"
+   }
+  ],
+  "none": [],
+  "custom": [
+   {
+    "min": "0.1.0",
+    "max": "0.2.0"
+   }
+  ],
+  "preFloor": [
+   {
+    "min": "0.162.0-alpha.2",
+    "max": "0.162.0"
+   }
+  ]
+ },
+ "wanted": [
+  {
+   "adapter": "off",
+   "ranges": "tested",
+   "result": false
+  },
+  {
+   "adapter": "off",
+   "ranges": "none",
+   "result": false
+  },
+  {
+   "adapter": "off",
+   "ranges": "custom",
+   "result": false
+  },
+  {
+   "adapter": "off",
+   "ranges": "preFloor",
+   "result": false
+  },
+  {
+   "adapter": "appserver",
+   "ranges": "tested",
+   "result": true
+  },
+  {
+   "adapter": "appserver",
+   "ranges": "none",
+   "result": true
+  },
+  {
+   "adapter": "appserver",
+   "ranges": "custom",
+   "result": true
+  },
+  {
+   "adapter": "appserver",
+   "ranges": "preFloor",
+   "result": true
+  },
+  {
+   "adapter": null,
+   "ranges": "tested",
+   "result": true
+  },
+  {
+   "adapter": null,
+   "ranges": "none",
+   "result": false
+  },
+  {
+   "adapter": null,
+   "ranges": "custom",
+   "result": true
+  },
+  {
+   "adapter": null,
+   "ranges": "preFloor",
+   "result": true
+  },
+  {
+   "adapter": "",
+   "ranges": "tested",
+   "result": true
+  },
+  {
+   "adapter": "",
+   "ranges": "none",
+   "result": false
+  },
+  {
+   "adapter": "",
+   "ranges": "custom",
+   "result": true
+  },
+  {
+   "adapter": "",
+   "ranges": "preFloor",
+   "result": true
+  },
+  {
+   "adapter": "other",
+   "ranges": "tested",
+   "result": true
+  },
+  {
+   "adapter": "other",
+   "ranges": "none",
+   "result": false
+  },
+  {
+   "adapter": "other",
+   "ranges": "custom",
+   "result": true
+  },
+  {
+   "adapter": "other",
+   "ranges": "preFloor",
+   "result": true
+  }
+ ],
+ "rows": [
+  {
+   "row": null,
+   "result": false
+  },
+  {
+   "row": {},
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "codex"
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "adapter": "off"
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "adapter": "appserver"
+   },
+   "result": true
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "appserver_pid": 12
+   },
+   "result": true
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "appserver_pid": null
+   },
+   "result": true
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "adapter": "off",
+    "appserver_pid": 12
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "adapter": "other",
+    "appserver_pid": 12
+   },
+   "result": true
+  },
+  {
+   "row": {
+    "kind": "claude",
+    "adapter": "appserver"
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "claude",
+    "appserver_pid": 12
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "adapter": "appserver"
+   },
+   "result": false
+  },
+  {
+   "row": {
+    "kind": "codex",
+    "adapter": 5,
+    "appserver_pid": 1
+   },
+   "result": true
+  }
+ ],
+ "testedRanges": [
+  {
+   "env": {},
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "1"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "1",
+    "AH_CODEX_APPSERVER_RANGE": "none"
+   },
+   "result": []
+  },
+  {
+   "env": {
+    "AH_TEST": "1",
+    "AH_CODEX_APPSERVER_RANGE": "1.0.0,2.0.0"
+   },
+   "result": [
+    {
+     "min": "1.0.0",
+     "max": "2.0.0"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "1",
+    "AH_CODEX_APPSERVER_RANGE": "1.0.0,2.0.0-pre"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "1",
+    "AH_CODEX_APPSERVER_RANGE": "garbage"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "1",
+    "AH_CODEX_APPSERVER_RANGE": ""
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "0",
+    "AH_CODEX_APPSERVER_RANGE": "none"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_TEST": "true",
+    "AH_CODEX_APPSERVER_RANGE": "1.0.0,2.0.0"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  },
+  {
+   "env": {
+    "AH_CODEX_APPSERVER_RANGE": "none"
+   },
+   "result": [
+    {
+     "min": "0.162.0-alpha.2",
+     "max": "0.162.0-alpha.3"
+    }
+   ]
+  }
+ ]
+}

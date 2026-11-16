@@ -1,0 +1,88 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "oneLine",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "hello"
+      ],
+      "expect": "hello"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": ""
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": ""
+    },
+    {
+      "id": "number",
+      "args": [
+        42
+      ],
+      "expect": "42"
+    },
+    {
+      "id": "whitespace-runs",
+      "args": [
+        "  a \n\t b   c  "
+      ],
+      "expect": "a b c"
+    },
+    {
+      "id": "marker-neutralised",
+      "args": [
+        "x [ah-entry a1] y"
+      ],
+      "expect": "x (ah-entry a1] y"
+    },
+    {
+      "id": "link-marker-neutralised",
+      "args": [
+        "x [ah-link l1 from o@t] y"
+      ],
+      "expect": "x (ah-link l1 from o@t] y"
+    },
+    {
+      "id": "both-markers",
+      "args": [
+        "[ah-entry [ah-link"
+      ],
+      "expect": "(ah-entry (ah-link"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "only-space",
+      "args": [
+        "   "
+      ],
+      "expect": ""
+    },
+    {
+      "id": "object-stringified",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expect": "[object Object]"
+    }
+  ]
+}

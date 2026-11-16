@@ -1,0 +1,12 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "MAX_SESSIONS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 50
+    }
+  ]
+}

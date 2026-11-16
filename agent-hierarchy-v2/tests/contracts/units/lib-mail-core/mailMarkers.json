@@ -1,0 +1,114 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "mailMarkers",
+  "cases": [
+    {
+      "id": "single-group",
+      "args": [
+        "ah mail for o@a (2):\n- x\n[ah-entry a1,b2]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "a1",
+            "b2"
+          ],
+          "address": null
+        }
+      ]
+    },
+    {
+      "id": "to-forms",
+      "args": [
+        "ah mail for o@a (1):\n- x\n[ah-entry a1 to o@a]\n[ah-entry b2 to o@b]"
+      ],
+      "expect": [
+        {
+          "ids": [
+            "a1"
+          ],
+          "address": "o@a"
+        },
+        {
+          "ids": [
+            "b2"
+          ],
+          "address": "o@b"
+        }
+      ]
+    },
+    {
+      "id": "header-only",
+      "args": [
+        "ah mail for o@a (1):"
+      ],
+      "expect": null
+    },
+    {
+      "id": "marker-only-no-header",
+      "args": [
+        "[ah-entry a1]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "marker-in-the-middle-is-not-read",
+      "args": [
+        "ah mail for o@a (1):\n- x [ah-entry z9]\n- y"
+      ],
+      "expect": null
+    },
+    {
+      "id": "marker-before-prose-is-not-read",
+      "args": [
+        "ah mail for o@a (1):\n[ah-entry a1]\n- y"
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "header-with-extra-text",
+      "args": [
+        "ah mail for o@a (1): now\n[ah-entry a1]"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-empty-line-ends-block",
+      "args": [
+        "ah mail for o@a (1):\n[ah-entry a1]\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "bad-marker-line-ends-block",
+      "args": [
+        "ah mail for o@a (1):\n[ah-entry a1]\n[ah-entry bad id]"
+      ],
+      "expect": null
+    }
+  ]
+}

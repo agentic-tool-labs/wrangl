@@ -1,0 +1,80 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamHomeDir",
+  "cases": [
+    {
+      "id": "plain-checkout",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "linked-worktree",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    },
+    {
+      "id": "not-a-hierarchy-dir",
+      "args": [
+        "$ROOT/other/dir"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/other/dir"
+    },
+    {
+      "id": "hierarchy-but-not-under-claude",
+      "args": [
+        "$ROOT/x/hierarchy"
+      ],
+      "expect": "$ROOT/x/hierarchy"
+    },
+    {
+      "id": "env-override-disables-mapping",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "$ROOT/forced"
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy"
+    },
+    {
+      "id": "home-hierarchy-dir-outside-a-repo",
+      "args": [
+        "$ROOT/home/.claude/hierarchy/proj"
+      ],
+      "expect": "$ROOT/home/.claude/hierarchy/proj"
+    },
+    {
+      "id": "idempotent-on-a-home",
+      "args": [
+        "$ROOT/main/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy"
+    }
+  ]
+}

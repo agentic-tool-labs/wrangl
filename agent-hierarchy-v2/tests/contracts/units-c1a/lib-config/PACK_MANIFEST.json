@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "PACK_MANIFEST",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "ah-roles.json"
+    }
+  ]
+}

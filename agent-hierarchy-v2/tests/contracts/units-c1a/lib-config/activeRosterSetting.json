@@ -1,0 +1,142 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "activeRosterSetting",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "repo",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"squad\"}"
+      },
+      "expect": {
+        "value": "squad",
+        "level": "repo",
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "global",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agent-hierarchy.json": "{\"activeRoster\":\"g\"}"
+      },
+      "expect": {
+        "value": "g",
+        "level": "global",
+        "path": "$ROOT/home/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "repo-over-global",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"r\"}",
+        "home/.claude/agent-hierarchy.json": "{\"activeRoster\":\"g\"}"
+      },
+      "expect": {
+        "value": "r",
+        "level": "repo",
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "null-counts-as-unset",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":null}",
+        "home/.claude/agent-hierarchy.json": "{\"activeRoster\":\"g\"}"
+      },
+      "expect": {
+        "value": "g",
+        "level": "global",
+        "path": "$ROOT/home/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "non-string",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":5}"
+      },
+      "expect": {
+        "value": 5,
+        "level": "repo",
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"\"}"
+      },
+      "expect": {
+        "value": "",
+        "level": "repo",
+        "path": "$ROOT/repo/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "worktree-main-repo-level",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "x",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/agent-hierarchy.json": "{\"activeRoster\":\"m\"}"
+      },
+      "expect": {
+        "value": "m",
+        "level": "repo",
+        "path": "$ROOT/main/.claude/agent-hierarchy.json"
+      }
+    },
+    {
+      "id": "bad-json-skipped",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{x",
+        "home/.claude/agent-hierarchy.json": "{\"activeRoster\":\"g\"}"
+      },
+      "expect": {
+        "value": "g",
+        "level": "global",
+        "path": "$ROOT/home/.claude/agent-hierarchy.json"
+      }
+    }
+  ]
+}

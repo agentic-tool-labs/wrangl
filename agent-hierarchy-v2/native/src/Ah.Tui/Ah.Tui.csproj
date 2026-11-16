@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ahd-tui</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ah.Abstractions/Ah.Abstractions.csproj" />
+    <ProjectReference Include="../Ah.Core/Ah.Core.csproj" />
+    <ProjectReference Include="../Ah.Platform/Ah.Platform.csproj" />
+    <ProjectReference Include="../Ah.DaemonClient/Ah.DaemonClient.csproj" />
+  </ItemGroup>
+
+</Project>

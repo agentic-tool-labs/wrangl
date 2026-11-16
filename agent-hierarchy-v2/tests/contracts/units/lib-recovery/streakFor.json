@@ -1,0 +1,316 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "streakFor",
+  "cases": [
+    {
+      "id": "no-rows",
+      "args": [
+        [],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "one-resume-in-window",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:00.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "two-distinct-resumes",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:00.000Z"
+          },
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:58:00.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 3
+    },
+    {
+      "id": "same-failed-at-counted-once",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:00.000Z",
+            "failed_at": "x"
+          },
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:30.000Z",
+            "failed_at": "x"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "non-string-failed-at-falls-back-to-ts",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:00.000Z",
+            "failed_at": 5
+          },
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:00.000Z",
+            "failed_at": 6
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "window-edge-is-inside",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:15:00.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "just-outside-window",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:14:59.999Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "at-the-failure-instant-excluded",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T12:00:00.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "just-before-the-failure-included",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:59.999Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "other-subject",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "t",
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "other-type",
+      "args": [
+        [
+          {
+            "type": "peer",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "other-kind",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "NUDGE",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "unparseable-ts",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "yesterday"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "missing-ts",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "non-object-rows-skipped",
+      "args": [
+        [
+          null,
+          "x",
+          5,
+          [],
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "s",
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "numeric-subject-is-strict",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": 5,
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        "5",
+        1780315200000
+      ],
+      "expect": 1
+    },
+    {
+      "id": "subject-undefined-matches-missing-subject",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "ts": "2026-06-01T11:59:59.000Z"
+          }
+        ],
+        {
+          "$undefined": 1
+        },
+        1780315200000
+      ],
+      "expect": 2
+    },
+    {
+      "id": "failed-at-nan-counts-everything",
+      "args": [
+        [
+          {
+            "type": "watch-event",
+            "kind": "RESUME",
+            "subject": "s",
+            "ts": "2026-06-01T08:15:00.000Z"
+          }
+        ],
+        "s",
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": 2
+    }
+  ]
+}

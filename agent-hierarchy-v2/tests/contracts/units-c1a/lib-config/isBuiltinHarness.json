@@ -1,0 +1,119 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isBuiltinHarness",
+  "cases": [
+    {
+      "id": "claude",
+      "args": [
+        "claude"
+      ],
+      "expect": true
+    },
+    {
+      "id": "codex",
+      "args": [
+        "codex"
+      ],
+      "expect": true
+    },
+    {
+      "id": "claude-mod",
+      "args": [
+        "claude-mod"
+      ],
+      "expect": true
+    },
+    {
+      "id": "custom",
+      "args": [
+        "my-harness"
+      ],
+      "expect": false
+    },
+    {
+      "id": "stub-no-test-env",
+      "args": [
+        "stub"
+      ],
+      "expect": false
+    },
+    {
+      "id": "probe-no-test-env",
+      "args": [
+        "probe"
+      ],
+      "expect": false
+    },
+    {
+      "id": "stub-test-env",
+      "args": [
+        "stub"
+      ],
+      "env": {
+        "AH_TEST": "1"
+      },
+      "expect": true
+    },
+    {
+      "id": "probe-test-env",
+      "args": [
+        "probe"
+      ],
+      "env": {
+        "AH_TEST": "1"
+      },
+      "expect": true
+    },
+    {
+      "id": "stub-test-env-0",
+      "args": [
+        "stub"
+      ],
+      "env": {
+        "AH_TEST": "0"
+      },
+      "expect": false
+    },
+    {
+      "id": "claude-test-env",
+      "args": [
+        "claude"
+      ],
+      "env": {
+        "AH_TEST": "1"
+      },
+      "expect": true
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "case",
+      "args": [
+        "Claude"
+      ],
+      "expect": false
+    }
+  ]
+}

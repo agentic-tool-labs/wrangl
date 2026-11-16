@@ -1,0 +1,204 @@
+{
+  "lib": "lib-ah-cli",
+  "module": "hooks/lib-ah-cli.mjs",
+  "fn": "isCloseCommand",
+  "cases": [
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "dismiss-close",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {
+            "close": true
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "disband-close",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "disband",
+          "positional": [],
+          "flags": {
+            "close": true
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "dismiss-no-close",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {}
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "close-has-value",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {
+            "close": "yes"
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "other-verb",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "show",
+          "positional": [],
+          "flags": {
+            "close": true
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "msg-script",
+      "args": [
+        {
+          "script": "msg",
+          "scriptPath": "/p/hooks/msg.mjs",
+          "verb": "dismiss",
+          "positional": [],
+          "flags": {
+            "close": true
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined-flags-close",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "untrack",
+          "positional": [],
+          "flags": {
+            "close": true
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "dismiss-ignore-release",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {
+            "ignore-release": true
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "disband-ignore-release",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "disband",
+          "positional": [],
+          "flags": {
+            "ignore-release": true
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "ignore-release-has-value",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {
+            "ignore-release": "yes"
+          }
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "ignore-release-other-verb",
+      "args": [
+        {
+          "script": "roster",
+          "scriptPath": "/p/hooks/roster.mjs",
+          "verb": "show",
+          "positional": [],
+          "flags": {
+            "ignore-release": true
+          }
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "ignore-release-wrong-script",
+      "args": [
+        {
+          "script": "msg",
+          "scriptPath": "/p/hooks/msg.mjs",
+          "verb": "dismiss",
+          "positional": [
+            "x"
+          ],
+          "flags": {
+            "ignore-release": true
+          }
+        }
+      ],
+      "expect": false
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+ah › repoA · pid 4242 › alpha › alpha-architect
+────────────────────────────────────────────────────────────
+architect  ·  architect  ·  claude (peer)
+model opus  effort high  session sess-arch  work tree –
+placement herdr  pane %1  pasteable
+live  working for 60s  last tool Bash 60s ago
+context 88% !!
+blocked no
+owed 1
+  do-the-thing  sent 60s ago  eta medium
+mailbox  unacked 0  overdue 0  adapter –
+────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane…

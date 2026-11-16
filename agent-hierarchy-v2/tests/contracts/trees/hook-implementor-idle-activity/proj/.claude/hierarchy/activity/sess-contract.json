@@ -1,0 +1,10 @@
+{
+  "activity": "idle",
+  "at": "2026-01-01T00:00:00.000Z",
+  "blocked_by": null,
+  "note": null,
+  "tool": null,
+  "tool_at": null,
+  "streak": 3,
+  "source": "stopfailure"
+}

@@ -1,0 +1,290 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "logHookError",
+  "cases": [
+    {
+      "id": "error-with-frames-and-input",
+      "args": [
+        "session-start.mjs",
+        {
+          "$error": {
+            "message": "boom",
+            "stack": [
+              "Error: boom",
+              "    at a (/x/a.mjs:1:1)",
+              "    at b (/x/b.mjs:2:2)",
+              "    at c",
+              "    at d (dropped)"
+            ]
+          }
+        },
+        {
+          "hook_event_name": "SessionStart",
+          "session_id": "s-1"
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"session-start.mjs\",\"event\":\"SessionStart\",\"session_id\":\"s-1\",\"message\":\"boom\",\"stack\":[\"at a (/x/a.mjs:1:1)\",\"at b (/x/b.mjs:2:2)\",\"at c\"]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "string-thrown",
+      "args": [
+        "pre-tool-use.mjs",
+        "plain string thrown",
+        {}
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"pre-tool-use.mjs\",\"event\":null,\"session_id\":null,\"message\":\"plain string thrown\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "number-thrown",
+      "args": [
+        "x.mjs",
+        42,
+        {}
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"42\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "null-thrown",
+      "args": [
+        "x.mjs",
+        null,
+        {}
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"null\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "object-thrown",
+      "args": [
+        "x.mjs",
+        {
+          "a": 1
+        },
+        {}
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"[object Object]\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "input-undefined",
+      "args": [
+        "x.mjs",
+        "m",
+        {
+          "$undefined": 1
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"m\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "input-null",
+      "args": [
+        "x.mjs",
+        "m",
+        null
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"m\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "event-not-string",
+      "args": [
+        "x.mjs",
+        "m",
+        {
+          "hook_event_name": 5,
+          "session_id": null
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":null,\"message\":\"m\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "session-only",
+      "args": [
+        "x.mjs",
+        "m",
+        {
+          "session_id": "abc"
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"x.mjs\",\"event\":null,\"session_id\":\"abc\",\"message\":\"m\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "error-no-stack-frames",
+      "args": [
+        "stop.mjs",
+        {
+          "$error": {
+            "message": "no stack",
+            "stack": [
+              "Error: no stack"
+            ]
+          }
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"stop.mjs\",\"event\":null,\"session_id\":null,\"message\":\"no stack\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "error-one-frame",
+      "args": [
+        "stop.mjs",
+        {
+          "$error": {
+            "message": "one",
+            "stack": [
+              "Error: one",
+              "    at only"
+            ]
+          }
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"stop.mjs\",\"event\":null,\"session_id\":null,\"message\":\"one\",\"stack\":[\"at only\"]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "error-empty-stack-string",
+      "args": [
+        "stop.mjs",
+        {
+          "$error": {
+            "message": "empty",
+            "stack": [
+              ""
+            ]
+          }
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"stop.mjs\",\"event\":null,\"session_id\":null,\"message\":\"empty\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "unicode-and-controls",
+      "args": [
+        "h.mjs",
+        {
+          "$error": {
+            "message": "é 😀 \u001b[31m \"q\" \\   \ud800",
+            "stack": [
+              "Error: x"
+            ]
+          }
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"h.mjs\",\"event\":null,\"session_id\":null,\"message\":\"é 😀 \\u001b[31m \\\"q\\\" \\\\   \\ud800\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "frames-trimmed",
+      "args": [
+        "h.mjs",
+        {
+          "$error": {
+            "message": "m",
+            "stack": [
+              "Error: m",
+              "\t  at tabbed  ",
+              "    at b",
+              "at c",
+              "at d"
+            ]
+          }
+        }
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"h.mjs\",\"event\":null,\"session_id\":null,\"message\":\"m\",\"stack\":[\"at tabbed\",\"at b\",\"at c\"]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "hook-name-with-slash",
+      "args": [
+        "dir/hook.mjs",
+        "m",
+        {}
+      ],
+      "now": "2026-08-16T18:32:01.123Z",
+      "expectFiles": {
+        "home/.claude/hierarchy/hook-errors.jsonl": "{\"ts\":\"2026-08-16T18:32:01.123Z\",\"hook\":\"dir/hook.mjs\",\"event\":null,\"session_id\":null,\"message\":\"m\",\"stack\":[]}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

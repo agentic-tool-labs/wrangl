@@ -1,0 +1,117 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "splitTeamCopy",
+  "cases": [
+    {
+      "id": "plain-checkout-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "worktree-with-both-copies",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}",
+        "wt/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "path": "$ROOT/wt/.claude/hierarchy/team.json",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%2",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "worktree-home-only",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "worktree-pool-only",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "worktree-pool-copy-unreadable",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/team.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}",
+        "wt/.claude/hierarchy/team.json": "{x"
+      },
+      "expect": null
+    },
+    {
+      "id": "worktree-named",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%1\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}",
+        "wt/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"role\":\"architect\",\"name\":\"p-architect\",\"transport_id\":\"%2\",\"route\":\"peer\"}],\"orchestrator\":{\"pid\":1}}"
+      },
+      "expect": {
+        "path": "$ROOT/wt/.claude/hierarchy/teams/alpha.json",
+        "team": {
+          "members": [
+            {
+              "role": "architect",
+              "name": "p-architect",
+              "transport_id": "%2",
+              "route": "peer"
+            }
+          ],
+          "orchestrator": {
+            "pid": 1
+          }
+        }
+      }
+    }
+  ]
+}

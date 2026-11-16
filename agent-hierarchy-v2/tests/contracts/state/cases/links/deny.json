@@ -1,0 +1,77 @@
+{
+  "kind": "state-op",
+  "id": "deny",
+  "about": "deny appends to the denied list",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "links",
+    "op": "deny",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "links",
+        "op": "grant",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "team": "tm",
+            "link": {
+              "id": "lk-1",
+              "task": "20260101-120000-ab12",
+              "peers": [
+                "tm-b@tm"
+              ],
+              "requester": "tm-a@tm",
+              "granted_by": "orchestrator",
+              "messages": 2,
+              "minutes": 30
+            },
+            "now": 1767225600000
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-grant"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team": "tm",
+        "request": "req-ext-9",
+        "why": "not needed",
+        "now": 1767225604000
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-links-deny"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "ok": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a deny that clears the link",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:10.940Z"
+  }
+}

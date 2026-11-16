@@ -1,0 +1,16 @@
+ ▐▛███▛█   Claude Code v2.1.294
+▝▜██████▀  Haiku 5.5 · Claude API
+ ▝▝   ▝▝   @ah:implementor · <T>/ws/claude-agent
+
+  Get to finished work sooner with Opus 5.5. Switch anytime with /model.
+
+❯ Write 300 words about rivers. No tools.
+
+⏺ Rivers are among the oldest sculptors on Earth. Given enough time, a modest stream can carve a canyon, and the Colorado has cut through rock for millions of years to expose layers of geological
+
+✻ Hyperspacing… (1s · ↓ 200 tokens · thinking)
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── probe-e4r ─
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · esc to interrupt · ← for agents                                                                                                                      Ctrl+Y to paste deleted text

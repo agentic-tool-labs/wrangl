@@ -1,0 +1,40 @@
+{
+  "kind": "cli",
+  "id": "open-stream",
+  "about": "stream-done marks an open stream done and closes nothing",
+  "tree": "cli-stream-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-done",
+      "s-one",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"done\": true,\n  \"already_done\": false,\n  \"stream\": {\n    \"name\": \"s-one\",\n    \"state\": \"done\",\n    \"branch\": \"s-one\",\n    \"base\": \"main\",\n    \"base_sha\": null,\n    \"worktree\": null,\n    \"tab_id\": null,\n    \"opened\": \"<ISO:1>\",\n    \"closed\": \"<ISOL:1>\"\n  },\n  \"label\": null,\n  \"members\": [],\n  \"open_exchanges\": [],\n  \"verdict\": \"branch-missing\",\n  \"archived_ref\": null,\n  \"next\": [],\n  \"warnings\": [\n    \"branch-missing: refs/heads/s-one does not exist; the unshipped-commits gate was skipped and nothing is archived\"\n  ]\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.progress_logs.jsonl",
+          "mode": "0644",
+          "content": "{\"v\":1,\"at\":\"<ISO:2>\",\"kind\":\"train\",\"team\":\"tm\",\"stream\":\"s-one\",\"sha\":null,\"base\":\"main\",\"ref\":\"s-one\",\"verdict\":\"branch-missing\",\"slug\":null,\"into\":null,\"tag\":null,\"confirmed\":null,\"text\":\"stream s-one done: branch-missing\",\"source\":{\"type\":\"verb\",\"path\":null,\"verb\":\"stream-done\",\"tool_use_id\":null}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a done that removes the worktree or branch",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:51.819Z"
+  }
+}

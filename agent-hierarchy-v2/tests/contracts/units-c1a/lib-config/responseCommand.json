@@ -1,0 +1,94 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "responseCommand",
+  "cases": [
+    {
+      "id": "defaults",
+      "args": [],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id <id> --from <your role> --req <your request path>"
+    },
+    {
+      "id": "empty-options",
+      "args": [
+        {}
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id <id> --from <your role> --req <your request path>"
+    },
+    {
+      "id": "full",
+      "args": [
+        {
+          "id": "i1",
+          "role": "implementor",
+          "req": "/r/q.md",
+          "cwd": "/w"
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id i1 --from implementor --req /r/q.md --cwd /w"
+    },
+    {
+      "id": "no-cwd",
+      "args": [
+        {
+          "id": "i1",
+          "role": "x",
+          "req": "/r"
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id i1 --from x --req /r"
+    },
+    {
+      "id": "null-id",
+      "args": [
+        {
+          "id": null
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id null --from <your role> --req <your request path>"
+    },
+    {
+      "id": "undefined-role",
+      "args": [
+        {
+          "role": {
+            "$undefined": 1
+          }
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id <id> --from <your role> --req <your request path>"
+    },
+    {
+      "id": "empty-cwd",
+      "args": [
+        {
+          "cwd": ""
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id <id> --from <your role> --req <your request path>"
+    },
+    {
+      "id": "number-id",
+      "args": [
+        {
+          "id": 5
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id 5 --from <your role> --req <your request path>"
+    },
+    {
+      "id": "null-options",
+      "args": [
+        null
+      ],
+      "expectThrows": true
+    },
+    {
+      "id": "string-options",
+      "args": [
+        "abc"
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs new --type response --id <id> --from <your role> --req <your request path>"
+    }
+  ]
+}

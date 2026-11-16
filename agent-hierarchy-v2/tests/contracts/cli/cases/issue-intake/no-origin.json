@@ -1,0 +1,45 @@
+{
+  "kind": "cli",
+  "id": "no-origin",
+  "about": "no origin remote",
+  "tree": "cli-intake-noorigin",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "1"
+    ],
+    "stdin": null
+  },
+  "mutant": "the origin refusal drifted",
+  "expect": {
+    "stdout": "{\"error\":\"origin-not-github: no origin remote\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:31.089Z"
+  }
+}

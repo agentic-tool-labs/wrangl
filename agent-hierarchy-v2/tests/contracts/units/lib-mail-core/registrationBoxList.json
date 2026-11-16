@@ -1,0 +1,225 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "registrationBoxList",
+  "cases": [
+    {
+      "id": "order-and-unsafe-dropped",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            "o@a",
+            "o@b",
+            "o@c"
+          ],
+          "boxes": {
+            "o@b": "/h/mailbox/b~1/o",
+            "o@a": "/h/mailbox/a~1/o",
+            "o@c": "/etc"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        },
+        {
+          "address": "o@b",
+          "dir": "/h/mailbox/b~1/o"
+        }
+      ]
+    },
+    {
+      "id": "address-only-record",
+      "args": [
+        "/h",
+        {
+          "address": "o@a"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "null-reg",
+      "args": [
+        "/h",
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "array-reg",
+      "args": [
+        "/h",
+        []
+      ],
+      "expect": []
+    },
+    {
+      "id": "boxes-null",
+      "args": [
+        "/h",
+        {
+          "boxes": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "boxes-string",
+      "args": [
+        "/h",
+        {
+          "boxes": "x"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-addresses-uses-key-order",
+      "args": [
+        "/h",
+        {
+          "boxes": {
+            "o@z": "/h/mailbox/z~1/o",
+            "o@a": "/h/mailbox/a~1/o"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@z",
+          "dir": "/h/mailbox/z~1/o"
+        },
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        }
+      ]
+    },
+    {
+      "id": "addresses-extras-then-keys",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            "o@b"
+          ],
+          "boxes": {
+            "o@a": "/h/mailbox/a~1/o",
+            "o@b": "/h/mailbox/b~1/o"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@b",
+          "dir": "/h/mailbox/b~1/o"
+        },
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        }
+      ]
+    },
+    {
+      "id": "non-string-address-ignored",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            5,
+            "o@a"
+          ],
+          "boxes": {
+            "o@a": "/h/mailbox/a~1/o"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        }
+      ]
+    },
+    {
+      "id": "address-without-box-ignored",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            "o@a",
+            "o@missing"
+          ],
+          "boxes": {
+            "o@a": "/h/mailbox/a~1/o"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        }
+      ]
+    },
+    {
+      "id": "non-string-dir-dropped",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            "o@a"
+          ],
+          "boxes": {
+            "o@a": 7
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "duplicate-addresses-repeat",
+      "args": [
+        "/h",
+        {
+          "addresses": [
+            "o@a",
+            "o@a"
+          ],
+          "boxes": {
+            "o@a": "/h/mailbox/a~1/o"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        },
+        {
+          "address": "o@a",
+          "dir": "/h/mailbox/a~1/o"
+        }
+      ]
+    },
+    {
+      "id": "relative-home-keeps-nothing",
+      "args": [
+        "h",
+        {
+          "addresses": [
+            "o@a"
+          ],
+          "boxes": {
+            "o@a": "h/mailbox/a~1/o"
+          }
+        }
+      ],
+      "expect": []
+    }
+  ]
+}

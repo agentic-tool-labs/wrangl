@@ -1,0 +1,263 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "parseMergeForm",
+  "cases": [
+    {
+      "id": "single",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": false
+      }
+    },
+    {
+      "id": "single-merge-method",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --merge"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "merge",
+        "draft": false
+      }
+    },
+    {
+      "id": "single-rebase-method",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --rebase"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "rebase",
+        "draft": false
+      }
+    },
+    {
+      "id": "compound-draft",
+      "args": [
+        "gh pr ready 12 && gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": true
+      }
+    },
+    {
+      "id": "compound-with-mismatched-pr",
+      "args": [
+        "gh pr ready 11 && gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "short-sha",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef0123456 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "long-sha",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef012345670 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "uppercase-sha",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789ABCDEF0123456789ABCDEF01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "non-hex-sha",
+      "args": [
+        "gh pr merge 12 --match-head-commit g123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "unknown-method",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --fast-forward"
+      ],
+      "expect": null
+    },
+    {
+      "id": "extra-flag",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash --delete-branch"
+      ],
+      "expect": null
+    },
+    {
+      "id": "extra-word-before",
+      "args": [
+        "sudo gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "wrapped-in-bash",
+      "args": [
+        "bash -c 'gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash'"
+      ],
+      "expect": null
+    },
+    {
+      "id": "leading-and-trailing-whitespace",
+      "args": [
+        "  \tgh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash  \n"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": false
+      }
+    },
+    {
+      "id": "tabs-between-words",
+      "args": [
+        "gh\tpr\tmerge\t12\t--match-head-commit\t0123456789abcdef0123456789abcdef01234567\t--squash"
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": false
+      }
+    },
+    {
+      "id": "newline-between-words-is-not-a-blank",
+      "args": [
+        "gh pr merge 12\n--match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "leading-zero-pr",
+      "args": [
+        "gh pr merge 012 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "zero-pr",
+      "args": [
+        "gh pr merge 0 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "huge-pr-number",
+      "args": [
+        "gh pr merge 12345678901234567890 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": {
+        "pr": 12345678901234567000,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": false
+      }
+    },
+    {
+      "id": "pr-not-numeric",
+      "args": [
+        "gh pr merge abc --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "negative-pr",
+      "args": [
+        "gh pr merge -3 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "compound-needs-spaces-around-and",
+      "args": [
+        "gh pr ready 12&&gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "compound-without-ready-pr",
+      "args": [
+        "gh pr ready && gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+      ],
+      "expect": null
+    },
+    {
+      "id": "chained-with-semicolon",
+      "args": [
+        "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash; rm -rf /"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "object-is-stringified",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "array-of-one-is-stringified",
+      "args": [
+        [
+          "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+        ]
+      ],
+      "expect": {
+        "pr": 12,
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "method": "squash",
+        "draft": false
+      }
+    }
+  ]
+}

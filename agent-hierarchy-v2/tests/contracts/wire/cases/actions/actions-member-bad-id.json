@@ -1,0 +1,29 @@
+{
+  "kind": "wire",
+  "id": "actions-member-bad-id",
+  "about": "GET /v1/actions/<id> with an id that is not a full member id answers 400 bad_member",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {},
+    "headers": {},
+    "body": null,
+    "path": "/v1/actions/nope"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": "bad_member"
+    }
+  },
+  "mutant": "the route is missing, or answers a short id with 404 or 200",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-18T07:00:00.000Z",
+    "note": "native-only route (divergence/routes.json ui-actions-member-route): no Node recording exists"
+  }
+}

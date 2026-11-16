@@ -1,0 +1,268 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "parseMsgFilename",
+  "cases": [
+    {
+      "id": "request",
+      "args": [
+        "20260816-143201-ab12--architect--my-slug--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "architect",
+        "slug": "my-slug",
+        "type": "request"
+      }
+    },
+    {
+      "id": "response",
+      "args": [
+        "20260816-143201-ab12--implementor--my-slug--response.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "implementor",
+        "slug": "my-slug",
+        "type": "response"
+      }
+    },
+    {
+      "id": "note",
+      "args": [
+        "20260816-143201-ab12--orchestrator--note-1--note.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "orchestrator",
+        "slug": "note-1",
+        "type": "note"
+      }
+    },
+    {
+      "id": "link-note",
+      "args": [
+        "20260816-143201-ab12--ultra-advisor--x--link-note.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "ultra-advisor",
+        "slug": "x",
+        "type": "link-note"
+      }
+    },
+    {
+      "id": "hyphenated-to",
+      "args": [
+        "20260816-143201-ab12--ultra-advisor--slug--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "ultra-advisor",
+        "slug": "slug",
+        "type": "request"
+      }
+    },
+    {
+      "id": "directory-prefix",
+      "args": [
+        "/some/dir/msgs/20260816-143201-ab12--reviewer--s--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "reviewer",
+        "slug": "s",
+        "type": "request"
+      }
+    },
+    {
+      "id": "slug-32",
+      "args": [
+        "20260816-143201-ab12--architect--aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "architect",
+        "slug": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "request"
+      }
+    },
+    {
+      "id": "slug-33",
+      "args": [
+        "20260816-143201-ab12--architect--aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "slug-empty",
+      "args": [
+        "20260816-143201-ab12--architect----request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "slug-uppercase",
+      "args": [
+        "20260816-143201-ab12--architect--Slug--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "slug-underscore",
+      "args": [
+        "20260816-143201-ab12--architect--a_b--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "slug-digits-hyphens",
+      "args": [
+        "20260816-143201-ab12--architect--0-9-a--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "architect",
+        "slug": "0-9-a",
+        "type": "request"
+      }
+    },
+    {
+      "id": "to-digit",
+      "note": "roles may contain digits: the to part is ConfigModule.RoleNamePattern",
+      "args": [
+        "20260816-143201-ab12--arch1--s--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "arch1",
+        "slug": "s",
+        "type": "request"
+      }
+    },
+    {
+      "id": "to-uppercase",
+      "args": [
+        "20260816-143201-ab12--Architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-uppercase",
+      "args": [
+        "20260816-143201-AB12--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-rand-5",
+      "args": [
+        "20260816-143201-ab123--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-rand-3",
+      "args": [
+        "20260816-143201-ab1--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-short-date",
+      "args": [
+        "2026081-143201-ab12--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-fullwidth-digits",
+      "args": [
+        "２０２６０８１６-143201-ab12--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "id-arabic-indic-digits",
+      "args": [
+        "٢٠٢٦٠٨١٦-143201-ab12--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "type-unknown",
+      "args": [
+        "20260816-143201-ab12--architect--s--report.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ext-upper",
+      "args": [
+        "20260816-143201-ab12--architect--s--request.MD"
+      ],
+      "expect": null
+    },
+    {
+      "id": "ext-missing",
+      "args": [
+        "20260816-143201-ab12--architect--s--request"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "20260816-143201-ab12--architect--s--request.md\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-space",
+      "args": [
+        "20260816-143201-ab12--architect--s--request.md "
+      ],
+      "expect": null
+    },
+    {
+      "id": "leading-space",
+      "args": [
+        " 20260816-143201-ab12--architect--s--request.md"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "only-dir",
+      "args": [
+        "/a/b/"
+      ],
+      "expect": null
+    },
+    {
+      "id": "double-dash-in-slug",
+      "args": [
+        "20260816-143201-ab12--architect--a--b--request.md"
+      ],
+      "expect": {
+        "id": "20260816-143201-ab12",
+        "to": "architect--a",
+        "slug": "b",
+        "type": "request"
+      }
+    },
+    {
+      "id": "backslash-path",
+      "args": [
+        "C:\\x\\20260816-143201-ab12--architect--s--request.md"
+      ],
+      "expect": null
+    }
+  ]
+}

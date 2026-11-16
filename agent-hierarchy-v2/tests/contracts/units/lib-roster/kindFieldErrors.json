@@ -1,0 +1,876 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "kindFieldErrors",
+  "cases": [
+    {
+      "id": "valid-minimal",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": []
+    },
+    {
+      "id": "zero",
+      "args": [
+        0
+      ],
+      "expect": []
+    },
+    {
+      "id": "missing-role",
+      "args": [
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-role-known",
+      "args": [
+        {
+          "role": "ui-dev",
+          "model": "sonnet"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "custom-role-without-resolved",
+      "args": [
+        {
+          "role": "ui-dev"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "advise-model-allowed",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "model": "fable"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "reasoning-haiku-rejected",
+      "args": [
+        {
+          "role": "architect",
+          "model": "haiku"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "model-number",
+      "args": [
+        {
+          "role": "architect",
+          "model": 5
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "effort-null-ok",
+      "args": [
+        {
+          "role": "architect",
+          "effort": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "route-mail-on-claude",
+      "args": [
+        {
+          "role": "architect",
+          "route": "mail"
+        }
+      ],
+      "expect": [
+        "route \"mail\" is for kind \"custom\" members only, got kind \"claude\""
+      ]
+    },
+    {
+      "id": "route-subagent-legwork-ok",
+      "args": [
+        {
+          "role": "task-runner",
+          "route": "subagent"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "route-subagent-custom-implement",
+      "args": [
+        {
+          "role": "ui-dev",
+          "route": "subagent"
+        },
+        {
+          "roles": {
+            "ui-dev": {
+              "class": "implement"
+            },
+            "scribe": {
+              "class": "legwork"
+            },
+            "oracle": {
+              "class": "advise"
+            },
+            "bad-class": {
+              "class": "nope"
+            }
+          }
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "autoMode-invalid",
+      "args": [
+        {
+          "role": "architect",
+          "autoMode": "yolo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "onMissing-never",
+      "args": [
+        {
+          "role": "task-runner",
+          "onMissing": "never"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "onMissing-other",
+      "args": [
+        {
+          "role": "task-runner",
+          "onMissing": "sometimes"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "stored-name-null",
+      "args": [
+        {
+          "role": "architect",
+          "name": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-invalid-shape-upper",
+      "args": [
+        {
+          "role": "architect",
+          "kind": "Codex"
+        }
+      ],
+      "expect": [
+        "kind must be a non-empty lowercase string matching ^[a-z][a-z0-9-]*$, got \"Codex\""
+      ]
+    },
+    {
+      "id": "kind-invalid-shape-number",
+      "args": [
+        {
+          "role": "architect",
+          "kind": 5
+        }
+      ],
+      "expect": [
+        "kind must be a non-empty lowercase string matching ^[a-z][a-z0-9-]*$, got 5"
+      ]
+    },
+    {
+      "id": "kind-invalid-shape-empty",
+      "args": [
+        {
+          "role": "architect",
+          "kind": ""
+        }
+      ],
+      "expect": [
+        "kind must be a non-empty lowercase string matching ^[a-z][a-z0-9-]*$, got \"\""
+      ]
+    },
+    {
+      "id": "kind-invalid-shape-leading-digit",
+      "args": [
+        {
+          "role": "architect",
+          "kind": "9lives"
+        }
+      ],
+      "expect": [
+        "kind must be a non-empty lowercase string matching ^[a-z][a-z0-9-]*$, got \"9lives\""
+      ]
+    },
+    {
+      "id": "kind-null-is-claude",
+      "args": [
+        {
+          "role": "architect",
+          "kind": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-minimal",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-no-route",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex"
+        }
+      ],
+      "expect": [
+        "route must be \"pane\" for kind \"codex\" (a non-claude agent is reached through its Herdr pane, not SendMessage or the Agent tool), got undefined"
+      ]
+    },
+    {
+      "id": "kind-codex-peer-route",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "peer"
+        }
+      ],
+      "expect": [
+        "route must be \"pane\" for kind \"codex\" (a non-claude agent is reached through its Herdr pane, not SendMessage or the Agent tool), got \"peer\""
+      ]
+    },
+    {
+      "id": "kind-codex-model-ok",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-model-with-space",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt 5"
+        }
+      ],
+      "expect": [
+        "model must be a non-empty string with no whitespace or control characters, got \"gpt 5\""
+      ]
+    },
+    {
+      "id": "kind-codex-model-empty",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": ""
+        }
+      ],
+      "expect": [
+        "model must be a non-empty string with no whitespace or control characters, got \"\""
+      ]
+    },
+    {
+      "id": "kind-codex-model-control",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "ab"
+        }
+      ],
+      "expect": [
+        "model must be a non-empty string with no whitespace or control characters, got \"ab\""
+      ]
+    },
+    {
+      "id": "kind-codex-model-number",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": 5
+        }
+      ],
+      "expect": [
+        "model must be a non-empty string with no whitespace or control characters, got 5"
+      ]
+    },
+    {
+      "id": "kind-codex-effort",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "effort": "high"
+        }
+      ],
+      "expect": [
+        "effort is a Claude Code CLI flag and has no meaning for kind \"codex\" — remove it (got \"high\")"
+      ]
+    },
+    {
+      "id": "kind-codex-autoMode-mapped",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "plan"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-autoMode-invalid",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "autoMode": "yolo"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-args-ok",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "args": [
+            "--search"
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-args-not-array",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "args": "--search"
+        }
+      ],
+      "expect": [
+        "args must be an array of strings, got \"--search\""
+      ]
+    },
+    {
+      "id": "kind-codex-args-bad-element",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "args": [
+            "--ok",
+            "",
+            5
+          ]
+        }
+      ],
+      "expect": [
+        "args[1] must be a non-empty string, got \"\"",
+        "args[2] must be a non-empty string, got 5"
+      ]
+    },
+    {
+      "id": "kind-codex-args-set-model-too",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5",
+          "args": [
+            "--model",
+            "x"
+          ]
+        }
+      ],
+      "expect": [
+        "model is set, and args sets the model too — one channel per setting: drop the model flag from args, or drop model (got [\"--model\",\"x\"])"
+      ]
+    },
+    {
+      "id": "kind-codex-args-model-without-model-field",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "args": [
+            "--model",
+            "x"
+          ]
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-codex-args-approvals",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "args": [
+            "-c",
+            "approvals_reviewer=auto"
+          ]
+        }
+      ],
+      "expect": [
+        "args must not set approvals_reviewer: every codex member is launched with -c approvals_reviewer=\"user\", so an escalation waits for a human, and a later setting in args would undo that (got [\"-c\",\"approvals_reviewer=auto\"])"
+      ]
+    },
+    {
+      "id": "kind-codex-args-on-advise",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "args": [
+            "--search"
+          ]
+        }
+      ],
+      "expect": [
+        "args is not allowed on a non-claude advise-class member (ultra-advisor) — it could set a second model past the tier lock, or brief the member at launch without the user's approval (got [\"--search\"])"
+      ]
+    },
+    {
+      "id": "kind-codex-advise-no-args",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "codex",
+          "route": "pane",
+          "model": "gpt-5"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-claude-args-rejected",
+      "args": [
+        {
+          "role": "architect",
+          "args": [
+            "--model",
+            "haiku"
+          ]
+        }
+      ],
+      "expect": [
+        "args is not allowed for kind \"claude\" — Claude CLI flags are set with --model/--effort/--auto-mode, which are validated; args would bypass that (got [\"--model\",\"haiku\"])"
+      ]
+    },
+    {
+      "id": "kind-claude-args-empty-ok",
+      "args": [
+        {
+          "role": "architect",
+          "args": []
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-claude-explicit-args",
+      "args": [
+        {
+          "role": "architect",
+          "kind": "claude",
+          "args": [
+            "x"
+          ]
+        }
+      ],
+      "expect": [
+        "args is not allowed for kind \"claude\" — Claude CLI flags are set with --model/--effort/--auto-mode, which are validated; args would bypass that (got [\"x\"])"
+      ]
+    },
+    {
+      "id": "kind-other-model-no-mapping",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "gemini",
+          "route": "pane",
+          "model": "g1"
+        }
+      ],
+      "expect": [
+        "model has no mapping for kind \"gemini\" — pass that harness's own model flag in args instead (got \"g1\")"
+      ]
+    },
+    {
+      "id": "kind-other-effort-flag",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "gemini",
+          "route": "pane",
+          "effort": "low"
+        }
+      ],
+      "expect": [
+        "effort is a Claude Code CLI flag and has no meaning for kind \"gemini\" — remove it (got \"low\")"
+      ]
+    },
+    {
+      "id": "kind-other-autoMode-flag",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "gemini",
+          "route": "pane",
+          "autoMode": "auto"
+        }
+      ],
+      "expect": [
+        "auto-mode is a Claude Code CLI flag and has no meaning for kind \"gemini\" — remove it (got \"auto\")"
+      ]
+    },
+    {
+      "id": "kind-other-advise",
+      "args": [
+        {
+          "role": "ultra-advisor",
+          "kind": "gemini",
+          "route": "pane"
+        }
+      ],
+      "expect": [
+        "The Ultra-Advisor's model must have a declared opus or fable tier, and `gemini` has no model mapping, so its model cannot be set or declared. Use claude, or a kind with a model mapping (codex)."
+      ]
+    },
+    {
+      "id": "kind-other-clean",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "gemini",
+          "route": "pane"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "adapter-appserver-on-codex",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "adapter": "appserver"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "adapter-off-on-codex",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "adapter": "off"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "adapter-invalid",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "codex",
+          "route": "pane",
+          "adapter": "yes"
+        }
+      ],
+      "expect": [
+        "adapter must be \"appserver\" or \"off\" (or removed), got \"yes\""
+      ]
+    },
+    {
+      "id": "adapter-on-claude",
+      "args": [
+        {
+          "role": "architect",
+          "adapter": "appserver"
+        }
+      ],
+      "expect": [
+        "adapter \"appserver\" applies only to kind codex, not \"claude\" — remove it"
+      ]
+    },
+    {
+      "id": "adapter-on-other-kind",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "gemini",
+          "route": "pane",
+          "adapter": "off"
+        }
+      ],
+      "expect": [
+        "adapter \"off\" applies only to kind codex, not \"gemini\" — remove it"
+      ]
+    },
+    {
+      "id": "kind-custom-rejected-in-roster",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-custom-no-harness",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail"
+        }
+      ],
+      "expect": [
+        "harness is required for kind \"custom\" and must match ^[a-z][a-z0-9-]{1,31}$, got undefined"
+      ]
+    },
+    {
+      "id": "kind-custom-builtin-harness",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "codex"
+        }
+      ],
+      "expect": [
+        "harness \"codex\" is built in and needs no admission — choose another name for a custom harness"
+      ]
+    },
+    {
+      "id": "kind-custom-bad-harness-name",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "A"
+        }
+      ],
+      "expect": [
+        "harness is required for kind \"custom\" and must match ^[a-z][a-z0-9-]{1,31}$, got \"A\""
+      ]
+    },
+    {
+      "id": "kind-custom-harness-name-too-long",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "expect": [
+        "harness is required for kind \"custom\" and must match ^[a-z][a-z0-9-]{1,31}$, got \"abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\""
+      ]
+    },
+    {
+      "id": "kind-custom-harness-name-max",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-custom-wrong-route",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "pane",
+          "harness": "my-agent"
+        }
+      ],
+      "expect": [
+        "route must be \"mail\" for kind \"custom\", got \"pane\""
+      ]
+    },
+    {
+      "id": "kind-custom-command-multiline",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent",
+          "command": "a\nb"
+        }
+      ],
+      "expect": [
+        "command must be a single-line non-empty string, got \"a\\nb\""
+      ]
+    },
+    {
+      "id": "kind-custom-command-blank",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent",
+          "command": "  "
+        }
+      ],
+      "expect": [
+        "command must be a single-line non-empty string, got \"  \""
+      ]
+    },
+    {
+      "id": "kind-custom-command-ok",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent",
+          "command": "run it"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "kind-custom-command-nul",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent",
+          "command": "a\u0000b"
+        }
+      ],
+      "expect": [
+        "command must be a single-line non-empty string, got \"a\\u0000b\""
+      ]
+    },
+    {
+      "id": "kind-custom-model-effort-args",
+      "args": [
+        {
+          "role": "implementor",
+          "kind": "custom",
+          "route": "mail",
+          "harness": "my-agent",
+          "model": "x",
+          "effort": "low",
+          "autoMode": "auto",
+          "args": [
+            "x"
+          ]
+        }
+      ],
+      "expect": [
+        "model has no meaning for kind \"custom\" — remove it (got \"x\")",
+        "effort has no meaning for kind \"custom\" — remove it (got \"low\")",
+        "auto-mode has no meaning for kind \"custom\" — remove it (got \"auto\")",
+        "args has no meaning for kind \"custom\" — remove it (got [\"x\"])"
+      ]
+    }
+  ]
+}

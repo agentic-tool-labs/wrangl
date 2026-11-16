@@ -1,0 +1,16 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "ETAS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "small",
+        "medium",
+        "large"
+      ]
+    }
+  ]
+}

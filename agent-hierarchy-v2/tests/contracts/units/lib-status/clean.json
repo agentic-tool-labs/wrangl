@@ -1,0 +1,381 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "clean",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "hello world"
+      ],
+      "expect": "hello world"
+    },
+    {
+      "id": "not-a-string-number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-object",
+      "args": [
+        {
+          "a": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string-array",
+      "args": [
+        [
+          "a"
+        ]
+      ],
+      "expect": null
+    },
+    {
+      "id": "csi-sequence",
+      "args": [
+        "a\u001b[31mred\u001b[0m b"
+      ],
+      "expect": "ared b"
+    },
+    {
+      "id": "csi-with-intermediate-bytes",
+      "args": [
+        "a\u001b[?25h\u001b[1;2 qb"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "osc-ended-by-bel",
+      "args": [
+        "a\u001b]0;title\u0007b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "osc-ended-by-st",
+      "args": [
+        "a\u001b]0;title\u001b\\b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "osc-unterminated-runs-to-the-end",
+      "args": [
+        "a\u001b]0;title b"
+      ],
+      "expect": "a"
+    },
+    {
+      "id": "dcs-ended-by-st",
+      "args": [
+        "a\u001bPdata\u001b\\b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "sos-unterminated",
+      "args": [
+        "a\u001bXdata b"
+      ],
+      "expect": "a"
+    },
+    {
+      "id": "pm-ended-by-st",
+      "args": [
+        "a\u001b^data\u001b\\b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "apc-ended-by-st",
+      "args": [
+        "a\u001b_data\u001b\\b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "two-byte-escape",
+      "args": [
+        "a\u001bMb"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "string-terminator-alone",
+      "args": [
+        "a\u001b\\b"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "lone-escape-is-a-control-character",
+      "args": [
+        "a\u001bb"
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "escape-then-bracket-incomplete",
+      "args": [
+        "a\u001b["
+      ],
+      "expect": "a["
+    },
+    {
+      "id": "c0-controls",
+      "args": [
+        "a\u0000b\u0001c\nd\te\rf\u001fg"
+      ],
+      "expect": "abcdefg"
+    },
+    {
+      "id": "delete-and-c1",
+      "args": [
+        "abcde"
+      ],
+      "expect": "abcde"
+    },
+    {
+      "id": "bidi-overrides",
+      "args": [
+        "a‪b‮c⁦d⁩e"
+      ],
+      "expect": "abcde"
+    },
+    {
+      "id": "bidi-neighbours-kept",
+      "args": [
+        "a b‏c d⁪e"
+      ],
+      "expect": "a b‏c d⁪e"
+    },
+    {
+      "id": "lone-high-surrogate",
+      "args": [
+        "a\ud800b"
+      ],
+      "expect": "a�b"
+    },
+    {
+      "id": "lone-low-surrogate",
+      "args": [
+        "a\udc00b"
+      ],
+      "expect": "a�b"
+    },
+    {
+      "id": "valid-pair-kept",
+      "args": [
+        "a🙂b"
+      ],
+      "expect": "a🙂b"
+    },
+    {
+      "id": "cap-cuts-code-points",
+      "args": [
+        "abcdef",
+        3
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-longer-than-text",
+      "args": [
+        "abc",
+        10
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-at-length",
+      "args": [
+        "abc",
+        3
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-never-splits-a-pair",
+      "args": [
+        "a🙂b🙂c",
+        2
+      ],
+      "expect": "a🙂"
+    },
+    {
+      "id": "cap-counts-pairs-as-one",
+      "args": [
+        "🙂🙂🙂",
+        2
+      ],
+      "expect": "🙂🙂"
+    },
+    {
+      "id": "cap-zero-is-no-cap",
+      "args": [
+        "abcdef",
+        0
+      ],
+      "expect": "abcdef"
+    },
+    {
+      "id": "cap-undefined-is-no-cap",
+      "args": [
+        "abcdef",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "abcdef"
+    },
+    {
+      "id": "cap-null-is-no-cap",
+      "args": [
+        "abcdef",
+        null
+      ],
+      "expect": "abcdef"
+    },
+    {
+      "id": "cap-negative-drops-from-the-end",
+      "args": [
+        "abcdef",
+        -2
+      ],
+      "expect": "abcd"
+    },
+    {
+      "id": "cap-fraction-truncates",
+      "args": [
+        "abcdef",
+        2.9
+      ],
+      "expect": "ab"
+    },
+    {
+      "id": "cap-numeric-string",
+      "args": [
+        "abcdef",
+        "3"
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "cap-nan-is-no-cap",
+      "args": [
+        "abcdef",
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": "abcdef"
+    },
+    {
+      "id": "cap-infinity",
+      "args": [
+        "abcdef",
+        {
+          "$inf": 1
+        }
+      ],
+      "expect": "abcdef"
+    },
+    {
+      "id": "cap-applies-after-stripping",
+      "args": [
+        "\u001b[31mabcdef",
+        3
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "only-escapes",
+      "args": [
+        "\u001b[31m\u001b[0m"
+      ],
+      "expect": ""
+    },
+    {
+      "id": "combining-marks-count",
+      "args": [
+        "ééé",
+        2
+      ],
+      "expect": "é"
+    },
+    {
+      "id": "tab-and-newline-are-stripped",
+      "args": [
+        "a\tb\nc"
+      ],
+      "expect": "abc"
+    },
+    {
+      "id": "lone-high-surrogate-at-the-end",
+      "args": [
+        "a\ud800"
+      ],
+      "expect": "a�"
+    },
+    {
+      "id": "lone-high-surrogate-at-the-end-with-a-cap",
+      "args": [
+        "a\ud800",
+        5
+      ],
+      "expect": "a�"
+    },
+    {
+      "id": "cap-fraction-below-one-is-empty",
+      "args": [
+        "abcdef",
+        0.5
+      ],
+      "expect": ""
+    },
+    {
+      "id": "pair-at-the-end-with-a-cap",
+      "args": [
+        "ab🙂",
+        3
+      ],
+      "expect": "ab🙂"
+    },
+    {
+      "id": "pair-then-text-cut-after-the-pair",
+      "args": [
+        "🙂bcd",
+        1
+      ],
+      "expect": "🙂"
+    }
+  ]
+}

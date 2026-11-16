@@ -1,0 +1,188 @@
+{
+  "lib": "lib-mailbox",
+  "module": "tests/contract-tools/units-shims/lib-mailbox.mjs",
+  "fn": "chooseFromJson",
+  "cases": [
+    {
+      "id": "no-callers-is-user",
+      "args": [
+        {
+          "callerAddresses": [],
+          "toTeam": "tm"
+        }
+      ],
+      "expect": {
+        "ok": "user"
+      }
+    },
+    {
+      "id": "one-caller",
+      "args": [
+        {
+          "callerAddresses": [
+            "a@tm"
+          ],
+          "toTeam": "ot"
+        }
+      ],
+      "expect": {
+        "ok": "a@tm"
+      }
+    },
+    {
+      "id": "several-pick-the-one-in-the-team",
+      "args": [
+        {
+          "callerAddresses": [
+            "orchestrator@tm",
+            "orchestrator@ot"
+          ],
+          "toTeam": "ot"
+        }
+      ],
+      "expect": {
+        "ok": "orchestrator@ot"
+      }
+    },
+    {
+      "id": "several-none-in-the-team",
+      "args": [
+        {
+          "callerAddresses": [
+            "orchestrator@tm",
+            "orchestrator@ot"
+          ],
+          "toTeam": "zz"
+        }
+      ],
+      "expect": {
+        "error": {
+          "code": "ambiguous_address",
+          "message": "this session has several addresses: orchestrator@tm, orchestrator@ot; pass --from <address>",
+          "candidates": [
+            "orchestrator@tm",
+            "orchestrator@ot"
+          ]
+        }
+      }
+    },
+    {
+      "id": "several-two-in-the-team",
+      "args": [
+        {
+          "callerAddresses": [
+            "a@tm",
+            "b@tm"
+          ],
+          "toTeam": "tm"
+        }
+      ],
+      "expect": {
+        "error": {
+          "code": "ambiguous_address",
+          "message": "this session has several addresses: a@tm, b@tm; pass --from <address>",
+          "candidates": [
+            "a@tm",
+            "b@tm"
+          ]
+        }
+      }
+    },
+    {
+      "id": "explicit-one-of-the-callers",
+      "args": [
+        {
+          "callerAddresses": [
+            "orchestrator@tm",
+            "orchestrator@ot"
+          ],
+          "toTeam": "ot",
+          "explicit": "orchestrator@tm"
+        }
+      ],
+      "expect": {
+        "ok": "orchestrator@tm"
+      }
+    },
+    {
+      "id": "explicit-not-one-of-the-callers",
+      "args": [
+        {
+          "callerAddresses": [
+            "a@tm"
+          ],
+          "toTeam": "tm",
+          "explicit": "b@tm"
+        }
+      ],
+      "expect": {
+        "error": {
+          "code": "bad_request",
+          "message": "--from b@tm is not one of this session's addresses: a@tm"
+        }
+      }
+    },
+    {
+      "id": "explicit-user-without-addresses",
+      "args": [
+        {
+          "callerAddresses": [],
+          "toTeam": "tm",
+          "explicit": "user"
+        }
+      ],
+      "expect": {
+        "ok": "user"
+      }
+    },
+    {
+      "id": "explicit-other-without-addresses",
+      "args": [
+        {
+          "callerAddresses": [],
+          "toTeam": "tm",
+          "explicit": "a@tm"
+        }
+      ],
+      "expect": {
+        "error": {
+          "code": "bad_request",
+          "message": "--from a@tm: this session has no address; only --from user is allowed"
+        }
+      }
+    },
+    {
+      "id": "explicit-user-with-addresses-is-refused",
+      "args": [
+        {
+          "callerAddresses": [
+            "a@tm"
+          ],
+          "toTeam": "tm",
+          "explicit": "user"
+        }
+      ],
+      "expect": {
+        "error": {
+          "code": "bad_request",
+          "message": "--from user is not one of this session's addresses: a@tm"
+        }
+      }
+    },
+    {
+      "id": "team-suffix-must-match-exactly",
+      "args": [
+        {
+          "callerAddresses": [
+            "a@xtm",
+            "b@tm"
+          ],
+          "toTeam": "tm"
+        }
+      ],
+      "expect": {
+        "ok": "b@tm"
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "session_id": "sess-contract",
+  "address": "orchestrator@tm",
+  "addresses": [
+    "orchestrator@tm"
+  ],
+  "boxes": {
+    "orchestrator@tm": "<ROOT:ah>/mailbox/tm~fixture/orchestrator"
+  },
+  "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+  "harness": "claude",
+  "pid": <PID:runner>,
+  "pid_start": "<PIDSTART:runner>",
+  "pane_id": null,
+  "cwd": "<ROOT:proj>",
+  "at": "2026-01-01T00:00:00.000Z"
+}

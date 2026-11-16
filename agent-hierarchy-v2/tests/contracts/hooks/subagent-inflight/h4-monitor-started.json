@@ -1,0 +1,54 @@
+{
+  "kind": "hook",
+  "id": "h4-monitor-started",
+  "about": "a Monitor is recorded started under its task id",
+  "tree": "hook-owes-response",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Monitor",
+      "tool_input": {},
+      "tool_response": {
+        "taskId": "mon-1"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "monitor not recorded",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/agent-hierarchy.peer-records.state/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"<OPID:1>\",\"at\":\"<ISO:3>\",\"result\":{\"ok\":true}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": [
+        {
+          "path": "home/.claude/agent-hierarchy.peer-pending.jsonl",
+          "mode": "0644",
+          "content": "{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"pending\",\"nudges\":0,\"msg\":\"<ROOT:proj>/.claude/hierarchy/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:1>\"}\n{\"type\":\"subagent\",\"session_id\":\"sess-contract\",\"agent_id\":\"mon-1\",\"status\":\"started\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ]
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:40.321Z"
+  }
+}

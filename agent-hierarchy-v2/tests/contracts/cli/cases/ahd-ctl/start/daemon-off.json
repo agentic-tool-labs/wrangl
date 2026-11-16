@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "daemon-off",
+  "about": "start with AH_DAEMON=off refuses and says so",
+  "tree": null,
+  "env": {
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "start"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"source\":\"files\",\"error\":{\"code\":\"daemon_unavailable\",\"message\":\"AH_DAEMON=off\"}}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a start that spawns with the daemon off",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.810Z"
+  }
+}

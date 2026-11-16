@@ -1,0 +1,367 @@
+.looks-pv,
+:root {
+  color-scheme: dark;
+  --bg: #0f1113;
+  --bar: #14171a;
+  --side: #121518;
+  --control: #1b1f23;
+  --tab-on: #23292f;
+  --row-sel: #1d232a;
+  --row-hi: #171b1f;
+  --line: #262b31;
+  --line-row: #1f2429;
+  --line-control: #2c3238;
+  --edge: #2a3037;
+  --ink: #e4e7ea;
+  --ink-2: #b6bec6;
+  --muted: #8a939d;
+  --dim: #7a838d;
+  --accent: #4c9aff;
+  --on-accent: #0b1220;
+  --working: #8fc1ff;
+  --review: #c9a2ff;
+  --review-edge: #b38bff;
+  --attn: #f0b44c;
+  --err: #f26d6d;
+  --err-ink: #e7a3a3;
+  --err-line: #3a2224;
+  --tint-working: color-mix(in srgb, var(--working) 12%, var(--bg));
+  --tint-review: color-mix(in srgb, var(--review) 12%, var(--bg));
+  --tint-lane: color-mix(in srgb, var(--ink) 6%, transparent);
+  --tint-attn: color-mix(in srgb, var(--attn) 12%, var(--bg));
+  --tint-err: color-mix(in srgb, var(--err) 12%, var(--bg));
+  --err-bg: var(--tint-err);
+  --role-orchestrator: var(--ink);
+  --role-sub-orchestrator: #a9a4f2;
+  --role-architect: #3cc8b4;
+  --role-implementor: #56c8e8;
+  --role-ux-engineer: #fa9d68;
+  --role-reviewer: #e47bd1;
+  --role-ultra-advisor: #c9cf55;
+  --role-qa: #9ccf5a;
+  --role-neutral: #a7b0ba;
+  --brief-bg: #17140e;
+  --ok: #45b26b;
+  --tool-bg: #15191d;
+  --tool-line: #23292f;
+  --shadow-pop: 0 8px 24px rgba(0,0,0,.45);
+  /* the Board (board-r2): the mock's 28px grid backdrop, the column pane, and the floating card (shadow plus a 1px top highlight) */
+  --board-grid: rgb(255 255 255 / .04);
+  --kb-col: rgb(20 23 26 / .72);
+  --kb-card: #1a1e23;
+  --kb-card-shadow: 0 10px 24px rgb(0 0 0 / .5), 0 2px 6px rgb(0 0 0 / .35), inset 0 1px 0 rgb(255 255 255 / .07);
+  --board-grid-bg: linear-gradient(to right, var(--board-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px);
+  --overlay: rgba(0,0,0,.6);
+  --dialog-glass-fill: rgb(20 23 26 / .78);
+  --dialog-glass-blur: 16px;
+  --mock-bg: repeating-linear-gradient(45deg, #b45309, #b45309 12px, #92400e 12px, #92400e 24px);
+  --mock-ink: #ffffff;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-15: 15px;
+  --text-18: 18px;
+  --text-22: 22px;
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-24: 24px;
+  --radius: 4px;
+  --radius-pane: 6px;
+  --radius-card: var(--radius-pane);
+  --radius-dot: 50%;
+  --t-fast: 120ms cubic-bezier(.2, 0, 0, 1);
+
+  /* The names the view stylesheets use, mapped onto the tokens above. */
+  --font-sans: var(--font-ui);
+  --text-10: var(--text-11);
+  --text-14: var(--text-13);
+  --text-20: var(--text-18);
+  --page: var(--bg);
+  --page-glow: var(--bg);
+  --grid: var(--line-row);
+  --bar-bg: var(--bar);
+  --panel-bg: var(--side);
+  --sheet-bg: var(--bar);
+  --surface-1: var(--side);
+  --surface-2: var(--bar);
+  --surface-3: var(--control);
+  --surface-hover: var(--row-hi);
+  --surface-hover-2: var(--row-hi);
+  --surface-code: var(--tool-bg);
+  --on-control: var(--tab-on);
+  --on-control-ring: var(--line-control);
+  --hover-bg: var(--bar);
+  --line-soft: var(--line-row);
+  --line-strong: var(--line-control);
+  --line-hover: var(--line-control);
+  --ink-strong: var(--ink);
+  --ink-value: var(--ink);
+  --ink-3: var(--ink-2);
+  --muted-2: var(--muted);
+  --accent-ink: var(--accent);
+  --link: var(--accent);
+  --link-hover: var(--working);
+  --idle: var(--dim);
+  --blocked: var(--attn);
+  --blocked-ink: var(--attn);
+  --gone: var(--err-ink);
+  --overdue: var(--err-ink);
+  --overdue-bg: var(--err-bg);
+  --live: var(--ok);
+  --ok-bg: var(--tool-bg);
+  --k-brief: var(--attn);
+  --k-brief-bg: var(--brief-bg);
+  --k-brief-mark: var(--attn);
+  --k-response: var(--review);
+  --k-response-bg: var(--tool-bg);
+  --k-response-mark: var(--review);
+  --k-report: var(--attn);
+  --k-report-bg: var(--brief-bg);
+  --k-report-mark: var(--attn);
+  --working-mark: var(--working);
+  --blocked-mark: var(--blocked);
+  --brief-mark: var(--k-brief-mark);
+  --report-mark: var(--k-report-mark);
+  --idle-mark: var(--idle);
+  --diff-add: var(--ok);
+  --diff-add-bg: var(--tool-bg);
+  --diff-del: var(--err);
+  --diff-del-bg: var(--err-bg);
+  --pill-idle: var(--ink-2);
+  --pill-idle-bg: var(--control);
+  --pill-working: var(--working);
+  --pill-working-bg: var(--row-sel);
+  --pill-blocked: var(--attn);
+  --pill-blocked-bg: var(--brief-bg);
+  --edge-live: var(--accent);
+  --ring: var(--accent);
+  --label-halo: var(--bg);
+  --shadow-panel: none;
+  --shadow-control: none;
+  --shadow-hover: var(--shadow-pop);
+  --shadow-sheet: var(--shadow-pop);
+  --swatch-1: var(--accent);
+  --swatch-2: var(--review);
+  --swatch-3: var(--ok);
+  --orb-working: var(--accent);
+  --orb-working-start: var(--accent);
+  --orb-working-middle: var(--accent);
+  --orb-working-end: var(--accent);
+  --orb-idle: var(--dim);
+  --orb-idle-start: var(--dim);
+  --orb-idle-middle: var(--dim);
+  --orb-idle-end: var(--dim);
+  --orb-blocked: var(--attn);
+  --orb-blocked-start: var(--attn);
+  --orb-blocked-middle: var(--attn);
+  --orb-blocked-end: var(--attn);
+  --hub: var(--accent);
+  --orb-hub-start: var(--accent);
+  --orb-hub-middle: var(--accent);
+  --orb-hub-blue: var(--accent);
+  --orb-hub-end: var(--accent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #ffffff;
+    --bar: #f6f7f9;
+    --side: #f3f4f6;
+    --control: #eef0f3;
+    --tab-on: #e3e6ea;
+    --row-sel: #e8f0fd;
+    --row-hi: #f6f8fa;
+    --line: #d8dce2;
+    --line-row: #e6e9ed;
+    --line-control: #c9ced5;
+    --edge: #c9ced5;
+    --ink: #1b1f24;
+    --ink-2: #3d444d;
+    --muted: #59626e;
+    --dim: #676e77;
+    --accent: #0963ce;
+    --on-accent: #ffffff;
+    --working: #0963ce;
+    --review: #794acf;
+    --review-edge: #794acf;
+    --attn: #8c5e00;
+    --err: #c8212c;
+    --err-ink: #c8212c;
+    --err-line: #ffcecb;
+    --tint-working: color-mix(in srgb, var(--working) 9%, var(--bg));
+    --tint-review: color-mix(in srgb, var(--review) 9%, var(--bg));
+    --tint-lane: color-mix(in srgb, var(--ink) 5%, transparent);
+    --tint-attn: color-mix(in srgb, var(--attn) 10%, var(--bg));
+    --tint-err: color-mix(in srgb, var(--err) 9%, var(--bg));
+    --role-architect: #0b7a6c;
+    --role-implementor: #0a7290;
+    --role-ux-engineer: #9b4805;
+    --role-reviewer: #a8308f;
+    --role-ultra-advisor: #6b7010;
+    --role-sub-orchestrator: #5448c4;
+    --role-qa: #4a7812;
+    --role-neutral: #5d6670;
+    --brief-bg: #fff8e5;
+    --ok: #187734;
+    --tool-bg: #f6f8fa;
+    --tool-line: #d8dce2;
+    --shadow-pop: 0 8px 24px rgba(31,35,40,.15);
+    --board-grid: rgb(15 23 42 / .06);
+    --kb-col: rgb(246 247 249 / .78);
+    --kb-card: #ffffff;
+    --kb-card-shadow: 0 12px 28px rgb(15 23 42 / .08), 0 2px 8px rgb(15 23 42 / .05), inset 0 1px 0 #ffffff, inset 0 -1px 1px rgb(15 23 42 / .06);
+    --overlay: rgba(31,35,40,.4);
+    --dialog-glass-fill: rgb(246 247 249 / .92);
+    --working-mark: var(--accent);
+    --blocked-mark: var(--attn);
+    --brief-mark: var(--attn);
+    --report-mark: var(--attn);
+    --idle-mark: var(--dim);
+  }
+}
+
+.looks-pv[data-theme="light"],
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bar: #f6f7f9;
+  --side: #f3f4f6;
+  --control: #eef0f3;
+  --tab-on: #e3e6ea;
+  --row-sel: #e8f0fd;
+  --row-hi: #f6f8fa;
+  --line: #d8dce2;
+  --line-row: #e6e9ed;
+  --line-control: #c9ced5;
+  --edge: #c9ced5;
+  --ink: #1b1f24;
+  --ink-2: #3d444d;
+  --muted: #59626e;
+  --dim: #676e77;
+  --accent: #0963ce;
+  --on-accent: #ffffff;
+  --working: #0963ce;
+  --review: #794acf;
+  --review-edge: #794acf;
+  --attn: #8c5e00;
+  --err: #c8212c;
+  --err-ink: #c8212c;
+  --err-line: #ffcecb;
+  --tint-working: color-mix(in srgb, var(--working) 9%, var(--bg));
+  --tint-review: color-mix(in srgb, var(--review) 9%, var(--bg));
+  --tint-lane: color-mix(in srgb, var(--ink) 5%, transparent);
+  --tint-attn: color-mix(in srgb, var(--attn) 10%, var(--bg));
+  --tint-err: color-mix(in srgb, var(--err) 9%, var(--bg));
+  --role-architect: #0b7a6c;
+  --role-implementor: #0a7290;
+  --role-ux-engineer: #9b4805;
+  --role-reviewer: #a8308f;
+  --role-ultra-advisor: #6b7010;
+  --role-sub-orchestrator: #5448c4;
+  --role-qa: #4a7812;
+  --role-neutral: #5d6670;
+  --brief-bg: #fff8e5;
+  --ok: #187734;
+  --tool-bg: #f6f8fa;
+  --tool-line: #d8dce2;
+  --shadow-pop: 0 8px 24px rgba(31,35,40,.15);
+  --board-grid: rgb(15 23 42 / .06);
+  --kb-col: rgb(246 247 249 / .78);
+  --kb-card: #ffffff;
+  --kb-card-shadow: 0 12px 28px rgb(15 23 42 / .08), 0 2px 8px rgb(15 23 42 / .05), inset 0 1px 0 #ffffff, inset 0 -1px 1px rgb(15 23 42 / .06);
+  --overlay: rgba(31,35,40,.4);
+  --dialog-glass-fill: rgb(246 247 249 / .92);
+  --working-mark: var(--accent);
+  --blocked-mark: var(--attn);
+  --brief-mark: var(--attn);
+  --report-mark: var(--attn);
+  --idle-mark: var(--dim);
+}
+
+/* A look's role settings stop here: the preview shows only what its own look sets, never the app's. */
+.looks-pv {
+  --type-card-title-font: initial; --type-card-title-weight: initial; --type-card-title-style: initial; --type-card-title-size: initial;
+  --type-column-heading-font: initial; --type-column-heading-weight: initial; --type-column-heading-style: initial; --type-column-heading-size: initial;
+  --type-panel-heading-font: initial; --type-panel-heading-weight: initial; --type-panel-heading-style: initial; --type-panel-heading-size: initial;
+  --type-table-heading-font: initial; --type-table-heading-weight: initial; --type-table-heading-style: initial; --type-table-heading-size: initial;
+  --type-tab-font: initial; --type-tab-weight: initial; --type-tab-style: initial; --type-tab-size: initial;
+  --type-details-font: initial; --type-details-weight: initial; --type-details-style: initial; --type-details-size: initial;
+  --type-code-font: initial; --type-code-weight: initial; --type-code-style: initial; --type-code-size: initial;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url(/ui/fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2");
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-13);
+  line-height: 1.385;
+  font-weight: 400;
+}
+
+main, .page {
+  max-width: 96rem;
+  margin: 0 auto;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+pre, code, kbd {
+  font-family: var(--font-mono);
+}
+
+pre {
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+}
+
+p {
+  line-height: 1.5;
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* The show-internal control (msg-filter.js). */
+.internal-toggle { flex: none; align-self: flex-start; min-height: 24px; white-space: nowrap; font-variant-numeric: tabular-nums; }

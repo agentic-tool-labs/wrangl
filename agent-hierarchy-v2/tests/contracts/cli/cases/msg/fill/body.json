@@ -1,0 +1,39 @@
+{
+  "kind": "cli",
+  "id": "body",
+  "about": "fill replaces the response body and keeps the frontmatter",
+  "tree": "cli-msgs-session",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "fill",
+      "--id",
+      "20260101-000000-aaaa",
+      "--from",
+      "implementor",
+      "--req",
+      "<ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-aaaa--implementor--sample-a--request.md",
+      "--body",
+      "\"## [0] tldr\\n- done\\n\""
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"id\":\"<MSGID:1>\",\"type\":\"response\",\"path\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--sample-a--response.md\",\"rev\":1,\"bytes\":263}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a fill that rewrites the frontmatter",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.058Z"
+  }
+}

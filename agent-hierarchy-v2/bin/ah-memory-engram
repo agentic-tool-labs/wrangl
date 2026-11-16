@@ -1,0 +1,129 @@
+#!/bin/sh
+# agent-hierarchy: bin/ah-memory-engram record — the memory adapter for Engram. ahd runs it once per batch of ledger lines, the lines
+# newline-separated on stdin; exit 0 means every line is stored, anything else means ahd resends the whole batch later. POSIX sh and
+# sed -E; nothing is read back.
+#   AH_MEMORY_REPO, AH_MEMORY_TEAM   the repo and team the lines belong to (set by ahd)
+#   AH_MEMORY_ENGRAM_HOME            an Engram home to write to instead of the default (tests)
+# The write goes through one `engram export` (for the bundle header) and one `engram import --apply` with a bundle of one fact per
+# line. Engram refuses a second belief on one subject and predicate, so each subject carries a checksum of its line: storing the same
+# line twice is a no-op, and two lines never collide. A line with no kind is skipped. Each field is cut from the whole batch by one
+# sed run rather than from every line by its own, and the checksums come from a few cksum runs over all the lines, so the number of
+# processes a batch costs does not grow with its size.
+set -u
+
+[ "${1:-}" = record ] || { echo "usage: ah-memory-engram record   (ledger lines on stdin)" >&2; exit 2; }
+command -v engram >/dev/null 2>&1 || { echo "ah-memory-engram: engram is not on PATH" >&2; exit 75; }
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/ah-memory.XXXXXX") || exit 75
+[ -n "$tmp" ] || exit 75
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 75' HUP INT TERM
+
+grep -v '^$' > "$tmp/lines"
+[ -s "$tmp/lines" ] || exit 0
+
+# One output line per input line: the last "key":"value" string of that line, or an empty line when it has none.
+fields() { sed -E -e "s/.*\"$1\":\"(([^\"\\\\]|\\\\.)*)\".*/\\1/" -e t -e 's/.*//' "$tmp/lines"; }
+slug() { tr -c 'A-Za-z0-9._\n-' '-'; }
+
+fields kind > "$tmp/kind" || exit 75
+slug < "$tmp/kind" > "$tmp/kind-clean" || exit 75
+fields team | slug > "$tmp/team" || exit 75
+fields stream | slug > "$tmp/stream" || exit 75
+fields ref > "$tmp/ref" || exit 75
+fields slug > "$tmp/slug" || exit 75
+fields sha | cut -c1-7 > "$tmp/sha" || exit 75
+fields text > "$tmp/text" || exit 75
+
+repo=$(printf '%s' "${AH_MEMORY_REPO:-repo}" | tr -c 'A-Za-z0-9._-' '-')
+fixed_team=
+[ -z "${AH_MEMORY_TEAM:-}" ] || fixed_team=$(printf '%s' "$AH_MEMORY_TEAM" | tr -c 'A-Za-z0-9._-' '-')
+now=$(date +%s)
+records=0
+
+# The field files line up row by row; paste joins them with a separator that is not whitespace, so empty fields survive the read.
+# A JSON string cannot hold a raw control character, so the separator never occurs inside a field.
+us=$(printf '\037')
+paste -d "$us" "$tmp/lines" "$tmp/kind" "$tmp/kind-clean" "$tmp/team" "$tmp/stream" "$tmp/ref" "$tmp/slug" "$tmp/sha" "$tmp/text" > "$tmp/rows" || exit 75
+
+# The checksum of every line in one pass: each line goes to a file of its own, without its newline, and xargs hands the files to as few
+# cksum runs as the argument limit allows. That is one process per batch instead of two per line, which dominated a large batch.
+mkdir "$tmp/sum" || exit 75
+n=0
+while IFS= read -r one; do
+  n=$((n + 1))
+  printf '%s' "$one" > "$tmp/sum/$n" || exit 75
+  printf '%s\0' "$tmp/sum/$n"
+done < "$tmp/lines" | xargs -0 cksum > "$tmp/sums" || exit 75
+# A failed or short checksum run would give lines the wrong subjects for good, so the count must match the lines.
+[ $(($(wc -l < "$tmp/sums"))) -eq $(($(wc -l < "$tmp/lines"))) ] || exit 75
+exec 3< "$tmp/sums"
+
+while IFS=$us read -r line kind kind_clean team stream ref slugv sha7 text; do
+  read -r uniq _ <&3
+  [ -n "$kind" ] || { echo "ah-memory-engram: skipping a line with no kind" >&2; continue; }
+  [ -z "$fixed_team" ] || team=$fixed_team
+  subject=$ref
+  [ -n "$subject" ] || subject=$slugv
+
+  body="$kind${subject:+ $subject}${sha7:+ $sha7}: $text"
+  fact_subject="/ah2/$repo/$team/$kind_clean/$uniq"
+  tags="ah2 ledger kind=$kind_clean team=$team${stream:+ stream=$stream}"
+
+  printf '{"subject":"%s","kind":"concept","predicate":"records","body":"%s","object":null,"object_kind":null,"scope":"user","learned_via":"stated","regenerable":false,"evidence":"%s","valid_from":%s,"valid_to":null,"superseded_by":null,"reason":null,"created_at":%s,"details":null}\n' \
+    "$fact_subject" "$body" "$tags" "$now" "$now" >> "$tmp/records.jsonl"
+  records=$((records + 1))
+done < "$tmp/rows"
+
+[ "$records" -gt 0 ] || exit 0
+
+home_flag=
+[ -z "${AH_MEMORY_ENGRAM_HOME:-}" ] || home_flag="--home $AH_MEMORY_ENGRAM_HOME"
+
+# The bundle header comes from an export, which on a large database costs most of a run. It changes only when the engram binary does,
+# so a header seen to import cleanly is kept in AH_MEMORY_CACHE_DIR, keyed on the binary's path, size and date and on the home, and
+# used until that key changes. An import that refuses a cached header drops it, exports once and tries again.
+fallback='{"format":"engram-facts","format_version":1,"schema_version":19}'
+engram_bin=$(command -v engram)
+key="$engram_bin $home_flag $(ls -ln "$engram_bin" 2>/dev/null)"
+cache=
+[ -z "${AH_MEMORY_CACHE_DIR:-}" ] || cache="$AH_MEMORY_CACHE_DIR/engram-header"
+
+header=
+if [ -n "$cache" ] && [ -f "$cache" ] && [ "$(sed -n 1p "$cache")" = "$key" ]; then
+  header=$(sed -n 2p "$cache")
+fi
+cached=0
+[ -z "$header" ] || cached=1
+
+export_header() {
+  # shellcheck disable=SC2086
+  header=$(engram $home_flag export --path /ah2/.none 2>/dev/null | head -n 1)
+  exported=1
+  [ -n "$header" ] || { header=$fallback; exported=0; }
+}
+import_bundle() {
+  { printf '%s\n' "$header"; cat "$tmp/records.jsonl"; } > "$tmp/bundle.jsonl"
+  # shellcheck disable=SC2086
+  engram $home_flag import "$tmp/bundle.jsonl" --apply >"$tmp/out" 2>&1
+}
+
+exported=0
+[ "$cached" = 1 ] || export_header
+if ! import_bundle; then
+  if [ "$cached" = 1 ]; then
+    rm -f "$cache"
+    export_header
+    import_bundle || { cat "$tmp/out" >&2; exit 1; }
+  else
+    cat "$tmp/out" >&2
+    exit 1
+  fi
+fi
+
+if [ -n "$cache" ] && [ "$exported" = 1 ]; then
+  mkdir -p "$AH_MEMORY_CACHE_DIR" 2>/dev/null && printf '%s\n%s\n' "$key" "$header" > "$cache.$$" 2>/dev/null && mv -f "$cache.$$" "$cache" 2>/dev/null
+fi
+# "left out" means Engram already holds a belief on that subject. Each subject is unique to its line, so that belief is the line,
+# stored by an earlier try whose exit status ahd never saw.
+exit 0

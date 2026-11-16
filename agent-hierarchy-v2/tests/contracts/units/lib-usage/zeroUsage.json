@@ -1,0 +1,18 @@
+{
+  "lib": "lib-usage",
+  "module": "hooks/lib-usage.mjs",
+  "fn": "zeroUsage",
+  "cases": [
+    {
+      "id": "zeros",
+      "args": [],
+      "expect": {
+        "calls": 0,
+        "in": 0,
+        "out": 0,
+        "cache_read": 0,
+        "cache_create": 0
+      }
+    }
+  ]
+}

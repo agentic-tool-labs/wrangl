@@ -1,0 +1,70 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "HARNESS_NAME_RE",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "my-harness"
+      ],
+      "expect": true
+    },
+    {
+      "id": "min-2",
+      "args": [
+        "ab"
+      ],
+      "expect": true
+    },
+    {
+      "id": "one-char",
+      "args": [
+        "a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "max-32",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": true
+    },
+    {
+      "id": "33",
+      "args": [
+        "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expect": false
+    },
+    {
+      "id": "upper",
+      "args": [
+        "Ab"
+      ],
+      "expect": false
+    },
+    {
+      "id": "underscore",
+      "args": [
+        "a_b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "ab\n"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": false
+    }
+  ]
+}

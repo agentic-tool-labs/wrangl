@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "LANDED_QUIET_MS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 120000
+    }
+  ]
+}

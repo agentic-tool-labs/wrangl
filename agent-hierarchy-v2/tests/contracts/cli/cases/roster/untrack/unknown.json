@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "unknown",
+  "about": "untrack of a name the owner's team does not track answers already_untracked with the team id and the name, exits 0 and changes nothing",
+  "tree": "wire-tm-owner",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "untrack",
+      "nope"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"untracked\": false,\n  \"already_untracked\": true,\n  \"team_id\": \"t-tm\",\n  \"member\": \"nope\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an untrack of a name the team does not track removes a row or refuses",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:55.103Z"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "appendDispatchRecord",
+  "cases": [
+    {
+      "id": "minimal",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa",
+        "architect"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "dispatch",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "to": "architect",
+              "created": "2026-06-01T12:00:00.000Z",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "with-path-and-address",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa",
+        "architect",
+        "/p/x--request.md",
+        "w@t"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "dispatch",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "to": "architect",
+              "path": "/p/x--request.md",
+              "to_addr": "w@t",
+              "created": "2026-06-01T12:00:00.000Z",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "empty-path-dropped",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa",
+        "architect",
+        "",
+        ""
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "dispatch",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "to": "architect",
+              "created": "2026-06-01T12:00:00.000Z",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "null-path-dropped",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa",
+        "architect",
+        null,
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": {
+          "$jsonl": [
+            {
+              "type": "dispatch",
+              "session_id": "s1",
+              "request_id": "20260601-000001-aaaa",
+              "to": "architect",
+              "created": "2026-06-01T12:00:00.000Z",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

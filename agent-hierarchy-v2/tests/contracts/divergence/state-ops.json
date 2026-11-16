@@ -1,0 +1,22 @@
+{
+  "about": "State-op rows whose recorded answer is Node's in-process writer and which native serves differently.",
+  "rows": [
+    {
+      "id": "F5-mailbox-state-ops-not-served",
+      "where": "Ah.State StateService.InvokeAsync, the mailbox domain (ack, append, attempt, heartbeat, register, unregister)",
+      "node": "the recorded answer is the in-process writer's: the operation runs and answers its result",
+      "native": "the mailbox state operations are daemon:false, so the route and the one-shot verb both answer bad_request `mailbox.<op> is not served by the daemon`",
+      "reason": "0115 F5: mailbox state ops are daemon:false (accepted), Node recorded its in-process writer",
+      "rowsExercisingNode": [
+        "state-op/mailbox/ack",
+        "state-op/mailbox/ack-twice",
+        "state-op/mailbox/append",
+        "state-op/mailbox/attempt",
+        "state-op/mailbox/heartbeat",
+        "state-op/mailbox/register",
+        "state-op/mailbox/unregister",
+        "state-op/mailbox/unregister-absent"
+      ]
+    }
+  ]
+}

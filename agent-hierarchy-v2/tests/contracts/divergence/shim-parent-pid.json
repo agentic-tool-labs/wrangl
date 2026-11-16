@@ -1,0 +1,51 @@
+{
+  "about": "Where the native hook lane intentionally differs from the Node oracle because of the Node shim, not because of a unit. Under the shim (hooks/lib-dispatch.mjs) the native binary's parent is the shim process, so a unit that compares or records the parent pid sees the shim, where Node sees the Claude process. Production hooks.json executes the binary directly (0114 Z), so ParentPid is the Claude process there; the shim is a test-only seam. Proven natively by Ah.Cli.Tests DirectExecParentPidTests.",
+  "ruling": "orchestrator note 20261011-200656-1ccu (2): register the ppid-dependent rows here, and one native-only row proves ParentPid is the parent under a direct exec.",
+  "appliesTo": "hook lane, --impl native, through the Node shim",
+  "dependsOn": [
+    "an up record's pid compared with the ending process's parent (sessionend-roster foreignEnd)",
+    "a team's orchestrator pid matched against the parent pid when the event carries no session id (ownedTeams: sessionend-roster, sessionstart, activity, stopfailure-recovery)",
+    "the pid recorded on a roster, session-pid or registration row (normalized as <PID> in the recorded rows, so equal under the shim)"
+  ],
+  "rowsExercisingNode": [
+    {
+      "row": "hook/sessionend-roster/h3-down-from-up-record",
+      "node": "up record pid equals the parent pid: the ender is the registered process",
+      "shim": "the parent is the shim: foreign end if the runner is alive",
+      "handled": "case uses a dead registered pid so both implementations record down"
+    },
+    {
+      "row": "hook/sessionend-roster/h3-down-pane-from-env",
+      "node": "as above",
+      "shim": "as above",
+      "handled": "case uses a dead registered pid"
+    },
+    {
+      "row": "hook/sessionend-roster/h3-no-session-id",
+      "node": "the team's orchestrator pid equals the parent pid: the team is owned and a snapshot is written",
+      "shim": "no owner by pid: no snapshot",
+      "handled": "case uses a tree with no team file"
+    },
+    {
+      "row": "hook/sessionstart/h3-no-session-id",
+      "node": "the team resolves as the caller's own by pid: the state block names it",
+      "shim": "the team is not recognised as the caller's",
+      "handled": "case uses a tree with no team file"
+    },
+    {
+      "row": "hook/sessionstart/h3-legacy-live-team-kept",
+      "node": "the default team's orchestrator pid is the runner, which is alive: the status file lists the team as live",
+      "shim": "the orchestrator pid is not this process's parent, so the status file's liveness differs",
+      "handled": "excluded under this ledger's excludedCases; the same unit's own-team and stale-team rows cover the sweep rule"
+    }
+  ],
+  "nativeOnly": [
+    {
+      "row": "Ah.Cli.Tests DirectExecParentPidTests.AHookRunDirectlyRecordsTheCallingProcessAsItsParent",
+      "proves": "a hook run by direct exec of the binary records the calling process as its parent pid"
+    }
+  ],
+  "excludedCases": [
+    "hook/sessionstart/h3-legacy-live-team-kept"
+  ]
+}

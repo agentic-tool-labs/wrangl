@@ -1,0 +1,473 @@
+{
+  "lib": "lib-gate",
+  "module": "hooks/lib-gate.mjs",
+  "fn": "write",
+  "cases": [
+    {
+      "id": "new-file-each",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "with-cwd",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "session",
+          "cwd": "/work"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"session\",\n      \"at\": \"2026-03-04T05:06:07.089Z\",\n      \"cwd\": \"/work\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "empty-cwd-omitted",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "off",
+          "cwd": ""
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"off\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "overwrite",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "off",
+          "cwd": "/w2"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"old\",\n      \"cwd\": \"/w\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"off\",\n      \"at\": \"2026-03-04T05:06:07.089Z\",\n      \"cwd\": \"/w2\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "second-session-appended",
+      "args": [
+        {
+          "session_id": "s2",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"old\"\n    },\n    \"s2\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "no-session-key",
+      "args": [
+        {
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "null-session",
+      "args": [
+        {
+          "session_id": null,
+          "choice": "off"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"choice\": \"off\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "padded-session",
+      "args": [
+        {
+          "session_id": " s1 ",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "invalid-choice",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "maybe"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": null
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "missing-choice",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": null
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "choice-number",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": 1
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": null
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "clear-existing",
+      "args": [
+        {
+          "session_id": "s1",
+          "clear": true
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"old\"\n    },\n    \"s2\": {\n      \"choice\": \"off\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s2\": {\n      \"choice\": \"off\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "removed": true
+      }
+    },
+    {
+      "id": "clear-missing",
+      "args": [
+        {
+          "session_id": "s9",
+          "clear": true
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "removed": false
+      }
+    },
+    {
+      "id": "clear-no-file",
+      "args": [
+        {
+          "session_id": "s1",
+          "clear": true
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": null
+      },
+      "expect": {
+        "removed": false
+      }
+    },
+    {
+      "id": "clear-string-true-is-not-clear",
+      "args": [
+        {
+          "session_id": "s1",
+          "clear": "true",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "clear-true-wins-over-choice",
+      "args": [
+        {
+          "session_id": "s1",
+          "clear": true,
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"off\",\n      \"at\": \"old\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {}\n}\n"
+      },
+      "expect": {
+        "removed": true
+      }
+    },
+    {
+      "id": "clear-null-entry",
+      "args": [
+        {
+          "session_id": "s1",
+          "clear": true
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": null\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": null\n  }\n}\n"
+      },
+      "expect": {
+        "removed": false
+      }
+    },
+    {
+      "id": "prune-oldest",
+      "args": [
+        {
+          "session_id": "new",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"new\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "no-prune-at-limit",
+      "args": [
+        {
+          "session_id": "s00",
+          "choice": "off"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"off\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "prune-ties-keep-file-order",
+      "args": [
+        {
+          "session_id": "new",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"k0\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k1\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k2\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k3\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k4\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k5\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k6\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k7\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k8\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k9\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k10\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k11\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k12\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k13\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k14\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k15\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k16\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k17\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k18\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k19\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k20\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k21\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k22\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k23\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k24\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k25\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k26\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k27\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k28\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k29\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k30\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k31\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k32\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k33\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k34\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k35\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k36\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k37\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k38\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k39\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k40\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k41\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k42\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k43\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k44\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k45\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k46\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k47\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k48\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k49\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"k0\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k1\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k2\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k3\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k4\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k5\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k6\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k7\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k8\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k9\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k10\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k11\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k12\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k13\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k14\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k15\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k16\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k17\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k18\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k19\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k20\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k21\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k22\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k23\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k24\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k25\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k26\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k27\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k28\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k29\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k30\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k31\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k32\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k33\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k34\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k35\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k36\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k37\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k38\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k39\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k40\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k41\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k42\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k43\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k44\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k45\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k46\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k47\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k48\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    },\n    \"k49\": {\n      \"choice\": \"each\",\n      \"at\": \"same\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "prune-entry-null-throws",
+      "args": [
+        {
+          "session_id": "new",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"bad\": null\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"bad\": null\n  }\n}\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "prune-missing-at-sorts-first",
+      "args": [
+        {
+          "session_id": "new",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s00\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:00.000Z\"\n    },\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"noat\": {\n      \"choice\": \"off\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s01\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:01.000Z\"\n    },\n    \"s02\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:02.000Z\"\n    },\n    \"s03\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:03.000Z\"\n    },\n    \"s04\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:04.000Z\"\n    },\n    \"s05\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:05.000Z\"\n    },\n    \"s06\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:06.000Z\"\n    },\n    \"s07\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:07.000Z\"\n    },\n    \"s08\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:08.000Z\"\n    },\n    \"s09\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:09.000Z\"\n    },\n    \"s10\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:10.000Z\"\n    },\n    \"s11\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:11.000Z\"\n    },\n    \"s12\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:12.000Z\"\n    },\n    \"s13\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:13.000Z\"\n    },\n    \"s14\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:14.000Z\"\n    },\n    \"s15\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:15.000Z\"\n    },\n    \"s16\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:16.000Z\"\n    },\n    \"s17\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:17.000Z\"\n    },\n    \"s18\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:18.000Z\"\n    },\n    \"s19\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:19.000Z\"\n    },\n    \"s20\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:20.000Z\"\n    },\n    \"s21\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:21.000Z\"\n    },\n    \"s22\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:22.000Z\"\n    },\n    \"s23\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:23.000Z\"\n    },\n    \"s24\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:24.000Z\"\n    },\n    \"s25\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:25.000Z\"\n    },\n    \"s26\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:26.000Z\"\n    },\n    \"s27\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:27.000Z\"\n    },\n    \"s28\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:28.000Z\"\n    },\n    \"s29\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:29.000Z\"\n    },\n    \"s30\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:30.000Z\"\n    },\n    \"s31\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:31.000Z\"\n    },\n    \"s32\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:32.000Z\"\n    },\n    \"s33\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:33.000Z\"\n    },\n    \"s34\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:34.000Z\"\n    },\n    \"s35\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:35.000Z\"\n    },\n    \"s36\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:36.000Z\"\n    },\n    \"s37\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:37.000Z\"\n    },\n    \"s38\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:38.000Z\"\n    },\n    \"s39\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:39.000Z\"\n    },\n    \"s40\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:40.000Z\"\n    },\n    \"s41\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:41.000Z\"\n    },\n    \"s42\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:42.000Z\"\n    },\n    \"s43\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:43.000Z\"\n    },\n    \"s44\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:44.000Z\"\n    },\n    \"s45\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:45.000Z\"\n    },\n    \"s46\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:46.000Z\"\n    },\n    \"s47\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:47.000Z\"\n    },\n    \"s48\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:48.000Z\"\n    },\n    \"s49\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-01-01T00:00:49.000Z\"\n    },\n    \"new\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "integer-like-session-ids",
+      "args": [
+        {
+          "session_id": "7",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\"version\":1,\"sessions\":{\"b\":{\"choice\":\"off\",\"at\":\"x\"},\"3\":{\"choice\":\"each\",\"at\":\"y\"}}}"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"3\": {\n      \"choice\": \"each\",\n      \"at\": \"y\"\n    },\n    \"7\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    },\n    \"b\": {\n      \"choice\": \"off\",\n      \"at\": \"x\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "newer-file-replaced",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 9,\n  \"sessions\": {\n    \"keep\": {\n      \"choice\": \"off\"\n    }\n  }\n}\n"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "corrupt-file-replaced",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "each"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {
+        "home/.claude/agent-hierarchy.gate.json": "{broken"
+      },
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "unicode-cwd",
+      "args": [
+        {
+          "session_id": "s1",
+          "choice": "each",
+          "cwd": "/w/é😀"
+        }
+      ],
+      "now": "2026-03-04T05:06:07.089Z",
+      "files": {},
+      "expectFiles": {
+        "home/.claude/agent-hierarchy.gate.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"choice\": \"each\",\n      \"at\": \"2026-03-04T05:06:07.089Z\",\n      \"cwd\": \"/w/é😀\"\n    }\n  }\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    }
+  ]
+}

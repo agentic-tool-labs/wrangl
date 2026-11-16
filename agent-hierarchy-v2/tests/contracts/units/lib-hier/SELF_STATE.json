@@ -1,0 +1,16 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "SELF_STATE",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": {
+        "UserPromptSubmit": "working",
+        "Stop": "idle",
+        "Notification": "blocked"
+      }
+    }
+  ]
+}

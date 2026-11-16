@@ -1,0 +1,114 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "resolveKind",
+  "cases": [
+    {
+      "id": "absent",
+      "args": [
+        {
+          "name": "a"
+        }
+      ],
+      "expect": "claude"
+    },
+    {
+      "id": "null-kind",
+      "args": [
+        {
+          "kind": null
+        }
+      ],
+      "expect": "claude"
+    },
+    {
+      "id": "codex",
+      "args": [
+        {
+          "kind": "codex"
+        }
+      ],
+      "expect": "codex"
+    },
+    {
+      "id": "empty-kind",
+      "args": [
+        {
+          "kind": ""
+        }
+      ],
+      "expect": ""
+    },
+    {
+      "id": "number-kind",
+      "args": [
+        {
+          "kind": 5
+        }
+      ],
+      "expect": 5
+    },
+    {
+      "id": "false-kind",
+      "args": [
+        {
+          "kind": false
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "member-null",
+      "args": [
+        null
+      ],
+      "expect": "claude"
+    },
+    {
+      "id": "member-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "claude"
+    },
+    {
+      "id": "member-empty-string",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "member-zero",
+      "args": [
+        0
+      ],
+      "expect": 0
+    },
+    {
+      "id": "member-false",
+      "args": [
+        false
+      ],
+      "expect": false
+    },
+    {
+      "id": "member-string",
+      "args": [
+        "abc"
+      ],
+      "expect": "claude"
+    },
+    {
+      "id": "member-array",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": "claude"
+    }
+  ]
+}

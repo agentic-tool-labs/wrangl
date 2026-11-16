@@ -1,0 +1,59 @@
+{
+  "kind": "wire",
+  "id": "state-write-repeat",
+  "about": "the same op_id twice runs once (idempotent)",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "subject": "s-impl",
+        "activity": "idle"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-2"
+    },
+    "path": "/v1/state/activity/record",
+    "before": [
+      {
+        "method": "POST",
+        "path": "/v1/state/activity/record",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "subject": "s-impl",
+            "activity": "idle"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-2"
+        }
+      }
+    ]
+  },
+  "expect": {
+    "status": 200,
+    "headers": {},
+    "json": {
+      "result": {
+        "written": true
+      }
+    }
+  },
+  "mutant": "a repeated op run twice",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:10.147Z"
+  }
+}

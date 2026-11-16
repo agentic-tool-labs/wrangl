@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "files",
+  "about": "status with no daemon answers from the files",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "status"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":true,\"source\":\"files\",\"up\":false,\"registrations\":[],\"overdue\":0,\"timers\":[],\"fallbacks\":{\"count\":0,\"last\":[]}}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a status that starts the daemon",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:39.885Z"
+  }
+}

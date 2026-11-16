@@ -1,0 +1,140 @@
+{
+  "slices": [
+    {
+      "id": "team:f28aaefa/mgr",
+      "body": {
+        "name": "mgr",
+        "dir_id": "f28aaefa",
+        "orchestrator": "member:f28aaefa/mgr/@orchestrator",
+        "members": [
+          "member:f28aaefa/mgr/dev",
+          "member:f28aaefa/mgr/gone"
+        ],
+        "plan": "plan:f28aaefa/mgr",
+        "pipeline": null,
+        "worktrees": [],
+        "streams": [
+          {
+            "name": "s1",
+            "state": "open",
+            "branch": "b-s1",
+            "base": "main",
+            "sub_orchestrator": "so-s1",
+            "lane": {
+              "max_members": 4,
+              "max_streams": 2
+            },
+            "child_team": "mgr-s1"
+          },
+          {
+            "name": "s2",
+            "state": "done",
+            "branch": "b-s2",
+            "base": "main",
+            "sub_orchestrator": "so-s2",
+            "lane": {
+              "max_members": 4,
+              "max_streams": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "team:f28aaefa/mgr-s1",
+      "body": {
+        "name": "mgr-s1",
+        "dir_id": "f28aaefa",
+        "orchestrator": "member:f28aaefa/mgr-s1/@orchestrator",
+        "members": [],
+        "plan": "plan:f28aaefa/mgr-s1",
+        "pipeline": null,
+        "worktrees": [],
+        "lane": {
+          "stream": "s1",
+          "parent_team": "mgr",
+          "state": "open",
+          "manager_rev": "f85fa77eb378",
+          "reported": {
+            "state": "working",
+            "summary": "working on it",
+            "updated": "2026-06-01T11:30:00Z",
+            "result": "merged"
+          }
+        }
+      }
+    },
+    {
+      "id": "member:f28aaefa/mgr/dev",
+      "body": {
+        "id": "member:f28aaefa/mgr/dev",
+        "name": "dev",
+        "role": "implementor",
+        "session": null,
+        "activity": null,
+        "liveness": {
+          "at": null,
+          "pid": null,
+          "pid_start": null,
+          "session_start": null
+        },
+        "placement": {
+          "transport_id": null,
+          "stream": null
+        },
+        "last_exchanges": [],
+        "last_report_at": null,
+        "node_path": "/t/f28aaefa/mgr/m/dev",
+        "column": 2,
+        "context_at": null,
+        "context_pct": null,
+        "context_text": "—",
+        "context_title": "context not reported",
+        "context_over": false,
+        "lead": {
+          "team": "mgr-s1",
+          "name": "so-s1"
+        },
+        "routes_to": {
+          "team": "mgr-s1",
+          "name": "orchestrator",
+          "via": "lead"
+        }
+      }
+    },
+    {
+      "id": "member:f28aaefa/mgr/gone",
+      "body": {
+        "id": "member:f28aaefa/mgr/gone",
+        "name": "gone",
+        "role": "implementor",
+        "session": null,
+        "activity": null,
+        "liveness": {
+          "at": null,
+          "pid": null,
+          "pid_start": null,
+          "session_start": null
+        },
+        "placement": {
+          "transport_id": null,
+          "stream": null
+        },
+        "last_exchanges": [],
+        "last_report_at": null,
+        "node_path": "/t/f28aaefa/mgr/m/gone",
+        "column": 2,
+        "context_at": null,
+        "context_pct": null,
+        "context_text": "—",
+        "context_title": "context not reported",
+        "context_over": false,
+        "routes_to": {
+          "team": "mgr",
+          "name": "orchestrator",
+          "via": "dissolved-lane"
+        }
+      }
+    }
+  ]
+}

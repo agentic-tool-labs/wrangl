@@ -1,0 +1,20 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "REQUEST_KEYS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "tldr",
+        "goal",
+        "context",
+        "constraints",
+        "files",
+        "acceptance",
+        "want_back"
+      ]
+    }
+  ]
+}

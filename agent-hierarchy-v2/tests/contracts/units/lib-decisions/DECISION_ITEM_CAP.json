@@ -1,0 +1,12 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "DECISION_ITEM_CAP",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 4
+    }
+  ]
+}

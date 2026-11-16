@@ -1,0 +1,1078 @@
+{
+  "version": 1,
+  "about": "The initial normalizer rule set. Each rule carries an example (in, out) and a counterexample (in) that must come out unchanged; tests/test-contract-normalize.sh checks both. A rule is added only when a recorded case proves it necessary, and a new rule needs the Reviewer's sign-off.",
+  "ignore_paths": [
+    "ah/logs/",
+    "ah/mailbox-notes/doorbell-trace/",
+    "ah/session-marks/",
+    "ah/run/*.lock",
+    "*.stale.*",
+    "*.tmp.*",
+    "ah/stall/ticks.json",
+    "ah/state/backups/",
+    ".domain.lock.*",
+    "*.db-wal",
+    "*.db-shm",
+    "ah/state/ah.db"
+  ],
+  "rules": [
+    {
+      "name": "root",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "context": "roots",
+      "replace": "<ROOT:name>",
+      "example": {
+        "ctx": {
+          "T": "/private/tmp/ahprobe.abc123",
+          "roots": {
+            "home": "/private/tmp/ahprobe.abc123/home",
+            "ah": "/private/tmp/ahprobe.abc123/ah",
+            "proj": "/private/tmp/ahprobe.abc123/proj"
+          }
+        },
+        "in": "wrote /tmp/ahprobe.abc123/ah/run/ahd.json and /private/tmp/ahprobe.abc123/proj/x under /private/tmp/ahprobe.abc123",
+        "out": "wrote <ROOT:ah>/run/ahd.json and <ROOT:proj>/x under <T>"
+      },
+      "counterexample": {
+        "in": "wrote /tmp/ahprobe.zzz999/ah/run/ahd.json and /private/tmp/ahprobe.abc123x/home/x"
+      }
+    },
+    {
+      "name": "plugin",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "context": "plugin",
+      "replace": "<PLUGIN>",
+      "example": {
+        "ctx": {
+          "plugin": "/opt/plugin-root/agent-hierarchy"
+        },
+        "in": "node /opt/plugin-root/agent-hierarchy/hooks/msg.mjs",
+        "out": "node <PLUGIN>/hooks/msg.mjs"
+      },
+      "counterexample": {
+        "in": "node /opt/other-root/agent-hierarchy/hooks/msg.mjs"
+      }
+    },
+    {
+      "name": "repo-root",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "context": "repo",
+      "replace": "<REPO>",
+      "example": {
+        "ctx": {
+          "repo": "/opt/plugin-root"
+        },
+        "in": "/opt/plugin-root has 3 changes; /opt/plugin-rootx is another",
+        "out": "<REPO> has 3 changes; /opt/plugin-rootx is another"
+      },
+      "counterexample": {
+        "in": "/opt/other-root has 3 changes"
+      }
+    },
+    {
+      "name": "plugin-version",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "context": "version",
+      "replace": "<VERSION>",
+      "example": {
+        "ctx": {
+          "version": "0.133.1"
+        },
+        "in": "ah CLI root (v0.133.1) and 0.133.1.",
+        "out": "ah CLI root (v<VERSION>) and <VERSION>."
+      },
+      "counterexample": {
+        "in": "0.133.10 and 10.133.1 and 0.133.1.2"
+      }
+    },
+    {
+      "name": "dev-version",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "\\b0\\.0\\.0-dev\\b",
+      "replace": "<VERSION>",
+      "example": {
+        "in": "\"ah_version\":\"0.0.0-dev\",",
+        "out": "\"ah_version\":\"<VERSION>\","
+      },
+      "counterexample": {
+        "in": "10.0.0-dev and 0.0.0-development and 0.0.1-dev"
+      }
+    },
+    {
+      "name": "runner-pid",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "context": "pid",
+      "replace": "<PID>",
+      "example": {
+        "ctx": {
+          "pid": 74240
+        },
+        "in": "proj · pid 74240 at /o/ab12.74240/t and {\"orchestrator_pid\": 74240} and {\"ms\": 74240, \"pid\": 74240}",
+        "out": "proj · pid <PID> at /o/ab12.<PID>/t and {\"orchestrator_pid\": \"<PID>\"} and {\"ms\": 74240, \"pid\": \"<PID>\"}"
+      },
+      "counterexample": {
+        "in": "pid 742401 and 174240 and 128c44e3-6c3a-4e90-b1a7-9a74240bcfa8"
+      }
+    },
+    {
+      "name": "runner-pid-start",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "context": "pidstart",
+      "replace": "<PIDSTART>",
+      "example": {
+        "ctx": {
+          "pidStart": "Sun Oct 18 02:11:07 2026"
+        },
+        "in": "{\"pid_start\":\"Sun Oct 18 02:11:07 2026\"}",
+        "out": "{\"pid_start\":\"<PIDSTART>\"}"
+      },
+      "counterexample": {
+        "in": "{\"pid_start\":\"Sun Oct 18 02:11:08 2026\"}"
+      }
+    },
+    {
+      "name": "probe-sandbox",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "(?<=/tmp/)ahprobe\\.[A-Za-z0-9]{6}\\b",
+      "replace": "<PROBE:n>",
+      "example": {
+        "in": "sandbox /tmp/ahprobe.bdrmm0/x and /private/tmp/ahprobe.bdrmm0 and /tmp/ahprobe.q1w2e3",
+        "out": "sandbox /tmp/<PROBE:1>/x and /private/tmp/<PROBE:1> and /tmp/<PROBE:2>"
+      },
+      "counterexample": {
+        "in": "/tmp/ahprobe.short and /tmp/other.abc123 and /var/ahprobe.q1w2e3"
+      }
+    },
+    {
+      "name": "iso-utc",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{1,3})?Z",
+      "replace": "<ISO:n>",
+      "example": {
+        "in": "at 2026-10-11T12:00:00.123Z and 2026-10-11T12:00:00Z and 2026-10-11T12:00:00.123Z",
+        "out": "at <ISO:1> and <ISO:2> and <ISO:3>"
+      },
+      "counterexample": {
+        "in": "on 2026-10-11 at 12:00:00 and 2026-10-11T12:00:00"
+      },
+      "numbering": "occurrence"
+    },
+    {
+      "name": "iso-local",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{1,7})?[+-]\\d\\d:\\d\\d",
+      "replace": "<ISOL:n>",
+      "example": {
+        "in": "created: 2026-10-11T12:09:41-04:00",
+        "out": "created: <ISOL:1>"
+      },
+      "counterexample": {
+        "in": "created: 2026-10-11T12:09:41"
+      },
+      "numbering": "occurrence"
+    },
+    {
+      "name": "iso-compact",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\b\\d{8}T\\d{9}Z\\b",
+      "replace": "<ISOC:n>",
+      "numbering": "occurrence",
+      "example": {
+        "in": "snapshots/tm-20261011T164501134Z.json",
+        "out": "snapshots/tm-<ISOC:1>.json"
+      },
+      "counterexample": {
+        "in": "tm-20261011T16450113Z.json and tm-2026101T164501134Z.json"
+      }
+    },
+    {
+      "name": "stale-team-stamp",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "(?<=_stale/team\\.)\\d{8}-\\d{6}(?=\\.json)",
+      "replace": "<STAMP:n>",
+      "numbering": "occurrence",
+      "example": {
+        "in": "proj/.claude/ah2/_stale/team.20261021-185056.json",
+        "out": "proj/.claude/ah2/_stale/team.<STAMP:1>.json"
+      },
+      "counterexample": {
+        "in": "_stale/team.20261021-18505.json and teams/team.20261021-185056.json"
+      }
+    },
+    {
+      "name": "msg-id",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\b\\d{8}-\\d{6}-[0-9a-z]{4}\\b",
+      "replace": "<MSGID:n>",
+      "example": {
+        "in": "20261011-120941-czme replies to 20261011-120941-czme and 20261011-111019-mcki",
+        "out": "<MSGID:1> replies to <MSGID:1> and <MSGID:2>"
+      },
+      "counterexample": {
+        "in": "2026101-120941-czme and 20261011-120941-czmeX and 20261011-12094-czme"
+      }
+    },
+    {
+      "name": "op-id",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\b[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\b",
+      "replace": "<OPID:n>",
+      "example": {
+        "in": "op 3f2b8c1a-5d4e-4f60-9a7b-1c2d3e4f5a6b done; retry of 3f2b8c1a-5d4e-4f60-9a7b-1c2d3e4f5a6b and 0a1b2c3d-1111-4222-8333-444455556666",
+        "out": "op <OPID:1> done; retry of <OPID:1> and <OPID:2>"
+      },
+      "counterexample": {
+        "in": "3f2b8c1a-5d4e-1f60-9a7b-1c2d3e4f5a6b and 3F2B8C1A-5D4E-4F60-9A7B-1C2D3E4F5A6B and 3f2b8c1a-5d4e-4f60-9a7b-1c2d3e4f5a6"
+      }
+    },
+    {
+      "name": "view-oid",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\b[0-9a-f]{10}(?=\\.(?:\\d+|<PID>|none)(?![0-9A-Za-z]))",
+      "replace": "<OID:n>",
+      "example": {
+        "in": "/o/7919dc7dfe.<PID>/t and 7919dc7dfe.none and b84e306692.123",
+        "out": "/o/<OID:1>.<PID>/t and <OID:1>.none and <OID:2>.123"
+      },
+      "counterexample": {
+        "in": "deadbeef.123 and 7919dc7dfe-123 and 7919dc7dfe.x"
+      }
+    },
+    {
+      "name": "view-tkey",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "~[0-9a-f]{10}\\b",
+      "replace": "~<TKEY:n>",
+      "example": {
+        "in": "/t/nopid~5997ba2781/m and beta~0ba10f59c9",
+        "out": "/t/nopid~<TKEY:1>/m and beta~<TKEY:2>"
+      },
+      "counterexample": {
+        "in": "nopid~5997ba278 and nopid5997ba2781"
+      }
+    },
+    {
+      "name": "view-rev",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<=\"rev\":\\s{0,2}\")[0-9a-f]{16}(?=\")",
+      "replace": "<REV:n>",
+      "example": {
+        "in": "{\"rev\":\"a79a8486a3d10e7f\",\"x\":1}",
+        "out": "{\"rev\":\"<REV:1>\",\"x\":1}"
+      },
+      "counterexample": {
+        "in": "{\"rev\":\"a79a8486\",\"revision\":\"a79a8486a3d10e7f\"}"
+      }
+    },
+    {
+      "name": "tmp-name",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file",
+        "path"
+      ],
+      "pattern": "\\.\\d+\\.[0-9a-f]{8}\\.tmp\\b",
+      "replace": ".<PID>.<HEX>.tmp",
+      "example": {
+        "in": "team.json.12345.deadbeef.tmp",
+        "out": "team.json.<PID>.<HEX>.tmp"
+      },
+      "counterexample": {
+        "in": "team.json.12345.tmp and team.json.12345.DEADBEEF.tmp"
+      }
+    },
+    {
+      "name": "pid-json",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "keys": [
+        "pid",
+        "ppid"
+      ],
+      "replace": "\"<PID>\"",
+      "example": {
+        "in": "{\"pid\":4242,\"name\":\"x\"}",
+        "out": "{\"pid\":\"<PID>\",\"name\":\"x\"}"
+      },
+      "counterexample": {
+        "in": "{\"pidx\":4242,\"name\":\"x\"}"
+      }
+    },
+    {
+      "name": "epoch-json",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "keys": [
+        "as_of",
+        "at",
+        "since_ms",
+        "started_ms",
+        "ts"
+      ],
+      "min": 1000000000000,
+      "replace": "\"<EPOCHMS>\"",
+      "example": {
+        "in": "{\"ts\":1791733607123,\"n\":1}",
+        "out": "{\"ts\":\"<EPOCHMS>\",\"n\":1}"
+      },
+      "counterexample": {
+        "in": "{\"ts\":999999999999,\"n\":1791733607123}"
+      }
+    },
+    {
+      "name": "clock-json",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "keys": [
+        "age_sec",
+        "expires_in_sec",
+        "uptime_sec",
+        "wall_ms",
+        "elapsed_ms",
+        "full_passes",
+        "last_pass_ms",
+        "listings"
+      ],
+      "replace": "\"<CLOCK>\"",
+      "example": {
+        "in": "{\"age_sec\":12,\"wall_ms\":340,\"count\":3}",
+        "out": "{\"age_sec\":\"<CLOCK>\",\"wall_ms\":\"<CLOCK>\",\"count\":3}"
+      },
+      "counterexample": {
+        "in": "{\"age_secs\":12,\"wall\":340}"
+      }
+    },
+    {
+      "name": "load-sample-json",
+      "applies_to": [
+        "file",
+        "stdout"
+      ],
+      "keys": [
+        "load1_per_cpu",
+        "mem_pressure",
+        "harnesses",
+        "api_errors_10m"
+      ],
+      "any_value": true,
+      "within": "load",
+      "replace": "\"<LOAD>\"",
+      "example": {
+        "in": "{\"load\":{\"state\":\"ok\",\"load1_per_cpu\":0.4,\"mem_pressure\":null,\"harnesses\":3,\"api_errors_10m\":{\"total\":1},\"thresholds\":{\"mem_pressure\":\"critical\"}}}",
+        "out": "{\"load\":{\"state\":\"ok\",\"load1_per_cpu\":\"<LOAD>\",\"mem_pressure\":\"<LOAD>\",\"harnesses\":\"<LOAD>\",\"api_errors_10m\":\"<LOAD>\",\"thresholds\":{\"mem_pressure\":\"critical\"}}}"
+      },
+      "counterexample": {
+        "in": "{\"thresholds\":{\"load1_per_cpu\":1.5,\"mem_pressure\":\"critical\"},\"harnesses\":3}"
+      }
+    },
+    {
+      "name": "gc-json",
+      "applies_to": [
+        "file",
+        "stdout"
+      ],
+      "keys": [
+        "heap_bytes",
+        "committed_bytes",
+        "fragmented_bytes",
+        "live_bytes",
+        "allocated_bytes",
+        "gen0",
+        "gen1",
+        "gen2",
+        "census"
+      ],
+      "any_value": true,
+      "within": "gc",
+      "replace": "\"<GC>\"",
+      "example": {
+        "in": "{\"gc\":{\"heap_bytes\":5367648,\"committed_bytes\":11141120,\"fragmented_bytes\":24640,\"live_bytes\":10199504,\"allocated_bytes\":12500336,\"gen0\":1,\"gen1\":0,\"gen2\":0}}",
+        "out": "{\"gc\":{\"heap_bytes\":\"<GC>\",\"committed_bytes\":\"<GC>\",\"fragmented_bytes\":\"<GC>\",\"live_bytes\":\"<GC>\",\"allocated_bytes\":\"<GC>\",\"gen0\":\"<GC>\",\"gen1\":\"<GC>\",\"gen2\":\"<GC>\"}}"
+      },
+      "counterexample": {
+        "in": "{\"heap_bytes\":5367648,\"gen0\":1}"
+      }
+    },
+    {
+      "name": "minute-json",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "keys": [
+        "m"
+      ],
+      "min": 1000000,
+      "max": 100000000,
+      "replace": "\"<MINUTE>\"",
+      "example": {
+        "in": "{\"minutes\":[{\"m\":29870283,\"busy\":true}]}",
+        "out": "{\"minutes\":[{\"m\":\"<MINUTE>\",\"busy\":true}]}"
+      },
+      "counterexample": {
+        "in": "{\"m\":5,\"busy\":true,\"seconds\":{\"m\":1800000000}}"
+      }
+    },
+    {
+      "name": "digest-json",
+      "applies_to": [
+        "stdout",
+        "file"
+      ],
+      "keys": [
+        "digest"
+      ],
+      "value_pattern": "[0-9a-f]{16}",
+      "replace": "\"<DIGEST>\"",
+      "example": {
+        "in": "{\"type\":\"cli-root\",\"digest\":\"daea1956128c538a\"}",
+        "out": "{\"type\":\"cli-root\",\"digest\":\"<DIGEST>\"}"
+      },
+      "counterexample": {
+        "in": "{\"type\":\"cli-root\",\"digest\":\"daea\"}"
+      }
+    },
+    {
+      "name": "prompt-id-json",
+      "applies_to": [
+        "stdout",
+        "file"
+      ],
+      "keys": [
+        "prompt_id"
+      ],
+      "value_pattern": "p[0-9a-f]{12}",
+      "replace": "\"<PROMPTID>\"",
+      "example": {
+        "in": "{\"type\":\"user-prompt\",\"prompt_id\":\"pd0086c41e20b\"}",
+        "out": "{\"type\":\"user-prompt\",\"prompt_id\":\"<PROMPTID>\"}"
+      },
+      "counterexample": {
+        "in": "{\"type\":\"user-prompt\",\"prompt_id\":\"pd00\"}"
+      }
+    },
+    {
+      "name": "impl-json",
+      "applies_to": [
+        "stdout",
+        "file"
+      ],
+      "keys": [
+        "impl"
+      ],
+      "value_context": "impl",
+      "replace": "\"<IMPL>\"",
+      "example": {
+        "ctx": {
+          "impl": "node"
+        },
+        "in": "{\"impl\":\"node\",\"pid\":1}",
+        "out": "{\"impl\":\"<IMPL>\",\"pid\":1}"
+      },
+      "counterexample": {
+        "ctx": {
+          "impl": "native"
+        },
+        "in": "{\"impl\":\"node\",\"pid\":1}"
+      }
+    },
+    {
+      "name": "node-warning",
+      "applies_to": [
+        "stderr"
+      ],
+      "pattern": "^\\(node:\\d+\\) .*\\n(\\(Use `node --trace-.*\\n)?",
+      "flags": "gm",
+      "replace": "",
+      "example": {
+        "in": "(node:123) ExperimentalWarning: x\n(Use `node --trace-warnings ...` to show where)\nreal line\n",
+        "out": "real line\n"
+      },
+      "counterexample": {
+        "in": "(nodes:123) not a node warning\nreal line\n"
+      }
+    },
+    {
+      "name": "age-text",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<=\"age\":\\s{0,2}\")\\d+[smhd](?=\")",
+      "replace": "<AGE>",
+      "example": {
+        "in": "{\"slug\":\"x\",\"age\":\"15m\",\"state\":\"open\"}",
+        "out": "{\"slug\":\"x\",\"age\":\"<AGE>\",\"state\":\"open\"}"
+      },
+      "counterexample": {
+        "in": "{\"age\":\"unknown\",\"ages\":\"15m\",\"x\":15}"
+      }
+    },
+    {
+      "name": "dispatch-age",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<=, sent )\\d+[smhd](?= ago\\b)",
+      "replace": "<AGE>",
+      "example": {
+        "in": "implementor \"(unnamed)\", request x, sent <AGE> ago (a/b.md)",
+        "out": "implementor \"(unnamed)\", request x, sent <AGE> ago (a/b.md)"
+      },
+      "counterexample": {
+        "in": "resent 284d ago; sent 3 days ago; sent 284w ago; sent 284d later; started 4h ago"
+      }
+    },
+    {
+      "name": "node-version",
+      "applies_to": [
+        "stdout",
+        "stderr"
+      ],
+      "pattern": "\\bnode v\\d+\\.\\d+\\.\\d+\\b",
+      "replace": "node v<NODE>",
+      "example": {
+        "in": "ah 0.1.0 at /x, node v24.15.0",
+        "out": "ah 0.1.0 at /x, node v<NODE>"
+      },
+      "counterexample": {
+        "in": "node 24.15.0 and nodev24.15.0 and v24.15.0"
+      }
+    },
+    {
+      "name": "uncommitted-count",
+      "applies_to": [
+        "stdout",
+        "stderr"
+      ],
+      "pattern": "\\b\\d+(?= uncommitted change\\(s\\))",
+      "replace": "<N>",
+      "example": {
+        "in": "has 142 uncommitted change(s) — hooks run",
+        "out": "has <N> uncommitted change(s) — hooks run"
+      },
+      "counterexample": {
+        "in": "has 142 changes and 7 uncommitted files"
+      }
+    },
+    {
+      "name": "doctor-repo-state",
+      "applies_to": [
+        "stdout"
+      ],
+      "pattern": "(?<=\"name\":\\s*\"marketplace\",\\s*\\n\\s*\"status\":\\s*)(?:\"ok\"(?=,\\s*\\n\\s*\"detail\":\\s*\"(?:<REPO> is clean|own root is not inside a git checkout))|\"warn\"(?=,\\s*\\n\\s*\"detail\":\\s*\"<REPO> has <N> uncommitted change\\(s\\)))",
+      "replace": "\"<REPO-STATE>\"",
+      "example": {
+        "in": "\"name\": \"marketplace\",\n      \"status\": \"warn\",\n      \"detail\": \"<REPO> has <N> uncommitted change(s) — x\"",
+        "out": "\"name\": \"marketplace\",\n      \"status\": \"<REPO-STATE>\",\n      \"detail\": \"<REPO> has <N> uncommitted change(s) — x\""
+      },
+      "counterexample": {
+        "in": "\"name\": \"marketplace\",\n      \"status\": \"warn\",\n      \"detail\": \"version mismatch\""
+      }
+    },
+    {
+      "name": "doctor-repo-detail",
+      "applies_to": [
+        "stdout"
+      ],
+      "pattern": "(?<=\"status\":\\s*\"<REPO-STATE>\",\\s*\\n\\s*\"detail\":\\s*)\"(?:<REPO> (?:is clean|has <N> uncommitted change\\(s\\)[^\"]*)|own root is not inside a git checkout[^\"]*)\"",
+      "replace": "\"<REPO-DETAIL>\"",
+      "example": {
+        "in": "\"status\": \"<REPO-STATE>\",\n      \"detail\": \"<REPO> is clean\"",
+        "out": "\"status\": \"<REPO-STATE>\",\n      \"detail\": \"<REPO-DETAIL>\""
+      },
+      "counterexample": {
+        "in": "\"status\": \"warn\",\n      \"detail\": \"<REPO> is clean\""
+      }
+    },
+    {
+      "name": "registration-pid-start",
+      "applies_to": [
+        "file"
+      ],
+      "action": "drop",
+      "paths": [
+        "ah/registrations/*.json"
+      ],
+      "keys": [
+        "pid_start"
+      ],
+      "value_pattern": "[A-Z][a-z]{2} [A-Z][a-z]{2} +[0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}",
+      "example": {
+        "in": "{\"v\":1,\"pid_start\":\"Mon Oct 12 00:39:19 2026\",\"at\":\"x\"}\n",
+        "out": "{\"v\":1,\"at\":\"x\"}\n",
+        "path": "ah/registrations/sess-1.json"
+      },
+      "counterexample": {
+        "in": "{\"v\":1,\"pid_start\":\"Mon Oct 12 00:39:19 2026\"}\n",
+        "path": "proj/.claude/hierarchy/peers.jsonl"
+      }
+    },
+    {
+      "name": "registration-bound",
+      "applies_to": [
+        "file"
+      ],
+      "action": "drop",
+      "paths": [
+        "ah/registrations/*.json"
+      ],
+      "keys": [
+        "bound"
+      ],
+      "value_pattern": "true|false",
+      "example": {
+        "in": "{\"v\":1,\"bound\":false,\"at\":\"x\"}\n",
+        "out": "{\"v\":1,\"at\":\"x\"}\n",
+        "path": "ah/registrations/sess-1.json"
+      },
+      "counterexample": {
+        "in": "{\"v\":1,\"bound\":false}\n",
+        "path": "proj/.claude/hierarchy/peers.jsonl"
+      }
+    },
+    {
+      "name": "team-pid-start",
+      "applies_to": [
+        "file"
+      ],
+      "action": "drop",
+      "paths": [
+        "proj/.claude/ah2/teams/*.json"
+      ],
+      "keys": [
+        "pid_start"
+      ],
+      "value_pattern": "[A-Z][a-z]{2} [A-Z][a-z]{2} +[0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4}",
+      "example": {
+        "in": "{\"orchestrator\":{\"pid\":4242,\"pid_start\":\"Mon Oct 12 00:39:19 2026\"}}\n",
+        "out": "{\"orchestrator\":{\"pid\":4242}}\n",
+        "path": "proj/.claude/ah2/teams/tm.json"
+      },
+      "counterexample": {
+        "in": "{\"orchestrator\":{\"pid\":4242,\"pid_start\":\"Mon Oct 12 00:39:19 2026\"}}\n",
+        "path": "proj/.claude/ah2/peers.jsonl"
+      }
+    },
+    {
+      "name": "cli-form-path-quoted",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(\\\\?\")([^\"\\'`\\\\]*)/bin/ah\\1 (roster|msg|gate)(?![A-Za-z0-9_])",
+      "groups": true,
+      "replace": "node $1$2/hooks/$3.mjs$1",
+      "example": {
+        "in": "run \"<PLUGIN>/bin/ah\" msg new, \"/x y/bin/ah\" roster teams, and JSON \\\"<PLUGIN>/bin/ah\\\" gate status",
+        "out": "run node \"<PLUGIN>/hooks/msg.mjs\" new, node \"/x y/hooks/roster.mjs\" teams, and JSON node \\\"<PLUGIN>/hooks/gate.mjs\\\" status"
+      },
+      "counterexample": {
+        "in": "\"<PLUGIN>/bin/ah\" hook x, \"<PLUGIN>/bin/ahx\" roster, \"<PLUGIN>/bin/ah\" rosters, \"<PLUGIN>/bin/ah\"roster, \"<PLUGIN>/bin/ah' roster"
+      }
+    },
+    {
+      "name": "cli-form-path-bare",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "([^ \\t\\r\\n\"\\'`(\\\\]*)/bin/ah (roster|msg|gate)(?![A-Za-z0-9_])",
+      "groups": true,
+      "replace": "node $1/hooks/$2.mjs",
+      "example": {
+        "in": "run <PLUGIN>/bin/ah roster teams, `/x/bin/ah msg new` and /h/été/bin/ah gate status",
+        "out": "run node <PLUGIN>/hooks/roster.mjs teams, `node /x/hooks/msg.mjs new` and node /h/été/hooks/gate.mjs status"
+      },
+      "counterexample": {
+        "in": "<PLUGIN>/bin/ah hook x, <PLUGIN>/bin/ahx roster, <PLUGIN>/bin/ah rosters, sbin/ah roster"
+      }
+    },
+    {
+      "name": "cli-form-ahd-path-quoted",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(\\\\?\")([^\"\\'`\\\\]*)/bin/ahd\\1(?![A-Za-z0-9_.-])",
+      "groups": true,
+      "replace": "node $1$2/hooks/ahd-ctl.mjs$1",
+      "example": {
+        "in": "run \"<PLUGIN>/bin/ahd\" logs, \"/x y/bin/ahd\" status, and JSON \\\"<PLUGIN>/bin/ahd\\\" check",
+        "out": "run node \"<PLUGIN>/hooks/ahd-ctl.mjs\" logs, node \"/x y/hooks/ahd-ctl.mjs\" status, and JSON node \\\"<PLUGIN>/hooks/ahd-ctl.mjs\\\" check"
+      },
+      "counterexample": {
+        "in": "\"<PLUGIN>/bin/ahdx\" status, \"<PLUGIN>/bin/ahd.pid\", \"<PLUGIN>/bin/ahd-tui\" --once"
+      }
+    },
+    {
+      "name": "cli-form-ahd-path-bare",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "([^ \\t\\r\\n\"\\'`(\\\\]*)/bin/ahd(?![A-Za-z0-9_.-])",
+      "groups": true,
+      "replace": "node $1/hooks/ahd-ctl.mjs",
+      "example": {
+        "in": "run <PLUGIN>/bin/ahd status and /h/été/bin/ahd logs",
+        "out": "run node <PLUGIN>/hooks/ahd-ctl.mjs status and node /h/été/hooks/ahd-ctl.mjs logs"
+      },
+      "counterexample": {
+        "in": "<PLUGIN>/bin/ahdx status, <PLUGIN>/bin/ahd.pid, <PLUGIN>/bin/ahd-tui, sbin/ahd status"
+      }
+    },
+    {
+      "name": "cli-form-bin",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<![A-Za-z0-9_./-])bin/ah (roster|msg|gate)(?![A-Za-z0-9_])",
+      "groups": true,
+      "replace": "hooks/$1.mjs",
+      "example": {
+        "in": "operations on `bin/ah roster` and bin/ah msg",
+        "out": "operations on `hooks/roster.mjs` and hooks/msg.mjs"
+      },
+      "counterexample": {
+        "in": "sbin/ah roster, bin/ah rosters, xbin/ah msg"
+      }
+    },
+    {
+      "name": "cli-form-ahd-bin",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<![A-Za-z0-9_./-])bin/ahd(?![A-Za-z0-9_.-])",
+      "groups": true,
+      "replace": "hooks/ahd-ctl.mjs",
+      "example": {
+        "in": "aliases of bin/ahd, which also inspects",
+        "out": "aliases of hooks/ahd-ctl.mjs, which also inspects"
+      },
+      "counterexample": {
+        "in": "sbin/ahd, bin/ahdx, bin/ahd.pid"
+      }
+    },
+    {
+      "name": "cli-form-name",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<![A-Za-z0-9_./:-])ah (roster|msg)(?![A-Za-z0-9_-])",
+      "groups": true,
+      "replace": "$1.mjs",
+      "example": {
+        "in": "Modelled on ah msg; run `ah roster init` first; ah rosteré and ah msgé",
+        "out": "Modelled on msg.mjs; run `roster.mjs init` first; roster.mjsé and msg.mjsé"
+      },
+      "counterexample": {
+        "in": "ah: roster, a ah rosters, ah msgs, an ah-roster, ah roster_x, ah roster-x"
+      }
+    },
+    {
+      "name": "cli-form-ahd-usage",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "^([ \\t]+)ahd (?=(?:start|stop|restart|drain|status|health|version|logs|inspect|check|contract|tui|state)(?![A-Za-z0-9_]))",
+      "groups": true,
+      "replace": "$1ahd-ctl.mjs ",
+      "flags": "gm",
+      "example": {
+        "in": "usage:\n  ahd start | stop | restart",
+        "out": "usage:\n  ahd-ctl.mjs start | stop | restart"
+      },
+      "counterexample": {
+        "in": "ahd status is up\n  ahd serve"
+      }
+    },
+    {
+      "name": "cli-form-ahd-reason",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(plugin-shipped CLI [^ ]) ahd (?=(?:start|stop|restart|drain|status|health|version|logs|inspect|check|contract|tui|state)(?![A-Za-z0-9_]))",
+      "groups": true,
+      "replace": "$1 ahd-ctl.mjs ",
+      "example": {
+        "in": "ah: plugin-shipped CLI — ahd inspect",
+        "out": "ah: plugin-shipped CLI — ahd-ctl.mjs inspect"
+      },
+      "counterexample": {
+        "in": "ah: plugin-shipped CLI — ahd bogus, plugin-shipped CLI — ahdx status, ahd inspect"
+      }
+    },
+    {
+      "name": "cli-form-gate-usage",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "^([ \\t]+)ah gate (?=(?:set|status|reset)(?![A-Za-z0-9_]))",
+      "groups": true,
+      "replace": "$1node gate.mjs ",
+      "flags": "gm",
+      "example": {
+        "in": "usage:\n  ah gate set --session <id>\n  ah gate status",
+        "out": "usage:\n  node gate.mjs set --session <id>\n  node gate.mjs status"
+      },
+      "counterexample": {
+        "in": "ah gate is a command\n  ah gate other"
+      }
+    },
+    {
+      "name": "cli-form-ahd-contract",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<![A-Za-z0-9_./-])ahd (contract)(?![A-Za-z0-9_])",
+      "groups": true,
+      "replace": "node hooks/ahd-ctl.mjs $1",
+      "example": {
+        "in": "rendered by `ahd contract` and ahd contract --plain",
+        "out": "rendered by `node hooks/ahd-ctl.mjs contract` and node hooks/ahd-ctl.mjs contract --plain"
+      },
+      "counterexample": {
+        "in": "the ahd conformance check, ahd conform, an ahd-contract flag, ahd contracts, ahd contract_x"
+      }
+    },
+    {
+      "name": "cli-form-intake-usage",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<![A-Za-z0-9_./:-])ah issue-intake(?![A-Za-z0-9_-])",
+      "groups": true,
+      "replace": "node issue-intake.mjs",
+      "example": {
+        "in": "usage: ah issue-intake --cwd <abs> --out-dir <abs> (--issues <ref,ref,...> | --labelled)",
+        "out": "usage: node issue-intake.mjs --cwd <abs> --out-dir <abs> (--issues <ref,ref,...> | --labelled)"
+      },
+      "counterexample": {
+        "in": "ah issue-intakes, an ah issue-intake-x, bah issue-intake, ah: issue-intake, ah issue_intake"
+      }
+    },
+    {
+      "name": "cli-form-docs-path",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(?<=\\(verbs: )(?:/|<PLUGIN>)[^)\\n]*?(?=/docs/cli-tools\\.md\\))",
+      "groups": true,
+      "replace": "agent-hierarchy",
+      "example": {
+        "in": "ah CLI root (v1.2.3): /x/agent-hierarchy-v2 (verbs: /x/agent-hierarchy-v2/docs/cli-tools.md)",
+        "out": "ah CLI root (v1.2.3): /x/agent-hierarchy-v2 (verbs: agent-hierarchy/docs/cli-tools.md)"
+      },
+      "counterexample": {
+        "in": "ah CLI root: see /x/agent-hierarchy-v2/docs/cli-tools.md, (verbs: /x/agent-hierarchy-v2/docs/other.md), (see /x/docs/cli-tools.md), (verbs: docs/cli-tools.md), (verbs: 0.134.10/docs/cli-tools.md), (verbs: agent-hierarchy/docs/cli-tools.md)"
+      }
+    },
+    {
+      "name": "usage-runtime-dir",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "the runtime dir \\(the hierarchy directory\\);",
+      "replace": "the runtime dir via lib-hier.mjs;",
+      "example": {
+        "in": "resolves\\nthe runtime dir (the hierarchy directory); output is JSON",
+        "out": "resolves\\nthe runtime dir via lib-hier.mjs; output is JSON"
+      },
+      "counterexample": {
+        "in": "the runtime dir (the hierarchy directory) and more, the runtime dir via lib"
+      }
+    },
+    {
+      "name": "hook-error-unit",
+      "applies_to": [
+        "stdout",
+        "stderr",
+        "file"
+      ],
+      "pattern": "(hook\\\\?\":\\\\?\")([a-z0-9-]+)(\\\\?\")",
+      "groups": true,
+      "replace": "$1$2.mjs$3",
+      "example": {
+        "in": "{\"hook\":\"stop\",\"message\":\"m\"} and {\\\"hook\\\":\\\"pretooluse-x\\\"}",
+        "out": "{\"hook\":\"stop.mjs\",\"message\":\"m\"} and {\\\"hook\\\":\\\"pretooluse-x.mjs\\\"}"
+      },
+      "counterexample": {
+        "in": "{\"hook\":\"stop.mjs\"}, {\"hookname\":\"stop\"}, {\"hook\":\"a b\"}, {\"hook\":\"Upper\"}"
+      }
+    },
+    {
+      "name": "usage-header-time",
+      "applies_to": [
+        "stdout"
+      ],
+      "pattern": "(?<=usage — )\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d",
+      "replace": "<TS:usage>",
+      "example": {
+        "in": "agent-hierarchy usage — 2026-10-12 07:10",
+        "out": "agent-hierarchy usage — <TS:usage>"
+      },
+      "counterexample": {
+        "in": "usage — now, and on 2026-10-12 07:10"
+      }
+    },
+    {
+      "name": "sha256-json",
+      "applies_to": [
+        "stdout",
+        "file"
+      ],
+      "keys": [
+        "sha256"
+      ],
+      "value_pattern": "[0-9a-f]{64}",
+      "replace": "\"<SHA256>\"",
+      "example": {
+        "in": "{\"snapshot\":\"x.md\",\"sha256\":\"abababababababababababababababababababababababababababababababab\"}",
+        "out": "{\"snapshot\":\"x.md\",\"sha256\":\"<SHA256>\"}"
+      },
+      "counterexample": {
+        "in": "{\"sha256\":\"abcd\"}"
+      }
+    },
+    {
+      "name": "git-base-json",
+      "applies_to": [
+        "stdout",
+        "file"
+      ],
+      "keys": [
+        "base"
+      ],
+      "value_pattern": "[0-9a-f]{40}",
+      "replace": "\"<GITSHA>\"",
+      "example": {
+        "in": "{\"event\":\"ref\",\"ref\":\"r\",\"base\":\"527a8d1e2cb846853dacad266b5aa8bc4306f90d\"}",
+        "out": "{\"event\":\"ref\",\"ref\":\"r\",\"base\":\"<GITSHA>\"}"
+      },
+      "counterexample": {
+        "in": "{\"base\":\"main\",\"sha\":\"527a8d1e2cb846853dacad266b5aa8bc4306f90d\"}"
+      }
+    }
+  ]
+}

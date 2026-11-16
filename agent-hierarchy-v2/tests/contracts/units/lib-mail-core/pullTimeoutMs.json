@@ -1,0 +1,106 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "pullTimeoutMs",
+  "cases": [
+    {
+      "id": "null-hb",
+      "args": [
+        null
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "undefined-hb",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-5000",
+      "args": [
+        {
+          "poll_ms": 5000
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-1000",
+      "args": [
+        {
+          "poll_ms": 1000
+        }
+      ],
+      "expect": 33000
+    },
+    {
+      "id": "poll-zero-falls-back",
+      "args": [
+        {
+          "poll_ms": 0
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-negative-falls-back",
+      "args": [
+        {
+          "poll_ms": -1
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-string-falls-back",
+      "args": [
+        {
+          "poll_ms": "5000"
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-nan-falls-back",
+      "args": [
+        {
+          "poll_ms": {
+            "$nan": 1
+          }
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-infinity-falls-back",
+      "args": [
+        {
+          "poll_ms": {
+            "$inf": 1
+          }
+        }
+      ],
+      "expect": 45000
+    },
+    {
+      "id": "poll-fractional",
+      "args": [
+        {
+          "poll_ms": 0.5
+        }
+      ],
+      "expect": 30001.5
+    },
+    {
+      "id": "no-poll-field",
+      "args": [
+        {}
+      ],
+      "expect": 45000
+    }
+  ]
+}

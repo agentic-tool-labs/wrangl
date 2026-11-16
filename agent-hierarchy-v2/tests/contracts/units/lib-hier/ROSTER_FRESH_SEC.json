@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "ROSTER_FRESH_SEC",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 1800
+    }
+  ]
+}

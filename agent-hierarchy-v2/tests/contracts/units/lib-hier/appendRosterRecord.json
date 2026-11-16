@@ -1,0 +1,123 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "appendRosterRecord",
+  "cases": [
+    {
+      "id": "writes-a-peer-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "name": "a",
+          "status": "up"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"status\":\"up\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "appends-after-existing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "name": "b"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"a\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:30.000Z\",\"name\":\"a\"}\n{\"type\":\"peer\",\"name\":\"b\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "record-type-overrides-peer",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "type": "gate",
+          "name": "a"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"gate\",\"name\":\"a\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "record-ts-is-replaced",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "name": "a",
+          "ts": "2020-01-01T00:00:00.000Z"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "creates-the-dir",
+      "args": [
+        "$ROOT/new/.claude/hierarchy",
+        {
+          "name": "a"
+        }
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "new/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"name\":\"a\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "empty-record",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {}
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

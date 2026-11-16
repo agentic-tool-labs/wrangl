@@ -1,0 +1,80 @@
+{
+  "kind": "state-op",
+  "id": "extend",
+  "about": "extend adds messages and minutes",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "links",
+    "op": "extend",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "links",
+        "op": "grant",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:proj>/.claude/hierarchy",
+            "team": "tm",
+            "link": {
+              "id": "lk-1",
+              "task": "20260101-120000-ab12",
+              "peers": [
+                "tm-b@tm"
+              ],
+              "requester": "tm-a@tm",
+              "granted_by": "orchestrator",
+              "messages": 2,
+              "minutes": 30
+            },
+            "now": 1767225600000
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-grant"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team": "tm",
+        "id": "lk-1",
+        "messages": 2,
+        "minutes": 10,
+        "now": 1767225603000
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-links-extend"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "id": "lk-1",
+        "extensions": 1,
+        "ended": []
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an extend that resets the count",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:11.289Z"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "splitAddress",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "a@b"
+      ],
+      "expect": {
+        "name": "a",
+        "team": "b"
+      }
+    },
+    {
+      "id": "dots-dashes-underscores",
+      "args": [
+        "a.b-c_d@t.1-2"
+      ],
+      "expect": {
+        "name": "a.b-c_d",
+        "team": "t.1-2"
+      }
+    },
+    {
+      "id": "two-ats",
+      "args": [
+        "a@b@c"
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-at",
+      "args": [
+        "abc"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-name",
+      "args": [
+        "@b"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-team",
+      "args": [
+        "a@"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "space",
+      "args": [
+        "a b@c"
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "a@b\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "leading-newline",
+      "args": [
+        "\na@b"
+      ],
+      "expect": null
+    },
+    {
+      "id": "array-of-one-stringifies",
+      "args": [
+        [
+          "a@b"
+        ]
+      ],
+      "expect": {
+        "name": "a",
+        "team": "b"
+      }
+    },
+    {
+      "id": "number-has-no-at",
+      "args": [
+        12
+      ],
+      "expect": null
+    },
+    {
+      "id": "slash",
+      "args": [
+        "a/b@c"
+      ],
+      "expect": null
+    },
+    {
+      "id": "non-ascii-letter",
+      "args": [
+        "é@c"
+      ],
+      "expect": null
+    }
+  ]
+}

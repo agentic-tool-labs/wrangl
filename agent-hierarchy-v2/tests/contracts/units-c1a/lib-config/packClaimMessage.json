@@ -1,0 +1,52 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "packClaimMessage",
+  "cases": [
+    {
+      "id": "one-file",
+      "args": [
+        "demo",
+        "qa",
+        [
+          "agents/other.md"
+        ]
+      ],
+      "expect": "agents/other.md also takes the agent name qa, so Claude Code might launch it as demo:qa instead of agents/qa.md"
+    },
+    {
+      "id": "two-files",
+      "args": [
+        "demo",
+        "qa",
+        [
+          "agents/a.md",
+          "agents/b.md"
+        ]
+      ],
+      "expect": "agents/a.md, agents/b.md also take the agent name qa, so Claude Code might launch one of them as demo:qa instead of agents/qa.md"
+    },
+    {
+      "id": "hidden-char-in-file",
+      "args": [
+        "demo",
+        "qa",
+        [
+          "agents/a‮.md"
+        ]
+      ],
+      "expect": "agents/a\\u{202e}.md also takes the agent name qa, so Claude Code might launch it as demo:qa instead of agents/qa.md"
+    },
+    {
+      "id": "hidden-char-in-plugin",
+      "args": [
+        "de​mo",
+        "qa",
+        [
+          "agents/a.md"
+        ]
+      ],
+      "expect": "agents/a.md also takes the agent name qa, so Claude Code might launch it as de\\u{200b}mo:qa instead of agents/qa.md"
+    }
+  ]
+}

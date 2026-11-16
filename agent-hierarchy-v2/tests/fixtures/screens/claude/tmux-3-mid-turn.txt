@@ -1,0 +1,50 @@
+
+ ▐▛███▛█   Claude Code v2.1.294
+▝▜██████▀  Haiku 5.5 · Claude API
+ ▝▝   ▝▝   <T>/ws/claude
+
+  Get to finished work sooner with Opus 5.5. Switch anytime with /model.
+
+❯ Write 300 words about rivers. No tools.
+
+⏺ Rivers are the planet's most patient sculptors. A trickle of snowmelt high in the mountains becomes a creek, the creek gathers tributaries, and over millennia the water carves canyons through solid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+· Kerfuffling… (1s · ↓ 138 tokens · thinking)
+                                                                                                                                                                          Ctrl+Y to paste deleted text
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · esc to interrupt · ← for agents

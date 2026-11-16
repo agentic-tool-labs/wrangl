@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.Core/Ah.Core.csproj" />
+    <ProjectReference Include="../Ah.TestKit/Ah.TestKit.csproj" />
+  </ItemGroup>
+
+</Project>

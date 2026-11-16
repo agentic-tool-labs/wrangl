@@ -1,0 +1,148 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "localIso",
+  "cases": [
+    {
+      "id": "tz-UTC",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expect": "2026-08-16T14:32:01+00:00"
+    },
+    {
+      "id": "tz-America-New_York",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "2026-08-16T10:32:01-04:00"
+    },
+    {
+      "id": "tz-Asia-Kolkata",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "Asia/Kolkata"
+      },
+      "expect": "2026-08-16T20:02:01+05:30"
+    },
+    {
+      "id": "tz-Australia-Lord_Howe",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "Australia/Lord_Howe"
+      },
+      "expect": "2026-08-17T01:02:01+10:30"
+    },
+    {
+      "id": "tz-Pacific-Kiritimati",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01Z"
+        }
+      ],
+      "env": {
+        "TZ": "Pacific/Kiritimati"
+      },
+      "expect": "2026-08-17T04:32:01+14:00"
+    },
+    {
+      "id": "ny-spring-forward-before",
+      "args": [
+        {
+          "$date": "2026-03-08T06:59:59Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "2026-03-08T01:59:59-05:00"
+    },
+    {
+      "id": "ny-spring-forward-after",
+      "args": [
+        {
+          "$date": "2026-03-08T07:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "2026-03-08T03:00:00-04:00"
+    },
+    {
+      "id": "ny-fall-back-first",
+      "args": [
+        {
+          "$date": "2026-11-01T05:59:59Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "2026-11-01T01:59:59-04:00"
+    },
+    {
+      "id": "ny-fall-back-second",
+      "args": [
+        {
+          "$date": "2026-11-01T06:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "America/New_York"
+      },
+      "expect": "2026-11-01T01:00:00-05:00"
+    },
+    {
+      "id": "lord-howe-winter",
+      "args": [
+        {
+          "$date": "2026-07-15T12:00:00Z"
+        }
+      ],
+      "env": {
+        "TZ": "Australia/Lord_Howe"
+      },
+      "expect": "2026-07-15T22:30:00+10:30"
+    },
+    {
+      "id": "milliseconds-dropped",
+      "args": [
+        {
+          "$date": "2026-08-16T14:32:01.999Z"
+        }
+      ],
+      "env": {
+        "TZ": "UTC"
+      },
+      "expect": "2026-08-16T14:32:01+00:00"
+    },
+    {
+      "id": "default-now",
+      "args": [],
+      "now": "2026-08-16T14:32:01Z",
+      "env": {
+        "TZ": "Asia/Kolkata"
+      },
+      "expect": "2026-08-16T20:02:01+05:30"
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "suggestTeamAlias",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "My Repo!"
+      ],
+      "expect": "My-Repo"
+    },
+    {
+      "id": "already-ok",
+      "args": [
+        "my-repo"
+      ],
+      "expect": "my-repo"
+    },
+    {
+      "id": "role-collision",
+      "args": [
+        "architect"
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "leading-junk",
+      "args": [
+        "__.repo"
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "long",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expect": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "id": "trailing-hyphens-after-cut",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbb"
+      ],
+      "expect": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "unicode",
+      "args": [
+        "répo 😀x"
+      ],
+      "expect": "r-po---x"
+    },
+    {
+      "id": "number",
+      "args": [
+        12345
+      ],
+      "expect": "12345"
+    },
+    {
+      "id": "herdr-basic",
+      "args": [
+        "My Repo",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-architect",
+            "-reviewer-2"
+          ]
+        }
+      ],
+      "expect": "my-repo"
+    },
+    {
+      "id": "herdr-long",
+      "args": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-implementor"
+          ]
+        }
+      ],
+      "expect": "xxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "id": "herdr-bad-suffix",
+      "args": [
+        "repo",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "architect"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "herdr-no-room",
+      "args": [
+        "repo",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "herdr-tiny-budget",
+      "args": [
+        "repo",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ]
+        }
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "herdr-uppercase-lowered",
+      "args": [
+        "REPO",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-architect"
+          ]
+        }
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "herdr-digit-start",
+      "args": [
+        "123repo",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-architect"
+          ]
+        }
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "herdr-all-junk",
+      "args": [
+        "!!!",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-architect"
+          ]
+        }
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "herdr-collision-falls-to-team",
+      "args": [
+        "architect",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-reviewer"
+          ]
+        }
+      ],
+      "expect": "team"
+    },
+    {
+      "id": "herdr-no-suffixes",
+      "args": [
+        "repo",
+        {
+          "transport": "herdr"
+        }
+      ],
+      "expect": "repo"
+    },
+    {
+      "id": "herdr-resolved-custom-role",
+      "args": [
+        "ui",
+        {
+          "transport": "herdr",
+          "suffixes": [
+            "-ui-reviewer"
+          ],
+          "resolved": {
+            "roles": {
+              "reviewer": {},
+              "ui-reviewer": {
+                "class": "review"
+              }
+            }
+          }
+        }
+      ],
+      "expect": "ui"
+    },
+    {
+      "id": "other-transport",
+      "args": [
+        "My Repo",
+        {
+          "transport": "tmux",
+          "suffixes": [
+            "-architect"
+          ]
+        }
+      ],
+      "expect": "My-Repo"
+    },
+    {
+      "id": "context-null",
+      "args": [
+        "My Repo",
+        null
+      ],
+      "expect": "My-Repo"
+    },
+    {
+      "id": "kelvin-sign",
+      "args": [
+        "Kelvin"
+      ],
+      "expect": "elvin"
+    }
+  ]
+}

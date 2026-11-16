@@ -1,0 +1,192 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "deny",
+  "cases": [
+    {
+      "id": "records-a-refusal",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1",
+          "why": "not now"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"not now\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "why-cut-at-two-hundred",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1",
+          "why": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "why-missing",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "why-number",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1",
+          "why": 5
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"5\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "keeps-the-last-fifty",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "new",
+          "why": "w"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[],\"denied\":[{\"request\":\"r0\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r1\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r2\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r3\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r4\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r5\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r6\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r7\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r8\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r9\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r10\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r11\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r12\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r13\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r14\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r15\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r16\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r17\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r18\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r19\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r20\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r21\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r22\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r23\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r24\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r25\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r26\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r27\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r28\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r29\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r30\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r31\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r32\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r33\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r34\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r35\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r36\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r37\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r38\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r39\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r40\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r41\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r42\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r43\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r44\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r45\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r46\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r47\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r48\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"},{\"request\":\"r49\",\"why\":\"w\",\"at\":\"2026-01-01T00:10:00.000Z\"}]}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r2\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r3\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r4\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r5\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r6\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r7\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r8\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r9\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r10\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r11\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r12\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r13\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r14\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r15\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r16\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r17\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r18\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r19\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r20\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r21\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r22\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r23\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r24\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r25\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r26\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r27\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r28\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r29\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r30\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r31\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r32\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r33\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r34\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r35\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r36\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r37\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r38\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r39\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r40\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r41\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r42\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r43\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r44\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r45\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r46\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r47\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r48\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"r49\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  },\n  {\n   \"request\": \"new\",\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "denied-not-an-array-fails",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1",
+          "why": "w"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[],\"denied\":5}"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\"v\":1,\"links\":[],\"denied\":5}"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "surrogate-split-at-the-cut",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r1",
+          "why": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\ud83d\ude00"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"request\": \"r1\",\n   \"why\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\ud83d\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "request-missing-left-out",
+      "args": [
+        {
+          "dir": "$ROOT/h",
+          "team": "fx",
+          "now": 1767226200000,
+          "why": "w"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n"
+      },
+      "expectFiles": {
+        "h/links/fx.json": "{\n \"v\": 1,\n \"links\": [],\n \"denied\": [\n  {\n   \"why\": \"w\",\n   \"at\": \"2026-01-01T00:10:00.000Z\"\n  }\n ]\n}\n"
+      },
+      "expect": {
+        "ok": true
+      }
+    },
+    {
+      "id": "dir-missing-fails-to-write",
+      "args": [
+        {
+          "team": "fx",
+          "now": 1767226200000,
+          "request": "r",
+          "why": "w"
+        }
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "expectThrows": true
+    }
+  ]
+}

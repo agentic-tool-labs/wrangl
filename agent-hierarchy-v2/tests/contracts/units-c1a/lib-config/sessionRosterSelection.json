@@ -1,0 +1,143 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "sessionRosterSelection",
+  "cases": [
+    {
+      "id": "default",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "default",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "env",
+      "args": [
+        "$ROOT/repo",
+        {}
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_ROSTER": "e"
+      },
+      "expect": {
+        "roster": "e",
+        "key": "e",
+        "source": "env",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "roster-option-null-forces-default",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"activeRoster\":\"act\"}"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "roster-option-name",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "named"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "roster": "named",
+        "key": "named",
+        "source": "flag",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "team-option",
+      "args": [
+        "$ROOT/repo",
+        {
+          "team": "alpha"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "expect": {
+        "roster": "alpha",
+        "key": "alpha",
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "session-owned-team",
+      "args": [
+        "$ROOT/repo",
+        {
+          "sessionId": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s1\"},\"members\":[]}"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    },
+    {
+      "id": "default-team-option",
+      "args": [
+        "$ROOT/repo",
+        {
+          "defaultTeam": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"version\":1,\"team_id\":\"t\",\"orchestrator\":{\"pid\":1,\"session_id\":\"s\"},\"members\":[],\"roster_key\":\"squad\"}"
+      },
+      "expect": {
+        "roster": "default",
+        "key": null,
+        "source": "team",
+        "level": null,
+        "path": null
+      }
+    }
+  ]
+}

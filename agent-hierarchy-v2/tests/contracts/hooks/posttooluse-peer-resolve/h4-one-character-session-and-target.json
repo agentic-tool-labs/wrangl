@@ -1,0 +1,49 @@
+{
+  "kind": "hook",
+  "id": "h4-one-character-session-and-target",
+  "about": "a one-character session id and target are real values",
+  "tree": "hook-orchestrator",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "posttooluse-peer-resolve",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "s",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "SendMessage",
+      "tool_response": {},
+      "tool_use_id": "toolu_contract",
+      "tool_input": {
+        "to": "x",
+        "message": "[hierarchy-msg <ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-abcd--implementor--demo--request.md]\nplease"
+      }
+    }
+  },
+  "mutant": "length boundary off by one",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"dispatch\",\"session_id\":\"s\",\"request_id\":\"<MSGID:1>\",\"to\":\"implementor\",\"path\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md\",\"to_addr\":\"x\",\"created\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:16:09.329Z"
+  }
+}

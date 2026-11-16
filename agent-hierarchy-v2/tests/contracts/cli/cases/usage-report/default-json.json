@@ -1,0 +1,39 @@
+{
+  "kind": "cli",
+  "id": "default-json",
+  "about": "no window as JSON",
+  "tree": "cli-usage",
+  "env": {
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "usage-report",
+    "argv": [
+      "--json"
+    ],
+    "stdin": null
+  },
+  "mutant": "window default or the daily block drifted",
+  "expect": {
+    "stdout": "{\n  \"generated\": \"<ISO:1>\",\n  \"records\": 6,\n  \"latest_session\": \"sess-bbbb2222\",\n  \"session\": {\n    \"roles\": {\n      \"godot-implementor\": {\n        \"agents\": 1,\n        \"missing\": 0,\n        \"calls\": 3,\n        \"in\": 10,\n        \"out\": 4000,\n        \"cache_read\": 10,\n        \"cache_create\": 1\n      },\n      \"other\": {\n        \"agents\": 1,\n        \"missing\": 0,\n        \"calls\": 3,\n        \"in\": 15,\n        \"out\": 700,\n        \"cache_read\": 0,\n        \"cache_create\": 0\n      },\n      \"orchestrator\": {\n        \"agents\": 1,\n        \"missing\": 0,\n        \"calls\": 1,\n        \"in\": 7,\n        \"out\": 700,\n        \"cache_read\": 70000,\n        \"cache_create\": 10\n      }\n    },\n    \"otherTypes\": {\n      \"Explore\": 1\n    }\n  },\n  \"window\": \"default\",\n  \"windowed\": {\n    \"roles\": {},\n    \"otherTypes\": {}\n  },\n  \"daily\": {}\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/ah2/agent-hierarchy.usage-cache.json",
+          "mode": "0644",
+          "content": "{\"v\":2,\"files\":{\"transcripts/sess-aaaa1111.jsonl\":{\"offset\":683,\"days\":{\"2026-01-05\":{\"calls\":2,\"in\":30,\"out\":5000,\"cache_read\":110000,\"cache_create\":100},\"2026-01-06\":{\"calls\":1,\"in\":5,\"out\":500,\"cache_read\":1000,\"cache_create\":0}},\"models\":{\"claude-opus-4\":2,\"claude-sonnet-4\":1},\"session_id\":\"sess-aaaa1111\",\"last_message\":null},\"transcripts/sess-bbbb2222.jsonl\":{\"offset\":208,\"days\":{\"2026-01-06\":{\"calls\":1,\"in\":7,\"out\":700,\"cache_read\":70000,\"cache_create\":10}},\"models\":{\"claude-opus-4\":1},\"session_id\":\"sess-bbbb2222\",\"last_message\":null},\"missing-dir/sess-cccc3333.jsonl\":{\"offset\":0,\"days\":{},\"models\":{},\"session_id\":\"sess-cccc3333\"}}}"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:11:04.649Z"
+  }
+}

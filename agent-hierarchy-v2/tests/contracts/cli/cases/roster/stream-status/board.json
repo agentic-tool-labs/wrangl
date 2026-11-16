@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "board",
+  "about": "stream-status prints the board for a team with no streams",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-status",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"team\": \"tm\",\n  \"transport\": \"terminal\",\n  \"streams\": [],\n  \"degraded\": \"no-tabs\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a board with a phantom stream",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:53.241Z"
+  }
+}

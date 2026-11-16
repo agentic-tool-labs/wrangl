@@ -1,0 +1,1055 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ownedTeamConfigs",
+  "cases": [
+    {
+      "id": "single-owned",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            "a"
+          ]
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "none",
+      "args": [
+        {
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "null-resolved",
+      "args": [
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": null
+    },
+    {
+      "id": "two-teams",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            "alpha",
+            "beta"
+          ]
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": "alpha",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "alpha",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "default-and-named",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            null,
+            "beta"
+          ]
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": null,
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": null,
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "opts-passed",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            "alpha",
+            "beta"
+          ]
+        },
+        {
+          "sessionId": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": "alpha",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "alpha",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "opts-team-overridden",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            "alpha",
+            "beta"
+          ]
+        },
+        {
+          "team": "zzz"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": "alpha",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "alpha",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "opts-default-team-kept-for-named",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            "alpha",
+            "beta"
+          ]
+        },
+        {
+          "defaultTeam": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": "alpha",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "alpha",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "opts-team-kept-for-default",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "ownedTeams": [
+            null,
+            "beta"
+          ]
+        },
+        {
+          "team": "zzz"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": [
+        {
+          "team": null,
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "zzz",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        },
+        {
+          "team": "beta",
+          "resolved": {
+            "configured": false,
+            "enabled": true,
+            "handoffs": "auto",
+            "handoffsSource": "default",
+            "msgs": "required",
+            "route": null,
+            "routeSource": null,
+            "roles": {
+              "ultra-advisor": {
+                "model": "fable"
+              },
+              "architect": {
+                "model": "opus"
+              },
+              "reviewer": {
+                "model": "opus"
+              },
+              "implementor": {
+                "model": "inherit"
+              },
+              "docs-writer": {
+                "model": "sonnet",
+                "routes": "Standalone documentation outside of code: READMEs, docs/, guides, changelogs"
+              },
+              "qa": {
+                "model": "sonnet"
+              },
+              "ux-engineer": {
+                "model": "opus",
+                "routes": "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)"
+              },
+              "task-runner": {
+                "model": "haiku",
+                "delegate": "task-gopher"
+              },
+              "backlog-groomer": {
+                "model": "sonnet",
+                "routes": "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record"
+              },
+              "sub-orchestrator": {
+                "model": "sonnet"
+              },
+              "deputy-chief": {
+                "model": "sonnet"
+              }
+            },
+            "sources": {
+              "ultra-advisor": "default",
+              "architect": "default",
+              "reviewer": "default",
+              "implementor": "default",
+              "docs-writer": "default",
+              "qa": "default",
+              "ux-engineer": "default",
+              "task-runner": "default",
+              "backlog-groomer": "default",
+              "sub-orchestrator": "default",
+              "deputy-chief": "default"
+            },
+            "shadowed": [],
+            "excludedRoles": [],
+            "layers": [],
+            "warnings": [],
+            "cwd": "$ROOT/repo",
+            "roster": null,
+            "rosterLevel": null,
+            "team": "beta",
+            "teamVia": "team",
+            "ownedTeams": []
+          }
+        }
+      ]
+    }
+  ]
+}

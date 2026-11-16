@@ -1,0 +1,33 @@
+{
+  "kind": "cli",
+  "id": "no-recipient",
+  "about": "send without a recipient is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "send",
+      "--text",
+      "x"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "error: bad_request: send needs a recipient: msg.mjs send <name@team> ...\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a send to nobody accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:43.770Z"
+  }
+}

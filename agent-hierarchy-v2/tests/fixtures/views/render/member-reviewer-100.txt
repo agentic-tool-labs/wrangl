@@ -1,0 +1,12 @@
+ah › repoA · pid 4242 › alpha › alpha-reviewer
+────────────────────────────────────────────────────────────────────────────────────────────────────
+reviewer  ·  reviewer  ·  codex (pane)
+model gpt-5  effort –  session –  work tree –
+placement herdr  pane %2  pasteable
+live  blocked for 60s
+context –
+blocked permission — askme
+owed 0
+mailbox  unacked 0  overdue 0  adapter – (notered)
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

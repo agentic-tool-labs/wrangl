@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h1-agent-reviewer-intent",
+  "about": "a review brief with intent denied",
+  "tree": "hook-orch-msgs",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "pretooluse-msg-gate",
+    "event": {
+      "hook_event_name": "PreToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Agent",
+      "tool_input": {
+        "subagent_type": "ah:reviewer",
+        "description": "d",
+        "prompt": "[hierarchy-msg <ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-ijkl--reviewer--full--request.md]"
+      },
+      "tool_use_id": "toolu_contract"
+    }
+  },
+  "mutant": "a review brief with intent denied",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-11T21:27:16.296Z"
+  }
+}

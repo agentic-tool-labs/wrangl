@@ -1,0 +1,82 @@
+{
+  "team": "myrepo",
+  "transport": "herdr",
+  "streams": [
+    {
+      "name": "s1",
+      "state": "open",
+      "label": "◐ s1",
+      "tab": {
+        "id": "w1:t10",
+        "live": true
+      },
+      "branch": "s1",
+      "base": "main",
+      "worktree": {
+        "path": "<SB>/myrepo/.claude/worktrees/s1",
+        "exists": true
+      },
+      "opened": "T",
+      "peers": [
+        {
+          "name": "myrepo-architect",
+          "role": "architect",
+          "status": "working",
+          "pane_id": "w1:p11",
+          "tab_id": "w1:t10",
+          "in_stream_tab": true
+        }
+      ],
+      "exchanges": [
+        {
+          "id": "<ID>",
+          "slug": "s",
+          "to_name": "myrepo-architect",
+          "from_name": "orchestrator-x",
+          "age_sec": 0
+        }
+      ],
+      "waiting_on": [
+        {
+          "on": "myrepo-architect",
+          "request": "<ID>",
+          "age_sec": 0
+        }
+      ],
+      "progress": {
+        "checklist": true,
+        "done": 0,
+        "in_progress": 0,
+        "not_started": 0,
+        "state": "open",
+        "updated": "T",
+        "newest_entry": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "s2",
+      "state": "done",
+      "label": null,
+      "tab": null,
+      "branch": null,
+      "base": null,
+      "worktree": null,
+      "opened": "T",
+      "closed": "T",
+      "peers": [],
+      "exchanges": [],
+      "waiting_on": [],
+      "progress": {
+        "checklist": true,
+        "done": 0,
+        "in_progress": 0,
+        "not_started": 0,
+        "state": "done",
+        "updated": "T",
+        "newest_entry": null,
+        "stale": false
+      }
+    }
+  ]
+}

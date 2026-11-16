@@ -1,0 +1,99 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "isPaneMember",
+  "cases": [
+    {
+      "id": "codex-pane",
+      "args": [
+        {
+          "kind": "codex",
+          "route": "pane"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "claude-pane",
+      "args": [
+        {
+          "route": "pane"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "claude-explicit-pane",
+      "args": [
+        {
+          "kind": "claude",
+          "route": "pane"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "codex-peer",
+      "args": [
+        {
+          "kind": "codex",
+          "route": "peer"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-string",
+      "args": [
+        ""
+      ],
+      "expect": false
+    },
+    {
+      "id": "null-kind-pane",
+      "args": [
+        {
+          "kind": null,
+          "route": "pane"
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "number-kind-pane",
+      "args": [
+        {
+          "kind": 5,
+          "route": "pane"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "custom-pane",
+      "args": [
+        {
+          "kind": "custom",
+          "route": "pane"
+        }
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-route",
+      "args": [
+        {
+          "kind": "codex"
+        }
+      ],
+      "expect": false
+    }
+  ]
+}

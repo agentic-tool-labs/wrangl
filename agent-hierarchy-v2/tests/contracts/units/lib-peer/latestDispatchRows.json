@@ -1,0 +1,49 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "latestDispatchRows",
+  "cases": [
+    {
+      "id": "latest-per-request",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000002-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"reviewer\",\"created\":\"2026-06-01T11:59:50.000Z\"}\n"
+      },
+      "expect": [
+        {
+          "type": "dispatch",
+          "session_id": "s1",
+          "request_id": "20260601-000001-aaaa",
+          "to": "reviewer",
+          "created": "2026-06-01T11:59:50.000Z"
+        },
+        {
+          "type": "dispatch",
+          "session_id": "s1",
+          "request_id": "20260601-000002-aaaa",
+          "to": "architect",
+          "created": "2026-06-01T11:58:20.000Z"
+        }
+      ]
+    },
+    {
+      "id": "other-session-ignored",
+      "args": [
+        "s1"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s2\",\"request_id\":\"20260601-000001-aaaa\",\"to\":\"architect\",\"created\":\"2026-06-01T11:58:20.000Z\"}\n"
+      },
+      "expect": []
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1"
+      ],
+      "expect": []
+    }
+  ]
+}

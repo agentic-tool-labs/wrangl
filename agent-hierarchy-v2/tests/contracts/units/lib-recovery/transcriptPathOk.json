@@ -1,0 +1,141 @@
+{
+  "lib": "lib-recovery",
+  "module": "hooks/lib-recovery.mjs",
+  "fn": "transcriptPathOk",
+  "cases": [
+    {
+      "id": "under-projects",
+      "args": [
+        "$ROOT/home/.claude/projects/p/s.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects/p/s.jsonl": "{}\n"
+      },
+      "expect": "$ROOT/home/.claude/projects/p/s.jsonl"
+    },
+    {
+      "id": "file-missing",
+      "args": [
+        "$ROOT/home/.claude/projects/p/gone.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects/p": {
+          "dir": true
+        }
+      },
+      "expect": null
+    },
+    {
+      "id": "relative-path",
+      "args": [
+        "home/.claude/projects/p/s.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects/p/s.jsonl": "{}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "not-jsonl",
+      "args": [
+        "$ROOT/home/.claude/projects/p/s.json"
+      ],
+      "files": {
+        "home/.claude/projects/p/s.json": "{}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "outside-projects",
+      "args": [
+        "$ROOT/home/.claude/other/s.jsonl"
+      ],
+      "files": {
+        "home/.claude/other/s.jsonl": "{}\n",
+        "home/.claude/projects": {
+          "dir": true
+        }
+      },
+      "expect": null
+    },
+    {
+      "id": "sibling-with-projects-prefix",
+      "args": [
+        "$ROOT/home/.claude/projects-evil/s.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects-evil/s.jsonl": "{}\n",
+        "home/.claude/projects": {
+          "dir": true
+        }
+      },
+      "expect": null
+    },
+    {
+      "id": "no-projects-dir",
+      "args": [
+        "$ROOT/other/s.jsonl"
+      ],
+      "files": {
+        "other/s.jsonl": "{}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "dotdot-escape-resolves-outside",
+      "args": [
+        "$ROOT/home/.claude/projects/p/../../x.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects/p": {
+          "dir": true
+        },
+        "home/.claude/x.jsonl": "{}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "dotdot-stays-inside",
+      "args": [
+        "$ROOT/home/.claude/projects/p/../q/s.jsonl"
+      ],
+      "files": {
+        "home/.claude/projects/p": {
+          "dir": true
+        },
+        "home/.claude/projects/q/s.jsonl": "{}\n"
+      },
+      "expect": "$ROOT/home/.claude/projects/q/s.jsonl"
+    },
+    {
+      "id": "path-over-1024",
+      "args": [
+        "$ROOT/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/s.jsonl"
+      ],
+      "expect": null
+    },
+    {
+      "id": "path-at-1024-but-missing",
+      "args": [
+        "/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.jsonl"
+      ],
+      "expect": null
+    },
+    {
+      "id": "not-a-string",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

@@ -1,0 +1,471 @@
+{
+  "lib": "lib-mesh",
+  "module": "tests/contract-tools/units-shims/lib-mesh.mjs",
+  "fn": "classifyJson",
+  "cases": [
+    {
+      "id": "orchestrator",
+      "args": [
+        {
+          "address": "orchestrator@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "orchestrator",
+        "address": "orchestrator@tm",
+        "name": "orchestrator",
+        "team": "tm",
+        "role": "orchestrator"
+      }
+    },
+    {
+      "id": "member",
+      "args": [
+        {
+          "address": "b@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "member",
+        "address": "b@tm",
+        "name": "b",
+        "team": "tm",
+        "role": "reviewer"
+      }
+    },
+    {
+      "id": "member-without-role",
+      "args": [
+        {
+          "address": "q@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "q"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "member",
+        "address": "q@tm",
+        "name": "q",
+        "team": "tm",
+        "role": null
+      }
+    },
+    {
+      "id": "unknown-name-on-known-team-is-external",
+      "args": [
+        {
+          "address": "zz@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": "zz@tm",
+        "name": "zz",
+        "team": "tm"
+      }
+    },
+    {
+      "id": "unknown-team-is-external",
+      "args": [
+        {
+          "address": "a@nope",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": "a@nope",
+        "name": "a",
+        "team": "nope"
+      }
+    },
+    {
+      "id": "not-an-address",
+      "args": [
+        {
+          "address": "plain",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": "plain"
+      }
+    },
+    {
+      "id": "empty-address",
+      "args": [
+        {
+          "address": "",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": ""
+      }
+    },
+    {
+      "id": "undefined-address",
+      "args": [
+        {
+          "address": {
+            "$undefined": 1
+          },
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": ""
+      }
+    },
+    {
+      "id": "team-without-data-is-external",
+      "args": [
+        {
+          "address": "a@tm",
+          "teams": {
+            "tm": {
+              "dir": "$ROOT/h"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": "a@tm",
+        "name": "a",
+        "team": "tm"
+      }
+    },
+    {
+      "id": "team-with-null-members",
+      "args": [
+        {
+          "address": "a@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": null
+              },
+              "dir": "$ROOT/h"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "external",
+        "address": "a@tm",
+        "name": "a",
+        "team": "tm"
+      }
+    },
+    {
+      "id": "member-list-with-null-entries",
+      "args": [
+        {
+          "address": "a@tm",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  null,
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "member",
+        "address": "a@tm",
+        "name": "a",
+        "team": "tm",
+        "role": "implementor"
+      }
+    },
+    {
+      "id": "orchestrator-name-needs-no-member-entry",
+      "args": [
+        {
+          "address": "orchestrator@ot",
+          "teams": {
+            "tm": {
+              "data": {
+                "members": [
+                  {
+                    "name": "a",
+                    "role": "implementor"
+                  },
+                  {
+                    "name": "b",
+                    "role": "reviewer"
+                  },
+                  {
+                    "name": "c",
+                    "role": "architect"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h"
+            },
+            "ot": {
+              "data": {
+                "members": [
+                  {
+                    "name": "x",
+                    "role": "implementor"
+                  }
+                ]
+              },
+              "dir": "$ROOT/h2"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "kind": "orchestrator",
+        "address": "orchestrator@ot",
+        "name": "orchestrator",
+        "team": "ot",
+        "role": "orchestrator"
+      }
+    }
+  ]
+}

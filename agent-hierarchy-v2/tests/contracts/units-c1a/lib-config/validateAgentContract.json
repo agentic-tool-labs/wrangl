@@ -1,0 +1,2533 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "validateAgentContract",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Does the work.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Does the work.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "ok-user-level",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/agents/worker.md": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Does the work.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/home/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/home/.claude/agents/worker.md",
+            "level": "user",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Does the work.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "not-found",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "agent-not-found",
+            "path": null,
+            "field": null,
+            "message": "No agent file for \"worker\": looked in $ROOT/repo/.claude/agents/worker.md and $ROOT/home/.claude/agents/worker.md.",
+            "fix": [
+              {
+                "kind": "scaffold",
+                "detail": "roster.mjs role set worker --scaffold repo (or --scaffold user) writes a template that passes the implement contract"
+              },
+              {
+                "kind": "create-file",
+                "detail": "$ROOT/repo/.claude/agents/worker.md"
+              },
+              {
+                "kind": "create-file",
+                "detail": "$ROOT/home/.claude/agents/worker.md"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "found": null,
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "location": {
+            "kind": "bare",
+            "path": null,
+            "level": null,
+            "shadowed": null,
+            "error": "agent-not-found",
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "not-found-builtin",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "builtin": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "agent-not-found",
+            "path": null,
+            "field": null,
+            "message": "No agent file for \"worker\": looked in $ROOT/repo/.claude/agents/worker.md and $ROOT/home/.claude/agents/worker.md.",
+            "fix": [
+              {
+                "kind": "create-file",
+                "detail": "$ROOT/repo/.claude/agents/worker.md"
+              },
+              {
+                "kind": "create-file",
+                "detail": "$ROOT/home/.claude/agents/worker.md"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "found": null,
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "location": {
+            "kind": "bare",
+            "path": null,
+            "level": null,
+            "shadowed": null,
+            "error": "agent-not-found",
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "plugin-no-record",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "plug:worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "plugin-unresolvable",
+            "path": null,
+            "field": null,
+            "message": "Cannot validate \"plug:worker\": the plugin has no install record in ~/.claude/plugins/installed_plugins.json.",
+            "fix": [
+              {
+                "kind": "copy-agent",
+                "detail": "copy the agent into .claude/agents/worker.md as a user-owned file, then point the role at the bare name worker"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "found": null,
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "location": {
+            "kind": "plugin",
+            "path": null,
+            "level": null,
+            "shadowed": null,
+            "error": "plugin-unresolvable",
+            "records": 0,
+            "candidates": []
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "plugin-record-no-file",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "plug:worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@mkt\":[{\"installPath\":\"$ROOT/plugroot\"}]}}",
+        "plugroot/agents/other.md": "x"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "plugin-unresolvable",
+            "path": null,
+            "field": null,
+            "message": "Cannot validate \"plug:worker\": no agents/worker.md under its install path(s).",
+            "fix": [
+              {
+                "kind": "copy-agent",
+                "detail": "copy the agent into .claude/agents/worker.md as a user-owned file, then point the role at the bare name worker"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "found": null,
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "location": {
+            "kind": "plugin",
+            "path": null,
+            "level": null,
+            "shadowed": null,
+            "error": "plugin-unresolvable",
+            "records": 1,
+            "candidates": [
+              "$ROOT/plugroot/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "plugin-found",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "plug:worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@mkt\":[{\"installPath\":\"$ROOT/plugroot\"}]}}",
+        "plugroot/agents/worker.md": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Does the work.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/plugroot/agents/worker.md",
+          "location": {
+            "kind": "plugin",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "level": "plugin",
+            "shadowed": null,
+            "error": null,
+            "records": 1,
+            "candidates": [
+              "$ROOT/plugroot/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Does the work.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "no front matter here\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "no-frontmatter",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": null,
+            "message": "$ROOT/repo/.claude/agents/worker.md has no --- frontmatter block, so Claude Code cannot load it as an agent.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add a --- block at the top with name: worker and a description"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "parse-error-tools",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, bad token\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "unparseable-field",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "Frontmatter tools is present but cannot be parsed.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "write tools as a comma list (Read, Grep), a [flow, list] or a block list of - items"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [
+            "tools"
+          ],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "parse-error-model",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\nmodel: two words\ntools: Read, SendMessage, Edit\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "unparseable-field",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "model",
+            "message": "Frontmatter model is present but cannot be parsed.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "write model as a plain one-line value"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [
+            "model"
+          ],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "name-mismatch",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: other\ntools: Read, SendMessage, Edit\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "name-mismatch",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "name",
+            "message": "Frontmatter name is \"other\", but Claude Code loads this agent by name \"worker\".",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "set name: worker"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "other",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "name-missing",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\ntools: Read, SendMessage, Edit\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "name-mismatch",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "name",
+            "message": "Frontmatter name is null, but Claude Code loads this agent by name \"worker\".",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "set name: worker"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "model-not-allowed",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "advise",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\nmodel: haiku\ntools: Read, SendMessage\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "model-not-allowed",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "model",
+            "message": "Frontmatter model \"haiku\" is outside the advise allowlist (fable, opus); it runs whenever the row is inherit or a subagent is dispatched without a model.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove model: from the agent file (the row's model then governs)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "set model: to one of fable, opus"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": "haiku",
+          "tools": [
+            "Read",
+            "SendMessage"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "model-alias-ok",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\nmodel: claude-opus-5\ntools: Read, SendMessage, Edit\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": "claude-opus-5",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "model-haiku-legwork",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "legwork",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\nmodel: haiku\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": "haiku",
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "missing-required",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "missing-tool:SendMessage",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs SendMessage, and this agent's effective tools lack it.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add SendMessage to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Edit|Write",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Edit or Write, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Edit to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "missing-alt-required",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Grep\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "missing-tool:Edit|Write",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Edit or Write, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Edit to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Grep"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "review-forbidden-edit",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "review",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "forbidden-tool:Edit",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have Edit: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove Edit from tools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "review-ok",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "review",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "review-no-bash-warns",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "review",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "design-discouraged-bash",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "design",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Write, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "discouraged-tool:Bash",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "Bash is outside the design convention.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove Bash from tools"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Write",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "inherit-all-tools",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "review",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ndescription: d.\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "forbidden-tool:Edit",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have Edit: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Edit to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "forbidden-tool:Write",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have Write: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "forbidden-tool:NotebookEdit",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have NotebookEdit: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add NotebookEdit to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "discouraged-tool:advisor",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "advisor is outside the review convention.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add advisor to disallowedTools"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "d.",
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "d.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "star-tools",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "review",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: *\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "forbidden-tool:Edit",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have Edit: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Edit to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "forbidden-tool:Write",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have Write: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "forbidden-tool:NotebookEdit",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "A review-class agent must not have NotebookEdit: a reviewer that can edit ends up validating its own fixes.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add NotebookEdit to disallowedTools"
+              },
+              {
+                "kind": "change-class",
+                "detail": "implement"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "discouraged-tool:advisor",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "advisor is outside the review convention.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add advisor to disallowedTools"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "*"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "disallowed-removes",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: *\ndisallowedTools: Edit, Write\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "missing-tool:Edit|Write",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Edit or Write, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove Edit from disallowedTools"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove Write from disallowedTools"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "discouraged-tool:advisor",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "advisor is outside the implement convention.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add advisor to disallowedTools"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "*"
+          ],
+          "disallowedTools": [
+            "Edit",
+            "Write"
+          ],
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "scoped-entry",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Edit, Bash(git:*)\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "scoped-tool-entry",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "tools",
+            "message": "tools entry \"Bash(git:*)\" grants the whole Bash tool: Claude Code does not enforce the scope.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "remove Bash(git:*) from tools, or list plain Bash knowingly; to restrict a tool, add it to disallowedTools"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash(git:*)"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "no-description-warn",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "no-description-builtin",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "builtin": true
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "config-description",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "description": "From config."
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ndescription: From file.\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "From file.",
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "From config.",
+          "source": "config"
+        }
+      }
+    },
+    {
+      "id": "shadowed",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agents/worker.md": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n",
+        "home/.claude/agents/worker.md": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "warn",
+            "code": "shadowed-agent",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "field": null,
+            "message": "\"worker\" exists at both levels: $ROOT/repo/.claude/agents/worker.md was validated and loads here; $ROOT/home/.claude/agents/worker.md is shadowed in this repo.",
+            "fix": [
+              {
+                "kind": "remove-file",
+                "detail": "delete or rename the shadowed user file $ROOT/home/.claude/agents/worker.md, or rename the repo agent $ROOT/repo/.claude/agents/worker.md"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Does the work.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/repo/.claude/agents/worker.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/repo/.claude/agents/worker.md",
+            "level": "repo",
+            "shadowed": "$ROOT/home/.claude/agents/worker.md",
+            "error": null,
+            "candidates": [
+              "$ROOT/repo/.claude/agents/worker.md",
+              "$ROOT/home/.claude/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Does the work.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "in-memory",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "inMemory": {
+            "path": "$ROOT/mem.md",
+            "text": "---\nname: worker\ndescription: Does the work.\nmodel: opus\ntools: Read, SendMessage, Edit, Bash\n---\nbody\n"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Does the work.",
+          "model": "opus",
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit",
+            "Bash"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/mem.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/mem.md",
+            "level": null,
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/mem.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Does the work.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "in-memory-fm",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "inMemory": {
+            "path": "$ROOT/mem.md",
+            "text": "ignored",
+            "fm": {
+              "frontmatter": true,
+              "name": "worker",
+              "description": "Pack text.",
+              "model": null,
+              "tools": [
+                "Read",
+                "SendMessage",
+                "Edit"
+              ],
+              "disallowedTools": null,
+              "parseErrors": []
+            }
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/mem.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/mem.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "worker",
+          "description": "Pack text.",
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/mem.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/mem.md",
+            "level": null,
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/mem.md"
+            ]
+          }
+        },
+        "description": {
+          "text": "Pack text.",
+          "source": "frontmatter"
+        }
+      }
+    },
+    {
+      "id": "in-memory-no-frontmatter",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "worker",
+          "cwd": "$ROOT/repo",
+          "inMemory": {
+            "path": "$ROOT/mem.md",
+            "text": "plain"
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "no-frontmatter",
+            "path": "$ROOT/mem.md",
+            "field": null,
+            "message": "$ROOT/mem.md has no --- frontmatter block, so Claude Code cannot load it as an agent.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add a --- block at the top with name: worker and a description"
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": false,
+          "name": null,
+          "description": null,
+          "model": null,
+          "tools": null,
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/mem.md",
+          "location": {
+            "kind": "bare",
+            "path": "$ROOT/mem.md",
+            "level": null,
+            "shadowed": null,
+            "error": null,
+            "candidates": [
+              "$ROOT/mem.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    },
+    {
+      "id": "namespaced-name-uses-last-part",
+      "args": [
+        {
+          "role": "worker",
+          "cls": "implement",
+          "agent": "plug:worker",
+          "cwd": "$ROOT/repo"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"plug@mkt\":[{\"installPath\":\"$ROOT/plugroot\"}]}}",
+        "plugroot/agents/worker.md": "---\nname: other\ntools: Read, SendMessage, Edit\n---\nbody\n"
+      },
+      "cwd": "repo",
+      "expect": {
+        "findings": [
+          {
+            "level": "error",
+            "code": "name-mismatch",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "field": "name",
+            "message": "Frontmatter name is \"other\", but Claude Code loads this agent by name \"worker\".",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "set name: worker"
+              }
+            ]
+          },
+          {
+            "level": "error",
+            "code": "missing-tool:Write|Bash",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "field": "tools",
+            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Write to tools (you use an allowlist)"
+              },
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "missing-recommended:Bash",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "field": "tools",
+            "message": "A implement-class agent is expected to have Bash.",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "add Bash to tools (you use an allowlist)"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "no-description",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "field": "description",
+            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
+            "fix": [
+              {
+                "kind": "set-description",
+                "detail": "roster.mjs role set worker --description \"<one line>\""
+              }
+            ]
+          }
+        ],
+        "file": {
+          "frontmatter": true,
+          "name": "other",
+          "description": null,
+          "model": null,
+          "tools": [
+            "Read",
+            "SendMessage",
+            "Edit"
+          ],
+          "disallowedTools": null,
+          "parseErrors": [],
+          "found": "$ROOT/plugroot/agents/worker.md",
+          "location": {
+            "kind": "plugin",
+            "path": "$ROOT/plugroot/agents/worker.md",
+            "level": "plugin",
+            "shadowed": null,
+            "error": null,
+            "records": 1,
+            "candidates": [
+              "$ROOT/plugroot/agents/worker.md"
+            ]
+          }
+        },
+        "description": {
+          "text": null,
+          "source": null
+        }
+      }
+    }
+  ]
+}

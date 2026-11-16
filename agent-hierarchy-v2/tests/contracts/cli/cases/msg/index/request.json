@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "request",
+  "about": "index prints the parsed frontmatter of one message file",
+  "tree": "cli-msgs",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "index",
+      "<ROOT:proj>/.claude/hierarchy/msgs/20260101-000000-aaaa--implementor--sample-a--request.md"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "[{\"line\":18,\"n\":0,\"key\":\"tldr\"},{\"line\":26,\"n\":1,\"key\":\"goal\"},{\"line\":29,\"n\":2,\"key\":\"context\"},{\"line\":32,\"n\":3,\"key\":\"constraints\"},{\"line\":35,\"n\":4,\"key\":\"files\"},{\"line\":38,\"n\":5,\"key\":\"acceptance\"},{\"line\":41,\"n\":6,\"key\":\"want_back\"}]\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "an index that misreads a null",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:41.691Z"
+  }
+}

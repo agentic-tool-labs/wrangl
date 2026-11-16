@@ -1,0 +1,12 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "SWEEP_DAYS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 7
+    }
+  ]
+}

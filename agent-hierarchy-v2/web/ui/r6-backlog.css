@@ -1,0 +1,49 @@
+/* The Backlog tab: one ranked outline, read-only. Tokens only; every colour comes from the shipped palette. */
+/* section.bl outranks r6-shell.css's later `.stage-wrap > :not(.panel-head)` overflow: auto */
+.r6 .stage-wrap > section.bl { display: flex; flex-direction: column; flex: 1; align-self: stretch; min-width: 0; min-height: 0; overflow: hidden; }
+.r6 .bl-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bar); color: var(--muted); font-size: var(--text-12); }
+.r6 .bl-title { margin: 0; color: var(--ink-strong); font-size: var(--text-15); font-weight: 600; }
+.r6 .bl-bar .chip { padding: 2px 8px; font-size: var(--text-11); }
+.r6 .bl-bar .chip.attn { color: var(--pill-blocked); background: var(--pill-blocked-bg); }
+.r6 .bl-tally { margin-left: auto; color: var(--muted-2); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.r6 .bl-main { flex: 1 1 auto; min-width: 0; padding: 0 16px 16px; overflow: auto; container-type: inline-size; }
+.r6 .bl-none { margin: 12px 0; }
+
+.r6 .bl-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: var(--ink-2); font-size: var(--text-13); }
+.r6 .bl-table th { position: sticky; top: 0; z-index: 1; height: 32px; padding: 0 8px; border-bottom: 1px solid var(--line); background: var(--panel-bg); color: var(--muted-2); font-size: var(--type-table-heading-size, var(--text-11)); font-weight: var(--type-table-heading-weight, 600); text-align: left; white-space: nowrap; font-family: var(--type-table-heading-font, inherit); font-style: var(--type-table-heading-style, inherit); }
+.r6 .bl-table td { height: 40px; padding: 0 8px; vertical-align: baseline; border-bottom: 1px solid var(--line-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r6 .bl-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Rank, Item, Theme, Wave, Size, Holder, State */
+.r6 .bl-table th:nth-child(1) { width: 48px; }
+.r6 .bl-table th:nth-child(3) { width: 18%; }
+.r6 .bl-table th:nth-child(4) { width: 80px; }
+.r6 .bl-table th:nth-child(5) { width: 48px; }
+.r6 .bl-table th:nth-child(6) { width: 14%; }
+.r6 .bl-table th:nth-child(7) { width: 168px; }
+.r6 .bl-rank { color: var(--muted-2); font-family: var(--font-mono); font-size: var(--text-12); }
+.r6 .bl-table tr.on > td { background: var(--surface-2); }
+.r6 .bl-table td.bl-item { padding: 0; }
+
+.r6 .bl-open { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; box-sizing: border-box; padding: 0 8px; border: 0; border-radius: var(--radius); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.r6 .bl-open:hover { background: var(--surface-hover); }
+.r6 .bl-open:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.r6 .bl-caret { flex: 0 0 auto; width: 12px; color: var(--muted-2); }
+.r6 .bl-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.r6 .bl-id { flex: 0 0 auto; color: var(--muted-2); font-family: var(--type-code-font, var(--font-mono)); font-size: var(--type-code-size, var(--text-11)); font-variant-numeric: tabular-nums; font-style: var(--type-code-style, inherit); font-weight: var(--type-code-weight, inherit); }
+.r6 .bl-theme { color: var(--muted); font-size: var(--text-12); }
+.r6 .bl-size { font-family: var(--font-mono); font-size: var(--text-12); }
+.r6 .bl-holder { color: var(--role, var(--ink-2)); }
+.r6 .bl-state { color: var(--muted); }
+.r6 .bl-chip { padding: 2px 8px; font-size: var(--text-11); white-space: nowrap; }
+.r6 .bl-chip.st-in_progress { color: var(--pill-working); background: var(--pill-working-bg); }
+.r6 .bl-chip.st-blocked { color: var(--pill-blocked); background: var(--pill-blocked-bg); }
+
+.r6 .bl-more > td { height: auto; padding: 8px 8px 12px; background: var(--surface-2); white-space: normal; }
+.r6 .bl-more dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; max-width: 72ch; margin: 0; }
+.r6 .bl-more dt { color: var(--muted-2); }
+.r6 .bl-more dd { margin: 0; color: var(--ink-2); line-height: 1.5; overflow-wrap: anywhere; }
+.r6 .bl-more dd.mono { font-family: var(--type-code-font, var(--font-mono)); font-size: var(--type-code-size, var(--text-12)); }
+.r6 .bl-more a { display: inline-flex; align-items: center; min-height: 24px; color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+.r6 .bl-more a:hover { color: var(--link-hover); }
+

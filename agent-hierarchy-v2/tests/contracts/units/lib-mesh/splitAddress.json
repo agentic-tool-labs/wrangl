@@ -1,0 +1,54 @@
+{
+  "lib": "lib-mesh",
+  "module": "hooks/lib-mesh.mjs",
+  "fn": "splitAddress",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "a@b"
+      ],
+      "expect": {
+        "name": "a",
+        "team": "b"
+      }
+    },
+    {
+      "id": "two-ats",
+      "args": [
+        "a@b@c"
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "trailing-newline",
+      "args": [
+        "a@b\n"
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    }
+  ]
+}

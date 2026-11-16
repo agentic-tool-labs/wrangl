@@ -1,0 +1,44 @@
+{
+  "kind": "hook",
+  "id": "h3-owed-armed-exhausted-waived",
+  "about": "a spent budget waives the obligation, releases the marker and allows",
+  "tree": "hook-owes-armed-n2",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-peer-nudge",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "waive threshold off by one",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"pending\",\"nudges\":2,\"msg\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:1>\",\"op_id\":\"<OPID:1>\"}\n{\"type\":\"turn\",\"session_id\":\"sess-contract\",\"status\":\"armed\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:2>\"}\n{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"waived\",\"nudges\":2,\"msg\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:3>\",\"op_id\":\"<OPID:3>\"}\n{\"type\":\"turn\",\"session_id\":\"sess-contract\",\"status\":\"disarmed\",\"ts\":\"<ISO:4>\",\"op_id\":\"<OPID:4>\"}\n"
+        }
+      ]
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:15:57.562Z"
+  }
+}

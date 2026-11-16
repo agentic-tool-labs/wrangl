@@ -1,0 +1,195 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "hierarchyDir",
+  "cases": [
+    {
+      "id": "git-root-from-subdir",
+      "args": [
+        "$ROOT/repo/a/b"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/a/b/x": ""
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "git-root-is-cwd",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "no-git-uses-home-and-basename",
+      "args": [
+        "$ROOT/plain/dir"
+      ],
+      "files": {
+        "plain/dir/x": ""
+      },
+      "expect": "$ROOT/home/.claude/hierarchy/dir"
+    },
+    {
+      "id": "no-git-trailing-slash",
+      "args": [
+        "$ROOT/plain/dir/"
+      ],
+      "files": {
+        "plain/dir/x": ""
+      },
+      "expect": "$ROOT/home/.claude/hierarchy/dir"
+    },
+    {
+      "id": "env-override",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "$ROOT/forced"
+      },
+      "expect": "$ROOT/forced"
+    },
+    {
+      "id": "env-override-trimmed",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "  $ROOT/forced  "
+      },
+      "expect": "$ROOT/forced"
+    },
+    {
+      "id": "env-override-relative-resolves-against-cwd",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "rel/dir"
+      },
+      "expect": "$ROOT/rel/dir"
+    },
+    {
+      "id": "env-blank-ignored",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "   "
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "env-nbsp-only-ignored",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": " ﻿"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "cwd-undefined-uses-process-cwd",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "cwd-empty-string-uses-process-cwd",
+      "args": [
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "cwd": "repo",
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "worktree-has-own-dir",
+      "args": [
+        "$ROOT/wt"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy"
+    },
+    {
+      "id": "git-file-counts-as-git",
+      "args": [
+        "$ROOT/wt/sub"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/sub/x": ""
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy"
+    },
+    {
+      "id": "dotgit-dangling-symlink-not-found",
+      "args": [
+        "$ROOT/plain2"
+      ],
+      "files": {
+        "plain2/x": ""
+      },
+      "expect": "$ROOT/home/.claude/hierarchy/plain2"
+    },
+    {
+      "id": "relative-cwd",
+      "args": [
+        "repo/a"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/a/x": ""
+      },
+      "cwd": ".",
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    },
+    {
+      "id": "cwd-with-dotdot",
+      "args": [
+        "$ROOT/repo/a/../b"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/b/x": ""
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy"
+    }
+  ]
+}

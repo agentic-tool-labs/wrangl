@@ -1,0 +1,41 @@
+{
+  "kind": "wire",
+  "id": "join-unknown-team",
+  "about": "an unknown team is 404 unknown_team with the live teams",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "team": "nope",
+      "harness": "custom-x",
+      "session_id": "s-custom",
+      "why": "to help",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/join"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "unknown_team",
+        "message": "no team \"nope\"",
+        "teams": [
+          "tm"
+        ]
+      }
+    }
+  },
+  "mutant": "a join for an unknown team accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:04.131Z"
+  }
+}

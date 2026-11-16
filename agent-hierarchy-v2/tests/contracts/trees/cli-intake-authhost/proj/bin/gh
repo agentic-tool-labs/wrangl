@@ -1,0 +1,3 @@
+#!/bin/sh
+d=$(dirname "$0")/..
+FAKE_GH_AUTH_HOST_ONLY=1 FAKE_GH_LOG="$d/gh.log" exec node "<PLUGIN>/tests/fixtures/issue-intake/gh" "$@"

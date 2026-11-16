@@ -1,0 +1,15 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "TOP_TIER_MODELS",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "fable",
+        "opus"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "kind": "cli",
+  "id": "paths",
+  "about": "list --json rows keep request and response, the message files' absolute paths, beside has_response",
+  "tree": "cli-msgs",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "msg",
+    "argv": [
+      "list",
+      "--open"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "[{\"id\":\"<MSGID:1>\",\"to\":\"implementor\",\"slug\":\"sample-a\",\"age\":\"<AGE>\",\"title\":null,\"title_source\":null,\"state\":\"open\",\"request\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--implementor--sample-a--request.md\",\"response\":\"<ROOT:proj>/.claude/ah2/msgs/<MSGID:1>--orchestrator--sample-a--response.md\",\"has_response\":true}]\n",
+    "stderr": "",
+    "exit": 0
+  },
+  "mutant": "a list whose rows leave out request or response",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-31T00:00:00.000Z",
+    "note": "hand-authored (keep every API: list rows' request/response, dropped in 7902a3827); stdout only, the tree is pinned by list/open"
+  }
+}

@@ -1,0 +1,64 @@
+0 {
+  "close": [
+    {
+      "role": "reviewer",
+      "name": "foo-reviewer",
+      "route": "peer",
+      "transport": "terminal",
+      "command": null
+    },
+    {
+      "role": "architect",
+      "name": "foo-architect",
+      "route": "peer",
+      "transport": "terminal",
+      "command": null
+    },
+    {
+      "role": "implementor",
+      "name": "foo-coder",
+      "route": "pane",
+      "transport": "terminal",
+      "transport_id": "p-foo",
+      "command": null
+    }
+  ],
+  "close_token": "1e5a90a42d5a19db",
+  "next": "node <PLUGIN>/hooks/roster.mjs disband --close --confirm --plan-token 1e5a90a42d5a19db --cwd <SANDBOX>/myrepo",
+  "expected": 0,
+  "strays": [],
+  "not_closable": [
+    {
+      "name": "foo-reviewer",
+      "reason": "no pane"
+    },
+    {
+      "name": "foo-architect",
+      "reason": "no pane"
+    },
+    {
+      "name": "foo-coder",
+      "reason": "no pane"
+    }
+  ],
+  "team_files": [
+    "<SANDBOX>/hier/teams/foo.json"
+  ],
+  "warnings": [
+    "W8: 3 members cannot be closed from here, because they have no pane: foo-reviewer, foo-architect, foo-coder. Close them by hand."
+  ],
+  "sources": {
+    "team": {
+      "file": "<SANDBOX>/hier/teams/foo.json",
+      "members": 3
+    },
+    "peers": {
+      "live": 1
+    },
+    "herdr": {
+      "ok": false,
+      "reason": "team transport is not herdr",
+      "prefix": "foo"
+    }
+  }
+}

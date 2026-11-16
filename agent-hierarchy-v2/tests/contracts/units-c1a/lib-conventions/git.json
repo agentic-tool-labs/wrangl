@@ -1,0 +1,258 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "git",
+  "cases": [
+    {
+      "id": "directory-string",
+      "args": [
+        "$ROOT/repo",
+        [
+          "status",
+          "-s"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'status'*) printf '%s' 'ok\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo status -s\n"
+      },
+      "expect": "ok\n"
+    },
+    {
+      "id": "scope-object-cwd-only",
+      "args": [
+        {
+          "cwd": "$ROOT/repo"
+        },
+        [
+          "log",
+          "-1"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'log'*) printf '%s' 'entry\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo log -1\n"
+      },
+      "expect": "entry\n"
+    },
+    {
+      "id": "scope-git-dir",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "/x/.git"
+        },
+        [
+          "log"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'log'*) printf '%s' 'a\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --git-dir=/x/.git log\n"
+      },
+      "expect": "a\n"
+    },
+    {
+      "id": "scope-work-tree",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "workTree": "/x/wt"
+        },
+        [
+          "log"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'log'*) printf '%s' 'a\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --work-tree=/x/wt log\n"
+      },
+      "expect": "a\n"
+    },
+    {
+      "id": "scope-both",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "/x/.git",
+          "workTree": "/x/wt"
+        },
+        [
+          "diff",
+          "--stat"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'diff'*) printf '%s' 'd\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --git-dir=/x/.git --work-tree=/x/wt diff --stat\n"
+      },
+      "expect": "d\n"
+    },
+    {
+      "id": "scope-empty-flags-ignored",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "",
+          "workTree": ""
+        },
+        [
+          "log"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'log'*) printf '%s' 'a\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo log\n"
+      },
+      "expect": "a\n"
+    },
+    {
+      "id": "nonzero-exit-throws",
+      "args": [
+        "$ROOT/repo",
+        [
+          "status"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'status'*) exit 3;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo status\n"
+      },
+      "expectThrows": true
+    },
+    {
+      "id": "no-output",
+      "args": [
+        "$ROOT/repo",
+        [
+          "fetch"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'fetch'*) exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo fetch\n"
+      },
+      "expect": ""
+    },
+    {
+      "id": "utf8-output",
+      "args": [
+        "$ROOT/repo",
+        [
+          "log"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'log'*) printf '%s' 'café → ok\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo log\n"
+      },
+      "expect": "café → ok\n"
+    },
+    {
+      "id": "args-with-spaces-joined-in-log",
+      "args": [
+        "$ROOT/repo",
+        [
+          "commit",
+          "-m",
+          "two words"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'commit'*) printf '%s' 'done\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo commit -m two words\n"
+      },
+      "expect": "done\n"
+    }
+  ]
+}

@@ -1,0 +1,449 @@
+{
+  "envelope_keys": [
+    "version",
+    "total",
+    "head_cursor",
+    "tail_cursor",
+    "rows",
+    "next",
+    "prev"
+  ],
+  "shared_keys": [
+    "after",
+    "before",
+    "limit"
+  ],
+  "limit": {
+    "default": 50,
+    "max": 200
+  },
+  "kinds": {
+    "exchanges": {
+      "prefixes": [
+        "list:exchanges:team:",
+        "list:exchanges:dir:"
+      ],
+      "filters": [
+        "member",
+        "with"
+      ],
+      "sample": {
+        "version": 1,
+        "total": 3,
+        "head_cursor": "Yw",
+        "tail_cursor": "Yg",
+        "rows": [
+          {
+            "id": "exchange:f28aaefa/c",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "c",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "orchestrator",
+              "to_name": "qa",
+              "from_name": null,
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          },
+          {
+            "id": "exchange:f28aaefa/b",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "b",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "developer",
+              "to_name": "qa",
+              "from_name": "dev",
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          }
+        ],
+        "next": "Yg",
+        "prev": "Yw"
+      }
+    },
+    "feed": {
+      "prefixes": [
+        "list:feed:team:",
+        "list:feed:dir:"
+      ],
+      "filters": [
+        "member",
+        "with"
+      ],
+      "sample": {
+        "version": 1,
+        "total": 3,
+        "head_cursor": "Yw",
+        "tail_cursor": "Yg",
+        "rows": [
+          {
+            "id": "exchange:f28aaefa/c",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "c",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "orchestrator",
+              "to_name": "qa",
+              "from_name": null,
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          },
+          {
+            "id": "exchange:f28aaefa/b",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "b",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "developer",
+              "to_name": "qa",
+              "from_name": "dev",
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          }
+        ],
+        "next": "Yg",
+        "prev": "Yw"
+      }
+    },
+    "open": {
+      "prefixes": [
+        "list:open:team:"
+      ],
+      "filters": [
+        "member"
+      ],
+      "sample": {
+        "version": 1,
+        "total": 3,
+        "head_cursor": "Yw",
+        "tail_cursor": "Yg",
+        "rows": [
+          {
+            "id": "exchange:f28aaefa/c",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "c",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "orchestrator",
+              "to_name": "qa",
+              "from_name": null,
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          },
+          {
+            "id": "exchange:f28aaefa/b",
+            "body": {
+              "dir_id": "f28aaefa",
+              "id": "b",
+              "slug": "s",
+              "class": "work",
+              "title": null,
+              "title_source": null,
+              "to": "tester",
+              "from": "developer",
+              "to_name": "qa",
+              "from_name": "dev",
+              "team": "default",
+              "parent": null,
+              "created": "2026-06-01T11:00:00Z",
+              "response_created": null,
+              "has_request": true,
+              "has_response": false,
+              "open": true,
+              "withdrawn": false,
+              "closed": false,
+              "closed_by": null,
+              "closed_reason": null,
+              "preview": null,
+              "request_bytes": null,
+              "response_bytes": null,
+              "excerpt_truncated": false,
+              "eta": null,
+              "eta_facts": null
+            }
+          }
+        ],
+        "next": "Yg",
+        "prev": "Yw"
+      }
+    },
+    "timeline": {
+      "prefixes": [
+        "list:timeline:"
+      ],
+      "filters": [
+        "from_ms",
+        "to_ms"
+      ],
+      "sample": {
+        "version": 3,
+        "total": 3,
+        "head_cursor": "Mw",
+        "tail_cursor": "Mg",
+        "rows": [
+          {
+            "seq": 3,
+            "subject": "alice",
+            "from_state": "busy",
+            "to_state": "idle",
+            "at": 1799999200000
+          },
+          {
+            "seq": 2,
+            "subject": "bob",
+            "from_state": null,
+            "to_state": "busy",
+            "at": 1799999100000
+          }
+        ],
+        "next": "Mg",
+        "prev": "Mw",
+        "seed": []
+      }
+    },
+    "timeline-spans": {
+      "prefixes": [
+        "list:timeline-spans:"
+      ],
+      "filters": [
+        "from_ms",
+        "to_ms"
+      ],
+      "sample": {
+        "version": 1,
+        "total": 3,
+        "head_cursor": "QG9yY2hlc3RyYXRvcg",
+        "tail_cursor": "ZGV2",
+        "rows": [
+          {
+            "id": "member:f28aaefa/default/@orchestrator",
+            "name": "orchestrator",
+            "spans": [
+              {
+                "state": "unknown",
+                "from": 1799395200000,
+                "to": 1800000000000
+              }
+            ],
+            "marks": []
+          },
+          {
+            "id": "member:f28aaefa/default/dev",
+            "name": "dev",
+            "spans": [
+              {
+                "state": "unknown",
+                "from": 1799395200000,
+                "to": 1800000000000
+              }
+            ],
+            "marks": []
+          }
+        ],
+        "next": "ZGV2",
+        "prev": null,
+        "from_ms": 1799395200000,
+        "to_ms": 1800000000000,
+        "archived": false,
+        "more": false
+      }
+    },
+    "transcript": {
+      "prefixes": [
+        "list:transcript:"
+      ],
+      "filters": [
+        "expand"
+      ],
+      "sample": {
+        "version": 3,
+        "total": null,
+        "head_cursor": "MTIy",
+        "tail_cursor": "NDY",
+        "rows": [
+          {
+            "offset": 122,
+            "bytes": 47,
+            "type": "user",
+            "blocks": [
+              {
+                "kind": "text",
+                "excerpt": "thanks"
+              }
+            ],
+            "rows": [
+              {
+                "index": 0,
+                "kind": "turn",
+                "cut": false
+              }
+            ],
+            "class": "work",
+            "turn_start": true,
+            "turn_ms": null,
+            "turn_tokens": null
+          },
+          {
+            "offset": 46,
+            "bytes": 76,
+            "type": "assistant",
+            "blocks": [
+              {
+                "kind": "text",
+                "excerpt": "Done."
+              }
+            ],
+            "rows": [
+              {
+                "index": 0,
+                "kind": "text",
+                "cut": false
+              }
+            ]
+          }
+        ],
+        "next": "NDY",
+        "prev": "MTIy"
+      }
+    },
+    "plan-changes": {
+      "prefixes": [
+        "list:plan-changes:"
+      ],
+      "filters": [
+        "item"
+      ],
+      "sample": {
+        "version": 1,
+        "total": 3,
+        "head_cursor": "MjAyNi0wNi0wMlQxMDowMDowM1ofdHVpHzM",
+        "tail_cursor": "MjAyNi0wNi0wMlQxMDowMDowMlofdHVpHzI",
+        "rows": [
+          {
+            "at": "2026-06-02T10:00:03Z",
+            "seq": 3,
+            "stream": "tui",
+            "item": "i1",
+            "kind": "state",
+            "from": "next",
+            "to": "in_progress",
+            "by": "implementor"
+          },
+          {
+            "at": "2026-06-02T10:00:02Z",
+            "seq": 2,
+            "stream": "tui",
+            "item": "i0",
+            "kind": "state",
+            "from": "next",
+            "to": "in_progress",
+            "by": "implementor"
+          }
+        ],
+        "next": "MjAyNi0wNi0wMlQxMDowMDowMlofdHVpHzI",
+        "prev": "MjAyNi0wNi0wMlQxMDowMDowM1ofdHVpHzM"
+      }
+    }
+  }
+}

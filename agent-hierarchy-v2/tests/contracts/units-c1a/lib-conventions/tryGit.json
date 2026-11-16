@@ -1,0 +1,79 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "tryGit",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        "$ROOT/repo",
+        [
+          "status"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'status'*) printf '%s' 'fine\n'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo status\n"
+      },
+      "expect": "fine\n"
+    },
+    {
+      "id": "nonzero-is-null",
+      "args": [
+        "$ROOT/repo",
+        [
+          "status"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'status'*) exit 1;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo status\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "scope-object-fails-null",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "/x"
+        },
+        [
+          "status"
+        ]
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --git-dir=/x status\n"
+      },
+      "expect": null
+    }
+  ]
+}

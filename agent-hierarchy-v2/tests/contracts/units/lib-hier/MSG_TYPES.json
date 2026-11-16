@@ -1,0 +1,15 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "MSG_TYPES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "request",
+        "response"
+      ]
+    }
+  ]
+}

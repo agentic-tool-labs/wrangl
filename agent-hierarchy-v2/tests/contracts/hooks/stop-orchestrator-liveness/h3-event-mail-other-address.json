@@ -1,0 +1,39 @@
+{
+  "kind": "hook",
+  "id": "h3-event-mail-other-address",
+  "about": "an entry for another address in the box is not delivered",
+  "tree": "hook-event-mail-other-address",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off",
+    "AH_MAIL_DOORBELL": "0"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "stop-orchestrator-liveness",
+    "event": {
+      "hook_event_name": "Stop",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "stop_hook_active": false,
+      "last_assistant_message": "done"
+    }
+  },
+  "mutant": "address not checked",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T04:40:03.732Z"
+  }
+}

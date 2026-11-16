@@ -1,0 +1,49 @@
+{
+  "kind": "cli",
+  "id": "team",
+  "about": "snapshot records the team's members in a snapshot file",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "snapshot",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"snapshot\": \"<ROOT:proj>/.claude/hierarchy/snapshots/tm-<ISOC:1>.json\",\n  \"team\": \"tm\",\n  \"members\": [\n    {\n      \"name\": \"tm-implementor\",\n      \"role\": \"implementor\",\n      \"session_id\": null\n    },\n    {\n      \"name\": \"tm-reviewer\",\n      \"role\": \"reviewer\",\n      \"session_id\": null\n    }\n  ],\n  \"removed\": 0\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.authority.json",
+          "mode": "0644",
+          "content": "{\n  \"db_id\": \"<OPID:1>\"\n}\n"
+        },
+        {
+          "path": "ah/state/ah.db.authority.json.lock",
+          "mode": "0644",
+          "content": ""
+        },
+        {
+          "path": "ah/state/ah.db.team_snapshots.jsonl",
+          "mode": "0644",
+          "content": "{\n  \"v\": 1,\n  \"kind\": \"ah-team-snapshot\",\n  \"team\": \"tm\",\n  \"team_id\": \"t-tm\",\n  \"taken_at\": \"<ISO:1>\",\n  \"transport\": null,\n  \"layout\": null,\n  \"members\": [\n    {\n      \"name\": \"tm-implementor\",\n      \"role\": \"implementor\",\n      \"kind\": \"claude\",\n      \"route\": null,\n      \"model\": null,\n      \"effort\": null,\n      \"autoMode\": null,\n      \"args\": null,\n      \"stream\": null,\n      \"expected_root\": null,\n      \"session_id\": null,\n      \"thread_id\": null\n    },\n    {\n      \"name\": \"tm-reviewer\",\n      \"role\": \"reviewer\",\n      \"kind\": \"claude\",\n      \"route\": null,\n      \"model\": null,\n      \"effort\": null,\n      \"autoMode\": null,\n      \"args\": null,\n      \"stream\": null,\n      \"expected_root\": null,\n      \"session_id\": null,\n      \"thread_id\": null\n    }\n  ]\n}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a snapshot with no members",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:50.781Z"
+  }
+}

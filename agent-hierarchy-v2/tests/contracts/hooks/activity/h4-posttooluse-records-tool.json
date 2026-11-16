@@ -1,0 +1,42 @@
+{
+  "kind": "hook",
+  "id": "h4-posttooluse-records-tool",
+  "about": "a tool finishing records working with the tool's name",
+  "tree": "hook-implementor",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "activity",
+    "event": {
+      "hook_event_name": "PostToolUse",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "tool_name": "Read",
+      "tool_response": {},
+      "tool_use_id": "toolu_contract",
+      "tool_input": {
+        "file_path": "/x"
+      }
+    }
+  },
+  "mutant": "tool name not recorded",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:33.245Z"
+  }
+}

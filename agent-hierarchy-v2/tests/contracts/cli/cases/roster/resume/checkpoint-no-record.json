@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "checkpoint-no-record",
+  "about": "resume --checkpoint for a team with no checkpoint record is refused and changes nothing (it does not fall back to a snapshot)",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "resume",
+      "--checkpoint",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "roster.mjs: resume --checkpoint: no checkpoint for \"tm\" — take one with `checkpoint`\n",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "resume --checkpoint launches or plans from a snapshot when no checkpoint record exists",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.5.0-pre.1",
+    "at": "2026-10-17T00:00:00.000Z",
+    "note": "placeholder until rerecord.mjs writes it from the native binary"
+  }
+}

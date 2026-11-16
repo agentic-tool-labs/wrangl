@@ -1,0 +1,37 @@
+{
+  "kind": "cli",
+  "id": "usage-neither",
+  "about": "neither --issues nor --labelled",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out"
+    ],
+    "stdin": null
+  },
+  "mutant": "the exactly-one check drifted",
+  "expect": {
+    "stdout": "{\"error\":\"usage: give exactly one of --issues and --labelled\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:34.410Z"
+  }
+}

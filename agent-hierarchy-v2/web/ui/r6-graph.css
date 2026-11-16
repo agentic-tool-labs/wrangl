@@ -1,0 +1,182 @@
+/* The Graph view: Map (the packed team, .gpack), Radial (the ring, .gpack.gradial: Map's chrome, scrubber and rail) and Flow. Tokens only; every selector sits under .graph, the header toggle or the graph legends. */
+
+/* the Map | Radial | Flow toggle, first in the Graph toolbar (.graph-controls) */
+.r6 .graph-toggle { display: flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.r6 .graph-toggle .seg { padding: 3px 12px; border: 0; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.r6 .graph-toggle .seg + .seg { border-left: 1px solid var(--line); }
+.r6 .graph-toggle .seg.on { background: color-mix(in srgb, var(--ink) 8%, var(--bar)); color: var(--ink); }
+.r6 .graph-toggle .seg:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.r6 .graph-controls .graph-toggle { margin-right: 2px; border-width: 0 1px 0 0; border-color: var(--line-control); border-radius: 0; }
+.r6 .graph-controls .graph-toggle .seg { height: 24px; padding: 0 var(--sp-8); border-radius: var(--radius); font-size: var(--text-13); }
+.r6 .graph-controls .graph-toggle .seg + .seg { border-left: 0; }
+
+
+/* links: width is the messages exchanged; a brief in flight is accent, one sent for review is dashed */
+.r6 .graph .edge-live { stroke: var(--accent); }
+.r6 .graph .edge-review { stroke: var(--review); stroke-dasharray: 5 4; }
+.r6 .gflow .edge { fill: none; stroke-width: 1; }
+.r6 .gflow .edge-live { stroke-width: 2; }
+.r6 .gflow .edge-review { stroke-width: 2; }
+.r6 .graph .dot { fill: var(--working-mark); pointer-events: none; offset-distance: 0%; offset-rotate: 0deg; animation: graph-travel 2.4s linear infinite; }
+.r6 .graph .dot-review { fill: var(--review); animation-duration: 3.4s; }
+@keyframes graph-travel { to { offset-distance: 100%; } }
+.r6.motion-off .graph .dot, .r6 .graph.offscreen .dot { animation: none; }
+@media (prefers-reduced-motion: reduce) { .r6 .graph .dot { animation: none; } }
+.r6 .flow-legend i { display: inline-block; width: 14px; flex: none; }
+.r6 .graph i.k-brief { height: 4px; background: var(--accent); }
+.r6 .graph i.k-review { border-top: 2px dashed var(--review); }
+.r6 .graph i.k-edge { height: 2px; background: var(--edge); }
+
+/* Flow: cards on a 20px dot grid, columns by role */
+.r6 .gflow { background-color: var(--bg); }
+.r6 .gflow .dot-grid { fill: var(--line-row); }
+.r6 .flow-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.r6 .flow-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.r6 .flabel { position: absolute; font-size: var(--text-11); text-transform: uppercase; letter-spacing: .04em; color: var(--dim); white-space: nowrap; }
+.r6 .fcard { position: absolute; box-sizing: border-box; pointer-events: auto; background: var(--bar); border: 1px solid var(--line); border-radius: var(--radius-card); font-size: var(--text-13); cursor: pointer; }
+.r6 .fcard.active { background: var(--tint-working); border-color: var(--accent); }
+.r6 .fcard.reviewing { background: var(--tint-review); border-color: color-mix(in srgb, var(--review) 60%, var(--bg)); }
+.r6 .fcard.selected, .r6 .fcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.r6 .fcard .fhead { display: flex; gap: 8px; align-items: center; padding: 8px 10px; white-space: nowrap; }
+.r6 .fcard.active .fhead { border-bottom: 1px solid var(--line); }
+.r6 .fcard .fhead b, .r6 .fcard .fname { font-weight: 600; color: var(--role, var(--ink)); overflow: hidden; text-overflow: ellipsis; }
+.r6 .fcard .fname { font-weight: 400; color: var(--ink); }
+.r6 .fcard .glyph { color: var(--idle-mark); }
+.r6 .fcard.active .glyph { color: var(--working-mark); }
+.r6 .fcard.reviewing .glyph, .r6 .fcard.reviewing .tag { color: var(--review); }
+.r6 .fcard .tag { flex: none; margin-left: auto; color: var(--muted); font-size: var(--text-11); }
+.r6 .fcard.active .tag { color: var(--working); }
+.r6 .fcard .fstats { display: flex; gap: 12px; white-space: nowrap; padding: 6px 10px; font-size: var(--text-11); color: var(--muted); }
+.r6 .fcard .fstats b { color: var(--ink); font-weight: 600; }
+.r6 .flow-legend { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 16px; align-items: center; padding: 6px 10px; background: var(--bar); border: 1px solid var(--line); border-radius: var(--radius-card); font-size: var(--text-12); color: var(--muted); }
+.r6 .flow-legend > span { display: flex; gap: 6px; align-items: center; }
+
+.r6 .flane { position: absolute; box-sizing: border-box; background: var(--tint-lane); border-radius: var(--radius-card); pointer-events: none; }
+.r6 .flane-label { position: absolute; left: var(--sp-8); top: var(--sp-2); max-width: calc(100% - 2 * var(--sp-8)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-11); line-height: 1.2; color: var(--muted); }
+
+/* Map: the team packed into circles (streams side by side, members inside), bundled message arcs, semantic zoom, the scrubber */
+.r6 .gpack { flex: 1; min-height: 0; }
+.r6 .gpack .gm-head { display: flex; align-items: center; gap: var(--sp-12); min-height: 40px; padding: 0 var(--sp-16); border-bottom: 1px solid var(--line-soft); font-size: var(--text-12); color: var(--muted); }
+.r6 .gm-crumbs { display: flex; align-items: center; gap: var(--sp-4); min-width: 0; }
+.r6 .gm-crumbs .sep { color: var(--dim); }
+.r6 .gm-crumbs button { min-height: 24px; padding: 0 var(--sp-6); border: 0; border-radius: var(--radius); background: transparent; color: var(--muted); font: inherit; cursor: pointer; white-space: nowrap; }
+.r6 .gm-crumbs button:hover { background: var(--surface-hover); }
+.r6 .gm-crumbs button[aria-current] { color: var(--ink-strong); font-weight: 600; }
+.r6 .gm-legend { display: flex; gap: var(--sp-12); margin-left: auto; white-space: nowrap; }
+.r6 .gm-legend .keys { display: contents; }
+.r6 .gm-legend .keys > span { display: flex; align-items: center; gap: var(--sp-4); }
+.r6 .gm-legend .x { min-width: 24px; min-height: 24px; padding: 0; border: 0; border-radius: var(--radius); background: transparent; color: var(--muted); font: inherit; font-size: var(--text-14); line-height: 1; cursor: pointer; }
+.r6 .gm-legend .x:hover { background: var(--surface-hover); color: var(--ink); }
+.r6 .gm-legend .x:focus-visible, .r6 .gm-svg:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.r6 .gm-legend .sw { display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--brief-mark); }
+.r6 .gm-legend .sw.report { border-top: 2px dashed var(--report-mark); }
+.r6 .gm-legend .sw.sent { border-top-color: var(--working-mark); }
+.r6 .gm-legend .sw.recv { border-top: 2px dashed var(--brief-mark); }
+.r6 .gm-legend .sw.ring { width: 12px; height: 12px; border: 2px solid var(--working-mark); border-radius: 50%; box-sizing: border-box; }
+.r6 .gm-stage { position: relative; flex: 1; min-height: 420px; }
+.r6 .gm-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.r6 .gm-svg:active { cursor: grabbing; }
+
+.r6 .gpack .ctr { fill: var(--surface-1); fill-opacity: .55; stroke: var(--idle-mark); cursor: zoom-in; }
+.r6 .gpack .ctr.root { fill: none; stroke: none; cursor: default; pointer-events: none; }
+.r6 .gpack .gm-node { outline: none; }
+.r6 .gpack .gm-node:hover > .ctr { stroke: var(--line-hover); }
+.r6 .gpack .gm-node:focus-visible > .ctr { stroke: var(--accent-ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.r6 .gpack .gm-leaf { cursor: pointer; outline: none; }
+.r6 .gpack .gm-leaf .body { fill: var(--surface-1); stroke: var(--line); vector-effect: non-scaling-stroke; }
+.r6 .gpack .gm-leaf .track { fill: none; stroke: var(--line-strong); }
+.r6 .gpack .gm-leaf .busy { fill: var(--idle-mark); }
+.r6 .gpack .gm-leaf:is(.st-working, .st-running) .busy { fill: var(--working-mark); }
+.r6 .gpack .gm-leaf.st-blocked .busy { fill: var(--blocked-mark); }
+.r6 .gpack .gm-leaf.st-gone .busy { fill: var(--gone); }
+.r6 .gpack .gm-leaf.st-gone .body { fill-opacity: .4; }
+.r6 .gpack .gm-leaf.selected .body { stroke: var(--ring); stroke-width: 2; }
+/* focus is the house outline (ui.css :focus-visible, !important), a box apart from the selected member's --ring stroke; WebKit draws
+   no outline on SVG, so the body stroke carries focus too (not on a selected member, whose --ring stays) */
+.r6 .gpack .gm-leaf:not(.selected):focus-visible .body { stroke: var(--accent-ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
+
+/* labels stay one screen size: --k is the zoom scale, set on the svg */
+.r6 .gpack .lbl { fill: var(--ink-strong); font-family: var(--font-ui); font-size: calc(var(--text-12) / var(--k, 1)); text-anchor: middle; dominant-baseline: central; pointer-events: none; paint-order: stroke; stroke: var(--label-halo); stroke-width: calc(3px / var(--k, 1)); stroke-linejoin: round; }
+.r6 .gpack .lbl.sub { fill: var(--muted); font-size: calc(var(--text-11) / var(--k, 1)); }
+.r6 .gpack .lbl.ctrl { fill: var(--muted); font-weight: 600; }
+.r6 .gpack .lbl.val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.r6 .gpack .gm-leaf:not([data-z]) .lbl,
+.r6 .gpack .gm-leaf[data-z="0"] :is(.t1, .t2, .t3, .t4, .t5),
+.r6 .gpack .gm-leaf[data-z="1"] :is(.t2, .t3, .t4, .t5),
+.r6 .gpack .gm-leaf[data-z="2"] :is(.t3, .t4, .t5),
+.r6 .gpack .gm-leaf[data-z="3"] :is(.t4, .t5),
+.r6 .gpack .gm-leaf[data-z="4"] .t5,
+.r6 .gpack .gm-clabel:not([data-show="1"]) { display: none; }
+
+/* arcs: briefs solid, reports dashed (both kinds share a hue in the house palette); width is the messages in the window */
+/* the lowest arc opacity that keeps a mark at 3:1 on the page: 3.77 dark at .55, 3.40 light at .75 (pinned in contrast.test.mjs).
+   The floor is for arcs at rest (Run): the windowed recency fade (--fade, down to .2) and the .08 selection dim go below it on purpose. */
+.r6 .gpack { --arc-alpha: .55; }
+:root[data-theme="light"] .r6 .gpack { --arc-alpha: .75; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .r6 .gpack { --arc-alpha: .75; } }
+.r6 .gpack .gm-arc { fill: none; stroke: var(--brief-mark); stroke-opacity: var(--fade, var(--arc-alpha)); stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+.r6 .gpack .gm-arc.report { stroke: var(--report-mark); stroke-dasharray: 5 4; stroke-linecap: butt; }
+.r6 .gpack .gm-arcs.focus .gm-arc { stroke-opacity: .08; }
+.r6 .gpack .gm-arcs.focus .gm-arc.on { stroke-opacity: 1; }
+.r6 .gpack .gm-spark-path { fill: none; stroke: none; }
+.r6 .gpack .spark { fill: var(--brief-mark); pointer-events: none; }
+.r6 .gpack .spark.over { fill: var(--blocked-mark); }
+.r6.motion-off .gpack .spark, .r6 .gpack.offscreen .spark { display: none; }
+.r6 .gpack .gm-more { position: absolute; left: var(--sp-16); bottom: var(--sp-12); margin: 0; padding: var(--sp-2) var(--sp-8); border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface-1); color: var(--muted); font-size: var(--text-12); font-variant-numeric: tabular-nums; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .r6 .gpack .spark { display: none; } }
+
+/* Radial: members on a ring, a band per stream outside it, one bundled path per message. Thin lines: the path widths are the two
+   knobs below, the colours the kind marks; briefs solid, reports dashed. A traced member's paths are sent solid, received dashed. */
+.r6 .gradial { --flow-w: 1px; --flow-w-on: 2.5px; }
+.r6 .gradial .gr-flow { fill: none; stroke: var(--brief-mark); stroke-width: var(--flow-w); stroke-opacity: var(--fade, var(--arc-alpha)); stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+.r6 .gradial .gr-flow.report { stroke: var(--report-mark); stroke-dasharray: 5 4; stroke-linecap: butt; }
+.r6 .gradial .gr-flows.focus .gr-flow { stroke-opacity: .06; }
+/* tracing a member, colour and dash encode direction, not kind: sent solid in --working-mark, received dashed in --brief-mark (Q1) */
+.r6 .gradial .gr-flows.focus .gr-flow.on { stroke: var(--working-mark); stroke-opacity: 1; stroke-width: var(--flow-w-on); stroke-dasharray: none; stroke-linecap: round; }
+.r6 .gradial .gr-flows.focus .gr-flow.on.in { stroke: var(--brief-mark); stroke-dasharray: 4 3; stroke-linecap: butt; }
+.r6 .gradial .gr-band { cursor: zoom-in; outline: none; }
+.r6 .gradial .gr-band .gr-arcband { fill: var(--line-strong); stroke: var(--page); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.r6 .gradial .gr-band:hover .gr-arcband { fill: var(--line-hover); }
+.r6 .gradial .gr-band.on .gr-arcband { fill: var(--accent); }
+.r6 .gradial .gr-band:focus-visible .gr-arcband { stroke: var(--accent-ink); }
+.r6 .gradial .lbl.band-l { fill: var(--ink-strong); font-size: calc(var(--text-11) / var(--k, 1)); font-weight: 600; stroke: none; }
+.r6 .gradial .gr-band.on .lbl.band-l { fill: var(--on-accent); }
+.r6 .gradial .gr-mem { cursor: pointer; outline: none; }
+.r6 .gradial .gr-mem .hit { fill: transparent; stroke: none; }
+.r6 .gradial .gr-mem .dot { fill: var(--surface-1); stroke: var(--idle-mark); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.r6 .gradial .gr-mem:is(.st-working, .st-running) .dot { stroke: var(--working-mark); }
+.r6 .gradial .gr-mem.st-blocked .dot { stroke: var(--blocked-mark); }
+.r6 .gradial .gr-mem.st-gone .dot { stroke: var(--gone); }
+/* selected: a --ring circle round the dot, so the state colour stays on the dot */
+.r6 .gradial .gr-mem.selected .hit { stroke: var(--ring); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.r6 .gradial .gr-mem:not(.selected):focus-visible .hit { stroke: var(--accent-ink); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.r6 .gradial .gr-mem.out { opacity: .5; }
+.r6 .gradial .gr-mem .lbl.start { text-anchor: start; }
+.r6 .gradial .gr-mem .lbl.end { text-anchor: end; }
+
+/* the scrubber */
+.r6 .gm-scrub { display: flex; align-items: center; gap: var(--sp-12); min-height: 48px; padding: 0 var(--sp-16); border-top: 1px solid var(--line-soft); font-size: var(--text-12); color: var(--muted); }
+.r6 .gm-scrub input[type="range"] { flex: 1; min-width: 120px; min-height: 24px; margin: 0; accent-color: var(--accent-ink); }
+.r6 .gm-scrub output { min-width: 18ch; color: var(--ink-value); font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r6 .gm-scrub .gm-end { min-width: 8ch; text-align: right; color: var(--muted); font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r6 .gm-scrub select, .r6 .gm-scrub .gm-play { min-height: 28px; padding: 0 var(--sp-8); border: 1px solid var(--line-control); border-radius: var(--radius); background: var(--surface-1); color: var(--ink-2); font: inherit; cursor: pointer; }
+.r6 .gm-scrub .gm-play { min-width: 64px; }
+.r6 .gm-scrub .gm-play[aria-pressed="true"] { background: var(--on-control); color: var(--ink-strong); box-shadow: var(--shadow-control); }
+.r6 .gm-scrub :is(select, .gm-play):hover:not(:disabled) { border-color: var(--line-hover); background: var(--surface-hover); }
+.r6 .gm-scrub :is(select, .gm-play):disabled { cursor: default; opacity: .6; }
+.r6 .gpack :is(.gm-crumbs button, .gm-scrub select, .gm-scrub .gm-play, .gm-scrub input):focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+/* the rail while Map shows */
+.r6 .gm-panel .sub { margin: 0 0 var(--sp-12); color: var(--muted); font-size: var(--text-13); }
+.r6 .gm-panel .gm-counts { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin: 0 0 var(--sp-16); }
+.r6 .gm-panel .gm-counts .pill { font-variant-numeric: tabular-nums; }
+.r6 .gm-msgs { list-style: none; margin: 0 0 var(--sp-16); padding: 0; }
+.r6 .gm-msgs li { border-bottom: 1px solid var(--line-soft); }
+.r6 .gm-msgs .gm-row { display: grid; grid-template-columns: 44px 64px minmax(0, 1fr); gap: var(--sp-8); align-items: baseline; width: 100%; min-height: 24px; padding: var(--sp-4); border: 0; border-radius: var(--radius); background: transparent; color: var(--ink-3); font: inherit; font-size: var(--text-12); text-align: left; }
+.r6 .gm-msgs button.gm-row { cursor: pointer; }
+.r6 .gm-msgs button.gm-row:hover { background: var(--surface-hover); }
+.r6 .gm-msgs button.gm-row:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.r6 .gm-msgs time { color: var(--muted); font-size: var(--text-11); font-variant-numeric: tabular-nums; }
+.r6 .gm-msgs .kind { justify-self: start; }
+.r6 .gm-msgs .route-line { overflow-wrap: anywhere; }
+.r6 .gm-msgs .route { display: block; color: var(--muted-2); font-size: var(--text-11); }

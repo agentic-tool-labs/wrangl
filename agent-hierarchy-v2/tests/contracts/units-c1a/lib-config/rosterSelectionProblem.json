@@ -1,0 +1,197 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "rosterSelectionProblem",
+  "cases": [
+    {
+      "id": "default-fine",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "default",
+          "key": null,
+          "source": "default",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "team-source-fine",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "x",
+          "key": "x",
+          "source": "team",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "flag-defined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "squad",
+          "key": "squad",
+          "source": "flag",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"squad\":{\"members\":[]}}}"
+      },
+      "expect": null
+    },
+    {
+      "id": "flag-undefined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "gone",
+          "key": "gone",
+          "source": "flag",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"squad\":{},\"other\":{}}}"
+      },
+      "expect": "--roster selects roster \"gone\", but there is no rosters.gone block at any level (defined: other, squad). Fix with `roster.mjs roster use default`, `roster.mjs roster use <other>`, or `roster.mjs init --roster gone`."
+    },
+    {
+      "id": "flag-undefined-none-defined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "gone",
+          "key": "gone",
+          "source": "flag",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "--roster selects roster \"gone\", but there is no rosters.gone block at any level (defined: none). Fix with `roster.mjs roster use default`, `roster.mjs roster use <other>`, or `roster.mjs init --roster gone`."
+    },
+    {
+      "id": "env-undefined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "gone",
+          "key": "gone",
+          "source": "env",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "WRANGL_ROSTER selects roster \"gone\", but there is no rosters.gone block at any level (defined: none). Fix with `roster.mjs roster use default`, `roster.mjs roster use <other>`, or `roster.mjs init --roster gone`."
+    },
+    {
+      "id": "active-undefined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "gone",
+          "key": "gone",
+          "source": "activeRoster",
+          "level": "repo",
+          "path": "/r/agent-hierarchy.json"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "activeRoster at repo in /r/agent-hierarchy.json selects roster \"gone\", but there is no rosters.gone block at any level (defined: none). Fix with `roster.mjs roster use default`, `roster.mjs roster use <other>`, or `roster.mjs init --roster gone`."
+    },
+    {
+      "id": "active-non-string",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "5",
+          "key": 5,
+          "source": "activeRoster",
+          "level": "global",
+          "path": "/g"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "activeRoster at global in /g must be a roster name, got 5. Fix with `roster.mjs roster use <name> --level global` or `roster.mjs roster use --clear --level global`."
+    },
+    {
+      "id": "active-empty-string",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "",
+          "key": "",
+          "source": "activeRoster",
+          "level": "repo",
+          "path": "/r"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "activeRoster at repo in /r must be a roster name, got \"\". Fix with `roster.mjs roster use <name> --level repo` or `roster.mjs roster use --clear --level repo`."
+    },
+    {
+      "id": "default-name-never-defined",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "default",
+          "key": "default",
+          "source": "flag",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/agent-hierarchy.json": "{\"rosters\":{\"default\":{}}}"
+      },
+      "expect": "--roster selects roster \"default\", but there is no rosters.default block at any level (defined: none). Fix with `roster.mjs roster use default`, `roster.mjs roster use <other>`, or `roster.mjs init --roster default`."
+    },
+    {
+      "id": "null-key-source-env",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "default",
+          "key": null,
+          "source": "env",
+          "level": null,
+          "path": null
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    }
+  ]
+}

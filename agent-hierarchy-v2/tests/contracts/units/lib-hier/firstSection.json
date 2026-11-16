@@ -1,0 +1,79 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "firstSection",
+  "cases": [
+    {
+      "id": "text-0",
+      "args": [
+        "---\nid: x\n---\n\n## [0] tldr\nBLOCKED\n\n## [1] status\nNEEDS-INTENT\n"
+      ],
+      "expect": "## [0] tldr\nBLOCKED\n"
+    },
+    {
+      "id": "text-1",
+      "args": [
+        "## [1] a\nx\n## [2] b\ny"
+      ],
+      "expect": "## [1] a\nx"
+    },
+    {
+      "id": "text-2",
+      "args": [
+        "no heading"
+      ],
+      "expect": ""
+    },
+    {
+      "id": "text-3",
+      "args": [
+        "## [0] only\nline1\nline2"
+      ],
+      "expect": "## [0] only\nline1\nline2"
+    },
+    {
+      "id": "text-4",
+      "args": [
+        "## [0] a\n## [1] b"
+      ],
+      "expect": "## [0] a"
+    },
+    {
+      "id": "text-5",
+      "args": [
+        "text\n## [0] a\nbody\n## [1] b\n"
+      ],
+      "expect": "## [0] a\nbody"
+    },
+    {
+      "id": "text-6",
+      "args": [
+        "## not-bracketed\n## [0] a\nbody"
+      ],
+      "expect": "## [0] a\nbody"
+    },
+    {
+      "id": "text-7",
+      "args": [
+        ""
+      ],
+      "expect": ""
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": ""
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": ""
+    }
+  ]
+}

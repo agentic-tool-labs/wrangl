@@ -1,0 +1,464 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "loadConventions",
+  "cases": [
+    {
+      "id": "absent-no-default",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/master^{commit}\n"
+      },
+      "expect": {
+        "opted_in": false,
+        "default": null,
+        "status": "absent",
+        "conventions": null
+      }
+    },
+    {
+      "id": "absent-file-missing",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 128;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": false,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "absent",
+        "conventions": null
+      }
+    },
+    {
+      "id": "ok",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":1,\"pr\":{\"draft\":false}}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "ok",
+        "conventions": {
+          "version": 1,
+          "pr": {
+            "draft": false
+          }
+        }
+      }
+    },
+    {
+      "id": "ok-via-symbolic-ref",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'symbolic-ref -q refs/remotes/origin/HEAD') printf '%s' 'refs/remotes/origin/trunk\n'; exit 0;;\n  *'rev-parse --verify -q refs/remotes/origin/trunk^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/trunk:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/trunk:.claude/ah-conventions.json') printf '%s' '{\"version\":1}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/trunk^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/trunk:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/trunk:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/trunk",
+          "branch": "trunk"
+        },
+        "status": "ok",
+        "conventions": {
+          "version": 1
+        }
+      }
+    },
+    {
+      "id": "invalid-schema-unknown-key",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":1,\"nope\":1}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: unknown key `nope`",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-schema-version",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":2}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: `version` must be the integer 1",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-schema-missing-version",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: `version` is required",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-schema-not-object",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '[1]'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: the file must hold a JSON object",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-schema-null",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' 'null'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: the file must hold a JSON object",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-blob-read-fails",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') exit 128;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Command failed: git -C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json",
+        "conventions": null
+      }
+    },
+    {
+      "id": "scope-object",
+      "args": [
+        {
+          "cwd": "$ROOT/repo",
+          "gitDir": "/x/.git"
+        }
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":1}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo --git-dir=/x/.git symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo --git-dir=/x/.git rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo --git-dir=/x/.git cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo --git-dir=/x/.git cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "ok",
+        "conventions": {
+          "version": 1
+        }
+      }
+    },
+    {
+      "id": "invalid-json-word",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' 'nope'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Unexpected token 'o', \"nope\" is not valid JSON",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-json-empty",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Unexpected end of JSON input",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-json-truncated",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Unexpected end of JSON input",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-json-trailing-comma",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":1,}'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Expected double-quoted property name in JSON at position 13 (line 1 column 14)",
+        "conventions": null
+      }
+    },
+    {
+      "id": "invalid-json-trailing-garbage",
+      "args": [
+        "$ROOT/repo"
+      ],
+      "files": {
+        "bin/git": {
+          "text": "#!/bin/sh\nd=$(dirname \"$0\")\necho \"$*\" >> \"$d/git.log\"\ncase \"$*\" in\n  *'rev-parse --verify -q refs/remotes/origin/main^{commit}') exit 0;;\n  *'cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json') exit 0;;\n  *'cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json') printf '%s' '{\"version\":1} x'; exit 0;;\n  *) exit 1;;\nesac\n",
+          "mode": 493
+        },
+        "repo/.keep": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expectFiles": {
+        "bin/git.log": "-C $ROOT/repo symbolic-ref -q refs/remotes/origin/HEAD\n-C $ROOT/repo rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C $ROOT/repo cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C $ROOT/repo cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+      },
+      "expect": {
+        "opted_in": true,
+        "default": {
+          "ref": "refs/remotes/origin/main",
+          "branch": "main"
+        },
+        "status": "invalid: Unexpected non-whitespace character after JSON at position 14 (line 1 column 15)",
+        "conventions": null
+      }
+    }
+  ]
+}

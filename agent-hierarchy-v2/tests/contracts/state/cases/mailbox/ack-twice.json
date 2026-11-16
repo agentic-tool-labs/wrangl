@@ -1,0 +1,72 @@
+{
+  "kind": "state-op",
+  "id": "ack-twice",
+  "about": "a second ack of the same id reports it existed",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "mailbox",
+    "op": "ack",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "mailbox",
+        "op": "ack",
+        "kind": "write",
+        "body": {
+          "args": {
+            "dir": "<ROOT:ah>/mailbox/tm~0123456789/tm-architect",
+            "id": "e1",
+            "by": "cli",
+            "session_id": "sess-a"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-ack"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "dir": "<ROOT:ah>/mailbox/tm~0123456789/tm-architect",
+        "id": "e1",
+        "by": "cli",
+        "session_id": "sess-a"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-mailbox-ack-twice"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "fresh": false
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "path": "ah/mailbox/tm~<TKEY:1>/tm-architect/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"op-setup-ack\",\"at\":\"<ISO:1>\",\"result\":{\"fresh\":true}}\n{\"op_id\":\"op-mailbox-ack-twice\",\"at\":\"<ISO:2>\",\"result\":{\"fresh\":false}}\n"
+        }
+      ]
+    }
+  },
+  "mutant": "a second ack that overwrites",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:14.138Z"
+  }
+}

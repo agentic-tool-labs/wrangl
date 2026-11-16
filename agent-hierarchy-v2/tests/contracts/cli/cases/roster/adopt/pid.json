@@ -1,0 +1,47 @@
+{
+  "kind": "cli",
+  "id": "pid",
+  "about": "adopt records the Orchestrator pid in the team file",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "adopt",
+      "--orchestrator-pid",
+      "<PID:runner>",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"adopted\": true,\n  \"team_id\": \"t-tm\",\n  \"orchestrator\": {\n    \"pid\": \"<PID>\",\n    \"session_id\": \"orch-tm\"\n  }\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/.claude/hierarchy/.state-team/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"<OPID:2>\",\"at\":\"<ISO:2>\",\"result\":{\"ok\":true}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": [
+        {
+          "path": "proj/.claude/hierarchy/teams/tm.json",
+          "mode": "0644",
+          "content": "{\n  \"team_id\": \"t-tm\",\n  \"mesh\": {\n    \"policy\": \"open\"\n  },\n  \"orchestrator\": {\n    \"pid\": \"<PID>\",\n    \"session_id\": \"orch-tm\"\n  },\n  \"members\": [\n    {\n      \"role\": \"implementor\",\n      \"name\": \"tm-implementor\",\n      \"transport_id\": \"p-tm-implementor\"\n    },\n    {\n      \"role\": \"reviewer\",\n      \"name\": \"tm-reviewer\",\n      \"transport_id\": \"p-tm-reviewer\"\n    }\n  ]\n}\n"
+        }
+      ]
+    }
+  },
+  "mutant": "an adopt that changes another team",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:44.278Z"
+  }
+}

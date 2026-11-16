@@ -1,0 +1,51 @@
+{
+  "kind": "state-op",
+  "id": "snapshot",
+  "about": "snapshot writes <team>-<ts>.json",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "team",
+    "op": "snapshot",
+    "kind": "write",
+    "ignore_status": true,
+    "body": {
+      "args": {
+        "dir": "<ROOT:proj>/.claude/hierarchy",
+        "team_name": "tm",
+        "ts": "20260101T120000123Z",
+        "doc": {
+          "kind": "ah-team-snapshot",
+          "v": 1,
+          "members": []
+        }
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-team-snapshot"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "file": "tm-<ISOC:1>.json",
+        "removed": 0
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a snapshot under another name",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:24.276Z"
+  }
+}

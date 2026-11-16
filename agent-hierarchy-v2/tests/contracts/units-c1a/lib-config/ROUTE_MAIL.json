@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROUTE_MAIL",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": "mail"
+    }
+  ]
+}

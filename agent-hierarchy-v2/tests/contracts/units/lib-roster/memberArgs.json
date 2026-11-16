@@ -1,0 +1,63 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "memberArgs",
+  "cases": [
+    {
+      "id": "absent",
+      "args": [
+        {
+          "role": "architect"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "empty",
+      "args": [
+        {
+          "args": []
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "list",
+      "args": [
+        {
+          "args": [
+            "--x"
+          ]
+        }
+      ],
+      "expect": [
+        "--x"
+      ]
+    },
+    {
+      "id": "not-array",
+      "args": [
+        {
+          "args": "--x"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-member",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "null-args",
+      "args": [
+        {
+          "args": null
+        }
+      ],
+      "expect": null
+    }
+  ]
+}

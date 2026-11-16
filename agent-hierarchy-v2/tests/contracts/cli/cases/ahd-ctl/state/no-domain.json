@@ -1,0 +1,31 @@
+{
+  "kind": "cli",
+  "id": "no-domain",
+  "about": "state with no domain is a usage error",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "ahd-ctl",
+    "argv": [
+      "state"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"state needs `writer` or a state domain and operation\"}}\n",
+    "stderr": "",
+    "exit": 2,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a state with nothing to do exits 0",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:50:24.712Z"
+  }
+}

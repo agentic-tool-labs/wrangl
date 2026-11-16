@@ -1,0 +1,43 @@
+{
+  "kind": "hook",
+  "id": "h3-plain-session-writes-no-roster",
+  "about": "an ordinary session with no up record records nothing in the roster",
+  "tree": "hook-plain",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "sessionend-roster",
+    "event": {
+      "hook_event_name": "SessionEnd",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "reason": "other"
+    }
+  },
+  "mutant": "a roster row written for a plain session",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.team_snapshots.jsonl",
+          "mode": "0644",
+          "content": "{\n  \"v\": 1,\n  \"kind\": \"ah-team-snapshot\",\n  \"team\": \"tm\",\n  \"team_id\": \"t-tm\",\n  \"taken_at\": \"<ISO:1>\",\n  \"transport\": null,\n  \"layout\": null,\n  \"members\": [\n    {\n      \"name\": \"tm-implementor\",\n      \"role\": \"implementor\",\n      \"kind\": \"claude\",\n      \"route\": null,\n      \"model\": null,\n      \"effort\": null,\n      \"autoMode\": null,\n      \"args\": null,\n      \"stream\": null,\n      \"expected_root\": null,\n      \"session_id\": null,\n      \"thread_id\": null\n    },\n    {\n      \"name\": \"tm-reviewer\",\n      \"role\": \"reviewer\",\n      \"kind\": \"claude\",\n      \"route\": null,\n      \"model\": null,\n      \"effort\": null,\n      \"autoMode\": null,\n      \"args\": null,\n      \"stream\": null,\n      \"expected_root\": null,\n      \"session_id\": null,\n      \"thread_id\": null\n    }\n  ]\n}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T05:15:55.643Z"
+  }
+}

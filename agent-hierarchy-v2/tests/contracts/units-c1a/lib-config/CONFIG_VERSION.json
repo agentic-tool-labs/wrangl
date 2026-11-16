@@ -1,0 +1,12 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "CONFIG_VERSION",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 1
+    }
+  ]
+}

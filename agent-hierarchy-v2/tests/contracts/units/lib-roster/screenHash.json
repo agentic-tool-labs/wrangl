@@ -1,0 +1,169 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "screenHash",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        "hello\nworld"
+      ],
+      "expect": "26c60a61d01db5836ca70fefd44a6a016620413c8ef5f259a6c5612d4f79d3b8"
+    },
+    {
+      "id": "trailing-whitespace-and-blank-lines",
+      "args": [
+        "hello  \nworld\t\n\n   \n"
+      ],
+      "expect": "26c60a61d01db5836ca70fefd44a6a016620413c8ef5f259a6c5612d4f79d3b8"
+    },
+    {
+      "id": "empty",
+      "args": [
+        ""
+      ],
+      "expect": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "clock-1",
+      "args": [
+        "x\nClaude will automatically deny this request in 1:39\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "clock-2",
+      "args": [
+        "x\nClaude will automatically deny this request in 0:07\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "seconds-short",
+      "args": [
+        "x\nClaude will automatically deny this request in 45s\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "seconds-long",
+      "args": [
+        "x\nClaude will automatically deny this request in 9 seconds\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "seconds-sec",
+      "args": [
+        "x\nClaude will automatically deny this request in 9 sec\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "seconds-with-tab",
+      "args": [
+        "x\nClaude will automatically deny this request in 9\t s\ny"
+      ],
+      "expect": "8d7b77d47bf49b47e6744075ffa55fedbf5dca7c97bcb13d9956141952605400"
+    },
+    {
+      "id": "seconds-trailing-letter-not-time",
+      "args": [
+        "x\nClaude will automatically deny this request in 9sx\ny"
+      ],
+      "expect": "283551a08b6329c0711333b56249d058e1be883b9aec4aa484d4583a714411ce"
+    },
+    {
+      "id": "case-insensitive",
+      "args": [
+        "AUTOMATICALLY DENY THIS REQUEST IN 3:21"
+      ],
+      "expect": "1879ed9197eff9b42ce9fd627bd1bf18919b8c287654a6c9519d54cfe3e5ced4"
+    },
+    {
+      "id": "wrapped-over-lines",
+      "args": [
+        "automatically deny\nthis request\nin 1:39 remaining"
+      ],
+      "expect": "9e7a774f9e4ca3d7ea0a6dbe36223718ea48c8bb2e77e2fbe2022a960c38a138"
+    },
+    {
+      "id": "wrapped-with-borders",
+      "args": [
+        "│ automatically deny this │\n│ request in 0:59 │"
+      ],
+      "expect": "ea961119b351898fb254e34f94d4f158321ba14a1e3af82d381f9f604595fef1"
+    },
+    {
+      "id": "blank-line-ends-the-sentence",
+      "args": [
+        "automatically deny this\n\nrequest in 1:39"
+      ],
+      "expect": "3e6ecd77a30dec3e9f86b99bb462f172d0c074e43567e16fa07815a342230c18"
+    },
+    {
+      "id": "seven-lines-too-far",
+      "args": [
+        "automatically\ndeny\nthis\nrequest\nin\nx\n1:39"
+      ],
+      "expect": "e3d0f03e66fce69be6a60490bc28a64c6c26be00455323203d6861a323c9ede4"
+    },
+    {
+      "id": "two-countdowns-on-one-line",
+      "args": [
+        "automatically deny this request in 1:39 and automatically deny this request in 2:00"
+      ],
+      "expect": "09bd431cd43c941e9940145e93ca07564429b0c893c4434a498e23883e3478b4"
+    },
+    {
+      "id": "not-a-countdown",
+      "args": [
+        "automatically deny this request in the morning"
+      ],
+      "expect": "50eb63b00de616a3a0a665f12f0a8e2aaa6ad5a4352a634f266976d71c7d130c"
+    },
+    {
+      "id": "time-without-minutes-padding",
+      "args": [
+        "automatically deny this request in 1:3"
+      ],
+      "expect": "68cae291e200c75a16026cadd5268b81bdadeb81e3810782bb88557726e3d158"
+    },
+    {
+      "id": "long-s-does-not-fold",
+      "args": [
+        "automatically deny this request in 9 ſec"
+      ],
+      "expect": "746c3b3cf1fc63d49533a8fdbfe5f5ce5096978e7dba2f26869e15feb5413157"
+    },
+    {
+      "id": "kelvin-sign-does-not-fold",
+      "args": [
+        "automatically deny this request in 9 s",
+        "K"
+      ],
+      "expect": "15a89b2598ae38ee51430a98c62e4b0adbd4d073913d35b2f030f95c0ca0dbb1"
+    },
+    {
+      "id": "lone-surrogate",
+      "args": [
+        "a\ud800b"
+      ],
+      "expect": "05087813392efc16fe8ff448920c6328e53af865df39419436659d9ffda90f7b"
+    },
+    {
+      "id": "time-on-the-sixth-line",
+      "args": [
+        "automatically\ndeny\nthis\nrequest\nin\n1:39"
+      ],
+      "expect": "53e8d61ff09f005afaed183124c35d0b38f6b64e6e67fd52335b5512e347bb7f"
+    },
+    {
+      "id": "time-on-the-seventh-line-after-a-border-line",
+      "args": [
+        "automatically\ndeny\nthis\nrequest\nin\n│\n1:39"
+      ],
+      "expect": "a9a8a17ea5fb520337519687f2b2b9a969d9ecffdf13c0926501152860f11797"
+    }
+  ]
+}

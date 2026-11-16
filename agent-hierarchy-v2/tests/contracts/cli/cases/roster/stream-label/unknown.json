@@ -1,0 +1,34 @@
+{
+  "kind": "cli",
+  "id": "unknown",
+  "about": "stream-label of an unknown stream is refused",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "stream-label",
+      "nope",
+      "--team",
+      "tm"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"rendered\": false,\n  \"reason\": \"no stream named \\\"nope\\\"\"\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a label rendered for a stream that does not exist",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:52.417Z"
+  }
+}

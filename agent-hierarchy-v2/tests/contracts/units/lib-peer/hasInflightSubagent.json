@@ -1,0 +1,125 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "hasInflightSubagent",
+  "cases": [
+    {
+      "id": "started-recently",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "started-at-the-ttl",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:00:00.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "started-past-the-ttl",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T10:59:59.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "started-in-the-future-within-ttl",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T12:01:00.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "stopped-latest",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"stopped\",\"ts\":\"2026-06-01T11:59:30.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "started-after-stopped",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"stopped\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:30.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "unparseable-ts-is-not-in-flight",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"never\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "one-of-two-agents-in-flight",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"stopped\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag2\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "other-session",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s2\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "none",
+      "args": [
+        "s1",
+        1780315200000
+      ],
+      "expect": false
+    },
+    {
+      "id": "now-default",
+      "args": [
+        "s1"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"subagent\",\"session_id\":\"s1\",\"agent_id\":\"ag1\",\"status\":\"started\",\"ts\":\"2026-06-01T11:59:00.000Z\"}\n"
+      },
+      "expect": true
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.argsSetModel",
+  "cases": [
+    {
+      "id": "none",
+      "args": [
+        []
+      ],
+      "expect": false
+    },
+    {
+      "id": "model-long",
+      "args": [
+        [
+          "--model",
+          "x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "model-equals",
+      "args": [
+        [
+          "--model=x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "short-m",
+      "args": [
+        [
+          "-m",
+          "x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "short-m-attached",
+      "args": [
+        [
+          "-mx"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "short-m-dash-is-not-model",
+      "args": [
+        [
+          "-m-"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "short-m-only-two-chars-m-minus",
+      "args": [
+        [
+          "-m"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-model",
+      "args": [
+        [
+          "-c",
+          "model=x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-model-spaced",
+      "args": [
+        [
+          "-c",
+          "  model = x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-long",
+      "args": [
+        [
+          "--config",
+          "model=x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-attached",
+      "args": [
+        [
+          "-cmodel=x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-equals",
+      "args": [
+        [
+          "--config=model=x"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "config-other-key",
+      "args": [
+        [
+          "-c",
+          "sandbox=read-only"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "config-modelx-is-not-model",
+      "args": [
+        [
+          "-c",
+          "modelx=1"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "config-value-not-string",
+      "args": [
+        [
+          "-c",
+          5
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "flag-last-without-value",
+      "args": [
+        [
+          "-c"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "id": "non-string-first",
+      "args": [
+        [
+          5,
+          "--model"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "id": "unrelated",
+      "args": [
+        [
+          "--add-dir",
+          "/x"
+        ]
+      ],
+      "expect": false
+    }
+  ]
+}

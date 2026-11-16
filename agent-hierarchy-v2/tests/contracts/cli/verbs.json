@@ -1,0 +1,2466 @@
+[
+  {
+    "cli": "roster",
+    "verb": "show",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "init",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "route",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "add",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "role",
+        "kind": "value"
+      },
+      {
+        "name": "model",
+        "kind": "value"
+      },
+      {
+        "name": "effort",
+        "kind": "value"
+      },
+      {
+        "name": "route",
+        "kind": "value"
+      },
+      {
+        "name": "kind",
+        "kind": "value"
+      },
+      {
+        "name": "args",
+        "kind": "value"
+      },
+      {
+        "name": "auto-mode",
+        "kind": "value"
+      },
+      {
+        "name": "on-missing",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "edit",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "member",
+        "kind": "value"
+      },
+      {
+        "name": "role",
+        "kind": "value"
+      },
+      {
+        "name": "model",
+        "kind": "value"
+      },
+      {
+        "name": "effort",
+        "kind": "value"
+      },
+      {
+        "name": "route",
+        "kind": "value"
+      },
+      {
+        "name": "auto-mode",
+        "kind": "value"
+      },
+      {
+        "name": "on-missing",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "remove",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "member",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "roster",
+    "sub_verbs": "list|copy|delete|use",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "clear",
+        "kind": "bool"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "text",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "create",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "roster-level",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
+      },
+      {
+        "name": "mode",
+        "kind": "value"
+      },
+      {
+        "name": "member-model",
+        "kind": "value"
+      },
+      {
+        "name": "verified",
+        "kind": "value"
+      },
+      {
+        "name": "transport",
+        "kind": "value"
+      },
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "from",
+        "kind": "value"
+      },
+      {
+        "name": "names-in-use",
+        "kind": "value"
+      },
+      {
+        "name": "plan",
+        "kind": "bool"
+      },
+      {
+        "name": "commit",
+        "kind": "bool"
+      },
+      {
+        "name": "spawn",
+        "kind": "bool"
+      },
+      {
+        "name": "partial",
+        "kind": "bool"
+      },
+      {
+        "name": "no-legwork-handoff",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux"
+    ],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "next-split",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "mode",
+        "kind": "value"
+      },
+      {
+        "name": "pane-count",
+        "kind": "value"
+      },
+      {
+        "name": "self",
+        "kind": "value"
+      },
+      {
+        "name": "created",
+        "kind": "value"
+      },
+      {
+        "name": "geometry",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "layout-splits",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "mode",
+        "kind": "value"
+      },
+      {
+        "name": "pane-count",
+        "kind": "value"
+      },
+      {
+        "name": "self",
+        "kind": "value"
+      },
+      {
+        "name": "created",
+        "kind": "value"
+      },
+      {
+        "name": "target",
+        "kind": "value"
+      },
+      {
+        "name": "direction",
+        "kind": "value"
+      },
+      {
+        "name": "next",
+        "kind": "bool"
+      },
+      {
+        "name": "apply",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "disband",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "plan-token",
+        "kind": "value"
+      },
+      {
+        "name": "plan",
+        "kind": "bool"
+      },
+      {
+        "name": "close",
+        "kind": "bool"
+      },
+      {
+        "name": "confirm",
+        "kind": "bool"
+      },
+      {
+        "name": "allow-global",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux"
+    ],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "dismiss",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "plan-token",
+        "kind": "value"
+      },
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "plan",
+        "kind": "bool"
+      },
+      {
+        "name": "close",
+        "kind": "bool"
+      },
+      {
+        "name": "confirm",
+        "kind": "bool"
+      },
+      {
+        "name": "also-config",
+        "kind": "bool"
+      },
+      {
+        "name": "allow-global",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "resync",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "move",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "tab",
+        "kind": "value"
+      },
+      {
+        "name": "split",
+        "kind": "value"
+      },
+      {
+        "name": "workspace",
+        "kind": "value"
+      },
+      {
+        "name": "new-tab",
+        "kind": "bool"
+      },
+      {
+        "name": "new-workspace",
+        "kind": "bool"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "snapshot",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "resume",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "yes",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux",
+      "claude",
+      "codex"
+    ],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "spawn-one",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "member",
+        "kind": "value"
+      },
+      {
+        "name": "model",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "names-in-use",
+        "kind": "value"
+      },
+      {
+        "name": "stream",
+        "kind": "value"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "allow-global",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux",
+      "claude",
+      "codex"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "spawn-ad-hoc",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "model",
+        "kind": "value"
+      },
+      {
+        "name": "effort",
+        "kind": "value"
+      },
+      {
+        "name": "route",
+        "kind": "value"
+      },
+      {
+        "name": "kind",
+        "kind": "value"
+      },
+      {
+        "name": "args",
+        "kind": "value"
+      },
+      {
+        "name": "auto-mode",
+        "kind": "value"
+      },
+      {
+        "name": "on-missing",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "names-in-use",
+        "kind": "value"
+      },
+      {
+        "name": "stream",
+        "kind": "value"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "allow-global",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr",
+      "tmux",
+      "claude",
+      "codex"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "stream-open",
+    "family": "roster:streams",
+    "unit": "roster:streams",
+    "flags": [
+      {
+        "name": "branch",
+        "kind": "value"
+      },
+      {
+        "name": "base",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "no-worktree",
+        "kind": "bool"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "git",
+      "herdr"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "stream-status",
+    "family": "roster:streams",
+    "unit": "roster:streams",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "stream-done",
+    "family": "roster:streams",
+    "unit": "roster:streams",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "stream-label",
+    "family": "roster:streams",
+    "unit": "roster:streams",
+    "flags": [
+      {
+        "name": "self-pane",
+        "kind": "value"
+      },
+      {
+        "name": "self-state",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "teams",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "status",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "now",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "reap",
+    "family": "roster:maint",
+    "unit": "roster:maint",
+    "flags": [
+      {
+        "name": "commit",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "history",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "adopt",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "checkin",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "orchestrator-pid",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "whoami",
+    "family": "roster:read",
+    "unit": "roster:read",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "role",
+    "sub_verbs": "set|trust",
+    "family": "roster:config",
+    "unit": "roster:config",
+    "flags": [
+      {
+        "name": "from",
+        "kind": "value"
+      },
+      {
+        "name": "label",
+        "kind": "value"
+      },
+      {
+        "name": "description",
+        "kind": "value"
+      },
+      {
+        "name": "routes",
+        "kind": "value"
+      },
+      {
+        "name": "model",
+        "kind": "value"
+      },
+      {
+        "name": "dispatch",
+        "kind": "value"
+      },
+      {
+        "name": "level",
+        "kind": "value"
+      },
+      {
+        "name": "pin",
+        "kind": "value"
+      },
+      {
+        "name": "dry-run",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "pack",
+    "sub_verbs": "list|show",
+    "family": "roster:config",
+    "unit": "roster:config",
+    "flags": [
+      {
+        "name": "path",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "text",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "doctor",
+    "family": "roster:maint",
+    "unit": "roster:maint",
+    "flags": [
+      {
+        "name": "check",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "deliver",
+    "family": "roster:delivery",
+    "unit": "roster:delivery",
+    "flags": [
+      {
+        "name": "req",
+        "kind": "value"
+      },
+      {
+        "name": "ping",
+        "kind": "value"
+      },
+      {
+        "name": "timeout",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "wait-only",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "answer",
+    "family": "roster:delivery",
+    "unit": "roster:delivery",
+    "flags": [
+      {
+        "name": "prompt",
+        "kind": "value"
+      },
+      {
+        "name": "choice",
+        "kind": "value"
+      },
+      {
+        "name": "screen-hash",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [
+      "herdr"
+    ],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "tier",
+    "sub_verbs": "set|remove|list",
+    "family": "roster:config",
+    "unit": "roster:config",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "untrack",
+    "family": "roster:team",
+    "unit": "roster:team",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "layout",
+    "sub_verbs": "accepted and refused",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "roster",
+    "verb": "alias",
+    "sub_verbs": "accepted and refused",
+    "family": "roster:template",
+    "unit": "roster:template",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error or refusal"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "new",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "to",
+        "kind": "value"
+      },
+      {
+        "name": "from",
+        "kind": "value"
+      },
+      {
+        "name": "slug",
+        "kind": "value"
+      },
+      {
+        "name": "to-name",
+        "kind": "value"
+      },
+      {
+        "name": "from-name",
+        "kind": "value"
+      },
+      {
+        "name": "parent",
+        "kind": "value"
+      },
+      {
+        "name": "reason",
+        "kind": "value"
+      },
+      {
+        "name": "eta",
+        "kind": "value"
+      },
+      {
+        "name": "type",
+        "kind": "value"
+      },
+      {
+        "name": "id",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "req",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "show",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "section",
+        "kind": "value"
+      },
+      {
+        "name": "out",
+        "kind": "value"
+      },
+      {
+        "name": "force",
+        "kind": "bool"
+      },
+      {
+        "name": "to",
+        "kind": "value"
+      },
+      {
+        "name": "pool",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "text",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "fill",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "id",
+        "kind": "value"
+      },
+      {
+        "name": "from",
+        "kind": "value"
+      },
+      {
+        "name": "req",
+        "kind": "value"
+      },
+      {
+        "name": "body",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "list",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "to",
+        "kind": "value"
+      },
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "open",
+        "kind": "bool"
+      },
+      {
+        "name": "closed",
+        "kind": "bool"
+      },
+      {
+        "name": "all",
+        "kind": "bool"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "downstream",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "root-name",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "index",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "1": "no message found for the id or path (one line on stderr)",
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "show",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "section",
+        "kind": "value"
+      },
+      {
+        "name": "out",
+        "kind": "value"
+      },
+      {
+        "name": "force",
+        "kind": "bool"
+      },
+      {
+        "name": "to",
+        "kind": "value"
+      },
+      {
+        "name": "pool",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "text",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "1": "no message found for the id (one line on stderr)",
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "sweep",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "days",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "roster",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "route",
+    "sub_verbs": "route peers --session <id>",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "session",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "decision",
+    "sub_verbs": "add|list",
+    "family": "msg:pool",
+    "unit": "msg:pool",
+    "flags": [
+      {
+        "name": "team",
+        "kind": "value"
+      },
+      {
+        "name": "input",
+        "kind": "value"
+      },
+      {
+        "name": "run",
+        "kind": "value"
+      },
+      {
+        "name": "item",
+        "kind": "value"
+      },
+      {
+        "name": "summary",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error (one line on stderr)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "send",
+    "family": "msg:mail",
+    "unit": "msg:mail",
+    "flags": [
+      {
+        "name": "ref",
+        "kind": "value"
+      },
+      {
+        "name": "text",
+        "kind": "value"
+      },
+      {
+        "name": "event",
+        "kind": "value"
+      },
+      {
+        "name": "kind",
+        "kind": "value"
+      },
+      {
+        "name": "reply-to",
+        "kind": "value"
+      },
+      {
+        "name": "eta",
+        "kind": "value"
+      },
+      {
+        "name": "id",
+        "kind": "value"
+      },
+      {
+        "name": "from",
+        "kind": "value"
+      },
+      {
+        "name": "session",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "1": "the operation failed (one `error: <code>: <text>` line)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "inbox",
+    "family": "msg:mail",
+    "unit": "msg:mail",
+    "flags": [
+      {
+        "name": "address",
+        "kind": "value"
+      },
+      {
+        "name": "session",
+        "kind": "value"
+      },
+      {
+        "name": "all",
+        "kind": "bool"
+      },
+      {
+        "name": "overdue",
+        "kind": "bool"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "ack",
+    "family": "msg:mail",
+    "unit": "msg:mail",
+    "flags": [
+      {
+        "name": "session",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "1": "the operation failed (one `error: <code>: <text>` line)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "link-request",
+    "family": "msg:mesh",
+    "unit": "msg:mesh",
+    "flags": [
+      {
+        "name": "to",
+        "kind": "value"
+      },
+      {
+        "name": "task",
+        "kind": "value"
+      },
+      {
+        "name": "why",
+        "kind": "value"
+      },
+      {
+        "name": "direction",
+        "kind": "value"
+      },
+      {
+        "name": "messages",
+        "kind": "value"
+      },
+      {
+        "name": "minutes",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "1": "the operation failed (one `error: <code>: <text>` line)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "link",
+    "sub_verbs": "grant|deny|revoke|extend-request|extend|list|show|post",
+    "family": "msg:mesh",
+    "unit": "msg:mesh",
+    "flags": [
+      {
+        "name": "messages",
+        "kind": "value"
+      },
+      {
+        "name": "minutes",
+        "kind": "value"
+      },
+      {
+        "name": "why",
+        "kind": "value"
+      },
+      {
+        "name": "tail",
+        "kind": "value"
+      },
+      {
+        "name": "since",
+        "kind": "value"
+      },
+      {
+        "name": "wait",
+        "kind": "value"
+      },
+      {
+        "name": "text",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "join",
+    "sub_verbs": "accept|deny",
+    "family": "msg:mesh",
+    "unit": "msg:mesh",
+    "flags": [
+      {
+        "name": "basis",
+        "kind": "value"
+      },
+      {
+        "name": "why",
+        "kind": "value"
+      },
+      {
+        "name": "name",
+        "kind": "value"
+      },
+      {
+        "name": "role",
+        "kind": "value"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "1": "the operation failed (one `error: <code>: <text>` line)"
+    }
+  },
+  {
+    "cli": "msg",
+    "verb": "daemon",
+    "sub_verbs": "start|status|stop",
+    "family": "msg:daemon",
+    "unit": "msg:daemon",
+    "flags": [
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": true,
+    "plain_flag": false,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "start",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [
+      "node"
+    ],
+    "exit_codes": {
+      "1": "the operation failed"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "stop",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "restart",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [
+      "node"
+    ],
+    "exit_codes": {
+      "1": "the operation failed"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "drain",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "require",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": true,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "1": "the operation failed",
+      "3": "the daemon is down and the verb needs it"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "status",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "health",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "3": "the daemon is down and the verb needs it"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "version",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "logs",
+    "family": "ahd:lifecycle",
+    "unit": "ahd:lifecycle",
+    "flags": [
+      {
+        "name": "n",
+        "kind": "value"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "inspect",
+    "sub_verbs": "boxes|entries|registrations|timers|events|status",
+    "family": "ahd:inspect",
+    "unit": "ahd:inspect",
+    "flags": [
+      {
+        "name": "address",
+        "kind": "value"
+      },
+      {
+        "name": "session",
+        "kind": "value"
+      },
+      {
+        "name": "dir",
+        "kind": "value"
+      },
+      {
+        "name": "n",
+        "kind": "value"
+      },
+      {
+        "name": "pending",
+        "kind": "bool"
+      },
+      {
+        "name": "acked",
+        "kind": "bool"
+      },
+      {
+        "name": "all",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success",
+      "2": "usage error"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "check",
+    "family": "ahd:check",
+    "unit": "ahd:check",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [
+      "node"
+    ],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "contract",
+    "family": "ahd:inspect",
+    "unit": "ahd:inspect",
+    "flags": [
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "0": "success"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "tui",
+    "family": "tui",
+    "unit": "tui",
+    "flags": [
+      {
+        "name": "path",
+        "kind": "value"
+      },
+      {
+        "name": "once",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": false,
+    "spawns": [],
+    "exit_codes": {
+      "2": "usage error",
+      "3": "the daemon is down and the verb needs it"
+    }
+  },
+  {
+    "cli": "ahd-ctl",
+    "verb": "state",
+    "sub_verbs": "writer|<domain> <op>",
+    "family": "ahd:state",
+    "unit": null,
+    "flags": [
+      {
+        "name": "set",
+        "kind": "value"
+      },
+      {
+        "name": "budget",
+        "kind": "value"
+      },
+      {
+        "name": "hook",
+        "kind": "bool"
+      },
+      {
+        "name": "follow",
+        "kind": "bool"
+      },
+      {
+        "name": "cwd",
+        "kind": "value"
+      },
+      {
+        "name": "plain",
+        "kind": "bool"
+      }
+    ],
+    "default_output": "json",
+    "json_flag": false,
+    "plain_flag": true,
+    "writes": "unclear",
+    "spawns": [],
+    "exit_codes": {}
+  }
+]

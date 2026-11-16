@@ -1,0 +1,164 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "logPasteAttempt",
+  "cases": [
+    {
+      "id": "entry-with-box",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "outcome": "ok",
+          "carrier": "t1"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":4,\"state\":\"paste-ok\",\"entry\":\"e1\",\"outcome\":\"ok\",\"carrier\":\"t1\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "entry-without-box-goes-to-run-paste",
+      "args": [
+        {
+          "id": "e1"
+        },
+        {
+          "outcome": "ok"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/run/paste/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":4,\"state\":\"paste-ok\",\"entry\":\"e1\",\"outcome\":\"ok\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n",
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": null
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "no-entry-goes-to-run-paste",
+      "args": [
+        null,
+        {
+          "outcome": "failed",
+          "reason": "no pane"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/run/paste/attempts.jsonl": "{\"v\":1,\"id\":null,\"rung\":4,\"state\":\"paste-failed\",\"entry\":null,\"outcome\":\"failed\",\"reason\":\"no pane\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "outcome-missing-is-undefined-in-state",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "reason": "x"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":4,\"state\":\"paste-undefined\",\"entry\":\"e1\",\"reason\":\"x\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "row-may-override-rung-in-place",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "outcome": "ok",
+          "rung": 9
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":9,\"state\":\"paste-ok\",\"entry\":\"e1\",\"outcome\":\"ok\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "appends-after-existing-rows",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "outcome": "ok"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":1,\"state\":\"x\",\"at\":\"2026-01-01T11:59:59.000Z\"}\n"
+      },
+      "expectFiles": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl": "{\"v\":1,\"id\":\"e1\",\"rung\":1,\"state\":\"x\",\"at\":\"2026-01-01T11:59:59.000Z\"}\n{\"v\":1,\"id\":\"e1\",\"rung\":4,\"state\":\"paste-ok\",\"entry\":\"e1\",\"outcome\":\"ok\",\"at\":\"2026-01-01T12:00:00.000Z\"}\n"
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "failed-write-is-swallowed",
+      "args": [
+        {
+          "id": "e1",
+          "box": "$ROOT/ah/mailbox/tm~aaaaaaaaaa/a"
+        },
+        {
+          "outcome": "ok"
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "ah/mailbox/tm~aaaaaaaaaa/a/attempts.jsonl/x": ""
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "formatFindings",
+  "cases": [
+    {
+      "id": "two",
+      "args": [
+        [
+          {
+            "level": "error",
+            "code": "x",
+            "message": "m1",
+            "fix": [
+              {
+                "kind": "k",
+                "detail": "d"
+              },
+              {
+                "kind": "k2",
+                "detail": "d2"
+              }
+            ]
+          },
+          {
+            "level": "warn",
+            "code": "y",
+            "message": "m2",
+            "fix": []
+          }
+        ]
+      ],
+      "expect": "ERROR x: m1\n  fix: [k] d\n  fix: [k2] d2\nWARN y: m2"
+    },
+    {
+      "id": "empty",
+      "args": [
+        []
+      ],
+      "expect": ""
+    }
+  ]
+}

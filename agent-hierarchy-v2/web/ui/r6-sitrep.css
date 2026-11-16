@@ -1,0 +1,24 @@
+/* The Sitrep dialog (ah-ui-ia §3.2): regions stacked on the 4px grid, each collapsed by its head, one line a row. */
+.sitrep .sr-status { margin: 0 0 var(--sp-16); color: var(--muted); font-size: var(--text-13); line-height: 20px; font-variant-numeric: tabular-nums; }
+.sitrep .sr-goal { margin: 0 0 var(--sp-16); }
+.sitrep .sr-cols { display: flex; flex-direction: column; gap: var(--sp-16); }
+.sitrep .sr-col { min-width: 0; }
+.sitrep .sr-col h3 { margin: 0; border-bottom: 1px solid var(--line); color: var(--ink-strong); font-size: var(--type-column-heading-size, var(--text-13)); font-weight: var(--type-column-heading-weight, 600); line-height: 20px; font-family: var(--type-column-heading-font, inherit); font-style: var(--type-column-heading-style, inherit); }
+.sitrep .sr-head { display: flex; align-items: center; gap: var(--sp-8); width: 100%; min-height: 32px; padding: var(--sp-4) var(--sp-8) var(--sp-4) 0; border: 0; border-radius: var(--radius); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.sitrep .sr-head:hover { background: var(--surface-3); }
+.sitrep .sr-head:focus-visible, .sitrep .sr-row:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.sitrep .sr-chev { flex: none; width: 16px; margin-left: auto; color: var(--muted); text-align: center; }
+.sitrep .sr-head[aria-expanded="false"] .sr-chev { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: no-preference) { .sitrep .sr-chev { transition: transform .12s ease; } }
+.sitrep .num { color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.sitrep .sr-list { margin: 0; padding: 0; list-style: none; }
+.sitrep .sr-item { min-width: 0; border-bottom: 1px solid var(--line-row); }
+.sitrep .sr-row { display: block; box-sizing: border-box; width: 100%; min-height: 32px; padding: var(--sp-4) var(--sp-8); overflow: hidden; border: 0; border-radius: var(--radius); background: none; color: var(--ink); font: inherit; font-size: var(--text-13); line-height: 24px; text-align: left; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.sitrep button.sr-row, .sitrep a.sr-row { cursor: pointer; }
+.sitrep button.sr-row:hover, .sitrep a.sr-row:hover { background: var(--surface-3); color: var(--ink-strong); }
+.sitrep .sr-record { color: var(--ink-2); }
+.sitrep .sr-record code { line-height: 1; }
+.sitrep code { font-family: var(--type-code-font, var(--font-mono)); font-size: var(--type-code-size, var(--text-12)); font-style: var(--type-code-style, inherit); font-weight: var(--type-code-weight, inherit); }
+.sitrep .sr-empty { margin: var(--sp-8) 0 0; padding: 0 var(--sp-8); font-size: var(--text-13); }
+.sitrep .sr-foot { margin: var(--sp-16) 0 0; font-size: var(--text-12); }
+@media (pointer: coarse) { .sitrep .sr-head, .sitrep .sr-row { min-height: 44px; } .sitrep .sr-row { padding-block: var(--sp-8) var(--sp-12); } }

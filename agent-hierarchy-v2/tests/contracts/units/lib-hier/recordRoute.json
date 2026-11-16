@@ -1,0 +1,99 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "recordRoute",
+  "cases": [
+    {
+      "id": "appends-a-route-row",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        "peers"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/.keep": ""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": {
+          "$jsonl": [
+            {
+              "type": "route",
+              "session_id": "s1",
+              "value": "peers",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "appends-after-existing-rows",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        "subagents"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s0\",\"value\":\"peers\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": {
+          "$jsonl": [
+            {
+              "ts": "$any",
+              "type": "route",
+              "session_id": "s0",
+              "value": "peers"
+            },
+            {
+              "type": "route",
+              "session_id": "s1",
+              "value": "subagents",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    },
+    {
+      "id": "any-value-is-recorded",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "s1",
+        "carrier-pigeon"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/gates.jsonl": {
+          "$jsonl": [
+            {
+              "type": "route",
+              "session_id": "s1",
+              "value": "carrier-pigeon",
+              "ts": "$any",
+              "op_id": "$any"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "$undefined": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "registrationBoxes",
+  "cases": [
+    {
+      "id": "map",
+      "args": [
+        {
+          "boxes": {
+            "a@t": "/d1",
+            "b@t": "/d2"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "a@t",
+          "dir": "/d1"
+        },
+        {
+          "address": "b@t",
+          "dir": "/d2"
+        }
+      ]
+    },
+    {
+      "id": "empty-map",
+      "args": [
+        {
+          "boxes": {}
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-boxes",
+      "args": [
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "null-reg",
+      "args": [
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "undefined-reg",
+      "args": [
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "boxes-null",
+      "args": [
+        {
+          "boxes": null
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "boxes-string",
+      "args": [
+        {
+          "boxes": "x"
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "boxes-array-uses-indexes",
+      "args": [
+        {
+          "boxes": [
+            "/x",
+            "/y"
+          ]
+        }
+      ],
+      "expect": [
+        {
+          "address": "0",
+          "dir": "/x"
+        },
+        {
+          "address": "1",
+          "dir": "/y"
+        }
+      ]
+    },
+    {
+      "id": "integer-like-keys-sort-first",
+      "args": [
+        {
+          "boxes": {
+            "2": "/b",
+            "10": "/a",
+            "x": "/c"
+          }
+        }
+      ],
+      "expect": [
+        {
+          "address": "2",
+          "dir": "/b"
+        },
+        {
+          "address": "10",
+          "dir": "/a"
+        },
+        {
+          "address": "x",
+          "dir": "/c"
+        }
+      ]
+    }
+  ]
+}

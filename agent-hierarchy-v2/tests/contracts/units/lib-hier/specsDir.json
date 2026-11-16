@@ -1,0 +1,35 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "specsDir",
+  "cases": [
+    {
+      "id": "absolute",
+      "args": [
+        "/a/b"
+      ],
+      "expect": "/a/b/specs"
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "/a/b/"
+      ],
+      "expect": "/a/b/specs"
+    },
+    {
+      "id": "relative",
+      "args": [
+        "a"
+      ],
+      "expect": "a/specs"
+    },
+    {
+      "id": "dotdot-normalised",
+      "args": [
+        "/a/b/../c"
+      ],
+      "expect": "/a/c/specs"
+    }
+  ]
+}

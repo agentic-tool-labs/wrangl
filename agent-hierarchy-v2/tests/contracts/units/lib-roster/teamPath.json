@@ -1,0 +1,145 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "teamPath",
+  "cases": [
+    {
+      "id": "default-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy/team.json"
+    },
+    {
+      "id": "named-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "empty-team-is-default",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/hierarchy/team.json"
+    },
+    {
+      "id": "non-hierarchy-dir-never-mapped",
+      "args": [
+        "$ROOT/other",
+        "alpha"
+      ],
+      "files": {},
+      "expect": "$ROOT/other/teams/alpha.json"
+    },
+    {
+      "id": "worktree-no-home-file-uses-own",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "worktree-home-has-file",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{}"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "worktree-legacy-copy-only",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/.claude/hierarchy/teams/alpha.json": "{}"
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "worktree-both-prefers-home",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "main/.claude/hierarchy/teams/alpha.json": "{}",
+        "wt/.claude/hierarchy/teams/alpha.json": "{}"
+      },
+      "expect": "$ROOT/main/.claude/hierarchy/teams/alpha.json"
+    },
+    {
+      "id": "worktree-default-team-legacy",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        null
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n",
+        "wt/.claude/hierarchy/team.json": "{}"
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy/team.json"
+    },
+    {
+      "id": "basename-not-hierarchy",
+      "args": [
+        "$ROOT/repo/.claude/other",
+        "alpha"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "$ROOT/repo/.claude/other/teams/alpha.json"
+    },
+    {
+      "id": "env-override-disables-home-mapping",
+      "args": [
+        "$ROOT/wt/.claude/hierarchy",
+        "alpha"
+      ],
+      "files": {
+        "main/.git/HEAD": "ref: refs/heads/main\n",
+        "main/.git/worktrees/wt/commondir": "../..\n",
+        "wt/.git": "gitdir: $ROOT/main/.git/worktrees/wt\n"
+      },
+      "env": {
+        "WRANGL_HIERARCHY_DIR": "$ROOT/forced"
+      },
+      "expect": "$ROOT/wt/.claude/hierarchy/teams/alpha.json"
+    }
+  ]
+}

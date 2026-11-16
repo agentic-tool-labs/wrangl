@@ -1,0 +1,137 @@
+{
+  "lib": "lib-mail-core",
+  "module": "hooks/lib-mail-core.mjs",
+  "fn": "boxUnder",
+  "cases": [
+    {
+      "id": "inside",
+      "args": [
+        "/h",
+        "/h/mailbox/tm~ab12/impl"
+      ],
+      "expect": true
+    },
+    {
+      "id": "trailing-slash",
+      "args": [
+        "/h",
+        "/h/mailbox/tm~ab12/impl/"
+      ],
+      "expect": false
+    },
+    {
+      "id": "root-itself",
+      "args": [
+        "/h",
+        "/h/mailbox/"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dotdot-first",
+      "args": [
+        "/h",
+        "/h/mailbox/../x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dot-segment",
+      "args": [
+        "/h",
+        "/h/mailbox/a/./b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dotdot-deep",
+      "args": [
+        "/h",
+        "/h/mailbox/a/../../x"
+      ],
+      "expect": false
+    },
+    {
+      "id": "other-home",
+      "args": [
+        "/h",
+        "/other/mailbox/a/b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "mailboxes-prefix-lookalike",
+      "args": [
+        "/h",
+        "/h/mailboxes/a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "relative",
+      "args": [
+        "/h",
+        "relative/mailbox/a/b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-segment",
+      "args": [
+        "/h",
+        "/h/mailbox/a//b"
+      ],
+      "expect": false
+    },
+    {
+      "id": "home-not-absolute",
+      "args": [
+        "h",
+        "h/mailbox/a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "home-not-string",
+      "args": [
+        5,
+        "/h/mailbox/a"
+      ],
+      "expect": false
+    },
+    {
+      "id": "dir-not-string",
+      "args": [
+        "/h",
+        5
+      ],
+      "expect": false
+    },
+    {
+      "id": "dir-undefined",
+      "args": [
+        "/h",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": false
+    },
+    {
+      "id": "single-segment",
+      "args": [
+        "/h",
+        "/h/mailbox/a"
+      ],
+      "expect": true
+    },
+    {
+      "id": "dotfile-is-fine",
+      "args": [
+        "/h",
+        "/h/mailbox/.hidden/x"
+      ],
+      "expect": true
+    }
+  ]
+}

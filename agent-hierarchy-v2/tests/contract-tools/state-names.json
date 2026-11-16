@@ -1,0 +1,20 @@
+{
+  "about": "State file and directory names the contract tooling refers to. They live in data, not in code, because tests/check-state-static.mjs bans these names as literals outside each domain's library.",
+  "teams": "teams",
+  "activity": "activity",
+  "statusJson": "status.json",
+  "peersJsonl": "peers.jsonl",
+  "gatesJsonl": "gates.jsonl",
+  "decisionsJsonl": "decisions.jsonl",
+  "sessionRoles": "agent-hierarchy.session-roles.json",
+  "peerPending": "agent-hierarchy.peer-pending.jsonl",
+  "gateJson": "agent-hierarchy.gate.json",
+  "usageJsonl": "agent-hierarchy.usage.jsonl",
+  "stateDir": "agent-hierarchy.state",
+  "snapshots": "snapshots",
+  "registrations": "registrations",
+  "entries": "entries.jsonl",
+  "attempts": "attempts.jsonl",
+  "acks": "acks",
+  "hookErrorsLog": ".claude/ah2/hierarchy/hook-errors.jsonl"
+}

@@ -1,0 +1,293 @@
+{
+  "source": {
+    "rev": "6275976",
+    "path": "native/spikes/ev-b/json-parity/parity.mjs",
+    "note": "generator re-run against Node; the values are not copied by hand"
+  },
+  "cases": [
+    {
+      "name": "c01-empty-object",
+      "rejected_by_node": false
+    },
+    {
+      "name": "c02-empty-array",
+      "rejected_by_node": false
+    },
+    {
+      "name": "c03-nested-empties",
+      "rejected_by_node": false
+    },
+    {
+      "name": "c04-nested",
+      "rejected_by_node": false
+    },
+    {
+      "name": "c05-deep-50",
+      "rejected_by_node": false
+    },
+    {
+      "name": "i01-crlf-tabs",
+      "rejected_by_node": false
+    },
+    {
+      "name": "i02-bom",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i03-trailing-comma",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i04-comment",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i05-invalid-utf8",
+      "rejected_by_node": false
+    },
+    {
+      "name": "i06-nan",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i07-single-quote",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i08-leading-zero",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i09-empty-file",
+      "rejected_by_node": true
+    },
+    {
+      "name": "i10-two-values",
+      "rejected_by_node": true
+    },
+    {
+      "name": "k01-insertion",
+      "rejected_by_node": false
+    },
+    {
+      "name": "k02-integer-keys",
+      "rejected_by_node": false
+    },
+    {
+      "name": "k03-duplicate-key",
+      "rejected_by_node": false
+    },
+    {
+      "name": "k04-proto-key",
+      "rejected_by_node": false
+    },
+    {
+      "name": "k05-empty-key",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n01-1e21",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n02-1e20",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n03-1e-6",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n04-1e-7",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n05-neg-zero",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n06-zero-frac",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n07-one-frac",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n08-1e2",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n09-1E5",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n10-plus-exp",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n11-0.1",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n12-sum",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n13-denorm-min",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n14-max",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n15-2p53-plus1",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n16-neg-2p53-plus1",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n17-2p32",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n18-overflow",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n19-neg-overflow",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n20-underflow",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n21-big-int",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n22-30digits",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n23-frac-small",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n24-frac-tiny",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n25-1e15",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n26-123456789.125",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n27-trailing-zeros",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n28-int-max",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n29-neg-int",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n30-pid-ms",
+      "rejected_by_node": false
+    },
+    {
+      "name": "n31-array-of-nums",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s01-ascii",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s02-html",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s03-bmp-nonascii",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s04-astral-raw",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s05-astral-escaped",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s06-u2028-raw",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s07-u2028-escaped",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s08-del",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s09-controls",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s10-short-escapes",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s11-lone-high",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s12-lone-low",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s13-nonchars",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s14-format-chars",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s15-latin1",
+      "rejected_by_node": false
+    },
+    {
+      "name": "s16-key-escapes",
+      "rejected_by_node": false
+    },
+    {
+      "name": "t01-true",
+      "rejected_by_node": false
+    },
+    {
+      "name": "t02-null",
+      "rejected_by_node": false
+    },
+    {
+      "name": "t03-string-top",
+      "rejected_by_node": false
+    },
+    {
+      "name": "t04-false",
+      "rejected_by_node": false
+    }
+  ]
+}

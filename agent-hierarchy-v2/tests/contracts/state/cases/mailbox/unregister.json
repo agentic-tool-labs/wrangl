@@ -1,0 +1,78 @@
+{
+  "kind": "state-op",
+  "id": "unregister",
+  "about": "unregister deletes the registration",
+  "tree": "state-ops",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "domain": "mailbox",
+    "op": "unregister",
+    "kind": "write",
+    "ignore_status": true,
+    "setup": [
+      {
+        "domain": "mailbox",
+        "op": "register",
+        "kind": "write",
+        "body": {
+          "args": {
+            "session_id": "sess-a",
+            "boxes": [
+              {
+                "address": "tm-architect@tm",
+                "dir": "<ROOT:ah>/mailbox/tm~0123456789/tm-architect"
+              }
+            ],
+            "team_file": "<ROOT:proj>/.claude/hierarchy/teams/tm.json",
+            "harness": "claude",
+            "pid": 12345,
+            "cwd": "<ROOT:proj>"
+          },
+          "context": {
+            "cwd": "<ROOT:proj>",
+            "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+          },
+          "op_id": "op-setup-reg"
+        }
+      }
+    ],
+    "body": {
+      "args": {
+        "session_id": "sess-a"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-mailbox-unregister"
+    }
+  },
+  "expect": {
+    "response": {
+      "ok": true,
+      "result": {
+        "removed": true
+      }
+    },
+    "tree_diff": {
+      "added": [],
+      "removed": [
+        "ah/registrations/sess-a.json"
+      ],
+      "changed": [
+        {
+          "path": "ah/registrations/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"op-setup-reg\",\"at\":\"<ISO:1>\",\"result\":{\"registered\":true}}\n{\"op_id\":\"op-mailbox-unregister\",\"at\":\"<ISO:2>\",\"result\":{\"removed\":true}}\n"
+        }
+      ]
+    }
+  },
+  "mutant": "an unregister that keeps the file",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.6",
+    "at": "2026-10-11T19:47:15.946Z"
+  }
+}

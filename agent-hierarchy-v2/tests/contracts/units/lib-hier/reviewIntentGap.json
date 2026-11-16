@@ -1,0 +1,145 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "reviewIntentGap",
+  "cases": [
+    {
+      "id": "reviewer-brief-empty",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "reviewer-brief-filled",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: g\n- [5] acceptance: a\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "checkpoint-request-to-a-reviewer-needs-no-intent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--checkpoint--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--checkpoint--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: checkpoint\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- Checkpoint request: the team is about to be restarted. Commit your work on your own branch as `wip(resume): <your open request's slug, or idle>`, with these lines in the body: `Request: <open request id or none>`, `Where: <one line>`, `Next: <one line>`, `Processes: <stopped: … | none>` and, if useful, `Notes:`. `git add` your own files only, untracked work you need included. Do not push. If a commit is impossible (a merge or rebase is in progress), answer not-ready.\n- Stop every background process you started (headless Godot runs, servers, watchers) and name them in `Processes:`.\n- Reply `Checkpoint: ready branch=<branch> sha=<sha> inflight=none` only after that, or `Checkpoint: not-ready reason=<one line>`. Put the line first under `## [1] status` of your response.\n- Then stop working until you are resumed; a new instruction supersedes this.\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "release-request-to-a-reviewer-needs-no-intent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--release--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--release--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: release\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- Release check: reply `Release: ready branch=<branch> sha=<sha> inflight=none` only if nothing is in flight (no running subagent, background shell or monitor) and your work is committed; otherwise reply `Release: not-ready reason=<one line>`. Put the line under `## [1] status` of your response.\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "a-hand-written-release-brief-without-acceptance-is-still-refused",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--release--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--release--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: release\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: review the change\n- [5] acceptance: \n\n## [1] goal\n- review the change\n\n## [5] acceptance\n- none\n"
+      },
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
+      "id": "a-slug-that-only-resembles-checkpoint-still-needs-intent",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--checkpoint-2--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--checkpoint-2--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: reviewer\nfrom: orchestrator\nslug: checkpoint-2\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [5] acceptance: \n\n## [1] goal\n- none\n\n## [5] acceptance\n- none\n"
+      },
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    },
+    {
+      "id": "architect-brief-is-not-review-class",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "response-is-not-a-request",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--response.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--response.md": "---\nid: 20260601-000001-aaaa\ntype: response\nto: reviewer\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] status: \n- [2] changes: \n- [3] evidence: \n- [4] gaps: \n- [5] open_questions: \n\n## [1] status\n- none\n\n## [2] changes\n- none\n\n## [3] evidence\n- none\n\n## [4] gaps\n- none\n\n## [5] open_questions\n- none\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "missing-file",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-frontmatter",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--reviewer--s1--request.md": "plain"
+      },
+      "expect": null
+    },
+    {
+      "id": "custom-role-class-from-resolved",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/msgs/20260601-000001-aaaa--auditor--s1--request.md",
+        {
+          "roles": {
+            "auditor": {
+              "class": "review"
+            }
+          }
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--auditor--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: auditor\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T10:01:00+00:00\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": [
+        "goal",
+        "acceptance"
+      ]
+    }
+  ]
+}

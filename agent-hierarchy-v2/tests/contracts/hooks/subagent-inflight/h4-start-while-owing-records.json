@@ -1,0 +1,50 @@
+{
+  "kind": "hook",
+  "id": "h4-start-while-owing-records",
+  "about": "a subagent starting while a report is owed is recorded started",
+  "tree": "hook-owes-response",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagent-inflight",
+    "event": {
+      "hook_event_name": "SubagentStart",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/sess-contract.jsonl",
+      "agent_id": "a-1",
+      "agent_type": "general-purpose"
+    }
+  },
+  "mutant": "start not recorded under obligation",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "home/.claude/agent-hierarchy.peer-records.state/.executed-ops.jsonl",
+          "mode": "0644",
+          "content": "{\"op_id\":\"<OPID:1>\",\"at\":\"<ISO:3>\",\"result\":{\"ok\":true}}\n"
+        }
+      ],
+      "removed": [],
+      "changed": [
+        {
+          "path": "home/.claude/agent-hierarchy.peer-pending.jsonl",
+          "mode": "0644",
+          "content": "{\"session_id\":\"sess-contract\",\"from\":\"tm-orchestrator\",\"from_name\":null,\"reply_to\":\"sender\",\"task\":\"demo\",\"status\":\"pending\",\"nudges\":0,\"msg\":\"<ROOT:proj>/.claude/hierarchy/msgs/<MSGID:1>--implementor--demo--request.md\",\"ts\":\"<ISO:1>\"}\n{\"type\":\"subagent\",\"session_id\":\"sess-contract\",\"agent_id\":\"a-1\",\"status\":\"started\",\"ts\":\"<ISO:2>\",\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ]
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T01:17:41.093Z"
+  }
+}

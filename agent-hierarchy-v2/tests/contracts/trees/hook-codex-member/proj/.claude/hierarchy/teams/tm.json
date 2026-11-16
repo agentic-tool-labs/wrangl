@@ -1,0 +1,1 @@
+{"team_id":"t-tm","mesh":{"policy":"open"},"orchestrator":{"pid":<PID:runner>,"session_id":"sess-contract"},"members":[{"role":"implementor","name":"tm-implementor","transport_id":"p-tm-implementor","kind":"codex","model":"gpt-5"},{"role":"ultra-advisor","name":"tm-ultra-advisor","transport_id":"p-tm-ua","kind":"codex","model":"gpt-5"}]}

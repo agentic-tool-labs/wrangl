@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "inspect-entries-bad-n",
+  "about": "n out of range is 400 bad_request",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "address": "tm-implementor@tm",
+      "n": "0",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/inspect/entries"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "n must be a whole number from 1 to 200"
+      }
+    }
+  },
+  "mutant": "n=0 accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:02.425Z"
+  }
+}

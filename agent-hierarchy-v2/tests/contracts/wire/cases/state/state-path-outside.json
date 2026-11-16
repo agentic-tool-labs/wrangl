@@ -1,0 +1,43 @@
+{
+  "kind": "wire",
+  "id": "state-path-outside",
+  "about": "a path argument outside the hierarchy dirs is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "args": {
+        "dir": "/etc",
+        "subject": "s",
+        "activity": "working"
+      },
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-4"
+    },
+    "path": "/v1/state/activity/record"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "field": "dir",
+        "message": "dir /etc is outside the request's hierarchy directories"
+      }
+    }
+  },
+  "mutant": "a path outside the hierarchy accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:09.175Z"
+  }
+}

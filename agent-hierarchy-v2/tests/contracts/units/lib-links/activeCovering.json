@@ -1,0 +1,166 @@
+{
+  "lib": "lib-links",
+  "module": "hooks/lib-links.mjs",
+  "fn": "activeCovering",
+  "cases": [
+    {
+      "id": "covering",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        }
+      ]
+    },
+    {
+      "id": "not-covering",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "c@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": []
+    },
+    {
+      "id": "expired-by-judging-not-returned",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":3,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": []
+    },
+    {
+      "id": "two-links",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx",
+        1767226200000
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"x\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"},{\"id\":\"y\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\",\"c@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": [
+        {
+          "id": "x",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        },
+        {
+          "id": "y",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx",
+            "c@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        }
+      ]
+    },
+    {
+      "id": "now-defaults-to-the-clock",
+      "args": [
+        "$ROOT/h",
+        "fx",
+        "a@fx",
+        "b@fx"
+      ],
+      "now": "2026-01-01T00:10:00.000Z",
+      "files": {
+        "h/msgs/20260101-000000-aa11--architect--work--request.md": "---\nid: 20260101-000000-aa11\ntype: request\nto: architect\nfrom: orchestrator\nslug: work\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: fx\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n",
+        "h/links/fx.json": "{\"v\":1,\"links\":[{\"id\":\"lk1\",\"task\":\"20260101-000000-aa11\",\"task_home\":\"$ROOT/h\",\"peers\":[\"b@fx\"],\"direction\":\"both\",\"requester\":\"a@fx\",\"granted_by\":\"orchestrator\",\"granted_at\":\"2026-01-01T00:00:00.000Z\",\"limits\":{\"messages\":3,\"minutes\":30},\"used\":0,\"extensions\":0,\"state\":\"active\"}],\"denied\":[]}"
+      },
+      "expect": [
+        {
+          "id": "lk1",
+          "task": "20260101-000000-aa11",
+          "task_home": "$ROOT/h",
+          "peers": [
+            "b@fx"
+          ],
+          "direction": "both",
+          "requester": "a@fx",
+          "granted_by": "orchestrator",
+          "granted_at": "2026-01-01T00:00:00.000Z",
+          "limits": {
+            "messages": 3,
+            "minutes": 30
+          },
+          "used": 0,
+          "extensions": 0,
+          "state": "active"
+        }
+      ]
+    }
+  ]
+}

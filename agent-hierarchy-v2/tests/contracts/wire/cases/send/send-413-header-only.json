@@ -1,0 +1,40 @@
+{
+  "kind": "wire",
+  "id": "send-413-header-only",
+  "about": "an oversized Content-Length with no body is 413 with Connection: close",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {
+      "Content-Type": "application/json",
+      "Content-Length": "2000000"
+    },
+    "body": null,
+    "path": "/v1/send"
+  },
+  "expect": {
+    "status": 413,
+    "headers": {
+      "connection": "close"
+    },
+    "json": {
+      "error": {
+        "code": "too_large",
+        "max_bytes": 65536,
+        "message": "body is 2000000 bytes; the limit is 65536"
+      }
+    }
+  },
+  "mutant": "a declared length over the cap accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:07.427Z"
+  },
+  "expect_headers": [
+    "connection"
+  ]
+}

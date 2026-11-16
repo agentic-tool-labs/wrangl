@@ -1,0 +1,12 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "ROUND_CAP",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": 3
+    }
+  ]
+}

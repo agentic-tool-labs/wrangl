@@ -1,0 +1,27 @@
+{
+  "offset": 120,
+  "type": "assistant",
+  "truncated": false,
+  "blocks": [
+    { "kind": "text", "text": "Daemon prose" },
+    { "kind": "thinking", "text": "Private thought" },
+    {
+      "kind": "tool_use",
+      "id": "edit-1",
+      "name": "Edit",
+      "input": { "file_path": "/work/example.txt", "old_string": "old", "new_string": "new" },
+      "diff": [{ "kind": "del", "text": "old" }, { "kind": "add", "text": "new" }]
+    },
+    { "kind": "tool_result", "tool_use_id": "edit-1", "is_error": false, "content": "stdout\n+plain\n-error" },
+    {
+      "kind": "tool_result",
+      "tool_use_id": "other-1",
+      "is_error": true,
+      "content": [
+        { "type": "text", "text": "first" },
+        { "type": "image", "source": {} },
+        { "type": "text", "text": "last" }
+      ]
+    }
+  ]
+}

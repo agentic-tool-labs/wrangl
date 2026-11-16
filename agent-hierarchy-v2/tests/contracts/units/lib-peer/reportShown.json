@@ -1,0 +1,70 @@
+{
+  "lib": "lib-peer",
+  "module": "hooks/lib-peer.mjs",
+  "fn": "reportShown",
+  "cases": [
+    {
+      "id": "seen-row",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"seen\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "surfaced-row",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"surfaced\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": true
+    },
+    {
+      "id": "other-request",
+      "args": [
+        "s1",
+        "20260601-000002-aaaa"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"seen\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-session",
+      "args": [
+        "s2",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"seen\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "other-type",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.peer-pending.jsonl": "{\"type\":\"dispatch\",\"session_id\":\"s1\",\"request_id\":\"20260601-000001-aaaa\"}\n"
+      },
+      "expect": false
+    },
+    {
+      "id": "no-file",
+      "args": [
+        "s1",
+        "20260601-000001-aaaa"
+      ],
+      "expect": false
+    }
+  ]
+}

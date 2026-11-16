@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "roster": {
+    "route": "peer",
+    "members": [
+      {
+        "role": "implementor",
+        "model": "sonnet"
+      }
+    ]
+  }
+}

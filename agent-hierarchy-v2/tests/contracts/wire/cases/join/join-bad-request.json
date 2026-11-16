@@ -1,0 +1,38 @@
+{
+  "kind": "wire",
+  "id": "join-bad-request",
+  "about": "a join without why is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "team": "tm",
+      "harness": "custom-x",
+      "session_id": "s-custom",
+      "why": "",
+      "cwd": "<ROOT:proj>",
+      "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+    },
+    "path": "/v1/join"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "a join needs why: one to 500 characters"
+      }
+    }
+  },
+  "mutant": "an empty why accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:03.639Z"
+  }
+}

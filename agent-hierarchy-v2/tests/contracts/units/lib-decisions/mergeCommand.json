@@ -1,0 +1,95 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "mergeCommand",
+  "cases": [
+    {
+      "id": "plain",
+      "args": [
+        12,
+        "0123456789abcdef0123456789abcdef01234567",
+        "squash",
+        false
+      ],
+      "expect": "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --squash"
+    },
+    {
+      "id": "draft-readies-first",
+      "args": [
+        12,
+        "0123456789abcdef0123456789abcdef01234567",
+        "merge",
+        true
+      ],
+      "expect": "gh pr ready 12 && gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --merge"
+    },
+    {
+      "id": "draft-truthy-string",
+      "args": [
+        12,
+        "0123456789abcdef0123456789abcdef01234567",
+        "rebase",
+        "yes"
+      ],
+      "expect": "gh pr ready 12 && gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --rebase"
+    },
+    {
+      "id": "draft-undefined",
+      "args": [
+        12,
+        "0123456789abcdef0123456789abcdef01234567",
+        "merge",
+        {
+          "$undefined": 1
+        }
+      ],
+      "expect": "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --merge"
+    },
+    {
+      "id": "undefined-pieces-print-undefined",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        {
+          "$undefined": 1
+        },
+        {
+          "$undefined": 1
+        },
+        false
+      ],
+      "expect": "gh pr merge undefined --match-head-commit undefined --undefined"
+    },
+    {
+      "id": "null-pieces-print-null",
+      "args": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "expect": "gh pr merge null --match-head-commit null --null"
+    },
+    {
+      "id": "pr-as-text",
+      "args": [
+        "12",
+        "0123456789abcdef0123456789abcdef01234567",
+        "merge",
+        false
+      ],
+      "expect": "gh pr merge 12 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --merge"
+    },
+    {
+      "id": "method-not-checked",
+      "args": [
+        1,
+        "0123456789abcdef0123456789abcdef01234567",
+        "yolo",
+        false
+      ],
+      "expect": "gh pr merge 1 --match-head-commit 0123456789abcdef0123456789abcdef01234567 --yolo"
+    }
+  ]
+}

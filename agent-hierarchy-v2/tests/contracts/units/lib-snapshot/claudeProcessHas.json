@@ -1,0 +1,186 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "claudeProcessHas",
+  "cases": [
+    {
+      "id": "found",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\nclaude --resume 0123456789abcdef --agent ah:architect\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": true
+    },
+    {
+      "id": "absent",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "node server.js\nvim notes.txt\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": false
+    },
+    {
+      "id": "id-present-but-not-claude",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "vim 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": false
+    },
+    {
+      "id": "claude-as-path",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "/usr/local/bin/claude --resume 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": true
+    },
+    {
+      "id": "claudex-is-not-claude",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claudex --resume 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": false
+    },
+    {
+      "id": "claude-at-line-end",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "run 0123456789abcdef claude\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": true
+    },
+    {
+      "id": "claude-preceded-by-dash-is-not-claude",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "my-claude 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": false
+    },
+    {
+      "id": "empty-listing",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": ""
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": false
+    },
+    {
+      "id": "ps-fails-is-null",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\nexit 1\n",
+          "mode": 493
+        }
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": null
+    },
+    {
+      "id": "ps-missing-is-null",
+      "args": [
+        "0123456789abcdef"
+      ],
+      "env": {
+        "PATH": "$ROOT/empty"
+      },
+      "expect": null
+    },
+    {
+      "id": "substring-of-longer-id-matches",
+      "args": [
+        "01234567"
+      ],
+      "files": {
+        "bin/ps": {
+          "text": "#!/bin/sh\ncat \"$0.out\"\n",
+          "mode": 493
+        },
+        "bin/ps.out": "claude --resume 0123456789abcdef\n"
+      },
+      "env": {
+        "PATH": "$ROOT/bin:/usr/bin:/bin"
+      },
+      "expect": true
+    }
+  ]
+}

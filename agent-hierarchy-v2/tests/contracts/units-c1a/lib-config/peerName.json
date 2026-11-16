@@ -1,0 +1,31 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "peerName",
+  "cases": [
+    {
+      "id": "basic",
+      "args": [
+        "repo",
+        "architect"
+      ],
+      "expect": "repo-architect"
+    },
+    {
+      "id": "empty-repo",
+      "args": [
+        "",
+        "architect"
+      ],
+      "expect": "-architect"
+    },
+    {
+      "id": "hyphens",
+      "args": [
+        "my-repo",
+        "ui-implementor"
+      ],
+      "expect": "my-repo-ui-implementor"
+    }
+  ]
+}

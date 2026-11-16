@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.DaemonClient/Ah.DaemonClient.csproj" />
+    <ProjectReference Include="../../src/Ah.Platform/Ah.Platform.csproj" />
+    <ProjectReference Include="../Ah.TestKit/Ah.TestKit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../../tests/fixtures/version-order.txt" Link="version-order.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,222 @@
+{
+  "lib": "lib-status",
+  "module": "hooks/lib-status.mjs",
+  "fn": "plainStatus",
+  "cases": [
+    {
+      "id": "visible-entry",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:00.000Z",
+              "visible": true,
+              "text": "2 live · 1 out"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · 2 live · 1 out"
+    },
+    {
+      "id": "invisible-entry-is-empty",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:00.000Z",
+              "visible": false,
+              "text": "2 live · 1 out"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": ""
+    },
+    {
+      "id": "last-entry-at-or-before-now",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:55:00.000Z",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "2026-06-01T11:58:20.000Z",
+              "visible": true,
+              "text": "b"
+            },
+            {
+              "at": "2026-06-01T12:01:40.000Z",
+              "visible": true,
+              "text": "c"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · b"
+    },
+    {
+      "id": "entry-exactly-at-now",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:55:00.000Z",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "2026-06-01T12:00:00.000Z",
+              "visible": true,
+              "text": "b"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · b"
+    },
+    {
+      "id": "all-in-the-future-uses-the-first",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T12:00:05.000Z",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "2026-06-01T12:00:09.000Z",
+              "visible": true,
+              "text": "b"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · a"
+    },
+    {
+      "id": "later-entry-wins-when-timeline-is-unordered-by-instant",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:50.000Z",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "2026-06-01T11:51:40.000Z",
+              "visible": true,
+              "text": "b"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · b"
+    },
+    {
+      "id": "empty-timeline",
+      "args": [
+        {
+          "timeline": []
+        },
+        1780315200000
+      ],
+      "expect": ""
+    },
+    {
+      "id": "unparseable-instants-use-the-first",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "never",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "soon",
+              "visible": true,
+              "text": "b"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · a"
+    },
+    {
+      "id": "now-is-nan-uses-the-first",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:00.000Z",
+              "visible": true,
+              "text": "a"
+            },
+            {
+              "at": "2026-06-01T11:59:30.000Z",
+              "visible": true,
+              "text": "b"
+            }
+          ]
+        },
+        {
+          "$nan": 1
+        }
+      ],
+      "expect": "ah · a"
+    },
+    {
+      "id": "visible-must-be-truthy",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:00.000Z",
+              "visible": 1,
+              "text": "a"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · a"
+    },
+    {
+      "id": "text-is-used-verbatim",
+      "args": [
+        {
+          "timeline": [
+            {
+              "at": "2026-06-01T11:59:00.000Z",
+              "visible": true,
+              "text": "x \u001b[1m y"
+            }
+          ]
+        },
+        1780315200000
+      ],
+      "expect": "ah · x \u001b[1m y"
+    },
+    {
+      "id": "missing-timeline-throws",
+      "args": [
+        {},
+        1780315200000
+      ],
+      "expectThrows": true
+    }
+  ]
+}

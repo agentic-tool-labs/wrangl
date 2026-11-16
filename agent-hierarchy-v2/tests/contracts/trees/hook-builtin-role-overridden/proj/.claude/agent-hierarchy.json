@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "roles": {
+    "implementor": {
+      "class": "implement",
+      "agent": "my-implementor",
+      "label": "Implementor",
+      "description": "d",
+      "routes": "r",
+      "model": "opus"
+    }
+  }
+}

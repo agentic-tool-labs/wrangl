@@ -1,0 +1,107 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "effectiveRoute",
+  "cases": [
+    {
+      "id": "session-answer-wins",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "route": "subagents"
+        },
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"peers\"}\n"
+      },
+      "expect": {
+        "value": "peers",
+        "source": "session"
+      }
+    },
+    {
+      "id": "config-route",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "route": "subagents"
+        },
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "value": "subagents",
+        "source": "config"
+      }
+    },
+    {
+      "id": "default-peers",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {},
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "value": "peers",
+        "source": "default"
+      }
+    },
+    {
+      "id": "no-resolved",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        null,
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "value": "peers",
+        "source": "default"
+      }
+    },
+    {
+      "id": "no-session",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "route": "subagents"
+        },
+        null
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"ts\":\"2026-06-01T12:00:00.000Z\",\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"peers\"}\n"
+      },
+      "expect": {
+        "value": "subagents",
+        "source": "config"
+      }
+    },
+    {
+      "id": "empty-route-is-default",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "route": ""
+        },
+        "s1"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": {
+        "value": "peers",
+        "source": "default"
+      }
+    }
+  ]
+}

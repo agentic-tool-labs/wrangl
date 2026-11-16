@@ -1,0 +1,12 @@
+ah › repoA · pid 4242 › alpha › alpha-impl
+────────────────────────────────────────────────────────────────────────────────────────────────────
+implementor  ·  implementor  ·  claude (peer)
+model sonnet  effort –  session sess-impl  work tree –
+placement herdr  pane %3  pasteable
+live  blocked for 60s
+context 69%
+blocked permission
+owed 0
+mailbox  unacked 0  overdue 0  adapter –
+────────────────────────────────────────────────────────────────────────────────────────────────────
+q quit  ? help  ↑↓ select  →← open/close  ⏎ open/show pane  r refresh

@@ -1,0 +1,114 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "describeInstance",
+  "cases": [
+    {
+      "id": "live-idle",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 90,
+          "busy": false,
+          "openBriefs": 0,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" live up-pid 1m ago"
+    },
+    {
+      "id": "stale",
+      "args": [
+        {
+          "name": "a",
+          "live": false,
+          "how": "seen",
+          "ageSec": 7200,
+          "busy": false,
+          "openBriefs": 0,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" stale seen 2h ago"
+    },
+    {
+      "id": "busy",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 90,
+          "busy": true,
+          "openBriefs": 0,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" live up-pid 1m ago, busy"
+    },
+    {
+      "id": "one-open-brief",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 90,
+          "busy": false,
+          "openBriefs": 1,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" live up-pid 1m ago, 1 open brief"
+    },
+    {
+      "id": "two-open-briefs-one-unassigned",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": 90,
+          "busy": false,
+          "openBriefs": 2,
+          "unassigned": 1
+        }
+      ],
+      "expect": "\"a\" live up-pid 1m ago, 2 open briefs (1 to role, no instance yet)"
+    },
+    {
+      "id": "age-infinity",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": {
+            "$inf": 1
+          },
+          "busy": false,
+          "openBriefs": 0,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" live up-pid ? ago"
+    },
+    {
+      "id": "age-invalid-is-question-mark",
+      "args": [
+        {
+          "name": "a",
+          "live": true,
+          "how": "up-pid",
+          "ageSec": -1,
+          "busy": false,
+          "openBriefs": 0,
+          "unassigned": 0
+        }
+      ],
+      "expect": "\"a\" live up-pid ? ago"
+    }
+  ]
+}

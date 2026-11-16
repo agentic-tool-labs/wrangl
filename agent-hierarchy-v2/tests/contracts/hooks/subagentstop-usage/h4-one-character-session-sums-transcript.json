@@ -1,0 +1,45 @@
+{
+  "kind": "hook",
+  "id": "h4-one-character-session-sums-transcript",
+  "about": "a one-character session id still finds the subagent transcript",
+  "tree": "hook-subagent-usage-one-char-session",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off",
+    "AH_MEMBER_NAME": "contract-member"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "subagentstop-usage",
+    "event": {
+      "hook_event_name": "SubagentStop",
+      "session_id": "s",
+      "cwd": "<ROOT:proj>",
+      "transcript_path": "<ROOT:home>/.claude/projects/contract/s.jsonl",
+      "agent_id": "a-1",
+      "agent_type": "ah:implementor"
+    }
+  },
+  "mutant": "one-character session id skipped",
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "ah/state/ah.db.usage_rows.jsonl",
+          "mode": "0644",
+          "content": "{\"ts\":\"<ISO:1>\",\"session_id\":\"s\",\"agent_id\":\"a-1\",\"agent_type\":\"wrangl:implementor\",\"project_dir\":\"<ROOT:home>/.claude/projects/contract\",\"found\":true,\"model\":\"claude-opus\",\"calls\":1,\"in\":10,\"out\":1,\"cache_read\":0,\"cache_create\":0,\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T06:09:35.365Z"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "kind": "wire",
+  "id": "status-wait-too-big",
+  "about": "wait over 25 is 400",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "GET",
+    "query": {
+      "dir": "<ROOT:proj>/.claude/hierarchy",
+      "wait": "26",
+      "since": "0"
+    },
+    "headers": {},
+    "body": null,
+    "path": "/v1/status"
+  },
+  "expect": {
+    "status": 400,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "wait must be a whole number of seconds from 0 to 25"
+      }
+    }
+  },
+  "mutant": "wait over the cap accepted",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:11.120Z"
+  }
+}

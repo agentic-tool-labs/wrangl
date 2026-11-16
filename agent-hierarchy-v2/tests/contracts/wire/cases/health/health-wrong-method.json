@@ -1,0 +1,36 @@
+{
+  "kind": "wire",
+  "id": "health-wrong-method",
+  "about": "POST /v1/health is 405 with an Allow header",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {},
+    "path": "/v1/health"
+  },
+  "expect": {
+    "status": 405,
+    "headers": {
+      "allow": "GET"
+    },
+    "json": {
+      "error": {
+        "code": "bad_request",
+        "message": "POST is not allowed here"
+      }
+    }
+  },
+  "mutant": "a 404 where the path exists for another method",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:58.546Z"
+  },
+  "expect_headers": [
+    "allow"
+  ]
+}

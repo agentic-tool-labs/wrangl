@@ -1,0 +1,32 @@
+{
+  "kind": "cli",
+  "id": "list",
+  "about": "tier list prints the global tier table",
+  "tree": null,
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "roster",
+    "argv": [
+      "tier",
+      "list"
+    ],
+    "stdin": null
+  },
+  "expect": {
+    "stdout": "{\n  \"path\": \"<ROOT:home>/.claude/agent-hierarchy.json\",\n  \"modelTiers\": {}\n}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "mutant": "a tier row invented",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:45:54.900Z"
+  }
+}

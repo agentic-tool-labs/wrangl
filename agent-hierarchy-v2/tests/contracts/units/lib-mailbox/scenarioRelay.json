@@ -1,0 +1,3094 @@
+{
+  "lib": "lib-mailbox",
+  "module": "tests/contract-tools/units-shims/lib-mailbox.mjs",
+  "fn": "scenario",
+  "cases": [
+    {
+      "id": "writes-the-obligation-of-a-well-formed-request",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "each-receiving-writer-counts-prompt-hook",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "each-receiving-writer-counts-adapter",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "adapter"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        }
+      ]
+    },
+    {
+      "id": "each-receiving-writer-counts-watcher",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "watcher"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        }
+      ]
+    },
+    {
+      "id": "each-receiving-writer-counts-stop-hook",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "stop-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        }
+      ]
+    },
+    {
+      "id": "the-cli-is-not-a-receiving-writer",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "cli"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        },
+        {
+          "ok": []
+        }
+      ]
+    },
+    {
+      "id": "sendmessage-is-not-a-receiving-writer",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "sendmessage"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "no-session-id",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "no-ids",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "unknown-id",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "nope"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "not-from-ahd",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "a@tm",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "a@tm",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "not-an-event",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "note",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                },
+                "text": "x"
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "note",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              },
+              "text": "x"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "another-event",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "link-ended",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "link-ended",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "no-data",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": null
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": null
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "no-relay-block",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig"
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig"
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-entry-missing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-address-missing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-dir-missing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-to-missing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-line-missing",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-empty-string",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": ""
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": ""
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-field-not-a-string",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": 5,
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": 5,
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-dir-not-absolute",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "relay-entry-differs-from-data-entry",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "other",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "other",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "to-another-session-is-not-ours",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                },
+                "to_session": "s-other"
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              },
+              "to_session": "s-other"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 0
+        }
+      ]
+    },
+    {
+      "id": "to-this-session-is-ours",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                },
+                "to_session": "s-a"
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              },
+              "to_session": "s-a"
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "second-ack-writes-nothing-more",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": 0
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "another-session-gets-its-own-row",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "relay",
+              "session_id": "s-b",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            },
+            {
+              "session_id": "s-b",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-requests-two-rows",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r2",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-two",
+                  "relay": {
+                    "entry": "e-two",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "two [ah-entry e-two to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                }
+              ],
+              "ids": [
+                "r1",
+                "r2"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r2",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-two",
+                "relay": {
+                  "entry": "e-two",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "two [ah-entry e-two to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 2
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            },
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-two",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-two",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "two [ah-entry e-two to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "the-same-id-in-two-boxes-is-written-once",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "a",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "append",
+              "team": "tm",
+              "name": "b",
+              "entry": {
+                "v": 1,
+                "id": "r1",
+                "from": "ahd",
+                "to": "a@tm",
+                "kind": "event",
+                "event": "relay-needed",
+                "route": "pull",
+                "created": "2026-01-01T11:59:59.000Z",
+                "data": {
+                  "entry": "e-orig",
+                  "relay": {
+                    "entry": "e-orig",
+                    "address": "b@tm",
+                    "dir": "/h/dir",
+                    "to": "b@tm",
+                    "line": "hello [ah-entry e-orig to b@tm]"
+                  }
+                }
+              }
+            },
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "a"
+                },
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            },
+            {
+              "op": "peerRecords"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": {
+            "entry": {
+              "v": 1,
+              "id": "r1",
+              "from": "ahd",
+              "to": "a@tm",
+              "kind": "event",
+              "event": "relay-needed",
+              "route": "pull",
+              "created": "2026-01-01T11:59:59.000Z",
+              "data": {
+                "entry": "e-orig",
+                "relay": {
+                  "entry": "e-orig",
+                  "address": "b@tm",
+                  "dir": "/h/dir",
+                  "to": "b@tm",
+                  "line": "hello [ah-entry e-orig to b@tm]"
+                }
+              }
+            },
+            "existed": false
+          }
+        },
+        {
+          "ok": 1
+        },
+        {
+          "ok": [
+            {
+              "session_id": "s-a",
+              "from": "b@tm",
+              "from_name": null,
+              "reply_to": null,
+              "task": "relay:e-orig",
+              "status": "pending",
+              "nudges": 0,
+              "msg": null,
+              "ts": "<ts>",
+              "relay": {
+                "entry": "e-orig",
+                "address": "b@tm",
+                "dir": "/h/dir",
+                "to": "b@tm",
+                "line": "hello [ah-entry e-orig to b@tm]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-box-with-no-entries-file",
+      "args": [
+        {
+          "ctx": {
+            "cwd": "$ROOT/h",
+            "hierarchy_dir": "$ROOT/h",
+            "main_hierarchy_dir": null,
+            "messaging_socket_dir": null
+          },
+          "steps": [
+            {
+              "op": "relay",
+              "session_id": "s-a",
+              "boxes": [
+                {
+                  "team": "tm",
+                  "name": "b"
+                }
+              ],
+              "ids": [
+                "r1"
+              ],
+              "by": "prompt-hook"
+            }
+          ]
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "files": {
+        "h/teams/tm.json": "{\"members\":[{\"name\":\"a\",\"role\":\"implementor\",\"kind\":\"claude\"},{\"name\":\"b\",\"role\":\"reviewer\",\"kind\":\"claude\"}],\"orchestrator\":{\"pid\":1,\"session_id\":\"o1\"}}\n"
+      },
+      "expect": [
+        {
+          "ok": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1841 @@
+[
+  {
+    "name": "test-affected-smoke",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/affected-smoke.sh",
+      "tests/contract-tools/affected-select.mjs",
+      "tests/contract-tools/select.mjs",
+      "agents/orchestrator.md",
+      "agents/implementor.md",
+      "skills/agent-team/SKILL.md"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-gate-select",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/contract-tools/gate-select.mjs"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-agent-frontmatter",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-branch-sweep",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-adr-backfill",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ah-cli",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "bin/ahd",
+      "hooks/registry.json"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-ah2-v1-isolation",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ahd-bin",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ahd-fallback",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ahd-heal",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-ahd-login-stay",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-chrome-mock-keychain",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-codex-appserver-spawn-kill",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-codex-appserver-spawn",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-codex-no-credentials",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "native/**",
+      "mod/**"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-config-unparsable",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contract-normalize",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/contract-tools/normalize.mjs",
+      "tests/contracts/normalize.json"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-progress",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contract-sidecar",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contract-tools",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/contract-tools/**",
+      "tests/contracts/normalize.json",
+      "tests/contracts/wire/routes.json"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-contracts-s0",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "hooks/registry.json",
+      "bin/ahd",
+      "tests/contract-tools/**",
+      "tests/contracts/**"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contracts-s1",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "hooks/registry.json",
+      "bin/ahd",
+      "tests/contract-tools/**",
+      "tests/contracts/**"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contracts-s2",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "hooks/registry.json",
+      "bin/ahd",
+      "tests/contract-tools/**",
+      "tests/contracts/**"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contracts-s3",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "hooks/registry.json",
+      "bin/ahd",
+      "tests/contract-tools/**",
+      "tests/contracts/**"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-contracts",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "hooks/*.mjs",
+      "hooks/registry.json",
+      "bin/ahd",
+      "tests/contract-tools/**",
+      "tests/contracts/**"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-daemon-leak-check",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-delivery-ladder-daemon",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-doc-links",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-dogfood-reinstall",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-dogfood",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-e4-baseline",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-exchange-open-liveness",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-exchange-open",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-generated-ignored",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-hermetic-ambient",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-hermetic-guard",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "tests/lib-hermetic.sh",
+      "bin/ah-trust.sh",
+      "bin/ah-testmode.sh"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-home-predicate",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "bin/ah-trust.sh",
+      "bin/ah-testmode.sh",
+      "tests/contracts/home-predicate.json",
+      "tests/contract-tools/home-predicate-sh.mjs",
+      "tests/contract-tools/trusted-homes-sh.mjs"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-hook-error-log",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-hook-state-writes",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-hook-syntax",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-issue-intake",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-lib-hermetic-exit",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-lib-wait",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-member-sessions",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-mod-fixtures-drift",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-mod-plugin-test",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-mod-readonly",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/hooks.json",
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-cli",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-downstream",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-fill",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-reply-beside-request",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-response",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-withdraw",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-msg-worktree-team",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Mesh/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-native-frontend",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-native-install",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-native-sessionstart",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "bin/ahd"
+    ],
+    "units": [
+      "ahd:check",
+      "ahd:inspect",
+      "ahd:lifecycle",
+      "cli:gate",
+      "cli:issue-intake",
+      "cli:usage-report",
+      "daemon",
+      "hook:activity",
+      "hook:posttooluse-ask-record",
+      "hook:posttooluse-merge-record",
+      "hook:posttooluse-peer-resolve",
+      "hook:posttooluse-roster",
+      "hook:pretooluse-ah-cli",
+      "hook:pretooluse-msg-gate",
+      "hook:pretooluse-sendmessage-response",
+      "hook:sessionend-roster",
+      "hook:sessionstart",
+      "hook:stop-orchestrator-liveness",
+      "hook:stop-peer-nudge",
+      "hook:stopfailure-recovery",
+      "hook:stream-label",
+      "hook:subagent-inflight",
+      "hook:subagentstart-cli-root",
+      "hook:subagentstop-msg-nudge",
+      "hook:subagentstop-usage",
+      "hook:userpromptsubmit-peer-tracking",
+      "msg:daemon",
+      "msg:mail",
+      "msg:mesh",
+      "msg:pool",
+      "roster:config",
+      "roster:delivery",
+      "roster:maint",
+      "roster:read",
+      "roster:streams",
+      "roster:team",
+      "roster:template",
+      "state",
+      "tui"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-no-ahprobe-glob-rm",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-no-bare-ask",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-orchestrator-identity",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-orchestrator-liveness",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-pane-style",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-path-independence",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-peer-pane-attribution",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-peer-progress",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-pid-safety",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-probe-cleanup",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-probe-e6r-gate",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-relay-hooks",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-bootstrap-install",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-release-export",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-report-back-completion",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-report-back",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-response-pointer-beside-request",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/hooks.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-review-scenario",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-role-packs",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/hooks.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-cli",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-commit",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-create-spawn",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "serial",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-disband-close",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-disband-herdr-only",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-disband",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-dismiss",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-move-guard",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-next-split",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-reboot-resume",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-resync",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-select",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-spawn-cwd",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-spawn",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-roster-team-home",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-team-override",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-team-scope",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-roster-whoami",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-all-lanes",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/run-all.sh",
+      "tests/contract-tools/select.mjs",
+      "tests/contract-tools/classify.mjs",
+      "tests/manifest.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-run-all",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/run-all.sh",
+      "tests/lib-daemon-leak.sh"
+    ],
+    "units": [],
+    "lane": "serial",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-set-list",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-set",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-set-store",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-sessionend-roster",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-shim-ah",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-shim-trust",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "bin/ahd",
+      "bin/ah-trust.sh",
+      "bin/ah-testmode.sh"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-skill-content-defects",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-skill-disband-search",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-smoke-relay-window",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "tests/e2e/smoke.sh",
+      "native/src/Ah.Mesh/Mail/MailClaims.cs"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-stall-failsafe",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-state-backup",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-status-activity",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-status-fixtures",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-status-owners",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-status",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-stopfailure-recovery",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-sub-orchestrators",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-subagent-inflight",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-subagentstart-cli-root",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-suite-hermeticity",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "serial",
+    "reads_source": false
+  },
+  {
+    "name": "test-team-history",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/Team/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ahd-team-hold",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Commands/Roster/Team/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-team-untrack",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/Team/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-team-untracked-live",
+    "kind": "static",
+    "libs": [],
+    "covers": [
+      "native/src/Ah.Commands/Roster/Team/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-test-env",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "serial",
+    "reads_source": false
+  },
+  {
+    "name": "test-tui-no-team",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "bin/ahd"
+    ],
+    "units": [
+      "daemon"
+    ],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-ups-cli-root",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-usage-tracking",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "hooks/registry.json"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": true
+  },
+  {
+    "name": "test-v1-no-global-names",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-v1-path-scan",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-web-client",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-whoami-identity",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
+    "name": "test-with-slot",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "tests/with-slot.sh",
+      "tests/run-all.sh"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  }
+]

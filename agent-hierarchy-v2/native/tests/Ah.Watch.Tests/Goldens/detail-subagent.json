@@ -1,0 +1,77 @@
+{
+  "view_schema": 1,
+  "kind": "detail",
+  "id": "/o/o.101/t/boxes/m/impl/sub/a2",
+  "path": "/detail/o/o.101/t/boxes/m/impl/sub/a2",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "subagent",
+      "id": "/o/o.101/t/boxes/m/impl/sub/a2",
+      "label": "a2",
+      "path": "/o/o.101/t/boxes/m/impl/sub/a2"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "subagent",
+      "path": "/o/o.101/t/boxes/m/impl/sub/a2"
+    },
+    "fields": [
+      {
+        "key": "id",
+        "label": "id",
+        "present": true,
+        "value": "a2",
+        "source": "inflight records",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "status",
+        "label": "status",
+        "present": true,
+        "value": "started",
+        "source": "inflight records",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "started_at",
+        "label": "started",
+        "present": true,
+        "value": "2026-06-02T09:10:00.000Z",
+        "source": "inflight records",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "ended_at",
+        "label": "ended",
+        "present": false,
+        "value": null,
+        "source": "inflight records",
+        "verified": false,
+        "reason": "still running"
+      },
+      {
+        "key": "parent",
+        "label": "parent",
+        "present": true,
+        "value": "/o/o.101/t/boxes/m/impl",
+        "source": "view",
+        "verified": true,
+        "reason": null
+      }
+    ]
+  },
+  "rev": "551282e4c7f52306"
+}

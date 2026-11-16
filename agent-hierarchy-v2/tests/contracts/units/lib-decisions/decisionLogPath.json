@@ -1,0 +1,55 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "decisionLogPath",
+  "cases": [
+    {
+      "id": "under-pipeline",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+    },
+    {
+      "id": "trailing-slash-dir",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+    },
+    {
+      "id": "relative-dir",
+      "args": [
+        "rel/hier",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "rel/hier/pipeline/20260601-000001-aaaa/decisions.jsonl"
+    },
+    {
+      "id": "empty-run-id-collapses",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        ""
+      ],
+      "expect": "$ROOT/repo/.claude/hierarchy/pipeline/decisions.jsonl"
+    },
+    {
+      "id": "dotdot-run-id-normalised",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        "../x"
+      ],
+      "expect": "$ROOT/repo/.claude/hierarchy/x/decisions.jsonl"
+    },
+    {
+      "id": "empty-dir",
+      "args": [
+        "",
+        "20260601-000001-aaaa"
+      ],
+      "expect": "pipeline/20260601-000001-aaaa/decisions.jsonl"
+    }
+  ]
+}

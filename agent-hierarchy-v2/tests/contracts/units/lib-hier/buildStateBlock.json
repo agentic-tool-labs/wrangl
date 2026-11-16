@@ -1,0 +1,738 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "buildStateBlock",
+  "cases": [
+    {
+      "id": "empty-hierarchy",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "open-exchange-listed",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000009-aaaa--architect--build-it--request.md": "---\nid: 20260601-000009-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: build-it\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:58:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: 1 — 20260601-000009-aaaa architect build-it 2m\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "eleven-open-exchanges-cut-at-ten",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/msgs/20260601-000001-aaaa--architect--s1--request.md": "---\nid: 20260601-000001-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s1\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000002-aaaa--architect--s2--request.md": "---\nid: 20260601-000002-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s2\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000003-aaaa--architect--s3--request.md": "---\nid: 20260601-000003-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s3\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000004-aaaa--architect--s4--request.md": "---\nid: 20260601-000004-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s4\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000005-aaaa--architect--s5--request.md": "---\nid: 20260601-000005-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s5\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000006-aaaa--architect--s6--request.md": "---\nid: 20260601-000006-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s6\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000007-aaaa--architect--s7--request.md": "---\nid: 20260601-000007-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s7\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000008-aaaa--architect--s8--request.md": "---\nid: 20260601-000008-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s8\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000009-aaaa--architect--s9--request.md": "---\nid: 20260601-000009-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s9\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000010-aaaa--architect--s10--request.md": "---\nid: 20260601-000010-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s10\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n",
+        "repo/.claude/hierarchy/msgs/20260601-000011-aaaa--architect--s11--request.md": "---\nid: 20260601-000011-aaaa\ntype: request\nto: architect\nfrom: orchestrator\nslug: s11\nparent: null\nreason: null\neta: null\nto_name: null\nfrom_name: null\nteam: null\nteam_file: null\nteam_guide: null\ncreated: 2026-06-01T11:00:00.000Z\n---\n\n## [0] tldr\n- [1] goal: \n- [2] context: \n- [3] constraints: \n- [4] files: \n- [5] acceptance: \n- [6] want_back: \n\n## [1] goal\n- none\n\n## [2] context\n- none\n\n## [3] constraints\n- none\n\n## [4] files\n- none\n\n## [5] acceptance\n- none\n\n## [6] want_back\n- none\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: 11 — 20260601-000011-aaaa architect s11 1h, 20260601-000010-aaaa architect s10 1h, 20260601-000009-aaaa architect s9 1h, 20260601-000008-aaaa architect s8 1h, 20260601-000007-aaaa architect s7 1h, 20260601-000006-aaaa architect s6 1h, 20260601-000005-aaaa architect s5 1h, 20260601-000004-aaaa architect s4 1h, 20260601-000003-aaaa architect s3 1h, 20260601-000002-aaaa architect s2 1h +1 more: msg.mjs list\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "team-authoritative-line",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"},{\"name\":null,\"role\":\"reviewer\",\"route\":\"subagent\"}],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"sO\"},\"team_id\":\"T1\"}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"busy\":true}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\nTeam T1 (authoritative): architect=p-architect busy; reviewer=(subagent)\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "member-idle-and-not-seen",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"},{\"name\":\"q-reviewer\",\"role\":\"reviewer\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%2\"}],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"sO\"},\"team_id\":\"T1\"}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\nTeam T1 (authoritative): architect=p-architect idle; reviewer=q-reviewer not-seen\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "peers-line-without-team",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"repo-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/ah2):\nopen exchanges: none\npeers: ultra-advisor: none; architect=repo-architect live 10s up-pid; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "peers-none",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "route-from-argument",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        "s1",
+        {
+          "value": "subagents",
+          "source": "config"
+        },
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: subagents (from config) — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "route-from-session-answer",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        "s1",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"route\",\"session_id\":\"s1\",\"value\":\"subagents\"}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: peers (from default) — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "route-default-for-session",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        "s1",
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: peers (from default) — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "orphaned-team-record",
+      "native_files": {
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":99999999,\"pid_start\":\"Mon Jan  1 00:00:00 2001\"},\"team_id\":\"T1\"}"
+      },
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":99999999},\"team_id\":\"T1\"}"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\nTeam T1 (authoritative): architect=p-architect not-seen\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)\nah: 1 orphaned team record(s) (default) — their orchestrator process is gone. `roster.mjs reap` to list, `reap --commit` to remove."
+    },
+    {
+      "id": "misplaced-peer-count",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"a\",\"status\":\"up\",\"pid\":1,\"misplaced\":true}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"b\",\"status\":\"up\",\"pid\":99999999,\"misplaced\":true}\n{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"c\",\"status\":\"down\",\"pid\":1,\"misplaced\":true}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)\nah: 1 misplaced peer(s) — see `roster.mjs teams` for detail.",
+      "native_expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\npeers: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)\nah: 2 misplaced peer(s) — see `roster.mjs teams` for detail."
+    },
+    {
+      "id": "named-team-scope",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": "alpha",
+          "teamVia": "team",
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/teams/alpha.json": "{\"members\":[{\"name\":\"p-architect\",\"role\":\"architect\",\"route\":\"pane\",\"transport\":\"herdr\",\"transport_id\":\"%1\"}],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"sO\"},\"team_id\":\"A1\"}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/hierarchy):\nopen exchanges: none\nTeam A1 (authoritative): architect=p-architect idle\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    },
+    {
+      "id": "team-with-no-members",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy",
+        {
+          "configured": false,
+          "enabled": true,
+          "handoffs": "auto",
+          "handoffsSource": "default",
+          "msgs": "required",
+          "route": null,
+          "routeSource": null,
+          "roles": {
+            "ultra-advisor": {
+              "model": "fable"
+            },
+            "architect": {
+              "model": "opus"
+            },
+            "reviewer": {
+              "model": "opus"
+            },
+            "implementor": {
+              "model": "inherit"
+            },
+            "task-runner": {
+              "model": "haiku",
+              "delegate": "task-gopher"
+            }
+          },
+          "shadowed": [],
+          "excludedRoles": [],
+          "cwd": "$ROOT/repo",
+          "roster": null,
+          "rosterLevel": null,
+          "team": null,
+          "teamVia": null,
+          "ownedTeams": []
+        },
+        "repo",
+        "opus",
+        null,
+        null,
+        1780315200000
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/team.json": "{\"members\":[],\"orchestrator\":{\"pid\":$SELFPID,\"pid_start\":\"$SELFSTART\",\"session_id\":\"sO\"},\"team_id\":\"T1\"}",
+        "repo/.claude/hierarchy/peers.jsonl": "{\"type\":\"peer\",\"ts\":\"2026-06-01T11:59:50.000Z\",\"name\":\"p-architect\",\"role\":\"architect\",\"status\":\"up\",\"pid\":1,\"busy\":true}\n"
+      },
+      "expect": "HIERARCHY STATE ($ROOT/repo/.claude/ah2):\nopen exchanges: none\npeers: ultra-advisor: none; architect=p-architect live 10s up-pid busy; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none\nroute: unknown — chain roles run only as peers\ntier: you are opus(3); architect opus(3); ultra-advisor fable(4)"
+    }
+  ]
+}

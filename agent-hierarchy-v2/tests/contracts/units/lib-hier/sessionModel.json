@@ -1,0 +1,139 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "sessionModel",
+  "cases": [
+    {
+      "id": "input-model-wins",
+      "args": [
+        {
+          "model": "m1",
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "env": {
+        "CLAUDE_MODEL": "env"
+      },
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"cached\"}\n"
+      },
+      "expect": "m1"
+    },
+    {
+      "id": "env-model",
+      "args": [
+        {
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "env": {
+        "CLAUDE_MODEL": "env"
+      },
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"cached\"}\n"
+      },
+      "expect": "env"
+    },
+    {
+      "id": "cached-gate-model",
+      "args": [
+        {
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"old\"}\n{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"new\"}\n"
+      },
+      "expect": "new"
+    },
+    {
+      "id": "cache-of-another-session",
+      "args": [
+        {
+          "session_id": "s2"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"cached\"}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "nothing-known",
+      "args": [
+        {
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-dir",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-input",
+      "args": [
+        null,
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "empty-model-falls-through",
+      "args": [
+        {
+          "model": "",
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "env": {
+        "CLAUDE_MODEL": ""
+      },
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"cached\"}\n"
+      },
+      "expect": "cached"
+    },
+    {
+      "id": "non-string-model-falls-through",
+      "args": [
+        {
+          "model": 5,
+          "session_id": "s1"
+        },
+        "$ROOT/repo/.claude/hierarchy"
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/gates.jsonl": "{\"type\":\"model\",\"session_id\":\"s1\",\"model\":\"cached\"}\n"
+      },
+      "expect": "cached"
+    }
+  ]
+}

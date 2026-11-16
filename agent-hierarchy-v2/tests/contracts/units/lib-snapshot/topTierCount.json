@@ -1,0 +1,133 @@
+{
+  "lib": "lib-snapshot",
+  "module": "hooks/lib-snapshot.mjs",
+  "fn": "topTierCount",
+  "cases": [
+    {
+      "id": "counts-resume-and-fresh-at-opus-or-above",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "opus"
+          },
+          {
+            "status": "fresh",
+            "model": "fable"
+          },
+          {
+            "status": "resume",
+            "model": "sonnet"
+          }
+        ]
+      ],
+      "expect": 2
+    },
+    {
+      "id": "skipped-alive-no-worktree-not-counted",
+      "args": [
+        [
+          {
+            "status": "skipped",
+            "model": "opus"
+          },
+          {
+            "status": "alive",
+            "model": "opus"
+          },
+          {
+            "status": "no-worktree",
+            "model": "opus"
+          }
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "id": "model-families-from-full-names",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "claude-opus-4-7"
+          },
+          {
+            "status": "fresh",
+            "model": "claude-sonnet-5"
+          },
+          {
+            "status": "fresh",
+            "model": "claude-3-haiku"
+          }
+        ]
+      ],
+      "expect": 1
+    },
+    {
+      "id": "unknown-model-not-counted",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "gpt-5"
+          },
+          {
+            "status": "resume",
+            "model": null
+          },
+          {
+            "status": "resume"
+          }
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "id": "case-insensitive",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "OPUS"
+          }
+        ]
+      ],
+      "expect": 1
+    },
+    {
+      "id": "family-inside-longer-word-not-counted",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "myopus"
+          },
+          {
+            "status": "resume",
+            "model": "opusx"
+          }
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "id": "family-after-digit-counted",
+      "args": [
+        [
+          {
+            "status": "resume",
+            "model": "claude-opus4"
+          }
+        ]
+      ],
+      "expect": 1
+    },
+    {
+      "id": "empty-plan",
+      "args": [
+        []
+      ],
+      "expect": 0
+    }
+  ]
+}

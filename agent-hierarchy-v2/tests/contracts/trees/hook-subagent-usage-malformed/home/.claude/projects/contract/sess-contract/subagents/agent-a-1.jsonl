@@ -1,0 +1,4 @@
+not json
+{"type":"assistant","message":{"model":"m1","usage":{"input_tokens":2}}}
+
+{"type":"assistant","message":{"model":"","usage":{"output_tokens":3}}}

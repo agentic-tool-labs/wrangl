@@ -1,0 +1,210 @@
+{
+  "lib": "lib-mailbox",
+  "module": "hooks/lib-mailbox.mjs",
+  "fn": "heartbeatFresh",
+  "cases": [
+    {
+      "id": "null",
+      "args": [
+        null,
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "undefined",
+      "args": [
+        {
+          "$undefined": 1
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "empty-object",
+      "args": [
+        {},
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "fresh",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:59.000Z",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "boundary-exactly-three-polls",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:45.000Z",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "one-ms-over",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:44.999Z",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "no-poll-uses-default",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:45.000Z"
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "no-poll-uses-default-stale",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:44.999Z"
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "poll-zero-uses-default",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:45.000Z",
+          "poll_ms": 0
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "poll-negative-uses-default",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:45.000Z",
+          "poll_ms": -1
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "poll-string-uses-default",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:45.000Z",
+          "poll_ms": "1"
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "poll-fractional",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:59.999Z",
+          "poll_ms": 0.5
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "poll-fractional-stale",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:59.998Z",
+          "poll_ms": 0.5
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "future-at-is-fresh",
+      "args": [
+        {
+          "at": "2026-01-01T12:01:00.000Z",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "at-junk",
+      "args": [
+        {
+          "at": "junk",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "at-empty-string",
+      "args": [
+        {
+          "at": "",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": false
+    },
+    {
+      "id": "at-with-offset",
+      "args": [
+        {
+          "at": "2026-01-01T13:00:00.000+01:00",
+          "poll_ms": 5000
+        },
+        1767268800000
+      ],
+      "expect": true
+    },
+    {
+      "id": "at-date-only",
+      "args": [
+        {
+          "at": "2026-01-01",
+          "poll_ms": 5000
+        },
+        1767268801000
+      ],
+      "expect": false
+    },
+    {
+      "id": "now-defaults-to-the-clock",
+      "args": [
+        {
+          "at": "2026-01-01T11:59:59.000Z",
+          "poll_ms": 5000
+        }
+      ],
+      "env": {
+        "AH_HOME": "$ROOT/ah"
+      },
+      "now": "2026-01-01T12:00:00.000Z",
+      "expect": true
+    }
+  ]
+}

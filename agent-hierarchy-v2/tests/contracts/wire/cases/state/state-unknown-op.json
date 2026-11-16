@@ -1,0 +1,38 @@
+{
+  "kind": "wire",
+  "id": "state-unknown-op",
+  "about": "an unknown op is 404 not_found",
+  "tree": "wire-tm",
+  "env": {},
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "method": "POST",
+    "query": {},
+    "headers": {},
+    "body": {
+      "args": {},
+      "context": {
+        "cwd": "<ROOT:proj>",
+        "hierarchy_dir": "<ROOT:proj>/.claude/hierarchy"
+      },
+      "op_id": "op-3"
+    },
+    "path": "/v1/state/activity/nope"
+  },
+  "expect": {
+    "status": 404,
+    "headers": {},
+    "json": {
+      "error": {
+        "code": "not_found",
+        "message": "no state operation activity.nope"
+      }
+    }
+  },
+  "mutant": "an unknown op answered 200",
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.4",
+    "at": "2026-10-11T18:46:09.658Z"
+  }
+}

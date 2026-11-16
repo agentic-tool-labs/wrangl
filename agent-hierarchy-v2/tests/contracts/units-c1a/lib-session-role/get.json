@@ -1,0 +1,62 @@
+{
+  "lib": "lib-session-role",
+  "module": "hooks/lib-session-role.mjs",
+  "fn": "get",
+  "cases": [
+    {
+      "id": "ok",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\"\n    }\n  }\n}\n"
+      },
+      "expect": "architect"
+    },
+    {
+      "id": "missing-session",
+      "args": [
+        {
+          "session_id": "s2"
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"s1\": {\n      \"role\": \"architect\"\n    }\n  }\n}\n"
+      },
+      "expect": null
+    },
+    {
+      "id": "no-file",
+      "args": [
+        {
+          "session_id": "s1"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "no-session-id",
+      "args": [
+        {}
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"role\": \"reviewer\"\n    }\n  }\n}\n"
+      },
+      "expect": "reviewer"
+    },
+    {
+      "id": "null-session-id",
+      "args": [
+        {
+          "session_id": null
+        }
+      ],
+      "files": {
+        "home/.claude/agent-hierarchy.session-roles.json": "{\n  \"version\": 1,\n  \"sessions\": {\n    \"__nosession__\": {\n      \"role\": \"reviewer\"\n    }\n  }\n}\n"
+      },
+      "expect": "reviewer"
+    }
+  ]
+}

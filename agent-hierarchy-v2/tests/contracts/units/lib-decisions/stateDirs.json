@@ -1,0 +1,73 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "stateDirs",
+  "cases": [
+    {
+      "id": "beside-the-run-dir",
+      "args": [
+        "decisions",
+        null,
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl"
+        }
+      ],
+      "expect": [
+        "$ROOT/repo/.claude/hierarchy/.state-decisions"
+      ]
+    },
+    {
+      "id": "no-path-is-empty",
+      "args": [
+        "decisions",
+        null,
+        {}
+      ],
+      "expect": []
+    },
+    {
+      "id": "non-string-path-is-empty",
+      "args": [
+        "decisions",
+        null,
+        {
+          "path": 5
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "no-args-is-empty",
+      "args": [
+        "decisions",
+        null,
+        null
+      ],
+      "expect": []
+    },
+    {
+      "id": "not-a-log-throws",
+      "args": [
+        "decisions",
+        null,
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/x.jsonl"
+        }
+      ],
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/x.jsonl is not a decision log"
+    },
+    {
+      "id": "log-not-under-pipeline-throws",
+      "args": [
+        "decisions",
+        null,
+        {
+          "path": "$ROOT/repo/.claude/hierarchy/run/decisions.jsonl"
+        }
+      ],
+      "expectThrows": true,
+      "expectError": "$ROOT/repo/.claude/hierarchy/run/decisions.jsonl is not a decision log"
+    }
+  ]
+}

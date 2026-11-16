@@ -1,0 +1,451 @@
+{
+  "lib": "lib-conventions",
+  "module": "hooks/lib-conventions.mjs",
+  "fn": "validateConventions",
+  "cases": [
+    {
+      "id": "minimal-valid",
+      "args": [
+        {
+          "version": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "full-valid",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trigger_label": "ah",
+            "trusted_actors": [
+              "a",
+              "b"
+            ]
+          },
+          "pr": {
+            "draft": false,
+            "issue_link": "closes",
+            "reviewers": [
+              "x",
+              "org/team"
+            ],
+            "merge_method": "squash"
+          },
+          "ci_secrets": "skip-ci",
+          "protected_paths": [
+            "a/**"
+          ],
+          "protected_branches": [
+            "main",
+            "release/*"
+          ],
+          "on_item_done": "ship"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "missing-version",
+      "args": [
+        {}
+      ],
+      "expect": "`version` is required"
+    },
+    {
+      "id": "missing-version-other-keys",
+      "args": [
+        {
+          "pr": {
+            "draft": true
+          }
+        }
+      ],
+      "expect": "`version` is required"
+    },
+    {
+      "id": "version-2",
+      "args": [
+        {
+          "version": 2
+        }
+      ],
+      "expect": "`version` must be the integer 1"
+    },
+    {
+      "id": "version-string",
+      "args": [
+        {
+          "version": "1"
+        }
+      ],
+      "expect": "`version` must be the integer 1"
+    },
+    {
+      "id": "version-float-one",
+      "args": [
+        {
+          "version": 1
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "version-null",
+      "args": [
+        {
+          "version": null
+        }
+      ],
+      "expect": "`version` must be the integer 1"
+    },
+    {
+      "id": "array",
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": "the file must hold a JSON object"
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": "the file must hold a JSON object"
+    },
+    {
+      "id": "string",
+      "args": [
+        "x"
+      ],
+      "expect": "the file must hold a JSON object"
+    },
+    {
+      "id": "number",
+      "args": [
+        1
+      ],
+      "expect": "the file must hold a JSON object"
+    },
+    {
+      "id": "unknown-top-key",
+      "args": [
+        {
+          "version": 1,
+          "extra": true
+        }
+      ],
+      "expect": "unknown key `extra`"
+    },
+    {
+      "id": "unknown-nested-pr",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "colour": "red"
+          }
+        }
+      ],
+      "expect": "unknown key `pr.colour`"
+    },
+    {
+      "id": "unknown-nested-issues",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "label": "x"
+          }
+        }
+      ],
+      "expect": "unknown key `issues.label`"
+    },
+    {
+      "id": "issues-not-object-string",
+      "args": [
+        {
+          "version": 1,
+          "issues": "x"
+        }
+      ],
+      "expect": "`issues` must be an object"
+    },
+    {
+      "id": "issues-null",
+      "args": [
+        {
+          "version": 1,
+          "issues": null
+        }
+      ],
+      "expect": "`issues` must be an object"
+    },
+    {
+      "id": "pr-array",
+      "args": [
+        {
+          "version": 1,
+          "pr": []
+        }
+      ],
+      "expect": "`pr` must be an object"
+    },
+    {
+      "id": "trigger-label-empty",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trigger_label": ""
+          }
+        }
+      ],
+      "expect": "`issues.trigger_label` must be a non-empty string"
+    },
+    {
+      "id": "trigger-label-number",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trigger_label": 5
+          }
+        }
+      ],
+      "expect": "`issues.trigger_label` must be a non-empty string"
+    },
+    {
+      "id": "trusted-actors-not-array",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trusted_actors": "a"
+          }
+        }
+      ],
+      "expect": "`issues.trusted_actors` must be an array of logins"
+    },
+    {
+      "id": "trusted-actors-empty-ok",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trusted_actors": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "trusted-actors-empty-entry",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trusted_actors": [
+              "a",
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": "`issues.trusted_actors` must be an array of logins"
+    },
+    {
+      "id": "trusted-actors-number-entry",
+      "args": [
+        {
+          "version": 1,
+          "issues": {
+            "trusted_actors": [
+              1
+            ]
+          }
+        }
+      ],
+      "expect": "`issues.trusted_actors` must be an array of logins"
+    },
+    {
+      "id": "draft-string",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "draft": "yes"
+          }
+        }
+      ],
+      "expect": "`pr.draft` must be a boolean"
+    },
+    {
+      "id": "issue-link-refs",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "issue_link": "refs"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "issue-link-bad",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "issue_link": "fixes"
+          }
+        }
+      ],
+      "expect": "`pr.issue_link` must be \"refs\" or \"closes\""
+    },
+    {
+      "id": "reviewers-bad",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "reviewers": [
+              ""
+            ]
+          }
+        }
+      ],
+      "expect": "`pr.reviewers` must be an array of logins or org/team names"
+    },
+    {
+      "id": "merge-method-rebase",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "merge_method": "rebase"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "merge-method-bad",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "merge_method": "ff"
+          }
+        }
+      ],
+      "expect": "`pr.merge_method` must be \"merge\", \"squash\" or \"rebase\""
+    },
+    {
+      "id": "ci-secrets-bad",
+      "args": [
+        {
+          "version": 1,
+          "ci_secrets": "never"
+        }
+      ],
+      "expect": "`ci_secrets` must be \"none-on-branches\" or \"skip-ci\""
+    },
+    {
+      "id": "ci-secrets-none-on-branches",
+      "args": [
+        {
+          "version": 1,
+          "ci_secrets": "none-on-branches"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "protected-paths-bad",
+      "args": [
+        {
+          "version": 1,
+          "protected_paths": "a"
+        }
+      ],
+      "expect": "`protected_paths` must be an array of globs"
+    },
+    {
+      "id": "protected-branches-bad",
+      "args": [
+        {
+          "version": 1,
+          "protected_branches": [
+            1
+          ]
+        }
+      ],
+      "expect": "`protected_branches` must be an array of globs"
+    },
+    {
+      "id": "on-item-done-empty",
+      "args": [
+        {
+          "version": 1,
+          "on_item_done": ""
+        }
+      ],
+      "expect": "`on_item_done` must be a skill name"
+    },
+    {
+      "id": "first-violation-wins-key-order",
+      "args": [
+        {
+          "version": 1,
+          "zzz": 1,
+          "pr": {
+            "draft": "x"
+          }
+        }
+      ],
+      "expect": "unknown key `zzz`"
+    },
+    {
+      "id": "first-violation-later-key",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "draft": "x"
+          },
+          "zzz": 1
+        }
+      ],
+      "expect": "`pr.draft` must be a boolean"
+    },
+    {
+      "id": "nested-first-violation",
+      "args": [
+        {
+          "version": 1,
+          "pr": {
+            "issue_link": "bad",
+            "draft": "x"
+          }
+        }
+      ],
+      "expect": "`pr.issue_link` must be \"refs\" or \"closes\""
+    },
+    {
+      "id": "integer-keys-ordered-first",
+      "args": [
+        {
+          "9": 2,
+          "10": 1,
+          "version": 1
+        }
+      ],
+      "expect": "unknown key `9`"
+    }
+  ]
+}

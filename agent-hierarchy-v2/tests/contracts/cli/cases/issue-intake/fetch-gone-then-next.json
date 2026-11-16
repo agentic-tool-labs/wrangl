@@ -1,0 +1,55 @@
+{
+  "kind": "cli",
+  "id": "fetch-gone-then-next",
+  "about": "an issue deleted between the reads, the next still processed",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--cwd",
+      "<ROOT:proj>",
+      "--out-dir",
+      "<ROOT:proj>/out",
+      "--issues",
+      "2202,1"
+    ],
+    "stdin": null
+  },
+  "mutant": "the run stopped at the deleted issue",
+  "expect": {
+    "stdout": "{\"repo\":\"alice/proj\",\"trigger_label\":\"ready-for-agent\",\"trusted_actors\":[\"alice\"],\"items\":[{\"issue\":2202,\"eligible\":false,\"reason\":\"edited-during-intake\"},{\"issue\":1,\"eligible\":true,\"snapshot\":\"<ROOT:proj>/out/issue-1.md\",\"sha256\":\"<SHA256>\",\"lines\":27}]}\n",
+    "stderr": "",
+    "exit": 0,
+    "tree_diff": {
+      "added": [
+        {
+          "path": "proj/gh.log",
+          "mode": "0644",
+          "content": "{\"args\":[\"auth\",\"status\",\"--hostname\",\"github.com\"],\"stdin\":\"\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeOwner($owner: String!, $name: String!) {\\\\n  repository(owner: $owner, name: $name) { owner { __typename login } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\"}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeMeta($owner: String!, $name: String!, $number: Int!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n      comments(last: 100) { nodes { id author { login } createdAt lastEditedAt } }\\\\n    }\\\\n  }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":2202}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeFetch($owner: String!, $name: String!, $number: Int!, $ids: [ID!]!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      title\\\\n      bodyHTML\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n    }\\\\n  }\\\\n  nodes(ids: $ids) { ... on IssueComment { id bodyHTML lastEditedAt } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":2202,\\\"ids\\\":[]}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeMeta($owner: String!, $name: String!, $number: Int!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n      comments(last: 100) { nodes { id author { login } createdAt lastEditedAt } }\\\\n    }\\\\n  }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":1}}\"}\n{\"args\":[\"api\",\"graphql\",\"--input\",\"-\"],\"stdin\":\"{\\\"query\\\":\\\"query IntakeFetch($owner: String!, $name: String!, $number: Int!, $ids: [ID!]!) {\\\\n  repository(owner: $owner, name: $name) {\\\\n    issue(number: $number) {\\\\n      title\\\\n      bodyHTML\\\\n      state\\\\n      lastEditedAt\\\\n      labels(first: 100) { nodes { name } }\\\\n      timelineItems(last: 100, itemTypes: [LABELED_EVENT, RENAMED_TITLE_EVENT]) {\\\\n        nodes {\\\\n          __typename\\\\n          ... on LabeledEvent { createdAt actor { login } label { name } }\\\\n          ... on RenamedTitleEvent { createdAt }\\\\n        }\\\\n      }\\\\n    }\\\\n  }\\\\n  nodes(ids: $ids) { ... on IssueComment { id bodyHTML lastEditedAt } }\\\\n}\\\",\\\"variables\\\":{\\\"owner\\\":\\\"alice\\\",\\\"name\\\":\\\"proj\\\",\\\"number\\\":1,\\\"ids\\\":[\\\"IC_1a\\\"]}}\"}\n"
+        },
+        {
+          "path": "proj/git.log",
+          "mode": "0644",
+          "content": "-C <ROOT:proj> remote get-url origin\n-C <ROOT:proj> symbolic-ref -q refs/remotes/origin/HEAD\n-C <ROOT:proj> rev-parse --verify -q refs/remotes/origin/main^{commit}\n-C <ROOT:proj> cat-file -e refs/remotes/origin/main:.claude/ah-conventions.json\n-C <ROOT:proj> cat-file blob refs/remotes/origin/main:.claude/ah-conventions.json\n"
+        },
+        {
+          "path": "proj/out/issue-1.md",
+          "mode": "0644",
+          "content": "UNTRUSTED ISSUE SNAPSHOT alice/proj#1 labelled-by=alice at=<ISO:1> fetched=<ISO:2>\n\nTITLE: Add a --dry-run flag\n\nBODY:\n| ## Goal\n|\n| Add a --dry-run flag.\n|\n| - prints the plan\n|\n| - writes nothing\n|\n| - [x] parse the flag\n|\n| - [ ] skip writes\n|\n| flag | effect\n| --dry-run | no writes\n|\n| run({ dryRun: true });\n| if (a  <  b) done();\n|\n| Ship it 🎉\nCOMMENT alice <ISO:3>:\n| Agent brief:\n| Do X.\n"
+        }
+      ],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:28.843Z"
+  }
+}

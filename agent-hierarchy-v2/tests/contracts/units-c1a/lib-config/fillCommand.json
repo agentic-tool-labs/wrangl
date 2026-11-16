@@ -1,0 +1,60 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "fillCommand",
+  "cases": [
+    {
+      "id": "defaults",
+      "args": [],
+      "expect": "node $AHROOT/hooks/msg.mjs fill --id <id> --from <your role> --req <your request path> --body '<json>'"
+    },
+    {
+      "id": "full",
+      "args": [
+        {
+          "id": "i1",
+          "role": "implementor",
+          "req": "/r/q.md",
+          "cwd": "/w"
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs fill --id i1 --from implementor --req /r/q.md --body '<json>' --cwd /w"
+    },
+    {
+      "id": "no-cwd",
+      "args": [
+        {
+          "id": "i1",
+          "role": "x",
+          "req": "/r"
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs fill --id i1 --from x --req /r --body '<json>'"
+    },
+    {
+      "id": "null-req",
+      "args": [
+        {
+          "req": null
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs fill --id <id> --from <your role> --req null --body '<json>'"
+    },
+    {
+      "id": "empty-cwd",
+      "args": [
+        {
+          "cwd": ""
+        }
+      ],
+      "expect": "node $AHROOT/hooks/msg.mjs fill --id <id> --from <your role> --req <your request path> --body '<json>'"
+    },
+    {
+      "id": "null-options",
+      "args": [
+        null
+      ],
+      "expectThrows": true
+    }
+  ]
+}

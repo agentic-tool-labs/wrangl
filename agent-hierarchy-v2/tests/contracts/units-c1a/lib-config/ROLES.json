@@ -1,0 +1,24 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "ROLES",
+  "cases": [
+    {
+      "id": "value",
+      "args": [],
+      "expect": [
+        "ultra-advisor",
+        "architect",
+        "reviewer",
+        "implementor",
+        "docs-writer",
+        "qa",
+        "ux-engineer",
+        "task-runner",
+        "backlog-groomer",
+        "sub-orchestrator",
+        "deputy-chief"
+      ]
+    }
+  ]
+}

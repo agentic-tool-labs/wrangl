@@ -1,0 +1,347 @@
+{
+  "view_schema": 1,
+  "kind": "detail",
+  "id": "/o/o.101",
+  "path": "/detail/o/o.101",
+  "breadcrumb": [
+    {
+      "kind": "root",
+      "id": "",
+      "label": "ah",
+      "path": "/"
+    },
+    {
+      "kind": "orchestrator",
+      "id": "/o/o.101",
+      "label": "repo · pid 101",
+      "path": "/o/o.101"
+    }
+  ],
+  "at": "2027-01-15T08:00:00.000Z",
+  "summary": {},
+  "children": [],
+  "body": {
+    "node": {
+      "kind": "orchestrator",
+      "path": "/o/o.101"
+    },
+    "fields": [
+      {
+        "key": "name",
+        "label": "name",
+        "present": true,
+        "value": "repo · pid 101",
+        "source": "view",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "state",
+        "label": "state",
+        "present": true,
+        "value": "live",
+        "source": "pid liveness",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "repo",
+        "label": "repo",
+        "present": true,
+        "value": "repo",
+        "source": "hierarchy directory",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "pid",
+        "label": "pid",
+        "present": true,
+        "value": 101,
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "session",
+        "label": "session",
+        "present": true,
+        "value": "sess-orch",
+        "source": "team file",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "teams",
+        "label": "teams",
+        "present": true,
+        "value": 1,
+        "source": "view",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "started",
+        "label": "started",
+        "present": false,
+        "value": null,
+        "source": "team file (pid_start)",
+        "verified": false,
+        "reason": "no start time recorded"
+      },
+      {
+        "key": "vitals",
+        "label": "Session vitals",
+        "present": true,
+        "value": [
+          {
+            "key": "model",
+            "label": "model",
+            "present": false,
+            "value": null,
+            "source": "statusline",
+            "verified": false,
+            "reason": "tap off"
+          },
+          {
+            "key": "effort",
+            "label": "effort",
+            "present": false,
+            "value": null,
+            "source": "statusline",
+            "verified": false,
+            "reason": "tap off"
+          },
+          {
+            "key": "cwd",
+            "label": "cwd",
+            "present": false,
+            "value": null,
+            "source": "registration",
+            "verified": false,
+            "reason": "not registered"
+          },
+          {
+            "key": "branch",
+            "label": "branch",
+            "present": false,
+            "value": null,
+            "source": "git HEAD file",
+            "verified": false,
+            "reason": "no git"
+          },
+          {
+            "key": "context",
+            "label": "context",
+            "present": false,
+            "value": null,
+            "source": "activity record; window from its model",
+            "verified": false,
+            "reason": "no activity record"
+          },
+          {
+            "key": "rate_limits",
+            "label": "rate limits",
+            "present": false,
+            "value": null,
+            "source": "statusline",
+            "verified": false,
+            "reason": "tap off"
+          }
+        ],
+        "source": "composite",
+        "verified": false,
+        "reason": null
+      },
+      {
+        "key": "roster",
+        "label": "Team roster",
+        "present": true,
+        "value": {
+          "members": [
+            {
+              "name": "impl",
+              "path": "/o/o.101/t/boxes/m/impl",
+              "team": "(default)",
+              "role": "implementor",
+              "model_short": "sonnet",
+              "effort": null,
+              "badge": "working",
+              "brief": {
+                "id": "req-1",
+                "slug": "view-model"
+              },
+              "last_activity_at": "2026-06-02T10:00:00.000Z",
+              "activity": {
+                "end_minute": 30000000,
+                "cells": [
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy",
+                  "busy"
+                ]
+              }
+            }
+          ],
+          "more": 0
+        },
+        "source": "member facts",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "flight",
+        "label": "Work in flight",
+        "present": true,
+        "value": {
+          "requests": [],
+          "requests_more": 0,
+          "mail": [],
+          "held": [],
+          "resumed": [],
+          "outage": null,
+          "unavailable": []
+        },
+        "source": "dispatch clock, mailbox, peer records",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "feed",
+        "label": "Events",
+        "present": true,
+        "value": {
+          "items": [],
+          "more": 0
+        },
+        "source": "peer records",
+        "verified": true,
+        "reason": null
+      },
+      {
+        "key": "activity",
+        "label": "Activity",
+        "present": false,
+        "value": null,
+        "source": "activity record",
+        "verified": false,
+        "reason": "no activity record"
+      },
+      {
+        "key": "pipeline",
+        "label": "Pipeline / release",
+        "present": true,
+        "value": [
+          {
+            "key": "run",
+            "label": "run",
+            "present": false,
+            "value": null,
+            "source": "pipeline anchor",
+            "verified": false,
+            "reason": "no pipeline run"
+          },
+          {
+            "key": "branches",
+            "label": "branches",
+            "present": true,
+            "value": [],
+            "source": "worktrees",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "key": "release_tag",
+            "label": "last release tag",
+            "present": false,
+            "value": null,
+            "source": "git",
+            "verified": false,
+            "reason": "git unavailable"
+          }
+        ],
+        "source": "composite",
+        "verified": false,
+        "reason": null
+      },
+      {
+        "key": "decisions",
+        "label": "Issues & decisions",
+        "present": false,
+        "value": null,
+        "source": "pipeline decisions log",
+        "verified": false,
+        "reason": "no pipeline run"
+      },
+      {
+        "key": "worktrees",
+        "label": "Worktrees",
+        "present": true,
+        "value": {
+          "trees": [],
+          "more": 0
+        },
+        "source": "pool enumeration, git",
+        "verified": true,
+        "reason": null
+      }
+    ]
+  },
+  "rev": "21b22b16d369ff1b"
+}

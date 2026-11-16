@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "ts": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "pid": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "pid",
+    "session_id",
+    "ts"
+  ],
+  "additionalProperties": true,
+  "description": "one row of the file"
+}

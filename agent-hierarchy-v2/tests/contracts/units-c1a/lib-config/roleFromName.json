@@ -1,0 +1,198 @@
+{
+  "lib": "lib-config",
+  "module": "hooks/lib-config.mjs",
+  "fn": "roleFromName",
+  "cases": [
+    {
+      "id": "n0-tm-architect",
+      "args": [
+        "tm-architect"
+      ],
+      "expect": "architect"
+    },
+    {
+      "id": "n1-tm-implementor-2",
+      "args": [
+        "tm-implementor-2"
+      ],
+      "expect": "implementor"
+    },
+    {
+      "id": "n2-tm-reviewer",
+      "args": [
+        "tm-reviewer"
+      ],
+      "expect": "reviewer"
+    },
+    {
+      "id": "n3-tm-ultra-advisor",
+      "args": [
+        "tm-ultra-advisor"
+      ],
+      "expect": "ultra-advisor"
+    },
+    {
+      "id": "n4-tm-orchestrator",
+      "args": [
+        "tm-orchestrator"
+      ],
+      "expect": null
+    },
+    {
+      "id": "n5-tm-task-runner",
+      "args": [
+        "tm-task-runner"
+      ],
+      "expect": null
+    },
+    {
+      "id": "n6-reviewer",
+      "args": [
+        "reviewer"
+      ],
+      "expect": "reviewer"
+    },
+    {
+      "id": "n7-advisor-thing",
+      "args": [
+        "advisor-thing"
+      ],
+      "expect": "ultra-advisor"
+    },
+    {
+      "id": "n8-ultra",
+      "args": [
+        "ultra"
+      ],
+      "expect": null
+    },
+    {
+      "id": "n9-xarchitectx",
+      "args": [
+        "xarchitectx"
+      ],
+      "expect": "architect",
+      "native_expect": null
+    },
+    {
+      "id": "n10-plain",
+      "args": [
+        "plain"
+      ],
+      "expect": null
+    },
+    {
+      "id": "n11-empty",
+      "args": [
+        ""
+      ],
+      "expect": null
+    },
+    {
+      "id": "n12-tm-Architect",
+      "args": [
+        "tm-Architect"
+      ],
+      "expect": null
+    },
+    {
+      "id": "number",
+      "args": [
+        5
+      ],
+      "expect": null
+    },
+    {
+      "id": "null",
+      "args": [
+        null
+      ],
+      "expect": null
+    },
+    {
+      "id": "custom-suffix",
+      "args": [
+        "proj-qc",
+        {
+          "roles": {
+            "qc": {
+              "class": "review",
+              "label": "QC",
+              "routes": "qc work",
+              "agent": "qc"
+            }
+          }
+        }
+      ],
+      "expect": "qc"
+    },
+    {
+      "id": "custom-suffix-with-ordinal",
+      "args": [
+        "proj-qc-2",
+        {
+          "roles": {
+            "qc": {
+              "class": "review",
+              "label": "QC",
+              "routes": "qc work",
+              "agent": "qc"
+            }
+          }
+        }
+      ],
+      "expect": "qc"
+    },
+    {
+      "id": "custom-suffix-not-anchored",
+      "args": [
+        "qc-proj",
+        {
+          "roles": {
+            "qc": {
+              "class": "review",
+              "label": "QC",
+              "routes": "qc work",
+              "agent": "qc"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "custom-wins-over-token",
+      "args": [
+        "reviewer-qc",
+        {
+          "roles": {
+            "qc": {
+              "class": "review",
+              "label": "QC",
+              "routes": "qc work",
+              "agent": "qc"
+            }
+          }
+        }
+      ],
+      "expect": "qc"
+    },
+    {
+      "id": "builtin-suffix-longer-custom",
+      "args": [
+        "proj-ultra-qc",
+        {
+          "roles": {
+            "qc": {
+              "class": "review",
+              "label": "QC",
+              "routes": "qc work",
+              "agent": "qc"
+            }
+          }
+        }
+      ],
+      "expect": "qc"
+    }
+  ]
+}

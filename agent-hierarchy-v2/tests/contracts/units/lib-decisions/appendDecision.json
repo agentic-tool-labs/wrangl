@@ -1,0 +1,3615 @@
+{
+  "lib": "lib-decisions",
+  "module": "hooks/lib-decisions.mjs",
+  "fn": "appendDecision",
+  "cases": [
+    {
+      "id": "decided-letter",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "decided-letter-d-of-four",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "default": "d",
+          "choice": "d",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\",\"D\"],\"default\":\"d\",\"choice\":\"d\",\"decision\":\"D\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "decided-other-with-review",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "other: something else",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": true,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"other: something else\",\"decision\":\"other: something else\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":true,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "parked-line",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":null,\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"unsure\",\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 0,
+            "parked": 1
+          },
+          "item": {
+            "decided": 0,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "parked-dangerous",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "dangerous",
+          "dangerous": true,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":null,\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"dangerous\",\"dangerous\":true,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 0,
+            "parked": 1
+          },
+          "item": {
+            "decided": 0,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "parked-with-named-decider",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": {
+            "role": "reviewer",
+            "name": "r1",
+            "model": "opus"
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":{\"role\":\"reviewer\",\"name\":\"r1\",\"model\":\"opus\"},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"unsure\",\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 0,
+            "parked": 1
+          },
+          "item": {
+            "decided": 0,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "op-id-recorded-on-the-line",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        "op-9"
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null,\"op_id\":\"op-9\"}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "id-counts-prior-decided-and-parked",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n{\"id\":\"d2\",\"kind\":\"parked\",\"item\":\"s9\",\"qkey\":\"p\"}\n{\"kind\":\"merge\",\"pr\":1}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n{\"id\":\"d2\",\"kind\":\"parked\",\"item\":\"s9\",\"qkey\":\"p\"}\n{\"kind\":\"merge\",\"pr\":1}\n{\"id\":\"d3\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d3",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 2,
+            "parked": 1
+          },
+          "item": {
+            "decided": 2,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "merge-lines-do-not-count-toward-the-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"kind\":\"merge\",\"pr\":1}\n{\"kind\":\"merge\",\"pr\":2}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"kind\":\"merge\",\"pr\":1}\n{\"kind\":\"merge\",\"pr\":2}\n{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "torn-log-gets-a-leading-newline",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"decided\",\"item\":\"x\",\"qkey\":\"z\"}\n{\"id\":\"d2\""
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"decided\",\"item\":\"x\",\"qkey\":\"z\"}\n{\"id\":\"d2\"\n{\"id\":\"d2\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d2",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 2,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "counts-in-result",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"q2\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"q3\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"q2\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"q3\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d4",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 3,
+            "parked": 1
+          },
+          "item": {
+            "decided": 2,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "creates-run-dir",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "refuse-not-an-object",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        "text",
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "the input must be one JSON object"
+        }
+      }
+    },
+    {
+      "id": "refuse-null-input",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        null,
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "the input must be one JSON object"
+        }
+      }
+    },
+    {
+      "id": "refuse-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        [
+          {
+            "kind": "decided",
+            "item": "s1",
+            "source": "architect",
+            "question": "Which option?",
+            "options": [
+              "A",
+              "B",
+              "C"
+            ],
+            "default": "a",
+            "choice": "b",
+            "decider": {
+              "role": "orchestrator",
+              "name": null,
+              "model": null
+            },
+            "rationale": "because",
+            "revert": "undo it",
+            "review": false,
+            "why_user": null,
+            "dangerous": false,
+            "exchange": null
+          }
+        ],
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "the input must be one JSON object"
+        }
+      }
+    },
+    {
+      "id": "refuse-merge-kind",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "merge",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "kind merge is written only by the merge record hook"
+        }
+      }
+    },
+    {
+      "id": "refuse-writer-owned-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "id": "d9"
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "writer-owned field(s) supplied: id — the writer sets them"
+        }
+      }
+    },
+    {
+      "id": "refuse-writer-owned-qkey-and-time",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "qkey": "x",
+          "time": "t"
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "writer-owned field(s) supplied: qkey, time — the writer sets them"
+        }
+      }
+    },
+    {
+      "id": "refuse-writer-owned-run-and-decision",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "run": "r",
+          "decision": "d"
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "writer-owned field(s) supplied: run, decision — the writer sets them"
+        }
+      }
+    },
+    {
+      "id": "refuse-unknown-field",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "extra": 1
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): extra"
+        }
+      }
+    },
+    {
+      "id": "refuse-two-unknown-fields",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "extra": 1,
+          "more": 2
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): extra, more"
+        }
+      }
+    },
+    {
+      "id": "refuse-missing-field",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "missing field(s): revert"
+        }
+      }
+    },
+    {
+      "id": "refuse-missing-fields-listed-in-order",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "review": false,
+          "why_user": null,
+          "dangerous": false
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "missing field(s): source, revert, exchange"
+        }
+      }
+    },
+    {
+      "id": "refuse-bad-kind",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "note",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "kind must be decided or parked"
+        }
+      }
+    },
+    {
+      "id": "refuse-empty-item",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "  ",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "item must be a non-empty string"
+        }
+      }
+    },
+    {
+      "id": "refuse-numeric-item",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": 5,
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "item must be a non-empty string"
+        }
+      }
+    },
+    {
+      "id": "refuse-empty-source",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "source must be a non-empty string"
+        }
+      }
+    },
+    {
+      "id": "refuse-empty-question",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": " \n",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "question must be a non-empty string"
+        }
+      }
+    },
+    {
+      "id": "refuse-one-option",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A"
+          ],
+          "default": "a",
+          "choice": "a",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "options must be 2 to 4 non-empty strings"
+        }
+      }
+    },
+    {
+      "id": "refuse-five-options",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "options must be 2 to 4 non-empty strings"
+        }
+      }
+    },
+    {
+      "id": "refuse-options-not-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": "A,B",
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "options must be 2 to 4 non-empty strings"
+        }
+      }
+    },
+    {
+      "id": "refuse-blank-option",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            " "
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "options must be 2 to 4 non-empty strings"
+        }
+      }
+    },
+    {
+      "id": "refuse-non-string-option",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            2
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "options must be 2 to 4 non-empty strings"
+        }
+      }
+    },
+    {
+      "id": "refuse-default-outside-options",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B"
+          ],
+          "default": "c",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "default must be a letter within options, or null"
+        }
+      }
+    },
+    {
+      "id": "refuse-default-uppercase",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "A",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "default must be a letter within options, or null"
+        }
+      }
+    },
+    {
+      "id": "refuse-default-number",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": 0,
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "default must be a letter within options, or null"
+        }
+      }
+    },
+    {
+      "id": "accept-default-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "refuse-choice-number",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": 1,
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "choice must be a string or null"
+        }
+      }
+    },
+    {
+      "id": "refuse-choice-outside-options",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B"
+          ],
+          "default": "a",
+          "choice": "c",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "choice must be a letter within options, or other: <text>"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-extra-key",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "a",
+            "name": null,
+            "model": null,
+            "x": 1
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-bad-role",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "Bad Role",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-missing-role",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-name-number",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "a",
+            "name": 1,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-model-number",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "a",
+            "name": null,
+            "model": 2
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-without-name-and-model-keys",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "a"
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-array",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": [],
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-decider-null-on-decided",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-rationale-not-string",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": null,
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "rationale must be a string"
+        }
+      }
+    },
+    {
+      "id": "refuse-revert-not-string",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": 5,
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "revert must be a string"
+        }
+      }
+    },
+    {
+      "id": "accept-empty-rationale-and-revert",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "",
+          "revert": "",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"\",\"revert\":\"\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "refuse-review-not-boolean",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": "yes",
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "review must be a boolean"
+        }
+      }
+    },
+    {
+      "id": "refuse-dangerous-not-boolean",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": 0,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "dangerous must be a boolean"
+        }
+      }
+    },
+    {
+      "id": "refuse-why-user-unknown",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "boredom",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "why_user must be dangerous, unsure, cap or null"
+        }
+      }
+    },
+    {
+      "id": "refuse-exchange-empty",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": " "
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "exchange must be a request id or null"
+        }
+      }
+    },
+    {
+      "id": "refuse-exchange-number",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": 5
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "exchange must be a request id or null"
+        }
+      }
+    },
+    {
+      "id": "accept-exchange-id",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": "20260601-000004-aaaa"
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":\"20260601-000004-aaaa\"}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-dangerous",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "dangerous",
+          "dangerous": true,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "a decided line can't be dangerous — a dangerous question goes to the user"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-by-user",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "user",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "a decided line's decider can't be the user — the user's answers are not logged as decided"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-with-why-user",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "a decided line has no why_user"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-choice-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": null,
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "choice must be a letter within options, or other: <text>"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-other-without-text",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "other: ",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": true,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "choice must be a letter within options, or other: <text>"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-other-without-review",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "other: free text",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "an other: answer always means review: true"
+        }
+      }
+    },
+    {
+      "id": "refuse-parked-with-choice",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": "a",
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "a parked line has no choice"
+        }
+      }
+    },
+    {
+      "id": "refuse-parked-without-why-user",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "a parked line needs why_user"
+        }
+      }
+    },
+    {
+      "id": "refuse-dangerous-without-why-user-dangerous",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": true,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "dangerous: true needs why_user dangerous"
+        }
+      }
+    },
+    {
+      "id": "accept-parked-decider-null",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"Which option?\",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":null,\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"unsure\",\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 0,
+            "parked": 1
+          },
+          "item": {
+            "decided": 0,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "refuse-parked-decider-invalid",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": "orchestrator",
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": null
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "decider must be { role, name, model }, role matching ^[a-z0-9-]+$ (null only on a parked line)"
+        }
+      }
+    },
+    {
+      "id": "refuse-parked-before",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"c0b19150a3cb\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"c0b19150a3cb\"}\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "parked-before",
+          "detail": "question c0b19150a3cb was parked earlier in this run — never re-ask"
+        }
+      }
+    },
+    {
+      "id": "refuse-decided-before",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "a",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"c0b19150a3cb\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"c0b19150a3cb\"}\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "decided-before",
+          "detail": "question c0b19150a3cb was already decided in this run as d1 — route that decision"
+        }
+      }
+    },
+    {
+      "id": "near-repeat-keys-the-same",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "  WHICH   option?  ",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"  WHICH   option?  \",\"qkey\":\"c0b19150a3cb\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d1",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "item-cap-reached",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k3\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k3\"}\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "cap",
+          "detail": "item s1 already has 4 decided (cap 4)"
+        }
+      }
+    },
+    {
+      "id": "item-cap-not-reached-at-three",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"fresh question\",\"qkey\":\"c1eba4e08676\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d4",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 4,
+            "parked": 0
+          },
+          "item": {
+            "decided": 4,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "parked-lines-do-not-count-toward-the-item-cap",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k3\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"fresh question\",\"qkey\":\"c1eba4e08676\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d5",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 1,
+            "parked": 4
+          },
+          "item": {
+            "decided": 1,
+            "parked": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "parked-is-not-capped",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "parked",
+          "item": "s1",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": null,
+          "choice": null,
+          "decider": null,
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": "unsure",
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k3\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"parked\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"fresh question\",\"qkey\":\"c1eba4e08676\",\"options\":[\"A\",\"B\",\"C\"],\"default\":null,\"choice\":null,\"decision\":null,\"decider\":null,\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":\"unsure\",\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d5",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 4,
+            "parked": 1
+          },
+          "item": {
+            "decided": 4,
+            "parked": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "run-cap-reached",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s99",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i0\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i3\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T11:58:25.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i4\",\"qkey\":\"k4\"}\n{\"id\":\"d6\",\"time\":\"2026-06-01T11:58:26.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i5\",\"qkey\":\"k5\"}\n{\"id\":\"d7\",\"time\":\"2026-06-01T11:58:27.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i6\",\"qkey\":\"k6\"}\n{\"id\":\"d8\",\"time\":\"2026-06-01T11:58:28.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i7\",\"qkey\":\"k7\"}\n{\"id\":\"d9\",\"time\":\"2026-06-01T11:58:29.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i8\",\"qkey\":\"k8\"}\n{\"id\":\"d10\",\"time\":\"2026-06-01T11:58:30.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i9\",\"qkey\":\"k9\"}\n{\"id\":\"d11\",\"time\":\"2026-06-01T11:58:31.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i10\",\"qkey\":\"k10\"}\n{\"id\":\"d12\",\"time\":\"2026-06-01T11:58:32.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i11\",\"qkey\":\"k11\"}\n{\"id\":\"d13\",\"time\":\"2026-06-01T11:58:33.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i12\",\"qkey\":\"k12\"}\n{\"id\":\"d14\",\"time\":\"2026-06-01T11:58:34.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i13\",\"qkey\":\"k13\"}\n{\"id\":\"d15\",\"time\":\"2026-06-01T11:58:35.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i14\",\"qkey\":\"k14\"}\n{\"id\":\"d16\",\"time\":\"2026-06-01T11:58:36.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i15\",\"qkey\":\"k15\"}\n{\"id\":\"d17\",\"time\":\"2026-06-01T11:58:37.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i16\",\"qkey\":\"k16\"}\n{\"id\":\"d18\",\"time\":\"2026-06-01T11:58:38.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i17\",\"qkey\":\"k17\"}\n{\"id\":\"d19\",\"time\":\"2026-06-01T11:58:39.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i18\",\"qkey\":\"k18\"}\n{\"id\":\"d20\",\"time\":\"2026-06-01T11:58:40.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i19\",\"qkey\":\"k19\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i0\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i3\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T11:58:25.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i4\",\"qkey\":\"k4\"}\n{\"id\":\"d6\",\"time\":\"2026-06-01T11:58:26.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i5\",\"qkey\":\"k5\"}\n{\"id\":\"d7\",\"time\":\"2026-06-01T11:58:27.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i6\",\"qkey\":\"k6\"}\n{\"id\":\"d8\",\"time\":\"2026-06-01T11:58:28.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i7\",\"qkey\":\"k7\"}\n{\"id\":\"d9\",\"time\":\"2026-06-01T11:58:29.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i8\",\"qkey\":\"k8\"}\n{\"id\":\"d10\",\"time\":\"2026-06-01T11:58:30.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i9\",\"qkey\":\"k9\"}\n{\"id\":\"d11\",\"time\":\"2026-06-01T11:58:31.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i10\",\"qkey\":\"k10\"}\n{\"id\":\"d12\",\"time\":\"2026-06-01T11:58:32.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i11\",\"qkey\":\"k11\"}\n{\"id\":\"d13\",\"time\":\"2026-06-01T11:58:33.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i12\",\"qkey\":\"k12\"}\n{\"id\":\"d14\",\"time\":\"2026-06-01T11:58:34.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i13\",\"qkey\":\"k13\"}\n{\"id\":\"d15\",\"time\":\"2026-06-01T11:58:35.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i14\",\"qkey\":\"k14\"}\n{\"id\":\"d16\",\"time\":\"2026-06-01T11:58:36.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i15\",\"qkey\":\"k15\"}\n{\"id\":\"d17\",\"time\":\"2026-06-01T11:58:37.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i16\",\"qkey\":\"k16\"}\n{\"id\":\"d18\",\"time\":\"2026-06-01T11:58:38.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i17\",\"qkey\":\"k17\"}\n{\"id\":\"d19\",\"time\":\"2026-06-01T11:58:39.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i18\",\"qkey\":\"k18\"}\n{\"id\":\"d20\",\"time\":\"2026-06-01T11:58:40.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i19\",\"qkey\":\"k19\"}\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "cap",
+          "detail": "the run already has 20 decided (cap 20)"
+        }
+      }
+    },
+    {
+      "id": "run-cap-not-reached-at-nineteen",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s99",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i0\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i3\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T11:58:25.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i4\",\"qkey\":\"k4\"}\n{\"id\":\"d6\",\"time\":\"2026-06-01T11:58:26.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i5\",\"qkey\":\"k5\"}\n{\"id\":\"d7\",\"time\":\"2026-06-01T11:58:27.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i6\",\"qkey\":\"k6\"}\n{\"id\":\"d8\",\"time\":\"2026-06-01T11:58:28.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i7\",\"qkey\":\"k7\"}\n{\"id\":\"d9\",\"time\":\"2026-06-01T11:58:29.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i8\",\"qkey\":\"k8\"}\n{\"id\":\"d10\",\"time\":\"2026-06-01T11:58:30.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i9\",\"qkey\":\"k9\"}\n{\"id\":\"d11\",\"time\":\"2026-06-01T11:58:31.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i10\",\"qkey\":\"k10\"}\n{\"id\":\"d12\",\"time\":\"2026-06-01T11:58:32.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i11\",\"qkey\":\"k11\"}\n{\"id\":\"d13\",\"time\":\"2026-06-01T11:58:33.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i12\",\"qkey\":\"k12\"}\n{\"id\":\"d14\",\"time\":\"2026-06-01T11:58:34.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i13\",\"qkey\":\"k13\"}\n{\"id\":\"d15\",\"time\":\"2026-06-01T11:58:35.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i14\",\"qkey\":\"k14\"}\n{\"id\":\"d16\",\"time\":\"2026-06-01T11:58:36.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i15\",\"qkey\":\"k15\"}\n{\"id\":\"d17\",\"time\":\"2026-06-01T11:58:37.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i16\",\"qkey\":\"k16\"}\n{\"id\":\"d18\",\"time\":\"2026-06-01T11:58:38.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i17\",\"qkey\":\"k17\"}\n{\"id\":\"d19\",\"time\":\"2026-06-01T11:58:39.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i18\",\"qkey\":\"k18\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i0\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i1\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i3\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T11:58:25.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i4\",\"qkey\":\"k4\"}\n{\"id\":\"d6\",\"time\":\"2026-06-01T11:58:26.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i5\",\"qkey\":\"k5\"}\n{\"id\":\"d7\",\"time\":\"2026-06-01T11:58:27.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i6\",\"qkey\":\"k6\"}\n{\"id\":\"d8\",\"time\":\"2026-06-01T11:58:28.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i7\",\"qkey\":\"k7\"}\n{\"id\":\"d9\",\"time\":\"2026-06-01T11:58:29.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i8\",\"qkey\":\"k8\"}\n{\"id\":\"d10\",\"time\":\"2026-06-01T11:58:30.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i9\",\"qkey\":\"k9\"}\n{\"id\":\"d11\",\"time\":\"2026-06-01T11:58:31.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i10\",\"qkey\":\"k10\"}\n{\"id\":\"d12\",\"time\":\"2026-06-01T11:58:32.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i11\",\"qkey\":\"k11\"}\n{\"id\":\"d13\",\"time\":\"2026-06-01T11:58:33.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i12\",\"qkey\":\"k12\"}\n{\"id\":\"d14\",\"time\":\"2026-06-01T11:58:34.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i13\",\"qkey\":\"k13\"}\n{\"id\":\"d15\",\"time\":\"2026-06-01T11:58:35.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i14\",\"qkey\":\"k14\"}\n{\"id\":\"d16\",\"time\":\"2026-06-01T11:58:36.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i15\",\"qkey\":\"k15\"}\n{\"id\":\"d17\",\"time\":\"2026-06-01T11:58:37.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i16\",\"qkey\":\"k16\"}\n{\"id\":\"d18\",\"time\":\"2026-06-01T11:58:38.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i17\",\"qkey\":\"k17\"}\n{\"id\":\"d19\",\"time\":\"2026-06-01T11:58:39.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"i18\",\"qkey\":\"k18\"}\n{\"id\":\"d20\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s99\",\"source\":\"architect\",\"question\":\"fresh question\",\"qkey\":\"56f9ac751e47\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d20",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 20,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "other-items-decided-do-not-hit-the-item-cap",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "fresh question",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k3\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k0\"}\n{\"id\":\"d2\",\"time\":\"2026-06-01T11:58:22.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k1\"}\n{\"id\":\"d3\",\"time\":\"2026-06-01T11:58:23.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k2\"}\n{\"id\":\"d4\",\"time\":\"2026-06-01T11:58:24.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s2\",\"qkey\":\"k3\"}\n{\"id\":\"d5\",\"time\":\"2026-06-01T12:00:00.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"source\":\"architect\",\"question\":\"fresh question\",\"qkey\":\"c1eba4e08676\",\"options\":[\"A\",\"B\",\"C\"],\"default\":\"a\",\"choice\":\"b\",\"decision\":\"B\",\"decider\":{\"role\":\"orchestrator\",\"name\":null,\"model\":null},\"rationale\":\"because\",\"revert\":\"undo it\",\"review\":false,\"why_user\":null,\"dangerous\":false,\"exchange\":null}\n"
+      },
+      "expect": {
+        "id": "d5",
+        "path": "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "counts": {
+          "run": {
+            "decided": 5,
+            "parked": 0
+          },
+          "item": {
+            "decided": 1,
+            "parked": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "refusals-write-nothing",
+      "args": [
+        "$ROOT/repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl",
+        "20260601-000001-aaaa",
+        {
+          "kind": "decided",
+          "item": "s1",
+          "source": "architect",
+          "question": "Which option?",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "default": "a",
+          "choice": "b",
+          "decider": {
+            "role": "orchestrator",
+            "name": null,
+            "model": null
+          },
+          "rationale": "because",
+          "revert": "undo it",
+          "review": false,
+          "why_user": null,
+          "dangerous": false,
+          "exchange": null,
+          "extra": 1
+        },
+        null
+      ],
+      "now": "2026-06-01T12:00:00Z",
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n"
+      },
+      "expectFiles": {
+        "repo/.claude/hierarchy/pipeline/20260601-000001-aaaa/decisions.jsonl": "{\"id\":\"d1\",\"time\":\"2026-06-01T11:58:21.000Z\",\"run\":\"20260601-000001-aaaa\",\"kind\":\"decided\",\"item\":\"s1\",\"qkey\":\"q1\"}\n"
+      },
+      "expect": {
+        "refused": {
+          "reason": "invalid",
+          "detail": "unknown field(s): extra"
+        }
+      }
+    }
+  ]
+}

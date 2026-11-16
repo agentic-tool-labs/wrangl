@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.Abstractions/Ah.Abstractions.csproj" />
+    <ProjectReference Include="../../src/Ah.Core/Ah.Core.csproj" />
+    <ProjectReference Include="../../src/Ah.Hierarchy/Ah.Hierarchy.csproj" />
+    <ProjectReference Include="../../src/Ah.StateDb/Ah.StateDb.csproj" />
+    <Compile Include="../SandboxDirectory.cs" Link="SandboxDirectory.cs" />
+  </ItemGroup>
+
+</Project>

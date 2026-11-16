@@ -1,0 +1,35 @@
+{
+  "lib": "lib-roster",
+  "module": "hooks/lib-roster.mjs",
+  "fn": "KIND_HARNESS.codex.nativeLegwork",
+  "cases": [
+    {
+      "id": "no-model",
+      "args": [
+        null
+      ],
+      "expect": "The tested form: `spawn_agent` with `task_name`, `message` and `fork_turns: \"none\"`; then `wait_agent`; `followup_task` with `target` sends that child a further order. If your spawn tool's names or fields differ, use their equivalents. Never fork your conversation history into a child: it starts from this file and your order alone. Do not set `model`: the child runs on your model."
+    },
+    {
+      "id": "model",
+      "args": [
+        "gpt-5-mini"
+      ],
+      "expect": "The tested form: `spawn_agent` with `task_name`, `message` and `fork_turns: \"none\"`, `model: \"gpt-5-mini\"`; then `wait_agent`; `followup_task` with `target` sends that child a further order. If your spawn tool's names or fields differ, use their equivalents. Never fork your conversation history into a child: it starts from this file and your order alone. If the spawn is refused for that model, spawn once more without `model` and say so in your response."
+    },
+    {
+      "id": "model-with-quote",
+      "args": [
+        "a\"b"
+      ],
+      "expect": "The tested form: `spawn_agent` with `task_name`, `message` and `fork_turns: \"none\"`, `model: \"a\\\"b\"`; then `wait_agent`; `followup_task` with `target` sends that child a further order. If your spawn tool's names or fields differ, use their equivalents. Never fork your conversation history into a child: it starts from this file and your order alone. If the spawn is refused for that model, spawn once more without `model` and say so in your response."
+    },
+    {
+      "id": "empty-model",
+      "args": [
+        ""
+      ],
+      "expect": "The tested form: `spawn_agent` with `task_name`, `message` and `fork_turns: \"none\"`; then `wait_agent`; `followup_task` with `target` sends that child a further order. If your spawn tool's names or fields differ, use their equivalents. Never fork your conversation history into a child: it starts from this file and your order alone. Do not set `model`: the child runs on your model."
+    }
+  ]
+}

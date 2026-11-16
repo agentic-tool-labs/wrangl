@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Ah.Daemon/Ah.Daemon.csproj" />
+    <ProjectReference Include="../../src/Ah.Platform/Ah.Platform.csproj" />
+    <ProjectReference Include="../../src/Ah.Config/Ah.Config.csproj" />
+    <ProjectReference Include="../Ah.TestKit/Ah.TestKit.csproj" />
+    <ProjectReference Include="../../src/Ah.Cli/Ah.Cli.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures/**/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Fixtures" />
+  </ItemGroup>
+
+</Project>

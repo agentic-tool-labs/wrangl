@@ -1,0 +1,104 @@
+{
+  "lib": "lib-hier",
+  "module": "hooks/lib-hier.mjs",
+  "fn": "rosterLine",
+  "cases": [
+    {
+      "id": "empty-roster-lists-eligible-roles",
+      "args": [
+        {}
+      ],
+      "expect": "ultra-advisor: none; architect: none; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none"
+    },
+    {
+      "id": "one-live-architect",
+      "args": [
+        {
+          "architect": [
+            {
+              "name": "a",
+              "live": true,
+              "how": "up-pid",
+              "ageSec": 5,
+              "busy": false,
+              "task": null,
+              "openBriefs": 0
+            }
+          ]
+        }
+      ],
+      "expect": "ultra-advisor: none; architect=a live 5s up-pid; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none"
+    },
+    {
+      "id": "busy-with-task-and-briefs",
+      "args": [
+        {
+          "reviewer": [
+            {
+              "name": "r",
+              "live": false,
+              "how": "seen",
+              "ageSec": 4000,
+              "busy": true,
+              "task": "t",
+              "openBriefs": 2
+            }
+          ]
+        }
+      ],
+      "expect": "ultra-advisor: none; architect: none; reviewer=r stale 1h seen busy(t) 2 open; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none"
+    },
+    {
+      "id": "two-instances-joined",
+      "args": [
+        {
+          "architect": [
+            {
+              "name": "a",
+              "live": true,
+              "how": "up-pid",
+              "ageSec": 1
+            },
+            {
+              "name": "b",
+              "live": false,
+              "how": "seen",
+              "ageSec": 100000
+            }
+          ]
+        }
+      ],
+      "expect": "ultra-advisor: none; architect=a live 1s up-pid; architect=b stale 1d seen; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none"
+    },
+    {
+      "id": "unattributed-key-skipped",
+      "args": [
+        {
+          "unattributed": [
+            {
+              "name": null
+            }
+          ],
+          "architect": []
+        }
+      ],
+      "expect": "ultra-advisor: none; architect: none; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none"
+    },
+    {
+      "id": "custom-role-after-eligible",
+      "args": [
+        {
+          "ui-implementor": [
+            {
+              "name": "u",
+              "live": true,
+              "how": "up-pid",
+              "ageSec": 3
+            }
+          ]
+        }
+      ],
+      "expect": "ultra-advisor: none; architect: none; reviewer: none; implementor: none; docs-writer: none; qa: none; ux-engineer: none; sub-orchestrator: none; deputy-chief: none; ui-implementor=u live 3s up-pid"
+    }
+  ]
+}

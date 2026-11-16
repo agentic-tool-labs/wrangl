@@ -1,0 +1,35 @@
+{
+  "kind": "cli",
+  "id": "usage-positional",
+  "about": "a positional argument",
+  "tree": "cli-intake",
+  "env": {
+    "AH_DAEMON": "off",
+    "PATH": "<ROOT:proj>/bin"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "cli": "issue-intake",
+    "argv": [
+      "--labelled",
+      "extra"
+    ],
+    "stdin": null
+  },
+  "mutant": "the positional refusal drifted",
+  "expect": {
+    "stdout": "{\"error\":\"usage: Unexpected argument 'extra'. This command does not take positional arguments\"}\n",
+    "stderr": "",
+    "exit": 1,
+    "tree_diff": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "recorded": {
+    "impl": "node",
+    "plugin_version": "0.134.10",
+    "at": "2026-10-12T07:39:34.463Z"
+  }
+}

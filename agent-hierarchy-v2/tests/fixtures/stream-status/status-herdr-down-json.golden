@@ -1,0 +1,60 @@
+{
+  "team": "myrepo",
+  "transport": "herdr",
+  "streams": [
+    {
+      "name": "g1",
+      "state": "open",
+      "label": "· g1",
+      "tab": {
+        "id": "w1:t10",
+        "live": false
+      },
+      "branch": null,
+      "base": null,
+      "worktree": null,
+      "opened": "T",
+      "peers": [
+        {
+          "name": "myrepo-architect",
+          "role": "architect",
+          "status": "unknown",
+          "pane_id": "w1:p11",
+          "tab_id": "w1:t10",
+          "in_stream_tab": true
+        }
+      ],
+      "exchanges": [
+        {
+          "id": "<ID>",
+          "slug": "s",
+          "to_name": "myrepo-architect",
+          "from_name": "orchestrator-x",
+          "age_sec": 0
+        }
+      ],
+      "waiting_on": [
+        {
+          "on": "myrepo-architect",
+          "request": "<ID>",
+          "age_sec": 0
+        }
+      ],
+      "progress": {
+        "checklist": true,
+        "done": 0,
+        "in_progress": 0,
+        "not_started": 0,
+        "state": "open",
+        "updated": "T",
+        "newest_entry": null,
+        "stale": false
+      }
+    }
+  ],
+  "warnings": [
+    "herdr agent list failed: {\"error\":{\"code\":\"forced\",\"message\":\"forced failure\"}}",
+    "herdr tab list failed: {\"error\":{\"code\":\"forced\",\"message\":\"forced failure\"}}",
+    "stream g1: renaming tab w1:t10 failed: herdr tab rename w1:t10 · g1 failed: {\"error\":{\"code\":\"forced\",\"message\":\"forced failure\"}}"
+  ]
+}
