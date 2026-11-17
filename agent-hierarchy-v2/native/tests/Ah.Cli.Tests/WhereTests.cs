@@ -127,6 +127,29 @@ public sealed class WhereTests
     }
 
     [Fact]
+    public void AhWhereIsAhdWhere()
+    {
+        // ah2-122 D2: the herdr mod asks `ah where`; it was an unknown command
+        using var harness = new Harness();
+        var before = harness.Sandbox.Listing();
+
+        var (code, stdout, stderr) = harness.Run("ah", "where");
+        var (ahdCode, ahdStdout, _) = harness.Run("where");
+
+        Assert.Equal(0, code);
+        Assert.Empty(stderr);
+        using var document = JsonDocument.Parse(stdout);
+        Assert.Equal(harness.Sandbox.AhHome, document.RootElement.GetProperty("home").GetString());
+        Assert.Equal((0, ahdStdout), (ahdCode, stdout));
+        Assert.Equal(before, harness.Sandbox.Listing());
+
+        // the nearest verb that must not match stays unknown
+        var (nearCode, _, nearStderr) = harness.Run("ah", "wher");
+        Assert.Equal(2, nearCode);
+        Assert.Contains("ah: unknown command 'wher'", nearStderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void PlainIsText()
     {
         using var harness = new Harness();

@@ -19,7 +19,8 @@ internal sealed record EnsureOptions(
     bool Hook = false,
     Action<string, string>? Warn = null,
     bool Start = true,
-    bool Explicit = false);
+    bool Explicit = false,
+    bool AnyVersion = false);
 
 /// <summary>
 /// Discovery, lazy start, the version and runtime handshake, and a request helper. "Daemon unavailable" is an
@@ -821,7 +822,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             // A daemon is drained when it is older than this plugin.
             var version = health.Str("version") ?? "?";
             var cmp = Versions.Compare(EffectiveVersion, version);
-            if (cmp <= 0)
+            if (cmp <= 0 || options.AnyVersion)
             {
                 return info;
             }
@@ -913,7 +914,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         DateTimeOffset? sentAt = null;
         try
         {
-            var found = await EnsureAsync(new EnsureOptions(Start: request.StartIfDown), ct).ConfigureAwait(false);
+            var found = await EnsureAsync(new EnsureOptions(Start: request.StartIfDown, AnyVersion: request.AnyVersion), ct).ConfigureAwait(false);
             if (found is null)
             {
                 return new DaemonReply(0, ReadOnlyMemory<byte>.Empty, "down");

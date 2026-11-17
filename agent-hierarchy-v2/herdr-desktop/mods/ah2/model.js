@@ -426,3 +426,8 @@ export async function pollExec(start, sleep, timeout, held) {
   if (won.r.code !== 0) throw new Error("ahd not running");
   return won.r;
 }
+
+// The wait before the next poll after a failed one (ah2-122 D5): the `backoff` step for `fails`, held to 8 s while the mod has been
+// down for less than 2 minutes (`downMs`), so a daemon back within that is seen within 8 s.
+export const QUICK_RETRY_MS = 120000;
+export const retryMs = (backoff, fails, downMs) => Math.min(backoff[Math.min(fails, backoff.length - 1)], downMs < QUICK_RETRY_MS ? 8000 : Infinity);

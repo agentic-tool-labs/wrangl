@@ -12,7 +12,7 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs } from "./model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardView } from "./board.js";
@@ -153,6 +153,7 @@ export default class Ah2 extends View {
   // The long-poll. A redraw only when the data or the up/down state changed (every redraw is a whole-window redraw).
   async poll(cx) {
     let fails = 0;
+    let downSince = null; // when the current run of failed polls began
     for (;;) {
       // The sidebar copy reads the rebuild stamp on load and on every turn of the poll (rebuild below); never in a check.
       if (this.view === "sitrep" && !this.team && !this.rebuildBusy && !checking()) cx.spawn((cx) => this.rebuild(cx));
@@ -176,6 +177,7 @@ export default class Ah2 extends View {
         this.status = "up";
         this.updated = Date.now();
         fails = 0;
+        downSince = null;
         if (this.view === "qa" && (changed || caught)) qaTake(this, undefined, cx); // after ready and status: a whole answer only (qa.js)
         if (changed && this.view === "sitrep" && !this.team) this.alarms();
         if (this.view === "status") this.publishDesk();
@@ -186,6 +188,7 @@ export default class Ah2 extends View {
         if (every) await cx.sleep(every * 1000);
       } catch (e) {
         const reason = e?.message ?? "ahd not running";
+        downSince ??= Date.now();
         if (this.status !== "down" || this.reason !== reason) {
           this.status = "down";
           this.reason = reason;
@@ -196,10 +199,11 @@ export default class Ah2 extends View {
           const was = targetKey(target());
           while (targetKey(target()) === was) await cx.sleep(2000);
           fails = 0;
+          downSince = null;
           continue;
         }
         if (reason === STUCK) fails = BACKOFF_MS.length - 1; // held execs: recheck on the 30 s step until one settles
-        await cx.sleep(BACKOFF_MS[Math.min(fails++, BACKOFF_MS.length - 1)]);
+        await cx.sleep(reason === STUCK ? BACKOFF_MS[fails++] : retryMs(BACKOFF_MS, fails++, Date.now() - downSince));
       }
     }
   }

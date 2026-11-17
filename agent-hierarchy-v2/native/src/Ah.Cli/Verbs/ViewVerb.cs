@@ -170,7 +170,7 @@ internal static class ViewVerb
         try
         {
             var query = Ah.DaemonClient.DaemonClientModule.SliceEventsQuery(ids, [], since, epoch, wait);
-            reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/view?path=%2Fevents" + query, default, TimeSpan.FromSeconds(wait + 15), StartIfDown: false)).GetAwaiter().GetResult();
+            reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/view?path=%2Fevents" + query, default, TimeSpan.FromSeconds(wait + 15), StartIfDown: false, AnyVersion: true)).GetAwaiter().GetResult();
         }
         catch (Exception e) when (e is IOException or HttpRequestException or System.Net.Sockets.SocketException or OperationCanceledException)
         {
