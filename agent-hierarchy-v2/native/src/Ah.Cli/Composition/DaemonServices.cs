@@ -25,6 +25,9 @@ internal sealed class DaemonServices
     private readonly Action<string> _log;
     private readonly Dictionary<string, string> _releaseRefusals = new(StringComparer.Ordinal);
     private readonly Lazy<WatchDependencies> _watch;
+
+    /// <summary>The watcher's coverage (ah2-102 F2), shared in process by the watch tick and the read model.</summary>
+    private readonly IWatchCoverage _coverage = WatchModule.CreateCoverage();
     private readonly Lazy<WatchHostSeams> _seams;
     private readonly Lazy<TestModeDirGate> _dirGate;
     private readonly WatchHealth _health;
@@ -132,6 +135,7 @@ internal sealed class DaemonServices
         {
             Cpu = PlatformModule.CreateCpuMeter(),
             SleepGapMs = WatchDependencies.DefaultSleepGapMs,
+            Coverage = _coverage,
         };
     }
 
@@ -706,6 +710,7 @@ internal sealed class DaemonServices
                     Timeline = new TimelineSettings(Ah.StateDb.StateDbModule.CreateOpener(), Path.Combine(_environment.AhHome, "state", "ah.db"), Ah.StateDb.StateDbModule.BusyTimeoutMs, () => (int)g.Config.UiSettings()["timeline_retention_days"].AsNumber()),
                     Home = _environment.AhHome,
                     TeamHeld = (dir, team) => g.Roster.HoldOf(dir, team == "default" ? null : team) is not null,
+                    Coverage = _coverage,
                     TeamGoal = (dir, team) => RulesReads.ShownGoal(_environment.AhHome, () => dir, _ => [team], g.OpenReader),
                     PeerPendingFile = g.Hierarchy.Peers.PeerPendingPath(),
                     Log = _log,

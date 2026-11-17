@@ -246,7 +246,7 @@ public sealed class HierarchyReadOpsTests
         Assert.True(Record(rig, "s1", new JsonObject { ["activity"] = "blocked", ["blocked_by"] = "permission", ["mirror_dir"] = mirror }));
         var before = rig.Services.Status.ReadActivityRecord(rig.Pool, JsonValue.FromString("s1")).AsObject();
 
-        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), "2026-11-17T13:10:15.000Z", mirror));
+        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), true, "2026-11-17T13:10:15.000Z", mirror));
 
         foreach (var dir in new[] { rig.Pool, mirror })
         {
@@ -257,23 +257,30 @@ public sealed class HierarchyReadOpsTests
         }
 
         // a mark already set is kept, not moved
-        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), "2026-11-17T13:10:30.000Z", mirror));
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), true, "2026-11-17T13:10:30.000Z", mirror));
         Assert.Equal("2026-11-17T13:10:15.000Z", rig.Services.Status.ReadActivityRecord(rig.Pool, JsonValue.FromString("s1")).Member("screen_clear_at")!.Value.AsString());
 
-        // B2: unmark removes only the mark, on both copies; a second unmark changes nothing
-        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), null, mirror));
+        // ah2-102 E1: a prompt read sets screen_prompt_at and removes screen_clear_at, on both copies; a second one changes nothing
+        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), false, "2026-11-17T13:10:30.000Z", mirror));
         foreach (var dir in new[] { rig.Pool, mirror })
         {
             var after = rig.Services.Status.ReadActivityRecord(dir, JsonValue.FromString("s1")).AsObject();
             Assert.False(after.ContainsKey("screen_clear_at"));
+            Assert.Equal("2026-11-17T13:10:30.000Z", after["screen_prompt_at"].AsString());
             Assert.Equal("blocked", after["activity"].AsString());
             Assert.Equal(before["at"].AsString(), after["at"].AsString());
         }
 
-        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), null, mirror));
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), false, "2026-11-17T13:10:45.000Z", mirror));
+
+        // and a clear read afterwards swaps them back
+        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), true, "2026-11-17T13:11:00.000Z", mirror));
+        var swapped = rig.Services.Status.ReadActivityRecord(mirror, JsonValue.FromString("s1")).AsObject();
+        Assert.False(swapped.ContainsKey("screen_prompt_at"));
+        Assert.Equal("2026-11-17T13:11:00.000Z", swapped["screen_clear_at"].AsString());
 
         // negative: a subject with no record gets none
-        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s9"), "2026-11-17T13:10:15.000Z", mirror));
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s9"), true, "2026-11-17T13:10:15.000Z", mirror));
         Assert.Null(Ah.StateDb.StateDbModule.CreateActivity(rig.AhHome).Row(rig.Pool, "s9"));
     }
 

@@ -220,6 +220,12 @@ public static partial class WatchModule
         }
 
         lanes.AddRange(treeLanes);
+        // ah2-102 F2: the watcher's coverage, in process; a publish that changed it re-reads the lane
+        if (options?.Coverage is Model.WatchCoverage coverage)
+        {
+            lanes.Add(new Model.CoverageLane(coverage));
+            coverage.Changed = () => model?.Emit(Model.CoverageLane.LaneName, Model.CoverageLane.Key);
+        }
         var lazy = new List<Model.LazyLane>();
         Model.ProgressLane? progress = null;
         Model.PlanItemsLane? planItems = null;
@@ -400,6 +406,11 @@ public static partial class WatchModule
         }
 
         model = new Model.ReadModel(lanes, new Model.ModelOptions(), modelNowMs, paths: paths, composers: composers) { Watcher = watcher, ProcessesObservedAtMs = processLane is null ? null : () => processLane.ObservedAtMs };
+        // ah2-110: the coverage lane's first record (absent to the empty set) is a lane write too; Publish tells Changed only when the set changes
+        if (options?.Coverage is Model.WatchCoverage)
+        {
+            model.Emit(Model.CoverageLane.LaneName, Model.CoverageLane.Key);
+        }
         // Off the projector thread, so the lane reads and the team list behind this handler do not wait on starting watchers (b233).
         dirs.Changed += watcher.SyncSoon;
         dirs.Changed += model.ResolveLiveLeases;
@@ -861,6 +872,9 @@ public static partial class WatchModule
         return ViewEvents.ToJson(viewEvent, id);
     }
 
+    /// <summary>The watcher's coverage (ah2-102 F2): one instance, given to both <see cref="ReadModelOptions.Coverage"/> and <see cref="WatchDependencies"/>.</summary>
+    public static IWatchCoverage CreateCoverage() => new Model.WatchCoverage();
+
     /// <summary>
     /// Registers the watch tick (every poll period) and the status-dir backstop (every 2 s). The composition root calls it once.
     /// </summary>
@@ -888,6 +902,7 @@ public static partial class WatchModule
             _ =>
             {
                 tick.RefreshStatusDirs();
+                tick.ExpireCoverage(dependencies.Clock.UtcNow.ToUnixTimeMilliseconds());
                 return Task.CompletedTask;
             });
     }

@@ -64,7 +64,12 @@ const since = (iso, now) => {
 };
 
 const body = (slices, id) => slices.get(id)?.body ?? null;
-const memberName = (key) => key.slice(key.lastIndexOf("/") + 1).replace(/^@/, "");
+export const memberName = (key) => key.slice(key.lastIndexOf("/") + 1).replace(/^@/, "");
+
+// ah2-73: ahd serves pane_id only where a click may land (a live member, and the orchestrator unless proven dead); an idle
+// orchestrator reads "unknown" and must stay clickable. The sidebar's row and the Graph's member (ah2-103) both read it here.
+export const memberPane = (key, m) =>
+  m && (m.liveness === "live" || (key.endsWith("/@orchestrator") && m.liveness !== "proven_dead")) ? m.pane_id ?? null : null;
 
 // A member's row. An orchestrator that is live but idle/unknown reads "Working" while its turn is open (turn_open) and "Running"
 // between turns, as in the web UI (select.js orchestratorRuns).
@@ -75,9 +80,7 @@ function memberRow(key, m, now) {
   const s = STATES[state];
   const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
   return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
-    // ah2-73: ahd serves pane_id only where a click may land (a live member, and the orchestrator unless proven dead); an idle
-    // orchestrator reads "unknown" and must stay clickable.
-    pane: m.liveness === "live" || (key.endsWith("/@orchestrator") && m.liveness !== "proven_dead") ? m.pane_id ?? null : null };
+    pane: memberPane(key, m) };
 }
 
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.

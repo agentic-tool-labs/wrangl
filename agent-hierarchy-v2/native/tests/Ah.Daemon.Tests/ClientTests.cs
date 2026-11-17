@@ -1110,7 +1110,33 @@ public sealed class ClientTests
     }
 
     [Fact]
-    public async Task AHookMeetingAnOlderDaemonDrainsItAtOnceAndSpawnsNoReplacementWhereACliCallReplacesIt()
+    public async Task AHookMeetingAnOlderDaemonDrainsItAndStartsTheReplacement()
+    {
+        // ah2-100: a hook on /reload-plugins drained the older daemon and left none running.
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var old = rig.Daemons.Single();
+            rig.Vars["DAEMON_VERSION"] = "2.0.0";
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+
+            var hook = await rig.Client.EnsureDaemonForHookAsync(TimeSpan.FromSeconds(5));
+
+            Assert.NotNull(hook);
+            Assert.Equal("2.0.0", hook.Version);
+            Assert.NotEqual(old.Pid, hook.Pid);
+            Assert.True(old.Exited);
+            Assert.Equal(2, rig.Spawner.Requests.Count);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AHookWhoseReplacementIsStillOlderLeavesItRunningInsteadOfDrainingItAgain()
     {
         var rig = new ClientRig(daemon: o => o.Version = "0.5.0");
         try
@@ -1126,8 +1152,55 @@ public sealed class ClientTests
 
             Assert.Null(hook);
             Assert.True(sw.Elapsed < TimeSpan.FromSeconds(30), $"the hook took {sw.Elapsed} on a 60 s budget");
-            Assert.Equal(spawned, rig.Spawner.Requests.Count);
-            Assert.True(await running.ExitsWithinAsync(TimeSpan.FromSeconds(30)));
+            Assert.Equal(spawned + 1, rig.Spawner.Requests.Count);
+            Assert.True(running.Exited);
+            Assert.Single(rig.Daemons, d => !d.Exited);
+            Assert.Contains("ahd-client replace-failed reason=the daemon is still older after a restart caller=", await File.ReadAllTextAsync(Path.Combine(rig.Home, "logs", "ahd.log")), StringComparison.Ordinal);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AHookMeetingAnOlderDaemonThatRefusesItsDrainStartsNothing()
+    {
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var old = rig.Daemons.Single();
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+            var client = DaemonClientModule.Compose(DepsWith(rig, rig.Spawner, rig.Inspector) with { Transport = new DrainAnswering(DrainRefused) });
+
+            var hook = await client.EnsureDaemonForHookAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Null(hook);
+            Assert.False(old.Exited);
+            Assert.Single(rig.Spawner.Requests);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task APlainStopStartsNoReplacement()
+    {
+        var rig = new ClientRig();
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var d = rig.Daemons.Single();
+
+            var stopped = await ClientRig.RunAsync("stop");
+
+            Assert.Equal(0, stopped.Code);
+            Assert.True(d.Exited);
+            Assert.Single(rig.Spawner.Requests);
+            Assert.DoesNotContain(rig.Daemons, h => !h.Exited);
         }
         finally
         {

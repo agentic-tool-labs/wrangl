@@ -992,8 +992,8 @@ internal class WatchHostAdapter(
         // the record's other copy is the one under the member's own checkout, which the hook writes alongside the team's (G5)
         var cwd = graph.Mailbox.ReadRegistration(sessionId) is { } registration ? Str(registration, "cwd") : null;
         var own = string.IsNullOrEmpty(cwd) ? null : graph.Config.HierarchyDir(cwd);
-        var at = clear ? Ah.Core.Time.Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)atMs)) : null;
-        _ = Hs.Status.MarkScreenClearRouted(home, JsonValue.FromString(sessionId), at, own);
+        var at = Ah.Core.Time.Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)atMs));
+        _ = Hs.Status.MarkScreenClearRouted(home, JsonValue.FromString(sessionId), clear, at, own);
     }
 
     public virtual void AppendPeerRows(IReadOnlyList<PeerAppend> rows)

@@ -547,10 +547,11 @@ public interface IHierarchyStatus
     bool RecordActivityRouted(string dir, JsonValue subject, JsonObject fields, bool hook = false);
 
     /// <summary>
-    /// Sets <c>screen_clear_at</c> to <paramref name="at"/> (null: removes it) in the existing activity record of <paramref name="subject"/> under
-    /// <paramref name="dir"/> and <paramref name="mirrorDir"/>, and nothing else; a mark already set is kept. False when no row changed or the write failed.
+    /// Records what the watcher read in the existing activity record of <paramref name="subject"/> under <paramref name="dir"/> and
+    /// <paramref name="mirrorDir"/>, and nothing else: <paramref name="clear"/> sets <c>screen_clear_at</c> and removes <c>screen_prompt_at</c>,
+    /// else the reverse; the mark set is <paramref name="at"/>, and a mark already set is kept. False when no row changed or the write failed.
     /// </summary>
-    bool MarkScreenClearRouted(string dir, JsonValue subject, string? at, string? mirrorDir = null);
+    bool MarkScreenClearRouted(string dir, JsonValue subject, bool clear, string at, string? mirrorDir = null);
 
     void ClearActivityRouted(string dir, JsonValue subject, bool hook = false, string? mirrorDir = null);
 

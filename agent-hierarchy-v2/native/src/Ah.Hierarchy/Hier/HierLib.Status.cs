@@ -552,21 +552,23 @@ internal sealed partial class HierLib : IHierarchyStatus
     /// <summary>
     /// <c>activity.mark</c> in the database: sets <c>screen_clear_at</c> to <c>at</c> in the record of <c>subject</c> under <c>dir</c> and
     /// <c>mirror_dir</c>, where that row exists and holds no mark yet, and changes nothing else in it; <c>{written}</c> says whether any row
-    /// changed. The watcher's mark that it read the member's screen and found no prompt on it (ah2-74); a later hook write drops it.
+    /// changed. It also removes <c>screen_prompt_at</c>. The watcher's mark that it read the member's screen and found no prompt on it
+    /// (ah2-74); a later hook write drops it.
     /// </summary>
     internal OpResult ActivityMarkDb(OpCall call, IDbOpTransaction tx) => OpArgs.Run(call, args =>
-        args.Member("at") is { IsText: true } at
-            ? ScreenClearWrite(tx, args, "json_set(body, '$.screen_clear_at', ?3)", "IS NULL", at.AsString())
-            : new JsonObject { ["written"] = false });
+        ScreenMarkWrite(tx, args, "screen_clear_at", "screen_prompt_at"));
 
-    /// <summary><c>activity.unmark</c> in the database: removes <c>screen_clear_at</c> from those rows where it is set, as <c>activity.mark</c> sets it.</summary>
+    /// <summary>
+    /// <c>activity.unmark</c> in the database: the reverse of <c>activity.mark</c>, setting <c>screen_prompt_at</c> to <c>at</c> where it is
+    /// absent and removing <c>screen_clear_at</c>. The watcher's mark that it read a prompt or could not read the screen (ah2-102 E1).
+    /// </summary>
     internal OpResult ActivityUnmarkDb(OpCall call, IDbOpTransaction tx) => OpArgs.Run(call, args =>
-        ScreenClearWrite(tx, args, "json_remove(body, '$.screen_clear_at')", "IS NOT NULL", null));
+        ScreenMarkWrite(tx, args, "screen_prompt_at", "screen_clear_at"));
 
-    private JsonObject ScreenClearWrite(IDbOpTransaction tx, JsonValue args, string body, string when, string? at)
+    private JsonObject ScreenMarkWrite(IDbOpTransaction tx, JsonValue args, string set, string remove)
     {
         var dir = TextOf(args.Member("dir"));
-        if (ActivityFile(args.Member("subject")) is null || string.IsNullOrEmpty(dir))
+        if (args.Member("at") is not { IsText: true } atValue || ActivityFile(args.Member("subject")) is null || string.IsNullOrEmpty(dir))
         {
             return new JsonObject { ["written"] = false };
         }
@@ -575,16 +577,10 @@ internal sealed partial class HierLib : IHierarchyStatus
         var changed = 0L;
         foreach (var target in new[] { dir, ActivityMirror(args.Member("mirror_dir"), dir) }.OfType<string>())
         {
-            var sql = $"UPDATE activity SET body = {body} WHERE hier_dir = ?1 AND session_id = ?2 AND json_valid(body) AND json_extract(body, '$.screen_clear_at') {when}";
-            if (at is null)
-            {
-                tx.Execute(sql, MsgRows.PoolKey(target), subject);
-            }
-            else
-            {
-                tx.Execute(sql, MsgRows.PoolKey(target), subject, at);
-            }
-
+            // one statement: sets the one mark when absent and removes the other; a row already in that state is not touched
+            var sql = $"UPDATE activity SET body = json_remove(CASE WHEN json_extract(body, '$.{set}') IS NULL THEN json_set(body, '$.{set}', ?3) ELSE body END, '$.{remove}') "
+                + $"WHERE hier_dir = ?1 AND session_id = ?2 AND json_valid(body) AND (json_extract(body, '$.{set}') IS NULL OR json_extract(body, '$.{remove}') IS NOT NULL)";
+            tx.Execute(sql, MsgRows.PoolKey(target), subject, atValue.AsString());
             changed += Changes(tx);
         }
 
@@ -1038,7 +1034,7 @@ internal sealed partial class HierLib : IHierarchyStatus
         }
     }
 
-    public bool MarkScreenClearRouted(string dir, JsonValue subject, string? at, string? mirrorDir = null)
+    public bool MarkScreenClearRouted(string dir, JsonValue subject, bool clear, string at, string? mirrorDir = null)
     {
         if (string.IsNullOrEmpty(dir) || !Exists(dir))
         {
@@ -1047,18 +1043,13 @@ internal sealed partial class HierLib : IHierarchyStatus
 
         try
         {
-            var args = new JsonObject { ["dir"] = dir, ["subject"] = subject };
-            if (at is not null)
-            {
-                args["at"] = at;
-            }
-
+            var args = new JsonObject { ["dir"] = dir, ["subject"] = subject, ["at"] = at };
             if (!string.IsNullOrEmpty(mirrorDir))
             {
                 args["mirror_dir"] = mirrorDir;
             }
 
-            var result = Call(PoolContext(dir), "activity", at is null ? "unmark" : "mark", args);
+            var result = Call(PoolContext(dir), "activity", clear ? "mark" : "unmark", args);
             return JsonText.Parse(result.ResultJson.Span).Member("written") is { IsBool: true } w && w.AsBool();
         }
         catch (Exception)
