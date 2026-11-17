@@ -6,9 +6,9 @@
 // Time: a scrubber under the maps, messages per minute over the run, with Run / 60 / 30 / 10 min windows; arcs outside the window
 // fade. It is Herdr's native Slider, so a drag never re-enters this script: the view redraws on release and on an arrow key
 // (one minute, STEP_MS), never per drag frame. Zoom: a click on a stream circle shows that stream alone; the crumb (or Esc) walks out.
-// Scale: − / + / Fit beside the tabs, and a mouse wheel (or ctrl or cmd + any wheel) about the pointer, eased as the web's stage is;
-// a trackpad's two-finger scroll pans a map larger than its frame (graph-model.js wheelAct). Herdr gives mods no pinch and no drag
-// events (gpui-kit typings: on_scroll_wheel, on_mouse_move, no pressed button), so neither is used.
+// Scale: − / + / Fit beside the tabs, and scroll to zoom: a mouse wheel or a trackpad's two-finger scroll, about the pointer, eased
+// as the web's stage is (graph-model.js wheelAct). Drag to pan: a left press on a map or the Flow's stage, moved past DRAG_PX, pans
+// content larger than its frame (grip, dragAct); a press and release short of it is still a click.
 // Map | Flow: the header's mode tabs switch to the web's Flow (graph-model.js flowModel over the shared flow-model.js): cards in four
 // role columns, links between them, lanes as bands. Read-only as the Map is. The choice is kept in Herdr's shared store (GRAPH_KEY).
 
@@ -17,7 +17,7 @@ import { shared, setShared, run, terminals } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
-  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale } from "./graph-model.js";
+  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
@@ -102,14 +102,57 @@ function syncKnob(v, sc) {
 
 const stop = (_e, cx) => cx.stop_propagation(); // a press on a control must not drag the window
 
+// Drag to pan (spec herdr-graph-gestures), one drag at a time in v.graphDrag {key, x0, y0, x, y, dragged, live, end}, `key` the
+// stage (a map's group id, or "flow"). A left press on the stage, or on a member or stream circle on it, starts it and stops the press
+// (the window must not drag); the stage's move pans once it passes DRAG_PX (dragAct). It ends on the release, when the pointer leaves
+// the stage (on_hover: a release outside is never delivered here, and on_mouse_move carries no button), when it enters it again,
+// on a press outside it (on_mouse_down_out), and when the view resets (fitView); an ended drag never pans again. A button's click
+// after a drag is dropped (clicks, wasDrag).
+function grip(v, key) {
+  const down = (e, cx) => {
+    cx.stop_propagation();
+    const { x, y } = e.position;
+    v.graphDrag = { key, x0: x, y0: y, x, y, dragged: false, live: true, end: 0 };
+  };
+  const end = (_e, cx) => {
+    const d = v.graphDrag;
+    if (!d?.live || d.key !== key) return;
+    d.live = false;
+    d.end = Date.now();
+    if (d.dragged) cx.notify(); // the grabbing hand goes back
+  };
+  const held = () => Boolean(v.graphDrag?.live && v.graphDrag.dragged && v.graphDrag.key === key);
+  // the stage's move: `pan` gives the drawn pan now (null while a rescale awaits its redraw), `set` stores one. While a zoom eases
+  // the drag waits (D8): the pointer's travel then is dropped, and the drag goes on from where the pointer is when the zoom lands.
+  const move = (pan, clamp, set) => (e, cx) => {
+    const d = v.graphDrag;
+    if (!d?.live || d.key !== key) return;
+    const p = v.graphEase ? null : pan(); // null: a rescale not yet redrawn
+    if (!p) {
+      if (d.dragged) Object.assign(d, e.position);
+      return;
+    }
+    const act = dragAct(d, e.position, p, clamp);
+    if (!act.dragged) return;
+    Object.assign(d, e.position, { dragged: true });
+    set(act.pan);
+    cx.notify();
+  };
+  const stage = (el, pannable, pan, clamp, set) => el.when(pannable && !held(), (x) => x.cursor_grab()).when(held(), (x) => x.cursor_grabbing())
+    .on_mouse_down("left", down).on_mouse_up("left", end).on_mouse_down_out(end)
+    .on_hover((_hovered, cx) => end(null, cx)) // leaving ends it; so does entering, should a leave at the window's edge go unreported
+    .on_mouse_move(move(pan, clamp, set));
+  return { down, end, stage, clicks: () => !wasDrag(v.graphDrag, Date.now()) };
+}
+
 // ah2-103: a member opens its pane by the sidebar's own path (main.js member): the live terminal terminalFinder gives for the
 // member's served pane, or its ah.name label; none, and the member is inert. `rest` is its border at rest: one already in accent
-// shows focus in foreground.
+// shows focus in foreground. A press on it starts its stage's drag (gr: grip), and the release of a drag does not open it.
 const addressOf = (v, id, pane) => v.graphTerminal?.({ pane, name: memberName(id) }) ?? null;
-const opens = (el, t, address, rest) => el.cursor_pointer().hover((s) => s.border_color(t.foreground))
+const opens = (el, t, address, rest, gr) => el.cursor_pointer().hover((s) => s.border_color(t.foreground))
   .focus((s) => s.border_color(rest === t.accent ? t.foreground : t.accent))
-  .on_mouse_down("left", stop)
-  .on_click(() => run("pane.focus", { terminal: address }));
+  .on_mouse_down("left", gr.down).on_mouse_up("left", gr.end)
+  .on_click(() => gr.clicks() && run("pane.focus", { terminal: address }));
 
 // graphModel (flowModel in Flow) only when an input changed: the slices (v.sliceGen, bumped by the poll), the shown team, window,
 // cursor, zoom and scale, the size (docked or not), the minute (the scrubber's clock moves in whole minutes), the mode and orientation,
@@ -279,10 +322,10 @@ function scaleBar(v, t) {
     .on_click((_e, cx) => act(cx))
     .child(text);
   return [
-    btn("graph-scale-out", "−", "Zoom out (scroll)", "Zoom out", (cx) => easeTo(v, cx, { by: 1 / SCALE_STEP })),
+    btn("graph-scale-out", "−", "Zoom out (scroll to zoom, drag to pan)", "Zoom out", (cx) => easeTo(v, cx, { by: 1 / SCALE_STEP })),
     div().w(40).flex_none().text_center().font_family(MONO).text_size(11).text_color(t.muted).accessibility_label(`Scale ${Math.round(s * 100)} percent`)
       .child(`${Math.round(s * 100)}%`),
-    btn("graph-scale-in", "+", "Zoom in (scroll)", "Zoom in", (cx) => easeTo(v, cx, { by: SCALE_STEP })),
+    btn("graph-scale-in", "+", "Zoom in (scroll to zoom, drag to pan)", "Zoom in", (cx) => easeTo(v, cx, { by: SCALE_STEP })),
     btn("graph-scale-fit", "Fit", "Fit the graph to the view", "Fit the graph to the view", (cx) => easeTo(v, cx, { to: 1 })),
   ];
 }
@@ -408,6 +451,7 @@ function map(t, g, zoomTo, v) {
   const s = v.graphScale;
   const F = S / s; // the frame: the map's square at scale 1
   const base = light(t.surface) ? 0.75 : 0.6;
+  const gr = grip(v, g.id);
   const els = [];
   // streams: raised, ringed in muted (the web's idle mark is under 3:1 here); the team's circle is not drawn. A stream that is not
   // the one shown is a button: it zooms in.
@@ -416,14 +460,15 @@ function map(t, g, zoomTo, v) {
     if (!c.zoom) return els.push(disc(div().id(`gc-${g.id}-${i}`)).tooltip(c.title).accessibility_label(c.title));
     els.push(disc(Button.new(`gc-${g.id}-${i}`)).cursor_pointer().hover((s) => s.border_color(t.foreground)).focus((s) => s.border_color(t.accent))
       .tooltip(`${c.title}. Click to zoom in`).accessibility_label(`Zoom into ${c.title}`)
-      .on_mouse_down("left", stop)
+      .on_mouse_down("left", gr.down).on_mouse_up("left", gr.end)
       .on_click((_e, cx) => {
+        if (!gr.clicks()) return;
         zoomTo(c.id);
         cx.notify();
       }));
   });
   for (const a of m.arcs) els.push(layer(stroke(a.cmds, a.width, a.kind === 1), Background.solid(t.accent).opacity(a.fade ?? base), S));
-  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, addressOf(v, n.id, n.pane))));
+  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, addressOf(v, n.id, n.pane), gr)));
   m.flights.forEach((f, i) => els.push(div().id(`gf-${g.id}-${i}`).absolute().left(f.x - 4).top(f.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(f.title).accessibility_label(f.title)));
   // container names sit on the circle's top edge, on a surface chip that stands in for the web's label halo
@@ -432,30 +477,28 @@ function map(t, g, zoomTo, v) {
       .text_size(11).font_semibold().text_color(t.muted).truncate().child(c.name))));
   const said = `${g.name} map: ${m.leaves.length} members${m.containers.length ? ` in ${m.containers.length} circles` : ""}, ${m.arcs.length} message arcs. The links say who messages whom.`;
   const box = frameOf(F, s, v.graphRoom, g.depth * LANE_PAD);
-  const pan = clampPan(v.graphPan[g.id], F, s, box);
-  // A zoom (wheelAct) eases about the pointer (easeTo); a pan moves a map larger than its frame, else the body scrolls as before. A pan
-  // waits for the redraw after a rescale (F and box are this render's). A positive delta.y is a scroll up (gpui-kit
-  // shell/src/tests/render.rs:10714, -200 scrolls a list down), so up zooms in.
+  const clamp = (p) => clampPan(p, F, s, box);
+  const pan = clamp(v.graphPan[g.id]);
+  // A scroll zooms (wheelAct), eased about the pointer (easeTo). A positive delta.y is a scroll up (gpui-kit
+  // shell/src/tests/render.rs:10714, -200 scrolls a list down), so up zooms in. A drag pans (grip); it waits for the redraw after a
+  // rescale (F and box are this render's).
   const wheel = (e, cx) => {
     const act = wheelAct(e);
-    if (act?.zoom) {
-      cx.stop_propagation();
-      easeTo(v, cx, { by: act.zoom, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
-    } else if (act?.pan && s > 1 && v.graphScale === s) {
-      const p = clampPan(v.graphPan[g.id], F, s, box);
-      v.graphPan[g.id] = clampPan({ x: p.x + act.pan.x, y: p.y + act.pan.y }, F, s, box);
-      cx.stop_propagation();
-      cx.notify();
-    }
+    if (!act) return;
+    cx.stop_propagation();
+    easeTo(v, cx, { by: act.zoom, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
   };
+  const pannable = S > box.w || S > box.h;
+  const now = () => (v.graphScale === s ? clamp(v.graphPan[g.id]) : null);
   // the frame is CHIP taller, the map drawn CHIP down, so a stream's name chip on a circle at the top edge is not clipped
-  return div().id(`gmap-${g.id}`).relative().w(box.w).h(box.h + CHIP).flex_none().overflow_hidden().accessibility_label(said).on_scroll_wheel(wheel)
+  return gr.stage(div().id(`gmap-${g.id}`), pannable, now, clamp, (p) => { v.graphPan[g.id] = p; })
+    .relative().w(box.w).h(box.h + CHIP).flex_none().overflow_hidden().accessibility_label(said).on_scroll_wheel(wheel)
     .child(div().id(`gmap-${g.id}-in`).absolute().left(pan.x).top(pan.y + CHIP).size(S).children(els));
 }
 
 // A member: its body, the busy track and ring (the share of the last hour it worked, in its state's tone), then the label tiers
 // its radius has room for: context, state mark and name, role, model · state, item. The mark's shape keeps it from resting on colour.
-function leaf(t, g, n, i, address) {
+function leaf(t, g, n, i, address, gr) {
   const r = n.r;
   const tone = t[n.tone] ?? t.unknown;
   const full = n.full;
@@ -466,7 +509,7 @@ function leaf(t, g, n, i, address) {
   const across = Math.round(r * 2 - 8);
   const tight = n.name.length * 6.2 + 18 > across;
   const mark = stateMark(t, n.state);
-  const at = address ? opens(Button.new(`gm-${g.id}-${i}`), t, address, t.border) : div().id(`gm-${g.id}-${i}`);
+  const at = address ? opens(Button.new(`gm-${g.id}-${i}`), t, address, t.border, gr) : div().id(`gm-${g.id}-${i}`);
   return at.absolute().left(n.x - r).top(n.y - r).size(r * 2).rounded(r)
     .bg(t.surface).border(1).border_color(t.border).when(n.state === "gone", (el) => el.opacity(0.4))
     .tooltip(address ? `${full}. Click to open its pane` : full).accessibility_label(address ? `${full}. Open its pane` : full)
@@ -510,6 +553,7 @@ function flowBody(t, m, v) {
   if (m.cards.length === 0) return [label(t, "Members", 0, 0), quiet(t, "None", 0)];
   const k = m.k;
   const s = v.graphScale;
+  const gr = grip(v, "flow");
   const sized = (el) => el.absolute().top(0).left(0).w(m.size.w).h(m.size.h);
   const els = [];
   m.bands.forEach((b, i) => els.push(div().id(`gfb-${i}`).absolute().left(b.x).top(b.y).w(b.w).h(b.h).rounded(6).bg(t.hover)
@@ -519,26 +563,22 @@ function flowBody(t, m, v) {
     els.push(sized(window.paint_path(stroke(l.cmds, w, l.kind === "review"), l.kind === "edge" ? t.muted : t.accent)));
   }
   m.labels.forEach((l) => els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).font_semibold().text_color(t.muted).child(l.text)));
-  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, addressOf(v, c.id, c.pane))));
+  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, addressOf(v, c.id, c.pane), gr)));
   m.dots.forEach((d, i) => els.push(div().id(`gfd-${i}`).absolute().left(d.x - 4).top(d.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title)));
-  const pan = flowPan(v.graphPan.flow, m.size, m.stage);
+  const clamp = (p) => flowPan(p, m.size, m.stage);
+  const pan = clamp(v.graphPan.flow);
   const big = m.size.w > m.stage.w || m.size.h > m.stage.h;
-  // As the Map's: a zoom eases about the pointer; a pan moves content larger than the stage, else bubbles to the body, and waits for
-  // the redraw after a rescale (m is laid out at this render's scale).
+  // As the Map's: a scroll zooms, eased about the pointer; a drag pans content larger than the stage, and waits for the redraw after
+  // a rescale (m is laid out at this render's scale).
   const wheel = (e, cx) => {
     const act = wheelAct(e);
-    if (act?.zoom) {
-      cx.stop_propagation();
-      easeTo(v, cx, { by: act.zoom, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
-    } else if (act?.pan && big && v.graphScale === s) {
-      const p = flowPan(v.graphPan.flow, m.size, m.stage);
-      v.graphPan = { flow: flowPan({ x: p.x + act.pan.x, y: p.y + act.pan.y }, m.size, m.stage) };
-      cx.stop_propagation();
-      cx.notify();
-    }
+    if (!act) return;
+    cx.stop_propagation();
+    easeTo(v, cx, { by: act.zoom, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
   };
-  const stage = div().id("gflow").relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)
+  const now = () => (v.graphScale === s ? clamp(v.graphPan.flow) : null);
+  const stage = gr.stage(div().id("gflow"), big, now, clamp, (p) => { v.graphPan = { flow: p }; }).relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)
     .child(div().id("gflow-in").absolute().left(pan.x).top(pan.y).w(m.size.w).h(m.size.h).children(els))
     .when(m.rest > 0, (el) => el.child(div().absolute().top(8).right(8).text_size(11).text_color(t.muted).child(`+${m.rest} more briefs`)));
   return [stage, flowLegend(t)];
@@ -558,7 +598,7 @@ function flowLegend(t) {
 
 // One member: a card when it is working, blocked or running (accent border, the tag, a stats line), else one line. A field with no
 // source is not drawn (the web's FlowCard).
-function flowCard(t, c, i, k, address) {
+function flowCard(t, c, i, k, address, gr) {
   const s = c.card;
   const r = c.rect;
   const reviewing = s.role === "reviewer" && s.state === "working";
@@ -583,7 +623,7 @@ function flowCard(t, c, i, k, address) {
   const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
   const rest = c.active ? t.accent : t.border;
   const tip = [s.full, s.role, word].filter(Boolean).join(" · ");
-  const at = address ? opens(Button.new(`gfc-${i}`), t, address, rest).flex().flex_col() : v_flex().id(`gfc-${i}`);
+  const at = address ? opens(Button.new(`gfc-${i}`), t, address, rest, gr).flex().flex_col() : v_flex().id(`gfc-${i}`);
   return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).px(10 * k).py(8 * k).gap(8 * k).when(!c.active, (el) => el.justify_center()).overflow_hidden()
     .rounded(6).border(1).border_color(rest).bg(c.active ? t.selected : t.raised)
     .when(s.state === "gone", (el) => el.opacity(0.4))

@@ -10,7 +10,8 @@ import { ah, target } from "./ah.js";
 import { targetLabel } from "./target-model.js";
 import { sidebarModel } from "./model.js";
 import { hasDesk } from "./dock.js";
-import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions } from "./settings-model.js";
+import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY } from "./settings-model.js";
+import { REBUILD_KEY } from "./rebuild-model.js";
 
 export const openSettings = () => openOverlay({ mod: "ah2", props: { view: "settings" }, kind: "dialog", key: "ah2-settings", width: 480, height: 640 });
 export const settings = () => settingsOf(shared(SETTINGS_KEY));
@@ -48,9 +49,16 @@ async function probe() {
 }
 
 function tell(n) {
-  if (n?.kind === "updated") notify({ title: n.again ? `Wrangl v${n.version} reinstalled` : `Wrangl updated to v${n.version}`, body: "The Wrangl sidebar reloaded with the new files.", level: "success" });
-  if (n?.kind === "stuck") notify({ title: `Wrangl v${n.version} didn't take`, body: `ah herdr install ran, but the mod still reports v${n.installed}. Rebuild ah from the plugin, then use Check now.`, level: "warning" });
-  if (n?.kind === "available") notify({ title: `Wrangl v${n.version} is available`, body: `The herdr mod is v${n.installed}. Update from the … menu in the Wrangl tab strip.`, level: "info", action: GO });
+  const spec = updateNotify(n);
+  if (spec) notify(spec);
+}
+
+// A click on the "available" notice (main.js hands its nextCommand here): the update path the menu's Update item runs. Two
+// copies that both receive the click install once: the first claims INSTALL_CLICK_KEY until its install settles.
+export function installClick() {
+  if (!clickFree(shared(INSTALL_CLICK_KEY), Date.now())) return null;
+  setShared(INSTALL_CLICK_KEY, Date.now());
+  return checkUpdate({ install: true }).finally(() => setShared(INSTALL_CLICK_KEY, 0));
 }
 
 // `ah herdr install` into this Herdr's home: Update/Reinstall, and with ["--replace-layout"] the Layout row's button. Never throws.
@@ -80,12 +88,12 @@ async function step(o) {
   }
   const failed = { version: p.bundled, text: (r.stderr || r.stdout || "the install failed").trim().split("\n").pop() };
   setShared(UPDATE_KEY, { ...shared(UPDATE_KEY), installing: 0, failed });
-  notify({ title: "Wrangl couldn't update", body: failed.text, level: "error", action: GO });
+  notify({ title: "Wrangl", body: `Could not update the Wrangl mod: ${(r.stderr || r.stdout || "the install failed").trim().split("\n")[0]}`, level: "error", action: GO });
   return s;
 }
 
 function step0(p, landed = false) {
-  const s = updateStep(shared(UPDATE_KEY), p, Date.now(), settings().autoUpdate, landed);
+  const s = updateStep(shared(UPDATE_KEY), p, Date.now(), settings().autoUpdate, landed, shared(REBUILD_KEY)?.state === "started");
   setShared(UPDATE_KEY, s.next);
   tell(s.notice);
   return s;

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { settingsOf, shownTeams, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions } from "../../herdr-desktop/mods/ah2/settings-model.js";
+import { settingsOf, shownTeams, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
 
 // atp-1727: maximize and restore reopen the Desk window on the same tab; the next plain open (the strip toggle, Needs you) reads the
 // size from the key's `max`, as dock.js openDeskWindow does.
@@ -84,6 +84,25 @@ test("a newer plugin is told once, auto-installs unless it failed before, and an
   assert.equal(updateStep({ failed: { version: "2.6.0" } }, p, 1000, true).install, false, "no auto retry of a failed version");
   const landed = updateStep({ installing: 900, installed: "2.5.0" }, { ...p, installed: "2.6.0" }, 1000, false);
   assert.deepEqual([landed.notice?.kind, landed.notice?.again, landed.next.installing], ["updated", false, 0]);
+});
+
+// ah2-111 Amendment 2: the "available" notice installs on click, waits for a running ahd build, and a click installs once.
+test("the update offer carries the install click, once per version, held while ahd builds, none when current", () => {
+  const p = { installed: "2.0.2", bundled: "2.0.3", notes: "" };
+  const first = updateStep({}, p, 1000, false);
+  assert.deepEqual(updateNotify(first.notice).action, { name: `ah2.${INSTALL_COMMAND}` }, "older marker, no build: the notice carries the action");
+  assert.match(updateNotify(first.notice).body, /Click to install\.$/);
+  assert.equal(updateStep(first.next, p, 2000, false).notice, null, "the same plugin version twice: one notice");
+  const held = updateStep({}, p, 1000, false, false, true);
+  assert.equal(held.notice, null, "a build still running: held");
+  assert.equal(updateStep(held.next, p, 2000, false).notice?.kind, "available", "offered once the build ends");
+  assert.equal(updateStep({}, { ...p, installed: "2.0.3" }, 1000, false).notice, null, "marker current: nothing");
+});
+
+test("a second click while a clicked install runs does nothing", () => {
+  assert.equal(clickFree(0, 1000), true);
+  assert.equal(clickFree(1000, 1000 + BUSY_MS - 1), false, "a second click while an install runs: nothing");
+  assert.equal(clickFree(1000, 1000 + BUSY_MS), true, "a claim past BUSY_MS no longer holds");
 });
 
 test("an install that exits 0 but still reads older is recorded stuck and never auto-installed again", () => {

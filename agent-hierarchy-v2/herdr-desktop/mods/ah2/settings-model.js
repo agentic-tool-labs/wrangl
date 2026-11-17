@@ -149,7 +149,8 @@ export const BUSY_MS = 120e3;
 // most one notice: "updated" once an install landed (even when Herdr's reload ended the run that started it), else
 // "available" once per version. landed: this check follows an install that exited 0; if the mod still reads older (the two
 // versions disagree, e.g. a binary built from another plugin), that version is recorded stuck: no auto-install, no Update offer.
-export function updateStep(prev, p, now, auto, landed = false) {
+// building: an ahd build is running (rebuild-model.js); the "available" notice waits for it to end (ah2-111 G2).
+export function updateStep(prev, p, now, auto, landed = false, building = false) {
   const was = prev && typeof prev === "object" ? prev : {};
   const next = { ...was, installed: p.installed, bundled: p.bundled, notes: p.notes, checked: now };
   const newer = versionNewer(p.bundled, p.installed);
@@ -167,11 +168,28 @@ export function updateStep(prev, p, now, auto, landed = false) {
     notice = { kind: "updated", version: p.installed, again: was.installed === p.installed };
   } else if (!busy) next.installing = 0;
   const install = newer && auto && !busy && was.failed?.version !== p.bundled;
-  if (newer && !install && !busy && was.told !== p.bundled) {
+  if (newer && !install && !busy && !building && was.told !== p.bundled) {
     next.told = p.bundled;
     notice = { kind: "available", version: p.bundled, installed: p.installed };
   }
   return { next, newer, install, notice };
+}
+
+// The command a click on the "available" notice sends this mod (herdr delivers "<mod>.<command>" to nextCommand()).
+export const INSTALL_COMMAND = "install";
+// When a click last started an install (shared, so two copies that both receive the click install once).
+export const INSTALL_CLICK_KEY = "ah2.install-click";
+// Whether a click may start an install: not while one a click started is still within BUSY_MS.
+export const clickFree = (claimedAt, now) => !(typeof claimedAt === "number" && claimedAt > 0 && now - claimedAt < BUSY_MS);
+
+// The herdr notice for updateStep's notice (null: none).
+export function updateNotify(n) {
+  if (n?.kind === "updated") return n.again
+    ? { title: `Wrangl v${n.version} reinstalled`, body: "The Wrangl sidebar reloaded with the new files.", level: "success" }
+    : { title: `Wrangl mod updated to ${n.version}.`, body: "The Wrangl sidebar reloaded with the new files.", level: "success" };
+  if (n?.kind === "stuck") return { title: `Wrangl v${n.version} didn't take`, body: `ah herdr install ran, but the mod still reports v${n.installed}. Rebuild ah from the plugin, then use Check now.`, level: "warning" };
+  if (n?.kind === "available") return { title: "Wrangl", body: `Wrangl ${n.version} is available (installed ${n.installed}). Click to install.`, level: "info", action: { name: `ah2.${INSTALL_COMMAND}` } };
+  return null;
 }
 
 // The About section's text, and its version line from the update state the check already holds (nothing is fetched for it).

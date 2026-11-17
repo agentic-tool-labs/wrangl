@@ -71,7 +71,7 @@ ahd restart    # stop, then start
 Add `--plain` to any of these to get text instead of JSON. Example (`ahd status --plain` with a daemon up):
 
 ```
-up  version 2.0.3  pid 49124  uptime 0s  requests 0
+up  version 2.0.4  pid 49124  uptime 0s  requests 0
 root /path/to/the/plugin
 owns mailbox=true status=false timers=
 errors 0 (5xx)
@@ -110,7 +110,7 @@ Everything above and below is `ahd <verb>`. The plugin ships it as `bin/ahd`:
   update that changes the native sources therefore needs a rebuild: with auto-rebuild on (the install's
   default) the next SessionStart rebuilds it in the background, or re-run `/wrangl:hierarchy install`
   (`scripts/install.sh --rebuild-only`). `ahd where` prints which plugin the binary found, the install stamp,
-  and whether the binary's contract matches the plugin's (`compatible`). A reinstall also replaces a link made
+  whether the binary's contract matches the plugin's (`compatible`), and ah's home as it resolves it (`home`). A reinstall also replaces a link made
   by hand to a plugin directory's `bin/ahd`.
 
 Without the install you can always run the same program as `<plugin root>/bin/ahd <verb>`.

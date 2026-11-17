@@ -56,7 +56,7 @@ const rig = async (cli: string[] = [], submit: (p: any) => Promise<unknown> = as
         if (p === '/ah/session-marks/' + SID) return {}
         throw new Error('no such file')
       },
-      read: async () => { if (!gated) { gated = true; await readGate } return w.fileText },
+      read: async (p: string) => { if (!gated && p === FILE) { gated = true; await readGate } return w.fileText },
     },
     clock: {
       now: async () => w.now,
@@ -206,6 +206,31 @@ test('session.start returns while its first tick waits on a read that never answ
   await settle()
   await settle()
   expect(r!.w.store.get('why')).toBe('unreadable')
+})
+
+test('session.start returns while the build check waits on a stamp read that never answers, with no toast; negative: after the bound a later check runs', async () => {
+  const r = await rig()
+  const toasts: unknown[] = []
+  const started = JSON.stringify({ version: '2.0.3', last_rebuild: { version: '2.0.4', at: '2026-11-17T17:00:00.000Z', state: 'started' } })
+  let hangs = true
+  const $s = { ...r.$, ui: { ...r.$.ui, toast: async (t: unknown) => { toasts.push(t) } },
+    fs: { ...r.$.fs, read: (p: string) => (p === '/ah/install.json' ? (hangs ? new Promise(() => {}) : Promise.resolve(started)) : r.$.fs.read(p)) } }
+  const from = r.w.timers.length
+  // A reload runs session.start again; its build check's stamp read is the one that hangs.
+  const back = await Promise.race([r.hooks['session.start']($s, { cwd: '/work/repo', isInteractive: true }, async (e: unknown) => e).then(() => true), new Promise<boolean>((res) => setTimeout(() => res(false), 1000))])
+  expect(back).toBe(true)
+  await settle()
+  hangs = false
+  await r.hooks['prompt.submit']($s, { text: 'go on' }, async (e: unknown) => e)
+  await settle()
+  expect(toasts).toEqual([])
+
+  // The read's bound passes: the hung read is abandoned, and the next check reads the stamp and shows its toast.
+  await r.w.timers.slice(from).filter((t) => t.ms === 2000 && !t.cancelled).at(-1)!.fn()
+  await settle()
+  await r.hooks['prompt.submit']($s, { text: 'go on' }, async (e: unknown) => e)
+  await settle()
+  expect(toasts.length).toBe(1)
 })
 
 test('a status read the daemon never answers fails after 2000 ms, and no second one opens until it settles', async () => {

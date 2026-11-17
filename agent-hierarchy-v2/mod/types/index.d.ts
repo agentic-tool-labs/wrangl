@@ -55,6 +55,8 @@ declare module 'claude-code' {
       dismissing: boolean
       /** The mail submitted to this session, newest first, at most 10: the Mail section of the Pane shows it. */
       mail: { at: number; ids: string[]; address: string; text: string; state: 'delivered' | 'not delivered' }[]
+      /** The background rebuild of ahd this session last kept from install.json (view.ts rebuildStep): its toasts show once. */
+      rebuild: unknown
     }
   }
 }

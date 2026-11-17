@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.4] - 2026-11-17
+
+### Added
+
+- **Two-finger scroll zooms the herdr desktop Graph, and click and drag pans it.** A trackpad two-finger scroll now
+  zooms about the pointer, as a mouse wheel does, with no key held; herdr gives mods no pinch gesture. Press and drag
+  pans a zoomed Map or an oversized Flow. A plain click on a member still opens its pane. Run `ah herdr install`
+  again to get it.
+- **Notices while a new `ahd` is built.** After a plugin update `ahd` is rebuilt in the background. Claude Code now
+  shows a toast, and herdr desktop a notice, when the build starts ("building ahd <version>…"), when it is ready, and
+  if it fails (with the path of the build log). Each shows once per build.
+- **Click the herdr "available" notice to update the Wrangl mod.** When the mod installed in herdr desktop is older
+  than the plugin, the notice herdr already showed now says "Click to install", and a click runs `ah herdr install`.
+  Nothing is installed without the click unless the existing auto-update setting is on. The notice waits for a running
+  `ahd` build to finish. The "… → Update" menu item is unchanged and does the same thing.
+
+### Changed
+
+- **`ah where` names ah's home.** Its JSON has a new `home` field and `--plain` a `home:` line. The herdr desktop mod
+  uses it to find the install stamp; with an older `ahd` it shows no build notices.
+
 ## [2.0.3] - 2026-11-17
 
 ### Added
