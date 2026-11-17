@@ -236,6 +236,47 @@ public sealed class HierarchyReadOpsTests
         Assert.Empty(activity.Rows(mirror));
     }
 
+    // ah2-74 G1: the mark sets screen_clear_at on both copies and nothing else; no row is created for a subject with none
+    [Fact]
+    public void AScreenClearMarkSetsOnlyItsFieldOnBothCopiesAndCreatesNoRow()
+    {
+        var rig = Make();
+        var mirror = Path.Combine(rig.Repo, "mirror");
+        Directory.CreateDirectory(mirror);
+        Assert.True(Record(rig, "s1", new JsonObject { ["activity"] = "blocked", ["blocked_by"] = "permission", ["mirror_dir"] = mirror }));
+        var before = rig.Services.Status.ReadActivityRecord(rig.Pool, JsonValue.FromString("s1")).AsObject();
+
+        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), "2026-11-17T13:10:15.000Z", mirror));
+
+        foreach (var dir in new[] { rig.Pool, mirror })
+        {
+            var after = rig.Services.Status.ReadActivityRecord(dir, JsonValue.FromString("s1")).AsObject();
+            Assert.Equal("2026-11-17T13:10:15.000Z", after["screen_clear_at"].AsString());
+            Assert.Equal("blocked", after["activity"].AsString());
+            Assert.Equal(before["at"].AsString(), after["at"].AsString());
+        }
+
+        // a mark already set is kept, not moved
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), "2026-11-17T13:10:30.000Z", mirror));
+        Assert.Equal("2026-11-17T13:10:15.000Z", rig.Services.Status.ReadActivityRecord(rig.Pool, JsonValue.FromString("s1")).Member("screen_clear_at")!.Value.AsString());
+
+        // B2: unmark removes only the mark, on both copies; a second unmark changes nothing
+        Assert.True(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), null, mirror));
+        foreach (var dir in new[] { rig.Pool, mirror })
+        {
+            var after = rig.Services.Status.ReadActivityRecord(dir, JsonValue.FromString("s1")).AsObject();
+            Assert.False(after.ContainsKey("screen_clear_at"));
+            Assert.Equal("blocked", after["activity"].AsString());
+            Assert.Equal(before["at"].AsString(), after["at"].AsString());
+        }
+
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s1"), null, mirror));
+
+        // negative: a subject with no record gets none
+        Assert.False(rig.Services.Status.MarkScreenClearRouted(rig.Pool, JsonValue.FromString("s9"), "2026-11-17T13:10:15.000Z", mirror));
+        Assert.Null(Ah.StateDb.StateDbModule.CreateActivity(rig.AhHome).Row(rig.Pool, "s9"));
+    }
+
     private static JsonObject IdleWrite() => new() { ["activity"] = "idle", ["blocked_by"] = JsonValue.Null };
 
     [Fact]

@@ -8,7 +8,8 @@
 // graph) is the Desk window on that tab, headed by the Desk's tab row (tabs.js panelTabsView).
 // `?view=feed|feed-dock|feed-empty|feed-down` the feed window (feed-dock at the side column's 420 px).
 // `?view=graph` the Graph window (graph-view.js) on ah2-tm4 and its lane: the web's Map, then the links, then the scrubber;
-// `graph-30` a 30 min window 90 min back, `graph-two` a second stream, `graph-zoom` zoomed into it.
+// `graph-30` a 30 min window 90 min back, `graph-two` a second stream, `graph-zoom` zoomed into it; `graph-flow` the same team in Flow
+// (graph-model.js flowModel: cards by role, links, legend), `graph-flow-v` Flow vertical, `dock-flow` Flow in the docked column.
 // `?view=settings` the settings dialog (settings.js) with an update ready and What's new open; the ah2 tab shows its dot.
 // `?view=menu` the strip's … popup (tabs.js) with an update ready; `?view=dock` the desk open on the Graph (dock.js, tabs.js
 // panelTabsView). Every view shows the desk's status segment (main.js statusSegment) and the Needs-you drawer peeking
@@ -22,7 +23,9 @@ import { descriptionBlocks, inlineParts } from "../mods/ah2/plans-model.js";
 import { answerText, DIRECTION, threadOf } from "../mods/ah2/questions-model.js";
 import { boardModel, ownerOf } from "../mods/ah2/board-model.js";
 import { feedModel } from "../mods/ah2/feed-model.js";
-import { graphModel, KNOB } from "../mods/ah2/graph-model.js";
+import { graphModel, flowModel, flowPan, KNOB } from "../mods/ah2/graph-model.js";
+import { DUTY, DUTY_TITLE, stateWord } from "../mods/ah2/select.js";
+import { FLOW_COLUMN } from "../../web/mock/model.mjs";
 import { settingsOf, STRIP, INTERVALS, changelogEntry } from "../mods/ah2/settings-model.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -371,6 +374,59 @@ const graphWin = Object.entries(GRAPHS).map(([v, m]) => `<div class="ov gr" data
   ${crumbOf(m.crumb)}<div class="ovb reg">${graphBody(m, false)}</div>${graphScrub(m.scrub)}
  </div>`).join("");
 
+// Flow, mirroring graph-view.js flowBody: the room is the body as graph-view.js measure() takes it (the Desk window 620 × 720, the
+// docked column 420 wide), so the stage, the fit and the orientation are the mod's own.
+const flowSvg = (cmds) => cmds.map((c) => c.join(" ")).join(" ");
+function flowStage(m) {
+  if (m.cards.length === 0) return '<h2>Members <span class="c">0</span></h2><div class="none">None</div>';
+  const k = m.k;
+  const px = (n) => `${r1(n)}px`;
+  const fz = (n) => `font-size:${r1(n * k)}px`;
+  const bands = m.bands.map((b) => `<div class="fb" style="left:${px(b.x)};top:${px(b.y)};width:${px(b.w)};height:${px(b.h)}"><span style="${fz(11)};max-width:${px(Math.max(0, b.w - 16))}">${esc(b.name)}</span></div>`);
+  const links = `<svg class="flk" width="${r1(m.size.w)}" height="${r1(m.size.h)}" aria-hidden="true">${m.links.map((l) => `<path class="${l.kind}" d="${flowSvg(l.cmds)}" stroke-width="${r1(Math.max(1, (l.kind === "edge" ? 1 : 2) * k))}"/>`).join("")}</svg>`;
+  const labels = m.labels.map((l) => `<span class="fl" style="left:${px(l.x)};top:${px(l.y)};${fz(11)}">${esc(l.text)}</span>`);
+  const cards = m.cards.map((c) => {
+    const s = c.card;
+    const reviewing = s.role === "reviewer" && s.state === "working";
+    const state = s.running ? "running" : STATES[s.state] ? s.state : "unknown";
+    const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
+    const duty = DUTY[s.duty] ?? null;
+    const ago = s.lastAt > 0 ? (Math.floor((NOW - s.lastAt) / 60000) < 1 ? "now" : Math.floor((NOW - s.lastAt) / 60000) < 60 ? `${Math.floor((NOW - s.lastAt) / 60000)}m` : `${Math.floor((NOW - s.lastAt) / 3600000)}h`) : "";
+    const tag = c.active ? (reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model) : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
+    const cell = (v, u) => `<span><b>${esc(String(v))}</b>${u ? ` ${u}` : ""}</span>`;
+    const stats = c.active ? [s.orchestrator ? cell(c.out, "out") : "", s.orchestrator && s.decisions !== null ? cell(s.decisions, "dec") : "",
+      s.role === "implementor" && s.round ? cell(s.round) : "", ago ? `<span>active <b>${ago}</b></span>` : ""].filter(Boolean) : [];
+    const gap = `gap:${r1(8 * k)}px`;
+    const head = `<div class="fh" style="${gap}">${mark(state)}<span class="fn" style="${fz(12.5)}">${esc(s.name)}</span>${duty ? `<span class="fx" style="${fz(11)}">${esc(duty)}</span>` : ""}${tag ? `<span class="fx${c.active ? " on" : ""}" style="${fz(11)}">${esc(tag)}</span>` : ""}</div>`;
+    return `<div class="fc${c.active ? " on" : ""}${s.state === "gone" ? " gone" : ""}" style="left:${px(c.rect.x)};top:${px(c.rect.y)};width:${px(c.rect.w)};height:${px(c.rect.h)};padding:${r1(8 * k)}px ${r1(10 * k)}px;${gap}" title="${esc([s.full, s.role, word].filter(Boolean).join(" · "))}" aria-label="${esc(`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`)}">${head}${c.active ? `<i class="fr"></i>${stats.length ? `<div class="fs" style="${gap};${fz(11)}">${stats.join("")}</div>` : ""}` : ""}</div>`;
+  });
+  const dots = m.dots.map((d) => `<i class="gfl" style="left:${px(d.x - 4)};top:${px(d.y - 4)}" title="${esc(d.title)}" aria-label="${esc(d.title)}"></i>`);
+  const pan = flowPan(null, m.size, m.stage);
+  return `<div class="gflow" style="width:${m.stage.w}px;height:${m.stage.h}px" aria-label="${esc(m.said)}"><div class="fin" style="left:${px(pan.x)};top:${px(pan.y)};width:${px(m.size.w)};height:${px(m.size.h)}">${[...bands, links, ...labels, ...cards, ...dots].join("")}</div>${m.rest > 0 ? `<span class="fmore">+${m.rest} more briefs</span>` : ""}</div>
+  <div class="flg" role="group" aria-label="Flow legend"><span><i class="kb"></i>brief in flight</span><span><svg width="14" height="2" aria-hidden="true"><path d="M 0 1 L 14 1"/></svg>sent for review</span><span><i class="ke"></i>reporting line</span><span class="fd2">Idle members are one line; a time is the last activity</span></div>`;
+}
+const modes = (m) => `<div class="vt gmd" role="tablist" aria-label="Graph layout"><button role="tab" aria-label="Map layout" title="Show the Map">Map</button><button role="tab" class="on" aria-label="Flow layout" title="Show the Flow">Flow</button></div><button class="ori" title="${m.orient === "vertical" ? "Vertical ⇄ Horizontal" : "Horizontal ⇄ Vertical"}" aria-label="Switch between horizontal and vertical">⇄</button>`;
+const flowHead = (m) => `<div class="fhd"><div class="vt" role="tablist">${m.tabs.map((t) => `<button role="tab" class="${t.id === m.id ? "on" : ""}" title="Show the ${esc(t.name)} graph">${esc(t.name)}</button>`).join("")}</div>${modes(m)}</div>`;
+// The Desk window's graph body: 620 − 2 border − 32 padding across; 720 less the Desk's tab row (44), the header (34), padding and chip.
+const ROOM = { w: 586, h: 720 - 2 - 44 - 34 - 12 - 12 - 8 };
+// The fixture's member slices carry no column (the daemon serves one); here each takes the column the mock gives its role, so the
+// cards spread over the four columns as they do live.
+const flowSlices = new Map([...slices].map(([id, sl]) => [id, id.startsWith("member:") ? { ...sl, body: { ...sl.body, column: FLOW_COLUMN[sl.body.role] ?? 2 } } : sl]));
+const FLOWS = {
+  "graph-flow": flowModel(flowSlices, team, "horizontal", 1, ROOM),
+  "graph-flow-v": flowModel(flowSlices, team, "vertical", 1, ROOM),
+};
+const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" data-v="${v}" role="dialog" aria-label="Graph">
+  ${deskTabs("graph", true)}
+  ${flowHead(m)}<div class="ovb reg">${flowStage(m)}</div>
+ </div>`).join("");
+// Docked: the 420 px column, its height as tall as the preview's window allows; no stored orientation, so the shape picks it.
+const fmDock = flowModel(flowSlices, team, null, 1, { w: 420 - 2 - 32, h: 640 });
+const dockFlow = `<aside class="dock dfl" aria-label="Wrangl desk">
+  ${deskTabs("graph", false)}
+  ${flowHead(fmDock)}<div class="ovb reg">${flowStage(fmDock)}</div>
+ </aside>`;
+
 // The settings dialog, mirroring settings.js's sizes: default settings with one lane hidden, the plugin newer than the mod.
 const SET = settingsOf({ hidden: ["a1b2c3d4/lane-herdr"] });
 const UPD = { installed: "2.5.0-pre.1", bundled: "2.5.0", notes: changelogEntry(readFileSync(join(here, "..", "..", "CHANGELOG.md"), "utf8"), "2.5.0", 1200) };
@@ -489,7 +545,7 @@ button.kbc{width:100%;text-align:left;font:inherit;color:inherit;border:1px soli
 .kbm{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted)}.kid{flex:none;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px "Geist Mono",ui-monospace,monospace}.kw{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kbf{display:flex;gap:4px;align-items:center;font-size:11px}.kbf b{font-weight:400;color:var(--blocked)}
 .ov.qa,.ov.gr{display:none}${Object.keys(GRAPHS).map((v) => `html[data-view=${v}] .ov.gr[data-v=${v}]{display:flex}`).join("")}html[data-view] .ov.sit{display:none}${VIEWS.map((v) => `html[data-view=${v}] .ov.qa[data-v=${v}]{display:flex}`).join("")}
-.ov.gr{height:min(720px,calc(100% - 96px))}.gmap-w{margin-top:12px;display:flex;justify-content:center}.gmap{position:relative;flex:none}.gmap>*{position:absolute}
+.ov.gr{height:min(720px,calc(100% - 96px))}${Object.keys(FLOWS).map((v) => `html[data-view=${v}] .ov.gr[data-v=${v}]{display:flex}`).join("")}html[data-view=dock] .dock.dfl{display:none}html[data-view=dock-flow] .dock.dfl{display:flex}.fhd{height:34px;flex:none;padding:8px 16px 0;display:flex;align-items:center;gap:8px}.fhd .vt{flex:1;min-width:0;height:auto;padding:0}.fhd .gmd{flex:none}.gmd button{height:24px;padding:0 8px;font-size:11.5px}.vt button.on{background:var(--raised);border-color:var(--raised);color:var(--foreground)}.ori{height:24px;min-width:24px;padding:0 6px;border:1px solid var(--input);border-radius:6px;background:none;color:var(--foreground);font:11.5px Geist,ui-sans-serif,system-ui,sans-serif}.gflow{position:relative;margin-top:12px;overflow:hidden;flex:none}.fin{position:absolute}.fin>*{position:absolute}.fb{border-radius:6px;background:var(--hover)}.fb span{position:absolute;left:8px;top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}.flk{left:0;top:0;fill:none;overflow:visible}.flk path{stroke:var(--accent)}.flk path.edge{stroke:var(--muted)}.flk path.review{stroke-dasharray:5 4}.fl{white-space:nowrap;font-weight:600;color:var(--muted)}.fc{box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border:1px solid var(--border);border-radius:6px;background:var(--raised)}.fc.on{justify-content:flex-start;border-color:var(--accent);background:var(--selected)}.fc.gone{opacity:.4}.fh{display:flex;align-items:center;min-width:0}.fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--foreground)}.fc.on .fn{font-weight:600}.fx{flex:none;color:var(--muted)}.fx.on{color:var(--accent)}.fr{display:block;height:1px;flex:none;background:var(--border)}.fs{display:flex;align-items:center;color:var(--muted)}.fs b{font-weight:600;color:var(--foreground)}.fmore{position:absolute;top:8px;right:8px;font-size:11px;color:var(--muted)}.flg{height:24px;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--muted);white-space:nowrap}.flg span{display:flex;align-items:center;gap:6px;flex:none}.flg i{display:block;flex:none;padding:0;border-radius:0}.flg i.kb{width:14px;height:2px;background:var(--accent)}.flg i.ke{width:14px;height:1px;background:var(--muted)}.flg svg path{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}.flg .fd2{flex:1;min-width:0;display:block;overflow:hidden;text-overflow:ellipsis}.gmap-w{margin-top:12px;display:flex;justify-content:center}.gmap{position:relative;flex:none}.gmap>*{position:absolute}
 .gc{border-radius:50%;background:var(--raised);border:1px solid var(--muted)}.garcs{left:0;top:0;overflow:visible}.garcs path{fill:none;stroke:var(--accent);stroke-opacity:.6;stroke-linecap:round}:root:not([data-theme=dark]) .garcs path{stroke-opacity:.75}.garcs path.rep{stroke-dasharray:5 4;stroke-linecap:butt}
 .gm{border-radius:50%;background:var(--surface);border:1px solid var(--border);box-sizing:border-box}.gm.gone{opacity:.4}.gm>svg{position:absolute;left:-1px;top:-1px}.gm>svg path{fill:none}.gm .trk{stroke:var(--border)}.gm .busy{stroke:currentColor}
 .gls{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.gl{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gl b{font-size:9px;font-weight:400}.gl.sub{font-size:11px;color:var(--muted)}.gl.val{font:600 11px "Geist Mono",ui-monospace,monospace}
@@ -569,6 +625,7 @@ const v = new URLSearchParams(location.search).get("view"); if (v) document.docu
   ${drawer}
  </section>
  ${dockCol}
+ ${dockFlow}
  ${statusRow}
  <div class="ov sit" role="dialog" aria-label="${esc(rep.name)} sitrep">
   <div class="ovh"><h1>${esc(rep.name)} · sitrep</h1>${needs(rep.needsYou)}<button class="x" title="Close (esc)" aria-label="Close the sitrep">×</button></div>
@@ -576,6 +633,7 @@ const v = new URLSearchParams(location.search).get("view"); if (v) document.docu
  </div>
  ${boardWin}
  ${graphWin}
+ ${flowWin}
  ${VIEWS.map((v) => qaWin(v).replace('class="ov qa"', `class="ov qa" data-v="${v}"`)).join("\n ")}
  ${FEEDS.map(feedWin).join("\n ")}
  ${setWin}

@@ -80,7 +80,7 @@ function histFetch(v, cx) {
   cx.spawn(async (cx) => {
     const sleep = (ms) => cx.sleep(ms);
     const read = v.link ? (path) => v.link.read(path, 15000, sleep) : null;
-    v.hist = historyTake(v.hist, h.seq, await historyRead(read, dirs, h.filter, Date.now(), h.more ? h.next : null));
+    v.hist = historyTake(v.hist, h.seq, await historyRead(read, dirs, h.filter, Date.now(), h.more ? h.next : null, ah().exec, sleep));
     cx.notify();
   });
 }

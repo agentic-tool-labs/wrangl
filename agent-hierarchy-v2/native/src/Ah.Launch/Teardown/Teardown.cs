@@ -1076,7 +1076,7 @@ public sealed record Teardown(
 
     /// <summary>Whether a member row is addressed on herdr: it came from a herdr listing, or spawn stamped its flavour.</summary>
     private static bool OnHerdr(JsonObject m) =>
-        m.Get("source") is { IsTruthy: true } || HerdrFlavour.OfMember(JsonValue.FromObject(m)) is not null;
+        m.Get("source") is { IsTruthy: true } || HerdrFlavour.OnHerdr(JsonValue.FromObject(m), null);
 
     private JsonObject CloseOne(JsonObject m, string teamTransport, LaunchContext context, List<string> warnings, IHerdr herdr)
     {

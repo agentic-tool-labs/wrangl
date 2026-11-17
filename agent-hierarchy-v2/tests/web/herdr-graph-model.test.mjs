@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf } from "../../herdr-desktop/mods/ah2/graph-model.js";
+import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -13,7 +13,7 @@ const mod = join(root, "herdr-desktop", "mods", "ah2");
 const reply = JSON.parse(readFileSync(join(root, "herdr-desktop", "fixture", "events.json"), "utf8"));
 const slices = new Map(reply.slices.map((s) => [s.id, s]));
 
-for (const f of ["graph-world.js", "plans-model.js", "select.js"]) {
+for (const f of ["flow-model.js", "graph-world.js", "plans-model.js", "select.js"]) {
   test(`the mod's ${f} is a byte-identical copy of web/ui/${f}`, () => {
     assert.ok(readFileSync(join(mod, f)).equals(readFileSync(join(root, "web", "ui", f))), `copy web/ui/${f} over herdr-desktop/mods/ah2/${f}`);
   });
@@ -162,4 +162,136 @@ test("a zoomed map fills the view's room, not its square, and pans to its far co
   const b2 = frameOf(540, 2, near);
   const p = panAround({ x: 0, y: 0 }, 540, 1, 2, 400, 400, b1, b2);
   assert.deepEqual([(400 + (b2.w - b1.w) / 2 - p.x) / 2, (400 - p.y) / 2], [400, 400]);
+});
+
+// ---- Flow (graph-model.js flowModel over flow-model.js, the web Flow's own maths)
+
+const FM = await import("../../herdr-desktop/mods/ah2/graph-model.js");
+const F = await import("../../herdr-desktop/mods/ah2/flow-model.js");
+const SEL = await import("../../herdr-desktop/mods/ah2/select.js");
+const TM4 = "a1b2c3d4/ah2-tm4";
+const WIDE = { w: 1400, h: 700 };
+const inside = (r, b) => r.x >= b.x && r.y >= b.y && r.x + r.w <= b.x + b.w && r.y + r.h <= b.y + b.h;
+
+test("Flow draws one card per member of the shown team; a lane's members sit inside their band", () => {
+  const m = FM.flowModel(slices, TM4, "horizontal", 1, WIDE);
+  const ids = SEL.memberIds(slices.get(`team:${TM4}`));
+  assert.deepEqual(m.cards.map((c) => c.id).sort(), [...ids].sort());
+  assert.equal(new Set(m.cards.map((c) => c.id)).size, m.cards.length);
+  // the architect leads an open lane whose child team is lane-herdr
+  const laned = new Map(slices);
+  const t = laned.get(`team:${TM4}`);
+  laned.set(t.id, { ...t, body: { ...t.body, streams: [{ state: "open", child_team: "lane-herdr", sub_orchestrator: "architect" }] } });
+  for (const orient of ["horizontal", "vertical"]) {
+    const l = FM.flowModel(laned, TM4, orient, 1, WIDE);
+    assert.equal(l.bands.length, 1, orient);
+    const kids = slices.get("team:a1b2c3d4/lane-herdr").body.members;
+    for (const id of [`member:${TM4}/architect`, ...kids]) {
+      const c = l.cards.find((x) => x.id === id);
+      assert.ok(c && inside(c.rect, l.bands[0]), `${id} inside the band, ${orient}`);
+    }
+  }
+});
+
+test("Flow's links are the reporting lines and the first 24 briefs in flight, one per pair, a brief's kind winning over the line", () => {
+  const m = FM.flowModel(slices, TM4, "horizontal", 1, WIDE);
+  const team = slices.get(`team:${TM4}`);
+  const edges = slices.get(`topology:${TM4}`).body.edges.parent_child;
+  const sparks = SEL.sparksOf(slices, team);
+  assert.ok(edges.length > 0 && sparks.length > 0, "the fixture has both");
+  const carded = new Set(m.cards.map((c) => c.id));
+  const kinds = F.sparkKinds(sparks);
+  const want = new Map();
+  for (const [a, b] of [...edges.map((e) => [e.from, e.to]), ...sparks.slice(0, 24).map((s) => [s.from, s.to])]) {
+    if (carded.has(a) && carded.has(b)) want.set(F.pairKey(a, b), kinds.get(F.pairKey(a, b)) ?? "edge");
+  }
+  assert.deepEqual(new Map(m.links.map((l) => [l.key, l.kind])), want);
+  assert.ok(m.links.some((l) => l.kind !== "edge" && edges.some((e) => F.pairKey(e.from, e.to) === l.key)), "a pair that is both is drawn once, as the brief");
+  // more than MAX_SPARKS: 24 drawn, the rest counted; an end with no card drops its link and dot
+  const rects = new Map([["a", { x: 0, y: 0, w: 10, h: 10 }], ["b", { x: 100, y: 0, w: 10, h: 10 }]]);
+  const many = Array.from({ length: 30 }, (_, i) => ({ id: `s${i}`, from: "a", to: i < 29 ? "b" : "ghost", slug: `x${i}`, review: i === 3 }));
+  const fl = F.flowLinks([{ from: "a", to: "b" }], many, rects, "horizontal");
+  assert.equal(fl.dots.length, 24);
+  assert.equal(fl.rest, 6);
+  assert.deepEqual(fl.links.map((l) => [l.key, l.kind]), [["a|b", "review"]]);
+});
+
+test("Flow's drawn scale is the fit times the scale, clamped, and every rect is the world rect × k from the box's corner", () => {
+  for (const [scale, orient, room] of [[1, "horizontal", WIDE], [2, "vertical", { w: 420, h: 600 }], [4, "horizontal", { w: 300, h: 300 }], [0.25, "vertical", WIDE]]) {
+    const m = FM.flowModel(slices, TM4, orient, scale, room);
+    const team = slices.get(`team:${TM4}`);
+    const ids = SEL.memberIds(team);
+    const nodes = F.flowNodes(slices, team, ids, SEL.laneChildren(slices, team, ids));
+    const lay = F.flowLayout(nodes, F.flowActive(slices, team, nodes), orient);
+    const stage = { w: room.w, h: room.h - FM.LEGEND_H };
+    const k = FM.clampScale(F.fitView(lay.box, stage.w, stage.h).k * scale);
+    assert.equal(m.k, k);
+    for (const c of m.cards) {
+      const r = lay.pos.get(c.id);
+      assert.deepEqual(c.rect, { x: (r.x - lay.box.x) * k, y: (r.y - lay.box.y) * k, w: r.w * k, h: r.h * k });
+    }
+  }
+  assert.equal(FM.flowModel(slices, TM4, null, 1, null).stage.w, FM.MAP_PX, "before the first measure the stage is the map's square");
+});
+
+test("the stored Map | Flow choice: Flow only when stored so; an orientation only when stored so, else the stage's shape picks it", () => {
+  for (const stored of [undefined, null, {}, "flow", 7, { mode: "radial" }, { mode: "FLOW" }]) assert.equal(FM.graphChoice(stored).mode, "map", JSON.stringify(stored));
+  assert.deepEqual(FM.graphChoice({ mode: "flow", orient: "vertical" }), { mode: "flow", orient: "vertical" });
+  assert.deepEqual(FM.graphChoice({ mode: "flow", orient: "diagonal" }), { mode: "flow", orient: null });
+  assert.deepEqual(FM.graphChoice({ mode: "map", orient: "horizontal" }), { mode: "map", orient: "horizontal" });
+  // nothing stored: a narrow stage opens vertical, a wide one horizontal; a stored orientation is kept whatever the shape
+  assert.equal(FM.flowModel(slices, TM4, null, 1, { w: 420, h: 700 }).orient, "vertical");
+  assert.equal(FM.flowModel(slices, TM4, null, 1, { w: 420, h: 700 }).picked, "vertical");
+  assert.equal(FM.flowModel(slices, TM4, null, 1, { w: 1600, h: 700 }).orient, "horizontal");
+  assert.equal(FM.flowModel(slices, TM4, "horizontal", 1, { w: 420, h: 700 }).orient, "horizontal");
+  assert.equal(FM.flowModel(slices, TM4, "horizontal", 1, { w: 420, h: 700 }).picked, null);
+  assert.equal(FM.flowModel(slices, TM4, "vertical", 1, { w: 1600, h: 700 }).orient, "vertical");
+});
+
+test("Flow's pan: smaller content centred across and at the top; larger content clamped at both edges; a zoom keeps the point under it", () => {
+  const stage = { w: 400, h: 300 };
+  assert.deepEqual(FM.flowPan({ x: -50, y: 40 }, { w: 200, h: 100 }, stage), { x: 100, y: 0 });
+  const big = { w: 800, h: 600 };
+  assert.deepEqual(FM.flowPan(undefined, big, stage), { x: -200, y: 0 });
+  assert.deepEqual(FM.flowPan({ x: 50, y: 50 }, big, stage), { x: 0, y: 0 });
+  assert.deepEqual(FM.flowPan({ x: -900, y: -900 }, big, stage), { x: -400, y: -300 });
+  const p = { x: -100, y: -100 };
+  const [px, py] = [150, 120];
+  const q = FM.flowPanAround(p, big, stage, 1, 1.25, px, py);
+  assert.deepEqual([(px - q.x) / 1.25, (py - q.y) / 1.25], [px - p.x, py - p.y], "the content point under (px, py) stays there");
+});
+
+test("Flow's frame: a team not arrived is pending, a stopped one closed, an empty one has no stage and no throw", () => {
+  const noTeam = new Map([...slices].filter(([id]) => id !== `team:${TM4}`));
+  assert.equal(FM.flowModel(noTeam, TM4, null, 1, WIDE).pending, true);
+  assert.equal(FM.flowModel(slices, "a1b2c3d4/gone-team", null, 1, WIDE).closed, true);
+  const empty = new Map(slices);
+  const t = empty.get(`team:${TM4}`);
+  empty.set(t.id, { ...t, body: { ...t.body, orchestrator: null, members: [] } });
+  const m = FM.flowModel(empty, TM4, null, 1, WIDE);
+  assert.equal(m.cards.length, 0, "the view shows Members 0 / None");
+  assert.deepEqual([m.links.length, m.dots.length, m.bands.length], [0, 0, 0]);
+});
+
+test("the wheel: a line delta zooms with no key, a pixel delta pans unless ctrl or cmd, at the web's factors; nothing reads as nothing", () => {
+  const none = { control: false, platform: false };
+  assert.deepEqual(wheelAct({ delta: { x: 0, y: 40 }, delta_lines: { x: 0, y: 2 }, modifiers: none }), { zoom: Math.exp(2 * 0.05) });
+  assert.deepEqual(wheelAct({ delta: { x: 3, y: -12 }, modifiers: none }), { pan: { x: 3, y: -12 } });
+  assert.deepEqual(wheelAct({ delta: { x: 0, y: -50 }, modifiers: { control: true, platform: false } }), { zoom: Math.exp(-50 * 0.002) });
+  assert.deepEqual(wheelAct({ delta: { x: 0, y: 30 }, modifiers: { control: false, platform: true } }), { zoom: Math.exp(30 * 0.002) });
+  assert.equal(wheelAct({ delta: { x: 0, y: 0 }, modifiers: none }), null);
+});
+
+test("the eased scale leaves its start, moves one way only, and lands exactly on the target at EASE_MS", () => {
+  const at = (ms) => easedScale(1, 2, 1000, 1000 + ms);
+  assert.equal(at(0), 1);
+  const steps = [40, 100, 200, 300, 399].map(at);
+  steps.reduce((prev, s) => (assert.ok(s > prev && s < 2), s), 1);
+  assert.ok(at(100) - 1 > 0.5, "ease-out: past half way within a quarter of the time");
+  assert.equal(at(EASE_MS), 2);
+  assert.equal(at(EASE_MS * 3), 2);
+  for (let ms = 0; ms <= EASE_MS; ms += 10) {
+    const s = easedScale(SCALE_MAX, SCALE_MIN, 0, ms);
+    assert.ok(s >= SCALE_MIN && s <= SCALE_MAX, `${s} at ${ms} ms`);
+  }
 });

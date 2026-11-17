@@ -340,6 +340,11 @@ internal static class SessionStart
                 c.LogError(e);
             }
 
+            foreach (var line in HerdrModNotice.Lines(s, JsConvert.ToJsString(s.Config.PluginVersion())))
+            {
+                context = context is null ? line : $"{context}\n\n{line}";
+            }
+
             try
             {
                 if (DaemonClientModule.ReadSpawnFailed(advisory.Daemon) is { } failed)

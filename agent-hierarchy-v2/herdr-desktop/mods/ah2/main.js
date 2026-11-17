@@ -91,6 +91,7 @@ export default class Ah2 extends View {
 
   // Herdr calls this when the copy goes (an overlay closed, or quit). Only our own id: reopening the same key replaces the window.
   async close() {
+    this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
   }
 

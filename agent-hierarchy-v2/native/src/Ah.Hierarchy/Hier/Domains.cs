@@ -265,6 +265,8 @@ internal sealed class ActivityDomain(HierLib lib) : HierDomain(lib, "activity", 
     [
         Write("record", OpStyle.Replace, false, DbOnlyBody, "dir", "mirror_dir") with { DbBody = Lib.ActivityRecordDb },
         Write("clear", OpStyle.Replace, false, DbOnlyBody, "dir", "mirror_dir") with { DbBody = Lib.ActivityClearDb },
+        Write("mark", OpStyle.Replace, false, DbOnlyBody, "dir", "mirror_dir") with { DbBody = Lib.ActivityMarkDb },
+        Write("unmark", OpStyle.Replace, false, DbOnlyBody, "dir", "mirror_dir") with { DbBody = Lib.ActivityUnmarkDb },
         Write("sweep", OpStyle.Replace, false, DbOnlyBody, "dir") with { DbBody = Lib.ActivitySweepDb },
 
         // internal: stores one record as given, for seeding a test's records; the daemon's state route refuses it

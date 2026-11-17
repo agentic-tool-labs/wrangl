@@ -2,7 +2,7 @@
 // paging reset and the stale answer.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { FILTER0, filterActive, sinceOf, historyPath, historyDirs, threadRow, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "../../herdr-desktop/mods/ah2/qa-history-model.js";
+import { FILTER0, filterActive, sinceOf, historyPath, historyArgv, historyDirs, threadRow, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "../../herdr-desktop/mods/ah2/qa-history-model.js";
 
 const NOW = new Date(2026, 10, 17, 15, 30).getTime();
 const TEAMS = [{ name: "a", dirId: "d1", hierDir: "/h1" }, { name: "b", dirId: "d1", hierDir: "/h1" }, { name: "c", dirId: "d2", hierDir: "/h2" }];
@@ -42,7 +42,7 @@ test("one round reads every dir and merges newest first; no bridge is an error, 
   const f = { ...FILTER0, search: "e" };
   const got = await historyRead(read, historyDirs(TEAMS, null), f, NOW);
   assert.deepEqual(got.rows.map((r) => r.id), ["y", "x"]);
-  assert.deepEqual(got.next, { d1: "1:x" });
+  assert.deepEqual(got.next, { "/h1": "1:x" });
   // Load more asks only the dirs that have a cursor, with it
   paths.length = 0;
   await historyRead(read, historyDirs(TEAMS, null), f, NOW, got.next);
@@ -75,4 +75,52 @@ test("an answer for an older request is dropped; a failed read keeps rows and fi
   const r = historyRefresh(h);
   assert.deepEqual(r.rows, [{ at: 2 }]);
   assert.deepEqual(historyTake(r, r.seq, { rows: [{ at: 5 }], next: {} }).rows, [{ at: 5 }]);
+});
+
+test("no bridge: each dir is read through ah msg history with the filter's flags, and its threads become rows (A6)", async () => {
+  const calls = [];
+  const exec = async (cmd, argv, opts) => (calls.push([cmd, argv, opts.timeout]), { code: 0, stderr: "",
+    stdout: JSON.stringify(argv.includes("/h1") ? { threads: [{ prompt: { id: "x", at: 1, text: "old email" }, replies: [] }], next: "1:x" }
+      : { threads: [{ prompt: { id: "y", at: 2, text: "new email" }, replies: [] }], next: null }) });
+  const f = { search: " my email ", team: null, time: "week", state: "answered" };
+  const since = String(NOW - 7 * 86_400_000);
+  const got = await historyRead(async () => null, historyDirs(TEAMS, null), f, NOW, null, exec);
+  assert.deepEqual(calls, [["ah", ["msg", "history", "--json", "--dir", "/h1", "--search", "my email", "--since", since, "--answered"], 15000],
+    ["ah", ["msg", "history", "--json", "--dir", "/h2", "--search", "my email", "--since", since, "--answered"], 15000]]);
+  assert.deepEqual([got.rows.map((r) => r.id), got.rows.map((r) => r.hierDir), got.next], [["y", "x"], ["/h2", "/h1"], { "/h1": "1:x" }]);
+  // Load more and the other flags: the cursor, the team, Not answered; read null (no Link at all) falls back too
+  calls.length = 0;
+  await historyRead(null, historyDirs(TEAMS, null), { ...FILTER0, team: "a", state: "unanswered" }, NOW, got.next, exec);
+  assert.deepEqual(calls.map((c) => c[1]), [["msg", "history", "--json", "--dir", "/h1", "--team", "a", "--unanswered", "--before", "1:x"]]);
+  assert.deepEqual(historyArgv("/h", { ...FILTER0, time: "today" }, NOW), ["msg", "history", "--json", "--dir", "/h", "--since", String(new Date(2026, 10, 17).getTime())]);
+  // a team with a hierDir but no dirId is still read, through ah
+  assert.deepEqual(historyDirs([{ name: "n", dirId: null, hierDir: "/h9" }], null).map((d) => d.hierDir), ["/h9"]);
+  // one hierDir is one dir, whether or not each team carries its dir_id (A12)
+  assert.deepEqual(historyDirs([{ name: "a", dirId: "d1", hierDir: "/h1" }, { name: "b", dirId: null, hierDir: "/h1" }], null).map((d) => d.name), ["a"]);
+});
+
+test("no bridge and ah failing, or no hierDir: the error, never an empty list (A7)", async () => {
+  const f = { ...FILTER0, search: "e" };
+  const fail = async () => ({ code: 2, stdout: "", stderr: "ah msg: no hierarchy at /h2\nmore" });
+  assert.deepEqual(await historyRead(async () => null, historyDirs(TEAMS, "c"), f, NOW, null, fail), { error: "Could not read: ah msg: no hierarchy at /h2" });
+  assert.deepEqual(await historyRead(async () => null, historyDirs(TEAMS, "c"), f, NOW, null, async () => { throw new Error("ah did not answer"); }),
+    { error: "Could not read: ah did not answer" });
+  assert.match((await historyRead(async () => null, historyDirs(TEAMS, "c"), f, NOW, null, async () => ({ code: 0, stdout: "not json", stderr: "" }))).error, /^Could not read: /);
+  assert.deepEqual(await historyRead(async () => null, [{ name: "z", dirId: "d9", hierDir: null }], f, NOW, null, fail), { error: "Could not read: ahd is not reachable" });
+});
+
+test("dash-led text on the ah path: the search goes with one leading dash, never a bare --search; another dash-led value is the error (A9, A11)", async () => {
+  const calls = [];
+  const exec = async (cmd, argv) => (calls.push(argv), { code: 0, stderr: "", stdout: JSON.stringify({ threads: [], next: null }) });
+  await historyRead(async () => null, historyDirs(TEAMS, "c"), { ...FILTER0, search: "  --force " }, NOW, null, exec);
+  assert.deepEqual(calls, [["msg", "history", "--json", "--dir", "/h2", "--search", "-force"]]);
+  // the bridge keeps the text as typed
+  assert.equal(historyPath("d2", { ...FILTER0, search: "--force" }, NOW), "/ui/v1/history?dir=d2&q=--force");
+  calls.length = 0;
+  assert.deepEqual(await historyRead(async () => null, [{ name: "--all", dirId: "d2", hierDir: "/h2" }], { ...FILTER0, team: "--all" }, NOW, null, exec),
+    { error: 'Could not read: ah cannot take --team "--all"' });
+  assert.deepEqual(calls, []);
+  // a late exec reads as readThread's does
+  assert.deepEqual(await historyRead(async () => null, historyDirs(TEAMS, "c"), { ...FILTER0, search: "e" }, NOW, null, async () => { throw new Error("ah took longer than 15000 ms"); }),
+    { error: "Could not read: ah did not answer" });
 });

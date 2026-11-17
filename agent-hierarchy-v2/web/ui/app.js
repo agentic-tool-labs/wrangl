@@ -4,8 +4,9 @@ import { Rows } from "./rows.js";
 import { createStore, retryGate } from "./store.js";
 import { EtaChip } from "./ticker.js";
 import { Live } from "./live-component.js";
-import { firstTeam, laneChildren, laneOf, memberIds, memberOf, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamSummary } from "./select.js";
-import { FlowStage, graphUi, isActive, readPrefs, shortName } from "./graph.js";
+import { firstTeam, laneChildren, memberIds, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamSummary } from "./select.js";
+import { FlowStage, graphUi, readPrefs, shortName } from "./graph.js";
+import { flowActive, flowNodes } from "./flow-model.js";
 import { MemberSummary, party } from "./member-summary.js";
 import { internalToggle, isInternal, shownOf, showInternal } from "./msg-filter.js";
 import { bindHash } from "./deeplink.js";
@@ -333,15 +334,14 @@ export class App extends Live {
     const slices = snap.slices;
     const team = firstTeam(slices, snap.ui);
     const ids = memberIds(team);
-    const lane = laneOf(slices, team, ids);
     const children = snap.ui.view === "graph" ? laneChildren(slices, team, ids) : [];
-    const row = (id, laneId, teamOf) => [id, slices.get(id)?.body.role ?? "", slices.get(id)?.body.name ?? id.split("/").pop(), laneId, teamOf, slices.get(id)?.body.column];
-    const nodesKey = ids.length === 0 ? "" : JSON.stringify([...ids.map((id) => row(id, lane(id), "")), ...children.map((c) => row(c.id, c.lane, c.team))]);
+    const nodes = flowNodes(slices, team, ids, children);
+    const nodesKey = ids.length === 0 ? "" : JSON.stringify(nodes.map((n) => [n.id, n.role, n.name, n.lane, n.team, n.column]));
     const shownIds = [...ids, ...children.map((c) => c.id)];
     const topo = team ? slices.get(`topology:${team.body.dir_id}/${team.body.name}`) : null;
     const sparksKey = sparksOf(slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${s.review ? 1 : 0}|${s.slug}`).join("\n");
     const selected = snap.ui.selected ?? null;
-    return { large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...ids.map((id) => [id, team]), ...children.map((c) => [c.id, slices.get(c.team)])].filter(([id, tm]) => tm && isActive(memberOf(slices, tm, id))).map(([id]) => id).join("\n") : "" };
+    return { large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...flowActive(slices, team, nodes)].join("\n") : "" };
   }
 
   componentDidMount() {
