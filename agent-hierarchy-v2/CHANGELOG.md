@@ -4,6 +4,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.2] - 2026-11-17
+
+Fixes and one addition from the first day of use on herdr desktop.
+
+### Added
+
+- **The Flow diagram in the herdr desktop Graph tab.** `Map | Flow` tabs in the Graph header. Flow shows the team's
+  members as cards in columns by role (Lead, Advise · design, Implement, Review) with the links between them, and a
+  button that flips it between horizontal and vertical. It starts vertical in a narrow pane. The choice is remembered.
+  The web UI's Flow is unchanged; both now use one layout file. Run `ah herdr install` again to get it.
+- **Mouse-wheel zoom in the herdr desktop Graph tab, with fine, eased steps.** A mouse wheel zooms about the pointer
+  with no key held; ctrl or cmd + scroll zooms too; a trackpad two-finger scroll still pans. The steps are the web UI's,
+  and wheel, − / + and Fit ease along the web's own transition. Herdr gives mods no pinch gesture, so pinch still does
+  nothing.
+- **A notice when the herdr desktop mod is older than the plugin.** After a plugin update `ahd` rebuilds itself, but
+  nothing refreshed the mod `ah herdr install` copied. A session start now says so in one line and names the command.
+  Nothing is written to the herdr config.
+
+### Fixed
+
+- **Searching the Q&A History tab found nothing.** The filtered list only read through the daemon's HTTP bridge. Where
+  the mod talks to the daemon through the `ah` command, every search failed. It now falls back to
+  `ah msg history`, as opening a thread already did. Search text that starts with `--` is sent with one leading dash,
+  so a few extra rows can match.
+- **Every working member in herdr desktop was shown as blocked.** The Wrangl pane said "Waiting on a permission" and
+  the Orchestrator got "may be blocked" mail within seconds of a member starting. Members of the Orchestrator's
+  automatic team had no transport recorded, so the daemon never read their screens. It now reads them, and the pane
+  follows each read: no prompt on screen shows working within one 15-second check, and a real prompt shows blocked.
+
 ## [2.0.1] - 2026-11-17
 
 Fixes found on the first clean installs of 2.0.0.

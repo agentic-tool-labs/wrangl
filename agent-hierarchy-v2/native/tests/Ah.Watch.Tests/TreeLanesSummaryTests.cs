@@ -268,6 +268,51 @@ public sealed partial class TreeLanesTests
         Assert.Equal("Waiting on a permission", AlertText(Summary(model)));
     }
 
+    // ah2-74 B3: the watcher's last read of this blocked record found no prompt on it; no time comparison
+    [Fact]
+    public void ABlockedRecordWithAScreenClearMarkShowsWorkingAndNoPermissionAlert()
+    {
+        var reader = Truth();
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = """{"activity":"blocked","blocked_by":"permission","at":"2026-06-01T12:00:00Z","turn_at":"2026-06-01T12:00:00Z","screen_clear_at":"2000-01-01T00:00:00.000Z"}""";
+        var (model, _) = SeededWithActivity(reader);
+        using var owner = model;
+
+        var body = Summary(model);
+        Assert.Equal("working", Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+        Assert.Empty(body.Member("alerts")!.Value.AsArray());
+    }
+
+    // negative: the mark demotes only a blocked record; a failed one keeps its alert
+    [Fact]
+    public void NegativeAFailedRecordWithAScreenClearMarkStillShowsItsFailure()
+    {
+        var reader = Truth();
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = """{"activity":"failed","at":"2026-06-01T12:00:00Z","turn_at":"2026-06-01T12:00:00Z","screen_clear_at":"2000-01-01T00:00:00.000Z"}""";
+        var (model, _) = SeededWithActivity(reader);
+        using var owner = model;
+
+        var body = Summary(model);
+        Assert.Equal("blocked", Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+        Assert.Equal("Last turn failed", AlertText(body));
+    }
+
+    // B1 → B3: once the mark is removed (a tick read the real dialog) the same record shows blocked again, with its alert
+    [Fact]
+    public void ABlockedRecordWhoseMarkWasRemovedShowsBlockedWithItsAlert()
+    {
+        var reader = Truth();
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = """{"activity":"blocked","blocked_by":"permission","at":"2026-06-01T12:00:00Z","turn_at":"2026-06-01T12:00:00Z"}""";
+        var (model, _) = SeededWithActivity(reader);
+        using var owner = model;
+
+        var body = Summary(model);
+        Assert.Equal("blocked", Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+        Assert.Equal("Waiting on a permission", AlertText(body));
+    }
+
     [Fact]
     public void ALeadsActivityIsFoundWhenItRunsOutsideItsTeamsCheckout()
     {

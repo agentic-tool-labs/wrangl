@@ -343,4 +343,65 @@ public sealed class InstallStampNoticeTests
         Assert.Contains(new string('a', 200) + "\"", cut, StringComparison.Ordinal);
         Assert.DoesNotContain(new string('a', 201), cut, StringComparison.Ordinal);
     }
+
+    private static string WriteHerdrMarker(Rig rig, string text)
+    {
+        var dir = rig.Sandbox.Home + "/.config/herdr-app/mods/ah2";
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(dir + "/.ah2-owned", text);
+        return dir + "/.ah2-owned";
+    }
+
+    [Fact]
+    public void AnOlderHerdrModMarkerGivesTheModLineWithoutAStamp()
+    {
+        var rig = new Rig();
+        var marker = WriteHerdrMarker(rig, "0.1.0\nmods/ah2/index.html sha256 ab\n");
+        var before = File.ReadAllText(marker);
+
+        Assert.Equal(
+            ["the Wrangl mod in herdr desktop is older than the plugin (0.1.0 < 0.2.0); run `ah herdr install` to update it"],
+            HooksModule.HerdrModLines(rig.Services, PluginVersion));
+        Assert.Equal(before, File.ReadAllText(marker));
+    }
+
+    [Fact]
+    public void ACurrentOrNewerHerdrModMarkerGivesNothing()
+    {
+        var rig = new Rig();
+        WriteHerdrMarker(rig, "0.2.0\n");
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+
+        WriteHerdrMarker(rig, "0.3.0\n");
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+    }
+
+    [Fact]
+    public void NoHerdrModMarkerGivesNothing()
+    {
+        var rig = new Rig();
+
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+    }
+
+    [Fact]
+    public void AnEmptyNonVersionOrUnreadableHerdrModMarkerGivesNothingAndDoesNotThrow()
+    {
+        var rig = new Rig();
+        WriteHerdrMarker(rig, string.Empty);
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+
+        WriteHerdrMarker(rig, "not-a-version\n");
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+
+        // Non-ASCII digits are not a version (Versions.Compare would rank them 0.0.0).
+        WriteHerdrMarker(rig, "٢.٠\n");
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+
+        // A directory where the marker file should be: Exists says yes, the read fails.
+        var dir = rig.Sandbox.Home + "/.config/herdr-app/mods/ah2/.ah2-owned";
+        File.Delete(dir);
+        Directory.CreateDirectory(dir);
+        Assert.Empty(HooksModule.HerdrModLines(rig.Services, PluginVersion));
+    }
 }

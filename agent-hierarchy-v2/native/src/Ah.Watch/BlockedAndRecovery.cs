@@ -46,7 +46,8 @@ internal sealed record SessionOutcome(
     IReadOnlyList<GateAppend> Gates,
     IReadOnlyList<PeerAppend> PeerRows,
     IReadOnlyList<MemberResume>? Resumes = null,
-    IReadOnlyList<TurnEndRecord>? Traces = null);
+    IReadOnlyList<TurnEndRecord>? Traces = null,
+    IReadOnlyList<(string Session, bool Clear)>? ScreenClear = null);
 
 /// <summary>
 /// A resume due for a member whose turn ended on an API error: the entry for its own box, the note for the Orchestrator when the
@@ -237,6 +238,7 @@ internal static partial class BlockedEvents
         ArgumentNullException.ThrowIfNull(episodes);
         var events = new List<WatchEvent>();
         var gateRows = new List<GateAppend>();
+        var screenClear = new List<(string Session, bool Clear)>();
         var ledger = new List<JsonObject>(gates);
         IReadOnlyList<JsonObject>? agents = null;
         var agentsRead = false;
@@ -273,7 +275,7 @@ internal static partial class BlockedEvents
 
                 var rowTransport = row.Str("transport") ?? team.Doc.Str("transport");
                 var paneId = row.Str("transport_id");
-                var onHerdr = rowTransport == "herdr" && !string.IsNullOrEmpty(paneId);
+                var onHerdr = Ah.Core.Mux.HerdrFlavour.OnHerdr(JsonValue.FromObject(row), rowTransport) && !string.IsNullOrEmpty(paneId);
                 var herdrStatus = onHerdr ? AgentStatusOf(paneId!) : null;
                 var blockedBy = m.Live != false && m.Activity == "blocked"
                     ? (string.IsNullOrEmpty(m.BlockedBy) ? "unknown" : m.BlockedBy)
@@ -306,18 +308,28 @@ internal static partial class BlockedEvents
                     st.Since = at != 0 ? at : now;
                 }
 
+                // ah2-74 B1: every tick a blocked hook record holds, the screen is read once (the wake below reuses the read) and decides the
+                // sidebar's mark: a readable Claude screen with no prompt (the b458 case) sets screen_clear_at; a recognised prompt or an
+                // unreadable screen removes it. The wake's own timing is unchanged.
+                var kind = kindOf(row);
+                PromptRead? read = null;
+                if (onHerdr && kind == "claude" && m.Live != false && m.Activity == "blocked" && m.SessionId is { Length: > 0 } session)
+                {
+                    read = promptCore(row, team.Doc);
+                    screenClear.Add((session, read.Screen.Trim().Length > 0 && string.IsNullOrEmpty(read.Recognized)));
+                }
+
                 if (st.Polls < PollsToWake || st.Woke)
                 {
                     continue;
                 }
 
-                var kind = kindOf(row);
                 string? hash = null;
                 var excerpt = $"(screen not available) {blockedBy}";
                 var unrecognised = false;
                 if (onHerdr)
                 {
-                    var p = promptCore(row, team.Doc);
+                    var p = read ?? promptCore(row, team.Doc);
                     // b458: a Claude screen that can be read but shows no prompt's option block (a spinner, an empty composer,
                     // status boxes, a squeezed pane) is not blocked, whatever the hook record or herdr says; unless the same
                     // screen stays put for UnrecognisedWakeMs, which a real dialog in a layout the classifier misses would do.
@@ -408,7 +420,7 @@ internal static partial class BlockedEvents
             }
         }
 
-        return new SessionOutcome(events, gateRows, []);
+        return new SessionOutcome(events, gateRows, [], ScreenClear: screenClear);
     }
 
     private static JsonObject GateRow(string type, string sessionId, string? team, string member, string? role, string? blockedBy, string? hash, bool includeEvidence)

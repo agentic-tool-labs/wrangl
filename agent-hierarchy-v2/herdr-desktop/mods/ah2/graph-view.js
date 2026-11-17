@@ -6,15 +6,22 @@
 // Time: a scrubber under the maps, messages per minute over the run, with Run / 60 / 30 / 10 min windows; arcs outside the window
 // fade. It is Herdr's native Slider, so a drag never re-enters this script: the view redraws on release and on an arrow key
 // (one minute, STEP_MS), never per drag frame. Zoom: a click on a stream circle shows that stream alone; the crumb (or Esc) walks out.
-// Scale: − / + / Fit beside the tabs, ctrl or cmd + wheel about the pointer; a plain wheel pans a map larger than its frame. Herdr
-// gives mods no pinch and no drag events (gpui-kit typings: on_scroll_wheel, on_mouse_move, no pressed button), so neither is used.
+// Scale: − / + / Fit beside the tabs, and a mouse wheel (or ctrl or cmd + any wheel) about the pointer, eased as the web's stage is;
+// a trackpad's two-finger scroll pans a map larger than its frame (graph-model.js wheelAct). Herdr gives mods no pinch and no drag
+// events (gpui-kit typings: on_scroll_wheel, on_mouse_move, no pressed button), so neither is used.
+// Map | Flow: the header's mode tabs switch to the web's Flow (graph-model.js flowModel over the shared flow-model.js): cards in four
+// role columns, links between them, lanes as bands. Read-only as the Map is. The choice is kept in Herdr's shared store (GRAPH_KEY).
 
 import { div, PathBuilder, Background } from "gpui-kit";
+import { shared, setShared } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
-import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, fitView, rescaleTo, frameOf, LANE_PAD } from "./graph-model.js";
+import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
+  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale } from "./graph-model.js";
+import { GRAPH_KEY } from "./settings-model.js";
+import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
-import { loadingOf } from "./model.js";
+import { STATES, age, loadingOf } from "./model.js";
 import { stateMark } from "./marks.js";
 
 const MONO = "Geist Mono";
@@ -24,7 +31,45 @@ const dockSize = (depth) => (depth === 0 ? 300 : 260);
 const BAR = 48; // the weight bar's track: a link's messages against the team's busiest link
 const HIST = 40; // the scrubber's bars, tallest
 const CHIP = 8; // a stream's name chip rises this far above its circle (map(): top(c.y - c.r - 8))
-const WHEEL_PX = 100; // ctrl/cmd + wheel travel per zoom step; ponytail: a guess, untuned on a real trackpad
+const FRAME_MS = 16; // an eased zoom's frame
+
+// An eased zoom (spec herdr-graph-wheel-zoom D8): `by` multiplies the target (the one in motion, else the drawn scale), clamped, so
+// travel at a limit is dropped, not banked; `to` sets it (Fit). The drawn scale, graphScale, which the layout reads, moves to it along
+// the web's curve, relaid out once per frame about `at` (Map {id, x, y}, Flow {x, y}, null: each centre). Travel mid-move retargets
+// from the drawn scale. A frame waits for the redraw at the drawn scale (graphMemo's key[5]); the loop ends on the target, when
+// fitView clears graphEase, or a second after a frame nobody drew (a closed pane), and the view's close() cancels it.
+export function easeTo(v, cx, { by = 1, to = null, at = null }) {
+  const target = clampScale(to ?? (v.graphEase?.to ?? v.graphScale) * by);
+  if (target === (v.graphEase?.to ?? v.graphScale)) {
+    if (to !== null && !v.graphEase) { // Fit at scale 1 still recentres (fitView's pan reset)
+      v.graphPan = {};
+      cx.notify();
+    }
+    return;
+  }
+  v.graphEase = { from: v.graphScale, to: target, t0: Date.now(), at, fit: to !== null };
+  if (v.graphAnim && !v.graphAnim.is_done()) return; // the running loop takes the new target
+  v.graphAnim = cx.spawn(async (cx) => {
+    let drawn = Date.now();
+    while (v.graphEase) {
+      await cx.sleep(FRAME_MS);
+      const e = v.graphEase;
+      const memo = v.graphMemo;
+      if (!e) break;
+      if (memo?.key[5] !== v.graphScale || !memo.m) {
+        if (Date.now() - drawn > 1000) v.graphEase = null;
+        continue;
+      }
+      drawn = Date.now();
+      const s2 = easedScale(e.from, e.to, e.t0, drawn);
+      if (s2 === e.to) v.graphEase = null;
+      if (v.graphMode === "flow") flowRescale(v, memo.m, s2, e.at?.x ?? null, e.at?.y ?? null);
+      else rescaleTo(v, memo.m.groups, s2, e.at);
+      if (s2 === e.to && e.fit) v.graphPan = {}; // Fit lands centred, as fitView does
+      cx.notify();
+    }
+  });
+}
 
 // The scrubber's state on the view: window, cursor (ms, null at now), zoom, and the slider, which must be made outside render.
 export function graphInit(v) {
@@ -32,6 +77,10 @@ export function graphInit(v) {
   v.graphWindow = "run";
   v.graphCursor = null;
   drillTo(v, null); // graphZoom, graphScale, graphPan
+  const c = graphChoice(shared(GRAPH_KEY));
+  v.graphMode = c.mode;
+  v.graphOrient = c.orient; // remembered, or null: the stage's shape picks it once per pane (graphPicked)
+  v.graphPicked = null;
   v.graphKnob = KNOB; // the knob value this view last set; the slider holding another means a hand is on it
   v.graphSlider = SliderState.new({ min: 0, max: KNOB, step: 1, value: KNOB });
   v.graphSlider.on("release", (value, cx) => {
@@ -52,22 +101,36 @@ function syncKnob(v, sc) {
 
 const stop = (_e, cx) => cx.stop_propagation(); // a press on a control must not drag the window
 
-// graphModel only when an input changed: the slices (v.sliceGen, bumped by the poll), the shown team, window, cursor, zoom and
-// scale, the size (docked or not) and the minute (the scrubber's clock moves in whole minutes). A throw is kept the same way. A pan
-// is not an input: it only moves the laid-out map in its frame.
+// graphModel (flowModel in Flow) only when an input changed: the slices (v.sliceGen, bumped by the poll), the shown team, window,
+// cursor, zoom and scale, the size (docked or not), the minute (the scrubber's clock moves in whole minutes), the mode and orientation,
+// and in Flow the room (Flow fits its stage). A throw is kept the same way. A pan is not an input: it only moves what is laid out.
+const orientOf = (v) => v.graphOrient ?? v.graphPicked;
 function graphOf(v, docked) {
-  const key = [v.sliceGen, v.graphTeam, v.graphWindow, v.graphCursor, v.graphZoom, v.graphScale, docked, Math.floor(Date.now() / STEP_MS)];
+  const flow = v.graphMode === "flow";
+  const key = [v.sliceGen, v.graphTeam, v.graphWindow, v.graphCursor, v.graphZoom, v.graphScale, docked, Math.floor(Date.now() / STEP_MS),
+    v.graphMode, orientOf(v), flow ? v.graphRoom?.w : null, flow ? v.graphRoom?.h : null];
   const memo = v.graphMemo;
   if (memo && key.every((k, i) => k === memo.key[i])) return memo;
   let m = null;
   let error = null;
   const s = v.graphScale;
   try {
-    m = graphModel(v.st.slices, v.graphTeam, docked ? (d) => dockSize(d) * s : MAP_PX * s, v);
+    m = flow ? flowModel(v.st.slices, v.graphTeam, orientOf(v) ?? null, s, v.graphRoom ?? null)
+      : graphModel(v.st.slices, v.graphTeam, docked ? (d) => dockSize(d) * s : MAP_PX * s, v);
   } catch (e) {
     error = e?.message ?? String(e);
   }
+  // the stage's shape picked the orientation: it holds for this pane from now on
+  if (m?.picked && !orientOf(v)) v.graphPicked = m.picked;
   return (v.graphMemo = { key, m, error });
+}
+
+// Map | Flow, or Flow's other orientation: back at fit (Map's drill and Flow's pan never carry across), and remembered.
+function choose(v, patch, cx) {
+  Object.assign(v, patch);
+  drillTo(v, null);
+  setShared(GRAPH_KEY, { mode: v.graphMode, orient: v.graphOrient });
+  cx.notify();
 }
 
 export function graphView(v, t, close) {
@@ -78,14 +141,16 @@ export function graphView(v, t, close) {
   syncKnob(v, m.scrub);
   const loading = loadingOf(v, m.loaded);
   const zoom = (z) => drillTo(v, z);
+  const flow = v.graphMode === "flow";
   let body;
   if (v.status === "down") body = [note(t, v.reason, "Retrying")];
   else if (error) body = [note(t, "Graph unavailable", error)];
   else if (loading) body = [note(t, "Loading graph…")];
   else if (m.empty) body = [note(t, "No teams running.")];
   else if (m.closed) body = [note(t, "Team closed.")];
+  else if (flow) body = flowBody(t, m, v);
   else {
-    const parts = m.groups.map((g) => group(t, g, docked, (node) => zoom({ team: g.id, node }), v, m.groups));
+    const parts = m.groups.map((g) => group(t, g, docked, (node) => zoom({ team: g.id, node }), v));
     body = docked ? [...parts.flatMap((p) => p.map), ...parts.flatMap((p) => p.links)] : parts.flatMap((p) => [...p.map, ...p.links]);
   }
   const step = (by, cx) => {
@@ -114,11 +179,12 @@ export function graphView(v, t, close) {
 
   // The room a zoomed map may fill (frameOf): the body's laid-out size (on_size_change), less its side and bottom padding, the
   // map's top margin and its chip.
+  // Flow's stage is the same room less its legend row (flowModel), so Flow redraws on every change of it.
   const measure = (size, cx) => {
     const room = { w: Math.round(size.width - 32), h: Math.round(size.height - 12 - 12 - CHIP) };
     if (v.graphRoom?.w === room.w && v.graphRoom?.h === room.h) return;
     v.graphRoom = room;
-    if (v.graphScale > 1) cx.notify();
+    if (v.graphScale > 1 || v.graphMode === "flow") cx.notify();
   };
   return v_flex().id("root").size_full().min_h(0).bg(t.surface).text_size(12.5)
     .track_focus(v.keys)
@@ -136,13 +202,44 @@ export function graphView(v, t, close) {
     .child(h_flex().h(34).px(16).pt(8).gap(8).flex_none().items_center()
       .child(Tabs.new("graph-tabs").flex_1().min_w(0).gap(2).flex().items_center()
         .children(loading || v.status === "down" ? [] : m.tabs.map(tab)))
-      .children(scaleBar(v, t, m.groups)))
+      .child(modeTabs(v, t))
+      .children(flow ? [orientButton(v, t)] : [])
+      .children(scaleBar(v, t)))
     .when(Boolean(m.crumb), (el) => el.child(crumb(t, m.crumb, (_e, cx) => {
       zoom(null);
       cx.notify();
     })))
     .child(v_flex().id("graph-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_size_change(measure).children(body))
-    .child(scrubber(v, t, loading || v.status === "down" ? null : m.scrub));
+    .children(flow ? [] : [scrubber(v, t, loading || v.status === "down" ? null : m.scrub)]);
+}
+
+// Map | Flow, styled as the scrubber's window tabs.
+function modeTabs(v, t) {
+  const tab = (mode, name) => {
+    const on = v.graphMode === mode;
+    return Tab.new(`graph-mode-${mode}`).selected(on)
+      .h(24).px(8).flex().flex_none().items_center().whitespace_nowrap().rounded(6).cursor_pointer().text_size(11.5)
+      .border(1).border_color(on ? t.raised : t.surface).bg(on ? t.raised : t.surface).text_color(on ? t.foreground : t.muted)
+      .hover((el) => el.text_color(t.foreground)).focus((el) => el.border_color(t.accent))
+      .accessibility_label(`${name} layout`)
+      .on_mouse_down("left", stop)
+      .on_click((_e, cx) => (on ? null : choose(v, { graphMode: mode }, cx)))
+      // a Tab does not wire tooltip (herdr-app check warns); the label inside it does
+      .child(div().id(`graph-mode-${mode}-name`).tooltip(`Show the ${name}`).child(name));
+  };
+  return Tabs.new("graph-modes").gap(2).flex().flex_none().items_center().children([tab("map", "Map"), tab("flow", "Flow")]);
+}
+
+// Flow's orientation, as the web's toolbar button: ⇄ swaps horizontal and vertical.
+function orientButton(v, t) {
+  const vertical = orientOf(v) === "vertical";
+  return Button.new("graph-orient").h(24).min_w(24).px(6).flex().flex_none().items_center().justify_center().rounded(6)
+    .cursor_pointer().text_size(11.5).text_color(t.foreground).border(1).border_color(t.input)
+    .focus((el) => el.border_color(t.accent)).hover((el) => el.bg(t.hover))
+    .tooltip(vertical ? "Vertical ⇄ Horizontal" : "Horizontal ⇄ Vertical").accessibility_label("Switch between horizontal and vertical")
+    .on_mouse_down("left", stop)
+    .on_click((_e, cx) => choose(v, { graphOrient: vertical ? "horizontal" : "vertical" }, cx))
+    .child("⇄");
 }
 
 // The way back out of a zoom: the team (and lane), each a button to the whole team, then the stream shown.
@@ -160,25 +257,22 @@ function crumb(t, names, out) {
     ]));
 }
 
-// The scale controls: −, the scale, +, Fit. A step is ×SCALE_STEP about each map's centre; Fit is scale 1, centred.
-function scaleBar(v, t, groups) {
+// The scale controls: −, the scale, +, Fit. A step is ×SCALE_STEP about each map's centre; Fit is scale 1, centred. Both ease (easeTo).
+function scaleBar(v, t) {
   const s = v.graphScale;
   const btn = (id, text, tip, said, act) => Button.new(id).h(24).min_w(24).px(6).flex().flex_none().items_center().justify_center().rounded(6)
     .cursor_pointer().text_size(11.5).text_color(t.foreground).border(1).border_color(t.input)
     .focus((el) => el.border_color(t.accent)).hover((el) => el.bg(t.hover))
     .tooltip(tip).accessibility_label(said)
     .on_mouse_down("left", stop)
-    .on_click((_e, cx) => {
-      act();
-      cx.notify();
-    })
+    .on_click((_e, cx) => act(cx))
     .child(text);
   return [
-    btn("graph-scale-out", "−", "Zoom out (ctrl or cmd + scroll)", "Zoom out", () => rescaleTo(v, groups, s / SCALE_STEP)),
+    btn("graph-scale-out", "−", "Zoom out (scroll)", "Zoom out", (cx) => easeTo(v, cx, { by: 1 / SCALE_STEP })),
     div().w(40).flex_none().text_center().font_family(MONO).text_size(11).text_color(t.muted).accessibility_label(`Scale ${Math.round(s * 100)} percent`)
       .child(`${Math.round(s * 100)}%`),
-    btn("graph-scale-in", "+", "Zoom in (ctrl or cmd + scroll)", "Zoom in", () => rescaleTo(v, groups, s * SCALE_STEP)),
-    btn("graph-scale-fit", "Fit", "Fit the graph to the view", "Fit the graph to the view", () => fitView(v)),
+    btn("graph-scale-in", "+", "Zoom in (scroll)", "Zoom in", (cx) => easeTo(v, cx, { by: SCALE_STEP })),
+    btn("graph-scale-fit", "Fit", "Fit the graph to the view", "Fit the graph to the view", (cx) => easeTo(v, cx, { to: 1 })),
   ];
 }
 
@@ -247,14 +341,14 @@ const quiet = (t, text, pad) => div().pl(pad).py(4).text_size(11).text_color(t.m
 
 // One team: a lane gets its own header (the tab names the top team), then Members (the map) and Links, indented by depth.
 // { map, links }: docked, every team's map comes first, then the links, each section headed by its lane.
-function group(t, g, docked, zoomTo, v, groups) {
+function group(t, g, docked, zoomTo, v) {
   const pad = g.depth * LANE_PAD;
   const head = (mt) => (g.depth > 0 ? [h_flex().mt(mt).h(20).pl(pad - 14).gap(4).items_center().text_size(11).font_semibold().text_color(t.muted)
     .child(div().text_color(t.dim).child("↳")).child(div().min_w(0).truncate().child(g.name))] : []);
   const out = head(16);
   if (g.pending) return { map: [...out, quiet(t, "Loading…", pad)], links: [] };
   if (g.members.length === 0) out.push(label(t, "Members", 0, pad), quiet(t, "None", pad));
-  else out.push(h_flex().mt(12).pl(pad).flex_none().justify_center().child(map(t, g, zoomTo, v, groups)));
+  else out.push(h_flex().mt(12).pl(pad).flex_none().justify_center().child(map(t, g, zoomTo, v)));
   const links = docked && g.depth > 0 ? head(16) : [];
   links.push(label(t, g.windowed ? "Links in the window" : g.run ? "Links" : "Links, last hour", g.links.length, pad));
   if (g.links.length === 0) links.push(quiet(t, g.windowed ? "No messages in the window." : g.run ? "No messages yet this run." : "No open run.", pad));
@@ -273,13 +367,14 @@ const light = (hex) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 128;
 };
 
-// Commands from graph-layout.js bundle() into a native stroke; a report runs dashed (5 4), as on the web.
+// Commands from graph-layout.js bundle() or flow-model.js flowCmds into a native stroke; a report runs dashed (5 4), as on the web.
 function stroke(cmds, width, dash) {
   let b = PathBuilder.stroke(width);
   if (dash) b = b.dash_array([5, 4]);
   for (const c of cmds) {
     if (c[0] === "M") b = b.move_to(c[1], c[2]);
     else if (c[0] === "L") b = b.line_to(c[1], c[2]);
+    else if (c[0] === "Q") b = b.curve_to(c[3], c[4], c[1], c[2]);
     else b = b.cubic_bezier_to(c[5], c[6], c[1], c[2], c[3], c[4]);
   }
   return b.build();
@@ -296,7 +391,7 @@ function ring(c, r, share, width) {
 
 const layer = (path, color, size) => window.paint_path(path, color).absolute().top(0).left(0).size(size);
 
-function map(t, g, zoomTo, v, groups) {
+function map(t, g, zoomTo, v) {
   const m = g.map;
   const S = m.size;
   const s = v.graphScale;
@@ -327,23 +422,17 @@ function map(t, g, zoomTo, v, groups) {
   const said = `${g.name} map: ${m.leaves.length} members${m.containers.length ? ` in ${m.containers.length} circles` : ""}, ${m.arcs.length} message arcs. The links say who messages whom.`;
   const box = frameOf(F, s, v.graphRoom, g.depth * LANE_PAD);
   const pan = clampPan(v.graphPan[g.id], F, s, box);
-  // ctrl or cmd + wheel scales about the pointer in whole SCALE_STEPs (WHEEL_PX of wheel each), so a gesture relays the map out once
-  // per step, not once per wheel event; a plain wheel pans a map larger than its frame, else scrolls the body as before. Both read
-  // the view's state, not this render's; after a step they wait for its redraw (groups and F are laid out at the old scale).
-  // A positive delta.y is a scroll up (gpui-kit shell/src/tests/render.rs:10714, -200 scrolls a list down), so up zooms in.
+  // A zoom (wheelAct) eases about the pointer (easeTo); a pan moves a map larger than its frame, else the body scrolls as before. A pan
+  // waits for the redraw after a rescale (F and box are this render's). A positive delta.y is a scroll up (gpui-kit
+  // shell/src/tests/render.rs:10714, -200 scrolls a list down), so up zooms in.
   const wheel = (e, cx) => {
-    const stale = v.graphScale !== s;
-    if (e.modifiers.control || e.modifiers.platform) {
+    const act = wheelAct(e);
+    if (act?.zoom) {
       cx.stop_propagation();
-      v.graphWheel = (v.graphWheel ?? 0) + e.delta.y;
-      const n = Math.trunc(v.graphWheel / WHEEL_PX);
-      if (!n || stale) return;
-      v.graphWheel -= n * WHEEL_PX;
-      const at = e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null;
-      rescaleTo(v, groups, s * SCALE_STEP ** n, at) && cx.notify();
-    } else if (s > 1 && !stale) {
+      easeTo(v, cx, { by: act.zoom, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
+    } else if (act?.pan && s > 1 && v.graphScale === s) {
       const p = clampPan(v.graphPan[g.id], F, s, box);
-      v.graphPan[g.id] = clampPan({ x: p.x + e.delta.x, y: p.y + e.delta.y }, F, s, box);
+      v.graphPan[g.id] = clampPan({ x: p.x + act.pan.x, y: p.y + act.pan.y }, F, s, box);
       cx.stop_propagation();
       cx.notify();
     }
@@ -398,4 +487,93 @@ function link(t, g, l, i, pad, docked) {
     .child(div().w(bar).h(4).flex_none().rounded(2).bg(t.hover)
       .when(fill > 0, (el) => el.child(div().w(fill).h(4).rounded(2).bg(t.muted))))
     .child(div().w(28).flex_none().text_right().font_family(MONO).text_size(11).text_color(t.muted).child(String(l.n)));
+}
+
+// ---- Flow: graph-model.js flowModel, drawn as the web's Flow (graph.js FlowStage, r6-graph.css .gflow) in Herdr tokens ----
+
+// The stage (bands, links, column labels, cards, the in-flight marks) at its pan, then the legend. Text scales with the drawn scale k,
+// as the web's does under its transform; the marks, the legend and "+N more" do not.
+function flowBody(t, m, v) {
+  if (m.pending) return [quiet(t, "Loading…", 0)];
+  if (m.cards.length === 0) return [label(t, "Members", 0, 0), quiet(t, "None", 0)];
+  const k = m.k;
+  const s = v.graphScale;
+  const sized = (el) => el.absolute().top(0).left(0).w(m.size.w).h(m.size.h);
+  const els = [];
+  m.bands.forEach((b, i) => els.push(div().id(`gfb-${i}`).absolute().left(b.x).top(b.y).w(b.w).h(b.h).rounded(6).bg(t.hover)
+    .child(div().absolute().left(8).top(2).max_w(Math.max(0, b.w - 16)).truncate().text_size(11 * k).text_color(t.muted).child(b.name))));
+  for (const l of m.links) {
+    const w = Math.max(1, (l.kind === "edge" ? 1 : 2) * k);
+    els.push(sized(window.paint_path(stroke(l.cmds, w, l.kind === "review"), l.kind === "edge" ? t.muted : t.accent)));
+  }
+  m.labels.forEach((l) => els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).font_semibold().text_color(t.muted).child(l.text)));
+  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k)));
+  m.dots.forEach((d, i) => els.push(div().id(`gfd-${i}`).absolute().left(d.x - 4).top(d.y - 4).size(8).rounded(4)
+    .bg(t.accent).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title)));
+  const pan = flowPan(v.graphPan.flow, m.size, m.stage);
+  const big = m.size.w > m.stage.w || m.size.h > m.stage.h;
+  // As the Map's: a zoom eases about the pointer; a pan moves content larger than the stage, else bubbles to the body, and waits for
+  // the redraw after a rescale (m is laid out at this render's scale).
+  const wheel = (e, cx) => {
+    const act = wheelAct(e);
+    if (act?.zoom) {
+      cx.stop_propagation();
+      easeTo(v, cx, { by: act.zoom, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
+    } else if (act?.pan && big && v.graphScale === s) {
+      const p = flowPan(v.graphPan.flow, m.size, m.stage);
+      v.graphPan = { flow: flowPan({ x: p.x + act.pan.x, y: p.y + act.pan.y }, m.size, m.stage) };
+      cx.stop_propagation();
+      cx.notify();
+    }
+  };
+  const stage = div().id("gflow").relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)
+    .child(div().id("gflow-in").absolute().left(pan.x).top(pan.y).w(m.size.w).h(m.size.h).children(els))
+    .when(m.rest > 0, (el) => el.child(div().absolute().top(8).right(8).text_size(11).text_color(t.muted).child(`+${m.rest} more briefs`)));
+  return [stage, flowLegend(t)];
+}
+
+// What the links mean, under the stage: the same strokes as the links, at legend size.
+function flowLegend(t) {
+  const key = (swatch, text) => h_flex().gap(6).flex_none().items_center().child(swatch).child(text);
+  const dashed = window.paint_path(stroke([["M", 0, 1], ["L", 14, 1]], 2, true), t.accent).w(14).h(2).flex_none();
+  return h_flex().id("gflow-legend").h(LEGEND_H).gap(12).flex_none().items_center().text_size(11).text_color(t.muted)
+    .accessibility_label("Flow legend: accent line, brief in flight; dashed accent, sent for review; muted line, reporting line")
+    .child(key(div().w(14).h(2).flex_none().bg(t.accent), "brief in flight"))
+    .child(key(dashed, "sent for review"))
+    .child(key(div().w(14).h(1).flex_none().bg(t.muted), "reporting line"))
+    .child(div().flex_1().min_w(0).truncate().child("Idle members are one line; a time is the last activity"));
+}
+
+// One member: a card when it is working, blocked or running (accent border, the tag, a stats line), else one line. A field with no
+// source is not drawn (the web's FlowCard).
+function flowCard(t, c, i, k) {
+  const s = c.card;
+  const r = c.rect;
+  const reviewing = s.role === "reviewer" && s.state === "working";
+  const state = s.running ? "running" : STATES[s.state] ? s.state : "unknown";
+  const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
+  const duty = DUTY[s.duty] ?? null;
+  const ago = s.lastAt > 0 ? age(Date.now() - s.lastAt) : "";
+  const tag = c.active ? (reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
+    : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
+  const head = h_flex().gap(8 * k).items_center().min_w(0)
+    .child(stateMark(t, state))
+    .child(div().flex_1().min_w(0).truncate().text_size(12.5 * k).text_color(t.foreground).when(c.active, (el) => el.font_semibold()).child(s.name))
+    .children(duty ? [div().flex_none().text_size(11 * k).text_color(t.muted).child(duty)] : [])
+    .children(tag ? [div().flex_none().text_size(11 * k).text_color(c.active ? t.accent : t.muted).child(tag)] : []);
+  const cell = (value, unit) => h_flex().gap(4 * k).flex_none().child(div().font_semibold().text_color(t.foreground).child(String(value))).children(unit ? [unit] : []);
+  const stats = c.active ? [
+    s.orchestrator ? cell(c.out, "out") : null,
+    s.orchestrator && s.decisions !== null ? cell(s.decisions, "dec") : null,
+    s.role === "implementor" && s.round ? cell(s.round) : null,
+    ago ? h_flex().gap(4 * k).flex_none().child("active").child(div().font_semibold().text_color(t.foreground).child(ago)) : null,
+  ].filter(Boolean) : [];
+  const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
+  return v_flex().id(`gfc-${i}`).absolute().left(r.x).top(r.y).w(r.w).h(r.h).px(10 * k).py(8 * k).gap(8 * k).when(!c.active, (el) => el.justify_center()).overflow_hidden()
+    .rounded(6).border(1).border_color(c.active ? t.accent : t.border).bg(c.active ? t.selected : t.raised)
+    .when(s.state === "gone", (el) => el.opacity(0.4))
+    .tooltip([s.full, s.role, word].filter(Boolean).join(" · ")).accessibility_label(said)
+    .child(head)
+    .when(c.active, (el) => el.child(div().h(1).flex_none().bg(t.border))
+      .when(stats.length > 0, (el2) => el2.child(h_flex().gap(8 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats))));
 }

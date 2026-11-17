@@ -244,6 +244,10 @@ internal class FakeHost : IWatchHost
 
     void IWatchHost.AppendPeerRows(IReadOnlyList<PeerAppend> rows) => AppendedPeers.AddRange(rows.Select(static r => r.Row));
 
+    internal List<(string Home, string Session, bool Clear, double AtMs)> ScreenClearMarks { get; } = [];
+
+    void IWatchHost.MarkScreenClear(string home, string sessionId, bool clear, double atMs) => ScreenClearMarks.Add((home, sessionId, clear, atMs));
+
     void IWatchHost.MarkSurfaced(string sessionId, IReadOnlyList<string> requestIds) => Surfaced.AddRange(requestIds);
 
     void IWatchHost.RecordWatchEvents(string sessionId, IReadOnlyList<WatchEvent> events) => Logged.AddRange(events);

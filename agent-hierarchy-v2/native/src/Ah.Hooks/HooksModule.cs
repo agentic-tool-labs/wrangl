@@ -37,6 +37,13 @@ public static class HooksModule
     public static IReadOnlyList<string> InstallStampLines(GateServices services, IInstallStampHost host, string pluginVersion) =>
         InstallStampNotice.Lines(services, host, pluginVersion);
 
+    /// <summary>The context line SessionStart adds when the herdr desktop mod's marker is older than the plugin (zero or one). Never throws.</summary>
+    public static IReadOnlyList<string> HerdrModLines(GateServices services, string pluginVersion) =>
+        HerdrModNotice.Lines(services, pluginVersion);
+
+    /// <summary>The herdr desktop home: <c>$HERDR_APP_HOME</c> when set, else <c>~/.config/herdr-app</c>; null when it is set but not absolute.</summary>
+    public static string? HerdrAppHome(IAhEnvironment env) => HerdrModNotice.Home(env);
+
     public static bool Implements(string name) => name == HookHost.ChainName || Units.Any(u => u.Name == name);
 
     internal static IReadOnlyList<GateUnit> Units { get; } = [.. GateUnits.All, .. AdvisoryUnits.All];

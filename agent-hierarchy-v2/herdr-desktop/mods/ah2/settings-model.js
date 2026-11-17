@@ -20,6 +20,8 @@ export const DESK_KEY = "ah2.desk";
 // The open Desk window (main.js desk copy): {overlay, view, max} while open, {view, max} (its last tab and size) once closed, null
 // never seen. An opener that finds it open adds `want: <tab>` and the window switches to it (reopening the key would replace it).
 export const DESK_WINDOW_KEY = "ah2.desk-window";
+// The Graph's Map | Flow choice and Flow's orientation, {mode, orient} (graph-view.js; read by graph-model.js graphChoice).
+export const GRAPH_KEY = "ah2.graph";
 // The Desk window's size, in one place so it can become a setting (atp-1727).
 export const DESK_WINDOW_SIZE = { width: 620, height: 720 };
 // Maximized (atp-1727): Herdr reads a size up to 1 as a share of its window (herdr-app src/window.rs open_overlay), so this is

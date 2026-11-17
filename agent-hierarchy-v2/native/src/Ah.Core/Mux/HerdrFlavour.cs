@@ -53,4 +53,10 @@ public static class HerdrFlavour
     /// <summary>The flavour a member row was stamped with at spawn, or null when it carries none.</summary>
     public static string? OfMember(JsonValue? member) =>
         member is { IsMap: true } m && m.Member(Field) is { IsText: true } f && f.AsString() is Tui or Core ? f.AsString() : null;
+
+    /// <summary>
+    /// Whether <paramref name="member"/> lives on herdr: <paramref name="transport"/> (the row's, else its team's) is <c>"herdr"</c>, or the row
+    /// was stamped with a flavour at spawn (<see cref="OfMember"/>). An implicit team is written before any transport is known and keeps none.
+    /// </summary>
+    public static bool OnHerdr(JsonValue? member, string? transport) => transport == "herdr" || OfMember(member) is not null;
 }

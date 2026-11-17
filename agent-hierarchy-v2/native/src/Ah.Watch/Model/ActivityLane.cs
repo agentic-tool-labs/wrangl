@@ -109,6 +109,12 @@ internal sealed class ActivityLane(IViewStateReader reader, Func<IReadOnlyList<s
             ["tool_at"] = Text(record, "tool_at") ?? JsonValue.Null,
             ["turn_at"] = Text(record, "turn_at") ?? JsonValue.Null,
         };
+
+        // ah2-74: the watcher's mark that it read the screen and found no prompt; carried only when present
+        if (Text(record, "screen_clear_at") is { } clear)
+        {
+            body["screen_clear_at"] = clear;
+        }
         body["context"] = record.Member("context") is { IsMap: true } context
             ? JsonValue.FromObject(new JsonObject
             {

@@ -190,6 +190,13 @@ public interface IWatchHost : IRecoveryHost
     /// <summary>Appends gate rows (<c>appendGateRouted</c>).</summary>
     void AppendGates(IReadOnlyList<GateAppend> gates);
 
+    /// <summary>
+    /// Sets (<paramref name="clear"/>: its screen was read and shows no prompt) or removes the <c>screen_clear_at</c> mark on the activity
+    /// record of session <paramref name="sessionId"/> under <paramref name="home"/> and its other copy, at <paramref name="atMs"/> (ah2-74).
+    /// A mark already set is kept; nothing else in the record changes.
+    /// </summary>
+    void MarkScreenClear(string home, string sessionId, bool clear, double atMs);
+
     /// <summary>Appends peer-record rows.</summary>
     void AppendPeerRows(IReadOnlyList<PeerAppend> rows);
 
@@ -776,6 +783,11 @@ internal sealed class WatchTick
             member => host.DispatchBaseMs(sid, member),
             _episodes);
         host.AppendGates(blocked.Gates);
+        foreach (var (session, clear) in blocked.ScreenClear ?? [])
+        {
+            host.MarkScreenClear(home, session, clear, now);
+        }
+
         events.AddRange(blocked.Events);
         Lap("blocked");
 

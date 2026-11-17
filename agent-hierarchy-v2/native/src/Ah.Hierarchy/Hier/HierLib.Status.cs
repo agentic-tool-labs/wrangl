@@ -550,6 +550,48 @@ internal sealed partial class HierLib : IHierarchyStatus
     });
 
     /// <summary>
+    /// <c>activity.mark</c> in the database: sets <c>screen_clear_at</c> to <c>at</c> in the record of <c>subject</c> under <c>dir</c> and
+    /// <c>mirror_dir</c>, where that row exists and holds no mark yet, and changes nothing else in it; <c>{written}</c> says whether any row
+    /// changed. The watcher's mark that it read the member's screen and found no prompt on it (ah2-74); a later hook write drops it.
+    /// </summary>
+    internal OpResult ActivityMarkDb(OpCall call, IDbOpTransaction tx) => OpArgs.Run(call, args =>
+        args.Member("at") is { IsText: true } at
+            ? ScreenClearWrite(tx, args, "json_set(body, '$.screen_clear_at', ?3)", "IS NULL", at.AsString())
+            : new JsonObject { ["written"] = false });
+
+    /// <summary><c>activity.unmark</c> in the database: removes <c>screen_clear_at</c> from those rows where it is set, as <c>activity.mark</c> sets it.</summary>
+    internal OpResult ActivityUnmarkDb(OpCall call, IDbOpTransaction tx) => OpArgs.Run(call, args =>
+        ScreenClearWrite(tx, args, "json_remove(body, '$.screen_clear_at')", "IS NOT NULL", null));
+
+    private JsonObject ScreenClearWrite(IDbOpTransaction tx, JsonValue args, string body, string when, string? at)
+    {
+        var dir = TextOf(args.Member("dir"));
+        if (ActivityFile(args.Member("subject")) is null || string.IsNullOrEmpty(dir))
+        {
+            return new JsonObject { ["written"] = false };
+        }
+
+        var subject = args.Member("subject")!.Value.AsString();
+        var changed = 0L;
+        foreach (var target in new[] { dir, ActivityMirror(args.Member("mirror_dir"), dir) }.OfType<string>())
+        {
+            var sql = $"UPDATE activity SET body = {body} WHERE hier_dir = ?1 AND session_id = ?2 AND json_valid(body) AND json_extract(body, '$.screen_clear_at') {when}";
+            if (at is null)
+            {
+                tx.Execute(sql, MsgRows.PoolKey(target), subject);
+            }
+            else
+            {
+                tx.Execute(sql, MsgRows.PoolKey(target), subject, at);
+            }
+
+            changed += Changes(tx);
+        }
+
+        return new JsonObject { ["written"] = changed > 0 };
+    }
+
+    /// <summary>
     /// <c>activity.put</c> (in-process only): stores <c>body</c> (JSON text) as the record of <c>subject</c> under <c>dir</c>, written at
     /// <c>updated_at_ms</c> (now when absent), as given; <c>{written: true}</c>.
     /// </summary>
@@ -988,6 +1030,35 @@ internal sealed partial class HierLib : IHierarchyStatus
             }
 
             var result = Call(PoolContext(dir), "activity", "record", args, hook);
+            return JsonText.Parse(result.ResultJson.Span).Member("written") is { IsBool: true } w && w.AsBool();
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public bool MarkScreenClearRouted(string dir, JsonValue subject, string? at, string? mirrorDir = null)
+    {
+        if (string.IsNullOrEmpty(dir) || !Exists(dir))
+        {
+            return false;
+        }
+
+        try
+        {
+            var args = new JsonObject { ["dir"] = dir, ["subject"] = subject };
+            if (at is not null)
+            {
+                args["at"] = at;
+            }
+
+            if (!string.IsNullOrEmpty(mirrorDir))
+            {
+                args["mirror_dir"] = mirrorDir;
+            }
+
+            var result = Call(PoolContext(dir), "activity", at is null ? "unmark" : "mark", args);
             return JsonText.Parse(result.ResultJson.Span).Member("written") is { IsBool: true } w && w.AsBool();
         }
         catch (Exception)

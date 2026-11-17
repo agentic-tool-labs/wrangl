@@ -65,6 +65,24 @@ public sealed class ReadModelWriteRelayModeTests : IDisposable
         return spy.Emitted;
     }
 
+    // ah2-74 G4: a screen-clear mark or unmark that changed a row is told to the activity lane as a hook's record is; negatives: one that
+    // changed nothing (sent every blocked tick) is not, nor is put, which no hook sends
+    [Theory]
+    [InlineData("mark", true, true)]
+    [InlineData("unmark", true, true)]
+    [InlineData("mark", false, false)]
+    [InlineData("unmark", false, false)]
+    [InlineData("put", true, false)]
+    public void AScreenClearMarkReReadsTheMembersActivitySlice(string op, bool written, bool told)
+    {
+        var relay = new ReadModelWriteRelay(() => 0);
+        var spy = new Spy();
+        relay.Attach(spy);
+        relay.Wrote("activity", op, Encoding.UTF8.GetBytes("""{"dir":"/w/.claude/ah2","mirror_dir":"/m/.claude/ah2","subject":"s1"}"""), Encoding.UTF8.GetBytes(written ? """{"written":true}""" : """{"written":false}"""));
+
+        Assert.Equal(told, spy.Emitted.Contains(("activity", WatchModule.ActivityKey("/m/.claude/ah2", "s1"))));
+    }
+
     /// <summary>
     /// per-dir-files-to-db S11e: a grants write changes only rows, so no grants file event re-reads the Worktrees lane; the daemon-served
     /// write itself names the lane's key (dir and team).

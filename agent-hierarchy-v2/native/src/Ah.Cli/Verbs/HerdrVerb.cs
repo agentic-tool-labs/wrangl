@@ -30,14 +30,12 @@ internal static partial class HerdrVerb
             return 2;
         }
 
-        var set = context.Env.GetVariable("HERDR_APP_HOME");
-        if (set is { Length: > 0 } && !Path.IsPathRooted(set))
+        if (Ah.Hooks.HooksModule.HerdrAppHome(context.Env) is not { } home)
         {
-            stderr.WriteLine($"ah herdr: HERDR_APP_HOME must be an absolute path, not {set}; nothing changed");
+            stderr.WriteLine($"ah herdr: HERDR_APP_HOME must be an absolute path, not {context.Env.GetVariable("HERDR_APP_HOME")}; nothing changed");
             return 2;
         }
 
-        var home = set is { Length: > 0 } ? set : Path.Combine(context.Env.HomeDirectory, ".config", "herdr-app");
         var mod = Full(home, ModRel);
         var marker = Path.Combine(mod, Marker);
         var layout = Full(home, LayoutRel);

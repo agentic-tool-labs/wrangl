@@ -1134,7 +1134,9 @@ internal static class SummaryData
             var lastLifeMs = Math.Max(Math.Max(atMs, record is { IsAbsent: false } ? record.AsOfMs : 0), registeredMs);
             var claude = team.Row(member) is not { } memberRow || LaneParts.Text(memberRow, "kind") is null or "" or "claude";
             var verdict = VerdictOf(registration?.Value, peers?.Member(member), processLane, lastLifeMs, nowMs, observedAtMs ?? nowMs, referenceSeen, claude, member);
-            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? "unknown" : activity == "idle" ? "idle" : activity is "blocked" or "failed" ? "blocked" : "working";
+            // ah2-74 B3: a blocked record whose screen the watcher read this episode and found no prompt on (screen_clear_at set) is working
+            var screenClear = activity == "blocked" && record is { IsAbsent: false } && LaneParts.Text(record.Value, "screen_clear_at") is { Length: > 0 };
+            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? "unknown" : activity == "idle" ? "idle" : screenClear ? "working" : activity is "blocked" or "failed" ? "blocked" : "working";
             var context = MemberComposer.ContextOf(record);
             var contextPct = ContextReading.Of((team.Row(member) is { } modelRow ? LaneParts.Text(modelRow, "model") : null) ?? context.Model, context.Used).Pct;
             // The Orchestrator records no activity through its turns, only whether one is open (ah2-62); it counts only while the session is live.

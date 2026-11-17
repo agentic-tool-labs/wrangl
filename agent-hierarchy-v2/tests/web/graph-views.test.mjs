@@ -324,6 +324,24 @@ test("the same line goes round when Flow is vertical", () => {
   assert.match(d, / L 32 640$/, "and arrives at the reviewer's");
 });
 
+test("Flow's path commands (flow-model.js, shared with the Herdr mod) serialise to the very d strings the web drew before the move", async () => {
+  const { flowCmds, pathText } = await import("../../web/ui/flow-model.js");
+  const swap = (r) => ({ x: r.y, y: r.x, w: r.h, h: r.w });
+  const [a, b] = [swap(LEAD), swap(TARGET)];
+  const cases = [
+    [[{ x: 0, y: 0, w: 100, h: 40 }, { x: 300, y: 100, w: 100, h: 40 }, "horizontal"], "M 100 20 C 200 20 200 120 300 120"],
+    [[{ x: 0, y: 0, w: 100, h: 40 }, { x: 0, y: 200, w: 100, h: 40 }, "vertical"], "M 50 40 C 50 120 50 120 50 200"],
+    [[LEAD, TARGET, "horizontal", [LEAD, TARGET, ...MIDDLE]], "M 220 232 L 236 232 Q 244 232 244 224 L 244 -1 Q 244 -9 252 -9 L 608 -9 Q 616 -9 616 -1 L 616 24 Q 616 32 624 32 L 640 32"],
+    [[a, b, "vertical", [a, b, ...MIDDLE.map(swap)]], "M 232 220 L 232 236 Q 232 244 224 244 L -1 244 Q -9 244 -9 252 L -9 608 Q -9 616 -1 616 L 24 616 Q 32 616 32 624 L 32 640"],
+  ];
+  for (const [args, d] of cases) {
+    const cmds = flowCmds(...args);
+    assert.equal(pathText(cmds), d);
+    assert.equal(G.flowPath(...args), d);
+    assert.equal(cmds.some((c) => c[0] === "Q"), args.length > 3, "a railed link turns its corners with Q; a plain one does not");
+  }
+});
+
 // One FlowCard on the slices a member's state comes from: `served` is its row in the team summary, `activity` its activity slice.
 async function flowCard(name, { role = "implementor", served, activity, team = "ah2-tm4", pipeline = {} }) {
   const { installDom, settle: drawn } = await import("./dom.mjs");

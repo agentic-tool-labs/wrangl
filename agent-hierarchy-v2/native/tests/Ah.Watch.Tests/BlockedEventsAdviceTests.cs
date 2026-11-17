@@ -80,6 +80,120 @@ public sealed class BlockedEventsAdviceTests
         Assert.Equal(1, BlockedEventsAfterTwoPolls("claude", "Do you want to proceed?\n❯ 1. Yes\n  2. No\n", "permission"));
     }
 
+    // ah2-74: a member of the Orchestrator's implicit team: neither its row nor the team records a transport; spawn stamped the flavour.
+    private static (SessionOutcome First, SessionOutcome Second, int Reads) ImplicitTeamPolls(string? flavour, string screen, string? recognized)
+    {
+        var (outcomes, reads) = ImplicitTeamTicks(flavour, (screen, recognized), (screen, recognized));
+        return (outcomes[0], outcomes[1], reads);
+    }
+
+    /// <summary>One tick per screen of <paramref name="ticks"/>, the hook record staying blocked throughout.</summary>
+    private static (List<SessionOutcome> Outcomes, int Reads) ImplicitTeamTicks(string? flavour, params (string Screen, string? Recognized)[] ticks)
+    {
+        var row = new JsonObject { ["name"] = "m1", ["transport_id"] = "t14s" };
+        if (flavour is not null)
+        {
+            row["herdr_flavour"] = flavour;
+        }
+
+        var team = new OwnedTeam(null, new JsonObject { ["transport"] = JsonValue.Null, ["implicit"] = true }, [new MemberView("m1", row, true, "blocked", "permission", "2026-11-17T13:10:00.000Z", "s1")]);
+        var episodes = new BlockedEpisodes();
+        var reads = 0;
+        var outcomes = new List<SessionOutcome>();
+        foreach (var tick in ticks)
+        {
+            outcomes.Add(BlockedEvents.Evaluate(
+                "sess", "/w", 1_000_000, "/w/.claude/ah2", "/r/bin/ah roster", [team], [], () => [], (_, _) =>
+                {
+                    reads++;
+                    return new PromptRead(Hash, tick.Screen, tick.Recognized);
+                },
+                _ => "claude", (_, _) => null, _ => 0, episodes));
+        }
+
+        return (outcomes, reads);
+    }
+
+    private const string Spinner = "✻ Pausing… dramatically… (1m 39s)\n\n❯ \n";
+
+    private const string Dialog = "Do you want to proceed?\n❯ 1. Yes\n  2. No\n";
+
+    private static int Wakes(SessionOutcome outcome) => outcome.Gates.Count(static g => g.Row.Str("type") == "blocked-wake");
+
+    [Fact]
+    public void AnImplicitTeamHerdrCoreMemberWhoseReadableScreenShowsNoPromptRaisesNoWakeAndNoAlert()
+    {
+        var (first, second, reads) = ImplicitTeamPolls("core", "✻ Pausing… dramatically… (1m 39s)\n\n❯ \n", null);
+
+        // one read per tick (B1), the second reused by the wake
+        Assert.Equal(2, reads);
+        Assert.Empty(first.Events.Concat(second.Events));
+        Assert.Equal(0, Wakes(first) + Wakes(second));
+        Assert.Equal([("s1", true)], first.ScreenClear!);
+        Assert.Equal([("s1", true)], second.ScreenClear!);
+    }
+
+    // B1: the mark set on a no-prompt tick is removed on the tick that reads the real dialog, which wakes as before
+    [Fact]
+    public void ATickThatReadsARecognisedPromptRemovesTheMark()
+    {
+        var (outcomes, reads) = ImplicitTeamTicks("core", (Spinner, null), (Dialog, "permission"));
+
+        Assert.Equal(2, reads);
+        Assert.Equal([("s1", true)], outcomes[0].ScreenClear!);
+        Assert.Equal([("s1", false)], outcomes[1].ScreenClear!);
+        Assert.Equal(1, Wakes(outcomes[1]));
+    }
+
+    // B1: an unreadable tick removes the mark (it fails toward showing blocked)
+    [Fact]
+    public void AnUnreadableTickRemovesTheMark()
+    {
+        var (outcomes, _) = ImplicitTeamTicks("core", (Spinner, null), ("  \n", null));
+
+        Assert.Equal([("s1", true)], outcomes[0].ScreenClear!);
+        Assert.Equal([("s1", false)], outcomes[1].ScreenClear!);
+    }
+
+    // negative: a member whose hook record is not blocked is neither read nor marked
+    [Fact]
+    public void AMemberNotBlockedByItsHookRecordIsNeitherReadNorMarked()
+    {
+        var row = new JsonObject { ["name"] = "m1", ["transport_id"] = "t14s", ["herdr_flavour"] = "core" };
+        var team = new OwnedTeam(null, new JsonObject { ["transport"] = JsonValue.Null }, [new MemberView("m1", row, true, "working", null, "2026-11-17T13:10:00.000Z", "s1")]);
+        var reads = 0;
+        var outcome = BlockedEvents.Evaluate(
+            "sess", "/w", 1_000_000, "/w/.claude/ah2", "/r/bin/ah roster", [team], [], () => [], (_, _) =>
+            {
+                reads++;
+                return new PromptRead(Hash, Spinner, null);
+            },
+            _ => "claude", (_, _) => null, _ => 0, new BlockedEpisodes());
+
+        Assert.Equal(0, reads);
+        Assert.Empty(outcome.ScreenClear!);
+    }
+
+    [Fact]
+    public void AnImplicitTeamHerdrCoreMemberAtARecognisedPromptRaisesTheWakeAndTheAlert()
+    {
+        var (first, second, _) = ImplicitTeamPolls("core", "Do you want to proceed?\n❯ 1. Yes\n  2. No\n", "permission");
+
+        Assert.Empty(first.Events);
+        Assert.Contains("is BLOCKED at a prompt", Assert.Single(second.Events).Text, StringComparison.Ordinal);
+        Assert.Equal(1, Wakes(second));
+    }
+
+    // negative: a row with no transport and no flavour stamp is not on herdr: no screen read, and today's UNCONFIRMED wording
+    [Fact]
+    public void AnImplicitTeamMemberWithNoFlavourStampIsNotReadAndStaysUnconfirmed()
+    {
+        var (_, second, reads) = ImplicitTeamPolls(null, "✻ Pausing… dramatically… (1m 39s)\n\n❯ \n", null);
+
+        Assert.Equal(0, reads);
+        Assert.Contains("UNCONFIRMED: its screen could not be read", Assert.Single(second.Events).Text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AnUnreadableClaudeScreenStillRaisesTheBlockedEventOnTheRecordAlone()
     {
