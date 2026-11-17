@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { qaModel, qaSubs, canSend, sendAnswer, readThread, NO_REPLY, applyReply, sitrepModel, loadingOf, sidebarModel, terminalFinder, deskModel, needsMark, counts, historyReply, threadStart } from "../../herdr-desktop/mods/ah2/model.js";
+import { qaModel, qaSubs, canSend, sendAnswer, readThread, NO_REPLY, applyReply, sitrepModel, loadingOf, sidebarModel, terminalFinder, deskModel, needsMark, counts, historyReply, threadStart, retryMs, QUICK_RETRY_MS } from "../../herdr-desktop/mods/ah2/model.js";
 import { answerBody, dismissBody, toggle, NO_PICK, threadOf } from "../../web/ui/questions-model.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -263,4 +263,15 @@ test("a team with waiting items and no pipeline run still gets its For you cards
   assert.equal(m.teams.length, 1);
   assert.equal(m.teams[0].cards.length, 1);
   assert.equal(m.teams[0].cards[0].kind, "item");
+});
+
+test("after a failed poll the retry stays at or under 8 s for the first 2 minutes down, then takes the 16 s and 30 s steps (ah2-122 D5)", () => {
+  const steps = [2000, 4000, 8000, 16000, 30000];
+  assert.deepEqual([0, 1, 2, 3, 4, 9].map((f) => retryMs(steps, f, 0)), [2000, 4000, 8000, 8000, 8000, 8000]);
+  assert.equal(retryMs(steps, 4, QUICK_RETRY_MS - 1), 8000, "the last moment of the quick window");
+  // the nearest inputs that must not be held: 2 minutes down exactly, and later
+  assert.equal(retryMs(steps, 3, QUICK_RETRY_MS), 16000);
+  assert.equal(retryMs(steps, 4, QUICK_RETRY_MS), 30000);
+  assert.equal(retryMs(steps, 9, 10 * QUICK_RETRY_MS), 30000);
+  assert.equal(retryMs(steps, 0, QUICK_RETRY_MS), 2000, "early steps are not raised");
 });

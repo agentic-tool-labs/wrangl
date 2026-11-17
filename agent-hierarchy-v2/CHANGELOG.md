@@ -4,6 +4,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.5] - 2026-11-17
+
+### Fixed
+
+- **herdr desktop no longer says "ahd not running" across a plugin update.** After an update the new `ah` could run
+  beside the previous `ahd` until a session replaced it, and the Wrangl mod's reads were refused in that time. The
+  mod's read is now answered by a running daemon of an older version (same protocol); nothing else is, and no read
+  stops or starts a daemon. After any failure the mod also retries at most every 8 s for its first two minutes down.
+- **`ah where` exists.** It prints what `ahd where` prints. The herdr mod has always asked `ah where`, so until now it
+  never found the daemon's local HTTP port, and the build notices added in 2.0.4 did not appear in herdr desktop.
+  Run `ah herdr install` again to get the mod's part of this.
+
 ## [2.0.4] - 2026-11-17
 
 ### Added

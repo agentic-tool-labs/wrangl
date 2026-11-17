@@ -1770,6 +1770,36 @@ public sealed class ClientTests
     }
 
     [Fact]
+    public async Task AnAnyVersionRequestIsAnsweredByAnOlderDaemonAndAPlainOneIsNot()
+    {
+        // ah2-122 D3: the herdr mod's `ah view events` against the daemon an update left running
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            Assert.Equal(200, (await rig.Client.RequestAsync(new DaemonRequest("GET", "/v1/health"))).Status);
+            var first = rig.Daemons.Single();
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+
+            var any = await rig.Client.RequestAsync(new DaemonRequest("GET", "/v1/health", StartIfDown: false, AnyVersion: true));
+            Assert.Equal(200, any.Status);
+            Assert.Equal("1.0.0", Parse(System.Text.Encoding.UTF8.GetString(any.Body.Span))["version"].AsString());
+
+            // the nearest request that must not be answered: the same one without the flag, as before
+            var plain = await rig.Client.RequestAsync(new DaemonRequest("GET", "/v1/health", StartIfDown: false));
+            Assert.Equal(0, plain.Status);
+            Assert.Equal("down", plain.FallbackReason);
+
+            // neither drained, replaced or started anything
+            Assert.False(first.Exited);
+            Assert.Single(rig.Daemons);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
     public async Task ARequestWithNoDaemonSaysDownAndWasNeverSent()
     {
         var rig = new ClientRig();

@@ -205,7 +205,8 @@ internal static class CliApp
         // a hook cannot wait, `ah db` works on a database as it finds it, and `ah proc` stops things whatever the daemon is doing
         // `ah ahd heal` is the one ahd verb reachable through ah (crash-resume §14.11): it judges a daemon that may never answer
         var heal = args is ["ahd", "heal", ..];
-        if (!heal && args[0] is not ("hook" or "db" or "proc" or "admin" or "gate" or "push-guard") && context.Services is { } upgradeServices)
+        // `ah where` contacts no daemon, as `ahd where` (ah2-122 D2)
+        if (!heal && args[0] is not ("hook" or "db" or "proc" or "admin" or "gate" or "push-guard" or "where") && context.Services is { } upgradeServices)
         {
             SchemaUpgradeWait.Run(context.Env, () => upgradeServices.Value.Daemon, stderr);
         }
@@ -214,6 +215,8 @@ internal static class CliApp
         {
             case "ahd" when heal:
                 return RunAhd(args[1..], context, stdout, stderr, registries);
+            case "where":
+                return WhereVerb.Run(context, args[1..], stdout, stderr);
             case "hook":
                 return HookVerb.Run(context, args[1..], stdout, stderr);
             case "gate":

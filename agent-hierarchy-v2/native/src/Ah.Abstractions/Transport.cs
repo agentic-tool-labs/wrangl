@@ -72,7 +72,9 @@ public sealed record DaemonRequest(
     string PathAndQuery,
     ReadOnlyMemory<byte> Body = default,
     TimeSpan? Timeout = null,
-    bool StartIfDown = true);
+    bool StartIfDown = true,
+    // a running daemon older than this client that passes the protocol check answers it, as it is: nothing is drained (ah2-122 D3)
+    bool AnyVersion = false);
 
 /// <summary>
 /// The daemon's answer. <see cref="Status"/> 0 means "use the files": <see cref="FallbackReason"/> then says why (<c>down</c>,
