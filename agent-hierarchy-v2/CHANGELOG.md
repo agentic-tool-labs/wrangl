@@ -4,6 +4,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.7] - 2026-11-17
+
+### Changed
+
+- **The Orchestrator's start text is indexed.** At session start the Orchestrator now receives a short resident core
+  plus an index of on-demand sections, in four outputs that each fit Claude Code's limit, instead of one long text it
+  had to read from a file: about 16,400 characters in a default setup, down from about 28,800. A section is read with
+  `ah rules show <key>` when its trigger comes up (`ah rules index` lists them), and a resident rule says to do that
+  before acting on anything an index entry relates to. Rules that nothing enforces at the moment they would be broken
+  stay resident. Sub-Orchestrator, Deputy and member texts are unchanged.
+
+### Fixed
+
+- **Wheel zoom in the herdr desktop Graph follows the wheel.** A wheel or two-finger scroll now moves the view at
+  once and eases only as it stops (about 120 ms), instead of restarting a slow-starting 400 ms animation on every
+  wheel event. The − / + / Fit buttons are unchanged. Run `ah herdr install` again to get it.
+
 ## [2.0.6] - 2026-11-17
 
 ### Fixed

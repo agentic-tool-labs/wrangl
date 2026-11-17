@@ -89,10 +89,15 @@ export function spring(x) {
   const u = (lo + hi) / 2;
   return u * u * (3 - 2 * u);
 }
-// The drawn scale at `now` of an eased zoom from `from` to `to` begun at t0: exactly `to` once EASE_MS has passed, never past it.
-export function easedScale(from, to, t0, now) {
-  const x = (now - t0) / EASE_MS;
-  return x >= 1 ? to : from + (to - from) * spring(x);
+// A wheel's zoom (spec herdr-graph-wheel-follow D1, D2): short, and eased out only, so it is fastest at the event and settles into
+// the target. A wheel event restarts it from the drawn scale (easeTo), so a turning wheel never re-enters a slow start.
+export const WHEEL_EASE_MS = 120;
+export const cubicOut = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - (1 - x) ** 3);
+// The drawn scale at `now` of an eased zoom from `from` to `to` begun at t0: exactly `to` once its time has passed, never past it.
+// A button or a drill eases on the web's curve over EASE_MS (D5); a wheel (wheel true) on cubicOut over WHEEL_EASE_MS.
+export function easedScale(from, to, t0, now, wheel = false) {
+  const x = (now - t0) / (wheel ? WHEEL_EASE_MS : EASE_MS);
+  return x >= 1 ? to : from + (to - from) * (wheel ? cubicOut : spring)(x);
 }
 // A drill in or out (a stream circle, the crumb, Esc, a team tab) starts the map back at fit.
 export function drillTo(ui, z) {

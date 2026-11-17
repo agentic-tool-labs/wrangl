@@ -36,8 +36,34 @@ internal static class SessionRules
             return HookEmit.Silent;
         }
 
-        return SessionText(c, c.Cwd()) is { } text ? HookEmit.AdditionalContext("SessionStart", text) : HookEmit.Silent;
+        var identity = Identity(c, source);
+        return Compose(c, c.Cwd(), identity, true) is { } text
+            ? HookEmit.AdditionalContext("SessionStart", identity is null ? text : SessionStart.WithLeadLine(text))
+            : HookEmit.Silent;
     }
+
+    /// <summary>
+    /// This unit's output: the Orchestrator's resident identity, then the session's rules text. <paramref name="rules"/> false leaves the rules
+    /// out unless the identity is there, which is how the opt-in delivery adds them only to a delivery it makes.
+    /// </summary>
+    internal static string? StartText(GateContext c, string cwd, string? source, bool rules) => Compose(c, cwd, Identity(c, source), rules);
+
+    private static string? Compose(GateContext c, string cwd, string? identity, bool rules)
+    {
+        var text = rules || identity is not null ? SessionText(c, cwd) : null;
+        return identity is null ? text : text is null ? identity : identity + "\n\n" + text;
+    }
+
+    /// <summary>
+    /// The resident part of <c>agents/orchestrator.md</c> for a session flagged by command (an <c>--agent</c> Orchestrator has the file as its
+    /// definition), at the sources that always carried it; its deferred bullets are <c>ah rules show identity</c>.
+    /// </summary>
+    internal static string? Identity(GateContext c, string? source) =>
+        source is "startup" or "resume" or "compact" or "clear" or SessionStart.OptInSource && !OrchestratorIdentity.LaunchedAsAgent(c) && OrchestratorIdentity.Flagged(c)
+            && !SessionStart.StartRefused(c)
+            && OrchestratorIdentity.Body(c) is { } body && ConfigModule.SplitOrchestratorIdentity(body).Resident is { Length: > 0 } resident
+            ? resident
+            : null;
 
     /// <summary>What the session of this payload gets: the block, and for an Orchestrator its text, which also says how to add a rule and so comes even with no rules. Null for a bare or disabled session.</summary>
     internal static string? SessionText(GateContext c, string cwd)

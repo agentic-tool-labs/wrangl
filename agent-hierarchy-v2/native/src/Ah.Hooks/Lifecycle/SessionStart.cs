@@ -280,10 +280,28 @@ internal static class SessionStart
             PhaseTrace.End("sessionstart.plain-session", span);
         }
 
-        return Finish(c, advisory, cwd, sessionIdValue, sessionId, source, ppid, context, registered) is { } text
-            ? HookEmit.AdditionalContext("SessionStart", text)
-            : HookEmit.Silent;
+        var text = Finish(c, advisory, cwd, sessionIdValue, sessionId, source, ppid, context, registered);
+        if (text is not null && role is null && TopOrchestratorDirective(c))
+        {
+            text = WithLeadLine(text);
+        }
+
+        return text is not null ? HookEmit.AdditionalContext("SessionStart", text) : HookEmit.Silent;
     }
+
+    /// <summary>The longest SessionStart output this plugin aims for; the harness cuts one over 10,000 characters to a preview.</summary>
+    internal const int OutputCap = 9500;
+
+    /// <summary>The output as sent: with <see cref="LeadLine"/> first only when it is over <see cref="OutputCap"/>.</summary>
+    internal static string WithLeadLine(string text) => text.Length > OutputCap ? LeadLine + "\n\n" + text : text;
+
+    /// <summary>Whether this unit refuses the payload's start (no process table, or the session does not belong to the hook's harness): the units beside it then inject nothing it would not.</summary>
+    internal static bool StartRefused(GateContext c) =>
+        c.Services.Sessions is not { } sessions
+        || MeshModule.SessionStartRefusal(sessions.Table, c.Services.Process.ParentPid, c.Input.Text("session_id") ?? string.Empty, sessions.Sessions()) is not null;
+
+    /// <summary>Whether the session's directive is the top-level Orchestrator's resident core and index: not a Sub-Orchestrator's or a Deputy's.</summary>
+    internal static bool TopOrchestratorDirective(GateContext c) => !DeclaredSubOrchestrator.Is(c) && !DeclaredSubOrchestrator.IsDeputy(c);
 
     /// <summary>
     /// What a session that has just opted in gets, in the turn it opted in: the same text a flagged session gets at its next start, or
@@ -299,8 +317,21 @@ internal static class SessionStart
         var (context, registered) = PlainSession(c, advisory, cwd, sessionIdValue, sessionId, OptInSource, s.Config.IsTopLevelAgentSession(c.Input), ppid, PaneOf(s), null);
         var text = Finish(c, advisory, cwd, sessionIdValue, sessionId, OptInSource, ppid, context, registered);
 
-        // No SessionStart fires for an opt-in, so the rules hook will not bring these.
-        return text is not null && SessionRules.SessionText(c, cwd) is { } rules ? text + "\n\n" + rules : text;
+        // No SessionStart fires for an opt-in, so the directive, index and rules hooks will not bring theirs: the four outputs, in their order.
+        var parts = new[]
+        {
+            text,
+            text is null ? null : SessionDirective.Text(c, cwd),
+            text is null ? null : SessionIndex.Text(c, cwd),
+            SessionRules.StartText(c, cwd, OptInSource, text is not null),
+        }.OfType<string>().ToList();
+        if (parts.Count == 0)
+        {
+            return null;
+        }
+
+        var payload = string.Join("\n\n", parts);
+        return TopOrchestratorDirective(c) ? WithLeadLine(payload) : payload;
     }
 
     /// <summary>The non-role branch: the setup nudge of an unconfigured repo, the directive and state of an enabled one, nothing in a disabled one.</summary>
@@ -324,6 +355,9 @@ internal static class SessionStart
     {
         var s = c.Services;
 
+        // An empty context is the top-level Orchestrator's, whose directive is another unit's: it still gets the lines below.
+        static string With(string? context, string line) => string.IsNullOrEmpty(context) ? line : $"{context}\n\n{line}";
+
         // Only a participant (a non-subagent session with a mailbox address) touches the daemon or the install stamp.
         if (registered)
         {
@@ -332,7 +366,7 @@ internal static class SessionStart
             {
                 foreach (var line in InstallStampNotice.Lines(s, advisory.InstallStamp, JsConvert.ToJsString(s.Config.PluginVersion())))
                 {
-                    context = context is null ? line : $"{context}\n\n{line}";
+                    context = With(context, line);
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException)
@@ -342,7 +376,7 @@ internal static class SessionStart
 
             foreach (var line in HerdrModNotice.Lines(s, JsConvert.ToJsString(s.Config.PluginVersion())))
             {
-                context = context is null ? line : $"{context}\n\n{line}";
+                context = With(context, line);
             }
 
             try
@@ -350,7 +384,7 @@ internal static class SessionStart
                 if (DaemonClientModule.ReadSpawnFailed(advisory.Daemon) is { } failed)
                 {
                     var line = $"ahd failed to start ({failed.Reason}); retrying after {failed.RetryAt}";
-                    context = context is null ? line : $"{context}\n\n{line}";
+                    context = With(context, line);
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException)
@@ -400,21 +434,19 @@ internal static class SessionStart
         if (heldBy is not null)
         {
             var holdLine = HoldGate.Line(s, cwd, sessionId, heldBy);
-            context = context is null ? holdLine : $"{context}\n\n{holdLine}";
+            context = With(context, holdLine);
         }
 
-        var identity = source is "startup" or "resume" or "compact" or "clear" or OptInSource && !OrchestratorIdentity.LaunchedAsAgent(c) && OrchestratorIdentity.Flagged(c)
-            ? OrchestratorIdentity.Body(c)
-            : null;
+        // The Orchestrator's identity is the session-rules unit's (SessionRules.Identity).
         if (context is null)
         {
-            return identity;
+            return null;
         }
 
         // Hooks own the path to the ah CLIs: every session this hook injects into learns the absolute root here.
         span = PhaseTrace.Begin();
         var rootLine = s.Config.CliRootLine();
-        context += $"\n\n{rootLine}";
+        context = With(context, rootLine);
         s.Hierarchy.Peers.RecordCliRootEmitted(sessionIdValue, rootLine);
         PhaseTrace.End("sessionstart.cli-root", span);
         try
@@ -437,11 +469,6 @@ internal static class SessionStart
         catch (Exception e) when (e is not OperationCanceledException)
         {
             // the log is a diagnostic; never let reading it break the injection it rides on
-        }
-
-        if (identity is not null)
-        {
-            context += $"\n\n{identity}";
         }
 
         return context;
@@ -893,50 +920,53 @@ internal static class SessionStart
             }
         }
 
+        // The top-level Orchestrator's directive is the session-directive unit's output; every other variant stays here, as it was.
         var modelText = model is { IsText: true } m ? m.AsString() : null;
-        var context = advisory.Directive.BuildDirective(resolved, sessionId.Length > 0 ? sessionId : null, dir, modelText, DeclaredSubOrchestrator.Is(c), DeclaredSubOrchestrator.IsDeputy(c));
-        context = LeadLine + "\n\n" + context;
+        var context = TopOrchestratorDirective(c)
+            ? string.Empty
+            : LeadLine + "\n\n" + advisory.Directive.BuildDirective(resolved, sessionId.Length > 0 ? sessionId : null, dir, modelText, DeclaredSubOrchestrator.Is(c), DeclaredSubOrchestrator.IsDeputy(c));
+        void Append(string text) => context = context.Length == 0 ? text : context + "\n\n" + text;
         if (teamSweepNote is not null)
         {
-            context += "\n\n" + teamSweepNote;
+            Append(teamSweepNote);
         }
 
         if (state is not null)
         {
-            context += "\n\n" + state + (source == "compact" ? $"\n{CompactStateLine}" : string.Empty);
+            Append(state + (source == "compact" ? $"\n{CompactStateLine}" : string.Empty));
         }
 
         if (MemoryRecall.Digest(c, source) is { } memory)
         {
-            context += "\n\n" + memory;
+            Append(memory);
         }
 
         if (soBlock is { } block)
         {
-            context += "\n\n" + block;
+            Append(block);
         }
 
         if (sessionId.Length > 0 && HoldGate.Of(c.Services, cwd, sessionId) is null && Checklist(c, advisory, sessionId, cwd) is { } checklist)
         {
-            context += "\n\n" + checklist;
+            Append(checklist);
         }
 
         if (s.Environment.GetVariable("HERDR_ENV") == "1" && !HerdrOnPath(s))
         {
-            context +=
-                "\n\nah: HERDR_ENV=1 but no `herdr` binary was found on PATH. Roster spawning "
+            Append(
+                "ah: HERDR_ENV=1 but no `herdr` binary was found on PATH. Roster spawning "
                 + "(/wrangl:agent-team create, ah roster spawn-one) will fail when it tries to place "
-                + "panes. Install herdr, or unset HERDR_ENV to fall back to tmux/terminal.";
+                + "panes. Install herdr, or unset HERDR_ENV to fall back to tmux/terminal.");
         }
 
         if (chainDownText is not null)
         {
-            context += "\n\n" + chainDownText;
+            Append(chainDownText);
         }
 
         if (downNote is not null)
         {
-            context += "\n\n" + downNote;
+            Append(downNote);
         }
 
         return (context, registered);

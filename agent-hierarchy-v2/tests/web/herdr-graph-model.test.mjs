@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, dragAct, DRAG_PX, wasDrag, CLICK_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
+import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, CLICK_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -320,6 +320,20 @@ test("the eased scale leaves its start, moves one way only, and lands exactly on
     const s = easedScale(SCALE_MAX, SCALE_MIN, 0, ms);
     assert.ok(s >= SCALE_MIN && s <= SCALE_MAX, `${s} at ${ms} ms`);
   }
+});
+
+// ah2-138: a wheel's ease has no slow start, so a turning wheel keeps up with the hand; it lands exactly at WHEEL_EASE_MS.
+test("the wheel's ease is fastest at its start, shrinks every frame, and lands exactly on the target at WHEEL_EASE_MS", () => {
+  const at = (ms) => easedScale(1, 2, 1000, 1000 + ms, true);
+  assert.equal(at(0), 1);
+  const steps = [];
+  for (let ms = 8; ms <= WHEEL_EASE_MS; ms += 8) steps.push(at(ms) - at(ms - 8));
+  steps.reduce((prev, d) => (assert.ok(d > 0 && d < prev, `step ${d} after ${prev}`), d), Infinity);
+  assert.equal(at(WHEEL_EASE_MS), 2);
+  assert.equal(at(WHEEL_EASE_MS * 3), 2);
+  assert.ok(at(WHEEL_EASE_MS - 1) < 2, "never past the target");
+  assert.ok(WHEEL_EASE_MS < EASE_MS);
+  assert.equal(easedScale(1, 2, 1000, 1100), 1 + spring(100 / EASE_MS), "a button keeps the web's curve");
 });
 
 // ah2-103: a Graph member opens its pane by the sidebar's path, so the Map leaf and the Flow card carry the pane the sidebar's row does.

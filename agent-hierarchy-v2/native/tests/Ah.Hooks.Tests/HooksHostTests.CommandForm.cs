@@ -41,6 +41,9 @@ public sealed partial class HooksHostTests
     [InlineData("{root}/bin/ahd inspect timers", "ah: plugin-shipped CLI \u2014 ahd inspect")]
     [InlineData("{root}/bin/ah rules next-step implement-done", "ah: plugin-shipped CLI \u2014 ah rules next-step")]
     [InlineData("{root}/bin/ah rules who-may-message a@tm b@tm --slug lock", "ah: plugin-shipped CLI \u2014 ah rules who-may-message")]
+    [InlineData("{root}/bin/ah rules list", "ah: plugin-shipped CLI \u2014 ah rules list")]
+    [InlineData("{root}/bin/ah rules index", "ah: plugin-shipped CLI \u2014 ah rules index")]
+    [InlineData("{root}/bin/ah rules show spec-handoff --cwd /repo", "ah: plugin-shipped CLI \u2014 ah rules show")]
     public void TheAllowReasonNamesTheNativeCommandAndNoScript(string command, string reason)
     {
         var root = MakePluginRoot();
