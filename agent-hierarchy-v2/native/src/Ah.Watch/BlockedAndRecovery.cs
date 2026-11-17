@@ -362,7 +362,12 @@ internal static partial class BlockedEvents
                 var cancel = $"{rosterCommand} answer {Quote(m.Name)} --cancel --screen-hash {hashText} --cwd {Quote(NodePath.Dirname(NodePath.Dirname(dir)))}{teamFlag}";
                 var roleText = role ?? "undefined";
                 var age = DispatchClock.FmtAge(Math.Max(0, (now - st.Since.Value) / 1000));
-                var head = $"ah: {roleText} \"{m.Name}\" is BLOCKED at a prompt ({blockedBy}) for {age}. Nobody is watching it."
+                // ah2-74: with no screen to read, the only evidence is the hook record, which a notice that merely mentions
+                // "permission" also writes while the member is running tools. Say so instead of stating it as fact.
+                var unconfirmed = excerpt.StartsWith("(screen not available)", StringComparison.Ordinal);
+                var head = (unconfirmed
+                        ? $"ah: {roleText} \"{m.Name}\" MAY be blocked at a prompt ({blockedBy}) for {age}. UNCONFIRMED: its screen could not be read, and a member that is only running tools can look like this. Check its pane before telling the user it is blocked."
+                        : $"ah: {roleText} \"{m.Name}\" is BLOCKED at a prompt ({blockedBy}) for {age}. Nobody is watching it.")
                     + (unrecognised ? " Note: unrecognised screen, possibly blocked." : string.Empty);
                 var memberRef = team.Name is null ? m.Name : $"{m.Name}@{team.Name}";
                 var park = ParkCommand(rosterCommand, team.Name, memberRef);

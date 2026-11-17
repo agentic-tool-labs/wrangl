@@ -29,7 +29,9 @@ internal sealed partial class MsgCommand
         var (exchange, requestPath, fm) = FindExchange(id, string.Empty, CloseTeams());
         var team = FrontText(fm?.Member("team")) ?? _teamArg
             ?? throw new MailFailure("usage", $"the request {id} names no team; pass --team <team> to close it as that team's Orchestrator");
+        // ah2-76: the user, and the session the user made admin, close any request as its team's Orchestrator.
         var closerTeam = CloserTeam(team, fm)
+            ?? (Principal.Kind == PrincipalKind.User ? team : null)
             ?? throw new MailFailure("not_your_session", $"only the Orchestrator of team {team}, its parent team's Orchestrator, or the Orchestrator that sent {id} can close it; this caller is none of them");
 
         var closed = Hier.Messages.CloseExchange(_graph.Bootstrap.EnsureHierarchyDir(HierarchyDir), exchange, requestPath.AsString(), reason, Str("note"), CloserOf(closerTeam), _cwd);

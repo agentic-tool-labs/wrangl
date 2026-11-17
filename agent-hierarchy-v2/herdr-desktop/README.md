@@ -159,6 +159,10 @@ Two tabs:
   things you asked the Orchestrator. A row for something you asked shows how many replies it got; click it to open
   its thread. The thread shows your words, then the **Reply** that answered them directly, then the rest of that turn
   and anything said later, each under **Later reply** with its time. `esc` or **← History** goes back.
+  Above the list, a search box and **Team**, **Time** (All time, Today, Last 7 days) and **State** (All, Answered,
+  Not answered) menus narrow it. ahd does the search, over your questions and their replies only: answered decisions
+  are not included. Typing searches after a short pause, `enter` at once, `esc` clears the box, **Clear** resets
+  everything, and **Load more** fetches older matches. The choice lasts while the window is open.
 
 ### Board
 

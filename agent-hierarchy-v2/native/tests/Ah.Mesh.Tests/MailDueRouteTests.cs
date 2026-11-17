@@ -530,6 +530,19 @@ public sealed class MailDueRouteTests
     }
 
     [Fact]
+    public async Task TheDoorbellBetweenToolCallsIsAnsweredAtOnceWithNothingDue()
+    {
+        var (_, timer, registry) = Virtual();
+        var input = Rig.Input();
+        var doorbell = input[..input.LastIndexOf('}')] + ",\"carrier\":\"tool\"}";
+
+        _ = await Ask(registry, "in=" + Uri.EscapeDataString(doorbell));
+
+        // ah2-70: it sends no wait, and it is a question, never a hold: a member's every tool call rings it
+        Assert.True(timer.Ticks.Count == 0 || timer.Ticks[^1] < 1_000, $"held for {(timer.Ticks.Count == 0 ? 0 : timer.Ticks[^1])} ms");
+    }
+
+    [Fact]
     public async Task ARequestWithNoWaitIsHeldForTheFullTwentyFiveSeconds()
     {
         var (_, timer, registry) = Virtual();

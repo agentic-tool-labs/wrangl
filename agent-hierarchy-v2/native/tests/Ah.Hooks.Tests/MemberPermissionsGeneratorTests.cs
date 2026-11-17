@@ -14,8 +14,18 @@ public sealed class MemberPermissionsGeneratorTests
     {
         var result = MemberPermissionsGenerator.Generate(Request(userAllow: ["Bash(cargo:*)"]));
 
-        Assert.Equal(["allow"], result.Permissions.Keys);
+        // an allow list and the member's own directories; never a deny or an ask
+        Assert.Equal(["allow", "additionalDirectories"], result.Permissions.Keys);
         var allow = result.Permissions["allow"].AsArray().Select(a => a.AsString()).ToList();
+        // ah2-70: the work tree and the scratch directory are named outright, for every file tool
+        var owned = result.Permissions["additionalDirectories"].AsArray().Select(a => a.AsString()).ToList();
+        Assert.NotEmpty(owned);
+        foreach (var dir in owned)
+        {
+            Assert.Contains($"Edit(/{dir}/**)", allow);
+            Assert.Contains($"Write(/{dir}/**)", allow);
+            Assert.Contains($"Read(/{dir}/**)", allow);
+        }
         foreach (var rule in new[]
         {
             "Bash(/opt/ah/bin/ah:*)", "Bash(ah:*)", "Bash(/opt/ah/bin/ahd:*)", "Bash(ahd:*)", "Bash(/plugin/bin/ah:*)",

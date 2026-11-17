@@ -255,7 +255,8 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
 
     // ---------------------------------------------------------------- stop, drain
 
-    internal async Task<bool> WaitForPidExitAsync(int pid, int ms)
+    /// <summary>Whether <paramref name="pid"/> exited within <paramref name="ms"/>. A cancelled wait returns false (still running) and does not throw.</summary>
+    internal async Task<bool> WaitForPidExitAsync(int pid, int ms, CancellationToken ct)
     {
         var end = Now() + ms;
         while (Now() < end)
@@ -265,7 +266,14 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return true;
             }
 
-            await Task.Delay((int)Math.Max(1, Math.Min(50, end - Now()))).ConfigureAwait(false);
+            try
+            {
+                await Task.Delay((int)Math.Max(1, Math.Min(50, end - Now())), ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                return false;
+            }
         }
 
         return !deps.Inspector.PidAlive(pid);
@@ -324,7 +332,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         var reply = await PostDrainAsync(daemon.Socket, reason, timeoutMs: 2000, cancellationToken).ConfigureAwait(false);
         if (ActualRefusal(reply) is null)
         {
-            _ = await WaitForPidExitAsync(daemon.Pid, DrainWaitMs).ConfigureAwait(false);
+            _ = await WaitForPidExitAsync(daemon.Pid, DrainWaitMs, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -404,7 +412,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         var info = await DiscoverCoreAsync(DiscoverTimeoutMs, ct).ConfigureAwait(false);
         if (info is { Draining: true })
         {
-            if (await WaitForPidExitAsync(info.Pid, DrainWaitMs).ConfigureAwait(false))
+            if (await WaitForPidExitAsync(info.Pid, DrainWaitMs, ct).ConfigureAwait(false))
             {
                 return (true, null);
             }
@@ -419,7 +427,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return (false, refusal);
             }
 
-            if (await WaitForPidExitAsync(info.Pid, DrainWaitMs).ConfigureAwait(false))
+            if (await WaitForPidExitAsync(info.Pid, DrainWaitMs, ct).ConfigureAwait(false))
             {
                 return (true, null);
             }
@@ -428,7 +436,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         // no answer, or still running after the wait. TERM starts a drain whose request never arrived; to a drain already running it adds nothing but the second wait below
         if (DaemonPidOnFile() is { } pid && StopHung((int)pid, reason))
         {
-            return (await WaitForPidExitAsync((int)pid, deps.StopExitWaitMs).ConfigureAwait(false), null);
+            return (await WaitForPidExitAsync((int)pid, deps.StopExitWaitMs, ct).ConfigureAwait(false), null);
         }
 
         return (false, null);
@@ -568,7 +576,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         }
 
         // A daemon that began draining since the caller looked is exiting, not down: no replacement while its pid lives.
-        if (again is not null && !await WaitForPidExitAsync(again.Pid, (int)Remaining()).ConfigureAwait(false))
+        if (again is not null && !await WaitForPidExitAsync(again.Pid, (int)Remaining(), ct).ConfigureAwait(false))
         {
             return null;
         }
@@ -605,7 +613,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                     return late;
                 }
 
-                if (late is not null && !await WaitForPidExitAsync(late.Pid, DrainWaitMs).ConfigureAwait(false))
+                if (late is not null && !await WaitForPidExitAsync(late.Pid, DrainWaitMs, ct).ConfigureAwait(false))
                 {
                     busy("answered; not replaced");
                     return null;
@@ -715,8 +723,15 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             var info = await DiscoverCoreAsync(options.Hook ? (int)Remaining() : DiscoverTimeoutMs, ct).ConfigureAwait(false);
             if (info is { Draining: true })
             {
+                // A request that may not start the daemon has nothing to wait for: the files serve it now.
+                if (!options.Start)
+                {
+                    Warn("the daemon is still draining");
+                    return null;
+                }
+
                 // An exiting daemon is not a down one: starting a replacement now races its shutdown.
-                if (!await WaitForPidExitAsync(info.Pid, options.Hook ? (int)Remaining() : DrainWaitMs).ConfigureAwait(false))
+                if (!await WaitForPidExitAsync(info.Pid, options.Hook ? (int)Remaining() : DrainWaitMs, ct).ConfigureAwait(false))
                 {
                     Warn("the daemon is still draining");
                     return null;
@@ -827,7 +842,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return null;
             }
 
-            if (!await WaitForPidExitAsync(info.Pid, DrainWaitMs).ConfigureAwait(false))
+            if (!await WaitForPidExitAsync(info.Pid, DrainWaitMs, ct).ConfigureAwait(false))
             {
                 Warn("the old daemon did not exit after a drain");
                 return null;

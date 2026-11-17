@@ -1566,6 +1566,28 @@ else
     fi
 fi
 
+# herdr desktop: one of its terminals sets HC_TERMINAL_ID. Offer to add Wrangl to the app; never do it without a yes.
+if [ -n "${HC_TERMINAL_ID:-}" ]; then
+    step "herdr desktop"
+    if ! $apply; then
+        would "ask (at a terminal, default no) whether to add Wrangl to the herdr desktop app: ah herdr install"
+    elif [ -n "$in_session" ]; then
+        say "You are in herdr desktop. To add Wrangl to it, run from a terminal: ah herdr install"
+    elif $interactive && ! $quiet; then
+        if ask_no_default "You are in herdr desktop. Add Wrangl to it now (ah herdr install)?"; then
+            if AH_HOME="$ah_home" "$target" --plugin-root "$plugin_root" ah herdr install; then
+                say "Wrangl is added to herdr desktop."
+            else
+                say "ah herdr install did not finish; the rest of the install is unaffected. Run it again later: ah herdr install"
+            fi
+        else
+            say "Not adding it. To add it later: ah herdr install"
+        fi
+    else
+        say "You are in herdr desktop. To add Wrangl to it: ah herdr install"
+    fi
+fi
+
 step "Done"
 if $apply; then
     say "ahd $plugin_version is installed at $target, with ahd-tui beside it."

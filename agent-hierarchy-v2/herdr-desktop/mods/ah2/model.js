@@ -75,7 +75,9 @@ function memberRow(key, m, now) {
   const s = STATES[state];
   const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
   return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
-    pane: m.liveness === "live" ? m.pane_id ?? null : null };
+    // ah2-73: ahd serves pane_id only where a click may land (a live member, and the orchestrator unless proven dead); an idle
+    // orchestrator reads "unknown" and must stay clickable.
+    pane: m.liveness === "live" || (key.endsWith("/@orchestrator") && m.liveness !== "proven_dead") ? m.pane_id ?? null : null };
 }
 
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.
@@ -254,6 +256,11 @@ export function qaModel(slices, now) {
   history.sort((x, y) => (y.at ?? -Infinity) - (x.at ?? -Infinity));
   return { loaded: slices.has("list:teams"), count, teams, history: history.slice(0, HISTORY_CAP), empty: teams.length === 0 };
 }
+
+// The running teams the History filter offers and reads (qa-history-model.js historyDirs): name, dirId, and the hierarchy dir its
+// questions: slice names (the ah fallback's --dir).
+export const historyTeams = (slices) => runningTeams(slices).map(({ t, id, b }) =>
+  ({ name: b.name ?? t.name, dirId: t.dir_id ?? null, hierDir: body(slices, questionsId(`team:${id}`))?.dir ?? null }));
 
 // The Q&A window's list never blanks on a refresh (atp-1708). `qa` is {shown, pending}: `shown` the slices drawn (a copy, so
 // ages stay live), `pending` whether the live slices give a different list ("Updates available"). Live slices that are not a

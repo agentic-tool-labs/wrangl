@@ -55,7 +55,12 @@ internal static class HookVerb
                 ReadOnlyMemory<byte> stdin;
                 try
                 {
-                    stdin = (ctx.ReadStdin ?? ReadProcessStdin)();
+                    var timedOut = false;
+                    stdin = ctx.ReadStdin is { } read ? read() : ReadProcessStdin(out timedOut);
+                    if (timedOut)
+                    {
+                        errors.Log(name, "stdin not closed after 5 s; the hook ran on what had arrived");
+                    }
                 }
                 catch (Exception) when (isGate)
                 {
@@ -192,19 +197,55 @@ internal static class HookVerb
         }
     }
 
-    private static ReadOnlyMemory<byte> ReadProcessStdin()
+    /// <summary>How long a hook waits for its standard input to close.</summary>
+    internal static readonly TimeSpan StdinBound = TimeSpan.FromSeconds(5);
+
+    private static ReadOnlyMemory<byte> ReadProcessStdin(out bool timedOut)
     {
         try
         {
-            using var input = Console.OpenStandardInput();
-            using var buffer = new MemoryStream();
-            input.CopyTo(buffer);
-            return buffer.ToArray();
+            return ReadBounded(Console.OpenStandardInput(), StdinBound, out timedOut);
         }
         catch (IOException)
         {
             // a closed standard input is an empty event
+            timedOut = false;
             return ReadOnlyMemory<byte>.Empty;
+        }
+    }
+
+    /// <summary>Reads <paramref name="input"/> to its end, or for <paramref name="bound"/> at most. A parent that never
+    /// closes the pipe would otherwise hold the hook until the harness kills it. On expiry the bytes read so far are
+    /// returned; the reading thread is left behind, and the process exits with the hook.</summary>
+    internal static ReadOnlyMemory<byte> ReadBounded(Stream input, TimeSpan bound, out bool timedOut)
+    {
+        var buffer = new MemoryStream();
+        var gate = new object();
+        var reader = Task.Run(() =>
+        {
+            var chunk = new byte[81920];
+            int n;
+            while ((n = input.Read(chunk, 0, chunk.Length)) > 0)
+            {
+                lock (gate)
+                {
+                    buffer.Write(chunk, 0, n);
+                }
+            }
+        });
+        try
+        {
+            timedOut = !reader.Wait(bound);
+        }
+        catch (AggregateException e) when (e.InnerException is IOException or ObjectDisposedException)
+        {
+            // a closed standard input is an empty event
+            timedOut = false;
+        }
+
+        lock (gate)
+        {
+            return buffer.ToArray();
         }
     }
 }

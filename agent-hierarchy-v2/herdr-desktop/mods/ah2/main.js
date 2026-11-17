@@ -100,7 +100,7 @@ export default class Ah2 extends View {
     if (view !== this.view) {
       if (this.view === "feed") this.feedShowing = false;
       this.view = view;
-      if (view === "qa") qaTake(this);
+      if (view === "qa") qaTake(this, undefined, cx);
       cx.notify();
     }
     setShared(DESK_WINDOW_KEY, { overlay: this.overlay, view, max: this.max });
@@ -166,7 +166,7 @@ export default class Ah2 extends View {
         this.status = "up";
         this.updated = Date.now();
         fails = 0;
-        if (this.view === "qa" && (changed || caught)) qaTake(this); // after ready and status: a whole answer only (qa.js)
+        if (this.view === "qa" && (changed || caught)) qaTake(this, undefined, cx); // after ready and status: a whole answer only (qa.js)
         if (changed && this.view === "sitrep" && !this.team) this.alarms();
         if (this.view === "status") this.publishDesk();
         if (changed || caught || was !== "up") cx.notify();

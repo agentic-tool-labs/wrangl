@@ -679,6 +679,14 @@ internal static class SpawnOne
             var liveStream = outMember.Member("stream") is { IsText: true } liveStreamText ? liveStreamText.AsString() : null;
             if (!byName && stream is { } asked && asked.Name != liveStream && !c.Opts.IsTrue("replace-live"))
             {
+                if (c.Services.OwnerProof?.IsUser() == true)
+                {
+                    // ah2-76: the user, and the session the user made admin, are never refused: a second member of the role
+                    // on another stream is what spawn-ad-hoc does, so do that.
+                    c.Stderr.WriteLine($"ah: a {role} is already live on stream {liveStream ?? "none"}; spawning a second one on {asked.Name} (as spawn-ad-hoc)");
+                    return new SpawnOutcome(null, RunSpawnAdHoc(c));
+                }
+
                 var roleLive =
                     $"ah: a {role} is already live: {liveName} on stream {liveStream ?? "none"}. spawn-one keeps one {role} per team; for a second on {asked.Name}, run ah roster spawn-ad-hoc {role} --stream {asked.Name}; nothing was launched";
                 throw c.Refuse(

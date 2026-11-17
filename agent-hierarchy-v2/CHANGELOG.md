@@ -4,6 +4,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.1] - 2026-11-17
+
+Fixes found on the first clean installs of 2.0.0.
+
+### Added
+
+- **Search and filters on the Q&A History tab in herdr desktop.** A search box and Team, Time and State menus. With
+  any of them set, the list comes from the stored question history of the running teams, newest first, with "Load
+  more"; answered decisions are not included in a search. Run `ah herdr install` again to get it.
+
+### Fixed
+
+- **Members were slow: about 25 seconds per tool call.** The check for new mail that runs between a member's tool calls was
+  held by the daemon for its full 25-second wait whenever no mail was due. The daemon now answers it at once.
+- **First-run setup was refused.** `/wrangl:hierarchy init` hands off to the roster wizard, and `ah roster init` and
+  `ah roster add` refused because the session already owned the empty team Wrangl creates for an Orchestrator. An empty
+  team of that kind no longer blocks roster edits.
+- **Hooks could hang for 30 seconds while the daemon was being replaced.** A hook's question to a daemon that is
+  shutting down no longer waits for it to exit, and a hook reads its standard input for 5 seconds at most.
+- **`ah roster dismiss` and `ah roster disband --close` could not close members started in herdr desktop** when the
+  team was the Orchestrator's automatic one. They now close.
+- **The Orchestrator could not be clicked in the herdr desktop Wrangl pane while it was idle or waiting at a
+  question.** Its row keeps its pane until the session is proven gone. Run `ah herdr install` again to get the mod's half.
+- **A "member is blocked at a permission prompt" alarm was sent with no screen to confirm it.** It now says it is
+  unconfirmed.
+
+### Changed
+
+- The user, and the session made admin with `ah admin grant`, are no longer refused by: roster edits while a team is
+  live, `dismiss` of a member that is not clean (it warns, then closes), `spawn-one` of a second member of a role on
+  another stream (it spawns one, as `spawn-ad-hoc` does), `ah msg close`, and the "agent-team skill is not loaded" gate.
+- A member's launch rules name its work tree and its scratch directory outright for the file tools.
+- The installer, run in a herdr desktop terminal, offers to run `ah herdr install`. It asks first and never installs
+  without a yes.
+- The two hooks that run every turn (prompt tracking, Orchestrator liveness) have a 10-second limit.
+
 ## [2.0.0] - 2026-11-14
 
 > **Early testing: use with caution.** Wrangl 2.0.0 is the first public release and is still being tested. Use it only on work you

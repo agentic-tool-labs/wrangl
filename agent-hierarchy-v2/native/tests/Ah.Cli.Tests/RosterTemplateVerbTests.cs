@@ -892,6 +892,37 @@ public sealed class RosterTemplateVerbTests : IDisposable
         Assert.False(File.Exists(RepoFile));
     }
 
+    /// <summary>ah2-65: the empty implicit team a session start gives the Orchestrator does not block the first-run roster init; one with a member still does.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TheOwnerOfAnEmptyImplicitTeamMayInitAndAddToTheRoster(bool withMember)
+    {
+        var teamFile = Path.Combine(Project, ".claude", "ah2", "teams", "proj.json");
+        var team = "{\"version\":1,\"team_id\":\"t-implicit\",\"implicit\":true,\"orchestrator\":{\"session_id\":null,\"pid\":" + Environment.ProcessId
+            + ",\"pid_start\":\"" + FakeRunner.SelfStart + "\"},\"members\":[" + (withMember ? "{\"name\":\"ah2-reviewer\",\"role\":\"reviewer\"}" : string.Empty) + "]}";
+        _sandbox.PlantTeam(teamFile, team);
+        var teamBefore = _sandbox.TeamText(teamFile);
+        var owner = new Dictionary<string, string?> { ["CLAUDE_PID"] = Environment.ProcessId.ToString(CultureInfo.InvariantCulture) };
+
+        var init = RosterAs(owner, "init", "--level", "global", "--route", "peer", "--cwd", Project);
+
+        if (withMember)
+        {
+            Assert.Equal(2, init.Code);
+            Assert.Contains("edits the roster TEMPLATE, and this session owns live team t-implicit", init.Stderr, StringComparison.Ordinal);
+            Assert.False(File.Exists(GlobalFile));
+            return;
+        }
+
+        Assert.True(init.Code == 0, init.Stderr);
+        var add = RosterAs(owner, "add", "--level", "global", "--role", "architect", "--cwd", Project);
+        Assert.True(add.Code == 0, add.Stderr);
+        var members = Parse(File.ReadAllText(GlobalFile))["roster"].AsObject()["members"].AsArray();
+        Assert.Contains(members, m => m.AsObject()["role"].AsString() == "architect");
+        Assert.Equal(teamBefore, _sandbox.TeamText(teamFile));
+    }
+
     [Fact]
     public void TheLiveTeamGateLetsAReadAndADryRunAndTheUsersOverrideThrough()
     {

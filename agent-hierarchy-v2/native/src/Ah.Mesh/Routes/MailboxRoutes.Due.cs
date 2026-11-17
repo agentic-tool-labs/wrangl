@@ -240,6 +240,13 @@ internal static partial class MeshRoutes
             wait = (int)Math.Clamp(n, 1, DueMaxWaitSeconds);
         }
 
+        // ah2-70: the doorbell the mod rings between the tool calls of a busy turn is a question, never a wait. It sends no
+        // `wait`, and holding it for the default made every tool call of a member with no new mail cost the full hold.
+        if (parsed.Carrier == DoorbellCarrier.Tool)
+        {
+            wait = 0;
+        }
+
         var source = new InProcessBoxes(mailbox, files);
         var registrationKey = RegistrationKey(due, mailbox, parsed.Session);
         source.Stamps[registrationKey] = Stamp(files, mailbox, registrationKey);
