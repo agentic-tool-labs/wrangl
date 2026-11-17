@@ -35,6 +35,7 @@ internal static class SliceDependencies
         new("team-summary:<t>", "activity", "members of t"),
         new("team-summary:<t>", "processes", "pids of t's dir"),
         new("team-summary:<t>", "peers", "the roster rows of t's dir"),
+        new("team-summary:<t>", "coverage", "every team: the session ids the watcher's blocked pass reads (ah2-102)"),
         new("team-summary:<t>", "messages", "exchanges of t"),
         new("team-summary:<t>", "progress", "plan of t"),
         new("topology:<t>", "teams", "t"),

@@ -332,10 +332,104 @@ public sealed class WatchTickTests
                 Host, env, Clock, Files, recovery, Dirs, () => Owner, Log.Add, snapshot => Observed = snapshot)
             {
                 Cpu = Cpu,
+                Coverage = Coverage,
+                SleepGapMs = SleepGapMs,
             });
         }
 
         internal CountingMeter? Cpu { get; set; }
+
+        internal Ah.Watch.Model.WatchCoverage Coverage { get; } = new();
+
+        internal double SleepGapMs { get; set; } = double.PositiveInfinity;
+    }
+
+    /// <summary>A rig whose session s1 owns one working Claude herdr core member, m1, session m-s1: covered once s1 is evaluated.</summary>
+    private static Rig CoveredRig()
+    {
+        var rig = new Rig();
+        rig.Host.Registrations.Add(Reg("s1"));
+        var row = new JsonObject { ["name"] = "m1", ["transport_id"] = "t1", ["herdr_flavour"] = "core" };
+        rig.Host.Owned["s1"] = [new OwnedTeam("alpha", new JsonObject(), [new MemberView("m1", row, true, "working", null, "2026-03-01T11:00:00.000Z", "m-s1")])];
+        return rig;
+    }
+
+    private static double NowMs(Rig rig) => rig.Clock.UtcNow.ToUnixTimeMilliseconds();
+
+    // ah2-102 F4: a tick whose session throws publishes nothing and does not move the publish time, so the backstop clears the set 45 s
+    // after the last real publish
+    [Fact]
+    public async Task ASessionThatThrowsEveryTickLetsTheBackstopClearTheCoverage()
+    {
+        var rig = CoveredRig();
+        var tick = rig.Tick();
+        await Pass(rig, tick);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+        var published = NowMs(rig) - 15_000;
+
+        rig.Host.ThrowFor = static _ => true;
+        await Pass(rig, tick, 3);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+
+        // negative: 45 s after the last publish is not yet past the bound
+        tick.ExpireCoverage(published + 45_000);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+
+        tick.ExpireCoverage(published + 45_001);
+        Assert.Empty(rig.Coverage.Sessions);
+    }
+
+    // ah2-102 F4: the publish time is the clock at the publish, so a slow tick does not trip the backstop
+    [Fact]
+    public async Task ASlowTickDoesNotTripTheBackstop()
+    {
+        var rig = CoveredRig();
+        var tick = rig.Tick();
+        await Pass(rig, tick, 1);
+        rig.Clock.UtcNow = rig.Clock.UtcNow.AddMilliseconds(15_000);
+        // the session's evaluation takes 40 s
+        rig.Host.ThrowFor = _ =>
+        {
+            rig.Clock.UtcNow = rig.Clock.UtcNow.AddMilliseconds(40_000);
+            return false;
+        };
+        await tick.RunAsync(CancellationToken.None);
+        var published = NowMs(rig);
+
+        tick.ExpireCoverage(published + 10_000);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+    }
+
+    // ah2-102 F4: across a sleep the backstop waits for the first tick after the wake, at most one poll period, then clears
+    [Fact]
+    public async Task ASleepGapWaitsForTheFirstTickAfterTheWake()
+    {
+        var rig = CoveredRig();
+        rig.SleepGapMs = WatchDependencies.DefaultSleepGapMs;
+        var tick = rig.Tick();
+        await Pass(rig, tick);
+        var published = NowMs(rig) - 15_000;
+
+        // woken after 10 min: not cleared before the first tick
+        tick.ExpireCoverage(published + 600_000);
+        tick.ExpireCoverage(published + 615_000);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+
+        // the first tick after the wake republishes, and the backstop then leaves it
+        rig.Clock.UtcNow = DateTimeOffset.FromUnixTimeMilliseconds((long)published + 616_000);
+        await tick.RunAsync(CancellationToken.None);
+        tick.ExpireCoverage(NowMs(rig) + 2_000);
+        Assert.Equal(["m-s1"], rig.Coverage.Sessions);
+
+        // negative: a tick that never comes after a wake is waited for one poll period only
+        var second = CoveredRig();
+        second.SleepGapMs = WatchDependencies.DefaultSleepGapMs;
+        var wedged = second.Tick();
+        await Pass(second, wedged);
+        var at = NowMs(second) - 15_000;
+        wedged.ExpireCoverage(at + 600_000);
+        wedged.ExpireCoverage(at + 615_001);
+        Assert.Empty(second.Coverage.Sessions);
     }
 
     private static WatchRegistration Reg(string sid, string? harness = "claude", long? pid = 100, string at = "2026-03-01T11:00:00.000Z", params string[] boxes) =>

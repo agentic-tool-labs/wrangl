@@ -77,6 +77,12 @@ public sealed record ReadModelOptions
     /// <summary>Whether a team is held, given its hierarchy directory and name: the summary's <c>held</c>. Null reads every team as not held.</summary>
     public Func<string, string, bool>? TeamHeld { get; init; }
 
+    /// <summary>
+    /// The watcher's coverage (ah2-102 F2), the same instance the watch tick publishes to (<see cref="WatchModule.CreateCoverage"/>). Null: no
+    /// session is covered, so a permission-blocked member with no screen mark shows blocked at once.
+    /// </summary>
+    public IWatchCoverage? Coverage { get; init; }
+
     /// <summary>A named team's own goal (ah2-53), given its hierarchy directory and name: <c>{text, done_when, team}</c>, or null with none or when it cannot be read. Null reads no goals.</summary>
     public Func<string, string, JsonObject?>? TeamGoal { get; init; }
 

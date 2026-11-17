@@ -205,7 +205,7 @@ Three different version numbers exist, and they are easy to confuse.
   answer also lists `protocols: [1, 2]`, but the daemon serves protocol 1 only. A client refuses a daemon whose
   `protocols` does not include 1 and uses the files instead. The contract document served at `/v1/contract` has its
   own `contract_version`, currently `1.1`.
-- **Plugin version**, for example `2.0.2`: in `/v1/health`, the `Ah-Daemon-Version` header and `ahd.json`. If
+- **Plugin version**, for example `2.0.3`: in `/v1/health`, the `Ah-Daemon-Version` header and `ahd.json`. If
   the client is newer than the daemon, a normal client drains the old daemon and starts a fresh one; a hook only
   asks the old one to drain and uses the files this time. A client that is older than, or equal to, the daemon is
   accepted as it is. `ahd version` prints the verdict: `equal`, `client-newer`, `client-older` or `unsupported`.

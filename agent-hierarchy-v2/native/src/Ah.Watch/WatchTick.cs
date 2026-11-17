@@ -191,9 +191,9 @@ public interface IWatchHost : IRecoveryHost
     void AppendGates(IReadOnlyList<GateAppend> gates);
 
     /// <summary>
-    /// Sets (<paramref name="clear"/>: its screen was read and shows no prompt) or removes the <c>screen_clear_at</c> mark on the activity
-    /// record of session <paramref name="sessionId"/> under <paramref name="home"/> and its other copy, at <paramref name="atMs"/> (ah2-74).
-    /// A mark already set is kept; nothing else in the record changes.
+    /// Records what the watcher read on the activity record of session <paramref name="sessionId"/> under <paramref name="home"/> and its
+    /// other copy, at <paramref name="atMs"/>: <paramref name="clear"/> (its screen was read and shows no prompt) sets <c>screen_clear_at</c>
+    /// and removes <c>screen_prompt_at</c>, else the reverse (ah2-74, ah2-102 E1). A mark already set is kept; nothing else in the record changes.
     /// </summary>
     void MarkScreenClear(string home, string sessionId, bool clear, double atMs);
 
@@ -249,6 +249,9 @@ public sealed record WatchDependencies(
 
     /// <summary>The gap between two polls that counts as sleep and is left out of the dispatch clock. The default never does; the daemon sets <see cref="DefaultSleepGapMs"/>.</summary>
     public double SleepGapMs { get; init; } = double.PositiveInfinity;
+
+    /// <summary>Where each tick publishes the session ids its blocked pass reads (ah2-102 F2), or null to publish nowhere.</summary>
+    public IWatchCoverage? Coverage { get; init; }
 }
 
 /// <summary>The hierarchy dirs of live registrations: what <c>/v1/status</c> serves.</summary>
@@ -355,7 +358,8 @@ internal sealed class WatchTick
         _chainDown = new ChainDownSweep(dependencies);
         _pollMs = Liveness.PollMs(dependencies.Environment);
         _downMs = StallSettings.From(dependencies.Environment).Down.TotalMilliseconds;
-        _awake = new AwakeClock(Math.Max(dependencies.SleepGapMs, 2 * _pollMs));
+        _sleepGapMs = Math.Max(dependencies.SleepGapMs, 2 * _pollMs);
+        _awake = new AwakeClock(_sleepGapMs);
         _startedMs = dependencies.Clock.UtcNow.ToUnixTimeMilliseconds();
     }
 
@@ -363,6 +367,9 @@ internal sealed class WatchTick
     private readonly double _startedMs;
 
     private readonly AwakeClock _awake;
+
+    /// <summary>The gap between two polls that counts as the machine having slept: the one test behind <see cref="_awake"/>.</summary>
+    private readonly double _sleepGapMs;
 
     internal double PollMs => _pollMs;
 
@@ -422,11 +429,20 @@ internal sealed class WatchTick
 
     internal async Task RunAsync(CancellationToken cancellation)
     {
+        // ah2-102 F3: a daemon that stops (its jobs' token is cancelled when it drains) or loses the watch publishes no coverage
+        if (_d.Coverage is { } stopping && Interlocked.Exchange(ref _stopHooked, 1) == 0)
+        {
+            _ = cancellation.Register(() => stopping.Publish(NoSessions));
+        }
+
         if (_d.StillOwner is { } owns && !owns())
         {
+            _d.Coverage?.Publish(NoSessions);
             return;
         }
 
+        _covered.Clear();
+        _coverageFailed = false;
         var now = (double)_d.Clock.UtcNow.ToUnixTimeMilliseconds();
         _ = _awake.Poll(now);
         _d.Host.BeginTick(now);
@@ -473,11 +489,20 @@ internal sealed class WatchTick
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                _coverageFailed = true;
                 _d.Log?.Invoke($"tick failed for {reg.SessionId}: {e}");
             }
 
             timer.LastTick = Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)now));
             evaluating += clock.ElapsedMilliseconds - step;
+        }
+
+        // ah2-102 F2/F3: the union of every evaluated session's coverage, once per tick; a session that threw leaves the last set standing
+        // and the publish time unmoved, so a session that throws every tick lets the backstop clear the set
+        if (!_coverageFailed)
+        {
+            _d.Coverage?.Publish(new HashSet<string>(_covered, StringComparer.Ordinal));
+            Interlocked.Exchange(ref _coverageAtMs, _d.Clock.UtcNow.ToUnixTimeMilliseconds());
         }
 
         foreach (var sid in _timers.Keys.Where(k => !seen.Contains(k)).ToList())
@@ -540,6 +565,54 @@ internal sealed class WatchTick
         return string.Create(
             System.Globalization.CultureInfo.InvariantCulture,
             $"slow={window.Count(ms => ms >= SlowTickMs)} p95={window[(int)Math.Ceiling(window.Length * 0.95) - 1]}ms");
+    }
+
+    private static readonly IReadOnlySet<string> NoSessions = new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>This tick's coverage so far: the session ids each evaluated session's blocked pass reads (ah2-102 F1).</summary>
+    private readonly HashSet<string> _covered = new(StringComparer.Ordinal);
+
+    private bool _coverageFailed;
+
+    /// <summary>When a tick last published its coverage, by the clock at the publish, in epoch ms; 0 before the first.</summary>
+    private long _coverageAtMs;
+
+    private int _stopHooked;
+
+    /// <summary>The publish time a sleep gap was seen after, and when the backstop first saw it (ah2-102 F4).</summary>
+    private long _wakeAfterMs;
+
+    private double _wakeSeenMs;
+
+    /// <summary>
+    /// ah2-102 F4: run by the status-dir backstop job, which ahd schedules apart from the tick: no coverage is published while no tick has
+    /// published for three poll periods, so a tick stuck awaiting or a session that throws every tick cannot keep a pending read showing
+    /// working. A gap longer than the tick's sleep test (<see cref="_sleepGapMs"/>) is a sleep: the first tick after the wake republishes, so
+    /// the backstop waits for it, at most one poll period after it saw the wake.
+    /// </summary>
+    internal void ExpireCoverage(double now)
+    {
+        var at = Interlocked.Read(ref _coverageAtMs);
+        if (at == 0 || now - at <= 3 * _pollMs)
+        {
+            return;
+        }
+
+        if (now - at > _sleepGapMs)
+        {
+            if (_wakeAfterMs != at)
+            {
+                _wakeAfterMs = at;
+                _wakeSeenMs = now;
+            }
+
+            if (now - _wakeSeenMs <= _pollMs)
+            {
+                return;
+            }
+        }
+
+        _d.Coverage?.Publish(NoSessions);
     }
 
     private OutagePlan _outage = new(OutageView.None, [], new Dictionary<string, List<WatchEvent>>(), []);
@@ -783,6 +856,7 @@ internal sealed class WatchTick
             member => host.DispatchBaseMs(sid, member),
             _episodes);
         host.AppendGates(blocked.Gates);
+        _covered.UnionWith(blocked.Covered);
         foreach (var (session, clear) in blocked.ScreenClear ?? [])
         {
             host.MarkScreenClear(home, session, clear, now);

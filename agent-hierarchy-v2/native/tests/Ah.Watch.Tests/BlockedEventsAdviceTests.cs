@@ -174,6 +174,35 @@ public sealed class BlockedEventsAdviceTests
         Assert.Empty(outcome.ScreenClear!);
     }
 
+    // ah2-102 F1: coverage is the read's guard without the blocked term: a working Claude herdr member is covered; a codex member and one
+    // not live to the watcher are not (negatives)
+    [Fact]
+    public void CoverageNamesTheMembersTheBlockedPassWouldReadWhetherOrNotTheyAreBlocked()
+    {
+        static JsonObject Row(string name, string? kind = null)
+        {
+            var row = new JsonObject { ["name"] = name, ["transport_id"] = "t-" + name, ["herdr_flavour"] = "core" };
+            if (kind is not null)
+            {
+                row["kind"] = kind;
+            }
+
+            return row;
+        }
+
+        var team = new OwnedTeam(null, new JsonObject { ["transport"] = JsonValue.Null },
+        [
+            new MemberView("m1", Row("m1"), true, "working", null, "2026-11-17T13:10:00.000Z", "s1"),
+            new MemberView("m2", Row("m2", "codex"), true, "blocked", "permission", "2026-11-17T13:10:00.000Z", "s2"),
+            new MemberView("m3", Row("m3"), false, "blocked", "permission", "2026-11-17T13:10:00.000Z", "s3"),
+        ]);
+        var outcome = BlockedEvents.Evaluate(
+            "sess", "/w", 1_000_000, "/w/.claude/ah2", "/r/bin/ah roster", [team], [], () => [], (_, _) => new PromptRead(Hash, Spinner, null),
+            r => r.Str("kind") ?? "claude", (_, _) => null, _ => 0, new BlockedEpisodes());
+
+        Assert.Equal(["s1"], outcome.Covered);
+    }
+
     [Fact]
     public void AnImplicitTeamHerdrCoreMemberAtARecognisedPromptRaisesTheWakeAndTheAlert()
     {

@@ -295,3 +295,24 @@ test("the eased scale leaves its start, moves one way only, and lands exactly on
     assert.ok(s >= SCALE_MIN && s <= SCALE_MAX, `${s} at ${ms} ms`);
   }
 });
+
+// ah2-103: a Graph member opens its pane by the sidebar's path, so the Map leaf and the Flow card carry the pane the sidebar's row does.
+test("the Map leaf and the Flow card carry the member's pane when it has one, none when it does not", () => {
+  const panes = (list) => Object.fromEntries(list.map((x) => [x.id.split("/").pop(), x.pane]));
+  const want = { "@orchestrator": "t1", implementor: null, reviewer: null, architect: null };
+  assert.deepEqual(panes(graphModel(slices, TM4).groups[0].map.leaves), want);
+  assert.deepEqual(panes(FM.flowModel(slices, TM4, "horizontal", 1, WIDE).cards), want);
+  // a lane's member reads its lane's summary; a proven-dead member has none
+  const laned = new Map(slices);
+  const t = laned.get(`team:${TM4}`);
+  laned.set(t.id, { ...t, body: { ...t.body, streams: [{ state: "open", child_team: "lane-herdr", sub_orchestrator: "architect" }] } });
+  const ls = laned.get("team-summary:a1b2c3d4/lane-herdr");
+  const arch = "member:a1b2c3d4/lane-herdr/architect";
+  laned.set(ls.id, { ...ls, body: { ...ls.body, member_states: { ...ls.body.member_states, [arch]: { ...ls.body.member_states[arch], pane_id: "t8" } } } });
+  assert.equal(FM.flowModel(laned, TM4, "horizontal", 1, WIDE).cards.find((c) => c.id === arch).pane, "t8");
+  const dead = new Map(slices);
+  const sum = dead.get("team-summary:9f8e7d6c/engram-rc");
+  const ms = sum.body.member_states;
+  dead.set(sum.id, { ...sum, body: { ...sum.body, member_states: { ...ms, "member:9f8e7d6c/engram-rc/implementor": { ...ms["member:9f8e7d6c/engram-rc/implementor"], pane_id: "t9" } } } });
+  assert.equal(graphModel(dead, "9f8e7d6c/engram-rc").groups[0].map.leaves.find((n) => n.id.endsWith("/implementor")).pane, null);
+});

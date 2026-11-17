@@ -696,6 +696,20 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     /// </summary>
     internal async Task<Discovered?> EnsureAsync(EnsureOptions options, CancellationToken ct = default)
     {
+        string? last = null;
+        var drained = false;
+        var found = await EnsureCoreAsync(options with { Warn = (text, reason) => { last = text; options.Warn?.Invoke(text, reason); } }, () => drained = true, ct).ConfigureAwait(false);
+        if (found is null && drained)
+        {
+            // ah2-100 D5: a replace that ends with no daemon says so in one line.
+            LogAction("replace-failed", $"reason={last ?? "unknown"}");
+        }
+
+        return found;
+    }
+
+    private async Task<Discovered?> EnsureCoreAsync(EnsureOptions options, Action onDrained, CancellationToken ct)
+    {
         void Warn(string text) => options.Warn?.Invoke(text, "down");
         if (DaemonOff)
         {
@@ -819,20 +833,24 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return null;
             }
 
-            if (options.Hook)
-            {
-                // Tell it to go and carry on with the files; the next CLI call starts the right one.
-                var hookReply = await PostDrainAsync(info.Socket, "client upgrade", (int)Math.Max(50, Math.Min(Remaining(), HookDrainTimeoutMs)), ct).ConfigureAwait(false);
-                Warn(ActualRefusal(hookReply) is { } hookRefusal
-                    ? $"the daemon is older ({version}) and refused to drain: {hookRefusal}; using files for now"
-                    : $"the daemon is older ({version}); asked it to drain, using files for now");
-                return null;
-            }
-
             if (round == 1)
             {
                 Warn("the daemon is still older after a restart");
                 return null;
+            }
+
+            if (options.Hook)
+            {
+                // ah2-100: whoever drains to replace starts the replacement; the next round waits for the exit and starts it within the budget.
+                var hookReply = await PostDrainAsync(info.Socket, "client upgrade", (int)Math.Max(50, Math.Min(Remaining(), HookDrainTimeoutMs)), ct).ConfigureAwait(false);
+                if (ActualRefusal(hookReply) is { } hookRefusal)
+                {
+                    Warn($"the daemon is older ({version}) and refused to drain: {hookRefusal}; using files for now");
+                    return null;
+                }
+
+                onDrained();
+                continue;
             }
 
             var drainReply = await PostDrainAsync(info.Socket, "client upgrade", 2000, ct).ConfigureAwait(false);
@@ -842,6 +860,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return null;
             }
 
+            onDrained();
             if (!await WaitForPidExitAsync(info.Pid, DrainWaitMs, ct).ConfigureAwait(false))
             {
                 Warn("the old daemon did not exit after a drain");

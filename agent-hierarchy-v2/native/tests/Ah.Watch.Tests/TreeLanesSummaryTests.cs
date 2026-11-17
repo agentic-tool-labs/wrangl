@@ -41,8 +41,9 @@ public sealed partial class TreeLanesTests
         }
     }
 
-    private static (ReadModel Model, Clock Clock) MakeWithActivity(TreeReader reader, ISliceComposer? summary = null, IModelLane? plan = null, Func<string, string, bool>? teamHeld = null, long? wallClockMs = null, Func<string, string?>? branchOf = null)
+    private static (ReadModel Model, Clock Clock) MakeWithActivity(TreeReader reader, ISliceComposer? summary = null, IModelLane? plan = null, Func<string, string, bool>? teamHeld = null, long? wallClockMs = null, Func<string, string?>? branchOf = null, WatchCoverage? coverage = null)
     {
+        coverage ??= new WatchCoverage();
         var clock = new Clock();
         string[] canonical = [Canon];
         var activity = new TimelineRecorder(new ActivityLane(reader, () => canonical), null, static _ => { }, null, new WorkingShare());
@@ -53,6 +54,7 @@ public sealed partial class TreeLanesTests
             .Append(activity)
             .Append(processes)
             .Append(new PeersLane(reader, () => canonical))
+            .Append(new CoverageLane(coverage))
             .ToList();
         if (plan is not null)
         {
@@ -68,13 +70,14 @@ public sealed partial class TreeLanesTests
             WallClockMs = () => wallClockMs ?? FixtureNowMs + ServeLaterMs,
             ProcessesObservedAtMs = () => processes.ObservedAtMs,
         };
+        coverage.Changed = () => model.Emit(CoverageLane.LaneName, CoverageLane.Key);
         return (model, clock);
     }
 
-    private static (ReadModel Model, Clock Clock) SeededWithActivity(TreeReader reader, ISliceComposer? summary = null, IModelLane? plan = null, Func<string, string, bool>? teamHeld = null, long? wallClockMs = null, Func<string, string?>? branchOf = null)
+    private static (ReadModel Model, Clock Clock) SeededWithActivity(TreeReader reader, ISliceComposer? summary = null, IModelLane? plan = null, Func<string, string, bool>? teamHeld = null, long? wallClockMs = null, Func<string, string?>? branchOf = null, WatchCoverage? coverage = null)
     {
-        var (model, clock) = MakeWithActivity(reader, summary, plan, teamHeld, wallClockMs, branchOf);
-        foreach (var lane in new[] { "teams", "worktrees", "decisions", "registrations", "known-dirs", "messages", "status", "activity" })
+        var (model, clock) = MakeWithActivity(reader, summary, plan, teamHeld, wallClockMs, branchOf, coverage);
+        foreach (var lane in new[] { "teams", "worktrees", "decisions", "registrations", "known-dirs", "messages", "status", "activity", CoverageLane.LaneName })
         {
             model.EmitKeySet(lane);
         }
@@ -307,6 +310,60 @@ public sealed partial class TreeLanesTests
         reader.Activities["s-dev"] = """{"activity":"blocked","blocked_by":"permission","at":"2026-06-01T12:00:00Z","turn_at":"2026-06-01T12:00:00Z"}""";
         var (model, _) = SeededWithActivity(reader);
         using var owner = model;
+
+        var body = Summary(model);
+        Assert.Equal("blocked", Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+        Assert.Equal("Waiting on a permission", AlertText(body));
+    }
+
+    // ah2-102 F5: a permission Notification shows working while its read is pending (the watcher's coverage holds the session), then follows the marks
+    [Theory]
+    [InlineData(true, "permission", "", "working", null)]
+    [InlineData(true, "permission", ",\"screen_prompt_at\":\"2026-06-01T12:00:15.000Z\"", "blocked", "Waiting on a permission")]
+    [InlineData(true, "permission", ",\"screen_clear_at\":\"2026-06-01T12:00:15.000Z\"", "working", null)]
+    [InlineData(false, "permission", "", "blocked", "Waiting on a permission")] // negative: not in the watcher's coverage
+    [InlineData(true, "question", ",\"note\":\"Ship it?\"", "blocked", "Asking in the terminal: Ship it?")] // negative: a question
+    public void ABlockedRecordFollowsTheWatchersTwoMarks(bool covered, string blockedBy, string extra, string state, string? alert)
+    {
+        var reader = Truth();
+        var coverage = new WatchCoverage();
+        if (covered)
+        {
+            coverage.Publish(new HashSet<string>(["s-dev"]));
+        }
+
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = "{\"activity\":\"blocked\",\"blocked_by\":\"" + blockedBy + "\",\"at\":\"2026-06-01T12:00:00Z\",\"turn_at\":\"2026-06-01T12:00:00Z\"" + extra + "}";
+        var (model, _) = SeededWithActivity(reader, coverage: coverage);
+        using var owner = model;
+
+        var body = Summary(model);
+        Assert.Equal(state, Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+        if (alert is null)
+        {
+            Assert.Empty(body.Member("alerts")!.Value.AsArray());
+        }
+        else
+        {
+            Assert.Equal(alert, AlertText(body));
+        }
+    }
+
+    // ah2-102 F3/F7: a covered member pending its read flips to blocked when the watcher publishes an empty set, with no other write
+    [Fact]
+    public void APendingMemberShowsBlockedOnceTheWatcherPublishesNoCoverage()
+    {
+        var reader = Truth();
+        var coverage = new WatchCoverage();
+        coverage.Publish(new HashSet<string>(["s-dev"]));
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = """{"activity":"blocked","blocked_by":"permission","at":"2026-06-01T12:00:00Z","turn_at":"2026-06-01T12:00:00Z"}""";
+        var (model, clock) = SeededWithActivity(reader, coverage: coverage);
+        using var owner = model;
+        Assert.Equal("working", Text(Summary(model).Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+
+        coverage.Publish(new HashSet<string>());
+        Drain(model, clock);
 
         var body = Summary(model);
         Assert.Equal("blocked", Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
@@ -1043,6 +1100,43 @@ public sealed partial class TreeLanesTests
     {
         public JsonValue Read(string domain, string op, string hierarchyDir, JsonObject args) =>
             domain == "team" ? teams.Read(domain, op, hierarchyDir, args) : JsonValue.Null;
+    }
+
+    /// <summary>ah2-110: the coverage lane's first record is a notified write, so the first full pass counts no drift for it; negative: the drift without the lane.</summary>
+    [Fact]
+    public void TheCoverageLanesFirstRecordIsNotADriftAndNegativeTheDriftWithoutTheLaneIsTheSame()
+    {
+        Assert.Equal(FirstPassDrift(null), FirstPassDrift(WatchModule.CreateCoverage()));
+    }
+
+    private static long FirstPassDrift(IWatchCoverage? coverage)
+    {
+        var root = Directory.CreateTempSubdirectory("ah-coverage-drift-").FullName;
+        try
+        {
+            var reader = new TreeReader();
+            using var model = LazyAwareModel.Unwrap(WatchModule.CreateReadModel(new TeamsOnlyReader(reader), () => [root], TestFolds.Options with { Coverage = coverage }))!;
+            WatchModule.StartReadModel(model);
+            var deadline = DateTime.UtcNow.AddSeconds(20);
+            // FullPasses counts per lane as each drains; an empty bus is every lane's first pass done (the seeding end)
+            while ((model.Counters.FullPasses < 1 || model.Bus.Count > 0) && DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(20);
+            }
+
+            Assert.True(model.Counters.FullPasses >= 1 && model.Bus.Count == 0, "the first pass did not drain within 20 s");
+            var drift = model.Counters.Drift;
+            if (coverage is not null)
+            {
+                Assert.False(model.Projector.Records.Get(CoverageLane.LaneName, CoverageLane.Key)?.IsAbsent ?? true, "the coverage lane was not read");
+            }
+
+            return drift;
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

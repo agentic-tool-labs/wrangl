@@ -13,7 +13,7 @@
 // role columns, links between them, lanes as bands. Read-only as the Map is. The choice is kept in Herdr's shared store (GRAPH_KEY).
 
 import { div, PathBuilder, Background } from "gpui-kit";
-import { shared, setShared } from "herdr";
+import { shared, setShared, run, terminals } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
@@ -21,7 +21,8 @@ import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, d
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
-import { STATES, age, loadingOf } from "./model.js";
+import { STATES, age, loadingOf, terminalFinder, memberName } from "./model.js";
+import { target } from "./ah.js";
 import { stateMark } from "./marks.js";
 
 const MONO = "Geist Mono";
@@ -101,6 +102,15 @@ function syncKnob(v, sc) {
 
 const stop = (_e, cx) => cx.stop_propagation(); // a press on a control must not drag the window
 
+// ah2-103: a member opens its pane by the sidebar's own path (main.js member): the live terminal terminalFinder gives for the
+// member's served pane, or its ah.name label; none, and the member is inert. `rest` is its border at rest: one already in accent
+// shows focus in foreground.
+const addressOf = (v, id, pane) => v.graphTerminal?.({ pane, name: memberName(id) }) ?? null;
+const opens = (el, t, address, rest) => el.cursor_pointer().hover((s) => s.border_color(t.foreground))
+  .focus((s) => s.border_color(rest === t.accent ? t.foreground : t.accent))
+  .on_mouse_down("left", stop)
+  .on_click(() => run("pane.focus", { terminal: address }));
+
 // graphModel (flowModel in Flow) only when an input changed: the slices (v.sliceGen, bumped by the poll), the shown team, window,
 // cursor, zoom and scale, the size (docked or not), the minute (the scrubber's clock moves in whole minutes), the mode and orientation,
 // and in Flow the room (Flow fits its stage). A throw is kept the same way. A pan is not an input: it only moves what is laid out.
@@ -135,6 +145,7 @@ function choose(v, patch, cx) {
 
 export function graphView(v, t, close) {
   const docked = isDocked();
+  v.graphTerminal = terminalFinder(terminals(), target()); // per render, as the sidebar's (main.js)
   const { m: got, error } = graphOf(v, docked);
   const m = got ?? { loaded: true, tabs: [], scrub: null, crumb: null }; // a failed layout draws the frame as when loading
   v.graphScrub = m.scrub;
@@ -412,7 +423,7 @@ function map(t, g, zoomTo, v) {
       }));
   });
   for (const a of m.arcs) els.push(layer(stroke(a.cmds, a.width, a.kind === 1), Background.solid(t.accent).opacity(a.fade ?? base), S));
-  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i)));
+  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, addressOf(v, n.id, n.pane))));
   m.flights.forEach((f, i) => els.push(div().id(`gf-${g.id}-${i}`).absolute().left(f.x - 4).top(f.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(f.title).accessibility_label(f.title)));
   // container names sit on the circle's top edge, on a surface chip that stands in for the web's label halo
@@ -444,7 +455,7 @@ function map(t, g, zoomTo, v) {
 
 // A member: its body, the busy track and ring (the share of the last hour it worked, in its state's tone), then the label tiers
 // its radius has room for: context, state mark and name, role, model · state, item. The mark's shape keeps it from resting on colour.
-function leaf(t, g, n, i) {
+function leaf(t, g, n, i, address) {
   const r = n.r;
   const tone = t[n.tone] ?? t.unknown;
   const full = n.full;
@@ -455,9 +466,10 @@ function leaf(t, g, n, i) {
   const across = Math.round(r * 2 - 8);
   const tight = n.name.length * 6.2 + 18 > across;
   const mark = stateMark(t, n.state);
-  return div().id(`gm-${g.id}-${i}`).absolute().left(n.x - r).top(n.y - r).size(r * 2).rounded(r)
+  const at = address ? opens(Button.new(`gm-${g.id}-${i}`), t, address, t.border) : div().id(`gm-${g.id}-${i}`);
+  return at.absolute().left(n.x - r).top(n.y - r).size(r * 2).rounded(r)
     .bg(t.surface).border(1).border_color(t.border).when(n.state === "gone", (el) => el.opacity(0.4))
-    .tooltip(full).accessibility_label(full)
+    .tooltip(address ? `${full}. Click to open its pane` : full).accessibility_label(address ? `${full}. Open its pane` : full)
     .child(layer(ring(r, r * 0.86, 1, r * 0.1), t.border, r * 2))
     .child(layer(ring(r, r * 0.86, Math.max(0.04, n.share ?? 0), r * 0.1), tone, r * 2))
     .child(v_flex().size_full().items_center().justify_center().gap(1)
@@ -507,7 +519,7 @@ function flowBody(t, m, v) {
     els.push(sized(window.paint_path(stroke(l.cmds, w, l.kind === "review"), l.kind === "edge" ? t.muted : t.accent)));
   }
   m.labels.forEach((l) => els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).font_semibold().text_color(t.muted).child(l.text)));
-  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k)));
+  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, addressOf(v, c.id, c.pane))));
   m.dots.forEach((d, i) => els.push(div().id(`gfd-${i}`).absolute().left(d.x - 4).top(d.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title)));
   const pan = flowPan(v.graphPan.flow, m.size, m.stage);
@@ -546,7 +558,7 @@ function flowLegend(t) {
 
 // One member: a card when it is working, blocked or running (accent border, the tag, a stats line), else one line. A field with no
 // source is not drawn (the web's FlowCard).
-function flowCard(t, c, i, k) {
+function flowCard(t, c, i, k, address) {
   const s = c.card;
   const r = c.rect;
   const reviewing = s.role === "reviewer" && s.state === "working";
@@ -569,10 +581,13 @@ function flowCard(t, c, i, k) {
     ago ? h_flex().gap(4 * k).flex_none().child("active").child(div().font_semibold().text_color(t.foreground).child(ago)) : null,
   ].filter(Boolean) : [];
   const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
-  return v_flex().id(`gfc-${i}`).absolute().left(r.x).top(r.y).w(r.w).h(r.h).px(10 * k).py(8 * k).gap(8 * k).when(!c.active, (el) => el.justify_center()).overflow_hidden()
-    .rounded(6).border(1).border_color(c.active ? t.accent : t.border).bg(c.active ? t.selected : t.raised)
+  const rest = c.active ? t.accent : t.border;
+  const tip = [s.full, s.role, word].filter(Boolean).join(" · ");
+  const at = address ? opens(Button.new(`gfc-${i}`), t, address, rest).flex().flex_col() : v_flex().id(`gfc-${i}`);
+  return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).px(10 * k).py(8 * k).gap(8 * k).when(!c.active, (el) => el.justify_center()).overflow_hidden()
+    .rounded(6).border(1).border_color(rest).bg(c.active ? t.selected : t.raised)
     .when(s.state === "gone", (el) => el.opacity(0.4))
-    .tooltip([s.full, s.role, word].filter(Boolean).join(" · ")).accessibility_label(said)
+    .tooltip(address ? `${tip}. Click to open its pane` : tip).accessibility_label(address ? `${said}. Open its pane` : said)
     .child(head)
     .when(c.active, (el) => el.child(div().h(1).flex_none().bg(t.border))
       .when(stats.length > 0, (el2) => el2.child(h_flex().gap(8 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats))));

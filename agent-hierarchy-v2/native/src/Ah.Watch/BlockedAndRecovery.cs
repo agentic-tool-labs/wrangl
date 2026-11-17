@@ -47,7 +47,11 @@ internal sealed record SessionOutcome(
     IReadOnlyList<PeerAppend> PeerRows,
     IReadOnlyList<MemberResume>? Resumes = null,
     IReadOnlyList<TurnEndRecord>? Traces = null,
-    IReadOnlyList<(string Session, bool Clear)>? ScreenClear = null);
+    IReadOnlyList<(string Session, bool Clear)>? ScreenClear = null)
+{
+    /// <summary>The session ids whose blocked record the blocked pass reads (ah2-102 F1): the watcher's coverage for the sidebar.</summary>
+    public IReadOnlyList<string> Covered { get; init; } = [];
+}
 
 /// <summary>
 /// A resume due for a member whose turn ended on an API error: the entry for its own box, the note for the Orchestrator when the
@@ -239,6 +243,7 @@ internal static partial class BlockedEvents
         var events = new List<WatchEvent>();
         var gateRows = new List<GateAppend>();
         var screenClear = new List<(string Session, bool Clear)>();
+        var covered = new List<string>();
         var ledger = new List<JsonObject>(gates);
         IReadOnlyList<JsonObject>? agents = null;
         var agentsRead = false;
@@ -273,9 +278,18 @@ internal static partial class BlockedEvents
                     episodes.Set(key, st);
                 }
 
-                var rowTransport = row.Str("transport") ?? team.Doc.Str("transport");
+                // an empty row transport falls through to the team's (ah2-102 E10)
+                var rowTransport = row.Str("transport") is { Length: > 0 } own ? own : team.Doc.Str("transport");
                 var paneId = row.Str("transport_id");
                 var onHerdr = Ah.Core.Mux.HerdrFlavour.OnHerdr(JsonValue.FromObject(row), rowTransport) && !string.IsNullOrEmpty(paneId);
+                // ah2-102 F1: the one boolean that guards the screen read below; the member is covered (its blocked record will be read) when it holds
+                var kind = kindOf(row);
+                var readable = onHerdr && kind == "claude" && m.Live != false && m.SessionId is { Length: > 0 };
+                if (readable)
+                {
+                    covered.Add(m.SessionId!);
+                }
+
                 var herdrStatus = onHerdr ? AgentStatusOf(paneId!) : null;
                 var blockedBy = m.Live != false && m.Activity == "blocked"
                     ? (string.IsNullOrEmpty(m.BlockedBy) ? "unknown" : m.BlockedBy)
@@ -309,14 +323,13 @@ internal static partial class BlockedEvents
                 }
 
                 // ah2-74 B1: every tick a blocked hook record holds, the screen is read once (the wake below reuses the read) and decides the
-                // sidebar's mark: a readable Claude screen with no prompt (the b458 case) sets screen_clear_at; a recognised prompt or an
-                // unreadable screen removes it. The wake's own timing is unchanged.
-                var kind = kindOf(row);
+                // sidebar's marks: a readable Claude screen with no prompt (the b458 case) sets screen_clear_at and removes screen_prompt_at; a
+                // recognised prompt or an unreadable screen does the reverse (ah2-102 E1). The wake's own timing is unchanged.
                 PromptRead? read = null;
-                if (onHerdr && kind == "claude" && m.Live != false && m.Activity == "blocked" && m.SessionId is { Length: > 0 } session)
+                if (readable && m.Activity == "blocked")
                 {
                     read = promptCore(row, team.Doc);
-                    screenClear.Add((session, read.Screen.Trim().Length > 0 && string.IsNullOrEmpty(read.Recognized)));
+                    screenClear.Add((m.SessionId!, read.Screen.Trim().Length > 0 && string.IsNullOrEmpty(read.Recognized)));
                 }
 
                 if (st.Polls < PollsToWake || st.Woke)
@@ -420,7 +433,7 @@ internal static partial class BlockedEvents
             }
         }
 
-        return new SessionOutcome(events, gateRows, [], ScreenClear: screenClear);
+        return new SessionOutcome(events, gateRows, [], ScreenClear: screenClear) { Covered = covered };
     }
 
     private static JsonObject GateRow(string type, string sessionId, string? team, string member, string? role, string? blockedBy, string? hash, bool includeEvidence)

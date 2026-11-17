@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.3] - 2026-11-17
+
+### Added
+
+- **Jump from the herdr desktop Graph to a member's pane.** In Map and Flow, a click on a member with a live pane
+  focuses that pane, as its row in the Wrangl pane does; Tab reaches the members and Enter or Space opens the pane.
+  Run `ah herdr install` again to get it.
+
+### Fixed
+
+- **`ahd` stayed down after a plugin update.** A prompt hook that met an older daemon told it to stop and left the
+  start to "the next call", but the session's later calls never start a daemon, so herdr desktop said `ahd` was not
+  running until `ahd start` was run by hand. The hook now starts the replacement within its time budget. `ahd stop`
+  still leaves the daemon down.
+- **A short false "Waiting on a permission" warning in herdr desktop.** 2.0.2 stopped the false mail, but until the
+  watcher's next screen read (up to 15 seconds) a working member still showed as blocked and raised a desktop notice.
+  The watcher now publishes which members it reads and records what each read showed. A member it reads shows working
+  until a read sees a prompt, and a real prompt shows within one 15-second check. A member it does not read (not a
+  Claude member, proven gone, or on a team with no live Orchestrator) shows blocked at once, as before, so it can still
+  raise the false notice.
+
 ## [2.0.2] - 2026-11-17
 
 Fixes and one addition from the first day of use on herdr desktop.

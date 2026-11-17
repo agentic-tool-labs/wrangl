@@ -110,10 +110,13 @@ internal sealed class ActivityLane(IViewStateReader reader, Func<IReadOnlyList<s
             ["turn_at"] = Text(record, "turn_at") ?? JsonValue.Null,
         };
 
-        // ah2-74: the watcher's mark that it read the screen and found no prompt; carried only when present
-        if (Text(record, "screen_clear_at") is { } clear)
+        // ah2-74 / ah2-102: the watcher's marks of what it read (no prompt; a prompt or no screen) and why the hook says blocked; carried only when present
+        foreach (var field in new[] { "screen_clear_at", "screen_prompt_at", "blocked_by" })
         {
-            body["screen_clear_at"] = clear;
+            if (Text(record, field) is { } value)
+            {
+                body[field] = value;
+            }
         }
         body["context"] = record.Member("context") is { IsMap: true } context
             ? JsonValue.FromObject(new JsonObject

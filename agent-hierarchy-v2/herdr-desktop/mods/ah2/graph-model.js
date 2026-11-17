@@ -8,7 +8,7 @@ import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
 import { fitView as fitBox, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
-import { STATES, sidebarModel } from "./model.js";
+import { STATES, sidebarModel, memberPane } from "./model.js";
 
 // The web Map's label tiers, label radius, spark cap, air, fit and arc offset are graph-world.js's TIERS, LABEL_AT, MAX_SPARKS,
 // airOf, fitPack and sideways, which both draw with.
@@ -161,7 +161,7 @@ function group(slices, t, depth, size, o = {}) {
     const stream = streamOf(slices, team.body, slices.get(id)?.body.placement?.stream ?? null);
     const ctx = m.state === "gone" ? null : m.ctx?.text ?? null;
     // a role that only repeats the name says nothing; a lane orchestrator's "sub-orchestrator" does
-    return { id, name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", stream, share: m.share, ctx, model: m.model ?? "" };
+    return { id, name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", stream, share: m.share, ctx, model: m.model ?? "", pane: memberPane(id, served[id]) };
   });
 
   const head = slices.get(flowId(team.body))?.body ?? null;
@@ -435,8 +435,10 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const sparks = sparksOf(slices, tm);
   const edges = slices.get(`topology:${id}`)?.body.edges?.parent_child ?? [];
   const fl = flowLinks(edges, sparks, layout.pos, o);
+  // a lane's member reads its pane from its lane's summary, as the sidebar's row does (memberPane)
+  const paneAt = (n) => memberPane(n.id, slices.get((n.team || teamId).replace(/^team:/, "team-summary:"))?.body.member_states?.[n.id]);
   const cards = nodes.filter((n) => layout.pos.has(n.id)).map((n) => ({ id: n.id, rect: rect(layout.pos.get(n.id)), card: flowCardOf(slices, n.team || teamId, n.id),
-    active: active.has(n.id), out: sparks.filter((s) => s.from === n.id).length }));
+    active: active.has(n.id), out: sparks.filter((s) => s.from === n.id).length, pane: paneAt(n) }));
   const links = fl.links.map((l) => ({ key: l.key, kind: l.kind, cmds: scaled(l.cmds) }));
   const dots = fl.dots.map((d) => {
     const cmds = scaled(d.cmds);
