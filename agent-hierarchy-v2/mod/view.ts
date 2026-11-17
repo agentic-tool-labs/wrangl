@@ -1062,3 +1062,48 @@ export function sitrepSections(held: unknown, now: number, columns: number): Sec
     return { section: 'sitrep', key: 'sitrep-' + name, title: `Sitrep · ${name}`, color: null, bordered, rows } as Section
   })]
 }
+
+// The background rebuild of ahd (ah2-111), from <AH_HOME>/install.json alone. The herdr mod holds the same rule in
+// herdr-desktop/mods/ah2/rebuild-model.js (the mod guard lets register.tsx import values from ./view only); tests/web/rebuild-notice.test.mjs
+// drives both copies through the same cases.
+export type Rebuild = { version: string; at: string; state: string; stamp: string | null }
+export type RebuildNotice = { kind: 'building' | 'ready' | 'failed'; version: string }
+// How often a running build is re-read, and for how long before the watch gives up and says nothing more.
+export const REBUILD_EVERY_MS = 3000
+export const REBUILD_WATCH_MS = 10 * 60_000
+
+// The stamp's text -> its last_rebuild, with the stamp's own version; null when the text is not a stamp with one.
+export function rebuildOf(text: unknown): Rebuild | null {
+  let j: any
+  try { j = JSON.parse(String(text)) } catch { return null }
+  const r = j !== null && typeof j === 'object' ? j.last_rebuild : null
+  if (r === null || typeof r !== 'object' || typeof r.version !== 'string' || typeof r.at !== 'string' || typeof r.state !== 'string') return null
+  return { version: r.version, at: r.at, state: r.state, stamp: typeof j.version === 'string' ? j.version : null }
+}
+
+// Given the rebuild this surface last kept (`before`, null: none) and the one the stamp records now (null: unreadable): what to
+// say, what to keep (`before` itself when nothing changed, so a caller writes only when keep !== before), and whether to keep
+// watching. A rebuild is keyed on version + at, so one already kept says nothing; "ready" and "failed" need its "started" kept first.
+export function rebuildStep(before: unknown, now: Rebuild | null): { notice: RebuildNotice | null; keep: unknown; watch: boolean } {
+  const b = before !== null && typeof before === 'object' ? (before as Partial<Rebuild>) : null
+  const watching = (r: Partial<Rebuild> | null) => r !== null && r.state === 'started'
+  if (now === null || (b !== null && b.version === now.version && b.at === now.at)) return { notice: null, keep: before, watch: watching(b) }
+  const ended = b !== null && b.state === 'started' && b.version === now.version
+  const notice: RebuildNotice | null = now.state === 'started' ? { kind: 'building', version: now.version }
+    : ended && now.state === 'ok' && now.stamp === now.version ? { kind: 'ready', version: now.version }
+    : ended && now.state === 'failed' ? { kind: 'failed', version: now.version }
+    : null
+  return { notice, keep: now, watch: watching(now) }
+}
+
+// The kept rebuild once the watch gave up: same key, so it says nothing more, and not "started", so it is not watched again.
+export function rebuildGaveUp(kept: unknown): unknown {
+  return kept !== null && typeof kept === 'object' && (kept as Partial<Rebuild>).state === 'started' ? { ...kept, state: 'gave-up' } : kept
+}
+
+// The Claude Code toast's text.
+export function rebuildToast(n: RebuildNotice, home: string): string {
+  if (n.kind === 'building') return `Wrangl: building ahd ${n.version}…`
+  if (n.kind === 'ready') return `Wrangl: ahd ${n.version} is ready`
+  return `Wrangl: the ahd ${n.version} build failed; see ${home}/logs/rebuild.log`
+}

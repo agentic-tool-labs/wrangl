@@ -38,7 +38,7 @@ public sealed class WhereTests
         Assert.Single(stdout.TrimEnd('\n').Split('\n'));
         using var document = JsonDocument.Parse(stdout);
         var root = document.RootElement;
-        Assert.Equal(["binary", "plugin", "compatible", "login", "ui"], root.EnumerateObject().Select(p => p.Name));
+        Assert.Equal(["binary", "plugin", "compatible", "login", "ui", "home"], root.EnumerateObject().Select(p => p.Name));
         Assert.Equal(
             ["path", "version", "contract", "plugin_name"],
             root.GetProperty("binary").EnumerateObject().Select(p => p.Name));
@@ -109,6 +109,21 @@ public sealed class WhereTests
         Assert.Equal((41234, false), Ui());
         File.WriteAllText(Path.Combine(run, "ui-port"), "garbage");
         Assert.Equal((null, false), Ui());
+    }
+
+    [Fact]
+    public void ItNamesAhsHomeAsAhResolvesIt()
+    {
+        using var harness = new Harness();
+
+        var (code, stdout, _) = harness.Run("where");
+        var (plainCode, plain, _) = harness.Run("where", "--plain");
+
+        Assert.Equal(0, code);
+        using var document = JsonDocument.Parse(stdout);
+        Assert.Equal(harness.Sandbox.AhHome, document.RootElement.GetProperty("home").GetString());
+        Assert.Equal(0, plainCode);
+        Assert.Contains($"home: {harness.Sandbox.AhHome}\n", plain);
     }
 
     [Fact]

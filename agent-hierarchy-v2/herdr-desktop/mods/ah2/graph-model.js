@@ -43,19 +43,34 @@ export function fitView(ui) {
   ui.graphScale = 1;
   ui.graphPan = {};
   ui.graphEase = null; // a drill, a mode switch or a new team ends any eased zoom (graph-view.js easeTo)
+  ui.graphDrag = null; // and any drag, whose stage may be gone (graph-view.js grip)
 }
 
-// A wheel event as the Graph reads it, Map and Flow alike: a line delta (a mouse wheel) zooms, so does ctrl or cmd with any delta; a
-// pixel delta alone (a trackpad's two-finger scroll) pans; else null. The factors are the web's (web/ui/graph.js onWheel); a positive
-// delta.y is a scroll up here (gpui-kit), so up zooms in. gpui-kit ScrollWheelEvent: delta in px, delta_lines when the device sent lines.
+// A wheel event as the Graph reads it, Map and Flow alike (spec herdr-graph-gestures D1, D2): every scroll zooms, a mouse wheel's
+// line delta and a trackpad's two-finger pixel delta alike, with no key; it never pans (a drag pans: dragAct). The factors are the
+// web's (web/ui/graph.js onWheel); a positive delta.y is a scroll up here (gpui-kit), so up zooms in, in whatever direction the
+// system's natural-scrolling setting delivers it. A horizontal delta is ignored. gpui-kit ScrollWheelEvent: delta in px, delta_lines
+// when the device sent lines.
 export function wheelAct(e) {
   const lines = e.delta_lines?.y;
   if (lines) return { zoom: Math.exp(lines * 0.05) };
-  const x = e.delta?.x ?? 0;
   const y = e.delta?.y ?? 0;
-  if (e.modifiers?.control || e.modifiers?.platform) return y ? { zoom: Math.exp(y * 0.002) } : null;
-  return x || y ? { pan: { x, y } } : null;
+  return y ? { zoom: Math.exp(y * 0.002) } : null;
 }
+
+// Click and drag pans (spec herdr-graph-gestures D3, D5). d: the press {x0, y0, x, y, dragged} in window px, (x, y) the point last
+// applied; at: the pointer now; pan: the drawn pan; clamp: the stage's pan rule (clampPan, flowPan). Under DRAG_PX from the press it
+// is still a click: no pan. From there on it is a drag for good, and the pan moves by the pointer's travel since (x, y), clamped.
+export const DRAG_PX = 4;
+export function dragAct(d, at, pan, clamp) {
+  const dragged = d.dragged || Math.hypot(at.x - d.x0, at.y - d.y0) >= DRAG_PX;
+  return { dragged, pan: dragged ? clamp({ x: pan.x + at.x - d.x, y: pan.y + at.y - d.y }) : null };
+}
+// Whether a click is the release of a drag, so it must not click (D5): a drag still held, or one ended (d.end, ms) under CLICK_MS
+// ago, since herdr does not promise the order of a button's click and the stage's release. A key press later clicks again.
+// ponytail: a time window, not an ordering; a keyboard click within CLICK_MS of a drag's end is dropped.
+export const CLICK_MS = 250;
+export const wasDrag = (d, now) => Boolean(d?.dragged && (d.live || now - d.end < CLICK_MS));
 
 // The eased zoom: the web's own stage transition, --spring-ms and --spring (web/ui/r6.css:713, on .world at :718).
 export const EASE_MS = 400;

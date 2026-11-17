@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
+import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, dragAct, DRAG_PX, wasDrag, CLICK_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -273,13 +273,39 @@ test("Flow's frame: a team not arrived is pending, a stopped one closed, an empt
   assert.deepEqual([m.links.length, m.dots.length, m.bands.length], [0, 0, 0]);
 });
 
-test("the wheel: a line delta zooms with no key, a pixel delta pans unless ctrl or cmd, at the web's factors; nothing reads as nothing", () => {
+test("the wheel: every scroll zooms, a line delta or a trackpad's pixel delta with no key, at the web's factors; never a pan", () => {
   const none = { control: false, platform: false };
   assert.deepEqual(wheelAct({ delta: { x: 0, y: 40 }, delta_lines: { x: 0, y: 2 }, modifiers: none }), { zoom: Math.exp(2 * 0.05) });
-  assert.deepEqual(wheelAct({ delta: { x: 3, y: -12 }, modifiers: none }), { pan: { x: 3, y: -12 } });
+  assert.deepEqual(wheelAct({ delta: { x: 3, y: -12 }, modifiers: none }), { zoom: Math.exp(-12 * 0.002) });
+  assert.deepEqual(wheelAct({ delta: { x: 0, y: 30 }, modifiers: none }), { zoom: Math.exp(30 * 0.002) }, "up zooms in");
   assert.deepEqual(wheelAct({ delta: { x: 0, y: -50 }, modifiers: { control: true, platform: false } }), { zoom: Math.exp(-50 * 0.002) });
   assert.deepEqual(wheelAct({ delta: { x: 0, y: 30 }, modifiers: { control: false, platform: true } }), { zoom: Math.exp(30 * 0.002) });
+  assert.equal(wheelAct({ delta: { x: 25, y: 0 }, modifiers: none }), null, "a horizontal scroll is ignored");
   assert.equal(wheelAct({ delta: { x: 0, y: 0 }, modifiers: none }), null);
+  for (const e of [{ delta: { x: 7, y: 9 }, modifiers: none }, { delta: { x: 0, y: 1 }, delta_lines: { x: 0, y: 1 }, modifiers: none }]) {
+    assert.equal(wheelAct(e).pan, undefined, "a scroll never pans");
+  }
+});
+
+test("the drag: no pan under DRAG_PX, a clamped pan from there on, and its release is not a click", () => {
+  const clamp = (p) => clampPan(p, 100, 2); // a 200 px map in a 100 px frame: pan x, y in -100..0
+  const press = { x0: 50, y0: 50, x: 50, y: 50, dragged: false };
+  assert.deepEqual(dragAct(press, { x: 52, y: 52 }, { x: -50, y: -50 }, clamp), { dragged: false, pan: null }, "2.8 px is a click");
+  assert.deepEqual(dragAct(press, { x: 50 + DRAG_PX, y: 50 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: -46, y: -50 } });
+  assert.deepEqual(dragAct(press, { x: 90, y: 20 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: -10, y: -80 } });
+  assert.deepEqual(dragAct(press, { x: 200, y: -200 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: 0, y: -100 } }, "clamped");
+  const held = { x0: 50, y0: 50, x: 80, y: 80, dragged: true };
+  assert.deepEqual(dragAct(held, { x: 81, y: 80 }, { x: -20, y: -20 }, clamp), { dragged: true, pan: { x: -19, y: -20 } }, "a drag stays one back under DRAG_PX");
+  const fits = (p) => clampPan(p, 100, 0.5); // a map smaller than its frame cannot be dragged out of place
+  assert.deepEqual(dragAct(press, { x: 90, y: 10 }, { x: 25, y: 25 }, fits).pan, { x: 25, y: 25 });
+  assert.equal(wasDrag({ dragged: true, live: true, end: 0 }, 1000), true);
+  assert.equal(wasDrag({ dragged: true, live: false, end: 1000 }, 1000 + CLICK_MS - 1), true, "the release of a drag does not click");
+  assert.equal(wasDrag({ dragged: true, live: false, end: 1000 }, 1000 + CLICK_MS), false, "a key press later clicks");
+  assert.equal(wasDrag({ dragged: false, live: false, end: 1000 }, 1001), false, "a click is a click");
+  assert.equal(wasDrag(undefined, 1), false);
+  const ui = { graphDrag: { dragged: true, live: true, end: 0 } };
+  fitView(ui);
+  assert.equal(wasDrag(ui.graphDrag, 1), false, "a drill, mode or team switch ends a drag whose stage may be gone");
 });
 
 test("the eased scale leaves its start, moves one way only, and lands exactly on the target at EASE_MS", () => {

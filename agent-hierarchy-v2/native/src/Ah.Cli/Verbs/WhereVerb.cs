@@ -10,7 +10,7 @@ namespace Ah.Cli.Verbs;
 internal static class WhereVerb
 {
     /// <summary>
-    /// <c>where [--plain]</c>: the binary, the plugin it would run, the login state and the browser bridge (JSON only), as one JSON object. Exit 0 whenever the binary runs. Nothing is written and no daemon is contacted.
+    /// <c>where [--plain]</c>: the binary, the plugin it would run, the login state, the browser bridge (JSON only) and ah's home, as one JSON object. Exit 0 whenever the binary runs. Nothing is written and no daemon is contacted.
     /// </summary>
     internal static int Run(CliContext context, string[] rest, TextWriter stdout, TextWriter stderr)
     {
@@ -44,6 +44,7 @@ internal static class WhereVerb
             sb.Append("plugin: ").Append(plugin is null ? "none" : $"{plugin.Root} ({plugin.Source}, version {pluginVersion ?? "unknown"}, contract {pluginContract ?? "unknown"})").Append('\n');
             sb.Append("compatible: ").Append(compatible ? "yes" : "no").Append('\n');
             sb.Append("login: ").Append(login).Append('\n');
+            sb.Append("home: ").Append(context.Env.AhHome).Append('\n');
             stdout.Write(sb.ToString());
             return 0;
         }
@@ -60,6 +61,7 @@ internal static class WhereVerb
         report["compatible"] = compatible;
         report["login"] = login;
         report["ui"] = UiValue(Path.Combine(context.Env.AhHome, "run"));
+        report["home"] = context.Env.AhHome;
         stdout.Write(JsonText.Stringify(report, 0) + "\n");
         return 0;
     }

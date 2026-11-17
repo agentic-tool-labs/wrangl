@@ -191,7 +191,8 @@ function sendRuleViolations(src) {
   const region = (text, from, to) => [text.indexOf(from), text.indexOf(to, text.indexOf(from) + 1)];
   const within = (i, [a, b]) => a >= 0 && i > a && (b < 0 || i < b);
   // readThread is the History thread's read: an exec too, and like sendAnswer reached only from a click
-  const allowed = { "main.js": [["async fetch(", "async poll("]], "model.js": [["export async function sendAnswer", "\nexport "], ["export async function readThread", "\nexport "]],
+  // main.js rebuildRead: the sidebar's build check, its `ah where` once per pane and the stamp's file read (ah2-111)
+  const allowed = { "main.js": [["async fetch(", "async poll("], ["async rebuildRead(", "// ---- the desk"]], "model.js": [["export async function sendAnswer", "\nexport "], ["export async function readThread", "\nexport "]],
     "board-model.js": [["export async function readItemLog", "\n}\n"]], "target-model.js": [["export function runnerOf", "\n}\n"]],
     "link-model.js": [["export class Link", "\n}\n"]],
     // historyRead's ah fallback (A6, A10): reached from qa.js histFetch only, on a filter change, Load more and the filtered tab's refresh
@@ -220,7 +221,7 @@ test("exec runs only in the poll, sendAnswer and the filtered History read, and 
   // every script of the mod, so a new view is covered without editing this list
   const src = Object.fromEntries(readdirSync(mod).filter((f) => f.endsWith(".js")).map((f) => [f, readFileSync(join(mod, f), "utf8")]));
   assert.deepEqual(sendRuleViolations(src), []);
-  assert.equal(Object.values(src).reduce((n, t) => n + (t.match(EXEC) ?? []).length, 0), 15, "exec( fifteen times: dismiss-model.js teamClose (ah roster close, on a Dismiss click), target-model.js runnerOf (machine, WSL, this computer, a local install), link-model.js Link (the exec poll, ah where, the service lease; reached from main.js fetch), model.js sendAnswer and readThread, qa-history-model.js historyRead (the ah fallback of a filtered History: a filter change, Load more, the tab's refresh), board-model.js readItemLog (on a card click), settings.js probe (ah where, the CHANGELOG read) and install");
+  assert.equal(Object.values(src).reduce((n, t) => n + (t.match(EXEC) ?? []).length, 0), 17, "exec( seventeen times: main.js rebuildRead (ah where once per pane, the stamp's read; the sidebar's build check), dismiss-model.js teamClose (ah roster close, on a Dismiss click), target-model.js runnerOf (machine, WSL, this computer, a local install), link-model.js Link (the exec poll, ah where, the service lease; reached from main.js fetch), model.js sendAnswer and readThread, qa-history-model.js historyRead (the ah fallback of a filtered History: a filter change, Load more, the tab's refresh), board-model.js readItemLog (on a card click), settings.js probe (ah where, the CHANGELOG read) and install");
   // the check can fail: a render-time exec, and a send outside a click
   const broken = { ...src, "qa.js": src["qa.js"].replace("const m = qaModel(v.st.slices, now);", "const m = qaModel(v.st.slices, now);\n  exec(\"ah\", []);\n  send(v, null, {}, null);") };
   assert.equal(sendRuleViolations(broken).length, 2);

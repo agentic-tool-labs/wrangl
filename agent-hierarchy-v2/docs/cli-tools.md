@@ -2110,7 +2110,7 @@ aliases of the same functions and keep their own text output. Output is one JSON
 `daemon down, showing files`). Errors are `{"ok": false, "error": {"code", "message"}}` (plain: one
 `error: <code>: <message>` line on stderr).
 
-**The bare `ahd` command.** The plugin ships `bin/ahd`, which runs the native `ahd` with the same arguments, output and exit code. Claude Code puts a plugin's `bin/` on the PATH of the Bash tool, so inside a Claude session `ahd status` just works, with no path. A plain terminal has no such PATH entry; to use it there, run `/wrangl:hierarchy install` once. It builds the native `ahd` into `<AH_HOME>/bin/ahd` and links it from `~/.local/bin/ahd`. The binary is every verb: `where` shows what it found (the binary, the plugin, the install stamp, the login state), and `bin/ahd` only finds and runs it. Without it, run `<R>/bin/ahd <verb>`. Everything below applies to `ahd <verb>` exactly as it does to `<R>/bin/ahd <verb>`.
+**The bare `ahd` command.** The plugin ships `bin/ahd`, which runs the native `ahd` with the same arguments, output and exit code. Claude Code puts a plugin's `bin/` on the PATH of the Bash tool, so inside a Claude session `ahd status` just works, with no path. A plain terminal has no such PATH entry; to use it there, run `/wrangl:hierarchy install` once. It builds the native `ahd` into `<AH_HOME>/bin/ahd` and links it from `~/.local/bin/ahd`. The binary is every verb: `where` shows what it found (the binary, the plugin, the install stamp, the login state, ah's home), and `bin/ahd` only finds and runs it. Without it, run `<R>/bin/ahd <verb>`. Everything below applies to `ahd <verb>` exactly as it does to `<R>/bin/ahd <verb>`.
 
 | Exit | Meaning |
 |---|---|

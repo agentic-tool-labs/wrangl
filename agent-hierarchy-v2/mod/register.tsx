@@ -1,5 +1,5 @@
 import type { Register } from 'claude-code'
-import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
+import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
 
 // A tone to Text props: bad and warn take their status's theme key, the same key their glyph takes, and bad is also bold
 // so it does not rest on color alone; work draws plain and any other tone draws dim.
@@ -571,6 +571,53 @@ const mailPoll = ($: any, env: MailEnv, busy: MailBusy, hier: () => string | nul
   return ctx
 }
 
+// The background rebuild of ahd (ah2-111): the stamp <AH_HOME>/install.json is read after session start's hooks (one of them
+// may start the build), on reload (session.start again) and on each prompt; while a build runs it is re-read every
+// REBUILD_EVERY_MS until it ends or REBUILD_WATCH_MS passes. One read at a time, so a toast cannot show twice. Reads only; never throws.
+type RebuildCtx = { busy: boolean; watch: { cancel: () => void } | null; toastMs: number }
+const rebuildCheck = async ($: any, ctx: RebuildCtx, until: number | null = null): Promise<void> => {
+  if (ctx.busy) return
+  ctx.busy = true
+  try {
+    const held = (await $.state.get({ plugin: 'wrangl', key: 'rebuild' })).value ?? null
+    if (until !== null && (await $.clock.now()) >= until) {
+      ctx.watch?.cancel()
+      ctx.watch = null
+      const gaveUp = rebuildGaveUp(held)
+      if (gaveUp !== held) await $.state.set({ plugin: 'wrangl', key: 'rebuild' }, gaveUp)
+      return
+    }
+    const env = await mailEnv($)
+    if (env === null) return
+    // The read has the mail poll's bound (AHD_TIMEOUT_MS, as `registered` reads): one that never answers is abandoned as unreadable,
+    // so the busy mark clears and a later check runs.
+    let now = null
+    let limit: { cancel: () => void } | null = null
+    const late = new Promise<null>((res) => { limit = $.clock.every(AHD_TIMEOUT_MS, () => res(null)) })
+    try {
+      const text = await Promise.race([Promise.resolve($.fs.read(env.home + '/install.json')), late])
+      if (text !== null) now = rebuildOf(text)
+    } catch {
+    } finally {
+      limit?.cancel()
+    }
+    const step = rebuildStep(held, now)
+    // Kept before toasting, so a toast that fails is not shown again.
+    if (step.keep !== held) await $.state.set({ plugin: 'wrangl', key: 'rebuild' }, step.keep)
+    if (step.notice !== null && ctx.toastMs > 0) void Promise.resolve($.ui.toast(rebuildToast(step.notice, env.home), { timeoutMs: ctx.toastMs })).catch(() => {})
+    if (step.watch && ctx.watch === null) {
+      const end = (await $.clock.now()) + REBUILD_WATCH_MS
+      ctx.watch = $.clock.every(REBUILD_EVERY_MS, () => rebuildCheck($, ctx, end))
+    } else if (!step.watch && ctx.watch !== null) {
+      ctx.watch.cancel()
+      ctx.watch = null
+    }
+  } catch {
+  } finally {
+    ctx.busy = false
+  }
+}
+
 export const nudgeRelabel = async (_$: any, e: any, next: any) => {
   const ran = await next(e)
   try {
@@ -600,6 +647,8 @@ export const register: Register = (on, options) => {
   // Busy from any prompt entering to the turn completing; the mail poll hands over a repeat only while idle.
   const busy: MailBusy = { at: null }
 
+  const rebuild: RebuildCtx = { busy: false, watch: null, toastMs: toastFor }
+
   const nudgeTools = [
     'SendMessage',
     'Agent',
@@ -619,6 +668,7 @@ export const register: Register = (on, options) => {
   on('prompt.submit', async ($, e, next) => {
     try { busy.at = await $.clock.now() } catch {
     }
+    void rebuildCheck($, rebuild)
     if (mailRun !== null) mailRun.st.held = false
     return next(e)
   })
@@ -945,7 +995,9 @@ export const register: Register = (on, options) => {
     void tick().catch(() => {})
     $.clock.every(2000, () => { daemonReady = true; return tick() })
     if (mail !== null && e.isInteractive !== false) mailRun = mailPoll($, mail, busy, () => (places === null ? null : places.pool.slice(0, Math.max(places.pool.lastIndexOf('/'), places.pool.lastIndexOf('\\')))), link, mailNotes)
-    return next(e)
+    const passed = await next(e)
+    void rebuildCheck($, rebuild)
+    return passed
   })
 
   // The band goes above whatever the rest of the chain draws there, never in its place, and yields to a survey.

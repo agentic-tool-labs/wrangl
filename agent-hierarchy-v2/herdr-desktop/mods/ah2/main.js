@@ -10,7 +10,8 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
-import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement } from "herdr";
+import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
+import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
 import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK } from "./model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
@@ -22,8 +23,8 @@ import { graphView, graphInit } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
 import { markCell } from "./marks.js";
-import { shownTeams, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing } from "./settings-model.js";
-import { settings, settingsView, checkUpdate } from "./settings.js";
+import { shownTeams, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
+import { settings, settingsView, checkUpdate, installClick } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { ah, target } from "./ah.js";
 import { UNRESOLVED, targetKey } from "./target-model.js";
@@ -38,6 +39,11 @@ const openTeam = (id) => openOverlay({ mod: "ah2", props: { view: "sitrep", team
 
 export default class Ah2 extends View {
   init(_props, cx) {
+    // A click on the "available" notice (settings-model.js updateNotify) arrives as a command. Which copy herdr hands it to is
+    // not documented, so every copy listens; installClick installs once however many receive it.
+    if (!checking()) cx.spawn(async () => {
+      for (;;) if ((await nextCommand()) === INSTALL_COMMAND) installClick();
+    });
     this.team = props()?.team ?? null;
     this.view = props()?.view ?? "sitrep";
     // The Desk window: one copy for all four tabs; `view` is the tab shown (tabs.js draws its header, select switches it).
@@ -91,6 +97,7 @@ export default class Ah2 extends View {
 
   // Herdr calls this when the copy goes (an overlay closed, or quit). Only our own id: reopening the same key replaces the window.
   async close() {
+    this.gone = true; // ends the rebuild watch (rebuild)
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
   }
@@ -147,6 +154,8 @@ export default class Ah2 extends View {
   async poll(cx) {
     let fails = 0;
     for (;;) {
+      // The sidebar copy reads the rebuild stamp on load and on every turn of the poll (rebuild below); never in a check.
+      if (this.view === "sitrep" && !this.team && !this.rebuildBusy && !checking()) cx.spawn((cx) => this.rebuild(cx));
       // A docked copy stays alive while its column is hidden or shows another view: it asks nothing until shown again.
       if (props()?.dock && !shownIn(this.view)) {
         await cx.sleep(2000);
@@ -245,6 +254,47 @@ export default class Ah2 extends View {
     for (const x of fresh.slice(0, 3)) {
       notify({ title: `Wrangl alarm · ${x.team.name}`, body: x.alert.text, level: "warning", action: { name: "layout.switch", args: { name: "wrangl" } } });
     }
+  }
+
+  // The background rebuild of ahd (ah2-111, rebuild-model.js): while the stamp says a build runs it is re-read every
+  // REBUILD_EVERY_MS until the build ends, this copy closes, or REBUILD_WATCH_MS passes. One task at a time. Notices always show:
+  // the "Alarms as herdr notices" setting covers team alarms only (settings.js).
+  async rebuild(cx) {
+    if (this.rebuildBusy) return;
+    this.rebuildBusy = true;
+    try {
+      const end = Date.now() + REBUILD_WATCH_MS;
+      while (!this.gone && (await this.rebuildRead())) {
+        if (Date.now() >= end) {
+          const held = shared(REBUILD_KEY) ?? null;
+          const gaveUp = rebuildGaveUp(held);
+          if (gaveUp !== held) setShared(REBUILD_KEY, gaveUp);
+          return;
+        }
+        await cx.sleep(REBUILD_EVERY_MS);
+      }
+    } finally {
+      this.rebuildBusy = false;
+    }
+  }
+
+  // One read of the stamp where ah runs: keeps what it says, posts the notice it calls for, and answers whether to keep watching.
+  // ah's home comes from `ah where`, held per pane for the runner's target (homeFor: a target change or a reply with no home
+  // asks again); the stamp is then read as a file, no process. No home or no read (a WSL target: target-model.js read) says nothing.
+  async rebuildRead() {
+    this.ahHome ??= { key: null, home: null };
+    const home = await homeFor(this.ahHome, JSON.stringify(target()), async () => {
+      const r = await ah().exec("ah", ["where"], { timeout: 10000 }).catch(() => null);
+      return r?.code === 0 ? r.stdout : null;
+    });
+    const text = home === null ? null : await ah().read(`${home}/install.json`).catch(() => null);
+    const now = text == null ? null : rebuildOf(text);
+    const held = shared(REBUILD_KEY) ?? null;
+    const step = rebuildStep(held, now);
+    if (step.keep !== held) setShared(REBUILD_KEY, step.keep);
+    if (step.notice !== null) notify(rebuildNotify(step.notice, home));
+    if (step.notice?.kind === "ready") checkUpdate(); // the mod update offer, held during the build, follows the ready notice
+    return step.watch;
   }
 
   // ---- the desk: status segment and Needs-you drawer ----
