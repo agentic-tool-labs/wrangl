@@ -1,0 +1,32 @@
+{
+  "kind": "hook",
+  "id": "bare-start",
+  "about": "a bare session gets no index",
+  "tree": "hook-configured-bare",
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "<PLUGIN>",
+    "AH_DAEMON": "off"
+  },
+  "cwd": "<ROOT:proj>",
+  "input": {
+    "script": "session-index",
+    "event": {
+      "hook_event_name": "SessionStart",
+      "session_id": "sess-contract",
+      "cwd": "<ROOT:proj>",
+      "source": "startup"
+    }
+  },
+  "expect": {
+    "stdout": "",
+    "stderr": "",
+    "exit": 0
+  },
+  "mutant": "a bare session is given the Orchestrator's index",
+  "recorded": {
+    "impl": "native",
+    "plugin_version": "2.0.5",
+    "at": "2026-11-17T00:00:00.000Z",
+    "note": "native-only hook unit: no Node recording exists"
+  }
+}

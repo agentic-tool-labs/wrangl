@@ -17,6 +17,24 @@
         "hooks": [
           {
             "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" session-directive"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" session-index"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" session-rules"
           }
         ]

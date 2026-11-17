@@ -56,6 +56,59 @@ public sealed class RulesVerbTests : IDisposable
     }
 
     [Fact]
+    public void IndexListsTheThirteenSectionsWithTheirTriggersAsTheDirectivePrintsThem()
+    {
+        var run = Run("index");
+
+        Assert.Equal(0, run.Code);
+        var lines = run.Stdout.ReplaceLineEndings("\n").TrimEnd('\n').Split('\n');
+        Assert.Equal(13, lines.Length);
+        Assert.Equal(ConfigModule.DirectiveIndexLines(), lines);
+        foreach (var entry in ConfigModule.DirectiveIndex())
+        {
+            Assert.Contains(lines, l => l.StartsWith($"- {entry.Trigger}", StringComparison.Ordinal) && l.EndsWith($": ah rules show {entry.Key}", StringComparison.Ordinal));
+            Assert.StartsWith("before ", entry.Trigger, StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData("nonsense")]
+    [InlineData("Spec-handoff")]
+    [InlineData("spec-handoff ")]
+    public void NegativeShowOfAnUnknownSectionExitsNonZeroListsTheKeysAndPrintsNothing(string key)
+    {
+        var run = Run("show", key);
+
+        Assert.Equal(2, run.Code);
+        Assert.Equal(string.Empty, run.Stdout);
+        Assert.Contains($"unknown section '{key}'", run.Stderr, StringComparison.Ordinal);
+        Assert.Contains(string.Join(", ", ConfigModule.DirectiveIndex().Select(e => e.Key)), run.Stderr, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("index", "extra")]
+    [InlineData("show")]
+    [InlineData("show", "spec-handoff", "review-loop")]
+    [InlineData("show", "spec-handoff", "--cwd")]
+    [InlineData("show", "spec-handoff", "--bogus")]
+    public void NegativeAMalformedIndexOrShowPrintsNothing(params string[] args)
+    {
+        var run = Run(args);
+
+        Assert.Equal(2, run.Code);
+        Assert.Equal(string.Empty, run.Stdout);
+    }
+
+    [Fact]
+    public void AKnownSectionPassesTheArgumentChecksAndNeedsComposedServices()
+    {
+        var run = Run("show", "spec-handoff");
+
+        Assert.Equal(70, run.Code);
+        Assert.Equal(string.Empty, run.Stdout);
+    }
+
+    [Fact]
     public void NegativeNoVerbIsAUsageError() => Assert.Equal(2, Run().Code);
 
     [Theory]

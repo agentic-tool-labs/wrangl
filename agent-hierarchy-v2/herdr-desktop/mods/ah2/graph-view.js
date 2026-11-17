@@ -7,7 +7,7 @@
 // fade. It is Herdr's native Slider, so a drag never re-enters this script: the view redraws on release and on an arrow key
 // (one minute, STEP_MS), never per drag frame. Zoom: a click on a stream circle shows that stream alone; the crumb (or Esc) walks out.
 // Scale: − / + / Fit beside the tabs, and scroll to zoom: a mouse wheel or a trackpad's two-finger scroll, about the pointer, eased
-// as the web's stage is (graph-model.js wheelAct). Drag to pan: a left press on a map or the Flow's stage, moved past DRAG_PX, pans
+// out only, in step with the hand (graph-model.js wheelAct, WHEEL_EASE_MS). Drag to pan: a left press on a map or the Flow's stage, moved past DRAG_PX, pans
 // content larger than its frame (grip, dragAct); a press and release short of it is still a click.
 // Map | Flow: the header's mode tabs switch to the web's Flow (graph-model.js flowModel over the shared flow-model.js): cards in four
 // role columns, links between them, lanes as bands. Read-only as the Map is. The choice is kept in Herdr's shared store (GRAPH_KEY).
@@ -35,11 +35,12 @@ const CHIP = 8; // a stream's name chip rises this far above its circle (map(): 
 const FRAME_MS = 16; // an eased zoom's frame
 
 // An eased zoom (spec herdr-graph-wheel-zoom D8): `by` multiplies the target (the one in motion, else the drawn scale), clamped, so
-// travel at a limit is dropped, not banked; `to` sets it (Fit). The drawn scale, graphScale, which the layout reads, moves to it along
-// the web's curve, relaid out once per frame about `at` (Map {id, x, y}, Flow {x, y}, null: each centre). Travel mid-move retargets
-// from the drawn scale. A frame waits for the redraw at the drawn scale (graphMemo's key[5]); the loop ends on the target, when
-// fitView clears graphEase, or a second after a frame nobody drew (a closed pane), and the view's close() cancels it.
-export function easeTo(v, cx, { by = 1, to = null, at = null }) {
+// travel at a limit is dropped, not banked; `to` sets it (Fit). The drawn scale, graphScale, which the layout reads, moves to it (a button
+// or Fit along the web's curve, a wheel, wheel true, eased out only over WHEEL_EASE_MS: spec herdr-graph-wheel-follow), relaid out
+// once per frame about `at` (Map {id, x, y}, Flow {x, y}, null: each centre). Travel mid-move retargets from the drawn scale, with
+// its own rule. A frame waits for the redraw at the drawn scale (graphMemo's key[5]); the loop ends on the target, when fitView
+// clears graphEase, or a second after a frame nobody drew (a closed pane), and the view's close() cancels it.
+export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
   const target = clampScale(to ?? (v.graphEase?.to ?? v.graphScale) * by);
   if (target === (v.graphEase?.to ?? v.graphScale)) {
     if (to !== null && !v.graphEase) { // Fit at scale 1 still recentres (fitView's pan reset)
@@ -48,7 +49,7 @@ export function easeTo(v, cx, { by = 1, to = null, at = null }) {
     }
     return;
   }
-  v.graphEase = { from: v.graphScale, to: target, t0: Date.now(), at, fit: to !== null };
+  v.graphEase = { from: v.graphScale, to: target, t0: Date.now(), at, fit: to !== null, wheel };
   if (v.graphAnim && !v.graphAnim.is_done()) return; // the running loop takes the new target
   v.graphAnim = cx.spawn(async (cx) => {
     let drawn = Date.now();
@@ -62,7 +63,7 @@ export function easeTo(v, cx, { by = 1, to = null, at = null }) {
         continue;
       }
       drawn = Date.now();
-      const s2 = easedScale(e.from, e.to, e.t0, drawn);
+      const s2 = easedScale(e.from, e.to, e.t0, drawn, e.wheel);
       if (s2 === e.to) v.graphEase = null;
       if (v.graphMode === "flow") flowRescale(v, memo.m, s2, e.at?.x ?? null, e.at?.y ?? null);
       else rescaleTo(v, memo.m.groups, s2, e.at);
@@ -486,7 +487,7 @@ function map(t, g, zoomTo, v) {
     const act = wheelAct(e);
     if (!act) return;
     cx.stop_propagation();
-    easeTo(v, cx, { by: act.zoom, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
+    easeTo(v, cx, { by: act.zoom, wheel: true, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
   };
   const pannable = S > box.w || S > box.h;
   const now = () => (v.graphScale === s ? clamp(v.graphPan[g.id]) : null);
@@ -575,7 +576,7 @@ function flowBody(t, m, v) {
     const act = wheelAct(e);
     if (!act) return;
     cx.stop_propagation();
-    easeTo(v, cx, { by: act.zoom, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
+    easeTo(v, cx, { by: act.zoom, wheel: true, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
   };
   const now = () => (v.graphScale === s ? clamp(v.graphPan.flow) : null);
   const stage = gr.stage(div().id("gflow"), big, now, clamp, (p) => { v.graphPan = { flow: p }; }).relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)

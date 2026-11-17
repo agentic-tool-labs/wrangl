@@ -31,6 +31,8 @@ internal static class AdvisoryUnits
         new("stop-orchestrator-liveness", StopOrchestratorLiveness.Run, GateClass.Advisory),
         new("stop-member-liveness", StopMemberLiveness.Run, GateClass.Advisory),
         new("sessionstart", SessionStart.Run, GateClass.NotAGate),
+        new("session-directive", SessionDirective.Run, GateClass.NotAGate),
+        new("session-index", SessionIndex.Run, GateClass.NotAGate),
         new("session-rules", SessionRules.Run, GateClass.NotAGate),
         new("job-track", JobTrack.Run, GateClass.NotAGate),
     ];

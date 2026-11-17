@@ -1850,9 +1850,13 @@ One goal per team, guidance and never a gate. `--team` defaults to the caller's 
 ```
 <ah> rules who-may-message <name@team> <name@team> [--slug <slug>]
 <ah> rules next-step <event>
+<ah> rules index
+<ah> rules show <key> [--cwd <dir>]
 ```
 
 Read-only answers about the protocol: whether the mesh allows one address to message another (`yes`, `no`, or `yes (warn: …)`, then the rule), and what step an event calls for. Exit 2 for an unknown event.
+
+`index` prints the on-demand sections of the top-level Orchestrator's directive, one `- <trigger> (item N): ah rules show <key>` line each, as the directive's index prints them. `show <key>` prints one section exactly as the full directive had it inline, built from the caller's resolved config (handoffs, routed roles, hierarchy directory); `show identity` prints the deferred bullets of `agents/orchestrator.md`. An unknown key exits 2 and lists the valid keys; nothing is printed on stdout.
 
 #### `ah test`
 

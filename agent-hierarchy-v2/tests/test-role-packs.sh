@@ -110,10 +110,17 @@ adopt() {
 # The role list row of <name> as JSON, in OUT.
 rolerow() { rm_ role list --json; OUT=$(node -e 'const o=JSON.parse(process.argv[1]);process.stdout.write(JSON.stringify(o.roles.find(r=>r.name===process.argv[2])||o.excluded.find(r=>r.name===process.argv[2])||null))' "$OUT" "$1"); }
 
-# SessionStart's injected context, in OUT.
-sessionstart() {
+# Where the Orchestrator's routing reaches it at session start: the session-directive output's resident routing
+# line (ROUTED_LINE) and, in that session, `ah rules show routing` naming pk-impl's route (ROUTED_RULE), each yes or no.
+# The resident line is not per role: the shipped implement alternatives keep it with gd untrusted, so only ROUTED_RULE tells gd apart.
+routing() {
   ah_test_always_on "$PROJ"
-  OUT=$(printf '%s' '{"session_id":"rp","cwd":"'"$PROJ"'","hook_event_name":"SessionStart","source":"startup"}' | ah_test_in_harness env HOME="$FAKEHOME" sh "$PLUGIN/bin/ah-hook" sessionstart 2>&1); RC=$?
+  local out rules
+  out=$(printf '%s' '{"session_id":"rp","cwd":"'"$PROJ"'","hook_event_name":"SessionStart","source":"startup"}' | ah_test_in_harness env HOME="$FAKEHOME" sh "$PLUGIN/bin/ah-hook" session-directive 2>&1)
+  rules=$(CLAUDE_CODE_SESSION_ID=rp HOME="$FAKEHOME" "$PLUGIN/bin/ah" rules show routing --cwd "$PROJ" 2>&1)
+  ROUTED_LINE=no; [[ "$out" == *'`ah rules show routing` before choosing who builds'* ]] && ROUTED_LINE=yes
+  ROUTED_RULE=no; [[ "$rules" == *'for "pack scenes and scripts"'* ]] && ROUTED_RULE=yes
+  OUT="$out"$'\n'"$rules"
 }
 
 decision() { node -e 'try{const o=JSON.parse(process.argv[1]);process.stdout.write(o.hookSpecificOutput.permissionDecision)}catch{process.stdout.write("none")}' "$OUT"; }
@@ -259,18 +266,18 @@ fresh
 cp -R "$PACKS/a" "$PACKS/pristine"
 adopt gd pk@mk:pk-impl
 AGENT_SUM=$(shasum "$PACKS/a/agents/pk-impl.md" | cut -d' ' -f1)
-sessionstart
-check "P6 (baseline) a trusted role routes at SessionStart" '[[ "$OUT" == *"for \\\"pack scenes and scripts\\\""* ]]'
+routing
+check "P6 (baseline) a trusted role routes at SessionStart (resident routing line, and ah rules show routing names its route)" '[ $ROUTED_LINE = yes ] && [ $ROUTED_RULE = yes ]'
 restore() { rm -rf "$PACKS/a"; cp -R "$PACKS/pristine" "$PACKS/a"; }
 p6() { # <label> <shell edit of $PACKS/a>
   restore; eval "$2"
   rolerow gd
   local state; state=$(jget o.pin_state)
-  sessionstart; local routed=no; [[ "$OUT" == *"for \\\"pack scenes and scripts\\\""* ]] && routed=yes
+  routing
   rm_ spawn-ad-hoc gd --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
   local spawnrc=$RC
   check "P6 $1: pack-changed in role list, out of SessionStart's routing, spawn refused, agent file untouched" \
-    '[ "$state" = pack-changed ] && [ $routed = no ] && [ $spawnrc != 0 ] && [ "$(shasum "$PACKS/a/agents/pk-impl.md" | cut -d" " -f1)" = "$AGENT_SUM" ]'
+    '[ "$state" = pack-changed ] && [ $ROUTED_RULE = no ] && [ $spawnrc != 0 ] && [ "$(shasum "$PACKS/a/agents/pk-impl.md" | cut -d" " -f1)" = "$AGENT_SUM" ]'
 }
 p6 "one byte of a hook file" 'printf "{ }\n" > "$PACKS/a/hooks/hooks.json"'
 p6 "a script under bin/" 'printf "#!/bin/sh\necho bye\n" > "$PACKS/a/bin/tool.sh"'

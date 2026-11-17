@@ -68,11 +68,13 @@ internal static partial class HookHost
     /// <summary>
     /// The units that run for a session that is not part of ah, each asking the identity predicate itself: the ways in (a typed ah2
     /// command, an ah2 act), the session-start attribution of a hand-launched member, the CLI root of an explicit ah2 subagent, and the
-    /// session rules, which on /clear must move the flag before they ask. Every other unit does nothing for such a session.
+    /// session directive, index and rules, which on /clear must move the flag before they ask. Every other unit does nothing for such a session.
     /// </summary>
     internal static readonly IReadOnlySet<string> SelfGuarded = new HashSet<string>(StringComparer.Ordinal)
     {
         "sessionstart",
+        "session-directive",
+        "session-index",
         "session-rules",
         "posttooluse-implicit-opt-in",
         "userpromptsubmit-peer-tracking",

@@ -128,6 +128,16 @@ public sealed class OrchestrateCommandTests
             return Encoding.UTF8.GetString(_rig.Run("sessionstart", json, services: () => services).Stdout.Span);
         }
 
+        /// <summary>What a SessionStart injects through all four of its units (sessionstart, session-directive, session-index, session-rules), in that order.</summary>
+        public string StartAll(string source, string session, int pid = HarnessSessions.Pid, Action<JsonObject>? tweak = null)
+        {
+            var services = Services(pid);
+            var json = JsonText.Stringify(Event("SessionStart", session, e => { e["source"] = source; tweak?.Invoke(e); }), 0);
+            return string.Concat(StartUnits.Select(unit => Encoding.UTF8.GetString(_rig.Run(unit, json, services: () => services).Stdout.Span)));
+        }
+
+        private static readonly string[] StartUnits = ["sessionstart", "session-directive", "session-index", "session-rules"];
+
         public HookOutcome Tool(string tool, string session, Action<JsonObject>? tweak = null)
         {
             var json = JsonText.Stringify(Event("PreToolUse", session, e => { e["tool_name"] = tool; tweak?.Invoke(e); }), 0);
@@ -441,18 +451,19 @@ public sealed class OrchestrateCommandTests
         Assert.False(Blocked(outcome), Text(outcome) + string.Join('\n', f.Rig.Errors.Records.Select(r => r.Message + r.Stack)));
         Assert.Contains("this session is now the Orchestrator", Text(outcome), StringComparison.Ordinal);
         Assert.Contains(Body, Text(outcome), StringComparison.Ordinal);
-        Assert.Contains(LeadLine, Text(outcome), StringComparison.Ordinal);
+        Assert.DoesNotContain(LeadLine, Text(outcome), StringComparison.Ordinal);
         Assert.Contains("ah CLI root", Text(outcome), StringComparison.Ordinal);
         Assert.DoesNotContain("disallowedTools", Text(outcome), StringComparison.Ordinal);
         Assert.Equal(HarnessSessions.Pid, f.Entry("s1")!.Value.Member("pid")!.Value.AsNumber());
         Assert.Equal(HarnessSessions.Start, f.Entry("s1")!.Value.Member("pid_start")!.Value.AsString());
     }
 
+    /// <summary>The top Orchestrator's sessionstart output under the cap carries no lead line (ah2-68 D6); a Sub-Orchestrator's directive keeps it.</summary>
     [Theory]
-    [InlineData("wrangl:orchestrator", true)]
+    [InlineData("wrangl:orchestrator", false)]
     [InlineData("wrangl:sub-orchestrator", true)]
     [InlineData("wrangl:architect", false)]
-    public void EveryDirectiveAtStartCarriesTheLeadLineAndARoleNoticeDoesNot(string agent, bool lead)
+    public void ASubOrchestratorDirectiveAtStartCarriesTheLeadLineAndATopOrchestratorUnderTheCapOrARoleNoticeDoesNot(string agent, bool lead)
     {
         var f = new Fixture(new Dictionary<string, string> { ["AH_MEMBER_NAME"] = "m1" });
 
@@ -483,7 +494,7 @@ public sealed class OrchestrateCommandTests
         var again = Text(f.Typed("/wrangl:orchestrator"));
 
         Assert.Contains("already on", again, StringComparison.Ordinal);
-        Assert.DoesNotContain(LeadLine, again, StringComparison.Ordinal);
+        Assert.DoesNotContain(Body, again, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -541,7 +552,7 @@ public sealed class OrchestrateCommandTests
 
         var on = Text(f.Typed("/wrangl:orchestrator"));
 
-        Assert.Contains(LeadLine, on, StringComparison.Ordinal);
+        Assert.Contains(Body, on, StringComparison.Ordinal);
         Assert.True(f.Flagged("s1"));
         Assert.False(f.Rig.Services.Config.ReadOrchestratorDeclined("s1"));
     }
@@ -698,10 +709,10 @@ public sealed class OrchestrateCommandTests
     public void CompactKeepsTheIdentityAndAnUnflaggedSessionGetsNone()
     {
         var f = new Fixture();
-        Assert.DoesNotContain(Body, f.Start("compact", "s1"), StringComparison.Ordinal);
+        Assert.DoesNotContain(Body, f.StartAll("compact", "s1"), StringComparison.Ordinal);
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("compact", "s1");
+        var context = f.StartAll("compact", "s1");
 
         Assert.Contains(Body, context, StringComparison.Ordinal);
         Assert.DoesNotContain("disallowedTools", context, StringComparison.Ordinal);
@@ -713,12 +724,12 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("clear", "s2");
+        var context = f.StartAll("clear", "s2");
 
         Assert.Contains(Body, context, StringComparison.Ordinal);
         Assert.True(f.Flagged("s2"));
         Assert.False(f.Flagged("s1"));
-        var again = f.Start("clear", "s3");
+        var again = f.StartAll("clear", "s3");
         Assert.Contains(Body, again, StringComparison.Ordinal);
         Assert.True(f.Flagged("s3"));
         Assert.False(f.Flagged("s2"));
@@ -733,7 +744,7 @@ public sealed class OrchestrateCommandTests
         _ = f.Typed("/wrangl:orchestrate");
         _ = f.Typed("/wrangl:orchestrate off");
 
-        _ = f.Start("clear", "s2", pid: pid);
+        _ = f.StartAll("clear", "s2", pid: pid);
 
         Assert.Equal(carried, f.Rig.Services.Config.ReadOrchestratorDeclined("s2"));
         Assert.Equal(!carried, f.Rig.Services.Config.ReadOrchestratorDeclined("s1"));
@@ -745,7 +756,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("clear", "s2", pid: 4343);
+        var context = f.StartAll("clear", "s2", pid: 4343);
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s2"));
@@ -759,7 +770,7 @@ public sealed class OrchestrateCommandTests
         _ = f.Typed("/wrangl:orchestrate");
         f.Sessions.Starts[HarnessSessions.Pid] = Other;
 
-        var context = f.Start("clear", "s2");
+        var context = f.StartAll("clear", "s2");
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s2"));
@@ -771,7 +782,7 @@ public sealed class OrchestrateCommandTests
     {
         var f = new Fixture();
 
-        var context = f.Start("clear", "s2");
+        var context = f.StartAll("clear", "s2");
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s2"));
@@ -783,7 +794,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("startup", "s2", pid: 4343);
+        var context = f.StartAll("startup", "s2", pid: 4343);
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s2"));
@@ -796,7 +807,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("resume", "s1", pid: 4343);
+        var context = f.StartAll("resume", "s1", pid: 4343);
 
         Assert.Contains(Body, context, StringComparison.Ordinal);
         Assert.Equal(4343, f.Entry("s1")!.Value.Member("pid")!.Value.AsNumber());
@@ -809,7 +820,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("resume", "s9", pid: 4343);
+        var context = f.StartAll("resume", "s9", pid: 4343);
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s9"));
@@ -821,7 +832,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("fork", "s2");
+        var context = f.StartAll("fork", "s2");
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
         Assert.False(f.Flagged("s2"));
@@ -833,7 +844,7 @@ public sealed class OrchestrateCommandTests
         var f = new Fixture();
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start("compact", "s1", tweak: e => e["agent_id"] = "a1");
+        var context = f.StartAll("compact", "s1", tweak: e => e["agent_id"] = "a1");
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
     }
@@ -846,10 +857,10 @@ public sealed class OrchestrateCommandTests
     public void AFlaggedSessionInAnUnconfiguredProjectGetsTheIdentityAloneAndAnUnflaggedOneGetsNothing(string source)
     {
         var f = new Fixture(configured: false);
-        Assert.DoesNotContain(Body, f.Start(source, "s1"), StringComparison.Ordinal);
+        Assert.DoesNotContain(Body, f.StartAll(source, "s1"), StringComparison.Ordinal);
         _ = f.Typed("/wrangl:orchestrate");
 
-        var context = f.Start(source, "s1");
+        var context = f.StartAll(source, "s1");
 
         Assert.Contains(Body, context, StringComparison.Ordinal);
         Assert.DoesNotContain("HIERARCHY STATE", context, StringComparison.Ordinal);
@@ -864,14 +875,14 @@ public sealed class OrchestrateCommandTests
     public void AFlaggedSessionWhoseStartEmitsNoOtherContextGetsTheIdentityAlone(string source, bool injected)
     {
         var f = new Fixture(config: """{"version":1,"enabled":false}""");
-        var silent = f.Start(source, "s1");
+        var silent = f.StartAll(source, "s1");
 
         // A disabled repo refuses the command, so the flag is one the session took before the repo was turned off.
         Tree(f, """{"version":1}""");
         _ = f.Typed("/wrangl:orchestrate");
         Tree(f, """{"version":1,"enabled":false}""");
 
-        var context = f.Start(source, "s1");
+        var context = f.StartAll(source, "s1");
 
         Assert.Equal(string.Empty, silent);
         Assert.Equal(injected, context.Contains(Body, StringComparison.Ordinal));
@@ -892,7 +903,7 @@ public sealed class OrchestrateCommandTests
         _ = f.Typed("/wrangl:orchestrate");
         _ = f.Typed("/wrangl:orchestrate off");
 
-        Assert.DoesNotContain(Body, f.Start("compact", "s1"), StringComparison.Ordinal);
+        Assert.DoesNotContain(Body, f.StartAll("compact", "s1"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -900,7 +911,7 @@ public sealed class OrchestrateCommandTests
     {
         var f = new Fixture();
 
-        var context = f.Start("compact", "s1", tweak: e => e["agent_type"] = "wrangl:orchestrator");
+        var context = f.StartAll("compact", "s1", tweak: e => e["agent_type"] = "wrangl:orchestrator");
 
         Assert.DoesNotContain(Body, context, StringComparison.Ordinal);
     }
