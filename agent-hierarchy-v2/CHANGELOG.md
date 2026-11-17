@@ -4,6 +4,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.6] - 2026-11-17
+
+### Fixed
+
+- **`ahd` comes back after a plugin update on a busy machine.** The hook that replaces an older daemon could read the
+  old daemon's health reply before it had marked itself stopping, conclude nothing had changed, and start nothing;
+  the old daemon then exited. A daemon now marks itself stopping before it answers the stop request, and the hook
+  waits for the daemon it just stopped to exit, within its existing time limit, before starting the new one.
+- **A brief's mail names the request.** Mail for a brief always carries the request id and the command that reads it;
+  it is no longer cut to "brief from X" with a mailbox entry id. `ah msg show <entry id>` says which request the
+  entry is for. A file path is printed only when the file exists.
+- **A brief to a busy member is no longer reported as delivery-failed.** The daemon keeps the delivery while the
+  member's session is still checking in, and fails it only when that stops.
+- **herdr desktop: a member that has not had a turn shows as idle,** not "No signal", and the team's "Waiting on
+  you" line sits under the team name instead of under the last member.
+
+### Added
+
+- **The herdr desktop Board matches the web Board.** Run `ah herdr install` again to get it.
+  - Cards show the work id, size (the deliverable's when the item has none), epic, "blocked by N", queue markers
+    and message counts, in the web's order.
+  - A Backlog column by wave; a breadcrumb scope (All teams, team, lane, epic, deliverable); lane headers.
+  - The item sheet shows what the web's item dialog shows: rows, description, notes, history, timeline, links and
+    attachments. Backlog rows, teams and lanes open sheets too.
+  - "Filter streams", "Show N older streams", "Show all N done today", expandable columns, stale teams shown on
+    request, "Show only this stream", "Changed since last visit" kept across restarts with "Mark all seen", and
+    arrow keys between cards.
+  - Not included: zoom (herdr cannot scale a laid-out board) and the web's `item=` link.
+
 ## [2.0.5] - 2026-11-17
 
 ### Fixed

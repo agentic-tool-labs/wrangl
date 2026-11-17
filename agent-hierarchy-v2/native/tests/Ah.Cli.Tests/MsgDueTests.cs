@@ -88,6 +88,31 @@ public sealed class MsgDueTests : IDisposable
     }
 
     [Fact]
+    public void ABriefIsMailedWithItsRequestIdAndReadCommandAndNegativeAReportStaysCompact()
+    {
+        Seed();
+        const string key = "/nowhere/.claude/ah2/msgs/20261117-154321-14ze--implementor--brief-mail--request.md";
+        var writer = PlantWriter();
+        TestPlant.Mail(writer, Box, JsonText.Parse("{\"id\":\"e-brief\",\"kind\":\"brief\",\"from\":\"orchestrator@tm\",\"ref\":\"" + key + "\",\"route\":\"pull\"}"), _sandbox.Root);
+        TestPlant.Mail(writer, Box, JsonText.Parse("{\"id\":\"e-report\",\"kind\":\"report\",\"from\":\"reviewer@tm\",\"ref\":\"" + key + "\",\"route\":\"pull\"}"), _sandbox.Root);
+
+        var a = Parse(Run(Input(), ["--json"], daemonOff: true).Out);
+
+        var compact = a["compact"].AsString();
+        Assert.Contains("- brief from orchestrator@tm: [hierarchy-msg 20261117-154321-14ze] read it with `ah msg show 20261117-154321-14ze`", compact, StringComparison.Ordinal);
+        Assert.DoesNotContain("/msgs/", compact, StringComparison.Ordinal);
+        Assert.DoesNotContain("/nowhere", a["prompt"].AsString(), StringComparison.Ordinal);
+        Assert.Contains("\n- report from reviewer@tm\n", compact, StringComparison.Ordinal);
+    }
+
+    private IStateWriter PlantWriter()
+    {
+        var variables = new Dictionary<string, string?> { ["AH_TEST"] = "1", ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home, ["AH_DAEMON"] = "off" };
+        var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.0.0", "1"));
+        return ServiceGraph.Build(PlatformModule.CreateIo(null), env, new FakeRunner(), new FakeDaemonClient { Reply = _ => new DaemonReply(0, default, "down") }).Writer;
+    }
+
+    [Fact]
     public void ADaemonThatServesTheDueRouteIsReportedByItsSocket()
     {
         Seed("e1");

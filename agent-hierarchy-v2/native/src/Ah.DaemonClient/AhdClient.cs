@@ -727,6 +727,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         }
 
         string? startWhy = null;
+        int? drainedPid = null;
         for (var round = 0; round < 2; round++)
         {
             if (options.Hook && Remaining() <= 0)
@@ -736,7 +737,9 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             }
 
             var info = await DiscoverCoreAsync(options.Hook ? (int)Remaining() : DiscoverTimeoutMs, ct).ConfigureAwait(false);
-            if (info is { Draining: true })
+
+            // ah2-136 D2: a 2.0.3 to 2.0.5 daemon answers health as live for a moment after accepting the drain; the one this call drained is draining.
+            if (info is { Draining: true } || (round == 1 && info is not null && info.Pid == drainedPid))
             {
                 // A request that may not start the daemon has nothing to wait for: the files serve it now.
                 if (!options.Start)
@@ -851,6 +854,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 }
 
                 onDrained();
+                drainedPid = info.Pid;
                 continue;
             }
 

@@ -86,6 +86,8 @@ function member(m, pad) {
   return `<div class="row" style="padding-left:${pad}px" title="${esc(full)}" aria-label="${esc(full)}">${glyph(m)}<span class="role${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="what">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
 }
 
+const alarm = (pad) => (a) => `<div class="alarm" style="margin-left:${pad + 26}px" title="${esc(a.text)}"><b aria-hidden="true">⚠</b><span>${esc(a.text)}</span></div>`;
+
 function teamRows(t, lane) {
   const pad = lane ? 22 : 8;
   const parts = [
@@ -94,8 +96,9 @@ function teamRows(t, lane) {
     t.working || t.blocked ? `<span class="tc">${esc(counts({ working: t.working, blocked: t.blocked }))}</span>` : "",
     `<span class="spill" role="button" title="Open the ${esc(t.name)} sitrep" aria-label="Open the ${esc(t.name)} sitrep">Sitrep</span>`,
     "</button>",
+    ...t.alerts.filter((a) => !a.member).map(alarm(pad)),
     ...t.members.map((m) => member(m, pad + 6)),
-    ...t.alerts.map((a) => `<div class="alarm" style="margin-left:${pad + 26}px" title="${esc(a.text)}"><b aria-hidden="true">⚠</b><span>${esc(a.text)}</span></div>`),
+    ...t.alerts.filter((a) => a.member).map(alarm(pad)),
     ...t.lanes.flatMap((l) => teamRows(l, true)),
   ];
   return parts;

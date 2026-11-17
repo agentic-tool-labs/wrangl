@@ -594,7 +594,7 @@ internal sealed partial class Mailbox
             string tail;
             if (e.Get("ref") is { IsTruthy: true } reference)
             {
-                tail = JsConvert.ToJsString(reference);
+                tail = MsgPointer.Display(JsConvert.ToJsString(reference));
             }
             else if (e.Get("event") is { IsTruthy: true } ev)
             {

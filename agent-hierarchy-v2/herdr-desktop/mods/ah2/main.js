@@ -15,7 +15,7 @@ import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, re
 import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs } from "./model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
-import { boardView } from "./board.js";
+import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
 import { graphSubs } from "./graph-model.js";
@@ -78,6 +78,7 @@ export default class Ah2 extends View {
     this.abandoned = 0; // model.js pollExec: execs given up on that have not settled yet
     this.sliceGen = 0;
     if (this.desk || this.view === "qa" || this.view === "board") qaInit(this); // the board's waiting cards are Q&A cards
+    if (this.desk || this.view === "board") boardInit(this);
     if (this.desk || this.view === "graph") graphInit(this); // the shown team, the scrubber and the zoom (graph-view.js); once, never per switch
     // The Desk window says it is open, and on which tab (cleared in close): the peek drawer and every opener read it.
     if (this.desk) setShared(DESK_WINDOW_KEY, { overlay: (this.overlay = props()?.overlay ?? null), view: this.view, max: this.max });
@@ -98,6 +99,7 @@ export default class Ah2 extends View {
   // Herdr calls this when the copy goes (an overlay closed, or quit). Only our own id: reopening the same key replaces the window.
   async close() {
     this.gone = true; // ends the rebuild watch (rebuild)
+    if (this.view === "board") boardLeave(this); // the Board's visit ends: store what it saw (board.js)
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
   }
@@ -107,6 +109,7 @@ export default class Ah2 extends View {
   select(view, cx) {
     if (view !== this.view) {
       if (this.view === "feed") this.feedShowing = false;
+      if (this.view === "board") boardLeave(this); // leaving the Board ends its visit (board.js)
       this.view = view;
       if (view === "qa") qaTake(this, undefined, cx);
       cx.notify();
@@ -119,10 +122,10 @@ export default class Ah2 extends View {
   subs() {
     if (this.desk) {
       const s = this.st.slices;
-      return unionSubs(["view:summary"], qaSubs(s), boardSubs(s), feedSubs(s), graphSubs(s, this));
+      return unionSubs(["view:summary"], qaSubs(s), boardSubs(s, Date.now(), { open: this.kb?.open, log: this.view === "board" ? this.kb?.sel?.log : null, shown: this.view === "board", team: this.kb?.team, hide: this.kb?.hide }), feedSubs(s), graphSubs(s, this));
     }
     if (this.view === "qa") return ["view:summary", ...qaSubs(this.st.slices)];
-    if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices)];
+    if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide })];
     if (this.view === "feed") return ["view:summary", ...feedSubs(this.st.slices)];
     if (this.view === "graph") return ["view:summary", ...graphSubs(this.st.slices, this)];
     return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary"];
@@ -497,14 +500,15 @@ export default class Ah2 extends View {
           .on_click(() => openDismiss(tm.id, tm.name, this.workRootOf(tm.id)))
           .child(svg("mods/ah2/x.svg").size(11))))
       );
+      const alert = (a) => h_flex().id(`alert-${tm.id}-${rows.length}`).ml(pad + 26).mt(2).mb(4).mr(8).gap(4).items_center().text_size(11)
+        .tooltip(a.text).accessibility_label(`Alert: ${a.text}`)
+        .child(div().flex_none().text_color(t.blocked).child("⚠"))
+        .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(a.text));
+      // ah2-133 D4: a team-level alert (Waiting on you) sits under the team header, above the members, so it never reads as the last member's
+      for (const a of tm.alerts) if (!a.member) rows.push(alert(a));
       // Collapsed lanes keep their header row (and alerts); their members are not drawn.
       if (!(lane && set.lanes === "collapsed")) for (const mb of tm.members) rows.push(this.member(t, mb, pad + 6, terminalOf, order, linked));
-      for (const a of tm.alerts) {
-        rows.push(h_flex().id(`alert-${tm.id}-${rows.length}`).ml(pad + 26).mt(2).mb(4).mr(8).gap(4).items_center().text_size(11)
-          .tooltip(a.text).accessibility_label(`Alert: ${a.text}`)
-          .child(div().flex_none().text_color(t.blocked).child("⚠"))
-          .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(a.text)));
-      }
+      for (const a of tm.alerts) if (a.member) rows.push(alert(a));
       for (const l of tm.lanes) team(l, true);
     };
 

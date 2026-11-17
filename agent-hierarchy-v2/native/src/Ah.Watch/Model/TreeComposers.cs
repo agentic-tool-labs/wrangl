@@ -1113,8 +1113,8 @@ internal static class SummaryData
     }
 
     /// <summary>
-    /// The member's state as the client's <c>stateOf</c> decides it: gone when its pid is known not to be live, idle when the activity is
-    /// idle, blocked when it is blocked or failed, unknown when there is no activity record, else working.
+    /// The member's state: gone when its pid is known not to be live, idle when the activity is idle, blocked when it is blocked or failed,
+    /// with no activity record idle when registered and live and unknown otherwise (the client's <c>stateOf</c> still says unknown there), else working.
     /// </summary>
     public static IReadOnlyList<MemberReading> Members(IRecordView records, TeamEntry team, long nowMs, long? observedAtMs = null, bool observed = true)
     {
@@ -1141,7 +1141,8 @@ internal static class SummaryData
             var permission = activity == "blocked" && question is null && record is { IsAbsent: false } && LaneParts.Text(record.Value, "blocked_by") == "permission";
             var prompted = permission && LaneParts.Text(record!.Value, "screen_prompt_at") is { Length: > 0 };
             var pending = permission && !prompted && !screenClear && CoverageLane.Covers(records, session!);
-            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? "unknown" : activity == "idle" ? "idle" : !prompted && (screenClear || pending) ? "working" : activity is "blocked" or "failed" ? "blocked" : "working";
+            // ah2-133 D2: a registered, live member that has had no turn yet (no activity record) is idle, not unknown.
+            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? (registration is not null && verdict == Ah.Core.Time.LivenessVerdict.Live ? "idle" : "unknown") : activity == "idle" ? "idle" : !prompted && (screenClear || pending) ? "working" : activity is "blocked" or "failed" ? "blocked" : "working";
             var context = MemberComposer.ContextOf(record);
             var contextPct = ContextReading.Of((team.Row(member) is { } modelRow ? LaneParts.Text(modelRow, "model") : null) ?? context.Model, context.Used).Pct;
             // The Orchestrator records no activity through its turns, only whether one is open (ah2-62); it counts only while the session is live.

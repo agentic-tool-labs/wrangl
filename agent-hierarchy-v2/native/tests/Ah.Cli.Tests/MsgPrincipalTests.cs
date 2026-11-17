@@ -245,6 +245,54 @@ public sealed class MsgPrincipalTests : IDisposable
         Assert.False(_graph.Hierarchy.Peers.ReportAcked("o", "20260101-000000-t1a"));
     }
 
+    [Fact]
+    public void ShowOfAMailboxEntryIdNamesItsRequestAndNegativeAnUnknownIdIsStillNotFound()
+    {
+        AsOrchestrator();
+        AsMember();
+        var (made, madeErr) = Run("new", "--to", "implementor", "--from", "orchestrator", "--slug", "entry-show", "--title", "Fix test titles", "--team", "tm", "--json", "--session", "o");
+        Assert.True(made == 0, madeErr);
+        var request = JsonText.Parse(_lastOut.TrimEnd('\n')).Member("id")!.Value.AsString();
+        var (sent, sentErr) = Run("send", "tm-implementor@tm", "--ref", request, "--kind", "brief", "--from", "orchestrator@tm", "--id", "20261117-154321-ygsz", "--session", "o");
+        Assert.True(sent == 0, sentErr);
+
+        var (entry, entryErr) = Run("show", "20261117-154321-ygsz", "--session", "s-impl");
+        var (unknown, unknownErr) = Run("show", "20261117-154321-zzzz", "--session", "s-impl");
+        var (byRequest, byRequestErr) = Run("show", request, "--session", "s-impl");
+
+        Assert.Equal(1, entry);
+        Assert.Contains($"20261117-154321-ygsz is a mailbox entry for {request}; run `ah msg show {request}`", entryErr, StringComparison.Ordinal);
+        Assert.Equal(1, unknown);
+        Assert.Contains("no request 20261117-154321-zzzz", unknownErr, StringComparison.Ordinal);
+        Assert.DoesNotContain("mailbox entry", unknownErr, StringComparison.Ordinal);
+        Assert.True(byRequest == 0, byRequestErr);
+    }
+
+    /// <summary>ah2-78 D3: a composed line names a file only when it exists; else the message's id, else the base name. Negative: an existing file keeps its path.</summary>
+    [Fact]
+    public void NoComposedLineNamesAFileThatDoesNotExistAndNegativeAnExistingFileKeepsItsPath()
+    {
+        var gone = "/nowhere/.claude/ah2/msgs/20261117-154321-14ze--implementor--brief-mail--request.md";
+        var goneOther = "/nowhere/notes/plan.md";
+        var real = Path.Combine(_sandbox.Root, "plan.md");
+        File.WriteAllText(real, "x");
+
+        var inbox = _graph.Mailbox.RenderInbox([
+            JsonText.Parse("{\"id\":\"e1\",\"kind\":\"brief\",\"from\":\"user\",\"ref\":\"" + gone + "\"}"),
+            JsonText.Parse("{\"id\":\"e2\",\"kind\":\"note\",\"from\":\"user\",\"ref\":\"" + goneOther + "\"}"),
+            JsonText.Parse("{\"id\":\"e3\",\"kind\":\"note\",\"from\":\"user\",\"ref\":\"" + real + "\"}"),
+        ]);
+
+        Assert.DoesNotContain("/nowhere", inbox, StringComparison.Ordinal);
+        Assert.Contains("20261117-154321-14ze", inbox, StringComparison.Ordinal);
+        Assert.Contains("plan.md", inbox, StringComparison.Ordinal);
+        Assert.Contains(real, inbox, StringComparison.Ordinal);
+        Assert.Equal("[hierarchy-msg plan.md]", MsgPointer.Token(goneOther));
+        Assert.Equal("plan.md", MsgPointer.Id(goneOther));
+        Assert.Equal($"[hierarchy-msg {real}]", MsgPointer.Token(real));
+        Assert.Equal("[hierarchy-msg 20261117-154321-14ze]", MsgPointer.Token(gone));
+    }
+
     private const string ExchangeId = "20261022-120000-aaaa";
 
     private string BodyFile(string text)

@@ -500,7 +500,7 @@ public sealed partial class TreeLanesTests
     }
 
     [Fact]
-    public void AMemberWithNoActivityRecordIsUnknownAndNotCountedWorking()
+    public void AMemberWithNoActivityRecordIsIdleWhenRegisteredAndLiveElseUnknownAndNotCountedWorking()
     {
         var reader = Truth();
         reader.LivePids.AddRange([1, 42]);
@@ -509,7 +509,26 @@ public sealed partial class TreeLanesTests
 
         Assert.Equal(3, Num(Summary(model), "members"));
         Assert.Equal(0, Num(Summary(model), "working"));
-        Assert.Equal(["unknown", "unknown", "unknown"], SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).Select(static m => m.State));
+        // ah2-133 D2: registered and live with no turn yet is idle; qa has no registration, so it stays unknown (no signal)
+        var states = SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).ToDictionary(static m => m.Member, static m => m.State);
+        Assert.Equal(3, states.Count);
+        Assert.Equal("idle", states[TreeIds.Orchestrator]);
+        Assert.Equal("idle", states["dev"]);
+        Assert.Equal("unknown", states["qa"]);
+
+        // negative: registered but liveness not live (no process table observed) stays unknown, as today
+        var unobserved = SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), observed: false).Single(static m => m.Member == "dev");
+        Assert.Equal(Ah.Core.Time.LivenessVerdict.Unknown, unobserved.Verdict);
+        Assert.Equal("unknown", unobserved.State);
+
+        // negative: registered with its pid not in the process table is not live, so unknown, as today
+        var notLive = Truth();
+        notLive.LivePids.Add(1);
+        var (deadModel, _) = SeededWithActivity(notLive);
+        using var deadOwner = deadModel;
+        var dead = SummaryData.Members(deadModel.Records, TreeData.Teams(deadModel.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).Single(static m => m.Member == "dev");
+        Assert.NotEqual(Ah.Core.Time.LivenessVerdict.Live, dead.Verdict);
+        Assert.Equal("unknown", dead.State);
 
         reader.Activities["s-dev"] = Act("working");
         var (withRecord, _) = SeededWithActivity(reader);
