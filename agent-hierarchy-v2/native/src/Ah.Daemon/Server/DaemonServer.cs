@@ -69,6 +69,7 @@ internal sealed class DaemonServer : IAsyncDisposable
     private WebApplication? _app;
     private ulong _ino;
     private int _draining;
+    private int _shutdownStarted;
     private int _drainWatched;
     private string _drainStep = "starting";
     private long _active;
@@ -463,11 +464,13 @@ internal sealed class DaemonServer : IAsyncDisposable
             return;
         }
 
-        if (Interlocked.Exchange(ref _draining, 1) != 0)
+        // The /v1/drain reply sets _draining before it answers (ah2-136 D1), so the once-guard is a flag of its own.
+        if (Interlocked.Exchange(ref _shutdownStarted, 1) != 0)
         {
             return;
         }
 
+        Volatile.Write(ref _draining, 1);
         Log("draining");
         Volatile.Write(ref _drainStep, "bridge");
         await _ui.StopAsync("daemon stop", refuseNewLeases: true).ConfigureAwait(false);
@@ -890,8 +893,19 @@ internal sealed class DaemonServer : IAsyncDisposable
                 }
 
                 Log($"drain requested{(reason is { Length: > 0 } ? $": {(reason.Length > 80 ? reason[..80] : reason)}" : string.Empty)} (by {caller.ToString().ToLowerInvariant()}, pid {peer})");
-                await ReplyJsonAsync(ctx, false, 200, Jx.Ok()).ConfigureAwait(false);
-                RequestShutdown(0);
+
+                // ah2-136 D1: draining before the reply, so no request after it is answered as a live daemon; the shutdown follows even
+                // when the reply fails, or the daemon would answer 503 and never exit.
+                Volatile.Write(ref _draining, 1);
+                try
+                {
+                    await ReplyJsonAsync(ctx, false, 200, Jx.Ok()).ConfigureAwait(false);
+                }
+                finally
+                {
+                    RequestShutdown(0);
+                }
+
                 return;
             }
 

@@ -183,7 +183,35 @@ internal sealed partial class MsgCommand
                 : _out.Fail($"{type} {id} is in more than one place ({listed}); pick one with --to <name> or --pool <dir>");
         }
 
-        throw NotFound($"no {type} {id}");
+        throw NotFound(quiet ? string.Empty : EntryRedirect(id) ?? $"no {type} {id}");
+    }
+
+    /// <summary>
+    /// ah2-78: when <paramref name="id"/> is a mailbox entry of the caller's that carries a message, the line naming that message and how to
+    /// read it; null otherwise. A box that cannot be read names nothing.
+    /// </summary>
+    private string? EntryRedirect(string id)
+    {
+        try
+        {
+            foreach (var box in Me())
+            {
+                foreach (var entry in _graph.Mailbox.ReadEntries(box.Dir).Entries)
+                {
+                    if (entry.Member("id") is { IsText: true } entryId && entryId.AsString() == id
+                        && entry.Member("ref") is { IsText: true } reference && MsgPointer.Handle(reference.AsString()) is { } handle)
+                    {
+                        return $"{id} is a mailbox entry for {handle}; run `ah msg show {handle}`";
+                    }
+                }
+            }
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            return null;
+        }
+
+        return null;
     }
 
     /// <summary>The caller's pool (or <c>--pool</c>) and every pool a handle may resolve in: the caller's and the main checkout's teams' pools.</summary>

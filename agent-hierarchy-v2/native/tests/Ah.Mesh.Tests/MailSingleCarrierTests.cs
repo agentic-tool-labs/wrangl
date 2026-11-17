@@ -506,6 +506,54 @@ public sealed class MailSingleCarrierTests
         Assert.Contains(panes.Payloads, p => p.Contains("[ah-entry e1 to b@tm]", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// ah2-78 D5: a claimed entry to a member whose mod keeps polling (busy mid-turn) is not released past the pull timeout: no relay request,
+    /// no paste, no delivery-failed, and it is acked once when the turn ends. Negative: a heartbeat gone stale releases it and it ends delivery-failed.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AClaimToAMemberWhoseModStillPollsIsHeldUntilItsTurnEndsAndNegativeAStaleOneFails(bool polling)
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1", from: "user", session: null);
+        var (ladder, mail, panes) = LadderOf(rig);
+        panes.Refuse = "indeterminate";
+        rig.Fx.Mailbox.WriteHeartbeat(rig.BoxB, "claude-mod", "s-b", 5000);
+
+        for (var at = TimeSpan.FromMinutes(1); at <= TimeSpan.FromMinutes(70); at += TimeSpan.FromMinutes(1))
+        {
+            rig.Fx.Clock.UtcNow = Instant + at;
+            if (polling)
+            {
+                rig.Fx.Mailbox.WriteHeartbeat(rig.BoxB, "claude-mod", "s-b", 5000);
+            }
+
+            await Pass(rig, ladder, at);
+        }
+
+        if (!polling)
+        {
+            Assert.Equal(ClaimStates.Released, rig.Claim("e1")!.Get("state")!.Value.AsString());
+            Assert.True(ToldFailed(mail));
+            return;
+        }
+
+        Assert.NotEqual(ClaimStates.Released, rig.Claim("e1")!.Get("state")!.Value.AsString());
+        Assert.Empty(mail.Sent);
+        Assert.Equal(0, panes.Pastes);
+        Assert.False(Escalated(rig, rig.BoxB));
+
+        // the turn ends: the mod's next poll takes the entry and acks it, once
+        Assert.Equal("e1", Assert.Single(rig.Fx.Mailbox.AckIds(rig.BoxB, ["e1"], "adapter", "s-b").Fresh));
+        await Pass(rig, ladder, TimeSpan.FromMinutes(71));
+        await Pass(rig, ladder, TimeSpan.FromMinutes(90));
+
+        Assert.Empty(rig.Fx.Mailbox.AckIds(rig.BoxB, ["e1"], "adapter", "s-b").Fresh);
+        Assert.Empty(mail.Sent);
+        Assert.Equal(0, panes.Pastes);
+    }
+
     /// <summary>b456: a paused member's box walks only the member-paused note: the same entry as the test above is never pasted (negative: that test, unpaused, pastes it).</summary>
     [Fact]
     public async Task APausedMembersBoxIsNotWalkedButItsPauseNoteIs()
@@ -887,18 +935,19 @@ public sealed class MailSingleCarrierTests
         Assert.Equal(ClaimStates.Released, rig.Claim("e1", box)!.Get("state")!.Value.AsString());
     }
 
+    /// <summary>ah2-78 D5 reverses this case: a member box with a fresh mod heartbeat keeps its claim and is not pasted.</summary>
     [Fact]
-    public async Task NegativeAMemberBoxWithAFreshModHeartbeatIsStillReleasedAndPasted()
+    public async Task AMemberBoxWithAFreshModHeartbeatKeepsItsClaimAndIsNotPasted()
     {
         var rig = MailClaimTests.Create();
         rig.Send("e1", from: "user", session: null);
         var (ladder, _, panes) = LadderOf(rig);
 
         await PollAndPass(rig, ladder, rig.BoxB, TimeSpan.FromMinutes(3), session: "s-b");
-        Assert.Equal(ClaimStates.Released, rig.Claim("e1")!.Get("state")!.Value.AsString());
+        Assert.NotEqual(ClaimStates.Released, rig.Claim("e1")!.Get("state")!.Value.AsString());
         await PollAndPass(rig, ladder, rig.BoxB, TimeSpan.FromMinutes(14), session: "s-b");
         await PollAndPass(rig, ladder, rig.BoxB, TimeSpan.FromMinutes(15), session: "s-b");
 
-        Assert.Equal(1, panes.Pastes);
+        Assert.Equal(0, panes.Pastes);
     }
 }

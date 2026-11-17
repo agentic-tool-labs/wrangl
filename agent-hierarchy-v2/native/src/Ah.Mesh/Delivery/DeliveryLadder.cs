@@ -616,6 +616,14 @@ public sealed partial record DeliveryLadder(
             return false;
         }
 
+        // ah2-78 D5: a member whose mod still polls is live and busy; its mail is taken at its turn end, so the claim is kept.
+        // A box with no member row is the Orchestrator's, held by the doorbell instead.
+        var heartbeat = box.Member is null ? null : Mailbox.ReadHeartbeat(box.Dir, Str(entry, "to_session") is { Length: > 0 } s ? s : null, now);
+        if (heartbeat is not null && Mailbox.HeartbeatFresh(heartbeat is null ? (JsonValue?)null : JsonValue.FromObject(heartbeat), now))
+        {
+            return false;
+        }
+
         return Mailbox.Claim(box.Dir, Str(entry, "id") ?? string.Empty, ClaimActions.Release, new JsonObject { ["reason"] = ClaimMachine.NoPollerReason, ["actor"] = "daemon" }).Won;
     }
 

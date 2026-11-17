@@ -42,7 +42,7 @@
           "next": 10
         }
       ],
-      "expect": "e1  note  from a@tm  2026-01-01T12:00:00.000Z  hi\ne2  brief  from a@tm  2026-01-01T12:00:00.000Z  /m/x--request.md"
+      "expect": "e1  note  from a@tm  2026-01-01T12:00:00.000Z  hi\ne2  brief  from a@tm  2026-01-01T12:00:00.000Z  x--request.md"
     },
     {
       "id": "event-with-text",

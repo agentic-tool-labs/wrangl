@@ -35,7 +35,7 @@
         },
         "b@tm"
       ],
-      "expect": "[hierarchy-msg /m/x--request.md] [ah-entry e1 to b@tm]"
+      "expect": "[hierarchy-msg x--request.md] [ah-entry e1 to b@tm]"
     },
     {
       "id": "event-without-text",

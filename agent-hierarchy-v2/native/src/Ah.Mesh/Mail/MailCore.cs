@@ -498,16 +498,11 @@ internal sealed partial class MailCore(IClock clock) : IMailCore
             var kindIs = kind is { IsText: true } k ? k.AsString() : null;
             if (kindIs == "brief" && hasRef)
             {
-                if (compact)
-                {
-                    lines.Add($"- brief from {from}");
-                }
-                else
-                {
-                    var key = Neutral(refValue);
-                    lines.Add($"- brief from {from}: {MsgPointer.ShowLine(key)}");
-                    lines.Add($"  Reply when done: ah msg fill --id {MsgPointer.Id(key)} --from <your role> --body-file -, then ah msg send {from} --kind report --ref {MsgPointer.Id(key)}");
-                }
+                // ah2-78: a brief is never compacted. Members' compact briefs were seen unexpanded (85 of 86 acked by the adapter, one by
+                // the prompt hook, 2026-11-14..17), so the member read a brief with no request id; these lines carry the id and its read command.
+                var key = Neutral(refValue);
+                lines.Add($"- brief from {from}: {MsgPointer.ShowLine(key)}");
+                lines.Add($"  Reply when done: ah msg fill --id {MsgPointer.Id(key)} --from <your role> --body-file -, then ah msg send {from} --kind report --ref {MsgPointer.Id(key)}");
             }
             else if (kindIs == "report" && hasRef)
             {

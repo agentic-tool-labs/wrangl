@@ -1135,6 +1135,128 @@ public sealed class ClientTests
         }
     }
 
+    /// <summary>
+    /// Answers <c>/v1/drain</c> with 200 itself, after <paramref name="beforeReply"/>, and passes every other request to the daemon;
+    /// <paramref name="afterHealthPastDrain"/> runs once, after the first health answer that follows the drain.
+    /// </summary>
+    private sealed class DrainAccepting(Func<Task> beforeReply, Action? afterHealthPastDrain = null) : IUnixHttpTransport
+    {
+        private readonly UnixTransport _real = new();
+        private int _drained;
+
+        public async Task<HttpReply> SendAsync(string socketPath, string method, string pathAndQuery, ReadOnlyMemory<byte> body, TimeSpan timeout, CancellationToken cancellationToken = default)
+        {
+            if (pathAndQuery != "/v1/drain")
+            {
+                var reply = await _real.SendAsync(socketPath, method, pathAndQuery, body, timeout, cancellationToken);
+                if (pathAndQuery == "/v1/health" && Interlocked.CompareExchange(ref _drained, 2, 1) == 1)
+                {
+                    afterHealthPastDrain?.Invoke();
+                }
+
+                return reply;
+            }
+
+            await beforeReply();
+            _ = Interlocked.CompareExchange(ref _drained, 1, 0);
+            return new(200, System.Text.Encoding.UTF8.GetBytes("{\"ok\":true}"));
+        }
+    }
+
+    /// <summary>Drains <paramref name="daemon"/> for real and waits for its exit: the test's stand-in for a drain thread that runs late.</summary>
+    private static async Task DrainForRealAsync(ClientRig rig, Harness daemon)
+    {
+        _ = await new UnixTransport().SendAsync(rig.Box.Sock, "POST", "/v1/drain", System.Text.Encoding.UTF8.GetBytes("{\"reason\":\"test\"}"), TimeSpan.FromSeconds(5));
+        _ = await daemon.Exit.WaitAsync(Until.Deadline);
+    }
+
+    [Fact]
+    public async Task AHookWhoseDrainedDaemonStillAnswersAsLiveWaitsForItsExitAndStartsTheReplacement()
+    {
+        // ah2-136 D2: a 2.0.3 to 2.0.5 daemon accepts the drain and answers health 200 with its old version until its drain thread runs.
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var old = rig.Daemons.Single();
+            rig.Vars["DAEMON_VERSION"] = "2.0.0";
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+            var client = DaemonClientModule.Compose(DepsWith(rig, rig.Spawner, rig.Inspector) with
+            {
+                // The daemon drains for real only once round 1 has seen it answer as live, so the test never depends on timing.
+                Transport = new DrainAccepting(() => Task.CompletedTask, () => _ = Task.Run(() => DrainForRealAsync(rig, old))),
+            });
+
+            var hook = await client.EnsureDaemonForHookAsync(TimeSpan.FromSeconds(5));
+
+            Assert.NotNull(hook);
+            Assert.Equal("2.0.0", hook.Version);
+            Assert.NotEqual(old.Pid, hook.Pid);
+            Assert.True(old.Exited);
+            Assert.Equal(2, rig.Spawner.Requests.Count);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AHookThatFindsADifferentOlderDaemonAfterItsDrainStillReturnsNull()
+    {
+        // ah2-136 D3: another pid, still older, is a wrong daemon, not the drained one being slow to say so.
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var old = rig.Daemons.Single();
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+            var client = DaemonClientModule.Compose(DepsWith(rig, rig.Spawner, rig.Inspector) with
+            {
+                Transport = new DrainAccepting(async () =>
+                {
+                    // Straight from the rig's spawner: the start verb would meet an older daemon and drain it through this transport again.
+                    await DrainForRealAsync(rig, old);
+                    _ = rig.Spawner.SpawnDetached(new DetachedSpawnRequest([], rig.Home, new Dictionary<string, string?>(), Path.Combine(rig.Home, "logs", "ahd.log")));
+                }),
+            });
+
+            var hook = await client.EnsureDaemonForHookAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Null(hook);
+            var other = Assert.Single(rig.Daemons, d => !d.Exited);
+            Assert.NotEqual(old.Pid, other.Pid);
+            Assert.Equal(2, rig.Spawner.Requests.Count);
+            Assert.Contains("ahd-client replace-failed reason=the daemon is still older after a restart caller=", await File.ReadAllTextAsync(Path.Combine(rig.Home, "logs", "ahd.log")), StringComparison.Ordinal);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ADaemonThatAcceptsADrainAnswersTheNextHealthRequestAsDraining()
+    {
+        // ah2-136 D1: the drain's own thread may not have run yet; the reply already counts as the start of the drain.
+        var rig = new ClientRig();
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            var transport = new UnixTransport();
+
+            var drain = await transport.SendAsync(rig.Box.Sock, "POST", "/v1/drain", System.Text.Encoding.UTF8.GetBytes("{\"reason\":\"test\"}"), TimeSpan.FromSeconds(5));
+            var health = await transport.SendAsync(rig.Box.Sock, "GET", "/v1/health", ReadOnlyMemory<byte>.Empty, TimeSpan.FromSeconds(5));
+
+            Assert.Equal(200, drain.Status);
+            Assert.Equal(503, health.Status);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
     [Fact]
     public async Task AHookWhoseReplacementIsStillOlderLeavesItRunningInsteadOfDrainingItAgain()
     {

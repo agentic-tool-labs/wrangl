@@ -105,7 +105,8 @@ export function sidebarModel(slices, now) {
       .map(([k, m]) => memberRow(k, m, now))
       .sort((x, y) => (x.name === "orchestrator" ? -1 : y.name === "orchestrator" ? 1 : 0));
     // Orchestrator-audience stuck alerts are the orchestrator's, not the user's (select.js summaryRow).
-    const alerts = (b.alerts ?? []).filter((a) => a.audience !== "orchestrator").map((a) => ({ key: `${a.kind}|${a.since ?? a.text ?? a.title}`, kind: a.kind, text: a.text || a.title, age: since(a.since, now), at: Date.parse(a.since ?? "") || 0 }));
+    // `member`: the member slice id a member's own alert names; null for a team-level one (Waiting on you), drawn with the team header (ah2-133 D4).
+    const alerts = (b.alerts ?? []).filter((a) => a.audience !== "orchestrator").map((a) => ({ key: `${a.kind}|${a.since ?? a.text ?? a.title}`, kind: a.kind, text: a.text || a.title, age: since(a.since, now), at: Date.parse(a.since ?? "") || 0, member: a.member ?? null }));
     // ah2-53: only the team's own goal; a lane's inherited one is already on its parent's row above
     const own = ownGoal(goalOf(b), b.name ?? t.name);
     teams.push({ id, dir: t.dir_id, name: b.name ?? t.name, parent: b.lane?.parent_team ?? null, needsYou: b.waiting_on_you ?? 0, blockers: b.waiting_blockers ?? 0, working: b.working ?? 0, blocked: b.blocked ?? 0, members, alerts, lanes: [], goal: own?.text ?? null, goalFull: own?.full ?? null });
