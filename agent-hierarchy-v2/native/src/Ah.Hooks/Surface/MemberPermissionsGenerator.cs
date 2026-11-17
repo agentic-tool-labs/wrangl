@@ -33,20 +33,40 @@ internal static class MemberPermissionsGenerator
 
     internal static readonly string[] Tools = ["Read", "Edit", "Write", "Glob", "Grep", "NotebookEdit", "SendMessage"];
 
+    /// <summary>The file tools that get a rule naming the member's own directories.</summary>
+    internal static readonly string[] PathTools = ["Read", "Edit", "Write", "NotebookEdit"];
+
     internal static MemberPermissionsResult Generate(MemberPermissionsRequest r)
     {
         ArgumentNullException.ThrowIfNull(r);
         var bin = r.AhPath[..(r.AhPath.LastIndexOf('/') + 1)];
         var root = r.PluginRoot.TrimEnd('/');
         string[] ah = [r.AhPath, "ah", bin + "ahd", "ahd", root + "/bin/ah", root + "/tests/with-slot.sh"];
+        // ah2-70: a member has full rights in the work tree it was given and in its own scratch directory. The bare tool
+        // names above do not settle a path Claude Code treats as special (a work tree under .claude/, a scratch directory
+        // under ~/.claude/): without a rule that names the path, auto mode sends each such call to its classifier, which
+        // costs tens of seconds a call. The path rules name both directories outright.
+        string[] owned = new[] { r.WorkRoot, r.MemberTmp ?? string.Empty }
+            .Where(d => d.StartsWith('/') && d.Length > 1)
+            .Select(d => d.TrimEnd('/'))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var paths = owned.SelectMany(d => PathTools.Select(tool => $"{tool}(/{d}/**)"));
         var allow = ah.Concat(Programs).Select(p => $"Bash({p}:*)")
             .Concat(Cleanup)
             .Append("Bash(*)")
             .Concat(Tools)
+            .Concat(paths)
             .Concat(r.UserAllow ?? [])
             .Distinct(StringComparer.Ordinal);
         var notes = (r.UserSettingsProblems ?? []).Select(p => $"settings file not read: {p}").ToList();
-        return new MemberPermissionsResult(new JsonObject { ["allow"] = Strings(allow) }, notes);
+        var permissions = new JsonObject { ["allow"] = Strings(allow) };
+        if (owned.Length > 0)
+        {
+            permissions["additionalDirectories"] = Strings(owned);
+        }
+
+        return new MemberPermissionsResult(permissions, notes);
     }
 
     /// <summary>The allow rule <see cref="Generate"/> renders that covers <paramref name="command"/>, or why none does.</summary>

@@ -96,6 +96,19 @@ public sealed class HerdrFlavourRoutingTests : IDisposable
     }
 
     [Fact]
+    public void AMemberStampedCoreClosesOnCoreWhenItsImplicitTeamNamesNoTransport()
+    {
+        var (graph, runner) = Graph(("HC_TERMINAL_ID", "t1"));
+        var member = new JsonObject { ["name"] = "tm-implementor", ["transport_id"] = "t7", ["herdr_flavour"] = "core" };
+        var team = JsonText.Parse("""{"transport":null,"implicit":true,"members":[]}""");
+
+        var result = graph.Launch.Teardown.CloseAndVerify([member], string.Empty, [], new LaunchContext(_sandbox.Home, "tm", "repo", new JsonObject()), team);
+
+        Assert.Contains("hc", Binaries(runner));
+        Assert.DoesNotContain("has no addressable pane", result.Results[0].Get("error") is { IsText: true } e ? e.AsString() : string.Empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AMembersRegisteredFlavourOutranksItsTeams()
     {
         var bins = CloseFrom(("HERDR_ENV", "1"), TuiTeam, registeredFlavour: "core");

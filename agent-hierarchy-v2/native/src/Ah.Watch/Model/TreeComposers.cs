@@ -1624,7 +1624,12 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
 
             // A live member's registered pane (every session start registers it afresh); a member not live serves none, since its pane may
             // since hold another program.
-            if (m.Verdict == Ah.Core.Time.LivenessVerdict.Live && m.Pane is { } pane)
+            // ah2-73: the Orchestrator's row keeps its pane while nothing proves the session dead. An idle Orchestrator, or one
+            // waiting at a question, writes no heartbeat and so reads Unknown, which is exactly when the user needs to click
+            // through to it; and unlike a member it carries no label a click could fall back on.
+            var servesPane = m.Verdict == Ah.Core.Time.LivenessVerdict.Live
+                || (m.Member == TreeIds.Orchestrator && m.Verdict != Ah.Core.Time.LivenessVerdict.ProvenDead);
+            if (servesPane && m.Pane is { } pane)
             {
                 entry["pane_id"] = pane;
             }

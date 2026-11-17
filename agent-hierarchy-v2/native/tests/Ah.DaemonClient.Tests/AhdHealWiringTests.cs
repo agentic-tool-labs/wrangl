@@ -332,6 +332,39 @@ public sealed class AhdHealWiringTests : IDisposable
     }
 
     [Fact]
+    public async Task ARequestThatMayNotStartTheDaemonDoesNotWaitForADrain()
+    {
+        RecordDaemon();
+        _rig.Answer = static () => Reply(503, "{\"error\":{\"code\":\"draining\"}}");
+        var warnings = new List<string>();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        // the pid never exits, so a wait would take the whole default DrainWaitMs (12 s)
+        var found = await new AhdClient(Deps()).EnsureAsync(
+            new EnsureOptions(Start: false, Warn: (text, _) => warnings.Add(text)), TestContext.Current.CancellationToken);
+
+        Assert.Null(found);
+        Assert.True(clock.ElapsedMilliseconds < 1000, $"took {clock.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture)} ms");
+        Assert.Equal("the daemon is still draining", warnings[^1]);
+        Assert.Empty(_rig.Spawns);
+    }
+
+    [Fact]
+    public async Task ARequestThatMayStartTheDaemonStillWaitsForADrain()
+    {
+        RecordDaemon();
+        _rig.Answer = static () => Reply(503, "{\"error\":{\"code\":\"draining\"}}");
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        var found = await new AhdClient(Deps() with { DrainWaitMs = 300 }).EnsureAsync(
+            new EnsureOptions(Start: true), TestContext.Current.CancellationToken);
+
+        Assert.Null(found);
+        Assert.True(clock.ElapsedMilliseconds >= 250, $"took {clock.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture)} ms");
+        Assert.Empty(_rig.Spawns);
+    }
+
+    [Fact]
     public void AHealIsLaunchedOnlyForARecordedLivingDaemonThatDoesNotAnswer()
     {
         var client = new AhdClient(Deps());

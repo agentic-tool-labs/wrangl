@@ -334,7 +334,8 @@ internal static class RosterCli
     /// </summary>
     private static void RefuseRosterEditWhileOwningTeam(RosterContext c)
     {
-        if (!MutatesTemplate(c) || c.Opts.IsTrue("allow-roster-edit"))
+        // ah2-76: the user, and the session the user made admin, are never refused.
+        if (!MutatesTemplate(c) || c.Opts.IsTrue("allow-roster-edit") || c.Services.OwnerProof?.IsUser() == true)
         {
             return;
         }
@@ -351,7 +352,7 @@ internal static class RosterCli
         foreach (var name in names)
         {
             var existing = c.Services.Roster.ReadTeamRecord(c.Dir, name);
-            if (existing.IsNull || !c.Services.Roster.IsTeamOwnedBy(existing, invoker))
+            if (existing.IsNull || !c.Services.Roster.IsTeamOwnedBy(existing, invoker) || TeamScopes.IsEmptyImplicitTeam(existing))
             {
                 continue;
             }

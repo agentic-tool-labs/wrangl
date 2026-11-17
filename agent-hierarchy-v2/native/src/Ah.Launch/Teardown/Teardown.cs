@@ -4,6 +4,7 @@ using Ah.Abstractions;
 using Ah.Codex;
 using Ah.Config;
 using Ah.Core.Json;
+using Ah.Core.Mux;
 using Ah.Core.Text;
 using Ah.Hierarchy;
 using Ah.Roster;
@@ -450,7 +451,9 @@ public sealed record Teardown(
     {
         ArgumentNullException.ThrowIfNull(closable);
         ArgumentNullException.ThrowIfNull(warnings);
-        string TransportOf(JsonObject m) => m.Get("source") is { IsTruthy: true } ? "herdr" : teamTransport;
+        // A row stamped with a herdr flavour at spawn lives on herdr whatever the team record says: an implicit team is
+        // written before any transport is known, and its record keeps none.
+        string TransportOf(JsonObject m) => OnHerdr(m) ? "herdr" : teamTransport;
         var herdrOf = new Dictionary<JsonObject, IHerdr>(ReferenceEqualityComparer.Instance);
         foreach (var m in closable)
         {
@@ -1071,6 +1074,10 @@ public sealed record Teardown(
         return result;
     }
 
+    /// <summary>Whether a member row is addressed on herdr: it came from a herdr listing, or spawn stamped its flavour.</summary>
+    private static bool OnHerdr(JsonObject m) =>
+        m.Get("source") is { IsTruthy: true } || HerdrFlavour.OfMember(JsonValue.FromObject(m)) is not null;
+
     private JsonObject CloseOne(JsonObject m, string teamTransport, LaunchContext context, List<string> warnings, IHerdr herdr)
     {
         var row = new JsonObject
@@ -1103,7 +1110,7 @@ public sealed record Teardown(
             }
         }
 
-        var transport = m.Get("source") is { IsTruthy: true } ? "herdr" : teamTransport;
+        var transport = OnHerdr(m) ? "herdr" : teamTransport;
         try
         {
             CloseMemberPane(transport, JsConvert.ToJsString(m.Get("transport_id")), herdr);

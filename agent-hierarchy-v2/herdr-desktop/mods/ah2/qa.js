@@ -8,10 +8,11 @@ import { v_flex, h_flex, Button, Popover, Tabs, Tab, Input, InputState, TextView
 import { ah } from "./ah.js";
 import { openView } from "./dock.js";
 import { Buffer } from "buffer";
-import { qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart } from "./model.js";
+import { qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
+import { FILTER0, TIMES, STATES, NO_MATCH, SCOPE, DEBOUNCE_MS, filterActive, historyDirs, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "./qa-history-model.js";
 
 // The Herdr runtime has no TextEncoder (probed: typeof TextEncoder is "undefined"), and questions-model's Other byte cap needs
 // one. Buffer gives the same UTF-8 bytes.
@@ -37,14 +38,66 @@ export function qaInit(v) {
   v.thread = null; // the History thread open in place of the list: {row, loading, text?, ...threadOf, error?, open?: Set of folds shown}
   v.descOpen = new Set(); // the card keys whose description is open past its fold
   v.copied = null; // the last code span copied, "<card key>|<text>"
+  v.hist = historyInit(); // History's search and filters, and their read (qa-history-model.js); kept while the pane is open, never stored
+  v.histMenu = null; // the History filter menu open: "team" | "time" | "state"
+  v.histTok = 0; // the newest keystroke; a debounced search for an older one does nothing
+  v.histFocus = false;
+  v.histInput = InputState.new({ placeholder: "Search questions and replies" });
+  v.histInput.on("change", (_e, cx) => {
+    const tok = ++v.histTok;
+    const text = v.histInput.value();
+    cx.spawn(async (cx) => {
+      await cx.sleep(DEBOUNCE_MS);
+      if (tok === v.histTok && text !== v.hist.filter.search) histAsk(v, { ...v.hist.filter, search: text }, cx);
+    });
+  });
+  v.histInput.on("submit", (_e, cx) => {
+    v.histTok++;
+    histAsk(v, { ...v.hist.filter, search: v.histInput.value() }, cx);
+  });
+  v.histInput.on("focus", (_e, cx) => {
+    v.histFocus = true;
+    cx.notify();
+  });
+  v.histInput.on("blur", (_e, cx) => {
+    v.histFocus = false;
+    cx.notify();
+  });
+}
+
+// A new search or filter: the first page again, the old rows dropped; all defaults is the slice list again, with no read (spec A1).
+function histAsk(v, filter, cx) {
+  v.hist = filterActive(filter) ? historyAsk(v.hist, filter) : { ...historyInit(), seq: v.hist.seq + 1 };
+  v.histMenu = null;
+  cx.notify();
+  if (filterActive(filter)) histFetch(v, cx);
+}
+
+// One round of list reads for v.hist as it stands (first page, Load more or refresh), off the UI thread; only the newest lands.
+function histFetch(v, cx) {
+  const h = v.hist;
+  const dirs = historyDirs(historyTeams(v.st.slices), h.filter.team);
+  cx.spawn(async (cx) => {
+    const sleep = (ms) => cx.sleep(ms);
+    const read = v.link ? (path) => v.link.read(path, 15000, sleep) : null;
+    v.hist = historyTake(v.hist, h.seq, await historyRead(read, dirs, h.filter, Date.now(), h.more ? h.next : null));
+    cx.notify();
+  });
 }
 
 // After a poll, the Q&A window: what it draws moves to the new data only with auto-update on or on the Updates available
 // click (model.js qaRefresh); until then it keeps the list on screen.
-export function qaTake(v, take = settings().autoQa) {
+// A filtered History refreshes with its filter when the list moves (`cx`, from the poll or a click).
+export function qaTake(v, take = settings().autoQa, cx = null) {
   const was = v.qa?.shown;
   v.qa = qaRefresh(v.qa, v.st.slices, Date.now(), take, !loadingOf(v, true));
-  if (v.qa?.shown !== was) qaPrune(v);
+  if (v.qa?.shown !== was) {
+    qaPrune(v);
+    if (cx && v.hist && filterActive(v.hist.filter)) {
+      v.hist = historyRefresh(v.hist);
+      histFetch(v, cx);
+    }
+  }
 }
 
 // A card whose row left what is drawn goes, with its selection and its Other input (the Q&A window: its shown slices).
@@ -122,6 +175,7 @@ export function qaView(v, t, close) {
   if (!shown && v.status === "down") body = [note(t, v.reason, "Retrying")];
   else if (!shown && loading) body = [note(t, "Loading questions…")];
   else if (v.tab === "history" && v.thread) body = threadPanel(v, t);
+  else if (v.tab === "history" && filterActive(v.hist.filter)) body = histBody(v, t);
   else if (v.tab === "history") body = d.history.length === 0 ? [empty(t, "Nothing in History yet.")] : d.history.map((r, i) => historyRow(v, t, r, i));
   else if (d.empty) body = [empty(t, "Nothing waits on you.", "What you answered is under History.")];
   else body = d.teams.flatMap((tm) => team(v, t, tm));
@@ -143,7 +197,14 @@ export function qaView(v, t, close) {
     .track_focus(v.keys)
     .on_key_down((e, cx) => {
       if (e.keystroke !== "escape") return;
-      if (v.nnOpen) {
+      if (v.tab === "history" && v.histFocus && v.histInput.value() !== "") { // Esc in the search box clears it first
+        v.histTok++;
+        v.histInput.set_value("");
+        histAsk(v, { ...v.hist.filter, search: "" }, cx);
+      } else if (v.histMenu) {
+        v.histMenu = null;
+        cx.notify();
+      } else if (v.nnOpen) {
         v.nnOpen = null;
         cx.notify();
       } else if (v.tab === "history" && v.thread) { // a thread steps back to History first, as its ← History does
@@ -162,10 +223,11 @@ export function qaView(v, t, close) {
       .accessibility_label("Updates available. Show them")
       .on_mouse_down("left", stop)
       .on_click((_e, cx) => {
-        qaTake(v, true);
+        qaTake(v, true, cx);
         cx.notify();
       })
       .child("Updates available")))
+    .when(v.tab === "history" && !v.thread, (el) => el.child(histControls(v, t)))
     .child(v_flex().id("qa-body").flex_1().min_h(0).px(16).pb(12).when(v.tab === "history", (el) => el.pt(8)).overflow_y_scrollbar().children(body));
 }
 
@@ -480,6 +542,93 @@ function threadPanel(v, t) {
         })));
       }
     }
+  }
+  return out;
+}
+
+// History's control row (spec D2): the search box, then Team, Time and State menus (board.js's owner menu), and Clear while any is
+// set. Tab order is the row's order, then the list.
+function histControls(v, t) {
+  const f = v.hist.filter;
+  const on = filterActive(f);
+  const pick = (k, x) => (_e, cx) => histAsk(v, { ...v.hist.filter, [k]: x }, cx);
+  const teams = [...new Set(historyTeams(v.st.slices).map((tm) => tm.name))];
+  const menu = (key, label, opts, now, k) => {
+    const shown = opts.find(([x]) => x === now)?.[1] ?? String(now);
+    const dflt = now === opts[0][0];
+    return Popover.new(`qa-hf-${key}`).open(v.histMenu === key)
+      .on_open_change((open, cx) => {
+        v.histMenu = open ? key : null;
+        cx.notify();
+      })
+      .trigger(Button.new(`qa-hf-${key}-btn`)
+        .h(24).px(8).gap(4).flex().flex_none().items_center().rounded(6).cursor_pointer().text_size(11.5)
+        .border(1).border_color(t.border).bg(dflt ? t.surface : t.selected).text_color(dflt ? t.muted : t.foreground)
+        .hover((s) => s.border_color(t.muted).text_color(t.foreground))
+        .focus((s) => s.border_color(t.accent))
+        .accessibility_label(`${label}: ${shown}. Choose ${label.toLowerCase()}`)
+        .on_mouse_down("left", stop)
+        .child(div().max_w(140).truncate().child(`${key === "state" ? "State: " : ""}${shown} ▾`)))
+      .content(v_flex().id(`qa-hf-${key}-list`).p(4).gap(2).max_h(320).overflow_y_scrollbar().rounded(8).border(1).border_color(t.border).bg(t.surface).shadow_md()
+        .children(opts.map(([x, text], i) => Button.new(`qa-hf-${key}-${i}`).selected(x === now)
+          .h(28).px(8).gap(6).flex().items_center().rounded(6).cursor_pointer().text_size(12).text_color(t.foreground)
+          .border(1).border_color(t.surface)
+          .hover((s) => s.bg(t.hover))
+          .focus((s) => s.border_color(t.accent))
+          .accessibility_label(`${text}${x === now ? ", selected" : ""}`)
+          .on_mouse_down("left", stop)
+          .on_click(pick(k, x))
+          .child(div().w(10).flex_none().text_size(10).text_color(t.accent).child(x === now ? "✓" : ""))
+          .child(text))));
+  };
+  return h_flex().id("qa-hf").h(40).px(16).gap(6).flex_none().items_center().border_b(1).border_color(t.border)
+    .child(h_flex().h(24).px(8).flex_1().min_w(120).items_center().rounded(6).border(1).border_color(v.histFocus ? t.accent : t.border).bg(t.surface)
+      .accessibility_label("Search questions and replies")
+      .on_mouse_down("left", stop)
+      .child(Input.new(v.histInput).flex_1().h_full().text_size(12).text_color(t.foreground)))
+    .child(menu("team", "Team", [[null, "All teams"], ...teams.map((n) => [n, n])], f.team, "team"))
+    .child(menu("time", "Time", TIMES, f.time, "time"))
+    .child(menu("state", "State", STATES, f.state, "state"))
+    .when(on, (el) => el.child(Button.new("qa-hf-clear")
+      .h(24).px(8).flex().flex_none().items_center().rounded(6).cursor_pointer().text_size(11.5).text_color(t.muted)
+      .border(1).border_color(t.surface)
+      .hover((s) => s.text_color(t.foreground))
+      .focus((s) => s.border_color(t.accent))
+      .accessibility_label("Clear the search and filters")
+      .on_mouse_down("left", stop)
+      .on_click((_e, cx) => {
+        v.histTok++;
+        v.histInput.set_value("");
+        histAsk(v, FILTER0, cx);
+      })
+      .child("Clear")));
+}
+
+// A filtered History (spec A2, A3): the scope line, a failed read's note over the rows it kept, the rows, and Load more.
+function histBody(v, t) {
+  const h = v.hist;
+  const out = [div().pb(4).text_size(11).text_color(t.muted).child(SCOPE)];
+  if (h.error) out.push(note(t, h.error));
+  if (h.rows.length === 0) {
+    if (h.loading) out.push(note(t, "Searching…"));
+    else if (!h.error) out.push(empty(t, NO_MATCH));
+    return out;
+  }
+  out.push(...h.rows.map((r, i) => historyRow(v, t, r, i)));
+  if (hasMore(h) || (h.loading && h.more)) {
+    out.push(Button.new("qa-hf-more").mt(8).h(28).px(10).flex().flex_none().items_center().self_start().rounded(6).cursor_pointer()
+      .border(1).border_color(t.raised).bg(t.raised).text_size(12).text_color(t.foreground).disabled(h.loading)
+      .when(!h.loading, (el) => el.hover((s) => s.bg(t.hover)))
+      .focus((s) => s.border_color(t.accent))
+      .accessibility_label(h.loading ? "Loading more" : "Load more questions")
+      .on_mouse_down("left", stop)
+      .on_click((_e, cx) => {
+        if (v.hist.loading) return;
+        v.hist = historyMore(v.hist);
+        cx.notify();
+        histFetch(v, cx);
+      })
+      .child(h.loading ? "Loading…" : "Load more"));
   }
   return out;
 }

@@ -217,6 +217,12 @@ internal static partial class SoftRules
             return null;
         }
 
+        // ah2-76: the session the user made admin is never bounced.
+        if (c.Services.Advisory?.Mailbox.PrincipalOf(System.Environment.ProcessId).Kind == Ah.Abstractions.PrincipalKind.User)
+        {
+            return null;
+        }
+
         var session = c.SessionKey();
         if (SoftGate.SinceReset(c, SoftGate.Rows(c, c.Services.Config.HierarchyDir(c.Cwd())))
             .Any(r => r.Text("outcome") == "skill-loaded" && r.Text("session_id") == session))

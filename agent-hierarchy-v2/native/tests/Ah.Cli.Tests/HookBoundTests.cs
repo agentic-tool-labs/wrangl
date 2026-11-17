@@ -59,4 +59,55 @@ public sealed class HookBoundTests
         Assert.False(worker.Join(Short * 3), "the gate returned at the hook bound");
         Assert.True(worker.Join(TimeSpan.FromSeconds(10)));
     }
+
+    /// <summary>A stream that hands over a few bytes and then never ends, like a parent that keeps the pipe open.</summary>
+    private sealed class NeverCloses(byte[] first) : Stream
+    {
+        private bool _sent;
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (!_sent)
+            {
+                _sent = true;
+                first.CopyTo(buffer, offset);
+                return first.Length;
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(30));
+            return 0;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
+    public void StandardInputThatNeverClosesIsReadForItsBoundAndYieldsWhatArrived()
+    {
+        var clock = Stopwatch.StartNew();
+        var read = HookVerb.ReadBounded(new NeverCloses("{\"a\":1}"u8.ToArray()), Short, out var timedOut);
+
+        Assert.True(timedOut);
+        Assert.Equal("{\"a\":1}", System.Text.Encoding.UTF8.GetString(read.Span));
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
+    }
+
+    [Fact]
+    public void StandardInputThatClosesIsReadInFull()
+    {
+        var payload = new byte[300_000];
+        Random.Shared.NextBytes(payload);
+
+        var read = HookVerb.ReadBounded(new MemoryStream(payload), TimeSpan.FromSeconds(5), out var timedOut);
+
+        Assert.False(timedOut);
+        Assert.Equal(payload, read.ToArray());
+    }
 }

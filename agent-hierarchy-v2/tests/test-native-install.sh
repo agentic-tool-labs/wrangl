@@ -1102,4 +1102,11 @@ check "UX-12 FRONTEND_DESIGN_COMMIT is a 40-hex commit and every FRONTEND_DESIGN
   for e in $f; do printf "%s" "${e#*:}" | grep -qE "^[0-9a-f]{64}\$" || exit 1; [ -n "${e%%:*}" ] || exit 1; done
   printf "%s" "$f" | grep -q "SKILL.md:" ' _ "$PLUGIN/scripts/install.sh"
 
+# --- herdr desktop: the mod is offered, never installed without a yes ---------------------------------------
+: > "$FAKE_LOG"
+herdr_out=$(HC_TERMINAL_ID=t1 in_repo --apply --prefix "$T/bin" </dev/null 2>&1)
+check "H-1 in herdr desktop without a terminal the mod is named and never installed" bash -c 'printf "%s" "$1" | grep -q "ah herdr install" && ! grep -q "ah herdr install" "$2"' _ "$herdr_out" "$FAKE_LOG"
+herdr_out=$(HC_TERMINAL_ID= in_repo --apply --prefix "$T/bin" </dev/null 2>&1)
+check "H-2 outside herdr desktop the installer does not mention it" bash -c '! printf "%s" "$1" | grep -q "herdr desktop"' _ "$herdr_out"
+
 [ "$FAIL" -eq 0 ]

@@ -114,7 +114,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" userpromptsubmit-peer-tracking"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" userpromptsubmit-peer-tracking",
+            "timeout": 10
           },
           {
             "type": "command",
@@ -291,7 +292,8 @@
           },
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-orchestrator-liveness"
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" stop-orchestrator-liveness",
+            "timeout": 10
           },
           {
             "type": "command",

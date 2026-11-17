@@ -169,6 +169,13 @@ internal static class DismissVerb
             return Close(c, dir, name, read, team, target, warnings, sources);
         }
 
+        if (c.Services.OwnerProof?.IsUser() == true)
+        {
+            // ah2-76: the user, and the session the user made admin, are never refused: say why it is not clean, then close.
+            c.Stderr.WriteLine($"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}); closing it because the caller is the user or the admin Orchestrator");
+            return Close(c, dir, name, read, team, target, warnings, sources);
+        }
+
         var message = $"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}) — nothing was closed. Close it anyway: {TeardownSupport.CloseCommand(c, "dismiss", name, memberPlan.Token)}";
         throw c.Refuse(
             new JsonObject
