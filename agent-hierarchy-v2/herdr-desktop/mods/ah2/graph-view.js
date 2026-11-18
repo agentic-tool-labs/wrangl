@@ -79,7 +79,10 @@ export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
 }
 
 // The scrubber's state on the view: window, cursor (ms, null at now), zoom, and the slider, which must be made outside render.
-export function graphInit(v) {
+export function graphInit(v, cx) {
+  // focus handles are never made in render (herdr refuses it): the sheet's here, a node's in its click (opens)
+  v.graphSheetKey = cx?.focus_handle() ?? null;
+  v.graphNodeKeys = new Map();
   v.graphTeam = v.team; // the shown team: the tab row changes it
   v.graphWindow = "run";
   v.graphCursor = null;
@@ -163,6 +166,7 @@ const opens = (el, t, v, id, rest, gr) => el.cursor_pointer().hover((s) => s.bor
   .on_mouse_down("left", gr.down).on_mouse_up("left", gr.end)
   .on_click((_e, cx) => {
     const was = v.graphSheet;
+    if (!v.graphNodeKeys.has(id)) v.graphNodeKeys.set(id, cx.focus_handle()); // made in the handler, so the close can focus back
     if (!sheetClick(v, id)) return;
     if (v.graphSheet) v.graphSheetKey?.focus();
     else v.graphNodeKeys?.get(was)?.focus();
@@ -217,13 +221,6 @@ export function graphView(v, t, close, cx) {
   const loading = loadingOf(v, m.loaded);
   const zoom = (z) => drillTo(v, z);
   const flow = v.graphMode === "flow";
-  // focus handles, made once each (D7): the sheet's first control, and every drawn member's node, so focus can go back to it
-  if (cx) {
-    v.graphSheetKey ??= cx.focus_handle();
-    v.graphNodeKeys ??= new Map();
-    const ids = flow ? (m.cards ?? []).map((c) => c.id) : (m.groups ?? []).flatMap((g) => g.map?.leaves ?? []).map((n) => n.id);
-    for (const id of ids) if (!v.graphNodeKeys.has(id)) v.graphNodeKeys.set(id, cx.focus_handle());
-  }
   const sheetOn = Boolean(v.graphSheet) && !loading && v.status !== "down" && !error;
   const sheetEl = sheetOn ? agentSheet(v, t, m, docked) : null;
   let body;
