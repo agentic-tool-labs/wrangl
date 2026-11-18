@@ -598,6 +598,71 @@ public sealed class TestModeDirGateTests : IDisposable
         Assert.Empty(PreMigrateBackups());
     }
 
+    /// <summary>Counts the schema wait's daemon calls; a call migrates the database as the replaced daemon would, so the wait ends at once.</summary>
+    private sealed class MigratingDaemon(string ahHome) : IDaemonClient
+    {
+        public int Ensures { get; private set; }
+
+        public int Drains { get; private set; }
+
+        public Task<DaemonInfo?> DiscoverAsync(TimeSpan timeout, CancellationToken cancellationToken = default) => Task.FromResult<DaemonInfo?>(null);
+
+        public Task<DaemonInfo?> EnsureDaemonAsync(TimeSpan budget, CancellationToken cancellationToken = default)
+        {
+            Ensures++;
+            using (StateDbModule.Open(ahHome, mayCreate: true))
+            {
+            }
+
+            return Task.FromResult<DaemonInfo?>(null);
+        }
+
+        public Task<DaemonReply> RequestAsync(DaemonRequest request, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new DaemonReply(0, ReadOnlyMemory<byte>.Empty, "down"));
+
+        public Task DrainAsync(DaemonInfo daemon, string reason, CancellationToken cancellationToken = default)
+        {
+            Drains++;
+            return Task.CompletedTask;
+        }
+
+        public void RecordFallback(string verb, string reason)
+        {
+        }
+    }
+
+    private (int Exit, string Stderr) InProcessAh(MigratingDaemon daemon, params string[] args)
+    {
+        var env = Env(testMode: true);
+        var graph = new Lazy<ServiceGraph>(() => ServiceGraph.Build(PlatformModule.CreateIo(null), env, new FakeRunner(), daemon));
+        var context = new CliContext(env, new RecordingExec(), new FakeRunner(), "ah", _sandbox.Executable("install/ah"), _sandbox.Home, 501, null, graph);
+        var stderr = new StringWriter();
+        var exit = CliApp.Run(args, context, new StringWriter(), stderr);
+        return (exit, stderr.ToString());
+    }
+
+    [Fact]
+    public void ViewEventsWithADatabaseBehindSkipsTheSchemaWaitAndAnotherViewVerbStillWaits()
+    {
+        _ = DatabaseOneSchemaBehind();
+        var poll = new MigratingDaemon(_sandbox.AhHome);
+
+        var events = InProcessAh(poll, "view", "events", "--sub", "s1");
+
+        Assert.Equal(1, events.Exit);
+        Assert.Contains("ahd is not running", events.Stderr, StringComparison.Ordinal);
+        Assert.DoesNotContain("replacing the daemon", events.Stderr, StringComparison.Ordinal);
+        Assert.Equal(0, poll.Ensures);
+        Assert.Equal(0, poll.Drains);
+        Assert.NotNull(StateDbModule.SchemaBehind(_sandbox.AhHome));
+
+        var other = new MigratingDaemon(_sandbox.AhHome);
+        var status = InProcessAh(other, "view", "status", "--dir", _sandbox.Home);
+
+        Assert.Contains("replacing the daemon", status.Stderr, StringComparison.Ordinal);
+        Assert.Equal(1, other.Ensures);
+    }
+
     // ---------------------------------------------------------------- the scope check at start
 
     private const string Refused = "refusing to start. Rewrite or strip them in the copy.";

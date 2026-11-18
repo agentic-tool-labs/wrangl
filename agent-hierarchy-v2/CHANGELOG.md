@@ -4,6 +4,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.8] - 2026-11-17
+
+### Fixed
+
+- **`ah` talks to the herdr your session is on.** On herdr desktop, a team re-formed by a spawn carried no herdr
+  marker and was read as the terminal herdr, so spawns warned `no herdr server is running`, `ah roster resync` said
+  the team had no panes and `ah roster teams` matched none of its members. The session's herdr environment now decides
+  when the team record does not say, a spawn completes the record, `resync` and `move` accept an older record, and
+  members working in a stream's work tree are matched.
+- **Dismissing the last member keeps the team.** The Orchestrator used to lose its team, and with it its mail address
+  (`unknown_address`, `not_your_session`), until the next spawn. The team now stays with no members; `ah roster
+  disband` and `ah roster untrack --all` remove it as before.
+- **The herdr mod's read never touches the daemon.** `ah view events` no longer runs the schema-upgrade wait, which
+  could start or drain `ahd` from a poll.
+- **`ah roster teams` no longer lists the Orchestrator's own session as untracked** after a restart of that session.
+
 ## [2.0.7] - 2026-11-17
 
 ### Changed

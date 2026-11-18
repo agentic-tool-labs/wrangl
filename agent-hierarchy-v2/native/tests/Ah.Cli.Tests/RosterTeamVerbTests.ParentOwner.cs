@@ -160,15 +160,17 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
-    public void NegativeADismissOfTheLastMemberOfATeamThatIsNotALaneChildStillRemovesItsFile()
+    public void NegativeADismissOfTheLastMemberOfATeamThatIsNotALaneChildKeepsItsFileEmpty()
     {
         WriteTeam("proj", LiveTeamJson("tmux", "{\"role\":\"reviewer\",\"name\":\"proj-reviewer\",\"route\":\"peer\",\"transport_id\":\"%2\",\"model\":\"sonnet\"}"));
-        var token = TokenOf(Roster("dismiss", "proj-reviewer", "--plan", "--ignore-release", "--team", "proj").Stdout);
+        var plan = Roster("dismiss", "proj-reviewer", "--plan", "--ignore-release", "--team", "proj").Stdout;
+        Assert.Null(JsonText.Parse(plan).Member("team_will_be_removed"));
+        var token = TokenOf(plan);
 
         var (code, stdout, stderr) = Roster("dismiss", "proj-reviewer", "--close", "--confirm", "--ignore-release", "--plan-token", token, "--team", "proj");
 
         Assert.True(code == 0, stdout + stderr);
-        Assert.False(_sandbox.TeamExists(TeamPath("proj")));
+        Assert.Empty(JsonText.Parse(_sandbox.TeamText(TeamPath("proj"))).Member("members")!.Value.AsArray());
     }
 
     [Fact]

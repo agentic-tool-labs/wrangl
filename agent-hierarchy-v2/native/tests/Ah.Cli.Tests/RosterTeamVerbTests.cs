@@ -1627,7 +1627,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     }
 
     [Fact]
-    public void UntrackForgetsTheRowOfAMemberThatIsNotLiveAndRemovesTheEmptiedTeam()
+    public void UntrackForgetsTheRowOfAMemberThatIsNotLiveAndKeepsTheEmptiedTeamUntilUntrackAll()
     {
         WriteTeam("proj", LiveTeamJson("terminal", TwoPeers));
 
@@ -1643,8 +1643,17 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         var (lastCode, lastOut, lastErr) = Roster("untrack", "proj-reviewer", "--commit", "--team", "proj");
         Assert.Equal(0, lastCode);
-        Assert.True(JsonText.Parse(lastOut).Member("team_removed")!.Value.AsBool());
-        Assert.Contains("has no members left, so it was removed", lastErr, StringComparison.Ordinal);
+        Assert.Null(JsonText.Parse(lastOut).Member("team_removed"));
+        Assert.Contains("has no members left; it is kept, with no members", lastErr, StringComparison.Ordinal);
+        var kept = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
+        Assert.Empty(kept.Member("members")!.Value.AsArray());
+        Assert.Equal("t-1", kept.Member("team_id")!.Value.AsString());
+        Assert.Equal("terminal", kept.Member("transport")!.Value.AsString());
+        Assert.True(kept.Member("orchestrator")!.Value.IsMap);
+
+        // negative (D3): whole-team removal still removes the kept record
+        var (allCode, _, allErr) = Roster("untrack", "--all", "--commit", "--team", "proj");
+        Assert.True(allCode == 0, allErr);
         Assert.False(_sandbox.TeamExists(TeamPath("proj")));
     }
 

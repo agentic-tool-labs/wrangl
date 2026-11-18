@@ -241,9 +241,8 @@ A verified close of a member also releases its work-tree record and removes its 
 (only under the team's `tmp/`; a failure is a warning); `disband --close`
 does the same for every member it closes.
 
-Dismissing the last member ends the Team: the plan reports
-`team_will_be_removed: true` (say so when you ask the user), and the close
-removes the team file and reports `team_removed: true`.
+Dismissing the last member keeps the Team with no members: the Orchestrator
+keeps its team and its address. `disband` or `untrack --all` removes it.
 
 ## `untrack`
 
@@ -265,8 +264,8 @@ the user's words are genuinely ambiguous, ask; do not pick.
    refusal names both remedies (`dismiss` to close it, or `--keep-sessions` to
    leave it running untracked) and says the record cannot be recovered.
 
-Untracking the last member ends the Team: the team file is removed and the
-output reports `team_removed: true`. The session itself is left running.
+Untracking the last member keeps the Team with no members (`team_empty: true`);
+`disband` or `untrack --all` removes it. The session itself is left running.
 
 `--all` forgets the whole team file instead of one member. Untracking
 something already gone succeeds with `already_untracked: true`, so a retry is

@@ -1264,7 +1264,7 @@ Plans and close results carry the same `sources` block as `disband`, and a plan 
 
 With no team file (for instance right after `disband --close` removed it): exit 0 with `dismissed: false, reason: "no active team and no live peers"` when the peer registry offers no closable session; exit 2, listing the live untracked sessions and the name / pane_id / session_id values `dismiss` accepts, when it does.
 
-A plan for the team's last member adds `team_will_be_removed: true`; closing it removes the team file and adds `team_removed: true`. It resolves the member through the same sources as `disband` and returns the same verified-close keys (`closed` means verified gone; `still_live`, `strays`, `warnings`); see [Team home and teardown](#team-home-and-teardown).
+Closing the team's last member keeps the team with no members when the record names an Orchestrator, so the Orchestrator keeps its team and address; `disband` or `untrack --all` removes it. Only a record that names no Orchestrator is removed: its plan adds `team_will_be_removed: true` and the close adds `team_removed: true`. It resolves the member through the same sources as `disband` and returns the same verified-close keys (`closed` means verified gone; `still_live`, `strays`, `warnings`); see [Team home and teardown](#team-home-and-teardown).
 
 A **plan** for a member with no pane (a `terminal`-transport team member, a null `transport_id`, or a live peer record with no `pane_id`) exits 0 with `expected: 0`, no `next`, `not_closable: [{name, reason: "no pane"}]` and a W8 warning; a member with a pane gets `not_closable: []` and no W8. `dismiss --close` on such a member is unchanged: exit 2, "no addressable pane", no JSON.
 
@@ -1284,7 +1284,7 @@ Only a done stream whose member it just closed counts.
 
 #### Untrack (close nothing)
 
-`<ah> roster untrack <name>|--all [--plan|--commit] [--keep-sessions] [--also-config] [--level <L>] [--team <t>]`. Idempotent: with no team file it exits 0 with `untracked: false, already_untracked: true, reason: "no team file to forget"`. Untracking the last member removes the team file and adds `team_removed: true` beside `team_empty`.
+`<ah> roster untrack <name>|--all [--plan|--commit] [--keep-sessions] [--also-config] [--level <L>] [--team <t>]`. Idempotent: with no team file it exits 0 with `untracked: false, already_untracked: true, reason: "no team file to forget"`. Untracking the last member keeps the team with no members (`team_empty: true`) when the record names an Orchestrator; `disband` or `untrack --all` removes it. A record that names no Orchestrator is removed, with `team_removed: true`.
 
 #### Re-register this session
 

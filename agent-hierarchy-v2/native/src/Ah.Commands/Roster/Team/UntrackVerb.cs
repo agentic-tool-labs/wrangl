@@ -265,7 +265,7 @@ internal static class UntrackVerb
             fresh => fresh.Get("members") is { IsArray: true } list
                 ? list.AsArray().Where(m => MemberPlanning.Text(m.Member("name")) != name).ToList()
                 : [],
-            keepFile: c.LaneActor);
+            keepFile: c.LaneActor || TeardownSupport.NamesOrchestrator(team));
         var remaining = update.Rows is { } rows
             ? rows.ToList()
             : Members(team).Where(m => MemberPlanning.Text(m.Member("name")) != name).ToList();
@@ -293,6 +293,10 @@ internal static class UntrackVerb
         if (update.Cleared)
         {
             c.Stderr.Write($"ah roster: ah: team {MemberPlanning.JsConvertText(teamId)} has no members left, so it was removed.\n");
+        }
+        else if (teamEmpty && update.Rows is not null && !c.LaneActor)
+        {
+            c.Stderr.Write($"ah roster: ah: team {MemberPlanning.JsConvertText(teamId)} has no members left; it is kept, with no members.\n");
         }
 
         var result = new JsonObject

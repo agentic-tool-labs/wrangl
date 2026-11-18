@@ -70,22 +70,22 @@ public interface IRosterLaunch
     IHerdr HerdrFor(string? flavour) => Herdr;
 
     /// <summary>
-    /// The herdr adapters of every server <paramref name="team"/>'s members live on, once each: <see cref="Herdr"/> first when the team lives on it or records no flavour (what team-wide
-    /// calls always used), then the team's own (<see cref="Ah.Core.Mux.HerdrFlavour.OfTeam"/>, where its untagged members resolve), then one
-    /// per member-row tag (<see cref="Ah.Core.Mux.HerdrFlavour.OfMember"/>), each only when it names another flavour.
+    /// The herdr adapters of every server <paramref name="team"/>'s members live on, once each: <see cref="Herdr"/> first when one of them
+    /// is its flavour, then the team's own (<see cref="Ah.Core.Mux.HerdrFlavour.RecordedOfTeam"/>, where its untagged members resolve), then one
+    /// per member-row tag (<see cref="Ah.Core.Mux.HerdrFlavour.OfMember"/>). A team that names no flavour hosts its untagged members (or, with
+    /// none, itself) on <paramref name="sessionFlavour"/> (<see cref="Ah.Core.Mux.HerdrFlavour.SessionFlavour"/>); null there adds no server.
     /// </summary>
-    static IReadOnlyList<IHerdr> TeamHerdrs(IRosterLaunch launch, JsonValue team)
+    static IReadOnlyList<IHerdr> TeamHerdrs(IRosterLaunch launch, JsonValue team, string? sessionFlavour)
     {
         var rows = team.Member("members") is { IsArray: true } members ? members.AsArray() : [];
-        var ofTeam = team.IsMap ? Ah.Core.Mux.HerdrFlavour.OfTeam(team) : null;
+        var ofTeam = team.IsMap ? Ah.Core.Mux.HerdrFlavour.RecordedOfTeam(team) : null;
         var ofMembers = rows.Select(static r => Ah.Core.Mux.HerdrFlavour.OfMember(r)).ToList();
-        var flavours = ofMembers.Prepend(ofTeam).Where(static f => f is not null).Distinct(StringComparer.Ordinal).ToList();
 
-        // b483: the env's herdr is asked only when a member can live on it: it is one of the recorded flavours, or the team records
-        // none of its own and has an untagged member (or no member), which resolves on the env's. A desktop team is then not asked
-        // about on the TUI herdr, whose failed tab list used to stop the whole teardown check.
-        var envHosts = flavours.Contains(launch.Herdr.Flavour, StringComparer.Ordinal) || (ofTeam is null && (ofMembers.Count == 0 || ofMembers.Contains(null)));
-        List<IHerdr> all = envHosts ? [launch.Herdr] : [];
+        // ah2-143: an untagged team says nothing about its server, so its untagged members live on the session's own herdr, and a call goes
+        // to no herdr that neither the session nor a stamp names (b483: a desktop team is not asked about on the TUI herdr).
+        var untaggedHost = ofTeam ?? (ofMembers.Count == 0 || ofMembers.Contains(null) ? sessionFlavour : null);
+        var flavours = ofMembers.Prepend(untaggedHost).Where(static f => f is not null).Distinct(StringComparer.Ordinal).ToList();
+        List<IHerdr> all = flavours.Contains(launch.Herdr.Flavour, StringComparer.Ordinal) ? [launch.Herdr] : [];
         var seen = new HashSet<string?>(StringComparer.Ordinal) { launch.Herdr.Flavour };
         foreach (var flavour in flavours)
         {

@@ -423,5 +423,16 @@ internal static class Resync
 
     /// <summary>The no-op reason for a non-herdr transport, shared by <c>resync</c> and <c>move</c>.</summary>
     internal static string TransportNoop(string? transport) =>
-        transport == "tmux" ? "transport tmux not supported (resync reads herdr panes only)" : "transport terminal has no panes";
+        transport == "tmux" ? "transport tmux not supported (resync reads herdr panes only)"
+        : transport is null ? "the team record names no transport"
+        : "transport terminal has no panes";
+
+    /// <summary>
+    /// The transport <c>resync</c> and <c>move</c> act on: the team record's, else (ah2-143: a record written before a spawn completed it)
+    /// <c>"herdr"</c> when a member row was stamped for herdr (<see cref="Ah.Core.Mux.HerdrFlavour.OnHerdr"/>), else null.
+    /// </summary>
+    internal static string? EffectiveTransport(JsonValue team) =>
+        MemberPlanning.Text(team.Member("transport")) is { } recorded ? recorded
+        : team.Member("members") is { IsArray: true } rows && rows.AsArray().Any(static m => Ah.Core.Mux.HerdrFlavour.OnHerdr(m, null)) ? "herdr"
+        : null;
 }

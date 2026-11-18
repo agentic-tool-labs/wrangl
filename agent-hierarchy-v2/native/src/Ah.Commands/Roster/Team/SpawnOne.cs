@@ -47,7 +47,7 @@ internal static class TeamRecords
     internal static JsonObject NewTeamRecord(RosterContext c, JsonValue resolved, string transport, double pid, string mode)
     {
         var messages = c.Services.Hierarchy.Messages;
-        return new JsonObject
+        var record = new JsonObject
         {
             ["version"] = 1,
             ["team_id"] = c.Services.Hierarchy.Core.NewId(),
@@ -60,6 +60,36 @@ internal static class TeamRecords
             ["roster"] = resolved.IsMap && resolved.Member("teamKey") is { IsTruthy: true } key ? key : JsonValue.Null,
             ["layout"] = mode,
         };
+
+        // ah2-143: the flavour it launches on, so later team-wide calls need not guess the server
+        if (transport == "herdr" && c.Services.Launch?.Herdr.Flavour is { } flavour)
+        {
+            record[Ah.Core.Mux.HerdrFlavour.Field] = flavour;
+        }
+
+        return record;
+    }
+
+    /// <summary>
+    /// ah2-143: completes <paramref name="team"/> after a herdr launch (<paramref name="launched"/> carries its flavour): <c>transport</c> and
+    /// <c>herdr_flavour</c> are set where absent or null, and a value already present is kept.
+    /// </summary>
+    internal static void CompleteAfterHerdrLaunch(JsonObject team, JsonObject launched)
+    {
+        if (launched.Get(Ah.Core.Mux.HerdrFlavour.Field) is not { IsText: true } flavour)
+        {
+            return;
+        }
+
+        if (team.Get("transport") is null or { IsNull: true })
+        {
+            team["transport"] = "herdr";
+        }
+
+        if (team.Get(Ah.Core.Mux.HerdrFlavour.Field) is null or { IsNull: true })
+        {
+            team[Ah.Core.Mux.HerdrFlavour.Field] = flavour;
+        }
     }
 }
 
@@ -1239,6 +1269,7 @@ internal static class SpawnOne
 
                 var next = doc.AsObject().Clone();
                 next["members"] = list;
+                TeamRecords.CompleteAfterHerdrLaunch(next, launched);
                 outTeam = next;
                 newRecord = merged;
                 return TeamFileOutcome.Write(next);
@@ -2112,6 +2143,7 @@ internal static class SpawnOne
 
                     var next = doc.AsObject().Clone();
                     next["members"] = list;
+                    TeamRecords.CompleteAfterHerdrLaunch(next, launched);
                     outTeam = next;
                     row = merged;
                     return TeamFileOutcome.Write(next);

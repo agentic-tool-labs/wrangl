@@ -236,6 +236,20 @@ public sealed class RosterVerbTests : IDisposable
         Assert.True(o["reason"].IsNull);
     }
 
+    /// <summary>ah2-97 D2: the Orchestrator of a team its last dismiss left empty still gets that team from whoami.</summary>
+    [Fact]
+    public void WhoamiNamesTheTeamOfAnOrchestratorWhoseTeamHasNoMembersLeft()
+    {
+        WriteTeam("tm", "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":" + Self + ",\"session_id\":\"orch\"},\"members\":[]}");
+
+        var (code, stdout, stderr) = Roster(["whoami"], new() { ["WRANGL_TEAM_FILE"] = Path.Combine(Hierarchy, "teams", "tm.json") });
+
+        Assert.True(code == 0, stderr);
+        var o = Parse(stdout).AsObject();
+        Assert.Equal("tm", o["team"].AsString());
+        Assert.True(o["member"].IsNull);
+    }
+
     [Fact]
     public void WhoamiRefusesAFlagItDoesNotTakeAndAcceptsTheOnesItDoes()
     {

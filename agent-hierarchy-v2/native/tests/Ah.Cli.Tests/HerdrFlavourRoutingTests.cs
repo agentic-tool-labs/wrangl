@@ -135,10 +135,36 @@ public sealed class HerdrFlavourRoutingTests : IDisposable
         var (graph, _) = Graph(("HERDR_ENV", "1"));
         Ah.Commands.IRosterLaunch launch = graph.Launch;
 
-        Assert.Equal(["tui"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"},{"name":"b","herdr_flavour":"tui"}]}""")).Select(h => h.Flavour));
-        Assert.Equal(["tui", "core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"},{"name":"b","herdr_flavour":"core"},{"name":"c","herdr_flavour":"core"}]}""")).Select(h => h.Flavour));
+        Assert.Equal(["tui"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"},{"name":"b","herdr_flavour":"tui"}]}"""), "tui").Select(h => h.Flavour));
+        Assert.Equal(["tui", "core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"},{"name":"b","herdr_flavour":"core"},{"name":"c","herdr_flavour":"core"}]}"""), "tui").Select(h => h.Flavour));
         // b483: a team that records its own flavour hosts its untagged member there, so the env's server is not asked
-        Assert.Equal(["core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"herdr_flavour":"core","members":[{"name":"a"}]}""")).Select(h => h.Flavour));
+        Assert.Equal(["core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"herdr_flavour":"core","members":[{"name":"a"}]}"""), "tui").Select(h => h.Flavour));
+    }
+
+    [Fact]
+    public void AnUntaggedTeamLivesOnTheSessionsHerdrAndATaggedOneOnItsOwn()
+    {
+        var (graph, _) = Graph(("HC_TERMINAL_ID", "t1"));
+        Ah.Commands.IRosterLaunch launch = graph.Launch;
+        var untagged = JsonText.Parse("""{"transport":null,"members":[{"name":"a"}]}""");
+
+        // ah2-143: a desktop session with an untagged team asks the desktop only, never the terminal herdr
+        Assert.Equal(["core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, untagged, "core").Select(h => h.Flavour));
+        Assert.Equal(["tui"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"herdr_flavour":"tui","members":[{"name":"a"}]}"""), "core").Select(h => h.Flavour));
+        // a stamped member still adds its server
+        Assert.Equal(["core", "tui"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"},{"name":"b","herdr_flavour":"tui"}]}"""), "core").Select(h => h.Flavour));
+    }
+
+    [Fact]
+    public void ASessionOnNoHerdrWithAnUntaggedTeamAsksNoServer()
+    {
+        var (graph, _) = Graph();
+        Ah.Commands.IRosterLaunch launch = graph.Launch;
+
+        Assert.Empty(Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a"}]}"""), null));
+        Assert.Empty(Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[]}"""), null));
+        // the nearest case that must still ask: a stamped member names its server
+        Assert.Equal(["core"], Ah.Commands.IRosterLaunch.TeamHerdrs(launch, JsonText.Parse("""{"members":[{"name":"a","herdr_flavour":"core"}]}"""), null).Select(h => h.Flavour));
     }
 
     [Fact]

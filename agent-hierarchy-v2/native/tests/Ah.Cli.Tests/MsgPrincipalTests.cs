@@ -139,6 +139,91 @@ public sealed class MsgPrincipalTests : IDisposable
         Assert.Contains("not_your_session", otherErr, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// ah2-50: the team's Orchestrator record and registration name session <c>o</c> at a process that has ended; <paramref name="session"/>
+    /// then starts at this process and SessionStart runs its rebind and registration. Only <c>o</c>, the owner, gets <c>orchestrator@tm</c>
+    /// back; and with a checkin's roster row it is not listed as an untracked live session.
+    /// </summary>
+    private (CallerPrincipal Principal, int Next, string NextErr, JsonObject Orchestrator) ResumeAs(string session)
+    {
+        const int Ended = 999999; // above the macOS pid limit, so never a live process
+        var hierarchy = Path.GetDirectoryName(Path.GetDirectoryName(_teamFile))!;
+        _sandbox.PlantTeam(
+            _teamFile,
+            "{\"team_id\":\"t-tm\",\"created\":\"2020-01-01T00:00:00.000Z\",\"orchestrator\":{\"pid\":" + Ended + ",\"pid_start\":\"2020-01-01T00:00:00.000Z\",\"session_id\":\"o\"},"
+            + "\"members\":[{\"role\":\"implementor\",\"name\":\"tm-implementor\",\"kind\":\"claude\",\"transport_id\":\"p1\"}]}\n");
+        Assert.True(_graph.Mailbox.WriteRegistration(new RegistrationWrite(
+            "o", [new BoxRef("orchestrator@tm", _graph.Mailbox.BoxDirFor(_teamFile, "orchestrator"))], _teamFile, "claude", Ended, PidStart: "2020-01-01T00:00:00.000Z", Bound: true)));
+
+        _ = _graph.Callers.RebindOwnedTeams(new RebindRequest(_sandbox.Root, session, System.Environment.ProcessId, RebindModes.Both));
+        _ = _graph.Callers.RegisterCaller(new CallerRequest(_sandbox.Root, session, System.Environment.ProcessId, null));
+        _graph.Hierarchy.StateCalls.AppendRosterRecord(hierarchy, new JsonObject
+        {
+            ["status"] = "up",
+            ["role"] = "orchestrator",
+            ["session_id"] = session,
+            ["pid"] = System.Environment.ProcessId,
+            ["pid_start"] = FakeRunner.SelfStart,
+            ["team"] = "tm",
+        });
+
+        var (next, nextErr) = Run("next", "--team", "tm");
+        var orchestrator = _graph.Roster.ReadTeamFileAt(_teamFile).AsObject().Get("orchestrator")!.Value.AsObject();
+        return (_graph.Mailbox.PrincipalOf(System.Environment.ProcessId), next, nextErr, orchestrator);
+    }
+
+    private JsonArray Untracked(string? team) =>
+        _graph.Launch.Teardown.UntrackedLive(
+            Path.GetDirectoryName(Path.GetDirectoryName(_teamFile))!,
+            team is null ? new Ah.Launch.TeamScope(null, NoTeam: true) : new Ah.Launch.TeamScope(team),
+            new HashSet<string>(StringComparer.Ordinal) { "tm-implementor" },
+            new Ah.Launch.LaunchContext(_sandbox.Root, null, "tm", new JsonObject()));
+
+    [Fact]
+    public void TheOwnerSessionResumedUnderANewPidIsOrchestratorOfItsTeamForMailAndNotUntracked()
+    {
+        var (principal, next, nextErr, orchestrator) = ResumeAs("o");
+
+        Assert.Equal(System.Environment.ProcessId, (int)orchestrator.Get("pid")!.Value.AsNumber());
+        Assert.Contains("orchestrator@tm", Assert.Single(principal.Sessions, s => s.SessionId == "o").Addresses);
+        Assert.True(next == 0, nextErr);
+        foreach (var team in new[] { "tm", null })
+        {
+            var rows = Untracked(team);
+            Assert.False(
+                rows.Any(row => row.Member("session_id") is { IsText: true } sid && sid.AsString() == "o"),
+                $"untracked in scope {team ?? "(no team)"}: {JsonText.Stringify(rows, 0)}");
+        }
+    }
+
+    [Fact]
+    public void NegativeAnOrphanedTeamsOwnerSessionStillLiveStaysUntrackedSoReapKeepsTheTeam()
+    {
+        _ = ResumeAs("o");
+        var self = System.Environment.ProcessId.ToString(CultureInfo.InvariantCulture);
+        _sandbox.PlantTeam( // the owner released the team: orphaned, though its session lives on
+            _teamFile,
+            "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":" + self + ",\"pid_start\":\"" + FakeRunner.SelfStart + "\",\"session_id\":\"o\","
+            + "\"released\":{\"pid\":" + self + ",\"pid_start\":\"" + FakeRunner.SelfStart + "\"}},"
+            + "\"members\":[{\"role\":\"implementor\",\"name\":\"tm-implementor\",\"kind\":\"claude\",\"transport_id\":\"p1\"}]}\n");
+
+        Assert.Equal(Ah.Roster.TeamLife.Orphaned, _graph.Roster.TeamLifeOf(_graph.Roster.ReadTeamFileAt(_teamFile)));
+        Assert.Contains(Untracked("tm"), row => row.Member("session_id") is { IsText: true } sid && sid.AsString() == "o");
+    }
+
+    [Fact]
+    public void NegativeADifferentSessionIdUnderTheNewPidDoesNotTakeTheTeamsOrchestratorAddress()
+    {
+        var (principal, next, nextErr, orchestrator) = ResumeAs("o-other");
+
+        Assert.Equal("o", orchestrator.Get("session_id")!.Value.AsString());
+        Assert.Equal(999999, (int)orchestrator.Get("pid")!.Value.AsNumber());
+        Assert.DoesNotContain(principal.Sessions, s => s.Addresses.Contains("orchestrator@tm"));
+        Assert.Contains(Untracked("tm"), row => row.Member("session_id") is { IsText: true } sid && sid.AsString() == "o-other");
+        Assert.NotEqual(0, next);
+        Assert.Contains("unknown_address", nextErr, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("note", true)]
     [InlineData("report", false)]
@@ -266,6 +351,22 @@ public sealed class MsgPrincipalTests : IDisposable
         Assert.Contains("no request 20261117-154321-zzzz", unknownErr, StringComparison.Ordinal);
         Assert.DoesNotContain("mailbox entry", unknownErr, StringComparison.Ordinal);
         Assert.True(byRequest == 0, byRequestErr);
+    }
+
+    /// <summary>ah2-97 D2: the team its last dismiss left empty still gives its owner <c>orchestrator@tm</c>: <c>new --from orchestrator</c> and <c>ack</c> work.</summary>
+    [Fact]
+    public void TheOwnerOfATeamWithNoMembersLeftKeepsItsAddressForNewAndAck()
+    {
+        _sandbox.PlantTeam(_teamFile, "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":" + Self + ",\"pid_start\":\"" + FakeRunner.SelfStart + "\",\"session_id\":\"o\"},\"members\":[]}\n");
+        AsOrchestrator();
+        _graph.Hierarchy.Peers.AppendDispatchRecord("o", "20260101-000000-t1ab", "implementor");
+
+        var (made, madeErr) = Run("new", "--to", "implementor", "--from", "orchestrator", "--slug", "kept", "--title", "Keep the team", "--team", "tm", "--json");
+        var (ack, ackErr) = Run("ack", "20260101-000000-t1ab");
+
+        Assert.True(made == 0, madeErr);
+        Assert.True(ack == 0, ackErr);
+        Assert.Contains("orchestrator@tm", _graph.Mailbox.PrincipalOf(System.Environment.ProcessId).Sessions[0].Addresses);
     }
 
     /// <summary>ah2-78 D3: a composed line names a file only when it exists; else the message's id, else the base name. Negative: an existing file keeps its path.</summary>

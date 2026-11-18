@@ -133,7 +133,11 @@ internal static partial class StreamSupport
         var whole = true;
         try
         {
-            foreach (var herdr in IRosterLaunch.TeamHerdrs(launch, c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile)))
+            var asked = IRosterLaunch.TeamHerdrs(launch, c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile), Ah.Core.Mux.HerdrFlavour.SessionFlavour(c.EnvText));
+
+            // no server asked is no list either: a tab nobody listed is not proven gone
+            whole = asked.Count > 0;
+            foreach (var herdr in asked)
             {
                 if (herdr.Invoke(["tab", "list"]).Member("result")?.Member("tabs") is not { IsArray: true } list)
                 {

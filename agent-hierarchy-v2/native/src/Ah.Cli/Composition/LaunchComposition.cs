@@ -405,7 +405,7 @@ internal static class LaunchComposition
                 }
             }
 
-            return new TeamRowsUpdate(picked.Count == 0, picked);
+            return new TeamRowsUpdate(picked.Count == 0 && !keepFile, picked);
         }
     }
 }
