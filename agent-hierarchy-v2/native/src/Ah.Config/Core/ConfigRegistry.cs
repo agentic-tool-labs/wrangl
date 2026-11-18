@@ -30,6 +30,7 @@ internal static partial class ConfigRegistry
     internal static readonly string[] TopTierModels = ["fable", "opus"];
     internal static readonly string[] HandoffModes = ["auto", "confirm"];
     internal static readonly string[] MsgsModes = ["required", "off"];
+    internal static readonly string[] QaModes = ["item", "batch"];
     internal static readonly string[] RouteValues = ["peers"];
     internal static readonly string[] StaleRouteValues = ["subagents", "prefer-peers"];
     internal static readonly string[] DispatchModes = ["peer", "model"];

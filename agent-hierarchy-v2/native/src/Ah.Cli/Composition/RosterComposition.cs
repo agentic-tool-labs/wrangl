@@ -39,6 +39,8 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
 
     public string? CloseShippedBacklog(string pool, string id, string sha) => Ah.Cli.Verbs.BacklogVerb.CloseShipped(graph, environment.AhHome, pool, id, sha);
 
+    public string? CloseDoneBacklog(string pool, string id, IReadOnlyList<string> commits, string note) => Ah.Cli.Verbs.BacklogVerb.CloseDone(graph, environment.AhHome, pool, id, commits, note, subItemsHold: true);
+
     public string? WorkAlias(string pool, string team, string id) =>
         Ah.Cli.Verbs.WorkVerb.Resolve(graph, environment.AhHome, pool, id, team).Row is { IsBacklog: false } row && row.Team == team ? row.Stream + "/" + row.Item : null;
 

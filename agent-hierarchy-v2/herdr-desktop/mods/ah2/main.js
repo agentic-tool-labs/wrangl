@@ -101,6 +101,7 @@ export default class Ah2 extends View {
     this.gone = true; // ends the rebuild watch (rebuild)
     if (this.view === "board") boardLeave(this); // the Board's visit ends: store what it saw (board.js)
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
+    this.graphTravel?.cancel(); // a brief's dot in travel (graph-model.js travelClock) leaves no task behind
     if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
   }
 
@@ -223,7 +224,7 @@ export default class Ah2 extends View {
     if (this.view === "qa") return qaView(this, t, closeOf());
     if (this.view === "board") return boardView(this, t, closeOf());
     if (this.view === "feed") return feedView(this, t, closeOf());
-    if (this.view === "graph") return graphView(this, t, closeOf());
+    if (this.view === "graph") return graphView(this, t, closeOf(), cx);
     if (this.view === "settings") return settingsView(this, t, () => closeOverlay(props().overlay));
     if (this.view === "dismiss") return dismissView(this, t);
     return this.team ? this.sitrep(t) : this.sidebar(t);
@@ -250,7 +251,7 @@ export default class Ah2 extends View {
     return v_flex().id("ah2-desk-window").size_full().min_h(0).bg(t.surface)
       .child(panelTabsView(t, { view: this.view, select: (view, cx) => this.select(view, cx), close, max: this.max }))
       // a press in the body stays in the body (text selection); only the tab row above drags the window
-      .child(div().id(`ah2-desk-${this.view}-body`).flex_1().min_h(0).on_mouse_down("left", (_e, cx) => cx.stop_propagation()).child(body(this, t, close)));
+      .child(div().id(`ah2-desk-${this.view}-body`).flex_1().min_h(0).on_mouse_down("left", (_e, cx) => cx.stop_propagation()).child(body(this, t, close, cx)));
   }
 
   // The sidebar copy only: alarms not seen before become herdr notices when the setting is on. The first reply only seeds.

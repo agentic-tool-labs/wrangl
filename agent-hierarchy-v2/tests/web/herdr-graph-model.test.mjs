@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, CLICK_MS } from "../../herdr-desktop/mods/ah2/graph-model.js";
+import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, CLICK_MS, PAN_KEEP_PX } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -13,7 +13,7 @@ const mod = join(root, "herdr-desktop", "mods", "ah2");
 const reply = JSON.parse(readFileSync(join(root, "herdr-desktop", "fixture", "events.json"), "utf8"));
 const slices = new Map(reply.slices.map((s) => [s.id, s]));
 
-for (const f of ["flow-model.js", "graph-world.js", "plans-model.js", "select.js"]) {
+for (const f of ["flow-model.js", "graph-world.js", "plans-model.js", "select.js", "deeplink.js"]) {
   test(`the mod's ${f} is a byte-identical copy of web/ui/${f}`, () => {
     assert.ok(readFileSync(join(mod, f)).equals(readFileSync(join(root, "web", "ui", f))), `copy web/ui/${f} over herdr-desktop/mods/ah2/${f}`);
   });
@@ -123,9 +123,10 @@ test("the Graph's scale clamps at both ends, fit fills the frame, and a drill in
   assert.equal(ui.graphScale, SCALE_MIN);
   assert.equal(rescaleTo(ui, groups(ui.graphScale), SCALE_MIN / SCALE_STEP), false);
   assert.equal(clampScale(SCALE_MIN + 0.01), SCALE_MIN + 0.01);
-  // smaller than its frame the map sits centred; larger, it cannot leave a gap at an edge, and a point off the edge is kept inside
-  assert.deepEqual(clampPan({ x: 0, y: 0 }, 540, 0.5), { x: 135, y: 135 });
-  assert.deepEqual(clampPan({ x: 50, y: -5000 }, 540, 2), { x: 0, y: -540 });
+  // at rest the map sits centred; any pan that keeps PAN_KEEP_PX of it on the box is kept, smaller or larger than the box
+  assert.deepEqual(clampPan(undefined, 540, 0.5), { x: 135, y: 135 });
+  assert.deepEqual(clampPan({ x: 0, y: 0 }, 540, 0.5), { x: 0, y: 0 });
+  assert.deepEqual(clampPan({ x: 50, y: -5000 }, 540, 2), { x: 50, y: PAN_KEEP_PX - 1080 });
   assert.deepEqual(clampPan({ x: -10, y: -530 }, 540, 2), { x: -10, y: -530 });
   // a wheel zoom about a point keeps the map point under it in place
   const p = panAround({ x: -100, y: -200 }, 540, 2, 3, 300, 100);
@@ -146,7 +147,7 @@ test("the Graph's scale clamps at both ends, fit fills the frame, and a drill in
   }
 });
 
-test("a zoomed map fills the view's room, not its square, and pans to its far corner", () => {
+test("a zoomed map fills the view's room, not its square, and pans until PAN_KEEP_PX of it is left", () => {
   const room = { w: 900, h: 700 };
   assert.deepEqual(frameOf(540, 4, room), { w: 900, h: 700 });
   assert.deepEqual(frameOf(540, 4, room, 14), { w: 886, h: 700 });
@@ -154,8 +155,8 @@ test("a zoomed map fills the view's room, not its square, and pans to its far co
   assert.deepEqual(frameOf(540, 1, room), { w: 540, h: 540 });
   assert.deepEqual(frameOf(540, 4, { w: 300, h: 300 }), { w: 540, h: 540 });
   assert.deepEqual(frameOf(540, 4, undefined), { w: 540, h: 540 });
-  // the 2160 px map pans until its far corner meets the box's, not the square's
-  assert.deepEqual(clampPan({ x: -9999, y: -9999 }, 540, 4, room), { x: 900 - 2160, y: 700 - 2160 });
+  // the 2160 px map pans until only PAN_KEEP_PX of it is left on the box
+  assert.deepEqual(clampPan({ x: -9999, y: -9999 }, 540, 4, room), { x: PAN_KEEP_PX - 2160, y: PAN_KEEP_PX - 2160 });
   // growing from the square into the room keeps the point under the pointer (the box widens about its centre)
   const near = { w: 600, h: 600 };
   const b1 = frameOf(540, 1, near);
@@ -248,13 +249,18 @@ test("the stored Map | Flow choice: Flow only when stored so; an orientation onl
   assert.equal(FM.flowModel(slices, TM4, "vertical", 1, { w: 1600, h: 700 }).orient, "vertical");
 });
 
-test("Flow's pan: smaller content centred across and at the top; larger content clamped at both edges; a zoom keeps the point under it", () => {
+test("Flow's pan: at rest centred across and at the top; any pan kept while PAN_KEEP_PX shows; a zoom keeps the point under it", () => {
   const stage = { w: 400, h: 300 };
-  assert.deepEqual(FM.flowPan({ x: -50, y: 40 }, { w: 200, h: 100 }, stage), { x: 100, y: 0 });
+  const small = { w: 200, h: 100 };
+  assert.deepEqual(FM.flowPan(undefined, small, stage), { x: 100, y: 0 }, "no stored pan: today's rest");
+  assert.deepEqual(FM.flowPan({ x: 200, y: 100 }, small, stage), { x: 200, y: 100 }, "smaller content: a 100 px pan is kept");
+  assert.deepEqual(FM.flowPan({ x: 9999, y: -9999 }, small, stage), { x: 400 - FM.PAN_KEEP_PX, y: FM.PAN_KEEP_PX - 100 }, "held with PAN_KEEP_PX showing");
   const big = { w: 800, h: 600 };
   assert.deepEqual(FM.flowPan(undefined, big, stage), { x: -200, y: 0 });
-  assert.deepEqual(FM.flowPan({ x: 50, y: 50 }, big, stage), { x: 0, y: 0 });
-  assert.deepEqual(FM.flowPan({ x: -900, y: -900 }, big, stage), { x: -400, y: -300 });
+  assert.deepEqual(FM.flowPan({ x: 50, y: 50 }, big, stage), { x: 50, y: 50 });
+  assert.deepEqual(FM.flowPan({ x: -900, y: -900 }, big, stage), { x: FM.PAN_KEEP_PX - 800, y: FM.PAN_KEEP_PX - 600 });
+  assert.deepEqual(FM.flowPan({ x: 0, y: 0 }, { w: 20, h: 20 }, stage), { x: 0, y: 0 });
+  assert.deepEqual(FM.flowPan({ x: 999, y: -999 }, { w: 20, h: 20 }, stage), { x: 380, y: 0 }, "content under PAN_KEEP_PX stays whole");
   const p = { x: -100, y: -100 };
   const [px, py] = [150, 120];
   const q = FM.flowPanAround(p, big, stage, 1, 1.25, px, py);
@@ -288,16 +294,17 @@ test("the wheel: every scroll zooms, a line delta or a trackpad's pixel delta wi
 });
 
 test("the drag: no pan under DRAG_PX, a clamped pan from there on, and its release is not a click", () => {
-  const clamp = (p) => clampPan(p, 100, 2); // a 200 px map in a 100 px frame: pan x, y in -100..0
+  const clamp = (p) => clampPan(p, 100, 2); // a 200 px map in a 100 px frame: pan x, y in -152..52 (PAN_KEEP_PX shows)
   const press = { x0: 50, y0: 50, x: 50, y: 50, dragged: false };
   assert.deepEqual(dragAct(press, { x: 52, y: 52 }, { x: -50, y: -50 }, clamp), { dragged: false, pan: null }, "2.8 px is a click");
   assert.deepEqual(dragAct(press, { x: 50 + DRAG_PX, y: 50 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: -46, y: -50 } });
   assert.deepEqual(dragAct(press, { x: 90, y: 20 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: -10, y: -80 } });
-  assert.deepEqual(dragAct(press, { x: 200, y: -200 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: 0, y: -100 } }, "clamped");
+  assert.deepEqual(dragAct(press, { x: 200, y: -200 }, { x: -50, y: -50 }, clamp), { dragged: true, pan: { x: 52, y: -152 } }, "clamped");
   const held = { x0: 50, y0: 50, x: 80, y: 80, dragged: true };
   assert.deepEqual(dragAct(held, { x: 81, y: 80 }, { x: -20, y: -20 }, clamp), { dragged: true, pan: { x: -19, y: -20 } }, "a drag stays one back under DRAG_PX");
-  const fits = (p) => clampPan(p, 100, 0.5); // a map smaller than its frame cannot be dragged out of place
-  assert.deepEqual(dragAct(press, { x: 90, y: 10 }, { x: 25, y: 25 }, fits).pan, { x: 25, y: 25 });
+  const fits = (p) => clampPan(p, 100, 0.5); // a 50 px map in its 100 px frame drags too, held with PAN_KEEP_PX on it
+  assert.deepEqual(dragAct(press, { x: 60, y: 45 }, { x: 25, y: 25 }, fits).pan, { x: 35, y: 20 });
+  assert.deepEqual(dragAct(press, { x: 90, y: 10 }, { x: 25, y: 25 }, fits).pan, { x: 52, y: -2 });
   assert.equal(wasDrag({ dragged: true, live: true, end: 0 }, 1000), true);
   assert.equal(wasDrag({ dragged: true, live: false, end: 1000 }, 1000 + CLICK_MS - 1), true, "the release of a drag does not click");
   assert.equal(wasDrag({ dragged: true, live: false, end: 1000 }, 1000 + CLICK_MS), false, "a key press later clicks");
@@ -355,4 +362,189 @@ test("the Map leaf and the Flow card carry the member's pane when it has one, no
   const ms = sum.body.member_states;
   dead.set(sum.id, { ...sum, body: { ...sum.body, member_states: { ...ms, "member:9f8e7d6c/engram-rc/implementor": { ...ms["member:9f8e7d6c/engram-rc/implementor"], pane_id: "t9" } } } });
   assert.equal(graphModel(dead, "9f8e7d6c/engram-rc").groups[0].map.leaves.find((n) => n.id.endsWith("/implementor")).pane, null);
+});
+
+// ---- the Flow's look (spec herdr-graph-polish): the web's colours, glyphs, edges, age text and the briefs' moving dots
+
+const WEB_CSS = readFileSync(join(root, "web", "ui", "ui.css"), "utf8");
+const cssBlock = (head) => {
+  const at = WEB_CSS.indexOf(head);
+  return WEB_CSS.slice(at, WEB_CSS.indexOf("\n}", at));
+};
+const cssVar = (block, name) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i").exec(block)?.[1];
+
+test("the mod's role, working and review colours are web/ui/ui.css's own, per appearance", () => {
+  const blocks = { dark: cssBlock(":root {"), light: cssBlock(':root[data-theme="light"] {') };
+  for (const [th, w] of Object.entries(FM.WEB)) {
+    const b = blocks[th];
+    for (const [k, css] of [["accent", "accent"], ["working", "working"], ["review", "review"], ["dim", "dim"], ["lineRow", "line-row"]]) assert.equal(w[k], cssVar(b, css) ?? cssVar(blocks.dark, css), `${th} ${k}`);
+    for (const [role, hex] of Object.entries(w.role)) {
+      if (hex === null) assert.match(b.includes("--role-orchestrator") ? b : blocks.dark, /--role-orchestrator:\s*var\(--ink\)/, `${th} ${role}`);
+      else assert.equal(hex, cssVar(b, `role-${role}`), `${th} ${role}`);
+    }
+  }
+});
+
+test("a card's style: active ◐ tinted working, a reviewer at work ◆ tinted review, idle its state's glyph; an unknown role is neutral", () => {
+  const card = (role, state, running = false) => ({ role, state, running });
+  const work = FM.cardStyle(card("implementor", "working"), true, false, "#17191d");
+  assert.deepEqual([work.glyph, work.mark, work.tag, work.name, work.line, work.bold], ["◐", FM.WEB.dark.working, FM.WEB.dark.working, FM.WEB.dark.role.implementor, FM.WEB.dark.accent, true]);
+  assert.equal(work.fill, FM.mix(FM.WEB.dark.working, "#17191d", 0.12));
+  const lightWork = FM.cardStyle(card("implementor", "working"), true, true, "#ffffff");
+  assert.equal(lightWork.mark, FM.WEB.light.accent, "the light working mark is the accent, as --working-mark");
+  const rev = FM.cardStyle(card("reviewer", "working"), true, true, "#ffffff");
+  assert.deepEqual([rev.glyph, rev.mark, rev.tag, rev.name], ["◆", FM.WEB.light.review, FM.WEB.light.review, FM.WEB.light.role.reviewer]);
+  assert.equal(FM.cardStyle(card("orchestrator", "working"), true, false, "#17191d").name, null, "the orchestrator's name is the theme's ink");
+  for (const role of ["", "custom-role", undefined, "neutral", "__proto__"]) assert.equal(FM.cardStyle(card(role, "working"), true, false, "#17191d").name, FM.WEB.dark.role.neutral, String(role));
+  const idle = FM.cardStyle(card("implementor", "idle"), false, false, "#17191d");
+  assert.deepEqual([idle.glyph, idle.mark, idle.fill, idle.line, idle.name, idle.bold], ["○", FM.WEB.dark.dim, null, null, null, false]);
+  assert.equal(FM.cardStyle(card("qa", "gone"), false, true, "#ffffff").glyph, "×");
+  assert.equal(FM.cardStyle(card("x", "weird"), false, true, "#ffffff").glyph, "?");
+});
+
+test("an edge's style: a reporting line thin in the theme's muted, a brief 2 px accent, a review 2 px dashed review", () => {
+  assert.deepEqual(FM.edgeStyle("edge", false), { color: null, width: 1, dash: false });
+  assert.deepEqual(FM.edgeStyle("brief", false), { color: FM.WEB.dark.accent, width: 2, dash: false });
+  assert.deepEqual(FM.edgeStyle("review", true), { color: FM.WEB.light.review, width: 2, dash: true });
+  assert.equal(FM.dotColor(false, false), FM.WEB.dark.working);
+  assert.equal(FM.dotColor(true, true), FM.WEB.light.review);
+});
+
+test("the age text is the web's: seconds under 90, minutes under 90, then hours", () => {
+  assert.deepEqual([0, 8000, 89999, 90000, 180000, 5399999, 5400000, 7200000].map((ms) => FM.ageText(ms)), ["0 s ago", "8 s ago", "89 s ago", "2 m ago", "3 m ago", "90 m ago", "2 h ago", "2 h ago"]);
+});
+
+test("a brief's dot is a pure function of time: along its link by length at the web's pace, sender to receiver, round again", () => {
+  const cmds = [["M", 0, 0], ["L", 100, 0], ["L", 100, 100]]; // 200 long
+  const fwd = FM.trackOf(cmds);
+  const back = FM.trackOf(cmds, true);
+  const near = (p, x, y) => assert.ok(Math.abs(p.x - x) < 1e-6 && Math.abs(p.y - y) < 1e-6, `${JSON.stringify(p)} ≠ ${x},${y}`);
+  const T = FM.DOT_MS.brief;
+  near(FM.dotAt(fwd, 1000, 1000), 0, 0);
+  near(FM.dotAt(fwd, 1000, 1000 + T / 4), 50, 0);
+  near(FM.dotAt(fwd, 1000, 1000 + T / 2), 100, 0);
+  near(FM.dotAt(fwd, 1000, 1000 + T + T / 4), 50, 0);
+  near(FM.dotAt(back, 1000, 1000), 100, 100);
+  near(FM.dotAt(back, 1000, 1000 + T / 4), 100, 50);
+  near(FM.dotAt(fwd, 0, FM.DOT_MS.review / 2, true), 100, 0);
+  near(FM.dotAt(fwd, 0, 777, false, true), 100, 0); // reduced motion: the midpoint, whatever the time
+  const curve = FM.trackOf([["M", 0, 0], ["C", 50, 0, 50, 100, 100, 100]]);
+  near(curve.at(-1), 100, 100);
+  const m = FM.flowModel(slices, TM4, "horizontal", 1, WIDE);
+  assert.ok(m.dots.length > 0 && m.dots.every((d) => d.pts.length > 1));
+});
+
+test("the dots' clock: none with nothing in flight; one for all dots; it ends when the last brief lands or the Graph stops drawing", async () => {
+  const spawned = [];
+  const cx = { spawn: (f) => { const h = { done: false, is_done: () => h.done, run: f }; spawned.push(h); return h; } };
+  const v = {};
+  assert.equal(FM.travelClock(v, cx, FM.travelsOf(v, [], Date.now())), false);
+  assert.equal(spawned.length, 0, "no timer with nothing in flight");
+  assert.equal(FM.travelClock(v, cx, FM.travelsOf(v, [{ key: "a" }, { key: "b" }], Date.now())), true);
+  assert.equal(FM.travelClock(v, cx, FM.travelsOf(v, [{ key: "a" }, { key: "b" }], Date.now())), false, "one clock for every dot");
+  assert.equal(spawned.length, 1);
+  let notes = 0;
+  const run = (h, then) => h.run({ sleep: async () => then(), notify: () => notes++ }).then(() => { h.done = true; });
+  await run(spawned[0], () => notes === 2 && FM.travelsOf(v, [], Date.now())); // the last brief lands after two frames
+  assert.equal(notes, 2, "the clock stopped once nothing was in flight");
+  FM.travelClock(v, cx, FM.travelsOf(v, [{ key: "c" }], Date.now()));
+  v.graphSeen = Date.now() - FM.SHOWN_GAP_MS - 1; // the Graph tab was hidden: no render since
+  notes = 0;
+  await run(spawned[1], () => {});
+  assert.equal(notes, 0, "a hidden Graph ends the clock");
+});
+
+test("Open in browser: the web's own Graph address for the shown team on ahd's port; disabled, saying why, with no port or team", () => {
+  assert.deepEqual(FM.webGraphLink(55821, "cb701b81/ah2"), { url: "http://127.0.0.1:55821/ui/#/graph?team=team%3Acb701b81%2Fah2", why: null });
+  const noPort = FM.webGraphLink(null, "cb701b81/ah2");
+  assert.equal(noPort.url, null);
+  assert.match(noPort.why, /not known/);
+  assert.equal(FM.webGraphLink(55821, null).url, null);
+  assert.match(FM.webGraphLink(55821, null).why, /no team/);
+});
+
+test("Amendment 4: a blocked card shows the blocked glyph in the theme's blocked colour; the light reviewing border is the full review", () => {
+  for (const lt of [false, true]) {
+    const base = lt ? "#ffffff" : "#17191d";
+    const blocked = FM.cardStyle({ role: "implementor", state: "blocked" }, true, lt, base);
+    const working = FM.cardStyle({ role: "implementor", state: "working" }, true, lt, base);
+    assert.equal(blocked.glyph, "❚❚");
+    assert.equal(blocked.mark, null, "null: the view draws it in theme().blocked");
+    assert.notEqual(blocked.glyph, working.glyph, "working and blocked never look the same");
+  }
+  assert.equal(FM.cardStyle({ role: "reviewer", state: "working" }, true, true, "#ffffff").line, FM.WEB.light.review);
+  assert.equal(FM.cardStyle({ role: "reviewer", state: "working" }, true, false, "#17191d").line, FM.mix(FM.WEB.dark.review, "#17191d", 0.6), "dark keeps the web's mix");
+});
+
+test("Amendment 4: seconds only while the dot clock runs; without it an age under a minute is 'just now', then minutes", () => {
+  assert.deepEqual([0, 8000, 59999, 60000, 89999, 180000, 7200000].map((ms) => FM.ageText(ms, false)), ["just now", "just now", "just now", "1 m ago", "1 m ago", "3 m ago", "2 h ago"]);
+  assert.deepEqual([8000, 89999].map((ms) => FM.ageText(ms, true)), ["8 s ago", "89 s ago"]);
+});
+
+// ---- the agent's sheet (spec herdr-graph-agent-details)
+const MM = await import("../../herdr-desktop/mods/ah2/member-model.js");
+const WEB_MS = await import("../../web/ui/member-summary.js");
+
+test("the sheet's member model is the web's memberModel, field for field and in its order; a member not held reads as gone", () => {
+  const ids = [...slices.keys()].filter((k) => k.startsWith("member:"));
+  assert.ok(ids.length > 3);
+  for (const id of [...ids, "member:a1b2c3d4/no-such-team/ghost"]) {
+    const ui = FM.sheetUi({ graphTeam: id.split("/").slice(0, 2).join("/").replace(/^member:/, "") });
+    const mine = MM.memberModel(slices, ui, id, MM.SUMMARY_MESSAGES);
+    const web = WEB_MS.memberModel(slices, ui, id, WEB_MS.SUMMARY_MESSAGES);
+    assert.deepEqual(Object.keys(mine), Object.keys(web), id);
+    assert.deepEqual(mine, web, id);
+    assert.deepEqual(MM.memberLeaseIds(slices, ui, id), WEB_MS.memberLeaseIds(slices, ui, id), id);
+  }
+  const gone = MM.memberModel(slices, {}, "member:a1b2c3d4/no-such-team/ghost");
+  assert.deepEqual([gone.state, gone.gone, gone.ctx, gone.rows], ["gone", true, "—", []]);
+  const withRows = ids.find((id) => (slices.get(id).body.last_exchanges ?? []).length > 0);
+  if (withRows) assert.deepEqual(MM.exchangeRows(slices, slices.get(withRows).body.last_exchanges), WEB_MS.exchangeRows(slices, slices.get(withRows).body.last_exchanges, 12, { showInternal: false }));
+  const x = MM.graphExtras(slices, {}, `team:${TM4}`, `member:${TM4}/implementor`);
+  assert.deepEqual([x.tokens, x.files, x.task.length > 0, typeof x.busyLabel], [null, null, true, "string"], "tokens and files are not held: the sheet draws —");
+});
+
+test("the sheet's slices are held only while it is open: the web's lease for its member", () => {
+  const id = `member:${TM4}/@orchestrator`;
+  const lease = MM.memberLeaseIds(slices, FM.sheetUi({ graphTeam: TM4 }), id);
+  assert.ok(lease.length > 0);
+  const closed = FM.graphSubs(slices, { graphTeam: TM4 });
+  const open = FM.graphSubs(slices, { graphTeam: TM4, graphSheet: id });
+  for (const l of lease) assert.ok(open.includes(l), l);
+  const extra = open.filter((s) => !closed.includes(s));
+  assert.deepEqual(extra.sort(), lease.filter((l) => !closed.includes(l)).sort(), "opening adds the lease and nothing else");
+  assert.deepEqual(FM.graphSubs(slices, { graphTeam: TM4, graphSheet: null }), closed, "closing drops it");
+});
+
+test("a click on a node opens its sheet, again closes it, another swaps it, a drag does not; Go to pane jumps or says why not", () => {
+  const v = { graphSheet: null, graphDrag: null };
+  assert.equal(FM.sheetClick(v, "a", 1000), true);
+  assert.equal(v.graphSheet, "a");
+  FM.sheetClick(v, "b", 1000);
+  assert.equal(v.graphSheet, "b", "another node swaps it");
+  FM.sheetClick(v, "b", 1000);
+  assert.equal(v.graphSheet, null, "the same node closes it");
+  v.graphDrag = { dragged: true, live: false, end: 1000 };
+  assert.equal(FM.sheetClick(v, "a", 1000 + FM.CLICK_MS - 1), false, "the release of a drag is not a click");
+  assert.equal(v.graphSheet, null);
+  assert.deepEqual(FM.paneAct("t7", "implementor", false), { cmd: "pane.focus", args: { terminal: "t7" }, why: null });
+  assert.deepEqual(FM.paneAct(null, "implementor", true), { cmd: null, args: null, why: "No pane: implementor is gone" });
+  assert.equal(FM.paneAct(null, "implementor", false).why, "No pane for implementor on this herdr");
+  assert.equal(FM.memberPageLink(55821, "member:cb701b81/ah2/implementor").url, "http://127.0.0.1:55821/ui/#/member/member%3Acb701b81%2Fah2%2Fimplementor");
+  assert.equal(FM.memberPageLink(null, "member:x/y/z").url, null);
+});
+
+test("V10: each Flow lane takes its role class's web colour (Lead sub-orchestrator, Advise architect, Implement implementor, Review violet); others neutral", () => {
+  for (const lt of [false, true]) {
+    const w = lt ? FM.WEB.light : FM.WEB.dark;
+    assert.deepEqual([0, 1, 2, 3].map((i) => FM.laneStyle(i, lt).color), [w.role["sub-orchestrator"], w.role.architect, w.role.implementor, w.review]);
+    assert.equal(FM.laneStyle(4, lt).color, w.role.neutral, "a lane with no known class is neutral");
+    assert.equal(FM.laneStyle(-1, lt).color, w.role.neutral);
+    assert.equal(FM.laneStyle(2, lt).band, `${w.role.implementor}0d`, "the band is the colour at 5 %");
+  }
+  for (const o of ["horizontal", "vertical"]) {
+    const m = FM.flowModel(slices, TM4, o, 1, WIDE);
+    assert.equal(m.lanes.length, m.labels.length, o);
+    assert.ok(m.lanes.every((l) => l.w > 0 && l.h > 0 && l.rule > 0), o);
+  }
 });

@@ -1279,8 +1279,16 @@ internal sealed partial class Mailbox(
             CallerIdentity.LiveSessions(this),
             (session, team) => bySession.TryGetValue(session.SessionId, out var reg)
                 && RegistrationTeams.For(reg, $"{AncestorSearch.OrchestratorName}@{team}") is { } teamFile
-                && CallerIdentity.IsRecordedOrchestrator(table, roster.ReadTeamFileAt(teamFile), session.Pid));
+                && OwnsTeam(roster.ReadTeamFileAt(teamFile), session.SessionId, session.Pid, session.PidStart));
     }
+
+    /// <summary>
+    /// ah2-158 D2: whether the registered session at <paramref name="pid"/> owns the team in <paramref name="teamRecord"/>, by the CLI's
+    /// own owner predicate (RosterCore.TeamOwnedBy): the record's session is one that process holds, or its pid with its start, or the
+    /// on-duty deputy. Callers pass only a registration the process tree proved, never a session id a request names.
+    /// </summary>
+    internal bool OwnsTeam(JsonValue teamRecord, string sessionId, int pid, string? pidStart) =>
+        roster.IsTeamOwnedBy(teamRecord, new TeamInvoker(pid, sessionId, pidStart));
 
     public bool WriteRegistration(RegistrationWrite registration) =>
         RegistrationArgs(registration) is { } args && Invoke("register", args).Member("registered") is { IsTruthy: true };

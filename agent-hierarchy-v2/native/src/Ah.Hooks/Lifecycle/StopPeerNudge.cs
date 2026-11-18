@@ -474,8 +474,14 @@ internal static partial class StopPeerNudge
     private static List<string> QaLines(GateContext c, List<QaOwedItem> qaDue)
     {
         var msg = c.Services.Config.CliCommand(CliTool.Msg, alwaysQuote: true);
-        return [.. qaDue.Select(q =>
+        List<string> lines = [.. qaDue.Select(q =>
             $"ah: {q.Member} reported DONE on {q.Slug} ({q.ResponsePath}) and no QA request for {q.Slug} exists. Dispatch QA: {ConfigModule.QaDispatchStep(q.Member, q.Slug, msg, c.Cwd())} A docs-only item opts out with `qa: none` in its original request's frontmatter.")];
+        if (qaDue.Any(static q => q.AskOnce))
+        {
+            lines.Add(QaChooseLine);
+        }
+
+        return lines;
     }
 
     /// <summary>
@@ -563,7 +569,11 @@ internal static partial class StopPeerNudge
 
     private const string QaWaivedType = "qa-waived";
 
-    private sealed record QaOwedItem(string RequestId, string Slug, string Member, string ResponsePath);
+    /// <summary>One owed QA dispatch. <paramref name="AskOnce"/>: the repo has not chosen when QA runs (config <c>qa.cadence</c> unset), so it is raised once, not repeated.</summary>
+    private sealed record QaOwedItem(string RequestId, string Slug, string Member, string ResponsePath, bool AskOnce = false);
+
+    /// <summary>The line an unconfigured repo's QA prompt ends with (ah2-154 D5).</summary>
+    private const string QaChooseLine = "ah: when QA runs is not configured, so this is asked once per DONE report. Choose: /wrangl:hierarchy qa item (QA at each item's merge) or /wrangl:hierarchy qa batch (QA once on a release batch).";
 
     private static string QaTask(QaOwedItem q) => "qa:" + q.RequestId;
 
@@ -582,6 +592,13 @@ internal static partial class StopPeerNudge
             var s = c.Services;
             var resolved = s.Config.ResolveConfig(c.Cwd(), new ResolveOptions(SessionId: sessionId));
             if (!IsOrchestrateSession(c, sessionId))
+            {
+                return found;
+            }
+
+            // ah2-154: "batch" raises no per-item QA prompt; unset (null) raises it once.
+            var qa = resolved.Get("qaCadence") is { IsText: true } qaMode ? qaMode.AsString() : null;
+            if (qa == "batch")
             {
                 return found;
             }
@@ -636,7 +653,7 @@ internal static partial class StopPeerNudge
                 var filed = qaRequests.Any(q => (q.Slug == slug || q.Text.Contains("ah/ship/" + slug, StringComparison.Ordinal)) && (q.Ms is null || q.Ms >= responseMs));
                 if (!filed)
                 {
-                    found.Add(new QaOwedItem(id.AsString(), slug, rfm.Member("to_name") is { IsText: true } name && name.AsString() != "null" ? name.AsString() : to.AsString(), responsePath.AsString()));
+                    found.Add(new QaOwedItem(id.AsString(), slug, rfm.Member("to_name") is { IsText: true } name && name.AsString() != "null" ? name.AsString() : to.AsString(), responsePath.AsString(), qa is null));
                 }
             }
         }
@@ -676,7 +693,7 @@ internal static partial class StopPeerNudge
         var due = new List<QaOwedItem>();
         foreach (var q in owed)
         {
-            if (spent.GetValueOrDefault(QaTask(q)) < HierarchyModule.MaxNudges)
+            if (spent.GetValueOrDefault(QaTask(q)) < (q.AskOnce ? 1 : HierarchyModule.MaxNudges))
             {
                 due.Add(q);
             }

@@ -4,10 +4,12 @@
 // names, arc widths), both byte-identical copies of web/ui's, kept honest by a test; graph-layout.js is d3's pack and curveBundle.
 import "./intl-shim.js"; // before graph-world.js, which needs Intl when it loads
 import { laneChildren, memberIds, memberOf, sparksOf } from "./select.js";
-import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf, fitPack, flowId, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
+import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { fitView as fitBox, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
+import { FLOW, fitView as fitBox, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
+import { hashOf, memberHref } from "./deeplink.js";
+import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
 
 // The web Map's label tiers, label radius, spark cap, air, fit and arc offset are graph-world.js's TIERS, LABEL_AT, MAX_SPARKS,
@@ -26,11 +28,18 @@ export function frameOf(frame, s, room, pad = 0) {
   if (s <= 1 || !room) return { w: frame, h: frame };
   return { w: Math.max(frame, room.w - pad), h: Math.max(frame, room.h) };
 }
-// A pan that keeps the map on its box: a map larger than the box cannot leave a gap at an edge, a smaller one sits centred.
+// The pan rule, Map and Flow alike (spec herdr-graph-drag-always D2): on one axis, content `size` px in `room` px may go anywhere that
+// keeps PAN_KEEP_PX of it (all of it when smaller) inside; with no stored pan it sits at `rest`.
+export const PAN_KEEP_PX = 48;
+export function keepPan(p, size, room, rest) {
+  if (p === null || p === undefined) return rest;
+  const keep = Math.min(PAN_KEEP_PX, size);
+  return Math.min(room - keep, Math.max(keep - size, p));
+}
+// The map's pan on its box: at rest centred on it.
 export function clampPan(pan, frame, s, box = { w: frame, h: frame }) {
   const size = frame * s;
-  const axis = (p, room) => (size <= room ? (room - size) / 2 : Math.min(0, Math.max(room - size, p ?? (room - size) / 2)));
-  return { x: axis(pan?.x, box.w), y: axis(pan?.y, box.h) };
+  return { x: keepPan(pan?.x, size, box.w, (box.w - size) / 2), y: keepPan(pan?.y, size, box.h, (box.h - size) / 2) };
 }
 // The pan that keeps the map point under (px, py) (box px) in place when the scale goes from s to s2 and the box from b1 to b2;
 // a box sits centred across its row and at its top, so a wider one moves the point right by half the growth.
@@ -164,6 +173,8 @@ export function graphSubs(slices, ui = {}, clock = Date.now()) {
       });
     }
   }
+  // the open sheet's member (spec herdr-graph-agent-details D6): the web's lease, held only while the sheet is open
+  if (ui.graphSheet) ids.push(...memberLeaseIds(slices, sheetUi(ui), ui.graphSheet));
   return [...new Set(ids)];
 }
 
@@ -394,11 +405,9 @@ export function graphChoice(stored) {
 
 export const LEGEND_H = 24; // the legend row under Flow's stage
 
-// Flow's pan {x, y} on the stage: content no larger than the stage sits centred across and at the top; larger content is clamped so no
-// gap shows at either edge (absent: centred across, at the top).
+// Flow's pan {x, y} on the stage (keepPan): at rest centred across and at the top.
 export function flowPan(pan, size, stage) {
-  const axis = (p, s, room, rest) => (s <= room ? rest : Math.min(0, Math.max(room - s, p ?? rest)));
-  return { x: axis(pan?.x, size.w, stage.w, (stage.w - size.w) / 2), y: axis(pan?.y, size.h, stage.h, 0) };
+  return { x: keepPan(pan?.x, size.w, stage.w, (stage.w - size.w) / 2), y: keepPan(pan?.y, size.h, stage.h, 0) };
 }
 
 // The pan that keeps the content point under the stage point (px, py) where it is when the drawn scale goes from k to k2.
@@ -460,15 +469,203 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const cards = nodes.filter((n) => layout.pos.has(n.id)).map((n) => ({ id: n.id, rect: rect(layout.pos.get(n.id)), card: flowCardOf(slices, n.team || teamId, n.id),
     active: active.has(n.id), out: sparks.filter((s) => s.from === n.id).length, pane: paneAt(n) }));
   const links = fl.links.map((l) => ({ key: l.key, kind: l.kind, cmds: scaled(l.cmds) }));
+  // flowLinks orders a path's ends along the columns, so a brief from the later card travels it backwards (sender to receiver)
   const dots = fl.dots.map((d) => {
-    const cmds = scaled(d.cmds);
-    const mid = cmds[Math.floor(cmds.length / 2)];
-    return { key: d.key, x: mid.at(-2), y: mid.at(-1), review: d.review, title: `in flight: ${d.slug} (${shortName(d.from)} → ${shortName(d.to)})${d.review ? ", review" : ""}` };
+    const a = layout.pos.get(d.from);
+    const b = layout.pos.get(d.to);
+    const pts = trackOf(scaled(d.cmds), !(o === "vertical" ? a.y <= b.y : a.x <= b.x));
+    const mid = pointAt(pts, 0.5);
+    return { key: d.key, x: mid.x, y: mid.y, pts, review: d.review, title: `in flight: ${d.slug} (${shortName(d.from)} → ${shortName(d.to)})${d.review ? ", review" : ""}` };
   });
   const lines = links.filter((l) => l.kind === "edge").length;
   const said = `${at.t.name} Flow: ${cards.length} members, ${lines} reporting lines, ${dots.length} briefs in flight${fl.rest > 0 ? `, ${fl.rest} more not drawn` : ""}`;
   return { ...base, closed: false, name: at.t.name, pending: false, orient: o, picked, stage, fit, k, box,
     size: box ? { w: box.w * k, h: box.h * k } : { w: 0, h: 0 },
-    cards, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y) })), bands: layout.bands.map((b) => ({ id: b.id, name: b.name, ...rect(b) })),
+    cards, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y) })),
+    // V10: each lane's column from its header to the stage's foot (vertical: its row, across the laid-out width; the content is centred), and its cards' width for the header's rule
+    lanes: layout.labels.map((l, i) => (o === "vertical"
+      ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h) * k, rule: FLOW.card.w * k }
+      : { i, x: X(l.x), y: Y(l.y), w: FLOW.card.w * k, h: Math.max(box ? box.h * k : 0, stage.h) - Y(l.y), rule: FLOW.card.w * k })), bands: layout.bands.map((b) => ({ id: b.id, name: b.name, ...rect(b) })),
     links, dots, rest: fl.rest, said };
+}
+
+// ---- Flow's look (spec herdr-graph-polish): the web's own colours and rules, pure, so the view and the preview draw the same
+
+// The web's hexes (web/ui/ui.css: dark `:root`, light `:root[data-theme="light"]`), held to that file by a test. Herdr's theme has no
+// role or review colour; neutrals (ink, muted, lines, surfaces) stay Herdr's theme() tokens. `null`: the theme's foreground (--ink).
+export const WEB = {
+  dark: { accent: "#4c9aff", working: "#8fc1ff", review: "#c9a2ff", dim: "#7a838d", lineRow: "#1f2429",
+    role: { orchestrator: null, "sub-orchestrator": "#a9a4f2", architect: "#3cc8b4", implementor: "#56c8e8", "ux-engineer": "#fa9d68", reviewer: "#e47bd1",
+      "ultra-advisor": "#c9cf55", qa: "#9ccf5a", neutral: "#a7b0ba" } },
+  light: { accent: "#0963ce", working: "#0963ce", review: "#794acf", dim: "#676e77", lineRow: "#e6e9ed",
+    role: { orchestrator: null, "sub-orchestrator": "#5448c4", architect: "#0b7a6c", implementor: "#0a7290", "ux-engineer": "#9b4805", reviewer: "#a8308f",
+      "ultra-advisor": "#6b7010", qa: "#4a7812", neutral: "#5d6670" } },
+};
+const markOf = (w, light) => (light ? w.accent : w.working); // --working-mark: --working dark, --accent light
+
+// color-mix(in srgb, c p%, base) for #rrggbb
+export function mix(c, base, p) {
+  if (!/^#[0-9a-f]{6}/i.test(base ?? "")) base = "#808080"; // a theme colour not in #rrggbb: a mid grey, still a tint
+  const ch = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [a, b] = [ch(c), ch(base)];
+  return `#${a.map((v, i) => Math.round(v * p + b[i] * (1 - p)).toString(16).padStart(2, "0")).join("")}`;
+}
+
+// A card's look, the web's FlowCard rule (r6-graph.css .fcard): an active card (isActive) is tinted working with ◐, a reviewer at
+// work tinted review with ◆; any other is one row with its state's glyph (graph-world.js glyphOf) in the idle mark. The name of an
+// active card takes its role's colour; an unknown or custom role is neutral. Colours: hex, or null for the theme's own (the view's
+// tokens). base: the surface the card sits on (#rrggbb), for the tints. Two departures from the web, for D5 (Amendment 4): a blocked
+// member's card shows the blocked glyph in the theme's blocked colour (mark null), not the working half-disc; and the light
+// reviewing border is the full review colour (the web's 60% mix is 2.61:1 on white).
+export function cardStyle(s, active, light, base) {
+  const w = light ? WEB.light : WEB.dark;
+  const pct = light ? 0.09 : 0.12;
+  const reviewing = s.role === "reviewer" && s.state === "working";
+  const role = Object.hasOwn(w.role, s.role ?? "") && s.role !== "neutral" ? w.role[s.role] : w.role.neutral;
+  if (reviewing) return { glyph: "◆", mark: w.review, tag: w.review, name: role, fill: mix(w.review, base, pct), line: light ? w.review : mix(w.review, base, 0.6), bold: true };
+  if (active && s.state === "blocked") return { glyph: glyphOf("blocked"), mark: null, tag: w.working, name: role, fill: mix(w.working, base, pct), line: w.accent, bold: true };
+  if (active) return { glyph: "◐", mark: markOf(w, light), tag: w.working, name: role, fill: mix(w.working, base, pct), line: w.accent, bold: true };
+  return { glyph: glyphOf(s.running ? "running" : s.state), mark: w.dim, tag: null, name: null, fill: null, line: null, bold: false };
+}
+
+// A link's look (r6-graph.css .gflow .edge*): a reporting line thin in the theme's muted (the web's --edge is under 3:1), a brief in
+// flight 2 px accent, one sent for review 2 px dashed review. color null: the theme's muted.
+export function edgeStyle(kind, light) {
+  const w = light ? WEB.light : WEB.dark;
+  if (kind === "review") return { color: w.review, width: 2, dash: true };
+  if (kind === "brief") return { color: w.accent, width: 2, dash: false };
+  return { color: null, width: 1, dash: false };
+}
+export const dotColor = (review, light) => (review ? (light ? WEB.light : WEB.dark).review : markOf(light ? WEB.light : WEB.dark, light));
+
+// The web's age text (store.js ageText for a dated value): "8 s ago", "3 m ago", "2 h ago". Seconds only while they are true
+// (Amendment 4): `live` is whether the dot clock is redrawing; without it the view redraws only on the half-minute tick or a poll, so
+// an age under a minute reads "just now" and from a minute on is in minutes.
+export function ageText(ms, live = true) {
+  if (!(ms >= 0)) return "—";
+  const s = Math.floor(ms / 1000);
+  if (!live) return s < 60 ? "just now" : s < 5400 ? `${Math.round(s / 60)} m ago` : `${Math.round(s / 3600)} h ago`;
+  return s < 90 ? `${s} s ago` : s < 5400 ? `${Math.round(s / 60)} m ago` : `${Math.round(s / 3600)} h ago`;
+}
+
+// ---- a brief's dot (spec herdr-graph-polish D4, Amendment 2): it runs along its link from sender to receiver, again and again, for as
+// long as the brief is in flight, at the web's pace (r6-graph.css .dot: graph-travel 2.4 s linear, a review 3.4 s, each dot from
+// when it first shows), on one script clock that runs only while a dot is drawn.
+export const DOT_MS = { brief: 2400, review: 3400 };
+export const SHOWN_GAP_MS = 1000; // no render for this long: the Graph is hidden (or the pane closed), so the clock stops
+
+// A path's commands as a polyline [{x, y, d}], d the length so far; reversed when the brief runs from the path's far end.
+export function trackOf(cmds, back = false) {
+  const pts = [];
+  let p = null;
+  const add = (x, y) => {
+    const d = p ? p.d + Math.hypot(x - p.x, y - p.y) : 0;
+    pts.push((p = { x, y, d }));
+  };
+  for (const c of cmds) {
+    if (c[0] === "M" || c[0] === "L") add(c[1], c[2]);
+    else {
+      const [x0, y0] = [p.x, p.y];
+      const n = 16;
+      for (let i = 1; i <= n; i++) {
+        const t = i / n;
+        const u = 1 - t;
+        if (c[0] === "Q") add(u * u * x0 + 2 * u * t * c[1] + t * t * c[3], u * u * y0 + 2 * u * t * c[2] + t * t * c[4]);
+        else add(u * u * u * x0 + 3 * u * u * t * c[1] + 3 * u * t * t * c[3] + t * t * t * c[5], u * u * u * y0 + 3 * u * u * t * c[2] + 3 * u * t * t * c[4] + t * t * t * c[6]);
+      }
+    }
+  }
+  if (!back) return pts;
+  const L = pts.at(-1)?.d ?? 0;
+  return pts.reverse().map((q) => ({ x: q.x, y: q.y, d: L - q.d }));
+}
+// The point a share f (0..1) of the way along a track, by length.
+export function pointAt(pts, f) {
+  if (pts.length === 0) return { x: 0, y: 0 };
+  const want = Math.min(1, Math.max(0, f)) * pts.at(-1).d;
+  let i = 1;
+  while (i < pts.length - 1 && pts[i].d < want) i++;
+  const a = pts[i - 1] ?? pts[0];
+  const b = pts[i] ?? a;
+  const k = b.d > a.d ? (want - a.d) / (b.d - a.d) : 0;
+  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+}
+
+// Where a dot is at `now`, first shown at t0: linear along its track by length, round again each period (the web's
+// offset-distance 0% → 100%). Reduced motion: the midpoint, still.
+export function dotAt(pts, t0, now, review = false, reduced = false) {
+  if (reduced) return pointAt(pts, 0.5);
+  const T = review ? DOT_MS.review : DOT_MS.brief;
+  return pointAt(pts, (((now - t0) % T) + T) % T / T);
+}
+
+// Called by each Flow render with the drawn dots: notes when each dot first showed (v.graphTravels, key → t0) and forgets the dots no
+// longer in flight. Returns whether any dot is drawn, which is what keeps the clock running.
+export function travelsOf(v, dots, now) {
+  v.graphSeen = now;
+  const was = v.graphTravels ?? new Map();
+  v.graphTravels = new Map(dots.map((d) => [d.key, was.get(d.key) ?? now]));
+  return v.graphTravels.size > 0;
+}
+
+// The one script clock for every dot, the zoom ease's kind (graph-view.js easeTo: cx.spawn, a FRAME_MS sleep, a redraw; the layout
+// is memoized, so a frame relays nothing out). It runs only while a dot is drawn and the Graph is drawn (a Flow render within
+// SHOWN_GAP_MS): with nothing in flight, after the last brief lands, with the tab hidden, in Map, or with the pane closed it ends
+// (the view's close() also cancels it). True when it started one.
+export function travelClock(v, cx, inFlight, frame = 16) {
+  if (!inFlight || (v.graphTravel && !v.graphTravel.is_done())) return false;
+  v.graphTravel = cx.spawn(async (cx) => {
+    for (;;) {
+      await cx.sleep(frame);
+      if (Date.now() - (v.graphSeen ?? 0) > SHOWN_GAP_MS || !(v.graphTravels?.size > 0)) break;
+      cx.notify();
+    }
+  });
+  return true;
+}
+
+// ---- Open in browser (spec herdr-graph-polish Amendment 3, V9): the web UI's Graph for the shown team, by the web's own route
+// (deeplink.js hashOf, a byte-identical copy), on ahd's loopback page (the port the poll's Link found). The web keeps Map / Radial /
+// Flow out of its route, so the browser opens on its own stored layout. url null: `why` says what is missing.
+export function webGraphLink(port, team) {
+  if (!port) return { url: null, why: "Open in browser: ahd's web page is not known yet (the Graph reads ah through the CLI)" };
+  if (!team) return { url: null, why: "Open in browser: no team is shown" };
+  return { url: `http://127.0.0.1:${port}/ui/${hashOf({ view: "graph", team: `team:${team}` })}`, why: null };
+}
+
+// ---- the agent's sheet (spec herdr-graph-agent-details): a click on a node opens its details; Go to pane is a button in it
+
+// The web's ui for a member model: the shown team (lane members resolve through it), internal messages hidden.
+export const sheetUi = (v) => ({ team: v.graphTeam ? `team:${v.graphTeam}` : null, showInternal: false });
+
+// A click on a node (D3): opens its sheet, the same node again closes it, another swaps it. A release that ended a drag (wasDrag) is
+// not a click. Returns whether anything changed; v.graphSheet is the member id or null.
+export function sheetClick(v, id, now = Date.now()) {
+  if (wasDrag(v.graphDrag, now)) return false;
+  v.graphSheet = v.graphSheet === id ? null : id;
+  return true;
+}
+
+// Go to pane (D4): the command a node's click ran before (run("pane.focus", {terminal})), or why it cannot: the member is gone, or
+// no terminal on this herdr is its pane. address: graph-view.js addressOf's answer for the member (terminalFinder), or null.
+export function paneAct(address, name, gone) {
+  if (address) return { cmd: "pane.focus", args: { terminal: address }, why: null };
+  return { cmd: null, args: null, why: gone ? `No pane: ${name} is gone` : `No pane for ${name} on this herdr` };
+}
+
+// Open page: the member's web page (deeplink.js memberHref), as Open in browser opens the Graph.
+export const memberPageLink = (port, id) => (port ? { url: `http://127.0.0.1:${port}/ui/${memberHref(id)}`, why: null }
+  : { url: null, why: "Open page: ahd's web page is not known yet (the Graph reads ah through the CLI)" });
+
+// ---- V10 (spec herdr-graph-polish Amendment 5): each Flow lane in the colour of the role class that lives in it, from the web's role
+// tokens: Lead the sub-orchestrator's (the orchestrator's own token is the ink, no hue), Advise · design the architect's, Implement the
+// implementor's, Review the review violet. A lane past these is neutral. `band`: the colour at LANE_ALPHA, behind the lane's cards,
+// which keep their own opaque fill, so a card's state still reads first.
+export const LANE_CLASS = ["sub-orchestrator", "architect", "implementor", "review"];
+export const LANE_ALPHA = 0.05;
+export function laneStyle(i, light) {
+  const w = light ? WEB.light : WEB.dark;
+  const c = LANE_CLASS[i];
+  const color = c === "review" ? w.review : c ? w.role[c] : w.role.neutral;
+  return { color, band: `${color}${Math.round(LANE_ALPHA * 255).toString(16).padStart(2, "0")}` };
 }

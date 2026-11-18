@@ -19,6 +19,10 @@ import { markCell } from "./marks.js";
 const MONO = "Geist Mono";
 const COL_W = 184; // six columns fit about 1200 px; narrower, the board scrolls sideways
 const SHEET_W = 300;
+// The one sheet frame (the Board's item, backlog and group sheets, and the Graph's agent sheet, graph-view.js): SHEET_W beside the
+// content, or the whole column when docked (`full`).
+export const sheetColumn = (t, full, id) => v_flex().id(id).when(full, (el) => el.w_full()).when(!full, (el) => el.w(SHEET_W).border_l(1).border_color(t.border))
+  .flex_none().h_full().min_h(0).bg(t.surface);
 const STRIP_W = 40; // an empty column, as the web's 40px strip
 const META_W = COL_W - 26; // the widest a card's chip or text runs: the column less the card's padding and border
 
@@ -348,8 +352,7 @@ function sheet(v, t, f, full) {
     .on_mouse_down("left", stop)
     .child("Focus terminal");
 
-  return v_flex().id("kb-sheet").when(full, (el) => el.w_full()).when(!full, (el) => el.w(SHEET_W).border_l(1).border_color(t.border))
-    .flex_none().h_full().min_h(0).bg(t.surface)
+  return sheetColumn(t, full, "kb-sheet")
     .child(v_flex().px(16).pt(8).pb(12).gap(6).flex_none().border_b(1).border_color(t.border)
       .child(h_flex().h(28).gap(6).items_center().text_size(11).text_color(t.muted)
         .child(div().flex_none().max_w(120).truncate().font_family(MONO).text_color(t.foreground).child(s.item))
@@ -565,8 +568,7 @@ function blSheetView(v, t, f, full) {
         .child(sel ? linkBtn(t, `kb-bl-item-${i}`, it.text, (cx) => select(f, sel, cx)) : div().min_w(0).truncate().text_color(t.foreground).child(it.text))
         .child(div().flex_none().text_size(11).text_color(t.muted).child(it.col));
     }));
-  return v_flex().id("kb-sheet").when(full, (el) => el.w_full()).when(!full, (el) => el.w(SHEET_W).border_l(1).border_color(t.border))
-    .flex_none().h_full().min_h(0).bg(t.surface).child(top).child(out);
+  return sheetColumn(t, full, "kb-sheet").child(top).child(out);
 }
 
 // A link to another sheet: accent text, underlined on hover and focus.
@@ -662,8 +664,7 @@ function groupSheetView(v, t, f, full) {
         .child(sel ? linkBtn(t, `kb-grp-item-${i}`, it.text, (cx) => select(f, sel, cx)) : div().min_w(0).truncate().text_color(t.foreground).child(it.text))
         .child(div().flex_none().text_size(11).text_color(t.muted).child(it.col));
     }));
-  return v_flex().id("kb-sheet").when(full, (el) => el.w_full()).when(!full, (el) => el.w(SHEET_W).border_l(1).border_color(t.border))
-    .flex_none().h_full().min_h(0).bg(t.surface).child(top).child(out);
+  return sheetColumn(t, full, "kb-sheet").child(top).child(out);
 }
 
 // The arrow keys (D2; board-kanban.js onKey): from the focused card or backlog row to the next one up or down its column, or to

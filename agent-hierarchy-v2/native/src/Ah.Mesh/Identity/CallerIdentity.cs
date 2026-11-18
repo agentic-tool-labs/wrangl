@@ -157,22 +157,6 @@ internal static class CallerIdentity
     }
 
     /// <summary>
-    /// Whether process <paramref name="pid"/> is the recorded Orchestrator of the team in <paramref name="teamFileRecord"/>: the
-    /// record names that pid and a start time that is the process's start time now.
-    /// </summary>
-    public static bool IsRecordedOrchestrator(IProcessTable table, JsonValue teamFileRecord, int pid)
-    {
-        if (!teamFileRecord.IsMap || teamFileRecord.AsObject().Get("orchestrator") is not { IsMap: true } o)
-        {
-            return false;
-        }
-
-        var record = o.AsObject();
-        return record.Get("pid") is { IsNumber: true } recorded && recorded.AsNumber() == pid
-            && record.Get("pid_start") is { IsText: true } start && ProcessIdentity.Same(table, pid, start.AsString());
-    }
-
-    /// <summary>
     /// <paramref name="pid"/> and every ancestor above it short of pid 1, when the walk reaches pid 1; null when it cannot: a link
     /// that cannot be read, a parent pid of 0 on the way, or more than 64 hops.
     /// </summary>

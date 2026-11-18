@@ -70,6 +70,9 @@ public interface IRosterCliServices
     /// <summary>Closes the open backlog row <paramref name="id"/> as shipped at <paramref name="sha"/> (the release watch's own close); the failure, or null. Nothing is closed where none is composed.</summary>
     string? CloseShippedBacklog(string pool, string id, string sha) => null;
 
+    /// <summary>Closes the open backlog row <paramref name="id"/> done with <paramref name="commits"/> and <paramref name="note"/>; the failure, or null. Nothing is closed where none is composed.</summary>
+    string? CloseDoneBacklog(string pool, string id, IReadOnlyList<string> commits, string note) => null;
+
     /// <summary>The backlog row (<c>b&lt;N&gt;</c>) a work id names; null when it names none, or no registry is composed.</summary>
     string? WorkParent(string pool, string team, string id) => null;
 
