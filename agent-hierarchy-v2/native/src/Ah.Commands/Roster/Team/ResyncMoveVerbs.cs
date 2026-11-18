@@ -33,7 +33,7 @@ internal static class ResyncVerb
             return 0;
         }
 
-        var transport = MemberPlanning.Text(team.Member("transport"));
+        var transport = Resync.EffectiveTransport(team);
         if (transport != "herdr")
         {
             c.Out(new JsonObject { ["resynced"] = false, ["reason"] = Resync.TransportNoop(transport) });
@@ -218,7 +218,7 @@ internal static class MoveVerb
             throw new RosterFailure($"move: member {name} has no pane to move");
         }
 
-        var transport = MemberPlanning.Text(team.Member("transport"));
+        var transport = Resync.EffectiveTransport(team);
         if (transport != "herdr")
         {
             c.Out(new JsonObject { ["moved"] = false, ["reason"] = Resync.TransportNoop(transport) });

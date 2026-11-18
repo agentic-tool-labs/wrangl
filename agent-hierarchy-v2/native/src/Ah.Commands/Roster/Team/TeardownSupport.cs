@@ -23,6 +23,9 @@ internal static partial class TeardownSupport
 
     internal static TeamScope ScopeOf(RosterContext c) => new(c.TeamFile);
 
+    /// <summary>Whether a team record names an orchestrator: such a team is kept, empty, when its last member leaves (ah2-97).</summary>
+    internal static bool NamesOrchestrator(JsonValue team) => team.Member("orchestrator") is { IsMap: true };
+
     // ---------------------------------------------------------------- the team records
 
     /// <summary>

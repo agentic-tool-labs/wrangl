@@ -174,8 +174,11 @@ public sealed record Teardown(
 
             var agentCwd = a.Member("cwd") is { IsTruthy: true } c ? JsConvert.ToJsString(c) : null;
             var partsPrefix = JsConvert.ToJsString(parts.Get("prefix"));
+            // ah2-143: a stream member's cwd is a work tree of this repository, whose git root is not the caller's but whose checkout is
             var sameRoot = partsPrefix == prefix
-                && !(agentCwd is not null && (myRoot is null || Config.FindGitRoot(Messages.RealCwd(agentCwd)) != myRoot));
+                && (agentCwd is null
+                    || (myRoot is not null && Config.FindGitRoot(Messages.RealCwd(agentCwd)) == myRoot)
+                    || (myCheckout is not null && CheckoutRoot(Messages.RealCwd(agentCwd)) == myCheckout));
             var stray = false;
             if (!sameRoot)
             {
@@ -241,6 +244,7 @@ public sealed record Teardown(
     {
         ArgumentNullException.ThrowIfNull(tracked);
         var rows = new JsonArray();
+        var orchestrators = OrchestratorSessions(dir, scope);
         foreach (var s in LiveRegistrySlots(dir, scope, context))
         {
             if (s.Member("live") is not { IsTruthy: true })
@@ -249,6 +253,12 @@ public sealed record Teardown(
             }
 
             if (s.Member("name") is { IsText: true } name && tracked.Contains(name.AsString()))
+            {
+                continue;
+            }
+
+            // ah2-50: a team's own Orchestrator session is tracked by the team record, not a member row
+            if (s.Member("session_id") is { IsText: true } sid && orchestrators.Contains(sid.AsString()))
             {
                 continue;
             }
@@ -271,6 +281,25 @@ public sealed record Teardown(
         }
 
         return rows;
+    }
+
+    /// <summary>The session ids the Orchestrator records of teams that are not orphaned name: the scope's team, or every team in <paramref name="dir"/> for the no-team scope.</summary>
+    private HashSet<string> OrchestratorSessions(string dir, TeamScope scope)
+    {
+        var sessions = new HashSet<string>(StringComparer.Ordinal);
+        var teams = scope.NoTeam ? [.. Roster.ListTeamNames(dir)] : new List<string?> { scope.Team };
+        foreach (var team in teams)
+        {
+            // an orphaned team's session is not its orchestrator: reap must still see it live, or it clears a team whose owner lives
+            var record = Roster.ReadTeamRecord(dir, team);
+            if (record.Member("orchestrator")?.Member("session_id") is { IsText: true } sid && sid.AsString().Length > 0
+                && Roster.TeamLifeOf(record) != Ah.Roster.TeamLife.Orphaned)
+            {
+                sessions.Add(sid.AsString());
+            }
+        }
+
+        return sessions;
     }
 
     public JsonObject SourcesField(string dir, TeamScope scope, JsonValue team, LaunchContext context)

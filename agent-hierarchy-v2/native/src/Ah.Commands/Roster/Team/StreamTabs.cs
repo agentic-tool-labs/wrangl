@@ -124,7 +124,7 @@ internal static class StreamTabs
         var liveTabs = new Dictionary<string, Ah.Launch.IHerdr?>(StringComparer.Ordinal);
         try
         {
-            foreach (var herdr in IRosterLaunch.TeamHerdrs(launch, team))
+            foreach (var herdr in IRosterLaunch.TeamHerdrs(launch, team, Ah.Core.Mux.HerdrFlavour.SessionFlavour(c.EnvText)))
             {
                 foreach (var t in herdr.Invoke(["tab", "list"]).Member("result")?.Member("tabs") is { IsArray: true } tabs
                     ? tabs.AsArray()

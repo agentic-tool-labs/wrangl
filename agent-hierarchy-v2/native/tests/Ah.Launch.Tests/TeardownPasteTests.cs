@@ -13,7 +13,7 @@ public sealed class TeardownPasteTests
     private static string Text(JsonValue? v) => v is { } value ? Ah.Core.Json.JsConvert.ToJsString(value) : "undefined";
 
 
-    internal static Teardown TeardownOver(ScenarioRig rig, FakeRowStore? rows = null) => new(
+    internal static Teardown TeardownOver(ScenarioRig rig, FakeRowStore? rows = null, Func<string, string?>? checkoutRoot = null) => new(
         rig.Env,
         rig.Io.Files,
         rig.Config,
@@ -28,7 +28,7 @@ public sealed class TeardownPasteTests
         rig.Sleeper,
         rig.Appserver,
         rows ?? new FakeRowStore(),
-        root => root);
+        checkoutRoot ?? (root => root));
 
     private static JsonObject Target(string name, string pane, bool stray = false)
     {

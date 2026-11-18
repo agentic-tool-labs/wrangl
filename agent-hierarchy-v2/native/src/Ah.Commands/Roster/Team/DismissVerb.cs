@@ -368,7 +368,7 @@ internal static class DismissVerb
                 fresh => fresh.Get("members") is { IsArray: true } list
                     ? list.AsArray().Where(m => MemberPlanning.Text(m.Member("name")) != name).ToList()
                     : [],
-                keepFile: own && c.LaneActor,
+                keepFile: own && (c.LaneActor || TeardownSupport.NamesOrchestrator(fileTeam)),
                 journal: own ? journal : null);
             if (update.Cleared)
             {
@@ -555,7 +555,7 @@ internal static class DismissVerb
         plan["team_id"] = team.Member("team_id") ?? JsonValue.Null;
         var others = Members(team).Where(m => MemberPlanning.Text(m.Member("name")) != name).Select(m => MemberPlanning.JsConvertText(m.Member("name")));
         plan["remaining"] = TeardownSupport.Strings(others);
-        if (Members(team).All(m => MemberPlanning.Text(m.Member("name")) == name))
+        if (Members(team).All(m => MemberPlanning.Text(m.Member("name")) == name) && !c.LaneActor && !TeardownSupport.NamesOrchestrator(team))
         {
             plan["team_will_be_removed"] = true;
         }

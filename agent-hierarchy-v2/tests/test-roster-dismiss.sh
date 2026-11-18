@@ -178,7 +178,7 @@ check "12: no active team: exit 0, dismissed:false reason:no active team and no 
   '[ "$RC" -eq 0 ] && echo "$OUT" | grep -q "\"dismissed\": false" && echo "$OUT" | grep -q "\"reason\": \"no active team and no live peers\""'
 
 # ===========================================================================
-# 13. Last member: team_empty:true, team_removed:true, and team.json is removed (the team ends).
+# 13. Last member: team_empty:true; a record naming an orchestrator is kept with no members (ah2-97 D1).
 # ===========================================================================
 mkdir -p "$HIER_DIR"
 ah_seed_team "$TEAM_FILE" <<EOF
@@ -190,8 +190,8 @@ EOF
 ah_test_prove_self orchestrator myrepo "$TEAM_FILE" > /dev/null
 run untrack myrepo-architect --commit --keep-sessions
 check "13: dismissing the only member: team_empty true" 'echo "$OUT" | grep -q "\"team_empty\": true"'
-check "13: team.json is removed and the output reports team_removed:true" \
-  '! ah_team_stored "$TEAM_FILE" && echo "$OUT" | grep -q "\"team_removed\": true"'
+check "13: team.json is kept with no members and the output has no team_removed" \
+  'ah_team_doc "$TEAM_FILE" | grep -Eq "\"members\": ?\[\]" && ! echo "$OUT" | grep -q "\"team_removed\""'
 
 # ===========================================================================
 # 14/15/16. --also-config: happy path, ordinal-shift warning, config-miss non-fatal.
@@ -265,8 +265,8 @@ run untrack myrepo-reviewer --commit --keep-sessions --also-config
 check "16: also-config miss: exit 0, untracked true, config.removed false with a reason" \
   '[ "$RC" -eq 0 ] && echo "$OUT" | grep -q "\"untracked\": true" && echo "$OUT" | grep -q "\"removed\": false"'
 check "16: stderr says the config was not changed" 'echo "$OUT" | grep -q "the config was not changed"'
-check "16: team.json IS modified (its only member removed, so the file is removed and team_removed:true)" \
-  '! ah_team_stored "$TEAM_FILE" && echo "$OUT" | grep -q "\"team_removed\": true"'
+check "16: team.json IS modified (its only member removed; kept with no members, no team_removed)" \
+  'ah_team_doc "$TEAM_FILE" | grep -Eq "\"members\": ?\[\]" && ! echo "$OUT" | grep -q "\"team_removed\""'
 
 # ===========================================================================
 # 17. Flag misuse.
@@ -313,8 +313,8 @@ run create --team named1 --commit --verified '[{"name":"named1-reviewer","role":
 check "20 setup: create --team named1 --commit succeeds" '[ "$RC" -eq 0 ]'
 run untrack named1-reviewer --commit --keep-sessions --team named1
 check "20: dismiss --team named1 --commit succeeds" '[ "$RC" -eq 0 ]'
-check "20: teams/named1.json now has no members, so it is removed and team_removed:true" \
-  '! ah_team_stored "$HIER_DIR/teams/named1.json" && echo "$OUT" | grep -q "\"team_removed\": true"'
+check "20: teams/named1.json now has no members and is kept, with no team_removed" \
+  'ah_team_doc "$HIER_DIR/teams/named1.json" | grep -Eq "\"members\": ?\[\]" && ! echo "$OUT" | grep -q "\"team_removed\""'
 check "20: default team.json untouched" '[ "$(ah_team_doc "$TEAM_FILE")" = "$BEFORE20" ]'
 
 # ===========================================================================

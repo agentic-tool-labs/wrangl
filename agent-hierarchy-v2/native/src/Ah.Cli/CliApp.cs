@@ -206,7 +206,9 @@ internal static class CliApp
         // `ah ahd heal` is the one ahd verb reachable through ah (crash-resume §14.11): it judges a daemon that may never answer
         var heal = args is ["ahd", "heal", ..];
         // `ah where` contacts no daemon, as `ahd where` (ah2-122 D2)
-        if (!heal && args[0] is not ("hook" or "db" or "proc" or "admin" or "gate" or "push-guard" or "where") && context.Services is { } upgradeServices)
+        // `ah view events` is the herdr mod's poll: a read never replaces or drains the daemon (ah2-123 D1)
+        var viewEvents = args is ["view", "events", ..];
+        if (!heal && !viewEvents && args[0] is not ("hook" or "db" or "proc" or "admin" or "gate" or "push-guard" or "where") && context.Services is { } upgradeServices)
         {
             SchemaUpgradeWait.Run(context.Env, () => upgradeServices.Value.Daemon, stderr);
         }

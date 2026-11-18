@@ -74,22 +74,26 @@ public sealed partial class RosterTeamVerbTests
         var result = JsonText.Parse(stdout);
         Assert.True(result.Member("closed")!.Value.AsBool());
         Assert.Equal(3, result.Member("results")!.Value.AsArray().Count);
-        Assert.False(_sandbox.TeamExists(TeamPath("proj")));
+        Assert.True(_sandbox.TeamExists(TeamPath("proj")));
     }
 
     [Fact]
-    public void TheMemberThatEmptiesTheTeamReportsTheTeamRemovedAndTheOthersDoNot()
+    public void DismissingTheLastMembersKeepsTheOwnedTeamWithItsFieldsAndNoMembers()
     {
         ArrangeTrio();
+        var before = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
         var token = TokenOf(PlanMany(Trio).Out);
 
         var (code, stdout, stderr) = CloseMany(token, Trio);
 
         Assert.True(code == 0, stderr);
-        var rows = JsonText.Parse(stdout).Member("results")!.Value.AsArray().ToList();
-        Assert.Null(rows[0].Member("team_removed"));
-        Assert.Null(rows[1].Member("team_removed"));
-        Assert.True(rows[2].Member("team_removed")!.Value.AsBool());
+        Assert.All(JsonText.Parse(stdout).Member("results")!.Value.AsArray(), row => Assert.Null(row.Member("team_removed")));
+        var kept = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
+        Assert.Empty(kept.Member("members")!.Value.AsArray());
+        foreach (var field in new[] { "team_id", "transport", "created", "orchestrator" })
+        {
+            Assert.Equal(JsonText.Stringify(before.Member(field)!.Value, 0), JsonText.Stringify(kept.Member(field)!.Value, 0));
+        }
     }
 
     [Fact]

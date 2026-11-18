@@ -40,6 +40,10 @@ public static class HerdrFlavour
     public static string OfTeam(JsonValue? team) =>
         team is { IsMap: true } t && t.Member(Field) is { IsText: true } f && f.AsString() == Core ? Core : Tui;
 
+    /// <summary>The flavour a team record names, or null when it names none: unlike <see cref="OfTeam"/>, an untagged record is unknown, not <see cref="Tui"/>.</summary>
+    public static string? RecordedOfTeam(JsonValue? team) =>
+        team is { IsMap: true } t && t.Member(Field) is { IsText: true } f && f.AsString() is Tui or Core ? f.AsString() : null;
+
     /// <summary>
     /// The flavour of the server an existing agent lives on: its registration's <see cref="Field"/> when present, else its member
     /// row's (<paramref name="member"/>, stamped at spawn), else its team's (<see cref="OfTeam"/>) when it belongs to one, else <paramref name="env"/>.

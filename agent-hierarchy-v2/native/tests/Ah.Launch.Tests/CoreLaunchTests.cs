@@ -106,6 +106,39 @@ public sealed class CoreLaunchTests
     }
 
     [Fact]
+    public void TheTeardownArmMatchesAStreamMemberInAWorkTreeButNotASamePrefixAgentOfAnotherRepository()
+    {
+        var rig = CoreRig();
+        var worktree = rig.Cwd + "/.claude/worktrees/s1";
+        var other = rig.Sandbox.Root + "/other";
+        Directory.CreateDirectory(worktree);
+        File.WriteAllText(worktree + "/.git", "gitdir: " + rig.Cwd + "/.git/worktrees/s1\n");
+        Directory.CreateDirectory(other + "/.git");
+        var hc = rig.Sandbox.Root + "/bin/hc";
+        File.WriteAllText(hc, "#!/bin/sh\n");
+        File.SetUnixFileMode(hc, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var terminals = new Dictionary<string, (string Name, string Cwd)> { ["t2"] = ("alpha-implementor", worktree), ["t3"] = ("alpha-reviewer", other) };
+        rig.Mux.Override = request => request.Argv switch
+        {
+            ["hc", "ls", ..] => FakeMux.Out(Ls([.. terminals.Keys])),
+            ["hc", "get", var t, ..] when terminals.TryGetValue(t, out var a) =>
+                FakeMux.Out($"{{\"address\":\"{t}\",\"state\":\"live\",\"cwd\":\"{a.Cwd}\",\"labels\":{{\"ah.name\":\"{a.Name}\"}}}}"),
+            ["hc", ..] => FakeMux.Out("{}"),
+            _ => null,
+        };
+
+        // the checkout root the real config reads from a work tree's .git back-pointer (paths arrive resolved, so matched by their tail)
+        string? Checkout(string path) => path.Contains("/other", StringComparison.Ordinal) ? other : path.Contains("/proj", StringComparison.Ordinal) ? rig.Cwd : null;
+        var arm = TeardownPasteTests.TeardownOver(rig, checkoutRoot: Checkout).HerdrArmMatches(rig.Sandbox.Root + "/ah", new TeamScope(null, NoTeam: true), rig.Context);
+
+        Assert.True(arm.Ok, arm.Reason);
+        Assert.Equal(2, arm.Agents.Count);
+        var matched = Assert.Single(arm.Matched);
+        Assert.Equal("t2", matched.Member("pane_id")?.AsString());
+        Assert.True(matched.Member("stray") is null, JsonText.Stringify(matched, 0));
+    }
+
+    [Fact]
     public void AHerdrMemberWithOnlyASpawnNonceIsClosableAndOneWithNeitherIsNot()
     {
         var teardown = TeardownPasteTests.TeardownOver(CoreRig());

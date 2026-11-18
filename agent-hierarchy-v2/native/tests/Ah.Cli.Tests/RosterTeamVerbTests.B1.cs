@@ -177,14 +177,14 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
-    public void NegativeB1AnUnmarkedOwnerUntrackingTheLastDeadMemberStillRemovesTheFile()
+    public void NegativeB1AnUnmarkedOwnerUntrackingTheLastDeadMemberKeepsTheFileEmpty()
     {
         ArrangeB1(null, live: false);
 
         var (code, stdout, stderr) = Roster("untrack", Impl, "--team", ChildName, "--commit");
 
         Assert.True(code == 0, stdout + stderr);
-        Assert.False(_sandbox.TeamExists(TeamPath(ChildName)));
+        Assert.Empty(JsonText.Parse(_sandbox.TeamText(TeamPath(ChildName))).Member("members")!.Value.AsArray());
     }
 
     [Theory]
