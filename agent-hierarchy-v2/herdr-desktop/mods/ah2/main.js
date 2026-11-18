@@ -79,7 +79,7 @@ export default class Ah2 extends View {
     this.sliceGen = 0;
     if (this.desk || this.view === "qa" || this.view === "board") qaInit(this); // the board's waiting cards are Q&A cards
     if (this.desk || this.view === "board") boardInit(this);
-    if (this.desk || this.view === "graph") graphInit(this); // the shown team, the scrubber and the zoom (graph-view.js); once, never per switch
+    if (this.desk || this.view === "graph") graphInit(this, cx); // the shown team, the scrubber and the zoom (graph-view.js); once, never per switch
     // The Desk window says it is open, and on which tab (cleared in close): the peek drawer and every opener read it.
     if (this.desk) setShared(DESK_WINDOW_KEY, { overlay: (this.overlay = props()?.overlay ?? null), view: this.view, max: this.max });
     if (this.view === "settings") checkUpdate(); // fresh versions while the dialog is open

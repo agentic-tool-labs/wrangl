@@ -4,6 +4,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.12] - 2026-11-18
+
+### Fixed
+
+- **The herdr desktop Graph opens again.** It failed with "This view could not be re-rendered" because it made focus
+  handles while drawing. They are now made when the view starts and when a node is clicked.
+- **The Orchestrator's own permission prompts no longer raise alerts.** 2.0.11 recorded each one as a blocked member,
+  so every prompt in the user's own terminal raised a "waiting on a permission" alert. Members' prompts still do.
+
 ## [2.0.11] - 2026-11-18
 
 ### Fixed
