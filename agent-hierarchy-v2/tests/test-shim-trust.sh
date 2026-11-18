@@ -285,11 +285,24 @@ process.exit(h.hookEventName === "SessionStart" && typeof d.systemMessage === "s
   && d.systemMessage.includes("not built") && d.systemMessage.includes(want) && d.systemMessage.includes("in a terminal")
   && !("permissionDecision" in h) ? 0 : 1);' "$2"
 }
+# bridge_owes <json> <NAME>: the notice matches hooks/register.ts's `const NAME = /…/`, the pattern the mod owes a SessionStart by (drift guard)
+bridge_owes() {
+  printf %s "$1" | node -e '
+const src = require("fs").readFileSync(process.argv[1], "utf8");
+const m = src.match(new RegExp("^const " + process.argv[2] + " = /(.+)/$", "m"));
+const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
+process.exit(m && new RegExp(m[1]).test(d.hookSpecificOutput.additionalContext) ? 0 : 1);' "$PLUGIN/hooks/register.ts" "$2"
+}
 shim_run sessionstart
-check "sessionstart, bare session, no binary: no output, one row" '[ $RC = 0 ] && [ -z "$OUT" ] && [ "$(wc -l < "$NLOG" | tr -d " ")" = 1 ] && grep -q "\"hook\":\"sessionstart\"" "$NLOG"'
+check "sessionstart, bare session, no binary: the bridge owes it (NOT_BUILT matches the notice)" 'bridge_owes "$OUT" NOT_BUILT'
+check "sessionstart, bare session, no binary: the not-built notice with the resolved root, exit 0, one row" '[ $RC = 0 ] && notice_ok "$OUT" "$PLUG_REAL" && [ "$(wc -l < "$NLOG" | tr -d " ")" = 1 ] && grep -q "\"hook\":\"sessionstart\"" "$NLOG"'
+check "sessionstart, bare session, no binary: the notice says the session is unregistered and to send another prompt" 'printf %s "$OUT" | grep -q "not registered or tracked and has no Orchestrator directive" && printf %s "$OUT" | grep -q "or send another prompt"'
 shim_run sessionstart WRANGL_TEAM_FILE=/x/t.json
 check "sessionstart, WRANGL_TEAM_FILE, no binary: the not-built notice with the resolved root, exit 0" '[ $RC = 0 ] && notice_ok "$OUT" "$PLUG_REAL"'
 check "sessionstart, WRANGL_TEAM_FILE, no binary: the notice claims no blocking" '! printf %s "$OUT" | grep -qi "block"'
+check "sessionstart, WRANGL_TEAM_FILE, no binary: a member keeps its own text, not the unregistered one (negative)" '! printf %s "$OUT" | grep -q "not registered"'
+check "sessionstart, WRANGL_TEAM_FILE, no binary: the bridge owes it (NOT_BUILT matches the member notice)" 'bridge_owes "$OUT" NOT_BUILT'
+check "the refused pattern does not match the not-built notice (negative)" '! bridge_owes "$OUT" REFUSED'
 check "sessionstart, WRANGL_TEAM_FILE, no binary: still exactly one hook-errors row" '[ "$(wc -l < "$NLOG" | tr -d " ")" = 1 ] && grep -q "\"hook\":\"sessionstart\"" "$NLOG"'
 shim_run sessionstart AH_MEMBER_NAME=m1
 check "sessionstart, AH_MEMBER_NAME, no binary: the not-built notice" '[ $RC = 0 ] && notice_ok "$OUT" "$PLUG_REAL"'
@@ -317,6 +330,19 @@ for variant in nobin bin; do
   chmod 755 "$PLUG/bin/ahd-pw-$variant"
 done
 check "the passwd-home substitution took in both copies" 'grep -q "^passwd=$NOBIN_PW\$" "$PLUG/bin/ahd-pw-nobin" && grep -q "^passwd=$PW\$" "$PLUG/bin/ahd-pw-bin"'
+# sessionstart on a refused home with no binary: every session hears the refusal's reason and fix; another unit stays silent
+sed "s#^ah_load_passwd_home && passwd=\$_ah_ph\$#passwd=$NOBIN_PW#" "$PLUG/bin/ah-hook" > "$PLUG/bin/ah-hook-pw-nobin"
+check "the ah-hook passwd-home substitution took" 'grep -q "^passwd=$NOBIN_PW\$" "$PLUG/bin/ah-hook-pw-nobin"'
+RLOG="$NOBIN_PW/.claude/ah2/hierarchy/hook-errors.jsonl"
+OUT=$(env -i PATH=/usr/bin:/bin HOME="$T/home" AH_HOME="$OTHER" sh "$PLUG/bin/ah-hook-pw-nobin" sessionstart </dev/null 2>/dev/null); RC=$?
+check "sessionstart, refused home, no binary: the notice is the refusal's reason and fix, exit 0, one row" '[ $RC = 0 ] && printf %s "$OUT" | node -e "
+const d = JSON.parse(require(\"fs\").readFileSync(0, \"utf8\"));
+process.exit(d.systemMessage === d.hookSpecificOutput.additionalContext && d.hookSpecificOutput.hookEventName === \"SessionStart\" && d.systemMessage === process.argv[1] ? 0 : 1);" "$MSG" && [ "$(wc -l < "$RLOG" | tr -d " ")" = 1 ]'
+check "sessionstart, refused home, no binary: the bridge owes it (REFUSED matches the notice)" 'bridge_owes "$OUT" REFUSED'
+rm -rf "$NOBIN_PW/.claude"
+OUT=$(env -i PATH=/usr/bin:/bin HOME="$T/home" AH_HOME="$OTHER" sh "$PLUG/bin/ah-hook-pw-nobin" pretooluse-chain </dev/null 2>/dev/null); RC=$?
+check "pretooluse-chain, refused home, no binary: still silent with one row (negative)" '[ $RC = 0 ] && [ -z "$OUT" ] && [ "$(wc -l < "$RLOG" | tr -d " ")" = 1 ]'
+rm -rf "$NOBIN_PW/.claude"
 rm -f "$RECORD"
 OUT=$(env -u AH_TEST AH_HOME="$SBX" PATH="$T/fakenode:/usr/bin:/bin" sh "$PLUG/bin/ahd-pw-nobin" where </dev/null 2>"$T/err"); RC=$?; ERR=$(cat "$T/err")
 check "exempt verb, refused home, no binary: exit 2 with the reason and the install hint" '[ $RC = 2 ] && [ -z "$OUT" ] && printf %s "$ERR" | grep -q "is not the default home and is not trusted" && printf %s "$ERR" | grep -q "no native ahd binary could be run"'

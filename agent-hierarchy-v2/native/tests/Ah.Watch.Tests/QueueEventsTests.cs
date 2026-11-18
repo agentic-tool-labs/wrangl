@@ -38,6 +38,49 @@ public sealed class QueueEventsTests
         return events;
     }
 
+    private static ChecklistEntry After(ChecklistEntry entry, string predecessor) => entry with { Item = entry.Item with { After = predecessor } };
+
+    [Fact]
+    public void AnItemWaitingOnAnOpenItemDrawsNoStaffingAlarmAndIsToldOnceItsPredecessorIsDone()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        IReadOnlyList<WatchEvent> Tick(double minutes, params ChecklistEntry[] items) =>
+            Unstaffed(minutes, HierarchyModule.ChecklistWithWaiting(items), told);
+
+        // A open: the unstaffed watch tells A, and B is not told on the next tick either
+        var first = Tick(11, Item("a"), After(Item("b"), "_run/a"));
+        Assert.Equal("_run/a", Assert.Single(first, static e => e.Name == "queue-stall-unstaffed").Data.Str("item"));
+        Assert.Contains("or `ah roster checklist set _run/a --after <item>` if it must wait for another", first[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain(Tick(12, Item("a"), After(Item("b"), "_run/a")), static e => e.Data.Str("item") == "_run/b");
+
+        // negative: A done, so B no longer waits and is told
+        var after = Tick(13, Item("a", state: "done"), After(Item("b"), "_run/a"));
+        Assert.Equal("_run/b", Assert.Single(after, static e => e.Name == "queue-stall-unstaffed").Data.Str("item"));
+    }
+
+    [Fact]
+    public void AnItemWaitingOnAnOpenItemIsNotOfferedToAnIdleMemberAndIsOnceItsPredecessorIsDropped()
+    {
+        var team = Team(Member("impl-1"));
+
+        var waiting = Run(11, HierarchyModule.ChecklistWithWaiting([Item("a", state: "blocked"), After(Item("b"), "_run/a")]), team);
+        var dropped = Run(11, HierarchyModule.ChecklistWithWaiting([Item("a", state: "dropped"), After(Item("b"), "_run/a")]), team);
+
+        Assert.DoesNotContain(waiting, static e => e.Name == "queue-stall");
+        Assert.Equal("_run/b", Assert.Single(dropped, static e => e.Name == "queue-stall").Data.Str("item"));
+    }
+
+    private static IReadOnlyList<WatchEvent> Unstaffed(double minutes, IReadOnlyList<ChecklistEntry> entries, HashSet<string> told)
+    {
+        var events = QueueEvents.Evaluate("s1", Ms(minutes), [Team()], [], _ => entries, _ => false, told, out var keys, budgetOf: _ => null);
+        foreach (var key in keys.Values)
+        {
+            _ = told.Add(key);
+        }
+
+        return events;
+    }
+
     [Fact]
     public void ThreeQueuedItemsWithIdleMembersOfTheirRolesRaiseThreeQueueStallEventsNamingEachItemAndMember()
     {

@@ -1,5 +1,5 @@
 import type { Register } from 'claude-code'
-import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
+import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, HOOKS_OFF_TEXT, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
 
 // A tone to Text props: bad and warn take their status's theme key, the same key their glyph takes, and bad is also bold
 // so it does not rest on color alone; work draws plain and any other tone draws dim.
@@ -953,8 +953,9 @@ export const register: Register = (on, options) => {
       if ((heldWhy.value ?? null) !== why) await $.state.set({ plugin: 'wrangl', key: 'why' }, why)
       const held = await $.state.get({ plugin: 'wrangl', key: 'view' })
       if (JSON.stringify(held.value) !== JSON.stringify(view)) await $.state.set({ plugin: 'wrangl', key: 'view' }, view)
-      // A held session with unread mail says so first (ah2-180 D2); it gives way to the usual entry once held clears.
-      const text = heldText(mailRun?.st.held === true, mailRun?.st.unread) ?? statusText(doc, now, id, statusEntry)
+      // Hooks off says so first (ah2-206 D5); then a held session with unread mail (ah2-180 D2); then the usual entry.
+      const off = (await $.state.get({ plugin: 'wrangl', key: 'hooksOff' })).value === true
+      const text = (off ? HOOKS_OFF_TEXT : undefined) ?? heldText(mailRun?.st.held === true, mailRun?.st.unread) ?? statusText(doc, now, id, statusEntry)
       if (text !== shown) { shown = text; $.ui.status(text) }
       // Each toast key shows at most once per session. The first view a session sees only seeds the set, so old
       // events are not replayed. Nothing changes on a tick with no view: an unreadable or expired file for one

@@ -31,8 +31,11 @@ public static partial class HierarchyModule
             }
         }
 
-        return entries;
+        return ChecklistRules.WithWaiting(entries);
     }
+
+    /// <summary><paramref name="entries"/> with each one's <see cref="ChecklistEntry.WaitingOn"/> computed from the others, as <see cref="ChecklistEntries"/> returns them.</summary>
+    public static IReadOnlyList<ChecklistEntry> ChecklistWithWaiting(IReadOnlyList<ChecklistEntry> entries) => ChecklistRules.WithWaiting(entries);
 
     /// <summary>The queued items a live idle member of their role could take now, per the stall rules.</summary>
     public static IReadOnlyList<QueueEntry> QueueStalled(

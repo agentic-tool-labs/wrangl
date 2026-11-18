@@ -18,6 +18,9 @@ internal static class QueueEvents
     internal const string ReportWaitingName = "report-waiting";
     internal const string StillWaitingName = "work-still-waiting";
 
+    /// <summary>The other way out a staffing alarm about <paramref name="itemKey"/> offers (ah2-209 D4, Amendment 1): only the predecessor is left as <c>&lt;item&gt;</c>.</summary>
+    internal static string AfterWayOut(string itemKey) => $"or `ah roster checklist set {itemKey} --after <item>` if it must wait for another";
+
     /// <summary>How often <c>work-still-waiting</c> lists again what was told and still holds (ah2-180 A3).</summary>
     internal const double LeadRemindMs = 20 * 60_000;
 
@@ -225,7 +228,7 @@ internal static class QueueEvents
                     null,
                     "QUEUE-STALL",
                     $"ahd alarm: queue-stall — dispatch {itemKey} to {member} (queued {Minutes(now - stalled.QueuedSinceMs)}m, {member} idle {idleFor}m)\n"
-                    + "Operational call (O3): dispatch it, or mark the item blocked/waiting_user with a note.",
+                    + "Operational call (O3): dispatch it, or mark the item blocked/waiting_user with a note, " + AfterWayOut(itemKey) + ".",
                     new JsonObject { ["request_id"] = JsonValue.Null, ["item"] = itemKey, ["member"] = member })
                 { Name = StallName, Team = team.Name };
                 events.Add(stall);
@@ -255,7 +258,7 @@ internal static class QueueEvents
                         null,
                         "QUEUE-STALL-UNSTAFFED",
                         $"ahd alarm: queue-stall-unstaffed — {spawn} (queued {Minutes(now - unstaffed.QueuedSinceMs)}m, no live {unstaffed.Role}, team live {live} of {(budget is { } b ? b.ToString(System.Globalization.CultureInfo.InvariantCulture) : "max")})\n"
-                        + $"Operational call (O2): {spawn}, or mark the item blocked/waiting_user with a note. (cadence step 3 applies: one new stream per tick)",
+                        + $"Operational call (O2): {spawn}, or mark the item blocked/waiting_user with a note, {AfterWayOut(itemKey)}. (cadence step 3 applies: one new stream per tick)",
                         new JsonObject { ["request_id"] = JsonValue.Null, ["item"] = itemKey, ["role"] = unstaffed.Role, ["live"] = live, ["budget"] = limit })
                     { Name = UnstaffedName, Team = team.Name };
                     events.Add(unstaffedEvent);

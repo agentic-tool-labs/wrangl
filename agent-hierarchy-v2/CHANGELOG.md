@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.16] - 2026-11-18
+
+### Added
+
+- **The Wrangl pane in herdr desktop is a tree.** Each team shows its Orchestrator at the root, its members under it and
+  each lane as a nested subtree, with connector lines and a control to fold a branch. Every row has a role icon in the
+  role's colour and the same state mark the Graph uses, so a role and its state look the same in both places.
+- **Checklist items can be ordered.** `ah roster checklist add ... --after <item>` (or `--after last` for the item just
+  added) and `checklist set <item> --after <item>` say an item waits for another. A waiting item shows what it waits on,
+  becomes ready when that item is done or dropped, and draws no staffing alarm meanwhile. The staffing alarm's text also
+  offers `--after` as the way out. Nothing is blocked: a waiting item can still be dispatched.
+
+### Fixed
+
+- **A session whose hooks are off is told so.** When the native binary is not built, or the state home is refused,
+  every session is told at start, not only a team member, and the status line says "Wrangl: not built, hooks off".
+  The session start is then retried on each prompt, so once the binary works the session gets its directive and is
+  registered without a restart.
+- **`checklist set --state` shows what was asked.** When the state is shown under another name, the answer carries both
+  and says so in one line (for example, `in_progress` is shown as `dispatched`).
+
 ## [2.0.15] - 2026-11-18
 
 ### Added

@@ -187,7 +187,8 @@ internal static class TimingVerb
 
         // ponytail: no slot read, so a member blocked on a test job counts as idle and holds S-build back; read the slot files if that misfires
         var (members, dispatches) = Ah.Watch.WatchModule.QueueFactsFromFiles(c.Services.Hierarchy, record, c.Dir, team, static _ => false);
-        return HierarchyModule.QueueAll(HierarchyModule.ChecklistEntries(c.Services.Hierarchy.Progress, c.ProgressPool, c.ProgressTeam), members, dispatches, nowMs);
+        // ah2-209 D3: an item waiting on another is not ready for a builder or a reviewer
+        return HierarchyModule.QueueAll([.. HierarchyModule.ChecklistEntries(c.Services.Hierarchy.Progress, c.ProgressPool, c.ProgressTeam).Where(static e => e.WaitingOn is null)], members, dispatches, nowMs);
     }
 
     private static JsonArray Texts(IEnumerable<string> texts)

@@ -12,14 +12,14 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows } from "./model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
-import { graphSubs, leaveGraph } from "./graph-model.js";
-import { graphView, graphInit } from "./graph-view.js";
+import { graphSubs, leaveGraph, rowMark } from "./graph-model.js";
+import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
 import { markCell } from "./marks.js";
@@ -35,6 +35,12 @@ const WAIT_S = "25"; // fits inside the 35 s exec timeout fetch passes
 const BACKOFF_MS = [2000, 4000, 8000, 16000, 30000];
 const MONO = "Geist Mono"; // ships with Herdr; gives ages and counts even digit widths (GPUI has no tabular-nums)
 const AGENT_STATE = { working: "working", blocked: "blocked", done: "done", idle: "idle" };
+// ah2-207 D2/D3: the tree's indent step (one connector column, and the disclosure's column) and the roles with an icon of their own
+// (role-<role>.svg; any other role draws role-member.svg). The folds live in Herdr's shared store, keyed "<team id>|<node key>".
+const STEP = 16;
+const TREE_KEY = "ah2-sidebar-tree";
+const ROLE_ICONS = new Set(["orchestrator", "sub-orchestrator", "deputy-chief", "ultra-advisor", "architect", "implementor", "reviewer", "qa", "ux-engineer", "docs-writer", "task-runner", "backlog-groomer"]);
+const roleIcon = (role) => `mods/ah2/role-${ROLE_ICONS.has(role) ? role : "member"}.svg`;
 
 const openTeam = (id) => openOverlay({ mod: "ah2", props: { view: "sitrep", team: id }, kind: "window", key: "ah2-sitrep", width: 620, height: 600 });
 
@@ -466,19 +472,21 @@ export default class Ah2 extends View {
     const linked = new Set();
     const rows = [];
 
-    const team = (tm, lane) => {
-      const pad = lane ? 22 : 8;
+    // ah2-207: each team draws its header, then its tree (model.js teamTree, treeRows); a lane's header is a node of its parent's tree.
+    const lt = isLight(t.surface);
+    const folds = shared(TREE_KEY) ?? {};
+    const header = (tm, lane, lead) => {
       // ah2-53: a team with a goal of its own shows it as a second muted line under the name, cut by the ellipsis; the row grows to fit it
       const goalTip = tm.goal ? ` · goal: ${tm.goalFull}` : "";
-      rows.push(this.ring(t, Button.new(`team-${tm.id}`), t.chrome)
+      const row = this.ring(t, Button.new(`team-${tm.id}`), t.chrome)
         .when(!tm.goal, (el) => el.h(30)).when(Boolean(tm.goal), (el) => el.min_h(30).py(4))
-        .pl(pad).pr(8).gap(4).flex().items_center().rounded(6).cursor_pointer()
+        .when(lane, (el) => el.flex_1().min_w(0).pl(4)).when(!lane, (el) => el.pl(8))
+        .pr(8).gap(4).flex().items_center().rounded(6).cursor_pointer()
         .text_size(11).font_semibold().text_color(t.muted)
         .hover((s) => s.bg(t.hover).text_color(t.foreground))
         .tooltip(`Open the ${tm.name} sitrep${counts(tm) ? ` · ${counts(tm)}` : ""}${goalTip}`)
         .accessibility_label(`${tm.name}${lane ? ", lane" : ""}. ${counts(tm) || "nothing running"}${goalTip}. Open its sitrep`)
         .on_click(() => openTeam(tm.id))
-        .when(lane, (el) => el.child(div().flex_none().text_color(t.dim).child("↳")))
         // the name keeps its width: working/blocked shrinks first (its full text is in the label), needs you never does
         .child(tm.goal
           ? v_flex().flex_auto().min_w(0)
@@ -507,18 +515,41 @@ export default class Ah2 extends View {
           .accessibility_label(`Dismiss team ${tm.name}`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
           .on_click(() => openDismiss(tm.id, tm.name, this.workRootOf(tm.id)))
-          .child(svg("mods/ah2/x.svg").size(11))))
-      );
-      const alert = (a) => h_flex().id(`alert-${tm.id}-${rows.length}`).ml(pad + 26).mt(2).mb(4).mr(8).gap(4).items_center().text_size(11)
+          .child(svg("mods/ah2/x.svg").size(11))));
+      return lead ? div().flex().w_full().gap(4).child(lead).child(row) : row;
+    };
+    // r: the tree row the alert sits under, whose lines run on through it; null under a team's header
+    const alert = (id, a, r) => {
+      const el = h_flex().id(`alert-${id}-${rows.length}`).flex_1().min_w(0).ml(r ? 5 : 34).mt(2).mb(4).mr(8).gap(4).items_center().text_size(11)
         .tooltip(a.text).accessibility_label(`Alert: ${a.text}`)
         .child(div().flex_none().text_color(t.blocked).child("⚠"))
         .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(a.text));
-      // ah2-133 D4: a team-level alert (Waiting on you) sits under the team header, above the members, so it never reads as the last member's
-      for (const a of tm.alerts) if (!a.member) rows.push(alert(a));
-      // Collapsed lanes keep their header row (and alerts); their members are not drawn.
-      if (!(lane && set.lanes === "collapsed")) for (const mb of tm.members) rows.push(this.member(t, mb, pad + 6, terminalOf, order, linked));
-      for (const a of tm.alerts) if (a.member) rows.push(alert(a));
-      for (const l of tm.lanes) team(l, true);
+      return r ? div().flex().w_full().gap(4).child(this.treeLead(t, r, null)).child(el) : el;
+    };
+    // A team's own alerts sit under its header, so they never read as a member's (ah2-133 D4); so does a member alert whose member has no row.
+    const teamAlerts = (tm, r) => {
+      const keys = new Set(tm.members.map((mb) => mb.key));
+      for (const a of tm.alerts) if (!a.member || !keys.has(a.member)) rows.push(alert(tm.id, a, r));
+    };
+    // A folded node's hidden members keep their alerts in sight, under it (a collapsed lane always kept them).
+    const hidden = (n) => n.children.flatMap((c) => [...(c.alerts ?? []), ...(c.kind === "lane" ? c.team.alerts.filter((a) => !a.member) : []), ...hidden(c)]);
+    const team = (tm) => {
+      rows.push(header(tm, false, null));
+      teamAlerts(tm, null);
+      // a node starts open, a lane closed under the Lanes: Collapsed setting, until its disclosure is used (kept per team and node)
+      const open = (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed");
+      for (const r of treeRows(teamTree(tm), open)) {
+        const n = r.node;
+        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.name);
+        if (n.kind === "lane") {
+          rows.push(header(n.team, true, lead));
+          teamAlerts(n.team, r);
+        } else {
+          rows.push(this.member(t, n, lead, lt, terminalOf, order, linked));
+          for (const a of n.alerts) rows.push(alert(tm.id, a, r));
+        }
+        if (r.kids && !r.open) for (const a of hidden(n)) rows.push(alert(tm.id, a, r));
+      }
     };
 
     let body;
@@ -527,7 +558,7 @@ export default class Ah2 extends View {
     else if (m.count === 0) body = [this.note(t, "No teams running.")];
     else if (teams.length === 0) body = [this.note(t, `${m.count === 1 ? "The running team is" : `All ${m.count} running teams are`} hidden.`, "Show them in Wrangl settings (the … menu).")];
     else {
-      teams.forEach((tm) => team(tm, false));
+      teams.forEach((tm) => team(tm));
       body = rows;
     }
 
@@ -575,26 +606,65 @@ export default class Ah2 extends View {
         .text_size(11).text_color(t.muted).child(div().truncate().child(foot)));
   }
 
-  member(t, mb, pad, terminalOf, order, linked) {
+  // A tree row's lead (ah2-207 D2): a column per level, each with its ancestor's rail where that runs on, the row's own elbow from its
+  // parent's line, then the disclosure (a row with children) or, at a leaf, the elbow carried through to the icon. Lines in theme().border.
+  // The lead stretches to its row's height, so the lines run on unbroken. The disclosure is 16 x 24, its centre on the line to its
+  // children, and stands clear of the row's own target (WCAG 2.2 target spacing). `fold` null: the lead of an alert under the row,
+  // only the lines that run on through it (the row's own, and the one down to its children when they show).
+  treeLead(t, r, fold, name = "") {
+    const line = () => div().absolute().bg(t.border);
+    const deep = r.node.depth > 0;
+    const cols = fold === null
+      ? [...(deep ? [...r.rails, !r.last] : []), r.open].map((on) => [on, false])
+      : deep ? [...r.rails.map((on) => [on, false]), [!r.last, true]] : [];
+    const col = ([down, elbow]) => div().relative().w(STEP).flex_none()
+      .when(down, (el) => el.child(line().left(7).top(0).w(1).h_full()))
+      .when(elbow, (el) => el.child(line().left(7).top(0).w(1).h(15)).child(line().left(7).top(14).w(STEP - 7).h(1)));
+    const end = fold === null ? [] : [r.kids
+      ? div().w(STEP).flex_none().flex().flex_col().pt(3)
+        .child(Button.new(`fold-${fold}`).w(STEP).h(24).flex().flex_none().items_center().justify_center().rounded(4).cursor_pointer()
+          .text_size(10).text_color(t.muted).border(1).border_color(t.chrome).focus((s) => s.border_color(t.accent))
+          .hover((el) => el.bg(t.hover).text_color(t.foreground))
+          .tooltip(r.open ? "Collapse" : "Expand")
+          .accessibility_label(`${r.open ? "Collapse" : "Expand"} ${name}`)
+          .on_click((_e, cx) => {
+            // ponytail: folds of ended teams stay in the store; prune by the running teams if it ever matters
+            setShared(TREE_KEY, { ...(shared(TREE_KEY) ?? {}), [fold]: !r.open });
+            cx.notify();
+          })
+          .child(r.open ? "▾" : "▸"))
+        // the line down to its children, under the disclosure, to the row's foot
+        .when(r.open, (el) => el.child(div().flex_1().ml(7).w(1).bg(t.border)))
+      : div().relative().w(STEP).flex_none().when(deep, (el) => el.child(line().left(0).top(14).w(STEP - 2).h(1)))];
+    return div().flex().flex_none().children([...cols.map(col), ...end]);
+  }
+
+  // A member's row (ah2-207 D3/D4): its role's icon in the role's hue, its state's glyph and mark as the Graph gives them (graph-model.js
+  // rowMark), the name, what it is on, the age. The glyph and the words carry the state; the colour only adds to it.
+  member(t, mb, lead, lt, terminalOf, order, linked) {
     const address = terminalOf(mb);
     if (address && !linked.has(address)) {
       order.push(address);
       linked.add(address);
     }
+    const mk = rowMark({ role: mb.role, state: mb.state, running: mb.state === "running" }, lt);
     const quiet = mb.state === "idle" || mb.state === "gone" || mb.state === "unknown";
-    const full = `${mb.name} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
+    const word = mb.what === mb.word.toLowerCase() || mb.what === "blocked"; // model.js memberRow: no item, the state's word
+    const full = `${mb.name}${mb.role && mb.role !== mb.name ? ` (${mb.role})` : ""} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
     // Every row has the ring border, linked or not, so their columns line up.
     const row = this.ring(t, address ? Button.new(`m-${mb.key}`) : h_flex().id(`m-${mb.key}`), t.chrome)
-      .h(30).pl(pad).pr(8).gap(8).flex().items_center().rounded(6).text_size(12.5)
+      .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12.5)
       .tooltip(full)
       .accessibility_label(address ? `${full}. Focus its terminal` : full)
-      .child(this.glyph(t, mb))
-      .child(div().w(86).flex_none().truncate().text_color(quiet ? t.muted : t.foreground).child(mb.name))
-      .child(div().flex_1().min_w(0).truncate().text_size(12).text_color(t.muted).child(mb.what))
+      .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(mk.hue ?? t.foreground))
+      .child(div().w(14).flex_none().flex().justify_center().text_size(11).text_color(mk.mark ?? t.blocked).child(mk.glyph))
+      // what it is on gives way first, then the name (to 40 px); a bare state word ("idle") never does, so the state is never lost
+      .child(div().flex_auto().min_w(40).truncate().text_color(quiet ? t.muted : t.foreground).child(mb.name))
+      .child(div().when(word, (el) => el.flex_none()).when(!word, (el) => el.flex_shrink(100).min_w(0)).truncate().text_size(12).text_color(t.muted).child(mb.what))
       .child(div().w(28).flex_none().text_right().font_family(MONO).text_size(11).text_color(t.muted).child(mb.age));
-    return address
+    return div().flex().w_full().gap(4).child(lead).child(address
       ? row.cursor_pointer().hover((el) => el.bg(t.hover)).on_click(() => run("pane.focus", { terminal: address }))
-      : row;
+      : row);
   }
 
   // ---- window overlay: one team's full sitrep ----

@@ -18,12 +18,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart } from "../mods/ah2/model.js";
+import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart, teamTree, treeRows } from "../mods/ah2/model.js";
 import { descriptionBlocks, inlineParts } from "../mods/ah2/plans-model.js";
 import { answerText, DIRECTION, threadOf } from "../mods/ah2/questions-model.js";
 import { boardModel, ownerOf } from "../mods/ah2/board-model.js";
 import { feedModel } from "../mods/ah2/feed-model.js";
-import { graphModel, flowModel, flowPan, KNOB, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, isReviewing } from "../mods/ah2/graph-model.js";
+import { graphModel, flowModel, flowPan, KNOB, rowMark, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, isReviewing } from "../mods/ah2/graph-model.js";
 import { memberModel, SUMMARY_MESSAGES } from "../mods/ah2/member-model.js";
 import { glyphOf } from "../mods/ah2/graph-world.js";
 import { DUTY, DUTY_TITLE, stateWord } from "../mods/ah2/select.js";
@@ -90,20 +90,50 @@ function member(m, pad) {
 
 const alarm = (pad) => (a) => `<div class="alarm" style="margin-left:${pad + 26}px" title="${esc(a.text)}"><b aria-hidden="true">⚠</b><span>${esc(a.text)}</span></div>`;
 
-function teamRows(t, lane) {
-  const pad = lane ? 22 : 8;
-  const parts = [
-    `<button class="team" style="padding-left:${pad}px" title="Open the ${esc(t.name)} sitrep">${lane ? '<span class="dim">↳</span>' : ""}<span class="tn">${esc(t.name)}</span>`,
+// ah2-207: a team's header, then its tree (model.js teamTree, treeRows), as main.js treeLead and member draw it: 16 px columns with the
+// rails, elbows and disclosure, the role icon (role-<role>.svg) in the role's hue and the state's glyph in the Graph's mark (rowMark).
+const ICON_ROLES = ["orchestrator", "sub-orchestrator", "deputy-chief", "ultra-advisor", "architect", "implementor", "reviewer", "qa", "ux-engineer", "docs-writer", "task-runner", "backlog-groomer"];
+const icon = (role) => readFileSync(join(here, "..", "mods", "ah2", `role-${ICON_ROLES.includes(role) ? role : "member"}.svg`), "utf8").replace(/ width="24" height="24"/, "");
+// AH2_PREVIEW_FOLD=<node key>[,…] folds those nodes, to show a collapsed row
+const FOLDED = new Set((process.env.AH2_PREVIEW_FOLD ?? "").split(",").filter(Boolean));
+const lead = (r) => {
+  const deep = r.node.depth > 0;
+  const cols = deep ? [...r.rails.map((on) => `<i class="tc2">${on ? '<b class="rv"></b>' : ""}</i>`), `<i class="tc2">${r.last ? "" : '<b class="rv"></b>'}<b class="re"></b><b class="rh"></b></i>`] : [];
+  const end = r.kids
+    ? `<i class="tc2 tk"><button class="fold" aria-label="${r.open ? "Collapse" : "Expand"} ${esc(r.node.name ?? r.node.team?.name)}">${r.open ? "▾" : "▸"}</button>${r.open ? '<b class="rd"></b>' : ""}</i>`
+    : `<i class="tc2">${deep ? '<b class="rl"></b>' : ""}</i>`;
+  return `<span class="lead">${cols.join("")}${end}</span>`;
+};
+const alertLead = (r) => `<span class="lead">${[...(r.node.depth > 0 ? [...r.rails, !r.last] : []), r.open].map((on) => `<i class="tc2">${on ? '<b class="rv"></b>' : ""}</i>`).join("")}</span>`;
+function treeMember(m) {
+  const mk = { l: rowMark({ role: m.role, state: m.state, running: m.state === "running" }, true), d: rowMark({ role: m.role, state: m.state, running: m.state === "running" }, false) };
+  const v = ["l", "d"].map((th) => `--hu-${th}:${mk[th].hue ?? "var(--foreground)"};--mk-${th}:${mk[th].mark ?? "var(--blocked)"}`).join(";");
+  const full = `${m.name}${m.role && m.role !== m.name ? ` (${m.role})` : ""} · ${m.word} · ${m.what}${m.age ? ` · ${m.age}` : ""}`;
+  const quiet = ["idle", "gone", "unknown"].includes(m.state);
+  return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
+}
+const treeAlarm = (r) => (a) => `<div class="trow">${alertLead(r)}<div class="alarm" style="margin-left:5px;flex:1;min-width:0" title="${esc(a.text)}"><b aria-hidden="true">⚠</b><span>${esc(a.text)}</span></div></div>`;
+
+function teamHead(t, lane) {
+  return [
+    `<button class="team" style="padding-left:${lane ? 4 : 8}px${lane ? ";flex:1;min-width:0" : ""}" title="Open the ${esc(t.name)} sitrep"><span class="tn">${esc(t.name)}</span>`,
     t.needsYou ? `<span class="cnt" title="${t.needsYou} needs you">${t.needsYou}</span>` : "",
     t.working || t.blocked ? `<span class="tc">${esc(counts({ working: t.working, blocked: t.blocked }))}</span>` : "",
     `<span class="spill" role="button" title="Open the ${esc(t.name)} sitrep" aria-label="Open the ${esc(t.name)} sitrep">Sitrep</span>`,
     "</button>",
-    ...t.alerts.filter((a) => !a.member).map(alarm(pad)),
-    ...t.members.map((m) => member(m, pad + 6)),
-    ...t.alerts.filter((a) => a.member).map(alarm(pad)),
-    ...t.lanes.flatMap((l) => teamRows(l, true)),
-  ];
-  return parts;
+  ].join("");
+}
+
+function teamRows(t) {
+  const keys = (tm) => new Set(tm.members.map((m) => m.key));
+  const teamLevel = (tm) => tm.alerts.filter((a) => !a.member || !keys(tm).has(a.member));
+  const out = [teamHead(t, false), ...teamLevel(t).map(alarm(8))];
+  for (const r of treeRows(teamTree(t), (n) => !FOLDED.has(n.key))) {
+    const n = r.node;
+    if (n.kind === "lane") out.push(`<div class="trow">${lead(r)}${teamHead(n.team, true)}</div>`, ...teamLevel(n.team).map(treeAlarm(r)));
+    else out.push(`<div class="trow">${lead(r)}${treeMember(n)}</div>`, ...n.alerts.map(treeAlarm(r)));
+  }
+  return out;
 }
 
 function region(r, top) {
@@ -550,7 +580,7 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 .list{flex:1;min-height:0;overflow:auto;padding:0 8px}
 .team{width:100%;height:30px;padding-right:8px;display:flex;align-items:center;gap:4px;border:1px solid var(--chrome);border-radius:6px;background:none;font:600 11px Geist,ui-sans-serif,system-ui,sans-serif;color:var(--muted);text-align:left;cursor:pointer}
 .team:hover{background:var(--hover);color:var(--foreground)}.team:focus-visible,.row:focus-visible,.x:focus-visible{outline:none;border-color:var(--accent)}.tn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tc{flex:0 100 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--muted)}.tc.need-n{flex:none;color:var(--foreground)}
-.row{height:30px;padding-right:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--chrome);border-radius:6px;font-size:12.5px}
+.trow{display:flex;gap:4px}.lead{display:flex;flex:none}.tc2{position:relative;width:16px;flex:none;display:flex;flex-direction:column}.tc2 b{position:absolute;background:var(--border)}.tc2 .rv{left:7px;top:0;width:1px;height:100%}.tc2 .re{left:7px;top:0;width:1px;height:15px}.tc2 .rh{left:7px;top:14px;width:9px;height:1px}.tc2 .rl{left:0;top:14px;width:14px;height:1px}.tc2.tk{padding-top:3px}.tc2 .rd{position:static;flex:1;margin-left:7px;width:1px}.fold{width:16px;height:24px;flex:none;padding:0;border:1px solid var(--chrome);border-radius:4px;background:none;color:var(--muted);font-size:10px;cursor:pointer}.fold:hover{background:var(--hover);color:var(--foreground)}.fold:focus-visible{outline:none;border-color:var(--accent)}.row.tr{flex:1;min-width:0;padding-left:4px;gap:6px}.ri{width:14px;height:14px;flex:none;display:flex;color:var(--hu-l)}.ri svg{width:14px;height:14px}.rg{width:14px;flex:none;text-align:center;font-size:11px;color:var(--mk-l)}:root[data-theme=dark] .ri{color:var(--hu-d)}:root[data-theme=dark] .rg{color:var(--mk-d)}.nm{flex:1 1 auto;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nm.quiet{color:var(--muted)}.wt{flex:0 100 auto;min-width:0;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wt.wd{flex:none}.row{height:30px;padding-right:8px;display:flex;align-items:center;gap:8px;border:1px solid var(--chrome);border-radius:6px;font-size:12.5px}
 .g{width:14px;flex:none;text-align:center;font-size:10px}
 .t-working{color:var(--working)}.t-blocked{color:var(--blocked)}.t-idle{color:var(--idle)}.t-unknown{color:var(--unknown)}.t-done{color:var(--done)}.dim{color:var(--dim)}
 .role{width:86px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.role.quiet{color:var(--muted)}
@@ -690,7 +720,7 @@ const v = new URLSearchParams(location.search).get("view"); if (v) document.docu
   <div class="ah2">
    <div class="head"><span class="lbl">Wrangl</span>${needs(side.needsYou)}</div>
    <div class="list">
-    ${side.teams.flatMap((t) => teamRows(t, false)).join("\n    ")}
+    ${side.teams.flatMap((t) => teamRows(t)).join("\n    ")}
     <div class="grp">Other agents</div>
     ${others.map((a) => member({ ...STATES[a.state], state: a.state, name: a.name, what: a.space, age: "" }, 14)).join("")}
    </div>

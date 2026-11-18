@@ -77,6 +77,12 @@ public sealed record PlanItem(
 
     /// <summary>Whether the item is in review because a reviewer's request opened on it (a <c>review</c> row with role <c>reviewer</c>), not because an older DONE report put it there.</summary>
     public bool Reviewing { get; init; }
+
+    /// <summary>The checklist item (<c>stream/id</c>) this item comes after, from its latest <c>after</c> row; null when none (an empty row clears it).</summary>
+    public string? After { get; init; }
+
+    /// <summary>Who wrote the item's <c>add</c> row (its <c>by</c>); null when the row named none.</summary>
+    public string? AddedBy { get; init; }
 }
 
 /// <summary>One change the plan events imply, in the order the log holds them: <c>Kind</c> is added, priority, state, retitle or dropped, and <c>From</c>/<c>To</c> are the values before and after (null when there was none). <c>Seq</c> is the row's place among the stream's readable rows.</summary>
@@ -156,7 +162,7 @@ internal static partial class ProgressFormat
     internal const int MaxCommits = 8;
 
     internal static readonly IReadOnlyList<string> PlanEvents =
-        ["add", "start", "done", "drop", "reopen", "testing", "retitle", "link", "note", "rank", "area", "assign", "next", "block", "wait-user", "unblock", "wait-orch", "role", "todo", "ref", "unref", "outcome", "size", "wave", "depend", "source", "ext", "kind", "parent", "review", "approve", "report"];
+        ["add", "start", "done", "drop", "reopen", "testing", "retitle", "link", "note", "rank", "area", "assign", "next", "block", "wait-user", "unblock", "wait-orch", "role", "todo", "ref", "unref", "outcome", "size", "wave", "depend", "source", "ext", "kind", "parent", "review", "approve", "report", "after"];
 
     /// <summary>The kinds a plan item may have, with their rank: a parent link is valid only when the parent's rank is higher.</summary>
     internal static readonly IReadOnlyList<string> Kinds = ["task", "deliverable", "epic", "goal", "project"];
@@ -229,6 +235,10 @@ internal static partial class ProgressFormat
 
     public static bool IsPlanSha(string text) => ShaPattern().IsMatch(text);
 
+    /// <summary>Whether <paramref name="text"/> is a checklist key an <c>after</c> row may name: <c>&lt;stream&gt;/&lt;id&gt;</c>, a non-empty stream of at most <see cref="MaxLabel"/> characters and an item slug.</summary>
+    internal static bool IsAfterKey(string text) =>
+        text.IndexOf('/', StringComparison.Ordinal) is var slash and > 0 and <= MaxLabel && text.IndexOf('/', slash + 1) < 0 && IsItemSlug(text[(slash + 1)..]);
+
     /// <summary>Whether <paramref name="text"/> is a backlog id, <c>b&lt;N&gt;</c>.</summary>
     public static bool IsBacklogId(string text) => text.Length > 1 && text[0] == 'b' && text.Skip(1).All(char.IsAsciiDigit);
 
@@ -241,7 +251,7 @@ internal static partial class ProgressFormat
         string ts, string team, string stream, string item, string eventName, string by,
         string? title = null, IReadOnlyList<string>? commits = null, string? branch = null, int? issue = null, string? note = null, string? session = null,
         int? rank = null, string? area = null, string? holder = null, string? role = null, string? todo = null, string? reference = null, string? source = null, string? parent = null,
-        PlanCause? cause = null, string? baseSha = null, IReadOnlyList<string>? options = null, string? answer = null, string? askedFor = null, string? cls = null)
+        PlanCause? cause = null, string? baseSha = null, IReadOnlyList<string>? options = null, string? answer = null, string? askedFor = null, string? cls = null, string? after = null)
     {
         var row = new JsonObject { ["v"] = PlanVersion, ["ts"] = ts, ["team"] = team, ["stream"] = stream, ["item"] = item, ["event"] = eventName };
         if (title is not null)
@@ -349,6 +359,11 @@ internal static partial class ProgressFormat
         if (cls is not null)
         {
             row["class"] = cls;
+        }
+
+        if (after is not null)
+        {
+            row["after"] = after;
         }
 
         row["by"] = by;
@@ -488,6 +503,8 @@ internal static partial class ProgressFormat
                 return $"kind needs one of {string.Join(", ", Kinds)}";
             case "parent" when !(Text(row, "parent") is { } p && (p.Length == 0 || IsBacklogId(p))):
                 return "parent needs a backlog id (b<N>) or empty";
+            case "after" when !(Text(row, "after") is { } a && (a.Length == 0 || IsAfterKey(a))):
+                return "after needs an item as <stream>/<id>, or empty";
             case "done":
                 var commits = row.Member("commits") is { IsArray: true } list ? list.AsArray().Select(c => c.IsText ? c.AsString() : string.Empty).ToList() : [];
                 if (commits.Count == 0 && !import)

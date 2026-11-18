@@ -14,13 +14,13 @@ internal static partial class ChecklistVerb
     private static partial System.Text.RegularExpressions.Regex NamedWork();
 
     private const string Usage =
-        "usage: ah roster checklist show [--all] [--state S] [--stale] [--since <ISO|6h>] | show <id> --trail | add <what> [--role R] [--stream S] [--todo T] [--ref ID] [--parent bN] | set <id> [--state queued|dispatched|waiting-orch|blocked*|waiting-user*|dropped, or a stored name in_progress|waiting_orch|waiting_user*|next|reported|in_review|approved  (* needs --note)] [--owner M] [--todo T] [--ref ID] [--note T] [--option L]... [--for name@team] [--class blocker|soon|eventually] [--parent bN|none] | done <id> [--note T] [--commit SHA]... | ship <sha> [--failed] [--team T] [--plain] | audit [--stream S] [--plain]  — to finish an item use: checklist done <id>. --parent names a backlog epic or deliverable; only its shape is checked, not that it exists. A waiting-user --note (at most 300 characters) names what is asked; the item's description (ah work record <stream>/<item> --type description --title Description --body-file -) says why it reaches the user, what each --option does and what Not needed (Already done, No longer needed) does: the Needs-you card shows it under the note, so the user can answer without coming back to you. Output is JSON; --plain prints text";
+        "usage: ah roster checklist show [--all] [--state S] [--stale] [--since <ISO|6h>] | show <id> --trail | add <what> [--role R] [--stream S] [--todo T] [--ref ID] [--parent bN] [--after <id>|last] | set <id> [--after <id>|none] [--state queued|dispatched|waiting-orch|blocked*|waiting-user*|dropped, or a stored name in_progress|waiting_orch|waiting_user*|next|reported|in_review|approved  (* needs --note)] [--owner M] [--todo T] [--ref ID] [--note T] [--option L]... [--for name@team] [--class blocker|soon|eventually] [--parent bN|none] | done <id> [--note T] [--commit SHA]... | ship <sha> [--failed] [--team T] [--plain] | audit [--stream S] [--plain]  — to finish an item use: checklist done <id>. --parent names a backlog epic or deliverable; only its shape is checked, not that it exists. A waiting-user --note (at most 300 characters) names what is asked; the item's description (ah work record <stream>/<item> --type description --title Description --body-file -) says why it reaches the user, what each --option does and what Not needed (Already done, No longer needed) does: the Needs-you card shows it under the note, so the user can answer without coming back to you. Output is JSON; --plain prints text";
 
     private const string StateList = "queued, dispatched, waiting-orch, blocked*, waiting-user*, dropped, or a stored name: in_progress, waiting_orch, waiting_user*, next, reported, in_review, approved (* needs --note)";
 
     private static readonly HashSet<string> Flags = new(StringComparer.Ordinal)
     {
-        "cwd", "team", "orchestrator-pid", "all", "role", "stream", "todo", "ref", "state", "owner", "note", "commit", "plain", "parent", "trail", "stale", "since", "option", "failed", "for", "class",
+        "cwd", "team", "orchestrator-pid", "all", "role", "stream", "todo", "ref", "state", "owner", "note", "commit", "plain", "parent", "trail", "stale", "since", "option", "failed", "for", "class", "after",
     };
 
     internal static int Run(RosterContext c)
@@ -317,6 +317,7 @@ internal static partial class ChecklistVerb
                 ["ref"] = (e.Item.Refs ?? []).Count > 0 ? e.Item.Refs![0] : JsonValue.Null,
                 ["refs"] = refs,
                 ["class"] = e.Item.State == "waiting_user" ? HierarchyModule.ChecklistClassOf(e.Item) : JsonValue.Null,
+                ["after"] = e.Item.After is { } after ? after : JsonValue.Null,
             });
         }
 
@@ -329,9 +330,13 @@ internal static partial class ChecklistVerb
         return new JsonObject { ["team"] = c.ProgressTeam, ["items"] = items, ["queue"] = lines };
     }
 
-    private static int Write(RosterContext c, IHierarchyProgress progress, string stream, string item, string verb, List<PlanInput> events, bool? created = null)
+    /// <summary>Who a row this verb writes is by: the member the env names, else the team's Orchestrator.</summary>
+    private static string By(RosterContext c) =>
+        c.EnvText(Ah.Mesh.MeshModule.MemberMarkerEnv) is { } member ? $"{member}@{c.ProgressTeam}" : HierarchyModule.OrchestratorAddress(c.ProgressTeam);
+
+    private static int Write(RosterContext c, IHierarchyProgress progress, string stream, string item, string verb, List<PlanInput> events, bool? created = null, string? asked = null)
     {
-        var by = c.EnvText(Ah.Mesh.MeshModule.MemberMarkerEnv) is { } member ? $"{member}@{c.ProgressTeam}" : HierarchyModule.OrchestratorAddress(c.ProgressTeam);
+        var by = By(c);
         // a row the verb wrote is a recorded fact the board audit replays as it is (board-derive § E2)
         var verbCause = new PlanCause(HierarchyModule.ChecklistCauseVerb, verb, HierarchyModule.ChecklistEventTime(c.Services.Clock.UtcNow));
         var result = progress.RecordChecklist(c.ProgressPool, c.ProgressTeam, stream, by, [.. events.Select(e => e with { Cause = e.Cause ?? verbCause })], c.Proved().SessionId);
@@ -351,10 +356,18 @@ internal static partial class ChecklistVerb
         }
 
         var after = HierarchyModule.ChecklistEntries(progress, c.ProgressPool, c.ProgressTeam).FirstOrDefault(e => e.Stream == stream && e.Item.Item == item);
-        return Report(c, stream, item, after is null ? "unknown" : HierarchyModule.ChecklistDisplayState(after.Item.State), created);
+        var state = after is null ? "unknown" : HierarchyModule.ChecklistDisplayState(after.Item.State);
+        // ah2-210 D5: a state asked under another name than the one stored is echoed, so the caller sees both
+        var echoed = asked is not null && asked != state ? asked : null;
+        if (echoed is not null)
+        {
+            c.Stderr.Write($"`{echoed}` is shown as `{state}`\n");
+        }
+
+        return Report(c, stream, item, state, created, echoed);
     }
 
-    private static int Report(RosterContext c, string stream, string item, string state, bool? created)
+    private static int Report(RosterContext c, string stream, string item, string state, bool? created, string? asked = null)
     {
         if (c.Opts.IsTrue("plain"))
         {
@@ -363,6 +376,11 @@ internal static partial class ChecklistVerb
         }
 
         var result = new JsonObject { ["item"] = item, ["stream"] = stream, ["state"] = state };
+        if (asked is not null)
+        {
+            result["asked"] = asked;
+        }
+
         if (created is { } made)
         {
             result["created"] = made;
@@ -408,6 +426,11 @@ internal static partial class ChecklistVerb
         {
             // board-truth D3: a title ending in a work id that names a backlog row is linked to it; an id that names none is ignored
             events.Add(new PlanInput(item, "parent") { Parent = row });
+        }
+
+        if (After(c, entries, "add", stream, item) is { } after)
+        {
+            events.Add(after);
         }
 
         var code = Write(c, progress, stream, item, "add", events, true);
@@ -461,6 +484,71 @@ internal static partial class ChecklistVerb
         var p when c.Services.WorkParent(c.ProgressPool, c.ProgressTeam, p) is { } row => new PlanInput(string.Empty, "parent") { Parent = row },
         var p => throw new RosterFailure($"checklist: --parent {p} is not a backlog id (b<N>) or none; nothing written"),
     };
+
+    /// <summary>
+    /// The <c>after</c> event <c>--after</c> asks for on <paramref name="stream"/>/<paramref name="item"/> (<c>none</c> clears it on <c>set</c>;
+    /// <c>last</c> on <c>add</c> is the item this caller last added to the stream), or null without the flag. A predecessor that is unknown, the
+    /// item itself, or one that would close a cycle is not stored: one stderr line says why and the rest of the command still applies (ah2-209 D1, D6).
+    /// </summary>
+    private static PlanInput? After(RosterContext c, IReadOnlyList<ChecklistEntry> entries, string verb, string stream, string item)
+    {
+        if (c.Opts.Text("after") is not { } named)
+        {
+            return null;
+        }
+
+        void Note(string why) => c.Stderr.Write($"checklist {verb}: --after {named} not stored ({why})\n");
+        if (named is "none" or "")
+        {
+            return verb == "set" ? new PlanInput(item, "after") { After = string.Empty } : null;
+        }
+
+        ChecklistEntry? target;
+        if (verb == "add" && named == "last")
+        {
+            var by = By(c);
+            target = entries.LastOrDefault(e => e.Stream == stream && e.Item.AddedBy == by);
+            if (target is null)
+            {
+                c.Stderr.Write($"checklist add: --after last ignored (no item added to {stream} by {by})\n");
+                return null;
+            }
+        }
+        else
+        {
+            var error = HierarchyModule.ChecklistResolve(entries, named, out target);
+            if (target is null && error == $"no item {named}" && c.Services.WorkAlias(c.ProgressPool, c.ProgressTeam, named) is { } alias)
+            {
+                error = HierarchyModule.ChecklistResolve(entries, alias, out target);
+            }
+
+            if (target is null)
+            {
+                Note(error == $"no item {named}" ? $"{error} in team {c.ProgressTeam}; a predecessor in another team or pool is not supported" : error ?? "no item " + named);
+                return null;
+            }
+        }
+
+        var self = stream + "/" + item;
+        var key = HierarchyModule.ChecklistKey(target);
+        if (key == self)
+        {
+            Note("an item cannot come after itself");
+            return null;
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal) { key };
+        for (var at = target.Item.After; at is not null && seen.Add(at); at = entries.FirstOrDefault(e => HierarchyModule.ChecklistKey(e) == at)?.Item.After)
+        {
+            if (at == self)
+            {
+                Note($"{key} already comes after {self}, so this would make a cycle");
+                return null;
+            }
+        }
+
+        return new PlanInput(item, "after") { After = key };
+    }
 
     private static ChecklistEntry Find(RosterContext c, IReadOnlyList<ChecklistEntry> entries, string verb, string id)
     {
@@ -569,12 +657,22 @@ internal static partial class ChecklistVerb
             events.Add(parent with { Item = id });
         }
 
+        if (After(c, entries, "set", entry.Stream, id) is { } after)
+        {
+            events.Add(after);
+        }
+        else if (events.Count == 0 && c.Opts.Text("after") is not null)
+        {
+            // ah2-209 D1: an --after that was not stored is a note, not a failure; with nothing else asked there is nothing to write
+            return Report(c, entry.Stream, id, HierarchyModule.ChecklistDisplayState(entry.Item.State), null);
+        }
+
         if (events.Count == 0)
         {
             throw new RosterFailure($"checklist set: nothing to change; {Usage}");
         }
 
-        var code = Write(c, progress, entry.Stream, id, "set", events);
+        var code = Write(c, progress, entry.Stream, id, "set", events, asked: c.Opts.Text("state"));
         Supersede(c, progress, auto, HierarchyModule.ChecklistKey(entry));
         return code;
     }

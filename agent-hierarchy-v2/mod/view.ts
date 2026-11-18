@@ -790,6 +790,9 @@ export function readDue(raw: unknown): DueAnswer | null {
 export const heldText = (held: boolean, unread: number | undefined): string | undefined =>
   held && unread !== undefined && unread > 0 ? `ah: stopped with ${unread} unread; type anything to resume` : undefined
 
+/** The status line while the last SessionStart did not run through the binary (ah2-206 D5); hooks/register.ts keeps the `hooksOff` flag. */
+export const HOOKS_OFF_TEXT = 'Wrangl: not built, hooks off'
+
 /** One delivery of mail as the Mail section shows it: when, which entries, the header's address, the full prompt text and how the submit ended. */
 export type MailRecord = { at: number; ids: string[]; address: string; text: string; state: 'delivered' | 'not delivered' }
 

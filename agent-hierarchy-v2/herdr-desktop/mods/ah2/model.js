@@ -2,7 +2,7 @@
 // Input: the slices `ah view events` serves (spec-herdr-desktop.md §4). Output: plain rows the views draw.
 // The Q&A fields are read only by the web's own questions-model.js (shipped beside this file as a byte-identical copy of web/ui's, kept honest by a test), spec P3.1.
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
-import { itemDescId } from "./plans-model.js";
+import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
 import { goalOf, ownGoal } from "./select.js";
 
@@ -80,7 +80,43 @@ function memberRow(key, m, now) {
   const s = STATES[state];
   const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
   return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
-    pane: memberPane(key, m) };
+    pane: memberPane(key, m), served: typeof m.role === "string" ? m.role : "" };
+}
+
+// ah2-207 Amendment 1: a member's role, for its icon and hue. The served role; else the orchestrator (a lane's is its sub-orchestrator);
+// else the role its name carries (plans-model.js roleOf, as the Board reads it); else "" (the generic icon, the neutral hue).
+const roleIn = (mb, lane) => mb.served || (mb.name === "orchestrator" ? (lane ? "sub-orchestrator" : "orchestrator") : roleOf(mb.name));
+
+// ah2-207 D1: one team's tree. Its orchestrator is the root, with the other members, then the lanes, under it; a lane is a node
+// that draws its header row, with the lane's own tree under it. A team without an orchestrator row has its members as roots.
+// A member's own alerts ride on its node. Node: { kind: "member" | "lane", key, depth, role, children, ...the member row or `team` }.
+export function teamTree(tm, depth = 0, lane = false) {
+  const orch = tm.members.find((mb) => mb.name === "orchestrator");
+  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, role: roleIn(mb, lane), alerts: tm.alerts.filter((a) => a.member === mb.key), children: [] });
+  const under = (d) => [
+    ...tm.members.filter((mb) => mb !== orch).map((mb) => node(mb, d)),
+    ...tm.lanes.map((l) => ({ kind: "lane", key: `lane:${l.id}`, depth: d, team: l, children: teamTree(l, d + 1, true) })),
+  ];
+  if (!orch) return under(depth);
+  return [{ ...node(orch, depth), children: under(depth + 1) }];
+}
+
+// The rows a tree draws, in order, with what the connectors need: a row at depth d > 0 draws d columns, its `rails` (one per level
+// between the root and it, true where that ancestor's line runs on past the row to a later sibling) and its own elbow; `last`, whether
+// it is the last of its siblings (the elbow stops there). `open(node)` says whether a node with
+// children shows them. Deep rows keep only the INDENT_CAP innermost columns, so the name keeps its room in a narrow pane.
+export const INDENT_CAP = 4;
+export function treeRows(roots, open) {
+  const out = [];
+  const walk = (nodes, rails) => nodes.forEach((n, i) => {
+    const last = i === nodes.length - 1;
+    const kids = n.children.length > 0;
+    const shown = kids && open(n);
+    out.push({ node: n, rails: n.depth > 0 ? rails.slice(1 - INDENT_CAP) : [], last, kids, open: shown });
+    if (shown) walk(n.children, n.depth > 0 ? [...rails, !last] : []);
+  });
+  walk(roots, []);
+  return out;
 }
 
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.
