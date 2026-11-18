@@ -7,7 +7,7 @@ import { laneChildren, memberIds, memberOf, sparksOf } from "./select.js";
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { FLOW, fitView as fitBox, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
+import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -519,11 +519,22 @@ export function mix(c, base, p) {
 // reviewing border is the full review colour (the web's 60% mix is 2.61:1 on white).
 // A reviewer at work on an active card reads "reviewing" (◆, the review tint); off the active set it is an idle-style row.
 export const isReviewing = (s, active) => Boolean(active) && s.role === "reviewer" && s.state === "working";
+// A role's colour: the web's role table; an unknown or custom role is neutral; null is the theme's foreground (the orchestrator).
+export const roleHue = (role, light) => {
+  const w = light ? WEB.light : WEB.dark;
+  return Object.hasOwn(w.role, role ?? "") && role !== "neutral" ? w.role[role] : w.role.neutral;
+};
+// ah2-207 D4: a Wrangl sidebar row in the Graph's look: its state's glyph and mark as the Flow card gives them (cardStyle, active as
+// isActive; mark null is the theme's blocked), and its role's hue for the icon. s: { role, state, running }.
+export function rowMark(s, light) {
+  const st = cardStyle(s, isActive(s), light, null);
+  return { glyph: st.glyph, mark: st.mark, hue: roleHue(s.role, light) };
+}
 export function cardStyle(s, active, light, base) {
   const w = light ? WEB.light : WEB.dark;
   const pct = light ? 0.09 : 0.12;
   const reviewing = isReviewing(s, active);
-  const role = Object.hasOwn(w.role, s.role ?? "") && s.role !== "neutral" ? w.role[s.role] : w.role.neutral;
+  const role = roleHue(s.role, light);
   if (reviewing) return { glyph: "◆", mark: w.review, tag: w.review, name: role, fill: mix(w.review, base, pct), line: light ? w.review : mix(w.review, base, 0.6), bold: true };
   if (active && s.state === "blocked") return { glyph: glyphOf("blocked"), mark: null, tag: w.working, name: role, fill: mix(w.working, base, pct), line: w.accent, bold: true };
   if (active) return { glyph: "◐", mark: markOf(w, light), tag: w.working, name: role, fill: mix(w.working, base, pct), line: w.accent, bold: true };

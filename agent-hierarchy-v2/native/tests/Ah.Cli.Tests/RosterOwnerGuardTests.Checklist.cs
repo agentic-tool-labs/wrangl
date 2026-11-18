@@ -45,6 +45,81 @@ public sealed partial class RosterOwnerGuardTests
     }
 
     [Fact]
+    public void SetEchoesTheAskedStateOnlyWhenItIsStoredUnderAnotherName()
+    {
+        TwoStreamsWithItemA();
+
+        var renamed = Run("checklist", "set", "s1/b", "--state", "in_progress", "--team", "tm");
+        var same = Run("checklist", "set", "s1/b", "--state", "queued", "--team", "tm");
+
+        Assert.Equal(0, renamed.Code);
+        var json = Ah.Core.Json.JsonText.Parse(renamed.Stdout);
+        Assert.Equal("dispatched", json.Member("state")?.AsString());
+        Assert.Equal("in_progress", json.Member("asked")?.AsString());
+        Assert.Contains("`in_progress` is shown as `dispatched`", renamed.Stderr, StringComparison.Ordinal);
+        // negative: the name given is the name stored, so nothing is added
+        Assert.Equal(0, same.Code);
+        Assert.Null(Ah.Core.Json.JsonText.Parse(same.Stdout).Member("asked"));
+        Assert.DoesNotContain("is shown as", same.Stderr, StringComparison.Ordinal);
+    }
+
+    private string? AfterOf(string key) =>
+        Ah.Core.Json.JsonText.Parse(Run("checklist", "show", "--all", "--team", "tm").Stdout).Member("items")!.Value.AsArray()
+            .First(i => i.Member("stream")?.AsString() + "/" + i.Member("id")?.AsString() == key).Member("after") is { IsText: true } after ? after.AsString() : null;
+
+    [Fact]
+    public void ACycleASelfReferenceAndAnUnknownItemAreNotStoredAndTheRestOfTheCommandStillApplies()
+    {
+        TwoStreamsWithItemA();
+
+        var stored = Run("checklist", "set", "s1/b", "--after", "s2/a", "--team", "tm");
+        Assert.Equal(0, stored.Code);
+        Assert.Equal("s2/a", AfterOf("s1/b"));
+        Assert.Contains("waiting on s2/a", Run("checklist", "show", "--plain", "--team", "tm").Stdout, StringComparison.Ordinal);
+
+        var cycle = Run("checklist", "set", "s2/a", "--after", "s1/b", "--todo", "cycle todo", "--team", "tm");
+        var self = Run("checklist", "set", "s1/b", "--after", "s1/b", "--todo", "self todo", "--team", "tm");
+        var unknown = Run("checklist", "set", "s1/a", "--after", "nope", "--todo", "unknown todo", "--team", "tm");
+
+        Assert.Equal(0, cycle.Code);
+        Assert.Contains("--after s1/b not stored", cycle.Stderr, StringComparison.Ordinal);
+        Assert.Contains("cycle", cycle.Stderr, StringComparison.Ordinal);
+        Assert.Null(AfterOf("s2/a"));
+        Assert.Contains("cycle todo", ReadLog(LogOf("s2")), StringComparison.Ordinal);
+
+        Assert.Equal(0, self.Code);
+        Assert.Contains("itself", self.Stderr, StringComparison.Ordinal);
+        Assert.Equal("s2/a", AfterOf("s1/b"));
+        Assert.Contains("self todo", ReadLog(LogOf("s1")), StringComparison.Ordinal);
+
+        Assert.Equal(0, unknown.Code);
+        Assert.Contains("no item nope", unknown.Stderr, StringComparison.Ordinal);
+        Assert.Null(AfterOf("s1/a"));
+        Assert.Contains("unknown todo", ReadLog(LogOf("s1")), StringComparison.Ordinal);
+
+        // none clears it
+        Assert.Equal(0, Run("checklist", "set", "s1/b", "--after", "none", "--team", "tm").Code);
+        Assert.Null(AfterOf("s1/b"));
+    }
+
+    [Fact]
+    public void AddAfterLastNamesTheItemThisCallerLastAddedToTheStreamAndIsIgnoredWhenThereIsNone()
+    {
+        TeamOwnedBy(Self);
+
+        var first = Run("checklist", "add", "Step one", "--after", "last", "--team", "tm");
+        var second = Run("checklist", "add", "Step two", "--after", "last", "--team", "tm");
+
+        Assert.Equal(0, first.Code);
+        Assert.Equal(0, second.Code);
+        var one = "_run/" + Ah.Core.Json.JsonText.Parse(first.Stdout).Member("item")?.AsString();
+        var two = "_run/" + Ah.Core.Json.JsonText.Parse(second.Stdout).Member("item")?.AsString();
+        Assert.Contains("--after last ignored", first.Stderr, StringComparison.Ordinal);
+        Assert.Null(AfterOf(one));
+        Assert.Equal(one, AfterOf(two));
+    }
+
+    [Fact]
     public void NegativeSetRefusesAnUnknownStateNameAndShowTrailNeedsAnId()
     {
         TwoStreamsWithItemA();

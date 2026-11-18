@@ -23,7 +23,8 @@ const stage = (on: any, answer: (name: string, payload: any) => unknown = () => 
     const payload = JSON.parse(e.init?.stdin ?? '{}')
     ran.push({ name, payload })
     order.push(name)
-    const out = answer(name, payload)
+    const out: any = answer(name, payload)
+    if (out?.exitCode !== undefined) return { value: { exitCode: out.exitCode, stdout: '', stderr: 'failed', isStdoutTruncated: false, isStderrTruncated: false } }
     return { value: { exitCode: 0, stdout: out === undefined ? '' : JSON.stringify(out), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
   on('session.id', () => ({ value: 'sess-1' }))
@@ -38,7 +39,12 @@ const stage = (on: any, answer: (name: string, payload: any) => unknown = () => 
   })
   on('prompt.submit', (_$: any, e: any) => ({ text: e.text, context: e.context }))
   on('turn.complete', (_$: any, e: any) => ({ text: e.answer }))
-  return { ran, order }
+  const off: unknown[] = [] // each hooksOff the bridge set
+  on('state.set', (_$: any, e: any, next: any) => {
+    if (e.key === 'hooksOff') off.push(e.value)
+    return next(e)
+  })
+  return { ran, order, off }
 }
 
 test('tool.call: a PreToolUse deny refuses the call, its nudge marker dropped', async ($, on) => {
@@ -72,6 +78,91 @@ test('prompt.submit: SessionStart context is carried once', async ($, on) => {
   const second: any = await $.prompt.submit({ text: 'again' })
   expect(first.text).toBe('AH DIRECTIVE\n\nhello')
   expect(second.text).toBe('again')
+})
+
+// The notice bin/ah-hook gives a non-member SessionStart with no binary.
+const NOT_BUILT = 'Wrangl is installed but its native binary is not built, so its hooks are off: this session is not registered or tracked and has no Orchestrator directive. Ask the user to run sh "/p/scripts/install.sh" --apply --auto-rebuild in a terminal, then start a new session or send another prompt.'
+const notice = (text: string) => ({ systemMessage: text, hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: text } })
+const starts = (ran: { name: string; payload: any }[]) => ran.filter(r => r.name === 'sessionstart')
+
+test('SessionStart answered by the not-built notice is run again on the next prompt, and not again once it ran through the binary', async ($, on) => {
+  let built = false
+  const { ran, off } = stage(on, name => (name === 'sessionstart' ? (built ? { hookSpecificOutput: { additionalContext: 'AH DIRECTIVE' } } : notice(NOT_BUILT)) : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  expect(off).toEqual([true])
+  const first: any = await $.prompt.submit({ text: 'one' }) // still not built: tried once more, owed again
+  expect(starts(ran).length).toBe(2)
+  built = true
+  const second: any = await $.prompt.submit({ text: 'two' })
+  const third: any = await $.prompt.submit({ text: 'three' })
+  expect(starts(ran).length).toBe(3)
+  expect(starts(ran).map(r => r.payload.source)).toEqual(['startup', 'startup', 'startup'])
+  expect(first.text).toBe(`${NOT_BUILT}\n\none`) // the start's notice once; the retry that still did not run adds nothing
+  expect(second.text).toBe('AH DIRECTIVE\n\ntwo')
+  expect(third.text).toBe('three')
+  expect(off).toEqual([true, true, false])
+})
+
+test('SessionStart that failed is owed to the next prompt', async ($, on) => {
+  let fail = true
+  const { ran } = stage(on, name => (name === 'sessionstart' ? (fail ? { exitCode: 1 } : { hookSpecificOutput: { additionalContext: 'AH DIRECTIVE' } }) : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  fail = false
+  const first: any = await $.prompt.submit({ text: 'one' })
+  expect(starts(ran).length).toBe(2)
+  expect(first.text).toBe('AH DIRECTIVE\n\none')
+})
+
+test('negative: a SessionStart that ran through the binary, with or without context, is not run again', async ($, on) => {
+  const { ran, off } = stage(on) // the binary answered with nothing
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await $.prompt.submit({ text: 'one' })
+  await $.prompt.submit({ text: 'two' })
+  expect(starts(ran).length).toBe(1)
+  expect(off).toEqual([false])
+})
+
+test('a refused home is owed like a missing binary: retried silently, and its directive arrives once the home is trusted', async ($, on) => {
+  const refused = 'ah: AH_HOME is not the default home and is not trusted, so ah did not run. Ask the user to trust this home from a terminal, or to unset AH_HOME.'
+  let trusted = false
+  const { ran, off } = stage(on, name => (name === 'sessionstart' ? (trusted ? { hookSpecificOutput: { additionalContext: 'AH DIRECTIVE' } } : notice(refused)) : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  const first: any = await $.prompt.submit({ text: 'one' })
+  trusted = true
+  const second: any = await $.prompt.submit({ text: 'two' })
+  expect(starts(ran).length).toBe(3)
+  expect(first.text).toBe(`${refused}\n\none`)
+  expect(second.text).toBe('AH DIRECTIVE\n\ntwo')
+  expect(off).toEqual([true, true, false])
+})
+
+test("negative: a /clear's first SessionStart answered by the notice is told (not a retry); only its retry is silent", async ($, on) => {
+  const { ran } = stage(on, name => (name === 'sessionstart' ? notice(NOT_BUILT) : undefined))
+  on('session.end', () => ({ sessionId: 'sess-1' }))
+  await $.session.end({ reason: 'clear', sessionId: 'sess-1' } as any)
+  const first: any = await $.prompt.submit({ text: 'one' })
+  const second: any = await $.prompt.submit({ text: 'two' })
+  expect(starts(ran).map(r => r.payload.source)).toEqual(['clear', 'clear'])
+  expect(first.text).toBe(`${NOT_BUILT}\n\none`)
+  expect(second.text).toBe('two')
+})
+
+test('negative: context that only mentions a refusal mid-text is not owed', async ($, on) => {
+  const { ran } = stage(on, name => (name === 'sessionstart' ? { hookSpecificOutput: { additionalContext: 'Earlier: ah: x, so ah did not run. Ask the user to trust this home from a terminal.' } } : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await $.prompt.submit({ text: 'one' })
+  expect(starts(ran).length).toBe(1)
+})
+
+test("negative: a member's own not-built notice is owed too; other context naming the words mid-text is not", async ($, on) => {
+  const member = 'Wrangl is installed but not built, so its hooks are off. Ask the user to run x in a terminal, then start a new session.'
+  let answer: unknown = notice(member)
+  const { ran } = stage(on, name => (name === 'sessionstart' ? answer : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  answer = { hookSpecificOutput: { additionalContext: `Note: ${member}` } }
+  await $.prompt.submit({ text: 'one' })
+  await $.prompt.submit({ text: 'two' })
+  expect(starts(ran).length).toBe(2)
 })
 
 test("turn.complete: a Stop block's reason, when it comes back as a prompt, is marked as the bridge's own once; the user's same text after it is not (negative)", async ($, on) => {

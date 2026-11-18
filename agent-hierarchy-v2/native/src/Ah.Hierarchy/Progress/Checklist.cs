@@ -6,7 +6,11 @@ namespace Ah.Hierarchy;
 /// <summary>One checklist line: a plan item with the stream it lives in (<c>_run</c> for a loose end).</summary>
 /// <param name="Stream">The stream whose plan log holds the item.</param>
 /// <param name="Item">The folded item.</param>
-public sealed record ChecklistEntry(string Stream, PlanItem Item);
+public sealed record ChecklistEntry(string Stream, PlanItem Item)
+{
+    /// <summary>The item (<c>stream/id</c>) this one waits on: its <see cref="PlanItem.After"/> while that item is open. Computed when the checklist is read, never stored; null when it waits on none.</summary>
+    public string? WaitingOn { get; init; }
+}
 
 /// <summary>What waits on the user in one team (<see cref="HierarchyModule.ChecklistWaiting"/>): its open decisions and the items none of them names.</summary>
 /// <param name="Decisions">The open decisions.</param>
@@ -77,6 +81,16 @@ internal static class ChecklistRules
 
     internal static string RoleOf(PlanItem item) => item.Role ?? DefaultRole;
 
+    /// <summary>
+    /// <paramref name="entries"/> with <see cref="ChecklistEntry.WaitingOn"/> set: an item whose predecessor is among them and open (not done,
+    /// not dropped) waits on it. A predecessor not among them waits on nothing.
+    /// </summary>
+    internal static List<ChecklistEntry> WithWaiting(IReadOnlyList<ChecklistEntry> entries)
+    {
+        var open = entries.Where(static e => IsOpen(e.Item)).Select(static e => e.Stream + "/" + e.Item.Item).ToHashSet(StringComparer.Ordinal);
+        return [.. entries.Select(e => e with { WaitingOn = e.Item.After is { } after && open.Contains(after) ? after : null })];
+    }
+
     /// <summary>The instant the item last entered its current state (the row that moved it there), or 0 when unknown.</summary>
     internal static double QueuedMs(PlanItem item) =>
         item.StateSince is { } at && DateTimeOffset.TryParse(at, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var when) ? when.ToUnixTimeMilliseconds() : UpdatedMs(item);
@@ -100,7 +114,8 @@ internal static class ChecklistRules
         double quietMs)
     {
         var found = new List<QueueEntry>();
-        foreach (var entry in entries.Where(static e => e.Item.State == PlanStates.Next && !AnsweredWithNoWork(e.Item)))
+        // ah2-209 D3: an item waiting on another is not offered
+        foreach (var entry in entries.Where(static e => e.Item.State == PlanStates.Next && !AnsweredWithNoWork(e.Item) && e.WaitingOn is null))
         {
             var role = RoleOf(entry.Item);
             var since = QueuedMs(entry.Item);
@@ -159,8 +174,10 @@ internal static class ChecklistRules
             return [];
         }
 
+        // ah2-209 D3: an item waiting on another is not unstaffed
         return [.. Queued(entries, members, dispatches, nowMs).Where(q =>
-            nowMs - q.QueuedSinceMs >= queuedMs
+            q.Entry.WaitingOn is null
+            && nowMs - q.QueuedSinceMs >= queuedMs
             && q.RoleLiveMembers == 0
             && (q.LastRoleSpawnMs is not { } spawned || nowMs - spawned >= recentSpawnMs))];
     }
@@ -281,6 +298,15 @@ internal static class ChecklistRules
         if (item.Todo is { Length: > 0 } todo)
         {
             sb.Append(" | next: ").Append(todo);
+        }
+
+        if (e.WaitingOn is { } waitingOn)
+        {
+            sb.Append(" | waiting on ").Append(waitingOn);
+        }
+        else if (item.After is { } after)
+        {
+            sb.Append(" | after ").Append(after);
         }
 
         var links = new List<string>(item.Refs ?? []);

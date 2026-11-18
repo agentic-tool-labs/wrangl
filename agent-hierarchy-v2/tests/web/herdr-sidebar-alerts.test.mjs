@@ -42,13 +42,15 @@ test("ah2-180: a raised user alarm is a team-level sidebar alert and the mod's o
   assert.deepEqual([card.kind, card.key, card.memberId], ["Alarm", `alarm|team:d1/ah2|${since}`, null]);
 });
 
-test("the sidebar draws team-level alerts before the member rows and member alerts after them", () => {
+test("the sidebar draws team-level alerts before the tree and a member's own alert right after its row (ah2-207 D5)", () => {
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "..", "herdr-desktop", "mods", "ah2", "main.js"), "utf8");
-  const head = src.indexOf("for (const a of tm.alerts) if (!a.member) rows.push(alert(a));");
-  const members = src.indexOf("for (const mb of tm.members) rows.push(this.member(");
-  const tail = src.indexOf("for (const a of tm.alerts) if (a.member) rows.push(alert(a));");
-  assert.ok(head > 0 && members > 0 && tail > 0, "the three loops are present");
-  assert.ok(head < members, "the waiting line is drawn above the members");
-  // negative: member alerts are not drawn with the header
-  assert.ok(tail > members, "member alerts stay after the members");
+  const head = src.indexOf("teamAlerts(tm, null);");
+  const tree = src.indexOf("for (const r of treeRows(teamTree(tm), open))");
+  const members = src.indexOf("rows.push(this.member(t, n, lead,");
+  const tail = src.indexOf("for (const a of n.alerts) rows.push(alert(tm.id, a, r));");
+  assert.ok(head > 0 && tree > 0 && members > 0 && tail > 0, "the loops are present");
+  assert.ok(head < tree, "the waiting line is drawn above the tree");
+  // negative: a member alert is not drawn with the header, and follows its own member's row
+  assert.ok(tail > members, "a member alert follows its member's row");
+  assert.ok(!/if \(!a\.member\) rows\.push/.test(src.slice(tree, tail)), "no team-level alert inside the tree loop");
 });

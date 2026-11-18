@@ -104,7 +104,7 @@ internal sealed class PlanFold : IPlanFold
             {
                 _order.Add(item);
                 var title = ProgressFormat.PlanText(row, "title") ?? item;
-                _items[item] = new PlanItem(item, title, PlanStates.NotStarted, ts, null, null, [], null, null, null, UpdatedAt: ts, StateSince: ts);
+                _items[item] = new PlanItem(item, title, PlanStates.NotStarted, ts, null, null, [], null, null, null, UpdatedAt: ts, StateSince: ts) { AddedBy = by.Length > 0 ? by : null };
                 _changes.Add(new PlanChange(ts, seq, item, "added", null, title, by));
             }
 
@@ -207,6 +207,7 @@ internal sealed class PlanFold : IPlanFold
             // task and an unknown kind fold to null, so an unset kind and an explicit task look the same; an empty parent clears it
             "kind" => current with { Kind = ProgressFormat.PlanText(row, "kind") is "project" or "goal" or "epic" or "deliverable" ? ProgressFormat.PlanText(row, "kind") : null },
             "parent" => current with { Parent = ProgressFormat.PlanText(row, "parent") is { Length: > 0 } parent ? parent : null },
+            "after" => current with { After = ProgressFormat.PlanText(row, "after") is { Length: > 0 } after ? after : null },
             _ => current,
         };
         var manual = row.Member("cause") is { IsMap: true } cause && ProgressFormat.PlanText(cause, "event") == ManualCause;

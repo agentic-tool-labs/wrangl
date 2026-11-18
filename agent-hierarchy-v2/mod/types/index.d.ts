@@ -57,6 +57,8 @@ declare module 'claude-code' {
       mail: { at: number; ids: string[]; address: string; text: string; state: 'delivered' | 'not delivered' }[]
       /** The background rebuild of ahd this session last kept from install.json (view.ts rebuildStep): its toasts show once. */
       rebuild: unknown
+      /** The last SessionStart did not run through the binary (hooks/register.ts); the status line says hooks are off while true. */
+      hooksOff: boolean
     }
   }
 }

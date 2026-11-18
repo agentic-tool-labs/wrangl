@@ -54,7 +54,8 @@ let agentType: string | undefined // the main loop's --agent type, as classic ho
 const subagentTypes = new Map<string, string>()
 const asks = new Map<string, string>() // tool_use_id → a PreToolUse ask's reason, answered at tool.check
 let held: string[] = [] // additionalContext waiting for the next prompt.submit
-let pendingSource: string | undefined // a SessionStart owed on the next prompt (after /clear)
+let pendingSource: string | undefined // a SessionStart owed on the next prompt (after /clear, or one that did not run)
+let owed = false // pendingSource is a retry of a SessionStart that did not run, not a /clear's first
 let stopContinued = false // the last Stop block queued a follow-up turn: classic stop_hook_active
 
 // The text this bridge passed to $.prompt.submit and has not seen arrive, one at a time. It is forgotten when it arrives (once), when
@@ -120,9 +121,9 @@ async function base($: any, classic: string, agentId?: string): Promise<Record<s
   return fields
 }
 
-// The bridge: one native hook unit, classic payload in, classic output back. Never throws.
+// The bridge: one native hook unit, classic payload in, classic output back. Never throws; `failed` is called when the run failed.
 // bridge to bin/ah-hook: 2026-11-11, atp-1592
-async function runHook($: any, row: Row, payload: Record<string, unknown>): Promise<Out | undefined> {
+async function runHook($: any, row: Row, payload: Record<string, unknown>, failed?: () => void): Promise<Out | undefined> {
   try {
     const root: string = $.plugin.root
     const ran = await $.process.run(['sh', `${root}/bin/ah-hook`, row.hook], {
@@ -131,6 +132,7 @@ async function runHook($: any, row: Row, payload: Record<string, unknown>): Prom
       timeoutMs: row.timeoutSec * 1000,
     })
     // Classic exit 2: a blocking error whose reason is stderr.
+    if (ran.exitCode !== 0) failed?.()
     if (ran.exitCode === 2) {
       const reason = ran.stderr.trim()
       return { decision: 'block', reason, hookSpecificOutput: { permissionDecision: 'deny', permissionDecisionReason: reason } }
@@ -142,18 +144,19 @@ async function runHook($: any, row: Row, payload: Record<string, unknown>): Prom
     const text = ran.stdout.trim()
     return text.startsWith('{') ? JSON.parse(text) : undefined
   } catch (err) {
+    failed?.()
     log($, `hook ${row.hook} (${row.classic}) failed: ${String(err)}`)
     return undefined
   }
 }
 
-// Runs one classic event's matching rows in order; an async row is not awaited. Returns each awaited output.
-async function runEvent($: any, classic: string, value: string, payload: Record<string, unknown>): Promise<Out[]> {
+// Runs one classic event's matching rows in order; an async row is not awaited. Returns each awaited output; `failed` as runHook's, awaited rows only.
+async function runEvent($: any, classic: string, value: string, payload: Record<string, unknown>, failed?: () => void): Promise<Out[]> {
   const outs: Out[] = []
   for (const row of await rowsFor($, classic, value)) {
     if (row.async) void runHook($, row, payload)
     else {
-      const out = await runHook($, row, payload)
+      const out = await runHook($, row, payload, failed)
       if (out) outs.push(out)
     }
   }
@@ -164,12 +167,34 @@ function contextOf(outs: Out[]): string[] {
   return outs.map(o => o.hookSpecificOutput?.additionalContext).filter(Boolean) as string[]
 }
 
-async function sessionStart($: any, source: string): Promise<string[]> {
+// The notices bin/ah-hook answers SessionStart with when no binary ran: not built (member's or not), or a refused home.
+const NOT_BUILT = /^Wrangl is installed but (?:its native binary is )?not built, so its hooks are off/
+const REFUSED = /^ah: .*, so ah did not run\. Ask the user to trust this home from a terminal/
+
+// A SessionStart that answered with one of those notices, or failed, did not really run: it is owed on the next prompt, at most one
+// try per prompt, until one runs through the binary; the mod's status line says so meanwhile. A retry (`retry`) that still did not
+// run adds no context: the session was told at its start.
+// ponytail: a machine that never builds pays one `sh bin/ah-hook sessionstart` per prompt for the session's life; nothing else stops it.
+async function sessionStart($: any, source: string, retry = false): Promise<string[]> {
+  let off = false
   try {
-    return contextOf(await runEvent($, 'SessionStart', source, { ...(await base($, 'SessionStart')), source }))
+    const context = contextOf(await runEvent($, 'SessionStart', source, { ...(await base($, 'SessionStart')), source }, () => (off = true)))
+    if (context.some(c => NOT_BUILT.test(c) || REFUSED.test(c))) off = true
+    return off && retry ? [] : context
   } catch (err) {
+    off = true
     log($, `SessionStart (${source}) failed: ${String(err)}`)
     return []
+  } finally {
+    if (off && pendingSource === undefined) {
+      pendingSource = source
+      owed = true
+    }
+    try {
+      await $.state.set({ plugin: 'wrangl', key: 'hooksOff' }, off)
+    } catch {
+      // no status line to tell
+    }
   }
 }
 
@@ -204,8 +229,10 @@ export const register: Register = (on, options) => {
     try {
       if (pendingSource) {
         const source = pendingSource
+        const retry = owed
         pendingSource = undefined
-        held.push(...(await sessionStart($, source)))
+        owed = false
+        held.push(...(await sessionStart($, source, retry)))
       }
       // A prompt this bridge submitted itself is marked, so the units never take it for the user's.
       const mine = own.take(e.text)
@@ -354,6 +381,7 @@ export const register: Register = (on, options) => {
     // A /clear goes on under a new session id with no session.start: its SessionStart runs on the next prompt.
     if (e.reason === 'clear') {
       pendingSource = 'clear'
+      owed = false
       lastCount = undefined
     }
     return next(e)

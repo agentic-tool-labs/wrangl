@@ -463,7 +463,7 @@ function group(t, g, docked, zoomTo, v) {
 // ---- the Map: graph-model.js mapOf, drawn as the web draws it (r6-graph.css .gpack) in Herdr tokens ----
 
 // A light theme draws the arcs stronger, as the web does (--arc-alpha .75 light; .6 dark where the web has .55, for 3:1 on raised).
-const light = (hex) => {
+export const light = (hex) => {
   const v = /^#?([0-9a-f]{6})/i.exec(hex ?? "")?.[1];
   if (!v) return false;
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16));

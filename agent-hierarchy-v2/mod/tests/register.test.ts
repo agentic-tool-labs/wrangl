@@ -126,6 +126,19 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(w.shown).toEqual(['1 live · 1 out', undefined])
   })
 
+  test(`${surface}: hooks off shows first, and gives way to the entry once the flag clears; a flag that is not exactly true shows nothing (negative)`, { options: { status_entry: true } }, async ($, on) => {
+    let off: unknown = true
+    const w = world({ stateGet: (_$: any, e: any, next: any) => (e.key === 'hooksOff' ? { value: { value: off, version: 1 } } : next(e)) })
+    stage(on, w)
+    const clock = mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    off = false
+    await clock.advance(2000)
+    off = 'true'
+    await clock.advance(2000)
+    expect(w.shown).toEqual(['Wrangl: not built, hooks off', '1 live · 1 out'])
+  })
+
   test(`${surface}: a missing file sets nothing`, async ($, on) => {
     const w = world({ files: {} })
     stage(on, w)

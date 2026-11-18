@@ -219,6 +219,9 @@ public sealed record PlanInput(
 
     /// <summary>How urgent a <c>wait-user</c> event's question is: <c>blocker</c>, <c>soon</c> or <c>eventually</c>.</summary>
     public string? Class { get; init; }
+
+    /// <summary>The checklist item (<c>stream/id</c>) an <c>after</c> event names; empty clears it.</summary>
+    public string? After { get; init; }
 }
 
 /// <summary>What recording plan events did: nothing (progress is off), a refusal with nothing written, or the count appended and, in <c>Warning</c>, why the Checklist block could not be rewritten afterwards (null when it was).</summary>
@@ -800,7 +803,7 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
         var rows = new JsonArray();
         foreach (var e in events)
         {
-            rows.Add(ProgressFormat.PlanRow(e.At ?? now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer, e.AskedFor, e.Class));
+            rows.Add(ProgressFormat.PlanRow(e.At ?? now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer, e.AskedFor, e.Class, e.After));
         }
 
         var append = Args(pool, team);

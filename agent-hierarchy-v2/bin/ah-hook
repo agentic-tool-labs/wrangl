@@ -2,7 +2,8 @@
 # agent-hierarchy: bin/ah-hook <name> runs the hook unit <name> through the native binary. POSIX sh, no bashisms.
 #   a binary found:   exec <binary> hook <name>   (stdin, stdout, stderr and exit code pass through)
 #   no binary:        every hook is silent and leaves one hook-errors row, gates included: sh cannot identify a session and a deny needs
-#                     an identified one. sessionstart adds the not-built notice for a member (WRANGL_TEAM_FILE or AH_MEMBER_NAME); exit 0
+#                     an identified one. sessionstart adds the not-built notice for every session (a member's own text: WRANGL_TEAM_FILE or AH_MEMBER_NAME); exit 0
+#   refused home:     the same, silent with one row; sessionstart adds the refusal's reason and fix as its notice
 # Outside test mode the binary is <home>/bin/ahd only, owned by the invoking uid and not writable by group or other, where <home> is
 # the default home <passwd home>/.claude/ah2 or an AH_HOME listed in <default home>/trusted-homes (bin/ah-trust.sh). An
 # AH_HOME that is neither is not used to find a binary: the default home's is run, and it refuses that AH_HOME itself. In test mode
@@ -45,12 +46,18 @@ ah_load_passwd_home && passwd=$_ah_ph
 # Where a row for a hook that did not run goes: the binary's own log home (HOME in test mode, the passwd home otherwise).
 if ah_test_mode; then loghome=${HOME:-}; else loghome=$passwd; fi
 route=$(ah_route "$passwd" "$orig_path" "")
+# say <text>: the SessionStart notice, <text> already escaped for a JSON string, as systemMessage and additionalContext.
+say() {
+  printf '{"systemMessage":"%s","hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}' "$1" "$1"
+}
 bin=
 case "$route" in
   "bin "*) bin=${route#bin } ;;
   "refuse "*)
-    # No binary can refuse this home in its own words: do what the binary does (silent, with one row).
-    ah_hook_refusal "$loghome" "$name" "ah: ${route#refuse }, so ah did not run. Ask the user to trust this home from a terminal, or to unset AH_HOME."
+    # No binary can refuse this home in its own words: do what the binary does (silent, with one row); sessionstart says so to every session.
+    why="ah: ${route#refuse }, so ah did not run. Ask the user to trust this home from a terminal, or to unset AH_HOME."
+    ah_hook_refusal "$loghome" "$name" "$why"
+    if [ "$name" = sessionstart ]; then say "$(printf '%s' "$why" | tr -d '\000-\037' | sed 's/\\/\\\\/g; s/"/\\"/g')"; fi
     exit 0
     ;;
 esac
@@ -61,10 +68,13 @@ if [ -z "$bin" ]; then
   esc_root=$(printf '%s' "$root" | tr -d '\000-\037' | sed 's/\\/\\\\/g; s/"/\\"/g')
   run_cmd="sh \\\"$esc_root/scripts/install.sh\\\" --apply --auto-rebuild"
   ah_hook_refusal "$loghome" "$name" "ah: the native ahd binary is required for $name and none could be run, so this hook did not run. Ask the user to run $run_cmd in a terminal."
-  if [ "$name" = sessionstart ] && [ -n "${WRANGL_TEAM_FILE:-}${AH_MEMBER_NAME:-}" ]; then
-    # The one thing sh can identify is a member; it is told why its team's hooks went quiet, and a session it cannot identify hears nothing.
-    note="Wrangl is installed but not built, so its hooks are off. Ask the user to run $run_cmd in a terminal, then start a new session."
-    printf '{"systemMessage":"%s","hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}' "$note" "$note"
+  if [ "$name" = sessionstart ]; then
+    # Every session is told why its hooks went quiet; a member, the one thing sh can identify, in its team's words.
+    if [ -n "${WRANGL_TEAM_FILE:-}${AH_MEMBER_NAME:-}" ]; then
+      say "Wrangl is installed but not built, so its hooks are off. Ask the user to run $run_cmd in a terminal, then start a new session."
+    else
+      say "Wrangl is installed but its native binary is not built, so its hooks are off: this session is not registered or tracked and has no Orchestrator directive. Ask the user to run $run_cmd in a terminal, then start a new session or send another prompt."
+    fi
   fi
   exit 0
 fi
