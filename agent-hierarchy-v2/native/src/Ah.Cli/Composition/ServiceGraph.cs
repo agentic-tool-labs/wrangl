@@ -159,6 +159,9 @@ internal sealed class ServiceGraph
     /// <summary>The daemon client the msg verbs ask first.</summary>
     internal IDaemonClient Daemon { get; private init; } = null!;
 
+    /// <summary>This graph is the daemon's own (<c>inDaemon</c> at <see cref="Build"/>).</summary>
+    internal bool InDaemon { get; private init; }
+
     /// <summary>The grants tables (per-dir-files-to-db S11e) the graph's reader and the grants domain share.</summary>
     internal IGrantSource Grants { get; private init; } = null!;
 
@@ -355,6 +358,7 @@ internal sealed class ServiceGraph
             Sender = MeshModule.CreateMeshSender(mailbox, rule, links, hierarchy, io.Clock, writer, io.Files, runFacts: new RunFactsReader(hierarchy, io.Files, roster, config)),
             Inspect = MeshModule.CreateMailInspect(mailbox, io.Files, environment, io.Clock),
             Daemon = daemon,
+            InDaemon = inDaemon,
             Grants = grantSource,
             HomeDocs = homeDocs,
             RecoverRecords = Ah.StateDb.StateDbModule.CreateRecoverRecords(environment.AhHome),

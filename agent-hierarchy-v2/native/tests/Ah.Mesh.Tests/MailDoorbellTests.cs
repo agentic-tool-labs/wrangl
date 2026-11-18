@@ -165,8 +165,9 @@ public sealed class MailDoorbellTests
     }
 
     [Fact]
-    public void AHeldSessionIsNotRungAndAsksForNoWake()
+    public void AHeldSessionIsNotRungButItsOldMailAsksForTheWake()
     {
+        // ah2-180 B3 (was: asks for no wake): a held session's prompt rings are dropped, so its mail goes to the pane wake.
         var rig = new Rig();
         rig.Add("r", PastLimit - 120_000);
         Assert.NotNull(rig.Decide(PastLimit).Ring);
@@ -175,7 +176,7 @@ public sealed class MailDoorbellTests
         var held = DecideHeld(rig, T0);
 
         Assert.Null(held.Ring);
-        Assert.Null(GoneUnread(rig));
+        Assert.Equal(Session, GoneUnread(rig));
     }
 
     // A state from before the clock, or with its reminders run out: nothing would ring again.
@@ -256,8 +257,9 @@ public sealed class MailDoorbellTests
     }
 
     [Fact]
-    public void ARingThatDropsAsksForNoWake()
+    public void ARingThatDropsGoesToThePaneWake()
     {
+        // ah2-180 B3 (was: asks for no wake): the drop marks the session held, and held mail this old goes to the pane wake.
         var rig = new Rig();
         rig.Add("r", PastLimit - 120_000);
         RemindersSpent(rig);
@@ -266,17 +268,107 @@ public sealed class MailDoorbellTests
 
         _ = DecideHeld(rig, T0 - 55_000);
 
-        Assert.Null(GoneUnread(rig));
+        Assert.Equal(Session, GoneUnread(rig));
     }
 
     [Fact]
-    public void NegativeAlarmsAloneStartNoClock()
+    public void AlarmsAloneStartTheClockForAnOrchestrator()
     {
+        // ah2-180 D3 (Amendment 3): an Orchestrator's alarm left unread reaches the wake as a report does.
         var rig = new Rig();
         rig.Add("ev", PastLimit - 120_000, kind: "event", text: "check-in-due: w", ev: "check-in-due");
         _ = rig.Decide(PastLimit);
 
+        Assert.Equal(Session, GoneUnread(rig));
+    }
+
+    // ah2-180 B1/B3: a held lead with one alarm and nothing else is not rung, and goes to the wake once that alarm is HeldWakeMs old.
+    [Fact]
+    public void AHeldLeadWithOnlyAnAlarmIsWokenOnceTheAlarmIsHeldWakeMsOld()
+    {
+        var rig = new Rig();
+        var at = T0 - MailDoorbell.HeldWakeMs - 10_000;
+        rig.Add("ev", at, kind: "event", text: "check-in-due: w", ev: "check-in-due");
+
+        Assert.Null(DecideHeld(rig, at + 1000).Ring);
+        Assert.Null(GoneUnread(rig, at + MailDoorbell.HeldWakeMs - 1000));
+        Assert.Equal(Session, GoneUnread(rig, at + MailDoorbell.HeldWakeMs));
+    }
+
+    // ah2-180 Amendment 3 (review N2): a held session seen in a turn has resumed and is not woken as held.
+    [Fact]
+    public void NegativeAHeldSessionSeenInATurnIsNotWokenAsHeld()
+    {
+        var rig = new Rig();
+        rig.Add("r", PastLimit - 120_000);
+        _ = rig.Bell.Decide(new DoorbellRequest(Session, T0 - 1000, T0 - 2000, new Dictionary<string, HandedState>(), DoorbellCarrier.Prompt) { Held = true });
+
         Assert.Null(GoneUnread(rig));
+    }
+
+    [Fact]
+    public void NegativeAStopThatLiftedIsNotWokenAsHeld()
+    {
+        var rig = new Rig();
+        rig.Add("r", PastLimit - 120_000);
+        _ = DecideHeld(rig, PastLimit);
+        _ = DecideHeld(rig, PastLimit + 1000, held: false);
+
+        Assert.Null(GoneUnread(rig, PastLimit + 1000 + MailDoorbell.HeldWakeMs));
+    }
+
+    // ah2-180 C1's reader: the last uncarried mark, or nothing.
+    [Fact]
+    public void TheUncarriedMarkIsReadBackAndASessionWithoutOneHasNone()
+    {
+        var rig = new Rig();
+        Assert.Null(rig.Fx.Mailbox.DoorbellUncarriedMark(Session));
+
+        rig.Fx.Mailbox.MarkDoorbellUncarried(Session, T0, "no-pane");
+
+        Assert.Equal((T0, "no-pane"), rig.Fx.Mailbox.DoorbellUncarriedMark(Session));
+    }
+
+    // ah2-180 A4: the told-again work alarms are alarm-class: a busy turn's tool carrier does not ring them, as it rings a report.
+    [Theory]
+    [InlineData("report-waiting", false)]
+    [InlineData("work-still-waiting", false)]
+    [InlineData(null, true)]
+    public void TheWorkAlarmsAreAlarmClass(string? ev, bool toolRings)
+    {
+        var rig = new Rig();
+        if (ev is null)
+        {
+            rig.Add("r", T0 - 60_000);
+        }
+        else
+        {
+            rig.Add("w", T0 - 60_000, kind: "event", text: ev + ": x", ev: ev);
+        }
+
+        Assert.Equal(toolRings, rig.Decide(T0, busyAt: T0 - 1000, carrier: DoorbellCarrier.Tool).Ring is not null);
+    }
+
+    [Fact]
+    public void NegativeAnAlarmInAMembersBoxStartsNoWake()
+    {
+        var rig = new Rig();
+        var member = rig.Home + "/mailbox/tm~h/m1";
+        Directory.CreateDirectory(member);
+        rig.Fx.Mailbox.WriteHeartbeat(member, MailDue.Adapter, Session, 5000);
+
+        Assert.Null(rig.Fx.Mailbox.DoorbellGoneUnread(member, "m1@tm", null, T0));
+    }
+
+    [Fact]
+    public void AHeldAnswerCountsItsUnreadAndANegativeOneCountsNothing()
+    {
+        var rig = new Rig();
+        rig.Add("r", T0 - 120_000);
+        rig.Add("ev", T0 - 110_000, kind: "event", text: "check-in-due: w", ev: "check-in-due");
+
+        Assert.Equal(2, DecideHeld(rig, T0).Unread);
+        Assert.Null(DecideHeld(rig, T0 + 1000, held: false).Unread);
     }
 
     [Fact]
@@ -342,6 +434,89 @@ public sealed class MailDoorbellTests
         rig.Add("r", T0 - 120_000);
 
         Assert.NotNull(DecideHeld(rig, T0, held: false).Ring);
+    }
+
+    [Fact]
+    public void AStoppedSessionWithOnlyAnAlarmIsMarkedAfterTheLimit()
+    {
+        var rig = new Rig();
+        rig.Add("ev", PastLimit - 120_000, kind: "event", text: "check-in-due: w", ev: "check-in-due");
+
+        Assert.Null(DecideHeld(rig, PastLimit).Escalation);
+        Assert.Null(DecideHeld(rig, T0 - 120_000).Escalation);
+        var told = DecideHeld(rig, T0).Escalation;
+        Assert.NotNull(told);
+        Assert.Equal("mail-unacked", told!.Kind);
+        Assert.Contains("is stopped with 1 unread; type a message to continue", told.Text, StringComparison.Ordinal);
+        Assert.Null(DecideHeld(rig, T0 + 1000).Escalation);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AStoppedMarkSaysWhenTheWakeCouldNotType(bool failedInEpisode)
+    {
+        var rig = new Rig();
+        rig.Add("r", PastLimit - 120_000);
+        _ = DecideHeld(rig, PastLimit);
+        rig.Fx.Mailbox.MarkDoorbellUncarried(Session, failedInEpisode ? PastLimit + 1000 : PastLimit - 1000, "no-pane");
+
+        var told = DecideHeld(rig, T0).Escalation!.Text;
+
+        Assert.Equal(failedInEpisode, told.Contains("; ah could not wake it", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NegativeAnAlarmAloneIsNotMarkedWhenTheSessionIsNotHeld()
+    {
+        var rig = new Rig();
+        rig.Add("ev", PastLimit - 120_000, kind: "event", text: "check-in-due: w", ev: "check-in-due");
+
+        _ = DecideHeld(rig, PastLimit, held: false);
+        Assert.Null(DecideHeld(rig, T0, held: false).Escalation);
+        Assert.Null(DecideHeld(rig, T0 + IMailCore.DoorbellRemindMs, held: false).Escalation);
+    }
+
+    // ah2-180 D1: stopped first, then a report, then an alarm: one mark past the limit, counting both.
+    [Fact]
+    public void AStopThenAReportThenAnAlarmIsMarkedOnceCountingBoth()
+    {
+        var rig = new Rig();
+        rig.Add("r", PastLimit - 120_000);
+        Assert.Null(DecideHeld(rig, PastLimit).Escalation);
+        rig.Add("ev", PastLimit + 60_000, kind: "event", text: "check-in-due: w", ev: "check-in-due");
+        Assert.Null(DecideHeld(rig, PastLimit + 61_000).Escalation);
+
+        var told = DecideHeld(rig, T0).Escalation;
+
+        Assert.Contains("is stopped with 2 unread", told!.Text, StringComparison.Ordinal);
+        Assert.Null(DecideHeld(rig, T0 + 1000).Escalation);
+    }
+
+    [Fact]
+    public void TheTraceRecordsAHeldSessionAndWhyItWasNotRung()
+    {
+        var rig = new Rig();
+        rig.Add("r", T0 - 120_000);
+
+        _ = DecideHeld(rig, T0);
+
+        var row = JsonText.Parse(File.ReadAllLines(Mailbox.TraceFile(rig.Home, Session)).Last(l => l.Contains("doorbell-trace", StringComparison.Ordinal))).AsObject();
+        Assert.True(row.Get("held")!.Value.AsBool());
+        Assert.Equal("held", row.Get("not_rung")!.Value.AsString());
+    }
+
+    [Fact]
+    public void NegativeTheTraceOfASessionNotHeldGivesNoHeldReason()
+    {
+        var rig = new Rig();
+        rig.Add("r", T0 - 120_000);
+
+        Assert.NotNull(DecideHeld(rig, T0, held: false).Ring);
+
+        var row = JsonText.Parse(File.ReadAllLines(Mailbox.TraceFile(rig.Home, Session)).Last(l => l.Contains("doorbell-trace", StringComparison.Ordinal))).AsObject();
+        Assert.False(row.Get("held")!.Value.AsBool());
+        Assert.True(row.Get("not_rung")!.Value.IsNull);
     }
 
     private static void Notes(Rig rig, int count, double createdMs = T0 - 60_000, string prefix = "n")
@@ -920,18 +1095,24 @@ public sealed class MailDoorbellTests
     }
 
     [Fact]
-    public void AnUnackedAlarmIsRungOnceAndNeverReRungOrEscalatedAsMailUnacked()
+    public void AnUnackedAlarmInALeadsBoxIsReRungThenEscalatedAsMailUnacked()
     {
+        // ah2-180 B1 (was: rung once, never re-rung or escalated).
         var rig = new Rig();
         rig.Add("a1", T0 - 30_000, kind: "event", ev: "check-in-due", requestId: "r1");
         Assert.NotNull(rig.Decide(T0).Ring);
 
+        var rerings = 0;
+        DoorbellEscalation? told = null;
         for (var i = 1; i <= 6; i++)
         {
-            var later = rig.Decide(T0 + (i * 30_000));
-            Assert.Null(later.Ring);
-            Assert.Null(later.Escalation);
+            var later = rig.Decide(T0 + (i * IMailCore.DoorbellReringMs));
+            rerings += later.Ring?.Kind == "rering" ? 1 : 0;
+            told ??= later.Escalation;
         }
+
+        Assert.Equal(IMailCore.DoorbellReringMax, rerings);
+        Assert.Equal("mail-unacked", told?.Kind);
     }
 
     private static DoorbellEscalation? BusyFor(Rig rig, int minutes, Action<List<DoorbellEscalation>>? each = null)
@@ -1815,14 +1996,15 @@ public sealed class MailDoorbellTests
     }
 
     [Fact]
-    public void AMemberWaitingAlarmNeitherRingsTheToolCarrierNorReRings()
+    public void AMemberWaitingAlarmDoesNotRingTheToolCarrierAndIsReRungInALeadsBox()
     {
         var rig = new Rig();
         rig.Add("w1", T0 - 60_000, kind: "event", ev: "member-waiting");
 
         Assert.Null(rig.Decide(T0, busyAt: T0 - 1000, carrier: DoorbellCarrier.Tool).Ring);
         Assert.Equal("ring", rig.Decide(T0).Ring!.Kind);
-        Assert.Null(rig.Decide(T0 + 3_600_000).Ring);
+        // ah2-180 B1 (was: never re-rung)
+        Assert.Equal("rering", rig.Decide(T0 + IMailCore.DoorbellReringMs).Ring?.Kind);
     }
 
     private static string GateRow(string type, string session = Session, string member = "a", string extra = "") =>

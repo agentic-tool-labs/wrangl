@@ -13,6 +13,9 @@ internal sealed partial class Mailbox
         return (!record.IsNull || !roster.TeamExistsAt(roster.TeamPath(home, team)), record);
     }
 
+    /// <summary>Whether the team of <paramref name="teamFile"/> is under a user hold of any phase (ah2-180 Amendment 3).</summary>
+    internal bool UnderHold(string teamFile, string team) => roster.HoldOf(RosterModule.TeamFileHome(teamFile) ?? string.Empty, team) is not null;
+
     /// <summary>
     /// Mail to a held team is appended and drained in the same call. Returns the send result when the entry was drained, else null.
     /// A brief marked <c>hold_exempt</c> is still delivered while the hold is winding down or stopped; a request from outside cannot carry the mark

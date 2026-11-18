@@ -270,6 +270,38 @@ public sealed class StallHostReportedTests : IDisposable
         Assert.DoesNotContain(binary == "hc" ? "herdr" : "hc", bins);
     }
 
+    // ah2-156: the stall probe asks the server the member is stamped on, not the untagged team's tui; the unstamped row is the negative
+    [Theory]
+    [InlineData("core", "hc", "herdr")]
+    [InlineData(null, "herdr", "hc")]
+    public void TheStallProbeOfAMemberOnAnUntaggedTeamAsksTheServerItIsStampedOn(string? stamp, string asked, string notAsked)
+    {
+        Directory.CreateDirectory(_sandbox.Bin);
+        foreach (var name in new[] { "herdr", "hc" })
+        {
+            var path = Path.Combine(_sandbox.Bin, name);
+            File.WriteAllText(path, "#!/bin/sh\n");
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
+        var runner = new FakeRunner();
+        var variables = new Dictionary<string, string?> { ["AH_TEST"] = "1", ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home, ["PATH"] = _sandbox.Bin };
+        var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.0.0", "1"));
+        var graph = ServiceGraph.Build(PlatformModule.CreateIo(null), env, runner, new FakeDaemonClient());
+        graph.Hierarchy.Core.Liveness = new RowJudge();
+        var dir = Path.Combine(_sandbox.Home, "repo", ".claude", "ah2");
+        Directory.CreateDirectory(Path.Combine(dir, "teams"));
+        var flavour = stamp is null ? string.Empty : $",\"herdr_flavour\":\"{stamp}\"";
+        File.WriteAllText(Path.Combine(dir, "teams", "tm.json"), $"{{\"transport\":\"herdr\",\"members\":[{{\"name\":\"a\",\"role\":\"implementor\",\"transport_id\":\"t7\"{flavour}}}]}}");
+        var host = new StallHost(graph, _sandbox.AhHome, () => true, () => null);
+
+        _ = host.Judge(new StallTeam("tm", dir, _sandbox.Home, null, "orch"), new StallMember("a", "implementor", "t7", false));
+
+        var bins = runner.Calls.Select(c => Path.GetFileName(c[0])).ToList();
+        Assert.True(bins.Contains(asked), string.Join(" | ", runner.Calls.Select(c => string.Join(' ', c))));
+        Assert.DoesNotContain(notAsked, bins);
+    }
+
     [Fact]
     public void AMemberWithNoPaneIsNotRead()
     {
@@ -450,5 +482,34 @@ public sealed class StallHostReportedTests : IDisposable
         PlantReported("{not json");
 
         Assert.Null(NewHost().ReportedSession("tm/impl"));
+    }
+
+    // ah2-180 C1: unread mail at orchestrator@tm and an uncarried mark not older than it is a stalled lead; an older mark or no unread mail is not.
+    [Fact]
+    public void UncarriedGivesTheUnreadCountAndReasonOnlyWhenTheMarkIsNotOlderThanTheOldestUnreadMail()
+    {
+        var project = Path.Combine(_sandbox.Root, "proj");
+        var hierarchy = Path.Combine(project, ".claude", "ah2");
+        Directory.CreateDirectory(Path.Combine(project, ".git"));
+        var variables = new Dictionary<string, string?> { ["AH_TEST"] = "1", ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home, ["WRANGL_HIERARCHY_DIR"] = hierarchy };
+        var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.0.0", "1"));
+        var graph = ServiceGraph.Build(PlatformModule.CreateIo(null), env, new RecordingRunner(), new FakeDaemonClient());
+        TestPlant.Team(graph.Roster, graph.Writer, graph.Roster.TeamPath(hierarchy, "tm"), "{\"version\":1,\"orchestrator\":{\"session_id\":\"o\",\"pid\":99999999},\"members\":[]}");
+        var host = new StallHost(graph, _sandbox.AhHome, () => true, () => null);
+        var team = new StallTeam("tm", hierarchy, project, "orchestrator@tm", "o");
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        // negative: a mark with no unread mail
+        graph.Mailbox.MarkDoorbellUncarried("o", now - 60_000, "no-pane");
+        Assert.Null(host.Uncarried(team));
+
+        var sent = graph.Mailbox.Send(new Ah.Core.Json.JsonObject { ["to"] = "orchestrator@tm", ["from"] = "ahd", ["cwd"] = project, ["hierarchy_dir"] = hierarchy, ["event"] = "queue-stall", ["text"] = "queue-stall: x" });
+        Assert.True(sent.Ok, sent.Failure?.ToString());
+
+        // negative: the mark is older than the oldest unread entry
+        Assert.Null(host.Uncarried(team));
+
+        graph.Mailbox.MarkDoorbellUncarried("o", now + 60_000, "no-pane");
+        Assert.Equal(new LeadUncarried(1, "no-pane"), host.Uncarried(team));
     }
 }

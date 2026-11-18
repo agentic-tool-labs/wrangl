@@ -95,7 +95,9 @@ test-native-frontend
 test-native-install
 test-role-packs
 test-roster-team-home
-test-run-set
+test-run-set-s1
+test-run-set-s2
+test-run-set-s3
 test-stall-failsafe
 test-with-slot
 '

@@ -293,7 +293,7 @@ internal sealed class BareHost(ServiceGraph g, StallHost stall, Func<IReadOnlyLi
         JsonArray agents;
         try
         {
-            agents = g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name)).Agents();
+            agents = g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name), row.Name).Agents();
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -478,7 +478,7 @@ internal sealed class BareHost(ServiceGraph g, StallHost stall, Func<IReadOnlyLi
 
     private string? ReadLaunchFile(string path) => g.Io.Files.Exists(path) ? g.Io.Files.ReadText(path) : null;
 
-    public BareVerdict Check(StallTeam team, BareRow row, BareSighting? earlier) => LaunchModule.CheckBare(Facts(team), row.Member, earlier);
+    public BareVerdict Check(StallTeam team, BareRow row, BareSighting? earlier) => LaunchModule.CheckBare(Facts(team, row.Name), row.Member, earlier);
 
     public string? LastSessionId(StallTeam team, BareRow row) => Facts(team).LastSessionId(row.Name, team.Name);
 
@@ -597,8 +597,9 @@ internal sealed class BareHost(ServiceGraph g, StallHost stall, Func<IReadOnlyLi
 
     private readonly IProcessTable _table = PlatformModule.CreateProcessTable(g.Runner);
 
-    private BareFacts Facts(StallTeam team) => new(
-        g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name)),
+    // member null: the herdr is not asked (LastSessionId), so the team's flavour, else tui, stands
+    private BareFacts Facts(StallTeam team, string? member = null) => new(
+        g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name), member),
         (teamName, name) => g.Launch.Snapshots.SessionIdOf(team.HierarchyDir, teamName, new JsonObject { ["name"] = name }) is { IsText: true } sid ? sid.AsString() : null,
         (session, pid, pidStart, teamName, name) => Claimed(session, pid, pidStart, teamName, name, team.HierarchyDir),
         pid => _table.StartTime(pid),

@@ -219,6 +219,12 @@ public static partial class WatchModule
             treeLanes.Add(new Model.DecisionsRereadNotifier(new Model.ParkedLane(parkedProbe, dirs.Refresh, () => dirs.Current), dir => questionsRef?.EmitHeldOfDir(dir, model!.Emit)));
         }
 
+        // ah2-180 Amendment 2: the stall watch's raised user alarms, served as team alerts
+        if (options?.UserAlarmsProbe is { } userAlarmsProbe)
+        {
+            treeLanes.Add(new Model.UserAlarmsLane(userAlarmsProbe));
+        }
+
         lanes.AddRange(treeLanes);
         // ah2-102 F2: the watcher's coverage, in process; a publish that changed it re-reads the lane
         if (options?.Coverage is Model.WatchCoverage coverage)
@@ -411,6 +417,12 @@ public static partial class WatchModule
         {
             model.Emit(Model.CoverageLane.LaneName, Model.CoverageLane.Key);
         }
+
+        // ah2-180 Amendment 2: the same for the user-alarms lane, whose store tells the model of no write
+        if (options?.UserAlarmsProbe is not null)
+        {
+            model.Emit(Model.UserAlarmsLane.LaneName, Model.UserAlarmsLane.Key);
+        }
         // Off the projector thread, so the lane reads and the team list behind this handler do not wait on starting watchers (b233).
         dirs.Changed += watcher.SyncSoon;
         dirs.Changed += model.ResolveLiveLeases;
@@ -576,6 +588,11 @@ public static partial class WatchModule
 
     /// <summary>The parked-questions lane, whose key is a canonical hierarchy directory (b517).</summary>
     public const string ParkedLaneName = Model.ParkedLane.LaneName;
+
+    /// <summary>The user-alarms lane and its one key: a write of the stall store re-reads it.</summary>
+    public const string UserAlarmsLaneName = Model.UserAlarmsLane.LaneName;
+
+    public const string UserAlarmsKey = Model.UserAlarmsLane.Key;
 
     /// <summary>The known-dirs lane's one key.</summary>
     public const string KnownDirsKey = Model.KnownDirsLane.Key;

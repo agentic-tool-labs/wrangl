@@ -88,6 +88,10 @@ export function summaryRow(slice) {
       // a stuck open task: its exchange id is the key the Board's item link takes
       return { ...card, key: `stuck|${teamId}|${a.exchange}`, kind: "Stuck", memberId: a.member ?? null, itemKey: a.exchange ?? null };
     }
+    if (a.kind === "alarm") {
+      // a user alarm the stall watch raised for the team (ah2-180): its own card, the error card's look, no member
+      return { ...card, key: `alarm|${teamId}|${a.since}`, kind: "Alarm", memberId: null };
+    }
     return a.kind === "error"
       ? { ...card, key: `error|${teamId}|${a.member}|${a.since}`, kind: "Error", memberId: a.member }
       : { ...card, key: `blocked|${teamId}|${a.member}|${a.since}`, kind: "Blocked", memberId: a.member };

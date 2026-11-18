@@ -1491,7 +1491,25 @@
     "reads_source": false
   },
   {
-    "name": "test-run-set",
+    "name": "test-run-set-s1",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-set-s2",
+    "kind": "static",
+    "libs": [],
+    "covers": [],
+    "units": [],
+    "lane": "full",
+    "reads_source": false
+  },
+  {
+    "name": "test-run-set-s3",
     "kind": "static",
     "libs": [],
     "covers": [],

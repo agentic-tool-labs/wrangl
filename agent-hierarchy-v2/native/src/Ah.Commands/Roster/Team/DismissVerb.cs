@@ -156,6 +156,10 @@ internal static class DismissVerb
             : CloseIfClean(c, dir, name, read, team, targetMember, warnings, sources);
     }
 
+    /// <summary>What "clean" means, in the order <see cref="CleanClose"/> checks it.</summary>
+    internal const string CleanMeans =
+        "A clean member is released and idle, has no open request, has finished its stream, and has no uncommitted or unmerged work (its work tree is clean and every commit is on origin).";
+
     /// <summary>A bare <c>dismiss &lt;name&gt;</c>: closes a clean member at once; a member that is not clean is refused with its reasons.</summary>
     private static int CloseIfClean(
         RosterContext c, string dir, string name, TeardownSupport.TeamRead read, JsonValue team, JsonValue target, List<string> warnings,
@@ -176,7 +180,7 @@ internal static class DismissVerb
             return Close(c, dir, name, read, team, target, warnings, sources);
         }
 
-        var message = $"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}) — nothing was closed. Close it anyway: {TeardownSupport.CloseCommand(c, "dismiss", name, memberPlan.Token)}";
+        var message = $"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}) — nothing was closed. {CleanMeans} Close it anyway: {TeardownSupport.CloseCommand(c, "dismiss", name, memberPlan.Token)}";
         throw c.Refuse(
             new JsonObject
             {

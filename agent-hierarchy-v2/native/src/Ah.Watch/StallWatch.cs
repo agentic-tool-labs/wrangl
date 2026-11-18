@@ -16,6 +16,9 @@ public sealed record StallTeam(string Name, string HierarchyDir, string Cwd, str
     public bool QueuedOnly { get; init; }
 }
 
+/// <summary>A lead's box holds <paramref name="Unread"/> unread entries and is marked uncarried since they arrived: the daemon's wake failed for <paramref name="Reason"/>.</summary>
+public sealed record LeadUncarried(int Unread, string Reason);
+
 /// <summary>A tracked member row. <paramref name="Exempt"/> marks one the sweeper keeps (<c>sweep_keep</c>).</summary>
 public sealed record StallMember(string Name, string? Role, string? PaneId, bool Exempt);
 
@@ -23,7 +26,14 @@ public sealed record StallMember(string Name, string? Role, string? PaneId, bool
 public sealed record StallJudgement(MemberVerdict Verdict, string RegistrationSession, DateTimeOffset? LastEvidence = null);
 
 /// <summary>A user alarm episode as recorded: what it was told for, when it was first and last told, and whether its first line got through.</summary>
-public sealed record UserAlarm(string Episode, DateTimeOffset FirstToldAt, DateTimeOffset LastToldAt, bool Delivered);
+public sealed record UserAlarm(string Episode, DateTimeOffset FirstToldAt, DateTimeOffset LastToldAt, bool Delivered)
+{
+    /// <summary>The alarm's kind (<c>owner-down</c>, <c>owner-asking</c>, <c>owner-stalled</c>); null on a record written before it was kept.</summary>
+    public string? Kind { get; init; }
+
+    /// <summary>The line told to the user, served as the team's alert while the alarm is raised (ah2-180 Amendment 2); null on an older record.</summary>
+    public string? Line { get; init; }
+}
 
 /// <summary>What the stall watch reads and writes. It never signals a process, closes a pane or edits a request.</summary>
 public interface IStallHost
@@ -74,6 +84,9 @@ public interface IStallHost
     /// <summary>When the session began waiting on a question it asked in its terminal; null when it is not waiting on one.</summary>
     DateTimeOffset? AskingSince(string hierarchyDir, string session) => null;
 
+    /// <summary>The team Orchestrator's unread mail the daemon could not wake it for (ah2-180 C1, the mark of B6); null when its box is read or not marked.</summary>
+    LeadUncarried? Uncarried(StallTeam team) => null;
+
     /// <summary>
     /// Starts the user's <c>alarm.command</c> with <paramref name="line"/> without waiting for it, and calls <paramref name="exited"/> with its
     /// exit status once it ends, on any thread; false, and no call, when none is set. <paramref name="team"/> and <paramref name="kind"/>
@@ -92,6 +105,12 @@ public interface IStallHost
 
     /// <summary>Records the user alarm for <paramref name="key"/>, or forgets it when <paramref name="alarm"/> is null.</summary>
     void SetAlarm(string key, UserAlarm? alarm) => SetReportedSession(key, alarm?.Episode);
+
+    /// <summary>The keys of every user alarm recorded (<c>alarm/&lt;team&gt;/&lt;kind&gt;</c>), whatever team; none when the host keeps no record.</summary>
+    IReadOnlyList<string> AlarmKeys() => [];
+
+    /// <summary>Whether the user ordered a hold on the team named <paramref name="team"/> in any hierarchy dir the watch walks.</summary>
+    bool TeamHeld(string team) => false;
 
     /// <summary>The unacked ahd events in the team's Orchestrator box, counted by event name; none when the host cannot read the box.</summary>
     IReadOnlyDictionary<string, int> WaitingEvents(StallTeam team) => new Dictionary<string, int>();
@@ -123,6 +142,9 @@ internal sealed class StallWatch
 
     /// <summary>How long a recorded alarm is kept for a member the sweeps no longer list; a short listing must not wipe live entries.</summary>
     public static readonly TimeSpan ReportedKeep = TimeSpan.FromDays(7);
+
+    /// <summary>The head of a user alarm's record key, <c>alarm/&lt;team&gt;/&lt;kind&gt;</c>.</summary>
+    internal const string AlarmKeyPrefix = "alarm/";
 
     private readonly Action<string>? _stamp;
     private readonly IStallHost _host;
@@ -254,7 +276,32 @@ internal sealed class StallWatch
         foreach (var gone in _ownerDownSince.Keys.Where(name => teams.All(t => t.Name != name)).ToList())
         {
             _ = _ownerDownSince.Remove(gone);
-            TellUser(new StallTeam(gone, string.Empty, string.Empty, null, string.Empty), "owner-down", null, string.Empty, false, false, now);
+        }
+
+        // ah2-180 Amendment 4: every raised alarm of a team no longer watched ends, read from the record so a daemon start clears them too;
+        // a team the user put on hold is told nothing.
+        foreach (var key in _host.AlarmKeys())
+        {
+            var cut = key.LastIndexOf('/');
+            if (!key.StartsWith(AlarmKeyPrefix, StringComparison.Ordinal) || cut <= AlarmKeyPrefix.Length || cut == key.Length - 1)
+            {
+                continue;
+            }
+
+            var name = key[AlarmKeyPrefix.Length..cut];
+            if (teams.Any(t => t.Name == name))
+            {
+                continue;
+            }
+
+            if (_host.TeamHeld(name))
+            {
+                _host.SetAlarm(key, null);
+            }
+            else
+            {
+                TellUser(new StallTeam(name, string.Empty, string.Empty, null, string.Empty), key[(cut + 1)..], null, string.Empty, false, false, now);
+            }
         }
 
         foreach (var team in teams)
@@ -290,6 +337,13 @@ internal sealed class StallWatch
             var asked = down ? null : _host.AskingSince(team.HierarchyDir, team.OrchestratorSession);
             var askedLong = asked is { } since && now - since >= _settings.AskAlarmAfter;
             TellUser(team, "owner-asking", askedLong ? Timestamps.ToIsoString(asked!.Value) : null, $"ah: team {team.Name}: its Orchestrator is waiting for your answer in its terminal, and its team cannot move.", false, true, now);
+
+            // ah2-180 C1: a live lead with unread mail ah could not wake it for.
+            var stalled = down || team.QueuedOnly ? null : _host.Uncarried(team);
+            TellUser(
+                team, "owner-stalled", stalled is null ? null : team.OrchestratorSession,
+                stalled is null ? string.Empty : $"{HierarchyModule.OrchestratorAddress(team.Name)} has {stalled.Unread} unread and ah could not wake it ({stalled.Reason}). Type anything in its pane.",
+                false, true, now);
         }
     }
 
@@ -299,7 +353,7 @@ internal sealed class StallWatch
     /// </summary>
     private void TellUser(StallTeam team, string kind, string? episode, string line, bool digest, bool repeat, DateTimeOffset now)
     {
-        var key = $"alarm/{team.Name}/{kind}";
+        var key = $"{AlarmKeyPrefix}{team.Name}/{kind}";
         var held = _host.Alarm(key);
         if (episode is null)
         {
@@ -329,14 +383,15 @@ internal sealed class StallWatch
             return;
         }
 
+        string Told() => digest ? line + Digest(team) : line;
         UserAlarm next;
         if (held is null || held.Episode != episode || !held.Delivered)
         {
-            next = new UserAlarm(episode, held is not null && held.Episode == episode ? held.FirstToldAt : now, now, false);
+            next = new UserAlarm(episode, held is not null && held.Episode == episode ? held.FirstToldAt : now, now, false) { Kind = kind, Line = Told() };
         }
         else if (repeat && now - held.LastToldAt >= _settings.AlarmRepeat)
         {
-            next = held with { LastToldAt = now };
+            next = held with { LastToldAt = now, Kind = kind, Line = Told() };
         }
         else
         {
@@ -352,16 +407,18 @@ internal sealed class StallWatch
         // Recorded before the start: the command may end, and mark its first line delivered, before the start returns.
         _host.SetAlarm(key, next);
         var first = !next.Delivered;
-        var start = Run(team, kind, digest ? line + Digest(team) : line, now, exit =>
+        var told = next.Line!;
+        var start = Run(team, kind, told, now, exit =>
         {
-            if (first && exit == 0 && _host.Alarm(key) is { } told && told.Episode == episode)
+            if (first && exit == 0 && _host.Alarm(key) is { } recorded && recorded.Episode == episode)
             {
-                _host.SetAlarm(key, told with { Delivered = true });
+                _host.SetAlarm(key, recorded with { Delivered = true });
             }
         });
         if (start != Start.Started)
         {
-            _host.SetAlarm(key, held);
+            // ah2-180 Amendment 2 (b): no channel carried it, but it is raised: the record stays (delivered as it was), so the alerts serve it and the next sweep tries a channel again
+            _host.SetAlarm(key, held is not null && held.Episode == episode ? held with { Kind = kind, Line = told } : next);
         }
     }
 

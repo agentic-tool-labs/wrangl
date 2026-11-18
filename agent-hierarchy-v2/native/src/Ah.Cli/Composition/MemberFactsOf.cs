@@ -32,13 +32,12 @@ internal static class MemberFactsOf
                 continue;
             }
 
-            var herdr = g.Launch.HerdrFor(teamRecord);
             // the team's record as the reuse compares it: the store's teams counter, or the record itself where there is none; read at the team's first probe
             string? stamp = null;
             string TeamStamp() => stamp ??= g.Roster.TeamsChangeToken()?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? Ah.Core.Json.JsonText.Stringify(teamRecord, 0);
 
-            // with the reuse on, one answer that this team's herdr server is not running stands for its other members in the pass
-            Ah.Launch.HerdrAgentState? serverDown = null;
+            // with the reuse on, one answer that a herdr server is not running stands for this team's other members on that server in the pass
+            var serverDown = new Dictionary<string, Ah.Launch.HerdrAgentState>(StringComparer.Ordinal);
 
             foreach (var row in rows.AsArray())
             {
@@ -65,16 +64,28 @@ internal static class MemberFactsOf
                 }
 
                 var pane = row.Member("transport_id") is { IsText: true } transport ? global::Ah.Abstractions.HeadlessTransport.PaneOf(transport.AsString()) : null;
+                // ah2-156: the server this member lives on, by its registration, its row and its team; ahd's own env is never the fallback
+                string Flavour() => Ah.Core.Mux.HerdrFlavour.Resolve(
+                    registration is null ? null : g.Mailbox.ReadRegistration(registration.SessionId), teamRecord, null, row) ?? Ah.Core.Mux.HerdrFlavour.Tui;
+
                 PaneProbe Ask()
                 {
-                    var state = herdr.AgentState(member);
+                    var state = g.Launch.HerdrFor(Flavour()).AgentState(member);
                     return new PaneProbe(state.Indeterminate, state.AgentStatus, state.AgentType, state.Why);
                 }
 
                 (PaneProbe Answer, bool Holdable) AskOnce()
                 {
-                    var state = serverDown ?? herdr.AgentState(member);
-                    serverDown = state.ServerDown ? state : serverDown;
+                    var flavour = Flavour();
+                    if (!serverDown.TryGetValue(flavour, out var state))
+                    {
+                        state = g.Launch.HerdrFor(flavour).AgentState(member);
+                        if (state.ServerDown)
+                        {
+                            serverDown[flavour] = state;
+                        }
+                    }
+
                     return (new PaneProbe(state.Indeterminate, state.AgentStatus, state.AgentType, state.Why), !state.Indeterminate || state.ServerDown);
                 }
 

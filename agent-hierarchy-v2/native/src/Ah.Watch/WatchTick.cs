@@ -799,7 +799,7 @@ internal sealed class WatchTick
             // TODO: a member whose session has live descendant processes (a running test or build) is also blocked on a job; add it once IProcessTable can list descendants.
             events.AddRange(QueueEvents.Evaluate(
                 sid, now, [.. owned.Where(t => !host.TeamHeld(home, t.Name))], candidates, team => host.Checklist(sid, home, team), m => !string.IsNullOrEmpty(m.SessionId) && host.SlotStateOf(m.SessionId, now) is not null, _queueTold, out queueKeys,
-                budgetOf: team => host.SessionBudgetOf(home, team), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt));
+                budgetOf: team => host.SessionBudgetOf(home, team), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt, remindAt: _remindAt));
         }
 
         IReadOnlyDictionary<WatchEvent, IReadOnlyList<string>> unlinkedKeys;
@@ -962,6 +962,14 @@ internal sealed class WatchTick
                 }
             }
 
+            if (mailed && ev.Name == QueueEvents.StillWaitingName)
+            {
+                lock (_queueTold)
+                {
+                    _remindAt[QueueEvents.UnstaffedTeamKey(sid, ev.Team)] = now;
+                }
+            }
+
             if (mailed && queueKeys.TryGetValue(ev, out var episode))
             {
                 lock (_queueTold)
@@ -1059,6 +1067,9 @@ internal sealed class WatchTick
 
     /// <summary>When each team last had an <c>idle-capacity</c> mailed and what it named, by session and team; held under the lock of <see cref="_queueTold"/> like <see cref="_unstaffedAt"/>.</summary>
     private readonly Dictionary<string, (double At, string Signature)> _idleCapacityAt = new(StringComparer.Ordinal);
+
+    /// <summary>When each team's <c>work-still-waiting</c> clock last started or fired, by session and team; held under the lock of <see cref="_queueTold"/>.</summary>
+    private readonly Dictionary<string, double> _remindAt = new(StringComparer.Ordinal);
 
     /// <summary>The <c>unlinked-dispatch</c> requests already told, by session, team and request id.</summary>
     private readonly HashSet<string> _unlinkedTold = new(StringComparer.Ordinal);

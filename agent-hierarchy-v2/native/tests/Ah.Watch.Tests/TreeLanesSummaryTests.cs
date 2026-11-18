@@ -415,6 +415,72 @@ public sealed partial class TreeLanesTests
     }
 
     [Fact]
+    public void ARaisedUserAlarmIsTheTeamsAlertOfKindAlarmForTheUserAndGoesWhenItClears()
+    {
+        string? store = "{\"alarm/default/owner-stalled\":{\"episode\":\"so\",\"delivered\":false,\"kind\":\"owner-stalled\",\"line\":\"orchestrator@default has 2 unread and ah could not wake it (no-pane). Type anything in its pane.\",\"raised_at\":\"2026-06-01T12:00:00.000Z\"},"
+            + "\"alarm/other/owner-down\":{\"episode\":\"x\",\"kind\":\"owner-down\",\"line\":\"ah: team other: its Orchestrator is down and a run is open.\"},"
+            + "\"default/impl-1@so\":\"s-dead\"}";
+        var (model, clock) = SeededWithActivity(Truth(), plan: new UserAlarmsLane(() => store));
+        using var owner = model;
+        model.Emit(UserAlarmsLane.LaneName, UserAlarmsLane.Key);
+        Drain(model, clock);
+
+        var alert = Assert.Single(Alerts(model));
+        Assert.Equal("alarm", Text(alert, "kind"));
+        Assert.Equal("user", Text(alert, "audience"));
+        Assert.Equal("orchestrator@default has 2 unread and ah could not wake it (no-pane). Type anything in its pane.", Text(alert, "text"));
+
+        // ah2-180 Amendment 4: a store that cannot be read keeps the alert it had
+        var held = store;
+        store = null;
+        model.Emit(UserAlarmsLane.LaneName, UserAlarmsLane.Key);
+        // the failed read is retried for ever, so the projector never settles: step it a while instead of draining
+        for (var i = 0; i < 50; i++)
+        {
+            _ = model.Projector.Step();
+        }
+
+        Assert.Equal("alarm", Text(Assert.Single(Alerts(model)), "kind"));
+        store = held;
+
+        // cleared: the store no longer holds the team's row
+        store = "{\"alarm/other/owner-down\":{\"episode\":\"x\",\"kind\":\"owner-down\",\"line\":\"ah: team other: its Orchestrator is down and a run is open.\"}}";
+        model.Emit(UserAlarmsLane.LaneName, UserAlarmsLane.Key);
+        Drain(model, clock);
+
+        Assert.Empty(Alerts(model));
+    }
+
+    /// <summary>The user-alarms lane's reconcile reads count drift only when the store's rows change: once at its first read, never while
+    /// the probe answers the same text; negative: a changed row on a reconcile read is one more drift.</summary>
+    [Fact]
+    public void TheUserAlarmsLaneDriftsOnceAtItsFirstReadAndNotWhileItsStoreIsUnchangedAndNegativeAChangedRowDriftsOnce()
+    {
+        var store = "{\"alarm/default/owner-down\":{\"episode\":\"x\",\"kind\":\"owner-down\",\"line\":\"ah: team default: its Orchestrator is down and a run is open.\"}}";
+        var (model, clock) = SeededWithActivity(Truth(), plan: new UserAlarmsLane(() => store));
+        using var owner = model;
+        var before = model.Counters.Drift;
+
+        model.ReconcileNow(UserAlarmsLane.LaneName);
+        Drain(model, clock);
+        var first = model.Counters.Drift;
+        Assert.Equal(before + 1, first);
+
+        for (var i = 0; i < 50; i++)
+        {
+            model.ReconcileNow(UserAlarmsLane.LaneName);
+            Drain(model, clock);
+        }
+
+        Assert.Equal(first, model.Counters.Drift);
+
+        store = "{\"alarm/default/owner-stalled\":{\"episode\":\"y\",\"kind\":\"owner-stalled\",\"line\":\"orchestrator@default has 1 unread and ah could not wake it (no-pane). Type anything in its pane.\"}}";
+        model.ReconcileNow(UserAlarmsLane.LaneName);
+        Drain(model, clock);
+        Assert.Equal(first + 1, model.Counters.Drift);
+    }
+
+    [Fact]
     public void TheSummaryCountsTheMemberRowsAndIgnoresAnActivityKeyNoMemberOwns()
     {
         var reader = Truth();
@@ -1128,13 +1194,21 @@ public sealed partial class TreeLanesTests
         Assert.Equal(FirstPassDrift(null), FirstPassDrift(WatchModule.CreateCoverage()));
     }
 
-    private static long FirstPassDrift(IWatchCoverage? coverage)
+    /// <summary>ah2-180 Amendment 2: the user-alarms lane's first record is a notified write too, so the first full pass counts no drift for it; negative: the drift without the lane.</summary>
+    [Fact]
+    public void TheUserAlarmsLanesFirstRecordIsNotADriftAndNegativeTheDriftWithoutTheLaneIsTheSame()
+    {
+        const string store = "{\"alarm/default/owner-down\":{\"episode\":\"x\",\"kind\":\"owner-down\",\"line\":\"ah: team default: its Orchestrator is down and a run is open.\"}}";
+        Assert.Equal(FirstPassDrift(null), FirstPassDrift(null, () => store));
+    }
+
+    private static long FirstPassDrift(IWatchCoverage? coverage, Func<string?>? userAlarmsProbe = null)
     {
         var root = Directory.CreateTempSubdirectory("ah-coverage-drift-").FullName;
         try
         {
             var reader = new TreeReader();
-            using var model = LazyAwareModel.Unwrap(WatchModule.CreateReadModel(new TeamsOnlyReader(reader), () => [root], TestFolds.Options with { Coverage = coverage }))!;
+            using var model = LazyAwareModel.Unwrap(WatchModule.CreateReadModel(new TeamsOnlyReader(reader), () => [root], TestFolds.Options with { Coverage = coverage, UserAlarmsProbe = userAlarmsProbe }))!;
             WatchModule.StartReadModel(model);
             var deadline = DateTime.UtcNow.AddSeconds(20);
             // FullPasses counts per lane as each drains; an empty bus is every lane's first pass done (the seeding end)
@@ -1148,6 +1222,11 @@ public sealed partial class TreeLanesTests
             if (coverage is not null)
             {
                 Assert.False(model.Projector.Records.Get(CoverageLane.LaneName, CoverageLane.Key)?.IsAbsent ?? true, "the coverage lane was not read");
+            }
+
+            if (userAlarmsProbe is not null)
+            {
+                Assert.False(model.Projector.Records.Get(UserAlarmsLane.LaneName, UserAlarmsLane.Key)?.IsAbsent ?? true, "the user-alarms lane was not read");
             }
 
             return drift;

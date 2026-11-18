@@ -15,6 +15,11 @@ internal static class QueueEvents
     internal const string WaitingName = "member-waiting";
     internal const string UnstaffedName = "queue-stall-unstaffed";
     internal const string IdleCapacityName = "idle-capacity";
+    internal const string ReportWaitingName = "report-waiting";
+    internal const string StillWaitingName = "work-still-waiting";
+
+    /// <summary>How often <c>work-still-waiting</c> lists again what was told and still holds (ah2-180 A3).</summary>
+    internal const double LeadRemindMs = 20 * 60_000;
 
     /// <summary>The key kind of the one copy of a <c>member-waiting</c> item sent to the chief after a second window.</summary>
     private const string WaitingCopyName = "member-waiting-chief";
@@ -34,7 +39,7 @@ internal static class QueueEvents
         string.Join(',', (ev.Data.Get("members") is { IsArray: true } m ? m.AsArray().Select(static v => v.AsString()) : []).Order(StringComparer.Ordinal))
         + "|" + string.Join(',', (ev.Data.Get("items") is { IsArray: true } i ? i.AsArray().Select(static v => v.AsString()) : []).Order(StringComparer.Ordinal));
 
-    private const int IdleCapacityMembers = 2;
+    private const int IdleCapacityMembers = 1;
 
     /// <summary>The key under which the time of a team's last <c>queue-stall-unstaffed</c> is kept.</summary>
     internal static string UnstaffedTeamKey(string session, string? team) => $"{session}|{team ?? "_default"}";
@@ -91,7 +96,8 @@ internal static class QueueEvents
         Func<string?, int?>? budgetOf = null,
         IDictionary<string, double>? unstaffedAt = null,
         Func<string?, IReadOnlyList<ReadyBacklogItem>>? readyBacklog = null,
-        IDictionary<string, (double At, string Signature)>? idleCapacityAt = null)
+        IDictionary<string, (double At, string Signature)>? idleCapacityAt = null,
+        IDictionary<string, double>? remindAt = null)
     {
         foreach (var stale in unstaffedAt?.Where(e => now - e.Value >= thresholdMs).Select(static e => e.Key).ToList() ?? [])
         {
@@ -111,6 +117,14 @@ internal static class QueueEvents
                 [.. team.Members.Select(m => new QueueMemberFact(m.Name, m.Row.Str("role") ?? string.Empty, m.Live, m.Activity, m.ActivityAt, m.Row.Get("dismissed") is { IsTruthy: true }, onJob(m), m.Row.Str("spawned_at"), m.Row.Str("stream"), StreamClosed(team.Doc, m.Row.Str("stream"))))],
                 [.. candidates.Select(c => new QueueDispatchFact(c.ToName, c.ToAddr, c.Created, c.Open))]);
             var teamStart = events.Count;
+            // ah2-180 A3: each condition that holds this tick, with the row work-still-waiting names it by, built from the key's own parts
+            var holding = new List<(string Key, string Row)>();
+            void Hold(string key, string name, string itemKey)
+            {
+                _ = active.Add(key);
+                holding.Add((key, $"{name} {itemKey}"));
+            }
+
             // b456: a paused member is not idle capacity
             var unpaused = members.Where(m => !team.Members.Any(v => v.Paused && v.Name == m.Name)).ToList();
             void IdleCapacity()
@@ -137,9 +151,61 @@ internal static class QueueEvents
                 events.Add(idleEvent);
             }
 
+            // ah2-180 A3: every LeadRemindMs, one mail listing what was told and still holds; the clock starts when the list first has a row.
+            void StillWaiting()
+            {
+                if (remindAt is null)
+                {
+                    return;
+                }
+
+                var rows = holding.Where(h => told.Contains(h.Key))
+                    .Select(static h => h.Row)
+                    .Distinct(StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal)
+                    .ToList();
+                if (readyBacklog is not null && idleCapacityAt is not null && idleCapacityAt.ContainsKey(UnstaffedTeamKey(session, team.Name))
+                    && IdleCapacityEvent(team.Name, unpaused, now, readyBacklog) is { } idleHolds)
+                {
+                    rows.Add($"{IdleCapacityName} {IdleCapacitySignature(idleHolds).Split('|')[0]}");
+                }
+
+                var remindKey = UnstaffedTeamKey(session, team.Name);
+                if (rows.Count == 0)
+                {
+                    _ = remindAt.Remove(remindKey);
+                    return;
+                }
+
+                if (!remindAt.TryGetValue(remindKey, out var since))
+                {
+                    remindAt[remindKey] = now;
+                    return;
+                }
+
+                if (now - since < LeadRemindMs)
+                {
+                    return;
+                }
+
+                var list = new JsonArray();
+                foreach (var row in rows)
+                {
+                    list.Add(row);
+                }
+
+                events.Add(new WatchEvent(
+                    null,
+                    "WORK-STILL-WAITING",
+                    $"ahd alarm: work-still-waiting — still waiting on you: {string.Join("; ", rows)}",
+                    new JsonObject { ["request_id"] = JsonValue.Null, ["rows"] = list })
+                { Name = StillWaitingName, Team = team.Name });
+            }
+
             if (entries.Count == 0)
             {
                 IdleCapacity();
+                StillWaiting();
                 continue;
             }
 
@@ -147,7 +213,7 @@ internal static class QueueEvents
             {
                 var member = stalled.Eligible[0];
                 var key = $"{session}|{teamName}|{StallName}|{HierarchyModule.ChecklistKey(stalled.Entry)}|{stalled.Entry.Item.StateSince}";
-                _ = active.Add(key);
+                Hold(key, StallName, HierarchyModule.ChecklistKey(stalled.Entry));
                 if (told.Contains(key))
                 {
                     continue;
@@ -175,7 +241,7 @@ internal static class QueueEvents
                 {
                     var itemKey = HierarchyModule.ChecklistKey(unstaffed.Entry);
                     var key = $"{session}|{teamName}|{UnstaffedName}|{itemKey}|{unstaffed.Role}|{unstaffed.Entry.Item.StateSince}";
-                    _ = active.Add(key);
+                    Hold(key, UnstaffedName, itemKey);
                     if (told.Contains(key) || emitted)
                     {
                         continue;
@@ -246,7 +312,7 @@ internal static class QueueEvents
                 }
 
                 var key = $"{session}|{teamName}|{WaitingName}|{itemKey}|{item.StateSince}";
-                _ = active.Add(key);
+                Hold(key, WaitingName, itemKey);
                 if (told.Contains(key))
                 {
                     continue;
@@ -264,7 +330,33 @@ internal static class QueueEvents
                 keyed[waitingEvent] = key;
             }
 
+            // ah2-180 A1: a row reported QueueStallMs ago waits on the Orchestrator whatever its owner is doing.
+            foreach (var reported in entries.Where(e => e.Item.State == "reported" && HierarchyModule.ChecklistStateSinceMs(e.Item) > 0
+                && now - HierarchyModule.ChecklistStateSinceMs(e.Item) >= thresholdMs))
+            {
+                var item = reported.Item;
+                var itemKey = HierarchyModule.ChecklistKey(reported);
+                var key = $"{session}|{teamName}|{ReportWaitingName}|{itemKey}|{item.StateSince}";
+                Hold(key, ReportWaitingName, itemKey);
+                if (told.Contains(key))
+                {
+                    continue;
+                }
+
+                var request = item.Refs is { Count: > 0 } refs ? refs[^1] : null;
+                var who = item.Holder ?? "the owner";
+                var reportEvent = new WatchEvent(
+                    null,
+                    "REPORT-WAITING",
+                    $"ahd alarm: report-waiting — {who} reported {itemKey} {Minutes(now - HierarchyModule.ChecklistStateSinceMs(item))}m ago and it waits on you ({request ?? "no request"})",
+                    new JsonObject { ["request_id"] = request ?? $"item:{itemKey}", ["item"] = itemKey, ["member"] = who })
+                { Name = ReportWaitingName, Team = team.Name };
+                events.Add(reportEvent);
+                keyed[reportEvent] = key;
+            }
+
             IdleCapacity();
+            StillWaiting();
         }
 
         var prefix = session + "|";
@@ -277,7 +369,7 @@ internal static class QueueEvents
     }
 
     /// <summary>
-    /// The <c>idle-capacity</c> alarm of one team, or null: at least two live members other than the Orchestrator idle 10+ minutes with no
+    /// The <c>idle-capacity</c> alarm of one team, or null: at least one live member other than the Orchestrator idle 10+ minutes with no
     /// open request, and at least one ready backlog item. The backlog is read only once enough members are idle.
     /// </summary>
     private static WatchEvent? IdleCapacityEvent(string? team, IReadOnlyList<QueueMember> members, double now, Func<string?, IReadOnlyList<ReadyBacklogItem>> readyBacklog)
@@ -316,7 +408,7 @@ internal static class QueueEvents
         return new WatchEvent(
             null,
             "IDLE-CAPACITY",
-            $"ahd alarm: idle-capacity — {idle.Count} members idle 10+ min with no open request: {named}. Ready backlog items nobody holds: {items}. "
+            $"ahd alarm: idle-capacity — {idle.Count} member{(idle.Count == 1 ? string.Empty : "s")} idle 10+ min with no open request: {named}. Ready backlog items nobody holds: {items}. "
             + "Run `ah backlog next` and dispatch, or leave them idle if that is deliberate: this is not told again until these members or items change.",
             new JsonObject { ["request_id"] = JsonValue.Null, ["members"] = memberList, ["items"] = itemList })
         { Name = IdleCapacityName, Team = team };

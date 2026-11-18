@@ -89,6 +89,16 @@ public sealed class UserAlarmTests
 
         public DateTimeOffset? AskingSince(string hierarchyDir, string session) => Asked;
 
+        public LeadUncarried? Stalled { get; set; }
+
+        public LeadUncarried? Uncarried(StallTeam team) => Stalled;
+
+        public bool HeldTeam { get; set; }
+
+        public IReadOnlyList<string> AlarmKeys() => [.. _alarms.Keys.Where(static k => k.StartsWith("alarm/", StringComparison.Ordinal))];
+
+        public bool TeamHeld(string team) => HeldTeam;
+
         public bool StartAlarmCommand(string line, string team, string kind, Action<int> exited)
         {
             if (!CommandSet)
@@ -165,6 +175,71 @@ public sealed class UserAlarmTests
     }
 
     [Fact]
+    public void AnUncarriedLeadIsToldOnceAsOwnerStalledAndALaterTurnClearsIt()
+    {
+        var host = new Host { Stalled = new LeadUncarried(3, "no-pane") };
+        var sweep = Sweeper(host);
+
+        sweep(1);
+        sweep(2);
+        Assert.Equal("orchestrator@tm has 3 unread and ah could not wake it (no-pane). Type anything in its pane.", Assert.Single(host.Lines));
+        Assert.NotNull(host.Alarm("alarm/tm/owner-stalled"));
+
+        host.Stalled = null;
+        sweep(3);
+        Assert.Contains("owner-stalled cleared", host.Lines[1], StringComparison.Ordinal);
+        Assert.Null(host.Alarm("alarm/tm/owner-stalled"));
+    }
+
+    [Fact]
+    public void ARaisedAlarmOfATeamPutOnHoldIsClearedWithNoLineAndOneStillWatchedIsKept()
+    {
+        var host = new Host { Stalled = new LeadUncarried(2, "no-pane") };
+        var sweep = Sweeper(host);
+        sweep(1);
+        Assert.Single(host.Lines);
+
+        // negative: still watched and still stalled, the raised alarm is kept
+        sweep(2);
+        Assert.NotNull(host.Alarm("alarm/tm/owner-stalled"));
+
+        // ah2-180 Amendment 4: put on hold, the team leaves the list; its alarm is cleared and nothing is told
+        host.Listed = false;
+        host.HeldTeam = true;
+        sweep(3);
+        Assert.Null(host.Alarm("alarm/tm/owner-stalled"));
+        Assert.Single(host.Lines);
+    }
+
+    [Fact]
+    public void ARaisedAlarmOfATeamThatEndedIsClearedWithItsClearedLineEvenAfterARestart()
+    {
+        var host = new Host { Stalled = new LeadUncarried(2, "no-pane") };
+        Sweeper(host)(1);
+        Assert.Single(host.Lines);
+
+        // a new daemon: nothing in memory names the team, only the record does
+        host.Listed = false;
+        Sweeper(host)(2);
+
+        Assert.Null(host.Alarm("alarm/tm/owner-stalled"));
+        Assert.Contains("owner-stalled cleared", host.Lines[1], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeAnUncarriedMarkOnADownLeadIsOwnerDownsGroundNotOwnerStalled()
+    {
+        var host = new Host { Address = null, Stalled = new LeadUncarried(3, "no-pane") };
+        var sweep = Sweeper(host);
+
+        sweep(0);
+        sweep(3);
+
+        Assert.DoesNotContain(host.Lines, static l => l.Contains("could not wake", StringComparison.Ordinal));
+        Assert.Null(host.Alarm("alarm/tm/owner-stalled"));
+    }
+
+    [Fact]
     public void AnOrchestratorDownPastItsTimeRunsTheCommandOnce()
     {
         var host = new Host { Address = null };
@@ -187,12 +262,34 @@ public sealed class UserAlarmTests
 
         sweep(20);
 
+        // ah2-180 Amendment 2 (b): raised though no channel carried it; nothing journalled
         Assert.Empty(host.Rows);
-        Assert.Null(host.Alarm("alarm/tm/owner-asking"));
+        Assert.False(host.Alarm("alarm/tm/owner-asking")!.Delivered);
 
         host.CommandSet = true;
         sweep(21);
         Assert.Single(host.Lines);
+    }
+
+    [Fact]
+    public void WithNoChannelARaisedOwnerStalledIsKeptWithItsLineAndClearsWhenTheLeadIsRead()
+    {
+        var host = new Host { CommandSet = false, Stalled = new LeadUncarried(2, "no-pane") };
+        var sweep = Sweeper(host);
+
+        sweep(1);
+        sweep(2);
+        var raised = host.Alarm("alarm/tm/owner-stalled")!;
+        Assert.Equal("owner-stalled", raised.Kind);
+        Assert.Equal("orchestrator@tm has 2 unread and ah could not wake it (no-pane). Type anything in its pane.", raised.Line);
+        Assert.False(raised.Delivered);
+        Assert.Equal(T0.AddMinutes(1), raised.FirstToldAt);
+        Assert.Empty(host.Lines);
+
+        host.Stalled = null;
+        sweep(3);
+        Assert.Null(host.Alarm("alarm/tm/owner-stalled"));
+        Assert.Empty(host.Lines);
     }
 
     [Theory]

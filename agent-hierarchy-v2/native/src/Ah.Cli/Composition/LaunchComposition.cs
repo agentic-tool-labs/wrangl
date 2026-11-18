@@ -150,6 +150,7 @@ internal static class LaunchComposition
         {
             Registration = graph.Mailbox.ReadRegistration,
             SessionOf = snapshots.SessionIdOf,
+            InDaemon = graph.InDaemon,
         };
         var snapshotRules = new SnapshotRules(files, registry.KindDefault);
         return new LaunchServices(
@@ -453,10 +454,16 @@ internal sealed class LaunchServices(
     private readonly Dictionary<string, IHerdr> _byFlavour = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// ahd only: the herdr adapter for the flavour <paramref name="teamRecord"/> stores (no <c>herdr_flavour</c>: tui). A session command
-    /// uses <see cref="Herdr"/>, whose flavour is the env's. One instance per flavour.
+    /// ahd only: the herdr adapter of the server <paramref name="member"/> lives on (ah2-156): <see cref="Ah.Core.Mux.HerdrFlavour.Resolve"/>
+    /// over <paramref name="registration"/>, the member's row in <paramref name="teamRecord"/> and the flavour the team records, else tui;
+    /// ahd's own env is no session's, so it is never the fallback. A session command uses <see cref="Herdr"/>, whose flavour is the env's.
     /// </summary>
-    public IHerdr HerdrFor(Ah.Core.Json.JsonValue? teamRecord) => HerdrFor(Ah.Core.Mux.HerdrFlavour.OfTeam(teamRecord));
+    public IHerdr HerdrFor(Ah.Core.Json.JsonValue? teamRecord, string? member = null, Ah.Core.Json.JsonObject? registration = null) =>
+        HerdrFor(Ah.Core.Mux.HerdrFlavour.Resolve(registration, teamRecord, null, RowOf(teamRecord, member)) ?? Ah.Core.Mux.HerdrFlavour.Tui);
+
+    private static Ah.Core.Json.JsonValue? RowOf(Ah.Core.Json.JsonValue? teamRecord, string? member) =>
+        member is null || teamRecord?.Member("members") is not { IsArray: true } rows ? null
+        : rows.AsArray().Select(static r => (Ah.Core.Json.JsonValue?)r).FirstOrDefault(r => r?.Member("name") is { IsText: true } n && n.AsString() == member);
 
     /// <summary>The herdr adapter for <paramref name="flavour"/> (<see cref="Ah.Core.Mux.HerdrFlavour.Resolve"/>); null is <see cref="Herdr"/>.</summary>
     public IHerdr HerdrFor(string? flavour)

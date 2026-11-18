@@ -69,7 +69,9 @@ public sealed class HerdrFlavourRoutingTests : IDisposable
     public void ARegistrationFlavourThatIsNeitherTuiNorCoreIsNotTaken() =>
         Assert.Equal("core", HerdrFlavour.Resolve(Doc("""{"herdr_flavour":"tmux"}"""), JsonText.Parse(CoreTeam), "tui"));
 
-    private (ServiceGraph Graph, FakeRunner Runner) Graph(params (string Name, string Value)[] extra)
+    private (ServiceGraph Graph, FakeRunner Runner) Graph(params (string Name, string Value)[] extra) => Graph(false, extra);
+
+    private (ServiceGraph Graph, FakeRunner Runner) Graph(bool inDaemon, params (string Name, string Value)[] extra)
     {
         var variables = new Dictionary<string, string?> { ["AH_TEST"] = "1", ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home };
         foreach (var (name, value) in extra)
@@ -79,7 +81,22 @@ public sealed class HerdrFlavourRoutingTests : IDisposable
 
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.0.0", "1"));
         var runner = new FakeRunner();
-        return (ServiceGraph.Build(PlatformModule.CreateIo(null), env, runner, new FakeDaemonClient()), runner);
+        return (ServiceGraph.Build(PlatformModule.CreateIo(null), env, runner, new FakeDaemonClient(), inDaemon: inDaemon), runner);
+    }
+
+    // ah2-156 D4: in ahd an unstamped member of an untagged team closes on tui, never on the server ahd's own env names; a session still uses its env
+    [Theory]
+    [InlineData(true, "herdr", "hc")]
+    [InlineData(false, "hc", "herdr")]
+    public void InAhdTeardownNeverTakesTheDaemonsEnvAsTheMembersFlavour(bool inDaemon, string closesOn, string notOn)
+    {
+        var (graph, runner) = Graph(inDaemon, ("HC_TERMINAL_ID", "t1"));
+        var member = new JsonObject { ["name"] = "tm-implementor", ["transport_id"] = "t7" };
+
+        _ = graph.Launch.Teardown.CloseAndVerify([member], "herdr", [], new LaunchContext(_sandbox.Home, "tm", "repo", new JsonObject()), JsonText.Parse(UntaggedTeam));
+
+        Assert.Contains(closesOn, Binaries(runner));
+        Assert.DoesNotContain(notOn, Binaries(runner));
     }
 
     private static List<string> Binaries(FakeRunner runner) => runner.Calls.Select(c => Path.GetFileName(c[0])).ToList();

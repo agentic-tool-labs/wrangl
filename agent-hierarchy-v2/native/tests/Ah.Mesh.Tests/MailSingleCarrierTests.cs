@@ -211,7 +211,7 @@ public sealed class MailSingleCarrierTests
         public JsonObject PlacementOf(JsonValue member, string? teamTransport) =>
             new() { ["pasteable"] = true, ["transport"] = "tmux", ["pane"] = "%1" };
 
-        public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0)
+        public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0, string? herdrFlavour = null)
         {
             // A wake names a pane or nothing, as the real paste would refuse.
             if (entryId.Length == 0 && member.Member("target") is not { IsText: true })

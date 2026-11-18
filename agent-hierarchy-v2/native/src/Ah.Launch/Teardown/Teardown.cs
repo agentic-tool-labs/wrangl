@@ -123,15 +123,19 @@ public sealed record Teardown(
     /// <summary>The session id of a member's live registration (dir, team file, member row), for a row that records none; see <see cref="ISnapshotBuilder.SessionIdOf"/>.</summary>
     public Func<string, string?, JsonValue, JsonValue?>? SessionOf { get; init; }
 
+    /// <summary>This runs in ahd (the scratch sweep reaches <see cref="MemberLiveness"/>): its env is no session's, so it is never the flavour fallback.</summary>
+    public bool InDaemon { get; init; }
+
     /// <summary>
     /// The herdr adapter of the server <paramref name="member"/> lives on: <see cref="Ah.Core.Mux.HerdrFlavour.Resolve"/> over its
-    /// registration, <paramref name="teamRecord"/>, and the env's flavour.
+    /// registration, <paramref name="teamRecord"/>, and the env's flavour (in ahd none: tui).
     /// </summary>
     private IHerdr HerdrOf(JsonValue member, JsonValue? teamRecord)
     {
         var session = member.Member("session_id") is { IsText: true } s && s.AsString().Length > 0 ? s.AsString() : null;
-        var flavour = Ah.Core.Mux.HerdrFlavour.Resolve(session is null ? null : Registration?.Invoke(session), teamRecord, Herdr.Flavour, member);
-        return flavour is null || flavour == Herdr.Flavour || Herdr is not global::Ah.Launch.Herdr env ? Herdr : env.ForFlavour(flavour);
+        var flavour = Ah.Core.Mux.HerdrFlavour.Resolve(session is null ? null : Registration?.Invoke(session), teamRecord, InDaemon ? null : Herdr.Flavour, member)
+            ?? Ah.Core.Mux.HerdrFlavour.Tui;
+        return flavour == Herdr.Flavour || Herdr is not global::Ah.Launch.Herdr env ? Herdr : env.ForFlavour(flavour);
     }
 
     /// <summary>The topology of <paramref name="herdr"/>'s server: <see cref="Topology"/> when it is the env's.</summary>

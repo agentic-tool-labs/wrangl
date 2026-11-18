@@ -53,6 +53,9 @@ public sealed record DueAnswer(
 {
     /// <summary>Whether the prompt is a doorbell ring, which this answer already claimed: asking again before handing it over would find nothing due.</summary>
     public bool Ring { get; init; }
+
+    /// <summary>While the session is held: how many items wait unread, a count only (ah2-180 D2); null otherwise.</summary>
+    public int? Unread { get; init; }
 }
 
 /// <summary>The unacked entries a box holds from a cursor, and the cursor after them.</summary>
@@ -262,6 +265,11 @@ internal sealed class MailDue(IMailbox mailbox, IMailCore core, IFileReader file
             json["ring"] = true;
         }
 
+        if (answer.Unread is { } unread)
+        {
+            json["unread"] = (double)unread;
+        }
+
         if (answer.Escalation is { } escalation)
         {
             json["escalation"] = new JsonObject { ["kind"] = escalation.Kind, ["address"] = escalation.Address, ["text"] = escalation.Text };
@@ -373,12 +381,14 @@ internal sealed class MailDue(IMailbox mailbox, IMailCore core, IFileReader file
         }
         DoorbellEscalation? escalation = null;
         var rang = false;
+        int? unread = null;
         if (ringsFor && ids.Count == 0)
         {
             var decision = doorbell!.Decide(new DoorbellRequest(request.Session, request.Now, request.BusyAt, request.Handed, request.Carrier) { HierarchyDir = request.HierarchyDir, Held = request.Held });
             acked.AddRange(decision.Acked.Where(id => !acked.Contains(id)));
             deadline = Earliest(deadline, decision.NextDeadlineMs);
             escalation = decision.Escalation;
+            unread = decision.Unread;
             if (decision.Ring is { } ring)
             {
                 ids.AddRange(ring.Inline ? ring.EntryIds : [ring.Id]);
@@ -397,7 +407,7 @@ internal sealed class MailDue(IMailbox mailbox, IMailCore core, IFileReader file
             boxDirs,
             compact == prompt ? null : compact,
             escalation)
-        { Ring = rang };
+        { Ring = rang, Unread = unread };
     }
 
     /// <summary>

@@ -347,7 +347,7 @@ export class TeamsRail extends Live {
         <h2 data-text="Needs you">Needs you</h2>
         <div class="snooze-note" role="status">${undo ? html`<span>Snoozed for 24 h: ${undo.title}</span><button type="button" class="tab" onClick=${this.unsnooze}>Undo</button><button type="button" class="tab" onClick=${() => this.setState({ undo: null })}>Dismiss</button>` : null}</div>
         ${cards.length === 0 ? html`<p class="dim">${asleep > 0 ? `All ${asleep} snoozed.` : "Nothing is waiting on you."}</p>` : cards.map((c) => html`<article class="need-card" key=${c.key} data-card=${c.key}>
-          <div class="need-meta"><span class=${c.kind === "Error" ? "need-kind err" : "need-kind"}>${c.kind}</span> · ${c.team}${c.at > 0 ? html` · <${Age} text=${ageSince(c.at)} />` : null}</div>
+          <div class="need-meta"><span class=${c.kind === "Error" || c.kind === "Alarm" ? "need-kind err" : "need-kind"}>${c.kind}</span> · ${c.team}${c.at > 0 ? html` · <${Age} text=${ageSince(c.at)} />` : null}</div>
           <div class="need-title">${c.title}</div>
           ${c.context ? html`<div class="need-ctx">${c.context}</div>` : null}
           <div class="need-actions"><button type="button" class="tab primary" onClick=${() => this.open(c)}>Open</button>${c.until > 0 ? html`<span class="need-asleep">Snoozed until ${hhmm.format(new Date(c.until))}</span>` : html`<button type="button" class="tab" onClick=${() => this.snooze(c)}>Snooze 24 h</button>`}</div>
