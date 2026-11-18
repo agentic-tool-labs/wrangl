@@ -92,6 +92,12 @@ internal sealed class ReadModelWriteRelay : IStateWriteObserver
             }
         }
 
+        // ah2-180 Amendment 2: the stall watch's alarm row changed, so the raised user alarms the team alerts serve are read again
+        if (domain == "stall" && op == "put" && JsonText.TryParse(argsJson.Span, out var stall) && stall.Member("key") is { IsText: true } stallKey && stallKey.AsString() == StallStore.Reported)
+        {
+            model.Emit(Ah.Watch.WatchModule.UserAlarmsLaneName, Ah.Watch.WatchModule.UserAlarmsKey);
+        }
+
         // In files mode the watched peer-pending file reports the write itself; in db mode nothing does, so the heard rows are reread here.
         if (domain == "peer-records" && op is "append" or "compact" && PeerRecordsInDb())
         {

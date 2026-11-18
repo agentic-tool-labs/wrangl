@@ -4,6 +4,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.11] - 2026-11-18
+
+### Fixed
+
+- **The daemon keeps the lead Orchestrator from stalling.** An Orchestrator whose turn was interrupted sat idle for
+  over an hour with a report and three alarms unread: Claude Code drops plugin prompts in a stopped session, and
+  nothing else got through. Now:
+  - unread mail in an Orchestrator's or Sub-Orchestrator's box ends in a turn. Alarms count as reports do, the wake
+    is decided per box, and a stopped session is woken in its pane two minutes after its oldest unread item with the
+    fixed line `ah: mail waiting, run ah msg next`. The wake does not type over a draft, a permission prompt or a
+    running turn, and never into a team on hold;
+  - the pane wake reaches herdr desktop. It typed through the terminal herdr whatever herdr the session was on;
+  - work that waits on the Orchestrator is mail and stays mail: a row reported for ten minutes raises
+    `report-waiting`, one idle member is enough for `idle-capacity`, and every twenty minutes `work-still-waiting`
+    lists what was told and still waits;
+  - when `ah` cannot wake the session, a new user alarm `owner-stalled` says so, and every raised user alarm
+    (`owner-down`, `owner-asking`, `owner-stalled`) now shows as an alert in the web UI and the herdr desktop mod,
+    with or without an `alarm.command`;
+  - an Orchestrator waiting at a permission prompt shows as blocked, as a member does;
+  - the stopped session's status line reads `ah: stopped with N unread; type anything to resume`, the doorbell
+    trace records every wake attempt, and `ah roster doctor` prints the lead's oldest unread mail and last wake.
+- **The daemon probes each member on the herdr it is on.** Its liveness, stall and teardown probes read a team
+  without a herdr marker as the terminal herdr; they now follow each member's own stamp.
+- **The herdr Graph after its review**: Go to pane finds a member that is not on screen, the agent sheet closes when
+  you leave the Graph tab, the dots stop at once on that switch, a reviewer that is not active is not drawn as
+  reviewing, and dots are the web's size.
+- **`ah` with no arguments lists `where`**, and a refused `ah roster dismiss` says what a clean member is.
+
+### Changed
+
+- **A reviewer under a "reviewers run nothing" rule gives its verdict from reading.** It does not clone, run, order
+  a run or ask for a work-tree approval, and lists what was not run for QA.
+- The shell suite `test-run-set` is three suites, each well under the per-suite timeout. No product change.
+
 ## [2.0.10] - 2026-11-17
 
 ### Added

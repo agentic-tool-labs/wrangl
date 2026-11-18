@@ -26,7 +26,7 @@ public sealed record LadderView(IMailbox Mailbox, IRosterCore Roster, IConfigCor
         public JsonObject PlacementOf(JsonValue member, string? teamTransport) =>
             new() { ["pasteable"] = false, ["reason"] = "no-pane", ["transport"] = JsonValue.Null, ["pane"] = JsonValue.Null };
 
-        public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0) =>
+        public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0, string? herdrFlavour = null) =>
             throw new InvalidOperationException("the inbox view never pastes");
     }
 }

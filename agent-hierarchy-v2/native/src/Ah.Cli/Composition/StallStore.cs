@@ -31,6 +31,30 @@ internal static class StallStore
     public static string? Read(string ahHome, string key) =>
         Query(ahHome, "SELECT value FROM meta WHERE key = ?1", key) is [[string value]] ? value : null;
 
+    /// <summary>
+    /// The value stored at <paramref name="key"/>, telling a failed read from a missing row (ah2-180 Amendment 4): false when the store cannot be
+    /// opened or queried, true with a null <paramref name="value"/> when the row is not there.
+    /// </summary>
+    public static bool TryRead(string ahHome, string key, out string? value)
+    {
+        value = null;
+        try
+        {
+            using var reader = StateDbModule.OpenReader(ahHome).Reader;
+            if (reader is null)
+            {
+                return false;
+            }
+
+            value = reader.Query("SELECT value FROM meta WHERE key = ?1", key) is [[string text]] ? text : null;
+            return true;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>The journal rows, oldest first, each the JSON text of one row.</summary>
     public static IReadOnlyList<string> JournalRows(string ahHome) =>
         [.. Query(ahHome, "SELECT row FROM stall_journal ORDER BY seq").Select(static r => (string)r[0]!)];

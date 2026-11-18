@@ -1,5 +1,5 @@
 import type { Register } from 'claude-code'
-import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
+import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
 
 // A tone to Text props: bad and warn take their status's theme key, the same key their glyph takes, and bad is also bold
 // so it does not rest on color alone; work draws plain and any other tone draws dim.
@@ -212,7 +212,7 @@ type MailHanded = { state: 'pending' | 'resolved'; at: number }
 // `row` is this session's row from the daemon's last answer, kept for the status tick's team files; `regToken` is that answer's token.
 type MailLink = { socket: string | null; row?: unknown; rows?: number; regToken?: number }
 // cliFailures and cliSkipUntil back the CLI request off while it keeps failing (a refused or erroring `ah msg due`): ticks before cliSkipUntil send nothing.
-type MailState = { state: string | null; generation: number; push: boolean; running: boolean; failures: number; notBefore: number; timer: { cancel: () => void } | null; cliFailures?: number; cliSkipUntil?: number; toolAt?: number; held?: boolean; heldAt?: number; regAt?: number; registered?: boolean; regInflight?: AhdGate }
+type MailState = { state: string | null; generation: number; push: boolean; running: boolean; failures: number; notBefore: number; timer: { cancel: () => void } | null; cliFailures?: number; cliSkipUntil?: number; toolAt?: number; held?: boolean; heldAt?: number; unread?: number; regAt?: number; registered?: boolean; regInflight?: AhdGate }
 // Whether this session has a registration, by the daemon's answer at most every REGISTERED_ASK_MS. With the daemon down it keeps its
 // last answer. Before any answer there is no socket to ask (only a CLI answer reports it), so the session's mark decides.
 const REGISTERED_ASK_MS = 5000
@@ -280,6 +280,11 @@ const showEscalation = ($: any, ctx: MailCtx, a: DueAnswer): void => {
   try {
     Promise.resolve($.ui.toast(a.escalation.text, { timeoutMs: ctx.notes.toastMs })).catch(() => {})
   } catch {}
+}
+
+// A held session's unread count, kept for the status tick's line (ah2-180 B8).
+export const showHeld = (_$: any, ctx: MailCtx, a: DueAnswer): void => {
+  ctx.st.unread = ctx.st.held === true ? a.unread : undefined
 }
 
 const TOOL_ASK_MS = 3000
@@ -392,6 +397,7 @@ export const mailCycle = async ($: any, ctx: MailCtx): Promise<void> => {
     let a = readDue(raw)
     if (a === null) throw new Error('unreadable answer')
     showEscalation($, ctx, a)
+    showHeld($, ctx, a)
     st.cliFailures = 0
     st.cliSkipUntil = 0
     if (gen !== st.generation) return
@@ -947,7 +953,8 @@ export const register: Register = (on, options) => {
       if ((heldWhy.value ?? null) !== why) await $.state.set({ plugin: 'wrangl', key: 'why' }, why)
       const held = await $.state.get({ plugin: 'wrangl', key: 'view' })
       if (JSON.stringify(held.value) !== JSON.stringify(view)) await $.state.set({ plugin: 'wrangl', key: 'view' }, view)
-      const text = statusText(doc, now, id, statusEntry)
+      // A held session with unread mail says so first (ah2-180 D2); it gives way to the usual entry once held clears.
+      const text = heldText(mailRun?.st.held === true, mailRun?.st.unread) ?? statusText(doc, now, id, statusEntry)
       if (text !== shown) { shown = text; $.ui.status(text) }
       // Each toast key shows at most once per session. The first view a session sees only seeds the set, so old
       // events are not replayed. Nothing changes on a tick with no view: an unreadable or expired file for one

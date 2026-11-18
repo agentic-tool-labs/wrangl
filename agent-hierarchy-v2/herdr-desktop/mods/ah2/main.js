@@ -18,7 +18,7 @@ import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
-import { graphSubs } from "./graph-model.js";
+import { graphSubs, leaveGraph } from "./graph-model.js";
 import { graphView, graphInit } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
@@ -111,6 +111,7 @@ export default class Ah2 extends View {
     if (view !== this.view) {
       if (this.view === "feed") this.feedShowing = false;
       if (this.view === "board") boardLeave(this); // leaving the Board ends its visit (board.js)
+      if (this.view === "graph") leaveGraph(this); // the dot clock stops and the agent sheet closes (graph-model.js)
       this.view = view;
       if (view === "qa") qaTake(this, undefined, cx);
       cx.notify();

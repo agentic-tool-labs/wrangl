@@ -4,7 +4,7 @@ import { fixtures } from './fixtures.ts'
 import { vectors } from './vectors.ts'
 import { mainVectors } from './main-vectors.ts'
 import { statusLanguage } from './status-language.ts'
-import { mailCut, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, MAIL_KEEP, MAIL_ROWS, MAIL_TEXT_BYTES, readDue, wrapRows } from '../view.ts'
+import { mailCut, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, MAIL_KEEP, MAIL_ROWS, MAIL_TEXT_BYTES, heldText, readDue, wrapRows } from '../view.ts'
 import { anywayQuestion, bandButtons, bandLine, BORDER_MIN, closeToast, DISMISS_BUTTON, dismissQuestion, failReason, inFlight, ownedTeams, readPlan, teamLabels, scope, toastMs, cut, noViewLine, NO_OWNED_TEAM, nullCause, PANE_BUTTON, keepSeen, paneRows, paneSections, STYLE, statusOf, parseDoc, SIZE_CAP, statusText, utf8Bytes, viewModel } from '../view.ts'
 
 const T0 = '2026-01-01T12:00:00.000Z'
@@ -875,6 +875,17 @@ test('readDueKeepsAStringCompactAndReadsAnyOtherCompactAsNone', () => {
   expect(readDue({ ...DUE, compact: { x: 1 } })?.compact).toBeNull()
   // a wrong-typed compact is no short form, never an unreadable answer
   expect(readDue({ ...DUE, compact: 7 })).not.toBeNull()
+})
+
+test('heldTextShowsAHeldSessionsUnreadAndClearsWhenHeldClears', () => {
+  const held = readDue({ ...DUE, ids: [], prompt: null, unread: 3 })
+  expect(held?.unread).toBe(3)
+  expect(heldText(true, held?.unread)).toBe('ah: stopped with 3 unread; type anything to resume')
+  // negatives: held cleared, nothing unread, no count, a malformed count
+  expect(heldText(false, 3)).toBeUndefined()
+  expect(heldText(true, 0)).toBeUndefined()
+  expect(heldText(true, readDue({ ...DUE })?.unread)).toBeUndefined()
+  expect(readDue({ ...DUE, unread: 'x' })?.unread).toBeUndefined()
 })
 
 test('mailCutKeepsATextWithinTheBoundAndCutsALongOneByCodePointWithTheInboxLine', () => {

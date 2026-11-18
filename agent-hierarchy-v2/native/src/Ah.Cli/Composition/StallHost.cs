@@ -10,7 +10,7 @@ namespace Ah.Cli.Composition;
 /// <summary>The stall watch's reads and writes over the daemon's service graph.</summary>
 internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner, Func<IReadOnlyList<string>?> knownDirs, Func<int, string?, bool>? processIsThere = null, Func<IReadOnlyList<string>, IReadOnlyList<string>>? admitDirs = null, Func<Ah.Launch.IHerdr, string, string, string?>? paneTail = null) : IStallHost
 {
-    /// <summary>The pane's recent screen, read through the herdr flavour the team stores (<see cref="LaunchServices.HerdrFor(Ah.Core.Json.JsonValue?)"/>).</summary>
+    /// <summary>The pane's recent screen, read through the herdr server the member lives on (<see cref="LaunchServices.HerdrFor(JsonValue?, string?, JsonObject?)"/>).</summary>
     public string? PaneTail(StallTeam team, StallMember member)
     {
         if (paneTail is not { } read || member.PaneId is not { } pane)
@@ -19,7 +19,7 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         }
 
         var record = g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name);
-        return record.Member("transport") is { IsText: true } transport ? read(g.Launch.HerdrFor(record), transport.AsString(), pane) : null;
+        return record.Member("transport") is { IsText: true } transport ? read(g.Launch.HerdrFor(record, member.Name), transport.AsString(), pane) : null;
     }
 
     public bool IsSessionId(string session) => g.Launch.SnapshotRules.IsSessionId(session);
@@ -46,37 +46,15 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
     /// <summary>The teams of <see cref="Teams"/> and the held teams it leaves out, by the same enumeration and the same held predicate.</summary>
     internal IReadOnlyList<StallTeam> TeamsIncludingHeld() => Enumerate(includeHeld: true);
 
+    public IReadOnlyList<string> AlarmKeys() => Episodes.Keys("alarm/");
+
+    public bool TeamHeld(string team) => Dirs().Any(dir => g.Roster.HoldOf(dir, team) is not null);
+
     private List<StallTeam> Enumerate(bool includeHeld, bool includeQueued = false)
     {
         var found = new List<StallTeam>();
-        var dirs = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var registration in g.Mailbox.LiveRegistrations())
-        {
-            foreach (var file in MeshModule.RegistrationTeamFiles(registration))
-            {
-                _ = dirs.Add(NodePath.Dirname(NodePath.Dirname(file)));
-            }
-        }
-
-        foreach (var dir in knownDirs() ?? [])
-        {
-            _ = dirs.Add(dir);
-        }
-
-        if (admitDirs is { } admit)
-        {
-            dirs = new HashSet<string>(admit([.. dirs]), StringComparer.Ordinal);
-        }
-
-        // Every work tree's hierarchy dir reads the main checkout's team files, so one team is listed under all of them; it is one team,
-        // taken once, under the dir that is the team home itself when that dir is known.
-        foreach (var listed in dirs.ToList())
-        {
-            _ = dirs.Add(g.Roster.TeamHome(listed));
-        }
-
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var dir in dirs.OrderBy(d => g.Roster.TeamHome(d) == d ? 0 : 1).ThenBy(d => d, StringComparer.Ordinal))
+        foreach (var dir in Dirs())
         {
             // The anchor is looked up only for a team whose orchestrator is not live: a live one is a stall team whatever its anchors say.
             var home = g.Roster.TeamHome(dir);
@@ -117,6 +95,38 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         }
 
         return found;
+    }
+
+    /// <summary>The hierarchy dirs the watch walks, team homes first: those of live registrations and the known dirs, as admitted.</summary>
+    private List<string> Dirs()
+    {
+        var dirs = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var registration in g.Mailbox.LiveRegistrations())
+        {
+            foreach (var file in MeshModule.RegistrationTeamFiles(registration))
+            {
+                _ = dirs.Add(NodePath.Dirname(NodePath.Dirname(file)));
+            }
+        }
+
+        foreach (var dir in knownDirs() ?? [])
+        {
+            _ = dirs.Add(dir);
+        }
+
+        if (admitDirs is { } admit)
+        {
+            dirs = new HashSet<string>(admit([.. dirs]), StringComparer.Ordinal);
+        }
+
+        // Every work tree's hierarchy dir reads the main checkout's team files, so one team is listed under all of them; it is one team,
+        // taken once, under the dir that is the team home itself when that dir is known.
+        foreach (var listed in dirs.ToList())
+        {
+            _ = dirs.Add(g.Roster.TeamHome(listed));
+        }
+
+        return [.. dirs.OrderBy(d => g.Roster.TeamHome(d) == d ? 0 : 1).ThenBy(d => d, StringComparer.Ordinal)];
     }
 
     public IReadOnlyList<StallMember> Members(StallTeam team)
@@ -187,7 +197,7 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         }
 
         var registration = g.Hierarchy.Core.Liveness?.ForMember(member.Name, team.Name);
-        var verdict = Ah.Hierarchy.HierarchyModule.JudgeMember(registration ?? FromPeerRow(team, member.Name), member.PaneId, () => Probe(team, member.Name), _starting.TryGetValue(BareKey(team, member.Name), out var startingAge) ? startingAge : null);
+        var verdict = Ah.Hierarchy.HierarchyModule.JudgeMember(registration ?? FromPeerRow(team, member.Name), member.PaneId, () => Probe(team, member.Name, registration?.SessionId),_starting.TryGetValue(BareKey(team, member.Name), out var startingAge) ? startingAge : null);
         var session = registration?.SessionId ?? (member.PaneId is { Length: > 0 } pane ? "pane:" + pane : string.Empty);
 
         // last_seen_at moves only when the session row is written, usually at its start, so the activity record is what says when a member was last alive.
@@ -274,7 +284,11 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
 
         if (At(entry, "first_told_at") is { } first && At(entry, "last_told_at") is { } last)
         {
-            return new UserAlarm(episode.AsString(), first, last, entry.Get("delivered") is not { } d || d.IsTruthy);
+            return new UserAlarm(episode.AsString(), first, last, entry.Get("delivered") is not { } d || d.IsTruthy)
+            {
+                Kind = entry.Get("kind") is { IsText: true } kind ? kind.AsString() : null,
+                Line = entry.Get("line") is { IsText: true } line ? line.AsString() : null,
+            };
         }
 
         var now = g.Io.Clock.UtcNow;
@@ -291,13 +305,22 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             return;
         }
 
-        Episodes.Put(key, new JsonObject
+        var row = new JsonObject
         {
             ["episode"] = alarm.Episode,
             ["first_told_at"] = Ah.Core.Time.Timestamps.ToIsoString(alarm.FirstToldAt),
             ["last_told_at"] = Ah.Core.Time.Timestamps.ToIsoString(alarm.LastToldAt),
             ["delivered"] = alarm.Delivered,
-        });
+        };
+        // ah2-180 Amendment 2 (a): a raised alarm keeps its kind and line, which the user-alarms lane serves as the team's alert
+        if (alarm.Kind is { } kind && alarm.Line is { } line)
+        {
+            row["kind"] = kind;
+            row["line"] = line;
+            row["raised_at"] = Ah.Core.Time.Timestamps.ToIsoString(alarm.FirstToldAt);
+        }
+
+        Episodes.Put(key, row);
     }
 
     private static DateTimeOffset? At(JsonObject entry, string field) =>
@@ -322,6 +345,28 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         }
 
         return counts;
+    }
+
+    /// <summary>
+    /// ah2-180 C1: the unread entries at the team's <c>orchestrator@</c> address, when the Orchestrator session's uncarried mark is not older than the
+    /// oldest of them (the wake failed for this mail, not for mail since read); null when there is no unread entry or no such mark.
+    /// </summary>
+    public LeadUncarried? Uncarried(StallTeam team)
+    {
+        if (team.OrchestratorSession.Length == 0 || g.Mailbox.DoorbellUncarriedMark(team.OrchestratorSession) is not { } mark)
+        {
+            return null;
+        }
+
+        var address = Ah.Hierarchy.HierarchyModule.OrchestratorAddress(team.Name);
+        var unread = g.Mailbox.ListBoxes().Where(b => b.Address == address).SelectMany(b => g.Mailbox.Pending(b.Dir)).ToList();
+        if (unread.Count == 0)
+        {
+            return null;
+        }
+
+        var oldest = unread.Min(static e => e.Member("created") is { IsText: true } c && Ah.Core.Time.Timestamps.TryParseMs(c.AsString(), out var ms) ? ms : double.MaxValue);
+        return mark.At >= oldest ? new LeadUncarried(unread.Count, mark.Reason) : null;
     }
 
     internal string AhHome => ahHome;
@@ -503,9 +548,11 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
 
     private static string Field(JsonValue map, string key) => map.AsObject().Get(key) is { IsText: true } v ? v.AsString() : string.Empty;
 
-    private PaneProbe Probe(StallTeam team, string name)
+    // ah2-156: the server the member lives on, by its registration, its row and its team
+    private PaneProbe Probe(StallTeam team, string name, string? session)
     {
-        var state = g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name)).AgentState(name);
+        var registration = session is null ? null : g.Mailbox.ReadRegistration(session);
+        var state = g.Launch.HerdrFor(g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name), name, registration).AgentState(name);
         return new PaneProbe(state.Indeterminate, state.AgentStatus, state.AgentType, state.Why);
     }
 }

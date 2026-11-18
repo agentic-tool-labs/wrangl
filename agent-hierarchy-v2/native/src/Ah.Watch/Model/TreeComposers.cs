@@ -1108,6 +1108,7 @@ internal static class SummaryData
             "needs_you" => (text, "Waiting on you"),
             "stuck" => ((who.Length > 0 ? who + ": " : string.Empty) + "task stuck", text),
             "error" => (who + " failed", text),
+            "alarm" => (text, "Alarm"),
             _ => (who + " is blocked", text),
         };
     }
@@ -1385,10 +1386,10 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
     public string SlicePrefix => "team-summary";
 
     public IReadOnlyList<string> Lanes =>
-        [TeamLane.LaneName, DecisionsLane.LaneName, WorktreeLane.LaneName, RegistrationLane.LaneName, StatusLane.LaneName, ActivityLane.LaneName, ProcessesLane.LaneName, PeersLane.LaneName, MessagesLane.LaneName, ProgressLane.LaneName, ParkedLane.LaneName, CoverageLane.LaneName];
+        [TeamLane.LaneName, DecisionsLane.LaneName, WorktreeLane.LaneName, RegistrationLane.LaneName, StatusLane.LaneName, ActivityLane.LaneName, ProcessesLane.LaneName, PeersLane.LaneName, MessagesLane.LaneName, ProgressLane.LaneName, ParkedLane.LaneName, CoverageLane.LaneName, UserAlarmsLane.LaneName];
 
     public IReadOnlyList<string> Affected(LaneKey changed, LaneRecord? previous, LaneRecord? current, IRecordView records) =>
-        changed.Lane == CoverageLane.LaneName
+        changed.Lane is CoverageLane.LaneName or UserAlarmsLane.LaneName
             ? AllIds(records)
             : [.. SummaryData.TeamsAffected(changed, previous, current, records).Select(static t => "team-summary:" + t.DirId + "/" + t.Team)
             .Concat(changed.Lane == TeamLane.LaneName
@@ -1452,7 +1453,7 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
             .Concat(members.Where(static m => m.Member != TreeIds.Orchestrator).Select(static m => m.StateAtMs))
             .Max();
         var work = SummaryData.PlanWork(records, dirId, team, SummaryData.Liveness(members, open.Select(static x => x.Id), asked.Select(static x => x.Id)), nowMs);
-        var (alerts, truncated) = AlertsOf(team, members, work.Waiting, work.Rows);
+        var (alerts, truncated) = AlertsOf(team, members, work.Waiting, work.Rows, UserAlarmsLane.Of(records, team.Name));
         var waitingRows = new JsonArray();
         foreach (var row in work.Rows.Take(WaitingRowCap))
         {
@@ -1674,7 +1675,10 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
     /// gone is not an alert. <c>since</c> is when the state began, so it does not move while the state holds. For what waits on the user that is
     /// the oldest time a waiting row records, a fact of the plan that a daemon restart leaves alone; null when no row records one.
     /// </summary>
-    private static (JsonValue Alerts, bool Truncated) AlertsOf(TeamEntry team, IReadOnlyList<MemberReading> members, long waiting, IEnumerable<JsonObject> waitingRows)
+    /// <summary>The alert kind of a raised user alarm.</summary>
+    public const string UserAlarmKind = "alarm";
+
+    private static (JsonValue Alerts, bool Truncated) AlertsOf(TeamEntry team, IReadOnlyList<MemberReading> members, long waiting, IEnumerable<JsonObject> waitingRows, IReadOnlyList<JsonValue> alarms)
     {
         var items = new List<(long Since, string Kind, string? Member, string Text)>();
         if (waiting > 0)
@@ -1689,10 +1693,21 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
             items.Add((m.StateAtMs, failed ? "error" : "blocked", TreeIds.Member(team.Dir, team.Name, m.Member), failed ? "Last turn failed" : m.Question is not { } asked ? "Waiting on a permission" : asked.Length > 0 ? "Asking in the terminal: " + asked : "Asking in the terminal"));
         }
 
+        // ah2-180 Amendment 2 (c): each user alarm the stall watch has raised for the team, its own line as the text, until it clears
+        foreach (var alarm in alarms)
+        {
+            items.Add((LaneParts.Ms(LaneParts.Text(alarm, "raised_at")), UserAlarmKind, null, LaneParts.Text(alarm, "line") ?? string.Empty));
+        }
+
         var array = new JsonArray();
         foreach (var i in items.OrderByDescending(static i => i.Since).ThenBy(static i => i.Member, StringComparer.Ordinal).ThenBy(static i => i.Kind, StringComparer.Ordinal).Take(AlertCap))
         {
             var item = new JsonObject { ["kind"] = i.Kind };
+            if (i.Kind == UserAlarmKind)
+            {
+                item["audience"] = "user";
+            }
+
             if (i.Member is not null)
             {
                 item["member"] = i.Member;

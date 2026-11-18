@@ -745,6 +745,19 @@ public sealed class TeardownPasteTests
     private static PasteOptions Options(JsonObject member, string payload, string transport = "tmux", PasteEntry? entry = null, string? activity = null, bool wait = false) =>
         new(member, "alpha", transport, payload, entry, activity, wait);
 
+    // ah2-180 B4: a paste for a pane on herdr desktop goes through the core adapter; with no flavour given, through the daemon's own.
+    [Theory]
+    [InlineData("core", "hc ")]
+    [InlineData(null, "herdr ")]
+    public void APasteForAnotherHerdrIsTypedThroughThatHerdrsAdapter(string? flavour, string first)
+    {
+        var rig = ScenarioRig.Create();
+
+        _ = PasteOver(rig).Paste(Options(Member(pane: "t1"), "ah: mail waiting, run ah msg next", transport: "herdr") with { HerdrFlavour = flavour });
+
+        Assert.StartsWith(first, rig.Mux.Calls.First(static c => c.StartsWith("hc ", StringComparison.Ordinal) || c.StartsWith("herdr", StringComparison.Ordinal)), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("two\nlines")]

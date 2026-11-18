@@ -186,12 +186,19 @@ internal static class CliApp
         return 70;
     }
 
+    /// <summary>Every command group <see cref="RunAh"/> dispatches, in the order the usage lists them; the bin/ah shim prints the same line.</summary>
+    internal static readonly string[] AhGroups =
+        ["roster", "progress", "ledger", "msg", "qa", "looks", "alarm", "proc", "admin", "view", "allow", "rules", "test", "usage", "usage-report", "herdr", "backlog", "work", "adr", "db", "issue-intake", "hook", "where"];
+
+    /// <summary>What <c>ah</c> with no arguments prints.</summary>
+    internal static string AhUsage => $"usage: ah <{string.Join('|', AhGroups)}> [args]";
+
     private static int RunAh(
         string[] args, CliContext context, TextWriter stdout, TextWriter stderr, IReadOnlyList<ModuleRegistry> registries)
     {
         if (args.Length == 0)
         {
-            stderr.WriteLine("usage: ah <roster|progress|ledger|msg|qa|looks|alarm|proc|admin|view|allow|rules|test|usage|usage-report|herdr|backlog|work|adr|db|issue-intake|hook> [args]");
+            stderr.WriteLine(AhUsage);
             return 2;
         }
 

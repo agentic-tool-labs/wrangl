@@ -293,7 +293,9 @@ public sealed class QueueEventsTests
                 idleCapacityAt: new Dictionary<string, (double At, string Signature)>(StringComparer.Ordinal))
                 .Where(static e => e.Name == "idle-capacity")];
 
-        Assert.Empty(Idle(Team(Member("implementor-96"), Member("reviewer-94", "reviewer") with { Paused = true })));
+        // ah2-180 A2: the unpaused one alone is idle capacity; with both paused there is none
+        Assert.DoesNotContain("reviewer-94", Assert.Single(Idle(Team(Member("implementor-96"), Member("reviewer-94", "reviewer") with { Paused = true }))).Text, StringComparison.Ordinal);
+        Assert.Empty(Idle(Team(Member("implementor-96") with { Paused = true }, Member("reviewer-94", "reviewer") with { Paused = true })));
         var told = Assert.Single(Idle(Team(Member("implementor-96"), Member("reviewer-94", "reviewer"), Member("qa-3", "qa") with { Paused = true })));
         Assert.DoesNotContain("qa-3", told.Text, StringComparison.Ordinal);
     }
@@ -322,7 +324,7 @@ public sealed class QueueEventsTests
     }
 
     [Fact]
-    public void IdleCapacityFiresForTwoMembersIdleTenMinutesWithReadyBacklogOnceUntilTheIdleSetChangesAndNotForOneMember()
+    public void IdleCapacityFiresForIdleMembersWithReadyBacklogOnceUntilTheIdleSetChangesAndForOneMemberAlone()
     {
         var stamped = new Dictionary<string, (double At, string Signature)>(StringComparer.Ordinal);
         IReadOnlyList<WatchEvent> Idle(double minutes, OwnedTeam team)
@@ -347,9 +349,20 @@ public sealed class QueueEventsTests
         Assert.Empty(Idle(42, pair));
         Assert.Single(Idle(42, Team(Member("implementor-96"), Member("reviewer-94", "reviewer"), Member("qa-3", "qa"))));
 
+        // ah2-180 A2: one idle member is enough
         stamped.Clear();
-        Assert.Empty(Idle(11, Team(Member("implementor-96"))));
-        Assert.Empty(Idle(11, Team(Member("implementor-96"), Member("reviewer-94", "reviewer", dismissed: true))));
+        Assert.Contains("1 member idle 10+ min with no open request: implementor-96.", Assert.Single(Idle(11, Team(Member("implementor-96")))).Text, StringComparison.Ordinal);
+        stamped.Clear();
+        Assert.Single(Idle(11, Team(Member("implementor-96"), Member("reviewer-94", "reviewer", dismissed: true))));
+    }
+
+    [Fact]
+    public void NegativeNoIdleMemberRaisesNoIdleCapacity()
+    {
+        var events = QueueEvents.Evaluate("s1", Ms(11), [Team(Member("implementor-96", activity: "working"), Member("reviewer-94", "reviewer", idleAt: 2))], [], _ => [], _ => false, new HashSet<string>(), out _,
+            readyBacklog: _ => [new ReadyBacklogItem("b260", "Ready work", "now", 1)], idleCapacityAt: new Dictionary<string, (double At, string Signature)>(StringComparer.Ordinal));
+
+        Assert.DoesNotContain(events, static e => e.Name == "idle-capacity");
     }
 
     [Fact]
@@ -373,9 +386,10 @@ public sealed class QueueEventsTests
         Assert.Single(Idle(11, Team(Member("implementor-96"), Member("reviewer-94", "reviewer"))));
         // negative: with no break in their idleness the same pair is not told again
         Assert.Empty(Idle(15, Team(Member("implementor-96"), Member("reviewer-94", "reviewer"))));
-        Assert.Empty(Idle(16, Team(Member("implementor-96", activity: "working"), Member("reviewer-94", "reviewer"))));
+        // ah2-180 A2: the episode ended and the one member still idle is enough on its own
+        Assert.Contains("reviewer-94", Assert.Single(Idle(16, Team(Member("implementor-96", activity: "working"), Member("reviewer-94", "reviewer")))).Text, StringComparison.Ordinal);
 
-        Assert.Single(Idle(27, Team(Member("implementor-96", idleAt: 16), Member("reviewer-94", "reviewer"))));
+        Assert.Single(Idle(47, Team(Member("implementor-96", idleAt: 16), Member("reviewer-94", "reviewer"))));
     }
 
     [Theory]
@@ -401,5 +415,98 @@ public sealed class QueueEventsTests
         {
             Assert.Empty(second);
         }
+    }
+
+    [Fact]
+    public void AReportedRowTenMinutesOldIsToldOnceAsReportWaitingWhateverItsOwnerIsDoing()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        var entry = Item("a", state: "reported", holder: "impl-1", refs: ["20261021-120000-aaaa"]);
+        var team = Team(Member("impl-1", activity: "working"));
+
+        var first = Run(10, [entry], team, told: told);
+        var again = Run(11, [entry], team, told: told);
+
+        var ev = Assert.Single(first);
+        Assert.Equal("report-waiting", ev.Name);
+        Assert.Contains("impl-1 reported _run/a 10m ago", ev.Text, StringComparison.Ordinal);
+        Assert.Contains("20261021-120000-aaaa", ev.Text, StringComparison.Ordinal);
+        Assert.Empty(again);
+    }
+
+    [Theory]
+    [InlineData("reported", 9)]
+    [InlineData("in_review", 30)]
+    public void NegativeAReportedRowUnderTenMinutesOrARowInReviewRaisesNoReportWaiting(string state, double now)
+    {
+        var events = Run(now, [Item("a", state: state, holder: "impl-1")], Team(Member("impl-1")));
+
+        Assert.DoesNotContain(events, static e => e.Name == "report-waiting");
+    }
+
+    private static IReadOnlyList<WatchEvent> Remind(double minutes, IReadOnlyList<ChecklistEntry> entries, HashSet<string> told, Dictionary<string, double> remindAt)
+    {
+        var events = QueueEvents.Evaluate("s1", Ms(minutes), [Team(Member("impl-1"))], [], _ => entries, _ => false, told, out var keys, remindAt: remindAt);
+        foreach (var key in keys.Values)
+        {
+            _ = told.Add(key);
+        }
+
+        foreach (var ev in events.Where(static e => e.Name == "work-still-waiting"))
+        {
+            remindAt[QueueEvents.UnstaffedTeamKey("s1", ev.Team)] = Ms(minutes);
+        }
+
+        return events;
+    }
+
+    [Fact]
+    public void AToldReportWaitingStillTrueTwentyMinutesOnIsListedOnceInWorkStillWaitingAndNotAfterTheRowIsDone()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        var remindAt = new Dictionary<string, double>(StringComparer.Ordinal);
+        var reported = Item("a", state: "reported", holder: "impl-1");
+
+        Assert.Equal("report-waiting", Assert.Single(Remind(10, [reported], told, remindAt)).Name);
+        Assert.Empty(Remind(11, [reported], told, remindAt));
+        Assert.Empty(Remind(30, [reported], told, remindAt));
+        var still = Assert.Single(Remind(31, [reported], told, remindAt));
+        Assert.Equal("work-still-waiting", still.Name);
+        Assert.Contains("report-waiting _run/a", still.Text, StringComparison.Ordinal);
+        Assert.Empty(Remind(40, [reported], told, remindAt));
+        Assert.Equal("work-still-waiting", Assert.Single(Remind(51, [reported], told, remindAt)).Name);
+
+        var done = Item("a", state: "done", holder: "impl-1", queuedAt: 52);
+        Assert.Empty(Remind(52, [done], told, remindAt));
+        Assert.Empty(Remind(80, [done], told, remindAt));
+    }
+
+    [Fact]
+    public void WorkStillWaitingNamesARowWhoseIdHoldsABarWhole()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        var remindAt = new Dictionary<string, double>(StringComparer.Ordinal);
+        var reported = Item("a|b", state: "reported", holder: "impl-1");
+
+        _ = Remind(10, [reported], told, remindAt);
+        _ = Remind(11, [reported], told, remindAt);
+        var still = Assert.Single(Remind(31, [reported], told, remindAt));
+
+        Assert.Equal("ahd alarm: work-still-waiting — still waiting on you: report-waiting _run/a|b", still.Text);
+    }
+
+    [Fact]
+    public void NegativeWorkStillWaitingNeverListsAConditionNotYetTold()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        var remindAt = new Dictionary<string, double>(StringComparer.Ordinal);
+        var reported = Item("a", state: "reported", holder: "impl-1");
+
+        // the first tell's mail failed, so the condition was never told: nothing is reminded however long it holds
+        _ = QueueEvents.Evaluate("s1", Ms(10), [Team(Member("impl-1"))], [], _ => [reported], _ => false, told, out _, remindAt: remindAt);
+        var later = QueueEvents.Evaluate("s1", Ms(40), [Team(Member("impl-1"))], [], _ => [reported], _ => false, told, out _, remindAt: remindAt);
+
+        Assert.DoesNotContain(later, static e => e.Name == "work-still-waiting");
+        Assert.Empty(remindAt);
     }
 }

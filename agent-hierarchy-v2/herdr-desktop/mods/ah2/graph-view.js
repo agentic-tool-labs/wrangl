@@ -18,7 +18,7 @@ import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, Sl
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
-  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle } from "./graph-model.js";
+  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle, isReviewing, paneOfMember } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
@@ -644,7 +644,7 @@ function flowBody(t, m, v, cx) {
   m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, v, gr, lt, m.dots.length > 0))); // the clock runs while a dot is drawn
   m.dots.forEach((d, i) => {
     const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review);
-    els.push(div().id(`gfd-${i}`).absolute().left(p.x - 4).top(p.y - 4).size(8).rounded(4)
+    els.push(div().id(`gfd-${i}`).absolute().left(p.x - 3).top(p.y - 3).size(6).rounded(3) // the web's 6 px (graph.js .dot r=3)
       .bg(dotColor(d.review, lt)).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title));
   });
   const clamp = (p) => flowPan(p, m.size, m.stage);
@@ -686,7 +686,7 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
   const s = c.card;
   const r = c.rect;
   const st = cardStyle(s, c.active, lt, t.surface);
-  const reviewing = s.role === "reviewer" && s.state === "working";
+  const reviewing = isReviewing(s, c.active);
   const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
   const duty = DUTY[s.duty] ?? null;
   const ago = s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "";
@@ -722,8 +722,6 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
 // sits, Now, in Map the rail's extras (graph-panel.js), the latest messages, and Open page (in the browser). A member that has
 // gone reads as gone; nothing here starts a timer (ages follow the dot clock's rule, ageText).
 
-// A member's pane as the graph drew it: the Flow card's or the Map leaf's.
-const paneIn = (m, id) => (m.cards ?? []).find((c) => c.id === id)?.pane ?? (m.groups ?? []).flatMap((g) => g.map?.leaves ?? []).find((n) => n.id === id)?.pane ?? null;
 
 function agentSheet(v, t, m, full) {
   const id = v.graphSheet;
@@ -731,7 +729,7 @@ function agentSheet(v, t, m, full) {
   const mm = memberModel(slices, sheetUi(v), id, SUMMARY_MESSAGES);
   const live = (m.dots?.length ?? 0) > 0; // the dot clock redraws: seconds are true
   const since = (ms) => ageText(Date.now() - ms, live).replace(" ago", "");
-  const go = paneAct(addressOf(v, id, paneIn(m, id)), mm.name, mm.gone);
+  const go = paneAct(addressOf(v, id, paneOfMember(slices, id)), mm.name, mm.gone);
   const page = memberPageLink(v.link?.port ?? null, id);
   const icon = (bid, file, label, act, why) => Button.new(bid).size(24).flex().flex_none().items_center().justify_center().rounded(6)
     .border(1).border_color(t.surface).focus((el) => el.border_color(t.accent)).disabled(Boolean(why))

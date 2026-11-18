@@ -28,6 +28,9 @@ public interface IAlarmEpisodes
 
     /// <summary>Replaces the entry for <paramref name="key"/> with <paramref name="fields"/>, stamped as seen now.</summary>
     void Put(string key, JsonObject fields);
+
+    /// <summary>The keys recorded that start with <paramref name="prefix"/>.</summary>
+    IReadOnlyList<string> Keys(string prefix);
 }
 
 /// <summary>
@@ -123,6 +126,14 @@ internal sealed class AlarmEpisodes(Func<string?> load, Action<string> save, Fun
             fields["at"] = Timestamps.ToIsoString(now());
             map[key] = fields;
             Save(map);
+        }
+    }
+
+    public IReadOnlyList<string> Keys(string prefix)
+    {
+        lock (Gate)
+        {
+            return [.. Map().Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal))];
         }
     }
 

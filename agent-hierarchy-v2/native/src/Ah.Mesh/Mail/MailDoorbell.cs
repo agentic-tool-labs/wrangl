@@ -34,7 +34,11 @@ public sealed record DoorbellRing(string Id, string Text, IReadOnlyList<string> 
 public sealed record DoorbellEscalation(string Kind, string Session, string Address, string Text);
 
 /// <summary>What the doorbell decided: a ring or none, the ring ids positively acknowledged, the escalation to raise, and when to ask again.</summary>
-public sealed record DoorbellDecision(DoorbellRing? Ring, IReadOnlyList<string> Acked, DoorbellEscalation? Escalation, double? NextDeadlineMs);
+public sealed record DoorbellDecision(DoorbellRing? Ring, IReadOnlyList<string> Acked, DoorbellEscalation? Escalation, double? NextDeadlineMs)
+{
+    /// <summary>While the session is held: how many items wait unread (ah2-180 D2); null otherwise.</summary>
+    public int? Unread { get; init; }
+}
 
 /// <summary>One digest entry: its box, id, kind, sender, the request it names (if any), its text or <c>--ref</c> path, and when it arrived.</summary>
 public sealed record DigestEntry(string Dir, string Id, string Kind, string From, string? RequestId, string Body, string Created);
@@ -110,6 +114,8 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
     private static readonly HashSet<string> AlarmEvents = new(StringComparer.Ordinal)
     {
         "check-in-due", "peer-silent", "overdue", "idle-without-report", "job-overdue", "queue-stall", "stalled-after-compact", "lane-escalated", "unlinked-dispatch", "member-waiting", "unreviewed-done",
+        // ah2-180 A4: the watch tick's told-again work alarms
+        "report-waiting", "work-still-waiting",
     };
 
     /// <summary>The watcher's idle-members alarm (<c>QueueEvents.IdleCapacityName</c>).</summary>
@@ -260,6 +266,26 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
 
         var seq = mailbox.ReadNote(UncarriedKind, session)?.Get("seq") is { IsNumber: true } n ? n.AsNumber() : 0;
         _ = mailbox.WriteNoteIf(UncarriedKind, session, new JsonObject { ["seq"] = seq + 1, ["at"] = now, ["reason"] = reason }, seq);
+        TraceRow(mailbox, session, new JsonObject { ["state"] = "doorbell-uncarried", ["session_id"] = session, ["now"] = now, ["reason"] = reason });
+    }
+
+    /// <summary>The session's last uncarried mark, or null when it has none or the session is no name.</summary>
+    internal static (double At, string Reason)? UncarriedMark(Mailbox mailbox, string session) =>
+        Mailbox.IsName(session) && mailbox.ReadNote(UncarriedKind, session) is { } note && note.Get("at") is { IsNumber: true } at
+            ? (at.AsNumber(), note.Get("reason") is { IsText: true } why ? why.AsString() : string.Empty)
+            : null;
+
+    // ah2-180 D1: an uncarried mark and an escalation in the session's doorbell trace. A failed write fails nothing.
+    private static void TraceRow(Mailbox mailbox, string session, JsonObject row)
+    {
+        try
+        {
+            mailbox.AppendTrace(session, row);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            _ = e;
+        }
     }
 
     /// <summary>
@@ -276,9 +302,19 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         }
 
         var state = State.From(mailbox.ReadNote(NoteKind, session));
+        // ah2-180 B3: a held session with unread mail goes to the pane wake once its oldest unread item is HeldWakeMs old.
+        if (state.HeldSince > 0)
+        {
+            // an item with no readable arrival counts from when the Stop was first seen with mail; a held session seen in a turn since has resumed
+            return state.BusySince <= 0 && now - (state.HeldOldest > 0 ? state.HeldOldest : state.HeldSince) >= HeldWakeMs;
+        }
+
         return state.UnreadSince > 0 && state.BusySince <= 0 && now - state.UnreadSince >= IMailCore.DoorbellRemindMs
             && state.RangAt >= state.UnreadSince && !RingEntered(state) && now - state.RangAt >= IMailCore.DoorbellReringMs;
     }
+
+    /// <summary>How old a held session's oldest unread item is before the delivery ladder types the wake line into its pane (ah2-180 B3).</summary>
+    internal const double HeldWakeMs = 120_000;
 
     // A prompt ring's turn key is rewritten by the turn it starts; a Stop or tool ring is carried inside a turn from the start.
     private static bool RingEntered(State state) => state.RangTurn.Length > 0 && !state.RangTurn.StartsWith("ring:", StringComparison.Ordinal);
@@ -286,9 +322,10 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
     // ---------------------------------------------------------------- the queue
 
     /// <summary>The unacked, pullable entries of the session's orchestrator boxes as ranked items; an event that no longer applies is acked away.</summary>
-    internal List<Item> Queue(string session, double now, string? team = null, bool idle = false, Action<double>? revealAt = null)
+    internal List<Item> Queue(string session, double now, string? team = null, bool idle = false, Action<double>? revealAt = null, bool unheld = false)
     {
         var entries = new List<(BoxRef Box, JsonValue Entry)>();
+        var registration = unheld ? mailbox.ReadRegistration(session) : null;
         foreach (var box in OrchestratorBoxes(session))
         {
             if (team is not null && box.Address != OrchestratorPrefix + team && box.Address != ChiefPrefix + team)
@@ -296,12 +333,20 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
                 continue;
             }
 
+            // ah2-180 Amendment 3: for the ring decision, a team under a user hold of any phase has nothing unread, and mail a hold drained is not unread.
+            if (unheld && RegistrationTeams.For(registration, box.Address) is { } teamFile && mailbox.UnderHold(teamFile, box.Address[(box.Address.IndexOf('@', StringComparison.Ordinal) + 1)..]))
+            {
+                continue;
+            }
+
+            var drained = unheld ? mailbox.LadderSweep(box.Dir).Settled : null;
             var heartbeat = mailbox.ReadHeartbeat(box.Dir, session) ?? mailbox.ReadHeartbeat(box.Dir);
             var options = new PullOptions(SessionId: session, Now: now, Hb: heartbeat is null ? JsonValue.Null : heartbeat);
             foreach (var entry in mailbox.ReadEntries(box.Dir).Entries)
             {
                 var id = Text(entry, "id");
-                if (id.Length == 0 || mailbox.IsAcked(box.Dir, id) || !core.Pullable(entry, options))
+                if (id.Length == 0 || mailbox.IsAcked(box.Dir, id) || !core.Pullable(entry, options)
+                    || (drained is not null && drained.TryGetValue(id, out var settled) && settled == DrainedState.State))
                 {
                     continue;
                 }
@@ -545,6 +590,7 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         internal bool BusyTold;
         internal double UnreadSince;
         internal double HeldSince;
+        internal double HeldOldest;
         internal bool HeldMarked;
         internal bool UncarriedTold;
         internal List<string> Recent = [];
@@ -577,6 +623,7 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
             s.BusyTold = o.Get("busy_told") is { IsBool: true } bt && bt.AsBool();
             s.UnreadSince = Num("unread_since");
             s.HeldSince = Num("held_since");
+            s.HeldOldest = Num("held_oldest");
             s.HeldMarked = o.Get("held_marked") is { IsBool: true } hm && hm.AsBool();
             s.UncarriedTold = o.Get("uncarried_told") is { IsBool: true } ut && ut.AsBool();
             if (o.Get("recent") is { IsArray: true } recent)
@@ -616,6 +663,7 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
                 ["busy_told"] = BusyTold,
                 ["unread_since"] = UnreadSince,
                 ["held_since"] = HeldSince,
+                ["held_oldest"] = HeldOldest,
                 ["held_marked"] = HeldMarked,
                 ["uncarried_told"] = UncarriedTold,
                 ["recent"] = recent,
@@ -639,6 +687,9 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
 
     private readonly Dictionary<string, string> _traced = new(StringComparer.Ordinal);
 
+    // The item count of the decision in progress, read under Gate by Decide for a held session's answer.
+    private int _unread;
+
     /// <summary>
     /// One <c>doorbell-trace</c> row in the session's trace file when the inputs of the ring decision change, per session and carrier: the record that b99 lacks of why an idle
     /// session was not rung. A failed write fails nothing.
@@ -648,7 +699,10 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
     {
         var fresh = items.Count(i => string.CompareOrdinal(i.Newest, state.ToldMark) > 0);
         var handed = request.Handed.TryGetValue(state.RingId, out var record) ? record.State : "none";
-        var key = string.Join('|', idle, ringPending, items.Count, fresh, state.RingId, handed, state.ToldMark);
+        // Why the prompt carrier makes no ring this time, by the gate the decider checks first; null when the ladder's timing decides.
+        string? notRung = request.Carrier != DoorbellCarrier.Prompt ? null
+            : items.Count == 0 ? "no-mail" : request.Held ? "held" : !idle ? "busy" : ringPending ? "ring-pending" : null;
+        var key = string.Join('|', idle, ringPending, items.Count, fresh, state.RingId, handed, state.ToldMark, request.Held, notRung);
         var slot = request.Session + " " + request.Carrier;
         if (_traced.GetValueOrDefault(slot) == key)
         {
@@ -674,6 +728,8 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
                 ["handed"] = handed,
                 ["told_mark"] = state.ToldMark,
                 ["rang_at"] = state.RangAt,
+                ["held"] = request.Held,
+                ["not_rung"] = notRung is null ? JsonValue.Null : notRung,
             });
         }
         catch (Exception e) when (e is not OutOfMemoryException)
@@ -687,10 +743,28 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         ArgumentNullException.ThrowIfNull(request);
         lock (Gate)
         {
+            _unread = 0;
             var decision = DecideLocked(request);
-            return decision.Escalation is { } escalation && request.HierarchyDir is { Length: > 0 } hier && SendToLead(escalation, hier)
-                ? decision with { Escalation = null }
-                : decision;
+            if (request.Held)
+            {
+                decision = decision with { Unread = _unread };
+            }
+
+            if (decision.Escalation is not { } escalation)
+            {
+                return decision;
+            }
+
+            var toLead = request.HierarchyDir is { Length: > 0 } hier && SendToLead(escalation, hier);
+            TraceRow(mailbox, request.Session, new JsonObject
+            {
+                ["state"] = "doorbell-escalation",
+                ["session_id"] = request.Session,
+                ["now"] = request.Now,
+                ["kind"] = escalation.Kind,
+                ["went"] = toLead ? "lead" : "session",
+            });
+            return toLead ? decision with { Escalation = null } : decision;
         }
     }
 
@@ -863,8 +937,9 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         // A digest item never rings by itself: the ring decision, re-rings and reminders see only the other items.
         double? reveal = null;
         var quiet = QuietChiefBoxes(request.Session);
-        var items = Queue(request.Session, now, idle: idle, revealAt: at => reveal = reveal is { } soonest ? Math.Min(soonest, at) : at)
+        var items = Queue(request.Session, now, idle: idle, revealAt: at => reveal = reveal is { } soonest ? Math.Min(soonest, at) : at, unheld: true)
             .Where(i => i.Rank != DigestRank && (i.Urgent || !quiet.Contains(i.Address) || i.Entries.Any(static e => e.Member("data")?.Member("copy") is { IsTruthy: true }))).ToList();
+        _unread = items.Count;
         var ringPending = state.RingId.Length > 0 && request.Handed.TryGetValue(state.RingId, out var handed) && handed.State == "pending";
         var inlineAcked = state.InlineId.Length > 0 && boxes.Any(b => mailbox.IsAcked(b.Dir, state.InlineId));
 
@@ -884,6 +959,7 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         if (items.Count == 0 || !request.Held)
         {
             state.HeldSince = 0;
+            state.HeldOldest = 0;
             state.HeldMarked = false;
         }
 
@@ -905,16 +981,20 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         DoorbellRing? ring = null;
         DoorbellEscalation? escalation = null;
 
-        // A Stop the mod has reported is not pasted over or rung through: they are told once, past the limit, what is waiting.
-        if (request.Held && items.Any(static i => !i.Alarm))
+        // A Stop the mod has reported is not rung through (the rings are dropped); the ladder wakes its pane once the oldest unread item is
+        // HeldWakeMs old (ah2-180 B3), and they are told once, past the limit, what is waiting. An alarm counts as a report does (B1).
+        if (request.Held)
         {
             state.HeldSince = state.HeldSince > 0 ? state.HeldSince : now;
+            state.HeldOldest = items.Min(i => i.Entries.Min(e => CreatedMs(e)));
             if (!state.HeldMarked && now - state.HeldSince >= IMailCore.DoorbellRemindMs)
             {
                 state.HeldMarked = true;
+                // ah2-180 D9: a wake the ladder could not type in this episode is said.
+                var unwoken = mailbox.ReadNote(UncarriedKind, request.Session)?.Get("at") is { IsNumber: true } failedAt && failedAt.AsNumber() >= state.HeldSince;
                 escalation = new DoorbellEscalation(
                     "mail-unacked", request.Session, boxes[0].Address,
-                    string.Create(CultureInfo.InvariantCulture, $"{boxes[0].Address} is stopped with {items.Count} unread; type a message to continue."));
+                    string.Create(CultureInfo.InvariantCulture, $"{boxes[0].Address} is stopped with {items.Count} unread; type a message to continue{(unwoken ? "; ah could not wake it" : string.Empty)}."));
             }
         }
 
@@ -949,7 +1029,8 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
         }
         else if (idle && !ringPending && !request.Held)
         {
-            if (state.UnreadSince <= 0 && !inlineAcked && items.Any(static i => !i.Alarm))
+            // An alarm starts the unread clock as a report does (ah2-180 D3): the doorbell serves only Orchestrator boxes.
+            if (state.UnreadSince <= 0 && !inlineAcked)
             {
                 state.UnreadSince = now;
             }
@@ -971,10 +1052,9 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
                     deadline = readyAt;
                 }
             }
-            else if (!ringAcked && state.RingId.Length > 0 && !state.Escalated && items.Any(static i => !i.Alarm))
+            else if (!ringAcked && state.RingId.Length > 0 && !state.Escalated)
             {
-                // Only an alarm is not re-rung or escalated: one wake is one notification, and the mail-unacked toast it would end in
-                // reads as the session having been told several times.
+                // An alarm in a lead's box is re-rung and escalated as a report is (ah2-180 B1); the doorbell serves only lead boxes.
                 var dueAt = state.RangAt + IMailCore.DoorbellReringMs;
                 if (now < dueAt)
                 {
@@ -1013,7 +1093,7 @@ internal sealed class MailDoorbell(Mailbox mailbox, IMailCore core, IFileReader 
 
             // No paste without a tried ring, and with reminders spent or no ring on record nothing else would try one. A ring that entered needs no wake, so it forces nothing.
             if (ring is null && deadline is null && escalation is null && !ringAcked && !RingEntered(state) && state.UnreadSince > 0 && state.RangAt < state.UnreadSince
-                && now - state.UnreadSince >= IMailCore.DoorbellRemindMs && items.Any(static i => !i.Alarm))
+                && now - state.UnreadSince >= IMailCore.DoorbellRemindMs)
             {
                 ring = Claim(state, items, 0, "reminder", now, "ring:" + (state.Seq + 1).ToString(CultureInfo.InvariantCulture), inline: false);
             }

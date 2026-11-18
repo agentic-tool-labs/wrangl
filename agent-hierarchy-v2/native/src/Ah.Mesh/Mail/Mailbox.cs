@@ -392,6 +392,9 @@ public interface IMailbox
     /// <summary>Records that the session could not be woken for its unread mail: its doorbell tells the person once, in its next answer.</summary>
     void MarkDoorbellUncarried(string session, double nowMs, string reason);
 
+    /// <summary>The session's last <see cref="MarkDoorbellUncarried"/> mark: when (ms) and why; null when it has none (ah2-180 C1's reader).</summary>
+    (double At, string Reason)? DoorbellUncarriedMark(string session);
+
     /// <summary>Whether a live registered session is the kind the doorbell serves, whether or not its mod still polls.</summary>
     bool DoorbellSessionLive(string session);
 
@@ -1661,6 +1664,8 @@ internal sealed partial class Mailbox(
         DoorbellSessions(boxDir, address, toSession, nowMs).FirstOrDefault(session => MailDoorbell.RingsGoUnread(this, session, nowMs));
 
     public void MarkDoorbellUncarried(string session, double nowMs, string reason) => MailDoorbell.MarkUncarried(this, session, nowMs, reason);
+
+    public (double At, string Reason)? DoorbellUncarriedMark(string session) => MailDoorbell.UncarriedMark(this, session);
 
     public bool DoorbellSessionLive(string session) =>
         ReadRegistration(session) is { } registration && RegistrationLive(registration) && MailDoorbell.ServesSession(this, environment, session);

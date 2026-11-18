@@ -400,6 +400,18 @@ test("a card's style: active ◐ tinted working, a reviewer at work ◆ tinted r
   assert.deepEqual([idle.glyph, idle.mark, idle.fill, idle.line, idle.name, idle.bold], ["○", FM.WEB.dark.dim, null, null, null, false]);
   assert.equal(FM.cardStyle(card("qa", "gone"), false, true, "#ffffff").glyph, "×");
   assert.equal(FM.cardStyle(card("x", "weird"), false, true, "#ffffff").glyph, "?");
+  const off = FM.cardStyle(card("reviewer", "working"), false, true, "#ffffff");
+  assert.deepEqual([off.glyph === "◆", off.fill, FM.isReviewing(card("reviewer", "working"), false)], [false, null, false], "a reviewer off the active set is not reviewing");
+});
+
+test("leaving the Graph stops the dot clock and closes the sheet; Go to pane finds an undrawn member's pane in the summaries", () => {
+  let cancelled = 0;
+  const v = { graphTravel: { cancel: () => cancelled++ }, graphSheet: "team:a/@implementor" };
+  FM.leaveGraph(v);
+  assert.deepEqual([cancelled, v.graphTravel, v.graphSheet], [1, null, null]);
+  const slices = new Map([["view:summary", { body: {} }], ["team-summary:team:b", { body: { member_states: { "team:b/@qa": { liveness: "live", pane_id: "p7" } } } }]]);
+  assert.equal(FM.paneOfMember(slices, "team:b/@qa"), "p7");
+  assert.equal(FM.paneOfMember(slices, "team:b/@nobody"), null);
 });
 
 test("an edge's style: a reporting line thin in the theme's muted, a brief 2 px accent, a review 2 px dashed review", () => {

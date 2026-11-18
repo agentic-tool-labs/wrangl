@@ -25,7 +25,8 @@ public sealed record PasteOptions(
     bool Wait = false,
     string Source = "ladder",
     int MaxChars = PasteOptions.DefaultMaxChars,
-    TimeSpan? LockWait = null)
+    TimeSpan? LockWait = null,
+    string? HerdrFlavour = null)
 {
     /// <summary>The longest payload, in characters, a paste carries unless the caller says otherwise.</summary>
     public const int DefaultMaxChars = 500;
@@ -107,6 +108,12 @@ public sealed record PasteService(
     public JsonObject Paste(PasteOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        // ah2-180 B4: a pane on another herdr than the daemon's is typed into through that herdr's adapter, as Teardown.HerdrOf chooses it.
+        if (options.HerdrFlavour is { } flavour && flavour != Herdr.Flavour && Herdr is global::Ah.Launch.Herdr own)
+        {
+            return (this with { Herdr = own.ForFlavour(flavour) }).Paste(options with { HerdrFlavour = null });
+        }
+
         var member = options.Member;
         var place = PlacementOf(member, options.TeamTransport);
         var kind = JsConvert.ToJsString(Config.ResolveKind(member));

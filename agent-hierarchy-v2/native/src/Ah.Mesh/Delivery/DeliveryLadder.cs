@@ -23,9 +23,10 @@ public interface IDeliveryPaste
     /// <summary>
     /// Pastes <paramref name="payload"/> into the member's pane for entry <paramref name="entryId"/> of box <paramref name="boxDir"/>.
     /// The paste's character limit applies to the payload without its first <paramref name="headerChars"/> characters.
-    /// An empty <paramref name="entryId"/> pastes for no entry: nothing is acked by it.
+    /// An empty <paramref name="entryId"/> pastes for no entry: nothing is acked by it. <paramref name="herdrFlavour"/>, when set, is the herdr
+    /// the pane lives on (ah2-180 B4); null keeps the daemon's own.
     /// </summary>
-    PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0);
+    PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0, string? herdrFlavour = null);
 }
 
 /// <summary>Mails one event from <c>ahd</c> for the ladder; throws when it cannot be sent.</summary>
@@ -224,9 +225,39 @@ public sealed partial record DeliveryLadder(
                     // one entry's failure (a busy box) is retried on the next tick and never stops the pass
                 }
             }
+
+            try
+            {
+                await WakeLeadBoxAsync(box, entries, sweep, nowMs, c).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // as for an entry: retried on the next tick
+            }
         }
 
         return new DeliveryCounts(pending, sending, paused, escalated);
+    }
+
+    /// <summary>
+    /// ah2-180 B2: a lead's box is considered for the pane wake whenever it holds an unread entry, daemon-written alarms included, which the
+    /// entry walk above never reaches (<see cref="IsLaddered"/>). The doorbell's state decides whether its mail has gone unread.
+    /// </summary>
+    private async Task WakeLeadBoxAsync(Box box, IReadOnlyList<JsonValue> entries, LadderSweepRows sweep, double now, Constants c)
+    {
+        // ah2-180 Amendment 3: a team under a user hold of any phase is not woken, and mail a hold drained is not unread.
+        if (Roster.HoldOf(RosterModule.TeamFileHome(box.TeamPath) ?? string.Empty, box.TeamName) is not null)
+        {
+            return;
+        }
+
+        var unread = entries.Where(static v => v.Kind == JsonKind.Map).Select(static v => v.AsObject())
+            .FirstOrDefault(e => Str(e, "id") is { Length: > 0 } id && !Mailbox.IsAcked(box.Dir, id)
+                && !(sweep.Settled.TryGetValue(id, out var settled) && settled == DrainedState.State));
+        if (unread is not null && Mailbox.DoorbellLive(box.Dir, box.Address, null, now) && Mailbox.DoorbellGoneUnread(box.Dir, box.Address, null, now) is { } session)
+        {
+            await WakeOrchestratorAsync(box, unread, session, now, c).ConfigureAwait(false);
+        }
     }
 
     // ---------------------------------------------------------------- boxes
@@ -814,13 +845,9 @@ public sealed partial record DeliveryLadder(
         }
 
         // MailDue leaves an orchestrator box to the doorbell, so its mail is never claimed and "no poller" would be false: it waits, on any rung, while the doorbell lives.
+        // Its wake is decided per box, after the walk (WakeLeadBoxAsync, ah2-180 B2).
         if (Mailbox.DoorbellLive(box.Dir, box.Address, Str(entry, "to_session"), now))
         {
-            if (Mailbox.DoorbellGoneUnread(box.Dir, box.Address, Str(entry, "to_session"), now) is { } unread)
-            {
-                await WakeOrchestratorAsync(box, entry, unread, now, c).ConfigureAwait(false);
-            }
-
             return;
         }
 
@@ -1167,7 +1194,10 @@ public sealed partial record DeliveryLadder(
             _wakeAt[session] = now + IMailCore.DoorbellRemindMs;
         }
 
-        var pane = Mailbox.ReadRegistration(session) is { } registration ? Str(registration, "pane_id") : null;
+        var registration = Mailbox.ReadRegistration(session);
+        var pane = registration is not null ? Str(registration, "pane_id") : null;
+        // ah2-180 B4: typed through the herdr the session is on, by its registration's stamp, else its team's.
+        var flavour = Ah.Core.Mux.HerdrFlavour.Resolve(registration, JsonValue.FromObject(box.Team), null);
         var member = new JsonObject { ["name"] = "orchestrator", ["transport_id"] = pane is null ? JsonValue.Null : pane, ["target"] = pane is null ? JsonValue.Null : pane };
         var outcome = await Task.Run(() => Paste.Paste(
             JsonValue.FromObject(member),
@@ -1175,14 +1205,17 @@ public sealed partial record DeliveryLadder(
             Str(box.Team, "transport"),
             OrchestratorWakeText,
             string.Empty,
-            box.Dir)).ConfigureAwait(false);
-        Mailbox.AppendAttempt(box.Dir, new JsonObject
+            box.Dir,
+            herdrFlavour: flavour)).ConfigureAwait(false);
+        var attempt = new JsonObject
         {
             ["state"] = "doorbell-wake",
             ["session_id"] = session,
             ["outcome"] = outcome.Outcome,
             ["reason"] = Nullable(outcome.Reason),
-        });
+        };
+        Mailbox.AppendAttempt(box.Dir, attempt);
+        TraceWake(session, box.Dir, now, flavour, outcome);
         if (outcome.Outcome == "confirmed")
         {
             lock (_gate)
@@ -1214,6 +1247,28 @@ public sealed partial record DeliveryLadder(
         }
 
         return true;
+    }
+
+    // ah2-180 D1: each wake attempt in the session's doorbell trace, beside its attempt row. A failed write fails nothing.
+    private void TraceWake(string session, string dir, double now, string? flavour, PasteOutcome outcome)
+    {
+        try
+        {
+            (Mailbox as global::Ah.Mesh.Mailbox)?.AppendTrace(session, new JsonObject
+            {
+                ["state"] = "doorbell-wake",
+                ["dir"] = dir,
+                ["session_id"] = session,
+                ["now"] = now,
+                ["herdr_flavour"] = Nullable(flavour),
+                ["outcome"] = outcome.Outcome,
+                ["reason"] = Nullable(outcome.Reason),
+            });
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            _ = e;
+        }
     }
 
     private void SendMail(string home, JsonObject request)

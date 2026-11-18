@@ -751,7 +751,7 @@ export function closeToast(label: string, status: unknown, stdout: unknown, stde
 }
 
 /** One answer of the mail poll, as the mod acts on it; `socket` is the daemon a CLI answer says serves the push route. */
-export type DueAnswer = { ids: string[]; prompt: string | null; compact: string | null; idle: boolean; state: string; acked: string[]; socket: string | null; ring: boolean; escalation?: { kind: string; text: string } }
+export type DueAnswer = { ids: string[]; prompt: string | null; compact: string | null; idle: boolean; state: string; acked: string[]; socket: string | null; ring: boolean; escalation?: { kind: string; text: string }; unread?: number }
 
 const isStrings = (x: unknown): x is string[] => Array.isArray(x) && x.every((s) => typeof s === 'string')
 const absolute = (p: string): boolean => /^(\/|[A-Za-z]:[\\/])/.test(p)
@@ -781,8 +781,14 @@ export function readDue(raw: unknown): DueAnswer | null {
     const { kind, text } = e as Record<string, unknown>
     if (typeof kind === 'string' && typeof text === 'string' && text !== '') answer.escalation = { kind, text }
   }
+  // A held session's count of unread items (ah2-180 D2); any other value is no count, not an unreadable answer.
+  if (typeof a.unread === 'number' && Number.isInteger(a.unread) && a.unread >= 0) answer.unread = a.unread
   return answer
 }
+
+/** The words a held session with unread mail shows in its status line and toasts (ah2-180 D2); undefined when there is nothing to say. */
+export const heldText = (held: boolean, unread: number | undefined): string | undefined =>
+  held && unread !== undefined && unread > 0 ? `ah: stopped with ${unread} unread; type anything to resume` : undefined
 
 /** One delivery of mail as the Mail section shows it: when, which entries, the header's address, the full prompt text and how the submit ended. */
 export type MailRecord = { at: number; ids: string[]; address: string; text: string; state: 'delivered' | 'not delivered' }

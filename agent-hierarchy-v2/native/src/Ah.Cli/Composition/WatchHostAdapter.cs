@@ -97,9 +97,9 @@ internal sealed class LaunchDeliveryPaste(IPaste paste) : IDeliveryPaste
 {
     public JsonObject PlacementOf(JsonValue member, string? teamTransport) => paste.PlacementOf(member, teamTransport);
 
-    public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0)
+    public PasteOutcome Paste(JsonValue member, string teamName, string? teamTransport, string payload, string entryId, string boxDir, int headerChars = 0, string? herdrFlavour = null)
     {
-        var result = paste.Paste(new PasteOptions(member, teamName, teamTransport, payload, entryId.Length == 0 ? null : new PasteEntry(entryId, boxDir), Source: "ladder", MaxChars: PasteOptions.DefaultMaxChars + headerChars));
+        var result = paste.Paste(new PasteOptions(member, teamName, teamTransport, payload, entryId.Length == 0 ? null : new PasteEntry(entryId, boxDir), Source: "ladder", MaxChars: PasteOptions.DefaultMaxChars + headerChars, HerdrFlavour: herdrFlavour));
         return new PasteOutcome(
             result.TryGetValue("outcome", out var outcome) && outcome.Kind == JsonKind.Text ? outcome.AsString() : "refused",
             result.TryGetValue("reason", out var reason) && reason.Kind == JsonKind.Text ? reason.AsString() : null);

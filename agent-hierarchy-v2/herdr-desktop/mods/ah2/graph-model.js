@@ -517,10 +517,12 @@ export function mix(c, base, p) {
 // tokens). base: the surface the card sits on (#rrggbb), for the tints. Two departures from the web, for D5 (Amendment 4): a blocked
 // member's card shows the blocked glyph in the theme's blocked colour (mark null), not the working half-disc; and the light
 // reviewing border is the full review colour (the web's 60% mix is 2.61:1 on white).
+// A reviewer at work on an active card reads "reviewing" (◆, the review tint); off the active set it is an idle-style row.
+export const isReviewing = (s, active) => Boolean(active) && s.role === "reviewer" && s.state === "working";
 export function cardStyle(s, active, light, base) {
   const w = light ? WEB.light : WEB.dark;
   const pct = light ? 0.09 : 0.12;
-  const reviewing = s.role === "reviewer" && s.state === "working";
+  const reviewing = isReviewing(s, active);
   const role = Object.hasOwn(w.role, s.role ?? "") && s.role !== "neutral" ? w.role[s.role] : w.role.neutral;
   if (reviewing) return { glyph: "◆", mark: w.review, tag: w.review, name: role, fill: mix(w.review, base, pct), line: light ? w.review : mix(w.review, base, 0.6), bold: true };
   if (active && s.state === "blocked") return { glyph: glyphOf("blocked"), mark: null, tag: w.working, name: role, fill: mix(w.working, base, pct), line: w.accent, bold: true };
@@ -622,6 +624,23 @@ export function travelClock(v, cx, inFlight, frame = 16) {
     }
   });
   return true;
+}
+
+// Leaving the Graph tab (main.js select; the kit gives no hide signal of its own): the dot clock stops at once rather than after
+// SHOWN_GAP_MS, and the agent sheet closes, so its lease (graphSubs) is dropped with the next poll.
+export function leaveGraph(v) {
+  v.graphTravel?.cancel();
+  v.graphTravel = null;
+  v.graphSheet = null;
+}
+
+// A member's pane from what the mod holds (any team summary's member_states, memberPane's rule), whether or not the graph draws it.
+export function paneOfMember(slices, id) {
+  for (const [key, s] of slices) {
+    const m = key.startsWith("team-summary:") ? s?.body?.member_states?.[id] : null;
+    if (m) return memberPane(id, m);
+  }
+  return null;
 }
 
 // ---- Open in browser (spec herdr-graph-polish Amendment 3, V9): the web UI's Graph for the shown team, by the web's own route

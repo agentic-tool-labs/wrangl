@@ -81,6 +81,7 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.NotEqual(0, code);
         Assert.Contains("stream s1 is not done", stdout + stderr, StringComparison.Ordinal);
+        Assert.Contains("has no uncommitted or unmerged work", stdout + stderr, StringComparison.Ordinal);
         Assert.False(Killed("%1"));
     }
 

@@ -29,6 +29,7 @@ internal static class SliceDependencies
         new("team-summary:<t>", "teams", "the goal of t and of t's lane parent, read into each team record; a goal write re-reads that team's key (ah2-53)"),
         new("team-summary:<t>", "decisions", "t"),
         new("team-summary:<t>", "parked", "the parked questions of t's dir"),
+        new("team-summary:<t>", "user-alarms", "every team: the raised user alarms, one key (ah2-180)"),
         new("team-summary:<t>", "worktrees", "worktrees of t"),
         new("team-summary:<t>", "registrations", "sessions of t's members"),
         new("team-summary:<t>", "status", "status.json of t's dir"),

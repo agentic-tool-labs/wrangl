@@ -136,10 +136,13 @@ internal static class ActivityRecorder
         }
         else if (sessionText.Length > 0 && OwnsTeam())
         {
-            // The Orchestrator keeps no activity of its own except the context fill and the one state the delivery ladder needs: parked on a question.
+            // The Orchestrator keeps no activity of its own except the context fill and the states the delivery ladder needs: parked on a question,
+            // or (ah2-180 C4) at a permission prompt, recorded as a member's is so the team's blocked alert shows it.
             var heldRecord = status.ReadActivityRecord(dir, session);
             var held = heldRecord.Member("activity") is { IsText: true } heldActivity ? heldActivity.AsString() : null;
-            var asking = hookEvent == "PreToolUse" && c.ToolName() == "AskUserQuestion";
+            var question = hookEvent == "PreToolUse" && c.ToolName() == "AskUserQuestion";
+            var permission = hookEvent == "Notification" && PermissionNotification(c);
+            var asking = question || permission;
             // A question's answer leaves the turn running; the turn's end or the session's end leaves it idle, so neither state outlives the turn.
             var releases = (held == "blocked" && hookEvent == "PostToolUse") || (held is "blocked" or "working" && hookEvent is "Stop" or "SessionEnd");
             // Whether its turn is open, in fields of their own beside the activity (ah2-62): any prompt opens it, the turn's or the session's end closes it.
@@ -154,7 +157,7 @@ internal static class ActivityRecorder
                     ? new JsonObject
                     {
                         ["activity"] = asking ? "blocked" : hookEvent == "PostToolUse" ? "working" : SelfState("Stop")!,
-                        ["blocked_by"] = asking ? "question" : JsonValue.Null,
+                        ["blocked_by"] = question ? "question" : permission ? "permission" : JsonValue.Null,
                     }
                     : new JsonObject { ["blocked_by"] = heldRecord.Member("blocked_by") ?? JsonValue.Null, ["note"] = heldRecord.Member("note") ?? JsonValue.Null };
                 if (!fills && held is not null)
@@ -162,7 +165,7 @@ internal static class ActivityRecorder
                     fill["activity"] = held;
                 }
 
-                if (asking)
+                if (question)
                 {
                     fill["note"] = QuestionNote(c);
                 }

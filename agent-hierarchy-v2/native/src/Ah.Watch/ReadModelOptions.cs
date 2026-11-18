@@ -113,6 +113,12 @@ public sealed record ReadModelOptions
     /// </summary>
     public Func<string, IReadOnlyList<Ah.Hierarchy.ParkedQuestion>?>? ParkedProbe { get; init; }
 
+    /// <summary>
+    /// The stall watch's alarm store as JSON text (its <c>stall.reported</c> row, ah2-180 Amendment 2), whose raised user alarms the <c>user-alarms</c> lane serves as team alerts;
+    /// null when it cannot be read. Asked on each write of the stall store and on a reconcile; without it no user alarm is an alert.
+    /// </summary>
+    public Func<string?>? UserAlarmsProbe { get; init; }
+
     /// <summary>The board fields of one stream's registered items, by item key, given the canonical hierarchy directory, the progress folder and the stream. Asked only while a client holds the stream.</summary>
     public Func<string, string, string, IReadOnlyDictionary<string, Model.WorkCard>>? WorkCardsProbe { get; init; }
 

@@ -111,6 +111,10 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
         public IRosterOwnerProof? OwnerProof { get; init; }
 
         public uint? CurrentUserId { get; init; }
+
+        public IMailbox? Mailbox => WithMailbox ? graph.Mailbox : null;
+
+        public bool WithMailbox { get; init; }
     }
 
     private sealed class FixedAncestry(NearestKind kind) : IRosterOwnerProof
@@ -128,7 +132,7 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
     private (int Code, string Stdout, string Stderr) Roster(Dictionary<string, string?>? extra, params string[] args)
     {
         var (graph, io, env) = Compose(extra);
-        var services = new Services(graph, io.Files, io.Clock, env, Project, _doctorOverride) { HomeDocsOverride = _homeDocsOverride, OwnerProof =_ancestry is { } kind ? new FixedAncestry(kind) : null, CurrentUserId = _userId ?? PlatformModule.CurrentUid() };
+        var services = new Services(graph, io.Files, io.Clock, env, Project, _doctorOverride) { HomeDocsOverride = _homeDocsOverride, OwnerProof =_ancestry is { } kind ? new FixedAncestry(kind) : null, CurrentUserId = _userId ?? PlatformModule.CurrentUid(), WithMailbox = _withMailbox };
         CommandsModule.ComposeRoster(() => services);
         var verb = CommandsModule.Registry.Verbs.Single(v => v.Name == "roster");
         var stdout = new StringWriter(CultureInfo.InvariantCulture);
@@ -521,6 +525,26 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
         _sandbox.PlantPeers(
             Hierarchy,
             $"{{\"type\":\"peer\",\"status\":\"{status}\",\"session_id\":\"s1\",\"pid\":{panePid},\"pane_id\":\"%1\",\"ts\":\"2026-03-01T00:00:00.000Z\"}}\n");
+    }
+
+    private bool _withMailbox;
+
+    // ah2-180 D2: the lead's oldest unread mail and the last wake, one line, only while mail is unread.
+    [Fact]
+    public void DoctorNamesTheLeadsOldestUnreadMailAndPrintsNothingWithoutIt()
+    {
+        SeedTeamWithOnePeer(Environment.ProcessId);
+        _doctorOverride = new FixedDoctor([], registered: []);
+        _withMailbox = true;
+        Assert.DoesNotContain(Parse(Roster(null, "doctor").Stdout)["rows"].AsArray(), static r => r.AsObject()["name"].AsString() == "lead-mail");
+
+        var graph = PlantGraph();
+        var sent = graph.Mailbox.Send(new JsonObject { ["to"] = "orchestrator@proj", ["from"] = "ahd", ["cwd"] = Project, ["hierarchy_dir"] = Hierarchy, ["event"] = "queue-stall", ["text"] = "queue-stall: x" });
+        Assert.True(sent.Ok, sent.Failure?.ToString());
+
+        var row = Row(Parse(Roster(null, "doctor").Stdout), "lead-mail");
+
+        Assert.StartsWith("oldest unread 0 min; last wake: none", row["detail"].AsString(), StringComparison.Ordinal);
     }
 
     [Fact]

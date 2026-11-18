@@ -259,6 +259,10 @@ internal static partial class DoctorVerb
         Add("progress", () => ProgressRow(c));
         Add("jobs-unseen", () => JobsUnseenRow(c));
         Add("alarm", () => AlarmRow(c));
+        if (LeadMailRow(c) is { } leadMail)
+        {
+            Add("lead-mail", () => leadMail);
+        }
         Add("test-bucket", () =>
         {
             var (level, detail) = c.Services.Doctor?.TestBucket() ?? ("ok", "not probed: no doctor services");
@@ -784,6 +788,40 @@ internal static partial class DoctorVerb
         }
 
         return new Check(resolved.Get("enabled") is { IsTruthy: true } ? "ok" : "warn", detail);
+    }
+
+    /// <summary>
+    /// ah2-180 D2: the caller's team lead's oldest unread mail and the last pane wake's result, one line; null when its box holds no
+    /// unread mail (or there is no team file or mailbox), so nothing is printed.
+    /// </summary>
+    internal static Check? LeadMailRow(RosterContext c)
+    {
+        // ah2-180 Amendment 3: a team under a user hold of any phase has nothing unread, and mail a hold drained is not unread.
+        if (c.Services.Mailbox is not { } mailbox || !c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile).IsMap || c.Services.Roster.HoldOf(c.Dir, c.TeamFile) is not null)
+        {
+            return null;
+        }
+
+        var box = mailbox.BoxDirFor(c.Services.Roster.TeamPath(c.Dir, c.TeamFile), "orchestrator");
+        var settled = mailbox.LadderSweep(box).Settled;
+        var oldest = mailbox.ReadEntries(box).Entries
+            .Where(static e => e.IsMap)
+            .Where(e => e.Member("id") is { IsText: true } id && !mailbox.IsAcked(box, id.AsString())
+                && !(settled.TryGetValue(id.AsString(), out var state) && state == "drained"))
+            .Select(static e => e.Member("created") is { IsText: true } at && Ah.Core.Time.Timestamps.TryParseMs(at.AsString(), out var ms) ? ms : double.NaN)
+            .Where(double.IsFinite)
+            .DefaultIfEmpty(double.NaN)
+            .Min();
+        if (!double.IsFinite(oldest))
+        {
+            return null;
+        }
+
+        var minutes = (int)((c.Services.Clock.UtcNow.ToUnixTimeMilliseconds() - oldest) / 60_000);
+        var wake = mailbox.ReadAttempts(box).LastOrDefault(static r => r.Get("state") is { IsText: true } s && s.AsString() == "doorbell-wake");
+        var last = wake is null ? "none"
+            : MemberPlanning.JsConvertText(wake.Get("outcome") ?? JsonValue.Null) + (wake.Get("reason") is { IsText: true } why ? $" ({why.AsString()})" : string.Empty);
+        return new Check("ok", string.Create(System.Globalization.CultureInfo.InvariantCulture, $"oldest unread {minutes} min; last wake: {last}"));
     }
 
     private static Check Team(RosterContext c)

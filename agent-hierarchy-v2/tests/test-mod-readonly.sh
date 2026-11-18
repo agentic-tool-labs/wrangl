@@ -229,6 +229,7 @@ export const mailCycle = async ($: any, ctx: MailCtx): Promise<void> => {
     let a = readDue(raw)
     if (a === null) throw new Error('unreadable answer')
     showEscalation($, ctx, a)
+    showHeld($, ctx, a)
     st.cliFailures = 0
     st.cliSkipUntil = 0
     if (gen !== st.generation) return
@@ -1074,7 +1075,7 @@ VIEW_OK="on('ui.render', { component: 'AbovePrompt' }, async (\$, e, next) => { 
 # The same-file helpers the View Button's onPress hands $ to, as scratch stubs.
 VIEW_SUPPORT="const paneShown = async (\$: any) => false; const paneClose = async (\$: any) => {}; const paneOpen = async (\$: any, member: boolean, toastFor: number) => {}; const viewCtx = async (\$: any) => null"
 # The one call of the mail helper the real register.tsx makes (the timer in mailPoll), as a scratch line outside register.
-SHOW_OK="const showEscalation = (\$: any, ctx: any, a: any): void => { ctx.st.escalation = a.escalation }"
+SHOW_OK="const showEscalation = (\$: any, ctx: any, a: any): void => { ctx.st.escalation = a.escalation }; const showHeld = (_\$: any, ctx: any, a: any): void => { ctx.st.unread = a.unread }"
 NOTE_OK="const noteMail = async (\$: any, ctx: any, a: any, s: string): Promise<void> => { ctx.st.escalation = s }"
 MAIL_OK="const mailPoll = (\$: any, ctx: any) => { ctx.st.timer = \$.clock.every(POLL_MS, () => mailCycle(\$, ctx)) }"
 # <line>...: the lexer's verdict on a scratch module holding only those lines (in register) and the pinned helpers.

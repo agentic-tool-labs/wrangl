@@ -10,6 +10,20 @@ test("a summary whose plan is unread says so; a loaded zero, and an older daemon
   assert.equal(row({ items_total: 0 }).planLoaded, true);
 });
 
+test("ah2-180: a raised user alarm is its own Alarm card keyed on kind and since, with no member", () => {
+  const since = "2026-11-18T05:00:00.000Z";
+  const row = summaryRow({ id: "team-summary:d/t", as_of: 1, body: { team: "team:d/t", name: "t", alerts: [
+    { kind: "alarm", audience: "user", since, text: "orchestrator@t has 2 unread", title: "orchestrator@t has 2 unread", detail: "Alarm" },
+    { kind: "error", member: "member:d/t/dev", since, text: "Last turn failed", title: "dev failed", detail: "Last turn failed" },
+  ] } });
+  const alarm = row.items.find((c) => c.kind === "Alarm");
+  assert.equal(alarm.key, `alarm|team:d/t|${since}`);
+  assert.equal(alarm.memberId, null);
+  // negative: an error alert is still the member's Error card, and nothing became a Blocked card
+  assert.equal(row.items.find((c) => c.kind === "Error").memberId, "member:d/t/dev");
+  assert.equal(row.items.some((c) => c.kind === "Blocked"), false);
+});
+
 test("a member's state: blocked and failed are blocked, idle is idle, everything else working", () => {
   assert.equal(stateOf("working", true), "working");
   assert.equal(stateOf("idle", true), "idle");

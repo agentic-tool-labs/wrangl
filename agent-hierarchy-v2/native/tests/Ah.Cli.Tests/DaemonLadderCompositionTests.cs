@@ -175,7 +175,7 @@ public sealed class DaemonLadderCompositionTests : IDisposable
         private WatchHostSeams? _seams;
     }
 
-    private WakeRig TwoReports(string? pane, string status = "idle", int promptExit = 0, long? pid = null)
+    private WakeRig TwoReports(string? pane, string status = "idle", int promptExit = 0, long? pid = null, bool alarmOnly = false)
     {
         if (OperatingSystem.IsWindows())
         {
@@ -222,7 +222,22 @@ public sealed class DaemonLadderCompositionTests : IDisposable
         Assert.True(graph.Mailbox.WriteRegistration(new RegistrationWrite("orch-tm", [new BoxRef("orchestrator@tm", orchBox)], teamFile, "claude", pid ?? Environment.ProcessId, PaneId: pane)));
         graph.Mailbox.WriteHeartbeat(orchBox, "claude-mod", "orch-tm", 5000);
         Directory.CreateDirectory(Path.Combine(hier, "msgs"));
-        foreach (var id in new[] { "e-1", "e-2" })
+        if (alarmOnly)
+        {
+            // ah2-180 B2: one daemon alarm, which the entry walk never reaches.
+            var alarm = graph.Mailbox.Send(new JsonObject
+            {
+                ["to"] = "orchestrator@tm",
+                ["from"] = "ahd",
+                ["cwd"] = hier,
+                ["hierarchy_dir"] = hier,
+                ["event"] = "queue-stall",
+                ["text"] = "queue-stall: an item waits",
+            });
+            Assert.True(alarm.Ok, alarm.Failure?.ToString());
+        }
+
+        foreach (var id in alarmOnly ? Array.Empty<string>() : new[] { "e-1", "e-2" })
         {
             var messageId = "20260101-000000-aa0" + id[^1];
             var response = Ah.TestKit.TestMsgStore.Plant(
@@ -311,21 +326,66 @@ public sealed class DaemonLadderCompositionTests : IDisposable
     }
 
     [Fact]
-    public async Task NegativeAHeldSessionIsNotPasted()
+    public async Task AHeldSessionWhoseMailIsOldIsWokenAndNotOnceTheStopLifts()
     {
         var rig = TwoReports("w1K:pDG");
+        var heldAt = rig.Later - 500;
+        _ = rig.Decide(heldAt, held: true);
 
-        _ = rig.Decide(rig.Later - 500, held: true);
+        await rig.PassAsync(rig.Later);
+        var prompt = Assert.Single(rig.Prompts);
+        Assert.Equal(["agent", "prompt", "w1K:pDG", WakeText], prompt[^4..]);
+        TheMailIsStillQueuedAndNoSenderWasTold(rig);
+
+        _ = rig.Decide(rig.Later + 1000);
+        _ = rig.Decide(rig.Later + 2000, busyAt: rig.Later + 1500);
+        await rig.PassAsync(rig.Later + IMailCore.DoorbellRemindMs + 1000);
+        Assert.Single(rig.Prompts);
+    }
+
+    // ah2-180 Amendment 3: mail a `stop` hold drained is not unread and wakes nothing; the same mail with no hold is woken.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task DrainedMailUnderAStopHoldIsNotUnreadAndWakesNothing(bool stopped)
+    {
+        var rig = TwoReports("w1K:pDG");
+        if (stopped)
+        {
+            var home = Ah.Roster.RosterModule.TeamFileHome(rig.TeamFile)!;
+            rig.Graph.Roster.ChangeHold(home, "tm", static _ => new Ah.Abstractions.HoldWrite("{\"kind\":\"stop\",\"since\":\"2026-01-01T00:00:00.000Z\"}"));
+            var hold = rig.Graph.Roster.HoldOf(home, "tm");
+            Assert.Equal("stopped", hold?.Phase);
+            _ = rig.Graph.Mailbox.DrainTeam(rig.TeamFile, "tm", hold!);
+        }
+
+        var held = rig.Decide(rig.Later - 500, held: true);
         await rig.PassAsync(rig.Later);
 
-        Assert.Empty(rig.Prompts);
-        TheMailIsStillQueuedAndNoSenderWasTold(rig);
+        Assert.Equal(stopped ? 0 : 2, held.Unread);
+        Assert.Equal(stopped ? 0 : 1, rig.Prompts.Count);
+    }
+
+    // ah2-180 B1/B2/B3: a held lead with one alarm and nothing else is not rung and is woken through the fake herdr.
+    [Fact]
+    public async Task AHeldLeadWithOnlyAnAlarmIsWokenInItsPane()
+    {
+        var rig = TwoReports("w1K:pDG", alarmOnly: true);
+        var held = rig.Decide(rig.Later - 500, held: true);
+        Assert.Null(held.Ring);
+
+        await rig.PassAsync(rig.Later);
+
+        var prompt = Assert.Single(rig.Prompts);
+        Assert.Equal(["agent", "prompt", "w1K:pDG", WakeText], prompt[^4..]);
+        // ah2-180 D1: the wake attempt is in the session's doorbell trace with its result
+        Assert.Contains(File.ReadAllLines(Path.Combine(rig.AhHome, "mailbox-notes", "doorbell-trace", "orch-tm.jsonl")), static l => l.Contains("\"state\":\"doorbell-wake\"", StringComparison.Ordinal) && l.Contains("\"outcome\":\"confirmed\"", StringComparison.Ordinal));
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task WithRemindersSpentARingIsTriedFirstAndADropMeansNoPaste(bool drops)
+    public async Task WithRemindersSpentARingIsTriedFirstAndADropStillGoesToThePaneWake(bool drops)
     {
         var rig = TwoReports("w1K:pDG");
         rig.RemindersSpent();
@@ -345,7 +405,8 @@ public sealed class DaemonLadderCompositionTests : IDisposable
         }
 
         await rig.PassAsync(limit + 60_000);
-        Assert.Equal(drops ? 0 : 1, rig.Prompts.Count);
+        // ah2-180 B3 (was: a drop means no paste): a dropped ring marks the session held, and its old mail goes to the pane wake.
+        Assert.Single(rig.Prompts);
         TheMailIsStillQueuedAndNoSenderWasTold(rig);
     }
 
