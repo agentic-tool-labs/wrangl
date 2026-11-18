@@ -157,7 +157,7 @@ export function updateStep(prev, p, now, auto, landed = false, building = false)
   let notice = null;
   if (landed && newer) {
     next.installing = 0;
-    next.failed = { version: p.bundled, stuck: true, text: `the installed mod still reports v${p.installed}` };
+    next.failed = { version: p.bundled, stuck: true, text: `the installed mod still reports v${p.installed}`, at: now };
     next.told = p.bundled; // the stuck notice is this version's one notice
     return { next, newer, install: false, notice: { kind: "stuck", version: p.bundled, installed: p.installed } };
   }
@@ -165,6 +165,7 @@ export function updateStep(prev, p, now, auto, landed = false, building = false)
   if (was.installing && p.installed && !newer) {
     next.installing = 0;
     next.failed = null;
+    next.landed = now; // the update dialog's "done" (updateDialogOf)
     notice = { kind: "updated", version: p.installed, again: was.installed === p.installed };
   } else if (!busy) next.installing = 0;
   const install = newer && auto && !busy && was.failed?.version !== p.bundled;
@@ -190,6 +191,69 @@ export function updateNotify(n) {
   if (n?.kind === "stuck") return { title: `Wrangl v${n.version} didn't take`, body: `ah herdr install ran, but the mod still reports v${n.installed}. Rebuild ah from the plugin, then use Check now.`, level: "warning" };
   if (n?.kind === "available") return { title: "Wrangl", body: `Wrangl ${n.version} is available (installed ${n.installed}). Click to install.`, level: "info", action: { name: `ah2.${INSTALL_COMMAND}` } };
   return null;
+}
+
+// ---- the update dialog (ah2-192, update.js) ----
+
+// The open dialog, {overlay, at}: an opener that finds it fresh opens none (herdr keeps one overlay per key for windows only).
+// The dialog refreshes `at` every CLAIM_REFRESH_MS, so a claim left by a crash goes stale.
+export const UPDATE_DIALOG_KEY = "ah2.update-dialog";
+export const CLAIM_MS = 10 * 60e3;
+export const CLAIM_REFRESH_MS = 5 * 60e3;
+export const claimFresh = (c, now) => c?.overlay != null && typeof c.at === "number" && now - c.at < CLAIM_MS;
+// A build or install that ended this long before the dialog opened is not this update's: its step shows as not needed.
+export const RECENT_MS = 15 * 60e3;
+export const OUTPUT_LINES = 300;
+const WATCH_MS = 10 * 60e3; // rebuild-model.js REBUILD_WATCH_MS: a "started" older than this is not running
+
+// The output pane's lines: the build log's, then the install's (or "Installing…" while it runs with none yet), the last `max`.
+export function outputOf(log, install, installing = false, max = OUTPUT_LINES) {
+  const lines = (s) => (typeof s === "string" && s.trim() !== "" ? s.replace(/\r/g, "").replace(/\n+$/, "").split("\n") : []);
+  const out = [...lines(log), ...lines(install)];
+  if (installing && lines(install).length === 0) out.push("Installing…");
+  return out.slice(-max);
+}
+
+const WORD = { none: "Not needed", waiting: "Waiting", running: "Running…", done: "Done", failed: "Failed" };
+const str = (x) => (typeof x === "string" && x !== "" ? x : null);
+
+// What the dialog shows, from REBUILD_KEY and UPDATE_KEY alone: a heading, the two steps (state, word, a failed one's reason),
+// whether anything still runs (`want`), and whether to offer Install now (`offer`: the build is done and a newer mod waits for
+// the user, auto-update off; D11). `opened`: when the dialog opened; `home`: ah's home, for the log path; `auto`: auto-update.
+export function updateDialogOf(rebuild, update, now, opened = now, home = null, auto = false) {
+  const b = rebuild && typeof rebuild === "object" ? rebuild : null;
+  const u = update && typeof update === "object" ? update : {};
+  const since = opened - RECENT_MS;
+  const log = home ? `${home}/logs/rebuild.log` : "logs/rebuild.log in ah's home";
+  const at = b ? Date.parse(b.at) : NaN;
+  const build = { key: "build", version: str(b?.version), state: "none", reason: null };
+  if (b?.state === "started" && now - at < WATCH_MS) build.state = "running";
+  else if (b && at >= since) {
+    build.state = b.state === "ok" ? "done" : "failed";
+    if (b.state !== "ok") build.reason = b.state === "failed" ? `The build failed; see ${log}` : `No end seen after 10 minutes; see ${log}`;
+  }
+  const install = { key: "install", version: str(u.bundled), state: "none", reason: null };
+  if (u.installing && now - u.installing < BUSY_MS) install.state = "running";
+  else if (u.failed && u.failed.at >= since) Object.assign(install, { state: "failed", version: str(u.failed.version) ?? install.version, reason: str(u.failed.text) ?? "the install failed" });
+  else if (u.landed >= since) Object.assign(install, { state: "done", version: str(u.installed) ?? install.version });
+  else if (build.state === "running" || versionNewer(u.bundled, u.installed)) install.state = "waiting";
+  // the install puts in the version the build makes (HerdrVerb.cs), so the newer of the two is the one being updated to
+  const newest = (x, y) => (versionNewer(y, x) ? y : x ?? y);
+  if (install.state === "waiting") install.version = newest(install.version, build.version);
+  const offer = !auto && build.state === "done" && install.state === "waiting" && versionNewer(u.bundled, u.installed);
+  const steps = [build, install].map((s) => ({ ...s, word: s.key === "install" && offer ? "Waiting for you" : WORD[s.state],
+    label: s.key === "build" ? `Build the daemon${s.version ? ` (ahd ${s.version})` : ""}` : `Install the herdr mod${s.version ? ` (${s.version})` : ""}` }));
+  const is = (state) => steps.some((s) => s.state === state);
+  const version = newest(install.version, build.version);
+  const want = is("running");
+  const heading = is("failed") ? "The update did not finish."
+    : offer ? `ahd${build.version ? ` ${build.version}` : ""} is ready. The herdr mod is not installed yet.`
+    : want || is("waiting") ? `Updating Wrangl${version ? ` to ${version}` : ""}…`
+    : is("done") ? `Wrangl${version ? ` ${version}` : ""} is installed.`
+    : "Nothing is updating.";
+  // the install output belongs to this update only when its install step is (a new build must not show an old install's lines)
+  const output = ["running", "done", "failed"].includes(install.state) ? str(u.output) : null;
+  return { heading, steps, want, offer, output, finished: !want && !is("waiting") };
 }
 
 // The About section's text, and its version line from the update state the check already holds (nothing is fetched for it).

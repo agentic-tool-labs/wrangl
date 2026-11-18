@@ -1078,6 +1078,13 @@ public static partial class HierarchyModule
             : [.. rows.Where(static e => e.Item.State == PlanStates.Done).SelectMany(static e => e.Item.Commits).Distinct(StringComparer.Ordinal).TakeLast(ProgressFormat.MaxCommits)];
     }
 
+    /// <summary>The teams of <paramref name="pool"/> with rows in the state db's progress logs (ah2-168 Amendment 3), in order. A read error throws.</summary>
+    public static IReadOnlyList<string> ChecklistTeams(Func<string, object?[], IReadOnlyList<object?[]>> query, string pool)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return [.. query("SELECT DISTINCT team FROM progress_logs WHERE hier_dir = ?1 ORDER BY team", [Ah.Core.Json.MsgRows.PoolKey(pool)]).Select(static r => (string)r[0]!)];
+    }
+
     /// <summary>
     /// A team sees a release ref for the first time, with no prior tip to compare: an item waiting in review closes when its reported sha differs from its base and is an ancestor of
     /// <paramref name="sha"/>. A newer dispatch has already moved the item out of review. Any other item waits for a move. The first refusal, or null.

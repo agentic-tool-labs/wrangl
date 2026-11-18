@@ -168,6 +168,20 @@ public sealed class BacklogVerbTests : IDisposable
         Assert.Null(BacklogVerb.CloseShipped(_graph, _sandbox.AhHome, _dir, "b999", Sha));
     }
 
+    [Fact]
+    public void AShipKeepsAnItemWithAnOpenSubItemOpenAndNegativeClosesItOnceTheSubItemIsDone()
+    {
+        Assert.Equal("b1", Add("Epic", "--kind", "epic"));
+        Assert.Equal("b2", Add("Sub", "--parent", "b1"));
+
+        Assert.Null(BacklogVerb.CloseShipped(_graph, _sandbox.AhHome, _dir, "b1", "abc1234def"));
+        Assert.Equal("not_started", S(Json("show", "b1"), "state"));
+
+        Assert.Equal(0, Ah("done", "b2", "--commit", "def5678").Code);
+        Assert.Null(BacklogVerb.CloseShipped(_graph, _sandbox.AhHome, _dir, "b1", "abc1234def"));
+        Assert.Equal("done", S(Json("show", "b1"), "state"));
+    }
+
     private IReadOnlyList<object?[]> Q(string sql, params object?[] args)
     {
         using var reader = StateDbModule.OpenReader(_sandbox.AhHome).Reader!;

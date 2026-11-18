@@ -10,7 +10,7 @@ using Ah.Watch;
 namespace Ah.Cli.Verbs;
 
 /// <summary>What <c>ah backlog</c> needs: the writer and its context, the state database, the project's hierarchy directory, the origin remote and who is writing.</summary>
-internal sealed record BacklogDeps(IStateWriter Writer, RequestContext Context, string AhHome, string Dir, string? OriginUrl, string By, Func<string, string?>? WorkAlias = null, Func<IReadOnlyList<PlanItem>>? DirItems = null, Func<string, IReadOnlyList<string>>? CloseChildren = null);
+internal sealed record BacklogDeps(IStateWriter Writer, RequestContext Context, string AhHome, string Dir, string? OriginUrl, string By, Func<string, string?>? WorkAlias = null, Func<IReadOnlyList<PlanItem>>? DirItems = null, Func<string, IReadOnlyList<string>>? CloseChildren = null, Func<string, IReadOnlyList<string>, string?>? CloseParent = null);
 
 /// <summary>
 /// <c>ah backlog list|show|next|add|set|claim|done|drop|import|export|groomed</c>: the project's backlog, the one plan stream kept in the
@@ -60,15 +60,19 @@ internal static class BacklogVerb
         return result.Ok ? null : result.Error ?? result.ErrorCode ?? "the write failed";
     }
 
-    /// <summary>A ship closed the last open item under backlog row <paramref name="id"/>: an open row closes with <paramref name="sha"/>; a closed or unknown one is left alone. The failure, or null.</summary>
+    /// <summary>
+    /// A ship closed the last open item under backlog row <paramref name="id"/>: an open row closes with <paramref name="sha"/>; a closed or unknown one,
+    /// or one with an open backlog sub-item (ah2-168), is left alone. The failure, or null.
+    /// </summary>
     internal static string? CloseShipped(ServiceGraph g, string ahHome, string dir, string id, string sha) =>
-        CloseDone(g, ahHome, dir, id, [sha], $"shipped {(sha.Length > 7 ? sha[..7] : sha)}");
+        CloseDone(g, ahHome, dir, id, [sha], $"shipped {(sha.Length > 7 ? sha[..7] : sha)}", subItemsHold: true);
 
     /// <summary>
     /// Closes open backlog row <paramref name="id"/> with <paramref name="commits"/> and <paramref name="note"/>; a closed or unknown row, a project or a goal is left alone,
     /// and with <paramref name="subItemsHold"/> (board-truth Amendment 2) so is a row with an open backlog sub-item. The failure, or null.
+    /// With <paramref name="closeParent"/>, a close then closes the row's parent when it was its last open sub-item (<see cref="CloseParentOf"/>); that close's failure is not this one's.
     /// </summary>
-    internal static string? CloseDone(ServiceGraph g, string ahHome, string dir, string id, IReadOnlyList<string> commits, string note, bool subItemsHold = false)
+    internal static string? CloseDone(ServiceGraph g, string ahHome, string dir, string id, IReadOnlyList<string> commits, string note, bool subItemsHold = false, bool closeParent = true)
     {
         if (StateDbModule.OpenReader(ahHome).Reader is not { } reader)
         {
@@ -98,7 +102,56 @@ internal static class BacklogVerb
         }
 
         var result = g.Writer.Invoke("progress", HierarchyModule.BacklogWriteOp, JsonText.ToUtf8(args, 0), g.Hierarchy.Messages.PoolContext(dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
-        return result.Ok ? null : result.Error ?? result.ErrorCode ?? "the write failed";
+        if (!result.Ok)
+        {
+            return result.Error ?? result.ErrorCode ?? "the write failed";
+        }
+
+        if (closeParent)
+        {
+            _ = CloseParentOf(g, ahHome, dir, id, commits);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Backlog row <paramref name="id"/> was just closed done or dropped (ah2-168 Amendment 1): its parent closes with <paramref name="commits"/> when it is no container,
+    /// is open, has no open sub-item left and no open checklist row of its own (<see cref="HierarchyModule.ChecklistParentFinished"/>). The failure, or null.
+    /// </summary>
+    internal static string? CloseParentOf(ServiceGraph g, string ahHome, string dir, string id, IReadOnlyList<string> commits)
+    {
+        if (StateDbModule.OpenReader(ahHome).Reader is not { } reader)
+        {
+            return "the state database cannot be read";
+        }
+
+        string? parent;
+        using (reader)
+        {
+            parent = HierarchyModule.BacklogGet(reader.Query, dir, id)?.Item.Parent;
+            if (parent is not { Length: > 0 })
+            {
+                return null;
+            }
+
+            // Amendment 3: an open row for the parent in any team of the pool holds it; no team at all means no rows, which passes.
+            // Amendment 4: a throw from the team read or a team's row check closes nothing and is the message, never the sub-item's failure
+            try
+            {
+                if (HierarchyModule.ChecklistTeams(reader.Query, dir).Any(t => HierarchyModule.ChecklistParentFinished(g.Hierarchy.Progress, dir, t, parent) is null))
+                {
+                    return null;
+                }
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                return $"the rows under {parent} cannot be read ({e.Message})";
+            }
+        }
+
+        // ponytail: one level; the parent closing does not close its own parent. Let closeParent walk up when a chain of epics must close in one call.
+        return CloseDone(g, ahHome, dir, parent, commits, $"closed with its last sub-item {id}", subItemsHold: true, closeParent: false);
     }
 
     /// <summary>
@@ -156,7 +209,8 @@ internal static class BacklogVerb
             var left = results.SelectMany(static r => r.Skipped).ToList();
             return [.. results.SelectMany(static r => r.Items.Select(static i => "closed checklist item " + i)), .. left.Count > 0 ? [$"{parent} is done; left open under it: {string.Join(", ", left)}"] : Array.Empty<string>()];
         }
-        return Run(new BacklogDeps(g.Writer, g.Hierarchy.Messages.PoolContext(dir), context.Env.AhHome, dir, origin, by, Alias, () => Composition.SitrepRows.DirItems(g, dir), CloseChildren), args, stdout, stderr);
+        return Run(new BacklogDeps(g.Writer, g.Hierarchy.Messages.PoolContext(dir), context.Env.AhHome, dir, origin, by, Alias, () => Composition.SitrepRows.DirItems(g, dir), CloseChildren,
+            (id, commits) => CloseParentOf(g, context.Env.AhHome, dir, id, commits)), args, stdout, stderr);
     }
 
     /// <summary>The origin remote's URL of the repository <paramref name="dir"/> is in; null when there is none.</summary>
@@ -350,10 +404,10 @@ internal static class BacklogVerb
             "show" => Show(),
             "next" => Next(),
             "add" => Add(Fields(new JsonObject { ["add"] = Arg(1, "a title") })),
-            "set" => Write(SetState(Fields(new JsonObject { ["item"] = ItemArg() }))),
+            "set" => ThenParent(SetState(Fields(new JsonObject { ["item"] = ItemArg() })), "set"),
             "claim" => Write(new JsonObject { ["item"] = ItemArg(), ["claim"] = F("holder") ?? throw new BacklogFailure("claim needs --holder") }),
             "done" => DoneAndChildren(),
-            "drop" => Write(new JsonObject { ["item"] = ItemArg(), ["drop"] = F("note") ?? throw new BacklogFailure("drop needs --note <why>") }),
+            "drop" => ThenParent(new JsonObject { ["item"] = ItemArg(), ["drop"] = F("note") ?? throw new BacklogFailure("drop needs --note <why>") }, "drop"),
             "testing" => Testing(),
             "import" => Import(),
             "export" => Export(),
@@ -653,7 +707,26 @@ internal static class BacklogVerb
                 }
             }
 
-            return code;
+            return code == 0 ? CloseParent(args, "done") : code;
+        }
+
+        /// <summary>One write; when it dropped the item (<c>drop</c>, <c>set --state dropped</c>), its parent may close too (<see cref="CloseParent"/>).</summary>
+        private int ThenParent(JsonObject args, string verb)
+        {
+            var code = Write(args);
+            return code == 0 && args.Get("drop") is not null ? CloseParent(args, verb) : code;
+        }
+
+        /// <summary>ah2-168 Amendment 1: the item just closed may have been its parent's last open sub-item; a parent left open by a failure is named on stderr and the exit stays 0.</summary>
+        private int CloseParent(JsonObject args, string verb)
+        {
+            if (d.CloseParent is { } close && args.Get("item") is { IsText: true } item && IsBacklogId(item.AsString())
+                && close(item.AsString(), args.Get("commits") is { } list ? [.. list.AsArray().Select(static c => c.AsString())] : []) is { } problem)
+            {
+                stderr.Write($"backlog {verb}: the parent of {item.AsString()} was not closed ({problem})\n");
+            }
+
+            return 0;
         }
 
         private JsonObject Done()

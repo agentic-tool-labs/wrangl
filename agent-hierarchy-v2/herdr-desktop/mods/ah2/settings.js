@@ -10,8 +10,9 @@ import { ah, target } from "./ah.js";
 import { targetLabel } from "./target-model.js";
 import { sidebarModel } from "./model.js";
 import { hasDesk } from "./dock.js";
-import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY } from "./settings-model.js";
+import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY, outputOf } from "./settings-model.js";
 import { REBUILD_KEY } from "./rebuild-model.js";
+import { openUpdate } from "./update.js";
 
 export const openSettings = () => openOverlay({ mod: "ah2", props: { view: "settings" }, kind: "dialog", key: "ah2-settings", width: 480, height: 640 });
 export const settings = () => settingsOf(shared(SETTINGS_KEY));
@@ -78,22 +79,25 @@ async function step(o) {
   const s = step0(p);
   const stuck = s.next.failed?.stuck && s.next.failed.version === p.bundled;
   if (!(s.install || (o.install && !stuck && p.installed && p.bundled && (s.newer || o.reinstall)))) return s;
-  setShared(UPDATE_KEY, { ...s.next, installing: Date.now(), failed: null });
+  setShared(UPDATE_KEY, { ...s.next, installing: Date.now(), failed: null, output: null });
+  openUpdate(); // the update dialog (update.js), whatever started the install
   // Herdr may reload this mod mid-install; the next check then sees the new marker and says "updated" (updateStep).
   const r = await install();
+  const output = outputOf(null, `${r.stdout ?? ""}\n${r.stderr ?? ""}`).join("\n"); // what the dialog shows; stdout, then stderr
   if (r.code === 0) {
     const kept = (r.stderr.match(/was kept/g) ?? []).length;
     if (kept) notify({ title: "Wrangl: edited files kept", body: `${kept} ${kept === 1 ? "file" : "files"} in mods/ah2 you edited stayed as they are.`, level: "warning" });
-    return step0(await probe(), true);
+    return step0(await probe(), true, output);
   }
-  const failed = { version: p.bundled, text: (r.stderr || r.stdout || "the install failed").trim().split("\n").pop() };
-  setShared(UPDATE_KEY, { ...shared(UPDATE_KEY), installing: 0, failed });
+  const failed = { version: p.bundled, text: (r.stderr || r.stdout || "the install failed").trim().split("\n").pop(), at: Date.now() };
+  setShared(UPDATE_KEY, { ...shared(UPDATE_KEY), installing: 0, failed, output });
   notify({ title: "Wrangl", body: `Could not update the Wrangl mod: ${(r.stderr || r.stdout || "the install failed").trim().split("\n")[0]}`, level: "error", action: GO });
   return s;
 }
 
-function step0(p, landed = false) {
-  const s = updateStep(shared(UPDATE_KEY), p, Date.now(), settings().autoUpdate, landed, shared(REBUILD_KEY)?.state === "started");
+function step0(p, landed = false, output = undefined) {
+  const prev = shared(UPDATE_KEY);
+  const s = updateStep(output === undefined ? prev : { ...prev, output }, p, Date.now(), settings().autoUpdate, landed, shared(REBUILD_KEY)?.state === "started");
   setShared(UPDATE_KEY, s.next);
   tell(s.notice);
   return s;
