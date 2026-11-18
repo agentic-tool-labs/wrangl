@@ -726,7 +726,7 @@ function agentSheet(v, t, m, full) {
   const mm = memberModel(slices, sheetUi(v), id, SUMMARY_MESSAGES);
   const live = (m.dots?.length ?? 0) > 0; // the dot clock redraws: seconds are true
   const since = (ms) => ageText(Date.now() - ms, live).replace(" ago", "");
-  const go = paneAct(addressOf(v, id, paneOfMember(slices, id)), mm.name, mm.gone);
+  const go = paneAct(addressOf(v, id, paneOfMember(slices, id)), mm.label ?? mm.name, mm.gone);
   const page = memberPageLink(v.link?.port ?? null, id);
   const icon = (bid, file, label, act, why) => Button.new(bid).size(24).flex().flex_none().items_center().justify_center().rounded(6)
     .border(1).border_color(t.surface).focus((el) => el.border_color(t.accent)).disabled(Boolean(why))
@@ -775,13 +775,13 @@ function agentSheet(v, t, m, full) {
     .border(1).border_color(t.border).focus((el) => el.border_color(t.accent)).disabled(!page.url)
     .when(Boolean(page.url), (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
     .when(!page.url, (el) => el.text_color(t.muted))
-    .tooltip(page.url ? `Open ${mm.name}'s page in the browser` : page.why).accessibility_label(page.url ? `Open ${mm.name}'s page in the browser` : page.why)
+    .tooltip(page.url ? `Open ${mm.label ?? mm.name}'s page in the browser` : page.why).accessibility_label(page.url ? `Open ${mm.label ?? mm.name}'s page in the browser` : page.why)
     .on_mouse_down("left", stop).on_click((_e, cx) => page.url && cx.open_url(page.url))
     .child("Open page");
-  return sheetColumn(t, full, "graph-sheet").accessibility_label(`Member ${mm.name}`)
+  return sheetColumn(t, full, "graph-sheet").accessibility_label(`Member ${mm.title ?? mm.name}`)
     .child(v_flex().px(16).pt(8).pb(10).gap(4).flex_none().border_b(1).border_color(t.border)
       .child(h_flex().h(28).gap(6).items_center()
-        .child(div().flex_1().min_w(0).truncate().text_size(13.5).font_semibold().text_color(t.foreground).child(mm.name))
+        .child(div().flex_1().min_w(0).truncate().text_size(13.5).font_semibold().text_color(t.foreground).child(mm.label ?? mm.name))
         .child(goBtn).child(shut))
       .child(h_flex().gap(4).text_size(12).text_color(t.foreground).child(`${mm.role || "member"} ·`)
         .child(mm.model ? div().child(mm.model) : dim("model not reported")))

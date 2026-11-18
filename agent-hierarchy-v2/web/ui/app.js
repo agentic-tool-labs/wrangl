@@ -4,7 +4,7 @@ import { Rows } from "./rows.js";
 import { createStore, retryGate } from "./store.js";
 import { EtaChip } from "./ticker.js";
 import { Live } from "./live-component.js";
-import { firstTeam, laneChildren, memberIds, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamSummary } from "./select.js";
+import { firstTeam, laneChildren, memberIds, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamRows, teamSummary } from "./select.js";
 import { FlowStage, graphUi, readPrefs, shortName } from "./graph.js";
 import { flowActive, flowNodes } from "./flow-model.js";
 import { MemberSummary, party } from "./member-summary.js";
@@ -188,7 +188,7 @@ class PairDialog extends Live {
               <span class="t">${hhmm(b.created)}</span>
               <span class=${`kind ${b.open ? "brief" : "response"}`}>${b.open ? "brief" : "done"}</span>
               <span class="slug">${b.slug}</span>
-              <span class="route">${partyName(b, "from")} → ${partyName(b, "to")}</span>
+              <span class="route">${partyName(b, "from", this.props.store.state.slices)} → ${partyName(b, "to", this.props.store.state.slices)}</span>
             </button>
             ${on ? html`<div class="pair-body" aria-busy=${text ? "false" : "true"}>
               ${text?.gone ? html`<p class="dim">no longer available</p>` : text ? html`<h3>Brief</h3>
@@ -207,19 +207,21 @@ class PairDialog extends Live {
   }
 }
 
-const FeedRow = memo(function FeedRow({ r }) {
+const FeedRow = memo(function FeedRow({ r, lanes = "" }) {
   const b = r.body;
+  const lane = b.team && lanes.split("|").includes(`${b.dir_id}/${b.team}`) ? b.team : null;
   return html`<li class=${`feed-row${b.open ? " open" : ""}`}>
     <span class="t">${hhmm(b.created)}</span>
     <span class=${`kind ${b.open ? "brief" : "response"}`}>${b.open ? "brief" : "done"}</span>
     <span class="slug">${b.slug}</span>
-    <span class="route">${party(b, "from")} → ${party(b, "to")}</span>
+    <span class="route">${party(b, "from", lane)} → ${party(b, "to", lane)}</span>
     ${b.open ? html`<${EtaChip} b=${b} />` : null}
   </li>`;
 });
+// ctx.lanes: a string, so each row redraws only when its row or the lane list changed (rows.js Row)
+const feedRow = (r, { lanes }) => html`<${FeedRow} r=${r} lanes=${lanes} />`;
 
 const feedKey = (r) => r.id;
-const feedRow = (r) => html`<${FeedRow} r=${r} />`;
 
 const FEED_ROWS = 20;
 
@@ -264,14 +266,16 @@ class LiveFeed extends Live {
     this.rows = shownOf(this.all, snap.ui, (r) => r.body);
     const summary = teamSummary(snap.slices, teamIdOf(snap.slices, snap.ui));
     const overdue = summary ? snap.slices.get(`list:open:team:${summary.dirId}/${summary.name}`)?.body.overdue ?? 0 : 0;
-    return { win: win ?? null, overdue, internal: showInternal(snap.ui) };
+    // ah2-220: the lane teams by dir and name, one primitive, so a feed row reads a lane's orchestrator as its Sub-Orchestrator
+    const lanes = teamRows(snap.slices).filter((t) => t.laneOf).map((t) => `${t.dirId}/${t.name}`).sort().join("|");
+    return { win: win ?? null, overdue, internal: showInternal(snap.ui), lanes };
   }
 
   draw(_, s) {
     const rows = this.rows;
     return html`<section class="feed" aria-label="Live feed">
       <h2 data-text="Live feed">Live feed${s.overdue > 0 ? html` <span class="eta overdue feed-overdue"><span class="eta-glyph" aria-hidden="true">⚠</span>${s.overdue} overdue</span>` : null}</h2>
-      ${rows.length === 0 ? html`<p class="dim">no messages yet</p>` : html`<${Rows} cls="feed-list" rows=${rows} keyOf=${feedKey} row=${feedRow} />`}
+      ${rows.length === 0 ? html`<p class="dim">no messages yet</p>` : html`<${Rows} cls="feed-list" rows=${rows} keyOf=${feedKey} row=${feedRow} ctx=${{ lanes: s.lanes }} />`}
       ${internalToggle(this.props.store, s.internal, this.all.filter((r) => isInternal(r.body)).length)}
     </section>`;
   }

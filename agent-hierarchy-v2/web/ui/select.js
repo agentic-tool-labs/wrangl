@@ -260,7 +260,7 @@ export function recentOf(slices, ids) {
   return (ids ?? [])
     .map((id) => {
       const b = slices.get(id)?.body;
-      return b ? `${String(b.title || b.slug).replace(/[|\n]/g, " ")}|${b.open ? 1 : 0}|${partyName(b, "from")}|${partyName(b, "to")}` : null;
+      return b ? `${String(b.title || b.slug).replace(/[|\n]/g, " ")}|${b.open ? 1 : 0}|${partyName(b, "from", slices)}|${partyName(b, "to", slices)}` : null;
     })
     .filter(Boolean)
     .join("\n");
@@ -357,11 +357,40 @@ export function busyLabel(windowMs) {
   return windowMs === null || windowMs === undefined || windowMs >= HOUR_MS ? "busy, last hour" : windowMs < 60_000 ? "busy" : `busy, last ${Math.round(windowMs / 60_000)} min`;
 }
 
+// ah2-220: how a member reads. A team's orchestrator (its key `…/@orchestrator`, or the bare name an owner or a party carries) is
+// "Sub-Orchestrator" (role "sub-orchestrator") when the team is a lane, `lane` being the lane team's name (the team has a parent team);
+// every other member, the top team's Orchestrator and a team the slice does not say is a lane included, keeps the name and role it has.
+// `title` is the tooltip: the full label and the lane's name. Display only: keys, addresses, filters' values and lookups keep `orchestrator`.
+export function memberLabel(id, name, role, lane) {
+  if (typeof lane === "string" && lane !== "" && typeof id === "string" && /(^|\/)@?orchestrator$/.test(id)) {
+    return { label: "Sub-Orchestrator", role: "sub-orchestrator", title: `Sub-Orchestrator of ${lane}` };
+  }
+  return { label: name, role, title: name };
+}
+
+// ah2-220 Amendment 1: a served asker address ("name@team", or a bare name in `team`) as the rule reads it: { label, title } when the
+// address's team is a lane the slices know and the name is its orchestrator, else null (the caller shows the asker as today).
+export function askerLabel(slices, dir, team, who) {
+  if (typeof who !== "string" || who === "") return null;
+  const at = who.indexOf("@");
+  const [name, own] = at < 0 ? [who, team] : [who.slice(0, at), who.slice(at + 1)];
+  const shown = nameIn(slices, dir, own, name);
+  return shown.label === name ? null : { label: shown.label, title: shown.title };
+}
+
+// The lane a team is, for memberLabel: the team's name when its body or its summary names a parent team, else null.
+const laneName = (slices, dir, team, lane) => (lane?.parent_team || slices?.get(`team-summary:${dir}/${team}`)?.body?.lane?.parent_team ? team : null);
+export const laneNameOf = (slices, t) => laneName(slices, t?.dir_id, t?.name, t?.lane);
+
+// A bare name in a team (a card's owner, an exchange party) as memberLabel reads it: { label, title }.
+export const nameIn = (slices, dir, team, name) => memberLabel(name, name, "", typeof name === "string" ? laneName(slices, dir, team) : null);
+
 export function memberOf(slices, team, id) {
   const t = team.body;
   const s = slices.get(id);
   if (!s) {
-    return { id, name: id.split("/").pop(), role: "", state: "gone", running: false, lastAt: 0, tool: null, toolAt: null, contextUsed: null, model: null, ctx: NO_CONTEXT, slug: null, recent: "", branch: null, workRoot: null, orchestrator: id === t.orchestrator, duty: dutyPart(t, id) };
+    const name = id.split("/").pop();
+    return { id, name, ...memberLabel(id, name, "", laneNameOf(slices, t)), state: "gone", running: false, lastAt: 0, tool: null, toolAt: null, contextUsed: null, model: null, ctx: NO_CONTEXT, slug: null, recent: "", branch: null, workRoot: null, orchestrator: id === t.orchestrator, duty: dutyPart(t, id) };
   }
   const recent = recentOf(slices, s.body.last_exchanges);
   const m = s.body;
@@ -372,7 +401,7 @@ export function memberOf(slices, team, id) {
   return {
     id,
     name: m.name,
-    role: m.role ?? "",
+    ...memberLabel(id, m.name, m.role ?? "", laneNameOf(slices, t)),
     state: orchestratorWorks(id, served) ? "working" : served?.state ?? "unknown",
     running,
     // The served facts in one line: only what is known.
@@ -438,8 +467,12 @@ export function openBriefsOf(slices, team, memberId) {
   return briefsInFlight(slices, team).filter((o) => o.to_member === memberId).map((o) => slices.get(o.id)).filter(Boolean);
 }
 
-// An exchange party for display: the server's name when it has one, else the role.
-export const partyName = (body, side) => body[`${side}_name`] ?? body[side];
+// An exchange party for display: the server's name when it has one, else the role; with `slices`, as nameIn reads it in the exchange's
+// team (ah2-220: a lane's orchestrator is its Sub-Orchestrator).
+export const partyName = (body, side, slices = null) => {
+  const name = body[`${side}_name`] ?? body[side];
+  return slices ? nameIn(slices, body.dir_id, body.team ?? "default", name).label : name;
+};
 
 // The member id an exchange party resolves to, as the server's pair filter resolves it: the party's name in the exchange's
 // directory and team (a team-less exchange belongs to the team named default), the orchestrator by its role; else null.

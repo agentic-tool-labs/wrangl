@@ -29,7 +29,7 @@ function memberRowsOf(slices, team) {
     const stream = streamOf(slices, t, slices.get(id)?.body.placement?.stream ?? null);
     const ctx = m.state === "gone" ? null : m.ctx;
     const item = currentItem(slices, t, stream, m);
-    return { id, name: shortName(id, m.name), role: m.role, state: m.running ? "running" : m.state, word: stateWord(m.state, m.running).toLowerCase(), duty: m.duty === "away" ? DUTY_TITLE.away : m.duty === "on" ? `${m.role} · ${DUTY.on}` : null, share: m.share, ctx: ctx?.text ?? null, model: m.model ?? "", stream, item: item?.key ?? null };
+    return { id, name: shortName(id, m.label), title: m.title, role: m.role, state: m.running ? "running" : m.state, word: stateWord(m.state, m.running).toLowerCase(), duty: m.duty === "away" ? DUTY_TITLE.away : m.duty === "on" ? `${m.role} · ${DUTY.on}` : null, share: m.share, ctx: ctx?.text ?? null, model: m.model ?? "", stream, item: item?.key ?? null };
   });
 }
 

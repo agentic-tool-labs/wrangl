@@ -2,7 +2,7 @@ import { html } from "./h.js";
 import { Live } from "./live-component.js";
 import { memberLink } from "./member-summary.js";
 import { hashOf } from "./deeplink.js";
-import { isQuiet, summaryIdOf } from "./select.js";
+import { askerLabel, isQuiet, nameIn, summaryIdOf } from "./select.js";
 import { historyView } from "./board-icicle.js";
 import { attentionOf, questionsId } from "./questions-model.js";
 import { AnswerForm } from "./questions-view.js";
@@ -176,15 +176,15 @@ const onCard = (e) => e.target.isConnected !== false && !e.target.closest?.("a, 
 
 export const kbCard = (c, { on = false, focusable = false, pick = null } = {}) =>
   html`<article key=${c.id} class=${`kb-card glass${c.ask ? " is-ask" : ""}${c.flag?.cls === "attn" ? " is-attn" : c.flag?.cls === "err" ? " is-stalled" : ""}`} data-nav data-id=${c.id} tabindex=${focusable ? 0 : -1}
-      aria-current=${on ? "true" : undefined} aria-label=${`${c.title}${c.asker ? `, asked by ${c.asker}` : ""}${c.ref ? `, ${c.ref}` : ""}, ${c.where.kind} ${c.where.name}${c.epic ? `, epic ${c.epic.name}` : ""}${c.owner ? `, owner ${c.owner}` : ""}${c.flag ? `, ${c.flag.text.slice(2)}` : ""}${workLabel(c.workId, c.blockedOpen)}${c.mark ? SEEN : ""}`}
+      aria-current=${on ? "true" : undefined} aria-label=${`${c.title}${c.asker ? `, asked by ${c.askerTitle}` : ""}${c.ref ? `, ${c.ref}` : ""}, ${c.where.kind} ${c.where.name}${c.epic ? `, epic ${c.epic.name}` : ""}${c.owner ? `, owner ${c.ownerTitle ?? c.owner}` : ""}${c.flag ? `, ${c.flag.text.slice(2)}` : ""}${workLabel(c.workId, c.blockedOpen)}${c.mark ? SEEN : ""}`}
       onClick=${(e) => onCard(e) && pick?.(c.id)}>
       <h3 class="kb-title" id=${`kt-${c.id}`} title=${c.title} data-text=${c.title}>${c.title}</h3>
       <div class="kb-meta">
         ${c.workId ? html`<span class="chip mono" title=${`Work id ${c.workId}`}>${c.workId}</span>` : null}
         <span class=${`kb-where is-${c.where.kind}`} title=${c.where.tip}>${c.where.name}</span>
-        ${c.asker ? html`<span title=${`Asked by ${c.asker}`}>asked by ${c.asker}</span>` : null}
+        ${c.asker ? html`<span title=${`Asked by ${c.askerTitle}`}>asked by ${c.askerShown}</span>` : null}
         ${c.epic ? html`<span class="kb-epic" title=${`${c.epic.name} (${c.epic.tip})`}>${c.epic.name}</span>` : null}
-        ${c.owner ? html`<span class="kb-who" title=${c.owner}>${memberLink(c.ownerId, c.owner)}</span>` : null}
+        ${c.owner ? html`<span class="kb-who" title=${c.ownerTitle ?? c.owner}>${memberLink(c.ownerId, c.ownerLabel ?? c.owner)}</span>` : null}
         ${c.size ? html`<span class="chip" title=${c.sizeFrom ? `Size ${c.size}, from deliverable ${c.sizeFrom}` : `Size ${c.size}`}>${c.size}</span>` : null}
         ${c.msgs ? html`<span class="num">${plural(c.msgs, "msg")}</span>` : null}
         ${c.mark ? html`<span class="kb-changed" title=${c.mark}>Changed</span>` : null}
@@ -310,6 +310,8 @@ export class BoardKanban extends Live {
         blockedOpen: c.blockedOpen ?? 0,
         title: ask?.text || c.title,
         asker: ask?.asker ?? null,
+        // ah2-220 Amendment 1: a lane's orchestrator asking reads Sub-Orchestrator (select.js askerLabel); else the asker as served
+        ...(({ label, title }) => ({ askerShown: label, askerTitle: title }))(askerLabel(slices, c.dirId, c.team, ask?.asker) ?? { label: ask?.asker ?? null, title: ask?.asker ?? null }),
         options: ask ? optionsText(ask) : null,
         // the link stays for the rest: more questions, or options or text the slice cut (the Inbox opens them whole)
         answer: c.decision ? (ask && asked.decisionCount <= 1 && ask.more === 0 && !ask.cut ? null : { href: inbox, text: !ask ? "Open Inbox" : asked.decisionCount > 1 ? `Answer ${asked.decisionCount} in Inbox` : "Answer in Inbox" })
@@ -320,6 +322,8 @@ export class BoardKanban extends Live {
         ask,
         also: c.decision ? asked?.decisions.slice(1) ?? [] : [],
         owner: c.owner || null,
+        // ah2-220: how the owner reads (a lane's orchestrator is its Sub-Orchestrator); `owner` stays the key filters match
+        ...(c.owner ? (({ label, title }) => ({ ownerLabel: label, ownerTitle: title }))(nameIn(slices, c.dirId, c.team, c.owner)) : {}),
         ownerId: c.owner && c.dirId && c.team ? `member:${c.dirId}/${c.team}/${c.owner}` : null,
         size: c.size,
         sizeFrom: c.sizeFrom,
@@ -483,7 +487,7 @@ export class BoardKanban extends Live {
       note: c.note ?? null,
       also: out.also,
       rows: [
-        ["Asked by", out.asker],
+        ["Asked by", out.askerShown],
         ["Plan item", out.ask?.item, "mono"],
         ["Work id", c.workId, "mono"],
         ["Blocked by", c.blockedOpen > 0 ? `${c.blockedOpen} open` : null],
@@ -497,7 +501,7 @@ export class BoardKanban extends Live {
         ["Branch", c.branch, "mono"],
         ["Changes", out.mark],
       ].filter(([, v]) => v),
-      holder: out.ownerId ? { id: out.ownerId, name: out.owner } : null,
+      holder: out.ownerId ? { id: out.ownerId, name: out.ownerLabel ?? out.owner } : null,
       // The team or lane opens its own panel, as its swimlane row's name did.
       group: { id: w.id, text: w.name, label: w.kind === "lane" ? "Lane" : "Team" },
       parent: c.deliv !== NONE ? { id: `bl:${c.deliv}`, text: bl.get(c.deliv)?.title ?? c.deliv, label: "Deliverable" } : null,

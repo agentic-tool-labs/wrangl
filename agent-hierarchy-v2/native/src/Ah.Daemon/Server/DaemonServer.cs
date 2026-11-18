@@ -61,6 +61,7 @@ internal sealed class DaemonServer : IAsyncDisposable
     private readonly long _idleExitMs;
     private readonly bool _stay;
     private readonly DateTimeOffset _startedAt;
+    private readonly (ulong Device, ulong Inode, long Size, long MtimeNs)? _binary;
 
     /// <summary>The spellings all requests share. A request runs on a flow of the server's own, so the scope the program opened around its run does not reach it.</summary>
     private readonly Func<IDisposable> _enterCases = Ah.Core.Text.PathGuard.ShareCases();
@@ -105,6 +106,7 @@ internal sealed class DaemonServer : IAsyncDisposable
         _router = new Router(registries.SelectMany(static r => r.Routes).Concat(registeredRoutes ?? []).Concat(StateRoutes.Create(deps.State, _workers, Log)));
         _jobs = [.. registries.SelectMany(static r => r.Jobs), .. registeredJobs ?? []];
         _startedAt = deps.Clock.UtcNow;
+        _binary = BinaryIdentity();
         _lastRequestMs = MonotonicMs();
         _ui = new UiBridge(new UiBridgeOptions(
             deps.Clock,
@@ -181,6 +183,24 @@ internal sealed class DaemonServer : IAsyncDisposable
         {
             _log.Write($"{Timestamps.ToIsoString(_deps.Clock.UtcNow)} ahd {message}\n");
             _log.Flush();
+        }
+    }
+
+    /// <summary>Device, inode, size and modification time of <see cref="DaemonDependencies.BinaryPath"/>, or null when it cannot be read.</summary>
+    private (ulong Device, ulong Inode, long Size, long MtimeNs)? BinaryIdentity()
+    {
+        if (_deps.BinaryPath is not { Length: > 0 } path)
+        {
+            return null;
+        }
+
+        try
+        {
+            return _deps.Files.Stat(path) is { } st ? (st.Device, st.Inode, st.Size, st.MtimeNs) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
+        {
+            return null;
         }
     }
 
@@ -885,14 +905,19 @@ internal sealed class DaemonServer : IAsyncDisposable
                 var caller = CallerOf(ctx);
                 var peer = PeerPidOf(ctx) is { } p ? p.ToString(System.Globalization.CultureInfo.InvariantCulture) : "unknown";
                 // A test-mode daemon's socket lies in its sandbox AH_HOME, so any caller that reached it named that sandbox home.
-                if (caller == PrincipalKind.Anonymous && !_deps.AhEnvironment.TestMode)
+                // ah2-214 D1: an anonymous caller is let through only on a fact the daemon reads itself, its binary file's identity.
+                var binaryChanged = caller == PrincipalKind.Anonymous && !_deps.AhEnvironment.TestMode
+                    && _binary is { } was && BinaryIdentity() is { } now && now != was;
+                if (caller == PrincipalKind.Anonymous && !_deps.AhEnvironment.TestMode && !binaryChanged)
                 {
                     Log($"drain refused: caller pid {peer} is neither a session nor the user");
                     await ReplyErrorAsync(ctx, false, 403, "anonymous", "a drain needs a caller the daemon can name: a session or the user", null).ConfigureAwait(false);
                     return;
                 }
 
-                Log($"drain requested{(reason is { Length: > 0 } ? $": {(reason.Length > 80 ? reason[..80] : reason)}" : string.Empty)} (by {caller.ToString().ToLowerInvariant()}, pid {peer})");
+                Log(binaryChanged
+                    ? $"drain accepted: the installed binary changed (caller pid {peer})"
+                    : $"drain requested{(reason is { Length: > 0 } ? $": {(reason.Length > 80 ? reason[..80] : reason)}" : string.Empty)} (by {caller.ToString().ToLowerInvariant()}, pid {peer})");
 
                 // ah2-136 D1: draining before the reply, so no request after it is answered as a live daemon; the shutdown follows even
                 // when the reply fails, or the daemon would answer 503 and never exit.

@@ -558,10 +558,12 @@ internal class WatchHostAdapter(
                 Hs.Core.MsgTimeMs,
                 FrontMatterOf,
                 path => Hs.Core.ReadMsgFile(path) is { Kind: JsonKind.Map } file ? Str(file.AsObject(), "text") : null,
-                (id, member, team) => DoneReportScan.HasReview(
+                (id, member, scope) => DoneReportScan.HasReview(
                     id, member, all, FrontMatterOf, ClassOf,
-                    team is { Length: > 0 } && graph.Links.ReadLinks(hdir, team).TryGetValue("links", out var links) && links.IsArray ? Objects(links.AsArray()) : [],
-                    MemberClass))));
+                    scope.Team is { Length: > 0 } team && graph.Links.ReadLinks(hdir, team).TryGetValue("links", out var links) && links.IsArray ? Objects(links.AsArray()) : [],
+                    MemberClass,
+                    scope,
+                    item => Checklist(sessionId, hdir, scope.Team).Any(c => HierarchyModule.ChecklistKey(c) == item && c.Item.State is "done" or "dropped")))));
         }
 
         return reports;

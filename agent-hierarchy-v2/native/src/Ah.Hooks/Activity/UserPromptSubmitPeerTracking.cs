@@ -305,6 +305,13 @@ internal static partial class UserPromptSubmitPeerTracking
             parts.Add($"ah: standing up, reshaping, or tearing down a live Team goes through the `{s.Config.PluginName}:agent-team` skill.");
         }
 
+        // ah2-216 A1: a typed prompt asking to start a member gets the command, every time it asks.
+        if (IsTypedPrompt(advisory, prompt, compactPrompt, s.Hierarchy.Peers.ParseWrapper(prompt)) && c.Input.Member("plugin_submitted") is not { IsTruthy: true }
+            && Gates.TeamCommands.PromptNote(c, prompt) is { } spawnNote)
+        {
+            parts.Add(spawnNote);
+        }
+
         // `/reload-plugins` fires no SessionStart, so a session that updates mid-flight never hears the root line that hook
         // injected. A prompt states it when it differs from the line last put into this session's context.
         if (!HierarchyDisabled(c))

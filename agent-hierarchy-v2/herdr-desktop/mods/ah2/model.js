@@ -4,7 +4,7 @@
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
-import { goalOf, ownGoal } from "./select.js";
+import { goalOf, ownGoal, memberLabel } from "./select.js";
 
 // State words and glyphs, as the web UI says them (web/ui/select.js STATE_WORD). `tone` is the Herdr theme() token.
 export const STATES = {
@@ -90,9 +90,10 @@ const roleIn = (mb, lane) => mb.served || (mb.name === "orchestrator" ? (lane ? 
 // ah2-207 D1: one team's tree. Its orchestrator is the root, with the other members, then the lanes, under it; a lane is a node
 // that draws its header row, with the lane's own tree under it. A team without an orchestrator row has its members as roots.
 // A member's own alerts ride on its node. Node: { kind: "member" | "lane", key, depth, role, children, ...the member row or `team` }.
-export function teamTree(tm, depth = 0, lane = false) {
+// ah2-220 Amendment 2: a team with a parent team is a lane even drawn at the top level (its parent not running).
+export function teamTree(tm, depth = 0, lane = Boolean(tm.parent)) {
   const orch = tm.members.find((mb) => mb.name === "orchestrator");
-  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, role: roleIn(mb, lane), alerts: tm.alerts.filter((a) => a.member === mb.key), children: [] });
+  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: [] });
   const under = (d) => [
     ...tm.members.filter((mb) => mb !== orch).map((mb) => node(mb, d)),
     ...tm.lanes.map((l) => ({ kind: "lane", key: `lane:${l.id}`, depth: d, team: l, children: teamTree(l, d + 1, true) })),
@@ -137,8 +138,11 @@ function runningTeams(slices) {
 export function sidebarModel(slices, now) {
   const teams = [];
   for (const { t, id, b } of runningTeams(slices)) {
+    // ah2-220: each row's label and tooltip (select.js memberLabel): a lane's orchestrator reads Sub-Orchestrator; `name` stays the key
+    const lane = b.lane?.parent_team ? b.name ?? t.name : null;
     const members = Object.entries(b.member_states ?? {})
       .map(([k, m]) => memberRow(k, m, now))
+      .map((mb) => (({ label, title }) => ({ ...mb, label, title }))(memberLabel(mb.key, mb.name, mb.served, lane)))
       .sort((x, y) => (x.name === "orchestrator" ? -1 : y.name === "orchestrator" ? 1 : 0));
     // Orchestrator-audience stuck alerts are the orchestrator's, not the user's (select.js summaryRow).
     // `member`: the member slice id a member's own alert names; null for a team-level one (Waiting on you), drawn with the team header (ah2-133 D4).
@@ -197,7 +201,7 @@ export function deskModel(slices, now) {
   let newest = null;
   const seen = (at, text, team) => { if (at > (newest?.at ?? 0)) newest = { at, text, team }; };
   for (const t of all) {
-    for (const mb of t.members) seen(mb.at, mb.what === mb.word.toLowerCase() ? `${mb.name} ${mb.what}` : `${mb.name} ${mb.word.toLowerCase()}: ${mb.what}`, t.name);
+    for (const mb of t.members) seen(mb.at, mb.what === mb.word.toLowerCase() ? `${mb.label} ${mb.what}` : `${mb.label} ${mb.word.toLowerCase()}: ${mb.what}`, t.name);
     for (const a of t.alerts) seen(a.at, `⚠ ${a.text}`, t.name);
   }
   return {

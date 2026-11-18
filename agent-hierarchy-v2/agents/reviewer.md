@@ -1,6 +1,8 @@
 ---
 name: reviewer
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc reviewer`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   Validator for the agent hierarchy. Dispatch it after an Implementor has
   produced a diff, with the absolute spec path and the changed files, to check
   the work against the spec and for correctness, regressions, and security. It

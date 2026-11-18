@@ -367,6 +367,36 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
     /// <summary>Whether chain role lines carry the Agent call: <c>subagents</c> and <c>prefer-subagents</c>.</summary>
     private static bool SubagentFirst(JsonObject resolved) => DispatchMode(resolved) is "subagents" or "prefer-subagents";
 
+    /// <summary>The last line of the Team commands block (ah2-216 D1).</summary>
+    internal const string TeamCommandsLast = "All of it: `ah rules show peer-roster`";
+
+    /// <summary>How the Team commands block's header starts.</summary>
+    internal const string TeamCommandsHeader = "Team commands";
+
+    /// <summary>
+    /// ah2-216 D1: the Team commands block, each command with this session's team and cwd where it has them; none under <c>dispatch: subagents</c>.
+    /// </summary>
+    private static IEnumerable<string> TeamCommandLines(JsonObject resolved, JsonArray? owned)
+    {
+        if (DispatchMode(resolved) == "subagents")
+        {
+            yield break;
+        }
+
+        // The bare `ah`, as the other resident lines name it, and team and cwd once in the header: the session-start budget (Amendment 2).
+        const string roster = "ah roster";
+        const string msg = "ah msg";
+        var cwd = $"--cwd {Or(resolved.Get("cwd"), "<abs cwd>")}";
+        var team = owned is { Count: 1 } ? $"--team {TeamArgName(owned[0].Member("team") ?? JsonValue.Null)} " : owned is { Count: > 1 } ? "--team <team> " : string.Empty;
+        yield return $"{TeamCommandsHeader} (each takes `{team}{cwd}`):";
+        yield return $"- Spawn a member into a stream: `{roster} stream-open <stream>`, then `{roster} spawn-ad-hoc <role> --stream <stream>` (`spawn-one` for a roster member).";
+        yield return $"- Brief it: `{msg} new --type request --to <role> --from orchestrator --to-name <member> --slug <slug> --title \"<title>\" --item <item> --body-file -`, then `{msg} send <member> --kind brief --ref <id>`.";
+        yield return $"- Read its report: `{msg} show <id> response`.";
+        yield return $"- Dismiss it: `{roster} dismiss <member>`.";
+        yield return $"- A roster verb refused: `{roster} checkin`, then retry the verb.";
+        yield return TeamCommandsLast;
+    }
+
     /// <summary>The Roles header for the <c>dispatch</c> setting; <c>peers</c> is today's text.</summary>
     private string RolesHeader(JsonObject resolved, JsonArray? owned)
     {
@@ -455,6 +485,7 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
         };
         lines.AddRange(RoleLines(resolved, repoBasename, config.OwnedTeamConfigs(fullResolved)));
         lines.AddRange(registryNotes);
+        lines.AddRange(TeamCommandLines(resolved, config.OwnedTeamConfigs(fullResolved)));
         lines.AddRange(
         [
             string.Empty,

@@ -42,6 +42,10 @@ public sealed class UnreviewedDoneScanTests
             static e => new JsonObject { ["from"] = "orchestrator", ["team"] = "t", ["to_name"] = "impl-1", ["title"] = "Build it" },
             path => { TextReads++; return Responses.TryGetValue(path, out var r) ? r.Text : null; },
             (id, _, _) => { ReviewReads++; return Reviewed.Contains(id); });
+
+        internal ReviewScope? LastScope { get; private set; }
+
+        internal DoneScanReads ScopeReads() => Reads() with { Reviewed = (_, _, scope) => { LastScope = scope; return false; } };
     }
 
     private const string Done = "## [0] tldr\n- [1] status: DONE abc1234\n";
@@ -146,5 +150,94 @@ public sealed class UnreviewedDoneScanTests
         JsonObject Link(string requester) => new() { ["task"] = child, ["requester"] = requester, ["peers"] = new JsonArray { JsonValue.FromString("rev-1@t") } };
         Assert.True(DoneReportScan.HasReview(parent, "impl-1@t", exchanges, Fm, static _ => "implement", [Link("impl-1@t")], Member));
         Assert.False(DoneReportScan.HasReview(parent, "impl-1@t", exchanges, Fm, static _ => "implement", [Link("impl-2@t")], Member));
+    }
+
+    private const string Item = "s/fix-it";
+    private const string ReportAt = "2026-11-18T15:00:00Z";
+
+    private static readonly double ReportedMs = Ah.Core.Time.Timestamps.TryParseMs(ReportAt, out var ms) ? ms : double.NaN;
+
+    /// <summary>An exchange whose request front matter rides along under <c>fm</c>, so <see cref="FmOf"/> can read it back.</summary>
+    private static JsonObject Req(string id, string to, string created, string item = Item, string team = "t", string pool = Pool, string? parent = null)
+    {
+        var fm = new JsonObject { ["item"] = item, ["team"] = team, ["created"] = created };
+        if (parent is not null)
+        {
+            fm["parent"] = parent;
+        }
+
+        return new JsonObject { ["id"] = id, ["to"] = to, ["request"] = new JsonObject { ["path"] = $"{pool}/msgs/{id}--orchestrator--{to}.md" }, ["fm"] = fm };
+    }
+
+    private static JsonObject? FmOf(JsonObject e) => e.TryGetValue("fm", out var fm) ? fm.AsObject() : null;
+
+    private static string? ClassOf(string role) => role == "reviewer" ? "review" : "implement";
+
+    private static bool Reviewed(string id, IReadOnlyList<JsonObject> exchanges, double reportedMs = double.NaN, string? item = Item, Func<string, bool>? closed = null) =>
+        DoneReportScan.HasReview(id, "impl-1@t", exchanges, FmOf, ClassOf, [], static _ => null, new ReviewScope("t", Pool, item, double.IsNaN(reportedMs) ? ReportedMs : reportedMs), closed);
+
+    [Fact]
+    public void OrchestratorReviewRequestOnTheItemCountsAndANonReviewOneDoesNot()
+    {
+        const string done = "20261118-145000-impl";
+        var impl = Req(done, "implementor", "2026-11-18T14:50:00Z");
+        Assert.True(Reviewed(done, [impl, Req("20261118-150500-rev1", "reviewer", "2026-11-18T15:05:00Z")]));
+        Assert.True(Reviewed(done, [impl, Req("20261118-150000-same", "reviewer", ReportAt)], ReportedMs + 400)); // created's whole second
+        Assert.False(Reviewed(done, [impl])); // no review request: alarm
+        Assert.False(Reviewed(done, [impl, Req("20261118-150500-imp2", "implementor", "2026-11-18T15:05:00Z")])); // not a review role
+        Assert.False(Reviewed(done, [impl, Req("20261118-150500-oth1", "reviewer", "2026-11-18T15:05:00Z", item: "s/other")])); // another item
+        Assert.False(Reviewed(done, [impl, Req("20261118-150500-tm01", "reviewer", "2026-11-18T15:05:00Z", team: "u")])); // another team
+        Assert.False(Reviewed(done, [impl, Req("20261118-150500-pl01", "reviewer", "2026-11-18T15:05:00Z", pool: "/other/.claude/ah2")])); // another pool
+        Assert.False(Reviewed(done, [impl, Req("20261118-150500-rev1", "reviewer", "2026-11-18T15:05:00Z")], item: null)); // unlinked: today's rule only
+    }
+
+    [Fact]
+    public void NewerDoneReportOnTheItemNeedsANewerReviewRequest()
+    {
+        const string first = "20261118-140000-impl";
+        const string rework = "20261118-145000-impl";
+        List<JsonObject> exchanges =
+        [
+            Req(first, "implementor", "2026-11-18T14:00:00Z"),
+            Req("20261118-143000-rev1", "reviewer", "2026-11-18T14:30:00Z"),
+            Req(rework, "implementor", "2026-11-18T14:50:00Z"),
+        ];
+        Assert.False(Reviewed(rework, exchanges)); // the review request is older than the rework's DONE
+        exchanges.Add(Req("20261118-151000-rev2", "reviewer", "2026-11-18T15:10:00Z"));
+        Assert.True(Reviewed(rework, exchanges));
+    }
+
+    [Fact]
+    public void ClosedItemNeverAlarmsAndAnOpenOneStillDoes()
+    {
+        const string done = "20261118-145000-impl";
+        IReadOnlyList<JsonObject> exchanges = [Req(done, "implementor", "2026-11-18T14:50:00Z")];
+        Assert.True(Reviewed(done, exchanges, closed: static i => i == Item));
+        Assert.False(Reviewed(done, exchanges, closed: static _ => false));
+        Assert.False(Reviewed(done, exchanges, item: null, closed: static _ => true)); // no item: nothing to look up
+    }
+
+    [Fact]
+    public void ReviewRequestDownTheParentChainCountsAndOneOffItDoesNot()
+    {
+        const string done = "20261118-145000-impl";
+        var impl = Req(done, "implementor", "2026-11-18T14:50:00Z");
+        var mid = Req("20261118-145500-midl", "implementor", "2026-11-18T14:00:00Z", item: "s/other", parent: done);
+        var rev = Req("20261118-145600-rev1", "reviewer", "2026-11-18T14:00:00Z", item: "s/other", parent: "20261118-145500-midl");
+        Assert.True(Reviewed(done, [impl, mid, rev]));
+        var stray = Req("20261118-145600-rev2", "reviewer", "2026-11-18T14:00:00Z", item: "s/other", parent: "20261118-145500-nope");
+        Assert.False(Reviewed(done, [impl, mid, stray]));
+    }
+
+    [Fact]
+    public void ScanHandsTheReviewTheReportsItemPoolAndTime()
+    {
+        var scan = NewScan();
+        var store = new Store();
+        Assert.Empty(scan.Scan([Pool], store.Exchanges(), new HashSet<string>(StringComparer.Ordinal) { "t" }, new HashSet<string>(StringComparer.Ordinal), Now, store.ScopeReads()));
+        store.Add("20261118-150000-scop", Now - Minute, Done);
+        var reads = store.ScopeReads() with { RequestFm = static _ => new JsonObject { ["from"] = "orchestrator", ["team"] = "t", ["item"] = Item } };
+        _ = Assert.Single(scan.Scan([Pool], store.Exchanges(), new HashSet<string>(StringComparer.Ordinal) { "t" }, new HashSet<string>(StringComparer.Ordinal), Now, reads));
+        Assert.Equal(new ReviewScope("t", Pool, Item, Now - Minute), store.LastScope);
     }
 }

@@ -1,6 +1,8 @@
 ---
 name: ultra-advisor
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc ultra-advisor`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   Escalation apex for the agent hierarchy, for the genuinely hard or high-
   stakes call. Dispatch it when the Architect could not resolve a fork or
   reported low confidence, when a review loop stalled, when the blast radius

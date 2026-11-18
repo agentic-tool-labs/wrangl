@@ -99,6 +99,30 @@ public sealed class ConfigDispatchTests
         Assert.Contains(lines, static l => l.StartsWith("- Task-Runner — Agent(", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("{\"version\":1}", true)]
+    [InlineData("{\"version\":1,\"dispatch\":\"peers\"}", true)]
+    [InlineData("{\"version\":1,\"dispatch\":\"prefer-peers\"}", true)]
+    [InlineData("{\"version\":1,\"dispatch\":\"prefer-subagents\"}", true)]
+    [InlineData("{\"version\":1,\"dispatch\":\"subagents\"}", false)] // negative: no peers, no block
+    public void TheTeamCommandsBlockStandsWithTheRoleLinesUnlessDispatchIsSubagents(string user, bool present)
+    {
+        var lines = DirectiveLines(user);
+        var at = lines.FindIndex(static l => l.StartsWith("Team commands (each takes `--cwd ", StringComparison.Ordinal) && l.EndsWith("`):", StringComparison.Ordinal));
+        Assert.Equal(present, at >= 0);
+        Assert.Equal(present, lines.Contains("All of it: `ah rules show peer-roster`"));
+        if (present)
+        {
+            var block = lines.Skip(at).TakeWhile(static l => l.Length > 0).ToList();
+            Assert.InRange(block.Count, 2, 8);
+            Assert.Equal("All of it: `ah rules show peer-roster`", block[^1]);
+            Assert.Contains(block, static l => l.Contains("spawn-ad-hoc <role> --stream <stream>", StringComparison.Ordinal));
+            Assert.Contains(block, static l => l.Contains("checkin", StringComparison.Ordinal));
+            Assert.DoesNotContain(block.Skip(1), static l => l.Contains("--cwd", StringComparison.Ordinal)); // negative: cwd only in the header
+            Assert.True(at > lines.FindIndex(static l => l.StartsWith("- Architect — ", StringComparison.Ordinal)));
+        }
+    }
+
     private static List<string> DirectiveLines(string user)
     {
         List<string> lines = [];

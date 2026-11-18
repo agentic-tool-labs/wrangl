@@ -25,7 +25,7 @@ export const HOLD_LATES = 3;
 // What the dialog offers, from ahd's preview. `busy` is a team with a running session: only that one asks before it goes.
 export function dismissPlan(preview) {
   const work = (m) => [m.status, m.detail].filter(Boolean).join(": ");
-  const live = (preview.live ?? []).map((m) => ({ name: m.member, role: m.role ?? "", work: work(m) }));
+  const live = (preview.live ?? []).map((m) => ({ name: m.member, team: m.team ?? null, role: m.role ?? "", work: work(m) }));
   const notes = [
     ...(preview.unknown ?? []).map((m) => `${m.member} may still be running`),
     ...(preview.held ?? []).map((m) => `${m.member}: ${work(m)}`),

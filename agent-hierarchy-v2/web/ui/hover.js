@@ -56,7 +56,7 @@ export class HoverCard extends Live {
     const m = team ? memberOf(snap.slices, team, h.id) : null;
     const { hid } = idsOf(snap, h.id);
     const usage = hid ? snap.slices.get(hid)?.body.turn_usage : undefined;
-    return { id: h.id, kind: h.kind, x: h.x, y: h.y, name: m?.name ?? h.id.split("/").pop(), role: m?.role ?? "", ctx: m ? m.ctx : null, state: m?.state ?? "gone", running: m?.running ?? false, tool: m?.tool ?? null, toolAt: m?.toolAt ?? null, slug: m?.slug ?? null, process: (team && snap.slices.get(`team-summary:${team.body.dir_id}/${team.body.name}`)?.body.member_states?.[h.id]?.process) ?? "unknown", tokens: usage ? usage.input_tokens + usage.output_tokens : null };
+    return { id: h.id, kind: h.kind, x: h.x, y: h.y, name: m?.label ?? h.id.split("/").pop(), role: m?.role ?? "", ctx: m ? m.ctx : null, state: m?.state ?? "gone", running: m?.running ?? false, tool: m?.tool ?? null, toolAt: m?.toolAt ?? null, slug: m?.slug ?? null, process: (team && snap.slices.get(`team-summary:${team.body.dir_id}/${team.body.name}`)?.body.member_states?.[h.id]?.process) ?? "unknown", tokens: usage ? usage.input_tokens + usage.output_tokens : null };
   }
 
   draw(_, s) {

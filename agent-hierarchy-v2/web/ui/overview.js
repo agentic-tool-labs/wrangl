@@ -71,7 +71,7 @@ export class OverviewView extends Live {
       .map((x) => {
         const to = byId.get(x.body.to_member ?? "");
         const branch = to ? snap.slices.get(`worktree:${t.dir_id}/${t.name}/${to.name}`)?.body.stream ?? null : null;
-        return { id: x.id, slug: x.body.title || x.body.slug, from: partyName(x.body, "from"), to: partyName(x.body, "to"), fromId: partyIdOf(x.body, "from"), toId: partyIdOf(x.body, "to"), state: to?.state ?? "idle", branch, at: Date.parse(x.body.created ?? "") || 0 };
+        return { id: x.id, slug: x.body.title || x.body.slug, from: partyName(x.body, "from", snap.slices), to: partyName(x.body, "to", snap.slices), fromId: partyIdOf(x.body, "from"), toId: partyIdOf(x.body, "to"), state: to?.state ?? "idle", branch, at: Date.parse(x.body.created ?? "") || 0 };
       })
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const decisions = (sum?.items ?? []).filter((i) => i.kind === "Decision");
@@ -99,7 +99,7 @@ export class OverviewView extends Live {
 
   member(m, selected) {
     // The row selects the member (its summary opens in the rail); the name inside it is the link to the member's page.
-    return html`<li key=${m.id} class=${`ov-member st-${m.running ? "working" : m.state}${selected === m.id ? " selected" : ""}`} data-role=${m.role || undefined} data-state=${m.state} ...${hoverProps(this.props.store, m.id, "strip")}><button class="ov-hit" aria-pressed=${selected === m.id} aria-label=${`Select ${m.name}`} onClick=${() => this.pick(m.id)}></button><span class="ov-row"><span class="g" aria-hidden="true">${m.running ? GLYPH.working : GLYPH[m.state] ?? "○"}</span><span class="who"><a class="mlink" href=${memberHref(m.id)}>${m.name}</a>${DUTY_TITLE[m.duty] ? html`<span class="duty-badge">${m.duty === "on" ? DUTY.on : DUTY_TITLE.away}</span>` : null}${m.slug ? html`<small>${m.slug}</small>` : null}${m.facts ? html`<small class="ov-facts">${m.facts}</small>` : null}</span><span class=${m.ctx.over ? "ctx over" : "ctx"} title=${m.ctx.text === NO_CONTEXT.text ? undefined : m.ctx.title}>${m.ctx.text === NO_CONTEXT.text ? "" : m.ctx.text}</span><span class="since" title=${m.since > 0 ? `${stateWord(m.state)} for this long` : undefined}>${m.since > 0 ? timeText(m.since) : ""}</span></span></li>`;
+    return html`<li key=${m.id} class=${`ov-member st-${m.running ? "working" : m.state}${selected === m.id ? " selected" : ""}`} data-role=${m.role || undefined} data-state=${m.state} ...${hoverProps(this.props.store, m.id, "strip")}><button class="ov-hit" aria-pressed=${selected === m.id} aria-label=${`Select ${m.title}`} onClick=${() => this.pick(m.id)}></button><span class="ov-row"><span class="g" aria-hidden="true">${m.running ? GLYPH.working : GLYPH[m.state] ?? "○"}</span><span class="who"><a class="mlink" href=${memberHref(m.id)} title=${m.title !== m.label ? m.title : undefined}>${m.label}</a>${DUTY_TITLE[m.duty] ? html`<span class="duty-badge">${m.duty === "on" ? DUTY.on : DUTY_TITLE.away}</span>` : null}${m.slug ? html`<small>${m.slug}</small>` : null}${m.facts ? html`<small class="ov-facts">${m.facts}</small>` : null}</span><span class=${m.ctx.over ? "ctx over" : "ctx"} title=${m.ctx.text === NO_CONTEXT.text ? undefined : m.ctx.title}>${m.ctx.text === NO_CONTEXT.text ? "" : m.ctx.text}</span><span class="since" title=${m.since > 0 ? `${stateWord(m.state)} for this long` : undefined}>${m.since > 0 ? timeText(m.since) : ""}</span></span></li>`;
   }
 
   draw(_, { selected }) {

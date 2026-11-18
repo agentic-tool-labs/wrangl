@@ -542,7 +542,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.Equal(string.Empty, stdout);
-        Assert.Equal("ah roster: create: --plan, --commit, --spawn, and --yes are mutually exclusive\n", stderr);
+        Assert.Equal("ah roster: create: --plan, --commit, --spawn, and --yes are mutually exclusive\n" + TeamCommandsTail, stderr);
         Assert.Equal(before, Tree());
     }
 
@@ -554,11 +554,11 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         var (levelCode, _, levelErr) = Roster("create", "--commit", "--verified", "[]", "--transport", "terminal");
 
         Assert.Equal(2, verifiedCode);
-        Assert.Equal("ah roster: --commit needs --verified <json array>\n", verifiedErr);
+        Assert.Equal("ah roster: --commit needs --verified <json array>\n" + TeamCommandsTail, verifiedErr);
         Assert.Equal(2, transportCode);
-        Assert.Equal("ah roster: --commit needs --transport\n", transportErr);
+        Assert.Equal("ah roster: --commit needs --transport\n" + TeamCommandsTail, transportErr);
         Assert.Equal(2, levelCode);
-        Assert.Equal("ah roster: --commit needs --roster-level\n", levelErr);
+        Assert.Equal("ah roster: --commit needs --roster-level\n" + TeamCommandsTail, levelErr);
         Assert.False(_sandbox.TeamExists(TeamPath("proj")));
     }
 
@@ -572,7 +572,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         var (code, _, stderr) = Roster("create", "--commit", "--verified", verified, "--transport", "terminal", "--roster-level", "repo");
 
         Assert.Equal(2, code);
-        Assert.Equal($"ah roster: create --commit: --verified must be a JSON array, got {typeName}\n", stderr);
+        Assert.Equal($"ah roster: create --commit: --verified must be a JSON array, got {typeName}\n" + TeamCommandsTail, stderr);
     }
 
     [Fact]
@@ -583,7 +583,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
             "--roster-level", "repo", "--orchestrator-pid", Self);
 
         Assert.Equal(2, code);
-        Assert.Equal("ah roster: create --commit: --verified must be either all member objects or all member-name strings, not a mix\n", stderr);
+        Assert.Equal("ah roster: create --commit: --verified must be either all member objects or all member-name strings, not a mix\n" + TeamCommandsTail, stderr);
         Assert.False(_sandbox.TeamExists(TeamPath("proj")));
     }
 
@@ -673,7 +673,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.Equal(
-            "ah roster: create --commit: --verified names no member \"proj-nobody\" in the repo roster — it defines: (none)\n", stderr);
+            "ah roster: create --commit: --verified names no member \"proj-nobody\" in the repo roster — it defines: (none)\n" + TeamCommandsTail, stderr);
         Assert.False(_sandbox.TeamExists(TeamPath("proj")));
     }
 
@@ -732,7 +732,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         var (badCode, _, badErr) = Roster([.. common, "--mode", "diagonal"]);
         Assert.Equal(2, badCode);
-        Assert.Equal("ah roster: --mode must be one of auto, columns, grid, got \"diagonal\"\n", badErr);
+        Assert.Equal("ah roster: --mode must be one of auto, columns, grid, got \"diagonal\"\n" + TeamCommandsTail, badErr);
         Assert.False(_sandbox.TeamExists(TeamPath("proj")));
 
         var (code, stdout, _) = Roster([.. common, "--mode", "grid"]);
@@ -1416,8 +1416,20 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         Assert.Equal(2, unknownCode);
         Assert.Equal(
-            "ah roster: spawn-one: unrecognized flag --bogus (use --cwd, --dry-run, --allow-global, --team, --orchestrator-pid, --member, --model, --names-in-use, --here, --tab, --split, --headless, or --prompt)\n",
+            "ah roster: spawn-one: unrecognized flag --bogus (use --cwd, --dry-run, --allow-global, --team, --orchestrator-pid, --member, --model, --names-in-use, --here, --tab, --split, --headless, or --prompt)\n" + TeamCommandsTail,
             unknownErr);
+    }
+
+    /// <summary>ah2-216 D4: the line a refused spawn-one, spawn-ad-hoc or create ends with.</summary>
+    private const string TeamCommandsTail = "Team commands: `ah rules show peer-roster`.\n";
+
+    [Fact]
+    public void NegativeARefusedDismissDoesNotEndWithTheTeamCommandsLine()
+    {
+        var (code, _, stderr) = Roster("dismiss", "x", "--commit");
+
+        Assert.Equal(2, code);
+        Assert.DoesNotContain("Team commands:", stderr, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1465,7 +1477,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.StartsWith("ah roster: spawn-one: role must be one of ", stderr, StringComparison.Ordinal);
-        Assert.EndsWith(", got \"nobody\"\n", stderr, StringComparison.Ordinal);
+        Assert.EndsWith(", got \"nobody\"\n" + TeamCommandsTail, stderr, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1499,9 +1511,9 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         var (harnessCode, _, harnessErr) = Roster("spawn-ad-hoc", "implementor", "--harness", "h");
 
         Assert.Equal(2, kindCode);
-        Assert.Equal("ah roster: spawn-ad-hoc: --kind requires a value (e.g. claude, codex, pi)\n", kindErr);
+        Assert.Equal("ah roster: spawn-ad-hoc: --kind requires a value (e.g. claude, codex, pi)\n" + TeamCommandsTail, kindErr);
         Assert.Equal(2, harnessCode);
-        Assert.Equal("ah roster: spawn-ad-hoc: --harness and --command apply only to --kind custom\n", harnessErr);
+        Assert.Equal("ah roster: spawn-ad-hoc: --harness and --command apply only to --kind custom\n" + TeamCommandsTail, harnessErr);
     }
 
     [Fact]

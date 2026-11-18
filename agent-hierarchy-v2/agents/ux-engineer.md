@@ -1,6 +1,8 @@
 ---
 name: ux-engineer
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc ux-engineer`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   UX-Engineer: implements web UI specs (CSS, markup, visual tokens, layout,
   interaction, accessibility) to a measured craft standard. Dispatch it with an
   absolute spec path and the work tree. It proves its work with headless

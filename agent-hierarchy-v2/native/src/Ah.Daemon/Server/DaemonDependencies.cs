@@ -55,4 +55,7 @@ public sealed record DaemonDependencies(
 
     /// <summary>The core behind <c>GET</c> and <c>POST /ui/v1/rules</c>; null leaves both answering 503.</summary>
     public UiRulesSupport? UiRules { get; init; }
+
+    /// <summary>The file this daemon runs from, whose identity at start an anonymous drain is checked against (ah2-214); null checks nothing, so every anonymous drain is refused.</summary>
+    public string? BinaryPath { get; init; } = Environment.ProcessPath;
 }

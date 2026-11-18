@@ -1414,12 +1414,14 @@ else
             daemon_said=""
             if [ "$daemon_err" != /dev/null ]; then
                 daemon_said=$(cat "$daemon_err")
-                [ -z "$daemon_said" ] || printf '%s\n' "$daemon_said" >&2
                 rm -f "$daemon_err"
             fi
             daemon_problem="the daemon did not come up after '$target $daemon_action'; start it with $target start"
+            daemon_refused=false
             case "$daemon_said" in
-                *drain_refused*) daemon_problem="'$target $daemon_action' was refused (drain_refused), so the old daemon keeps running until the first ah verb from a registered session replaces it" ;;
+                # the explanation below stands in for the daemon's own error line
+                *drain_refused*) daemon_refused=true; daemon_problem="'$target $daemon_action' was refused (drain_refused), so the old daemon keeps running until the first ah verb from a registered session replaces it" ;;
+                ?*) printf '%s\n' "$daemon_said" >&2 ;;
             esac
             case "$after" in
                 refused) ;;
@@ -1427,8 +1429,9 @@ else
                     say "The daemon is up: pid $(printf '%s' "$after" | sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p' | head -1), version $(printf '%s' "$after" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)."
                     ;;
                 *)
-                    if $rebuild_only; then
-                        # the background rebuild at SessionStart must not fail the session over a daemon that stayed down
+                    # the background rebuild at SessionStart must not fail the session over a daemon that stayed down; a refused
+                    # restart fails no install, since the next ah verb replaces the old daemon
+                    if $rebuild_only || $daemon_refused; then
                         say "warning: $daemon_problem"
                     else
                         say "error: $daemon_problem"

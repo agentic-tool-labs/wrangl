@@ -11,6 +11,7 @@ import { Buffer } from "buffer";
 import { qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
+import { askerLabel } from "./select.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
 import { FILTER0, TIMES, STATES, NO_MATCH, SCOPE, DEBOUNCE_MS, filterActive, historyDirs, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "./qa-history-model.js";
 
@@ -275,7 +276,8 @@ export function card(v, t, tm, c, compact = false) {
   }
   const busy = cs.sending;
   const ok = !busy && canSend(c, cs.pick);
-  const who = asker(c.asker, tm);
+  // ah2-220 Amendment 1: a lane's orchestrator asking reads Sub-Orchestrator (select.js askerLabel); else the asker as today
+  const who = askerLabel(v.st.slices, tm.id.slice(0, tm.id.indexOf("/")), tm.name, c.asker)?.label ?? asker(c.asker, tm);
   const head = c.header; // an item's title, a decision's item
   const meta = [tm.name, c.kind === "item" ? `item${who ? ` · ${who}` : ""}` : who, c.multi ? "pick any" : ""].filter(Boolean);
   const label = `${classLabel(c.cls)}. ${head ? `${head}: ` : ""}${c.text}. Asked by ${who || "unknown"}${c.age ? `, ${c.age} ago` : ""}`;

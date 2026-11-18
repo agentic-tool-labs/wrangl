@@ -20,8 +20,8 @@ export function exchangeRows(slices, ids, n = 12, ui = null) {
     if (!b || b.withdrawn || (!internal && isInternal(b))) {
       continue;
     }
-    const from = partyName(b, "from") ?? "";
-    const to = partyName(b, "to") ?? "";
+    const from = partyName(b, "from", slices) ?? "";
+    const to = partyName(b, "to", slices) ?? "";
     const item = b.title || b.item || b.slug || "";
     const pair = [partyIdOf(b, "from"), partyIdOf(b, "to")];
     b.created && rows.push({ at: Date.parse(b.created), kind: "brief", from, to, item, pair });
@@ -49,7 +49,7 @@ export function memberModel(slices, ui, id, n = SUMMARY_MESSAGES) {
   const lead = typeof body?.lead?.name === "string" && typeof body.lead.team === "string" ? body.lead : null;
   const ctx = m.ctx;
   return {
-    id, name: m.name, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
+    id, name: m.name, label: m.label, title: m.title, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
     tool: m.tool, toolAt: m.toolAt, branch: m.branch, workRoot: m.workRoot, slug: m.slug,
     ctx: ctx.text, ctxTitle: ctx.title, ctxOver: ctx.over, contextUsed: m.contextUsed ?? null,
     team: t.name, teamId, dir: t.dir_id, stream,

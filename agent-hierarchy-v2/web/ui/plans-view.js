@@ -50,7 +50,7 @@ const StreamRow = ({ s, showTeam, open, onOpen, onBoard }) => {
       <span class=${`pl-glyph st-${s.status}`} aria-hidden="true">${GLYPH[s.status]}</span>
       <span class="pl-name"><b>${s.mark.changed ? html`<${Dot} />` : null}${streamName(s.stream)}</b>${s.goal ? html`<span class="pl-goal">${s.goal}</span>` : null}${delta ? html`<span class="pl-delta">${delta}</span>` : null}</span>
       ${showTeam ? html`<span class="pl-team">${s.team}</span>` : null}
-      <span class="pl-owner" data-role=${s.role || undefined}>${s.owner || "—"}</span>
+      <span class="pl-owner" data-role=${s.role || undefined} title=${s.ownerTitle !== s.ownerLabel ? s.ownerTitle : undefined}>${s.ownerLabel || "—"}</span>
       <${Bar} s=${s} />
       <span class=${`chip pl-chip st-${chip.cls}`}>${chip.text}</span>
       <span class="pl-branch mono">${s.branch || "—"}</span>
@@ -80,7 +80,7 @@ const Detail = ({ s, items, truncated, onClose, changesOnly, showAll, onShowAll 
   <h2>${streamName(s.stream)}</h2>
   ${s.goal ? html`<p class="pl-goal-full">${s.goal}</p>` : null}
   <dl>
-    <dt>owner</dt><dd data-role=${s.role || undefined}>${s.owner ? memberLink(ownerId(s, s.owner), s.owner) : "—"}</dd>
+    <dt>owner</dt><dd data-role=${s.role || undefined}>${s.owner ? memberLink(ownerId(s, s.owner), s.ownerLabel ?? s.owner) : "—"}</dd>
     <dt>branch</dt><dd class="mono">${s.branch || "—"}</dd>
     <dt>work tree</dt><dd class="mono">${s.workTree ?? "—"}</dd>
     <dt>updated</dt><dd>${s.asOf > 0 ? html`<${Age} text=${ageSince(s.asOf)} />` : "—"}</dd>

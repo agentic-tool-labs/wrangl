@@ -187,7 +187,7 @@ export class MemberPage extends Live {
       : x.gone
         ? html`<p class="dim">no longer available</p>`
         : html`<p class="prose">${x.text ?? none}</p>${x.truncated ? html`<p class="dim">Excerpt only: the daemon does not serve the full text.</p>` : null}`);
-    return html`<article class="member-page" data-role=${m.role || undefined} data-state=${m.state} aria-label=${`Member ${m.name}`}>
+    return html`<article class="member-page" data-role=${m.role || undefined} data-state=${m.state} aria-label=${`Member ${m.title}`}>
       <p class="mp-back"><a href=${m.teamHref}>← ${m.team} · Overview</a></p>
       <header class="mp-head panel">
         <${MemberHead} m=${m} Tag="h1" />
@@ -233,7 +233,7 @@ export class MemberPage extends Live {
             <li><a href=${m.links.conversation}>Open conversation</a></li>
             <li><a href=${m.links.graph}>Show on graph</a></li>
             <li><a href=${m.links.timeline}>Show on timeline</a></li>
-            <li><a href=${m.links.board}>Board, filtered to ${m.name}</a></li>
+            <li><a href=${m.links.board}>Board, filtered to ${m.label}</a></li>
           </ul>
         </section>
         <section class="mp-card" aria-labelledby="mp-act"><h2 id="mp-act">Actions</h2>

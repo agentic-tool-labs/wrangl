@@ -1,6 +1,8 @@
 ---
 name: implementor
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc implementor`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   Builder for the agent hierarchy. Dispatch it with an absolute spec path to
   implement exactly what the spec says (code, tests, config) and report what
   it changed. It makes no design decisions: a spec that is silent, ambiguous,
