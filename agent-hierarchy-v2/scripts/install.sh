@@ -308,6 +308,20 @@ has_net10_sdk() {
     "$1" --list-sdks 2>/dev/null | grep -q '^10\.'
 }
 
+# The SDK this dotnet uses, as its --list-sdks line ("10.0.105 [/path/sdk]"), or the command when that cannot be read.
+sdk_in_use() {
+    local v line=""
+    v=$("$1" --version 2>/dev/null)
+    [ -n "$v" ] && line=$("$1" --list-sdks 2>/dev/null | grep -F "$v [" | head -1)
+    echo "${line:-$1}"
+}
+
+# True when restore log $1 has an advisory (NU1901-NU1904) on a pack the SDK pins: Microsoft.DotNet.ILCompiler (also as
+# runtime.<rid>.Microsoft.DotNet.ILCompiler) or Microsoft.NETCore.App.*. The SDK is out of date.
+sdk_advisory() {
+    grep -E 'NU190[1-4]' "$1" 2>/dev/null | grep -Eq 'Microsoft\.DotNet\.ILCompiler|Microsoft\.NETCore\.App\.'
+}
+
 download_to() {
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL "$1" -o "$2"
@@ -668,11 +682,48 @@ fi
 dotnet_cmd=""
 bootstrap_sdk=false
 sdk_dir="$ah_home/dotnet"
-if command -v dotnet >/dev/null 2>&1 && has_net10_sdk dotnet; then
-    dotnet_cmd=dotnet
-elif [ -x "$sdk_dir/dotnet" ] && has_net10_sdk "$sdk_dir/dotnet"; then
+
+# Written at each private install (its mtime is when; its text the version, for the reader). A still-flagged private SDK
+# installed less than sdk_stamp_days ago is not offered the install again: that update just ran and did not clear it.
+sdk_stamp="$sdk_dir/ah-installed-version"
+sdk_stamp_days=7
+
+# True when the stamp exists, is readable, and was written less than sdk_stamp_days ago (-mmin: BSD and GNU find).
+sdk_stamp_fresh() {
+    [ -r "$sdk_stamp" ] && [ -n "$(find "$sdk_stamp" -mmin -$((sdk_stamp_days * 24 * 60)) 2>/dev/null)" ]
+}
+
+# The current .NET 10 SDK, installed privately into $sdk_dir (the channel install brings the current patch; no PATH change).
+# Status 1 with the reason in $sdk_error on a failed download or install; the caller decides whether that ends the run.
+install_private_sdk() {
+    local rc=0
+    sdk_error=""
+    mkdir -p "$sdk_dir"
+    install_script=$(mktemp)
+    if ! download_to "https://dot.net/v1/dotnet-install.sh" "$install_script"; then
+        rm -f "$install_script"
+        sdk_error="could not download dotnet-install.sh"
+        return 1
+    fi
+    bash "$install_script" --channel 10.0 --install-dir "$sdk_dir" --no-path || rc=$?
+    rm -f "$install_script"
+    if [ "$rc" -ne 0 ]; then
+        sdk_error="the .NET SDK installer exited with status $rc"
+        return 1
+    fi
+    if ! has_net10_sdk "$sdk_dir/dotnet"; then
+        sdk_error="the SDK installer finished but $sdk_dir/dotnet reports no .NET 10 SDK"
+        return 1
+    fi
+    "$sdk_dir/dotnet" --version > "$sdk_stamp" 2>/dev/null || true
+}
+
+# The private SDK first: a user who chose it is not asked about the system one again.
+if [ -x "$sdk_dir/dotnet" ] && has_net10_sdk "$sdk_dir/dotnet"; then
     dotnet_cmd="$sdk_dir/dotnet"
     say "Using the .NET SDK previously installed into $sdk_dir"
+elif command -v dotnet >/dev/null 2>&1 && has_net10_sdk dotnet; then
+    dotnet_cmd=dotnet
 else
     bootstrap_sdk=true
     dotnet_cmd="$sdk_dir/dotnet"
@@ -684,15 +735,7 @@ if $bootstrap_sdk; then
     elif ! $interactive; then
         fail_step "no .NET 10 SDK found. Install one, or run this at a terminal to have it installed privately into $sdk_dir (about a few hundred MB)."
     elif ask_step "No .NET 10 SDK found. Install one privately into $sdk_dir?"; then
-        mkdir -p "$sdk_dir"
-        install_script=$(mktemp)
-        if ! download_to "https://dot.net/v1/dotnet-install.sh" "$install_script"; then
-            rm -f "$install_script"
-            fail_step "could not download dotnet-install.sh"
-        fi
-        bash "$install_script" --channel 10.0 --install-dir "$sdk_dir" --no-path
-        rm -f "$install_script"
-        has_net10_sdk "$dotnet_cmd" || fail_step "the SDK installer finished but $dotnet_cmd reports no .NET 10 SDK"
+        install_private_sdk || fail_step "$sdk_error"
     else
         fail_step "a .NET 10 SDK is required"
     fi
@@ -716,11 +759,64 @@ if $apply; then
     # publish-native.sh also fails on a compiler log that says a verb will always throw, and serve-starts the staged ahd in a
     # throwaway home, so a binary whose daemon cannot start never reaches the move below.
     # Env rather than flags: no build server or node is left running after the build.
-    if ! DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 \
-        MSBUILDDISABLENODEREUSE=1 UseSharedCompilation=false \
-        bash "$script_dir/publish-native.sh" --dotnet "$dotnet_cmd" --native "$plugin_root/native" --rid "$rid" --out "$stage" \
-        --version "$plugin_version" --contract "$contract" --name "$plugin_name" --artifacts "$stage/artifacts"; then
-        fail_step "dotnet publish failed"
+    publish_stage() { # publish_stage DIR: builds with $dotnet_cmd into DIR
+        DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 \
+            MSBUILDDISABLENODEREUSE=1 UseSharedCompilation=false \
+            bash "$script_dir/publish-native.sh" --dotnet "$dotnet_cmd" --native "$plugin_root/native" --rid "$rid" --out "$1" \
+            --version "$plugin_version" --contract "$contract" --name "$plugin_name" --artifacts "$1/artifacts" \
+            --restore-log "$1/restore.log"
+    }
+    restage() { rm -rf "$stage" && mkdir -p "$stage" || fail_step "cannot create $stage"; }
+    # An out-of-date SDK (an advisory on a package it supplies), or a failed build with the system SDK, is offered the
+    # current SDK privately, once, at a terminal. The background rebuild never installs one. A build that succeeded is kept.
+    can_ask=false
+    $interactive && ! $rebuild_only && can_ask=true
+    private_offer="Install the current .NET 10 SDK privately into $sdk_dir and build with that?"
+    if ! publish_stage "$stage"; then
+        if [ "$dotnet_cmd" = "$sdk_dir/dotnet" ]; then
+            # A broken private SDK falls back to a working system one, once, with no question: nothing is installed.
+            command -v dotnet >/dev/null 2>&1 && has_net10_sdk dotnet || fail_step "dotnet publish failed"
+            say "The build failed with the private .NET SDK in $sdk_dir; building once more with the system dotnet."
+            dotnet_cmd=dotnet
+            restage
+            publish_stage "$stage" || fail_step "dotnet publish failed with the private .NET SDK and with the system one. Delete the private SDK directory $sdk_dir (rm -rf $sdk_dir) and run this again."
+        elif ! $can_ask; then
+            at_terminal="Run this at a terminal"
+            $interactive && $rebuild_only && at_terminal="Run bash $script_dir/install.sh --apply (without --rebuild-only) at a terminal"
+            fail_step "dotnet publish failed with the .NET SDK $(sdk_in_use "$dotnet_cmd"). $at_terminal to have the current .NET 10 SDK installed privately into $sdk_dir and the build retried with it."
+        elif ask_no_default "The build failed with the .NET SDK $(sdk_in_use "$dotnet_cmd"). $private_offer"; then
+            install_private_sdk || fail_step "$sdk_error"
+            dotnet_cmd="$sdk_dir/dotnet"
+            restage
+            publish_stage "$stage" || fail_step "dotnet publish failed"
+        else
+            fail_step "dotnet publish failed"
+        fi
+    elif sdk_advisory "$stage/restore.log"; then
+        sdk_note="The .NET SDK in use, $(sdk_in_use "$dotnet_cmd"), is out of date (a package it supplies has a published advisory); the build still works."
+        if [ "$dotnet_cmd" = "$sdk_dir/dotnet" ] && sdk_stamp_fresh; then
+            # A private install ran within sdk_stamp_days and did not clear the advisory: asking again would not either.
+            say "$sdk_note"
+        elif ! $can_ask; then
+            say "$sdk_note To update it, run at a terminal: bash $script_dir/install.sh --apply"
+        else
+            say "$sdk_note"
+            if ask_no_default "$private_offer"; then
+                # The second build goes into its own stage; the first build is kept until that one succeeds.
+                stage2="$stage.sdk"
+                cleanup_dirs+=("$stage2")
+                first_dotnet="$dotnet_cmd"
+                if ! install_private_sdk; then
+                    say "The .NET SDK install failed ($sdk_error); carrying on with the first build."
+                elif ! { dotnet_cmd="$sdk_dir/dotnet"; mkdir -p "$stage2" && publish_stage "$stage2"; }; then
+                    dotnet_cmd="$first_dotnet"
+                    say "The build with the new private .NET SDK failed; carrying on with the first build."
+                else
+                    rm -rf "$stage"
+                    stage="$stage2"
+                fi
+            fi
+        fi
     fi
     find "$stage" -maxdepth 1 -type f -name '*.pdb' -delete
     [ -x "$stage/ahd" ] || fail_step "expected published binary not found at $stage/ahd"

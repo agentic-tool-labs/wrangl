@@ -94,6 +94,8 @@ cat > "$FAKEBIN/dotnet" <<'EOF'
 echo "dotnet $*" >> "$FAKE_LOG"
 case "$1" in
   --list-sdks) echo "10.0.301 [/fake/sdk]"; exit 0 ;;
+  --version) echo "10.0.301"; exit 0 ;;
+  restore) [ -n "${FAKE_RESTORE_OUT:-}" ] && echo "$FAKE_RESTORE_OUT"; exit 0 ;;
   publish)
     [ "${FAKE_PUBLISH_FAIL:-}" = 1 ] && { echo "fake publish failed" >&2; exit 1; }
     project="$2"
@@ -254,6 +256,49 @@ check "P-11 a re-run exits 0" test "$rc" -eq 0
 check "P-11 a re-run rebuilt both binaries" test "$(publishes)" -eq $((p1 + 2))
 check "P-11 a re-run leaves the stamp byte-identical" same "$stamp1" "$(cat "$AH_HOME/install.json")"
 check "P-11 a re-run leaves the sidecar and link identical" same "$sidecar1|$link1" "$(cat "$AH_HOME/bin/ahd.contract")|$(readlink "$T/bin/ahd")"
+
+# --- P-20: an out-of-date SDK is noticed and said; the install still completes ------------------------------
+adv="/x/Ah.Cli.csproj : warning NU1903: Package 'Microsoft.DotNet.ILCompiler' 10.0.7 has a known high severity vulnerability"
+out="$(FAKE_RESTORE_OUT="$adv" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"; rc=$?
+check "P-20 an SDK-package advisory, not at a terminal: the install completes" test "$rc" -eq 0 -a -x "$AH_HOME/bin/ahd"
+check "P-20 ... and says the SDK in use (version and path) is out of date, with the command to update" \
+  grep -q 'The .NET SDK in use, 10.0.301 \[/fake/sdk\], is out of date.*the build still works. To update it, run at a terminal: bash .*install.sh --apply' <<<"$out"
+check "P-20 ... and installs no SDK" test ! -e "$AH_HOME/dotnet"
+out="$(run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-20 a clean restore prints nothing new (nearest non-match)" test -z "$(grep -i 'out of date' <<<"$out")"
+out="$(FAKE_RESTORE_OUT="/x/Ah.Cli.csproj : warning NU1903: Package 'Newtonsoft.Json' 12.0.1 has a known high severity vulnerability" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-20 an advisory on a package the SDK does not supply prints nothing new (nearest non-match)" test -z "$(grep -i 'out of date' <<<"$out")"
+out="$(FAKE_RESTORE_OUT="/x/Ah.Cli.csproj : warning NU1903: Package 'runtime.native.System.Security.Cryptography.OpenSsl' 4.3.0 has a known high severity vulnerability" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-20 a bare runtime.* package is not an SDK pack (nearest non-match of runtime.<rid>.Microsoft.DotNet.ILCompiler)" test -z "$(grep -i 'out of date' <<<"$out")"
+
+# --- P-21: a private SDK: a broken one falls back to the system SDK; a stamped one is not offered the same install ------
+mkdir -p "$AH_HOME/dotnet"
+cat > "$AH_HOME/dotnet/dotnet" <<EOF
+#!/bin/bash
+case "\$1" in
+  --list-sdks) echo "10.0.100 [/priv/sdk]"; exit 0 ;;
+  --version) echo "10.0.100"; exit 0 ;;
+  publish) [ "\${FAKE_PRIV_PUBLISH_FAIL:-}" = 1 ] && { echo "private publish failed" >&2; exit 1; } ;;
+esac
+exec "$FAKEBIN/dotnet" "\$@"
+EOF
+chmod +x "$AH_HOME/dotnet/dotnet"
+out="$(FAKE_PRIV_PUBLISH_FAIL=1 run_install --apply --prefix "$T/bin" </dev/null 2>&1)"; rc=$?
+check "P-21 a private SDK whose publish fails, a working system SDK: the build completes with the system one" \
+  both 0 "$rc" 'building once more with the system dotnet' "$out"
+out="$(run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-21 a working private SDK builds with no fallback (nearest non-match)" test -z "$(grep 'system dotnet' <<<"$out")"
+echo "10.0.100" > "$AH_HOME/dotnet/ah-installed-version"
+out="$(FAKE_RESTORE_OUT="$adv" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"; rc=$?
+check "P-21 a flagged private SDK with a fresh install stamp: the line, and no update offered" \
+  test "$rc" -eq 0 -a -n "$(grep '10.0.100 \[/priv/sdk\], is out of date' <<<"$out")" -a -z "$(grep 'To update it' <<<"$out")"
+touch -t 202001010000 "$AH_HOME/dotnet/ah-installed-version"
+out="$(FAKE_RESTORE_OUT="$adv" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-21 ... a stamp 7 days old or older offers the update again (nearest non-match)" grep -q 'To update it' <<<"$out"
+rm -f "$AH_HOME/dotnet/ah-installed-version"
+out="$(FAKE_RESTORE_OUT="$adv" run_install --apply --prefix "$T/bin" </dev/null 2>&1)"
+check "P-21 ... and so does a missing stamp" grep -q 'To update it' <<<"$out"
+rm -rf "$AH_HOME/dotnet"
 
 # --- the PATH step is skipped whole when the prefix is already on PATH --------------------------------------
 BASEPATH="$FAKEBIN:/usr/bin:/bin"
