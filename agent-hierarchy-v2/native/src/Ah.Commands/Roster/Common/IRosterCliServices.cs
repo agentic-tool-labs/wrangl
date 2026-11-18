@@ -179,6 +179,16 @@ public interface IRosterOwnerProof
     /// </summary>
     NearestSession NearestAncestor(string dir, IReadOnlyList<string> rowDirs);
 
+    /// <summary>
+    /// The ancestor of the calling process that the owner guard registers when no walk proves a session (ah2-204): <paramref name="stated"/>
+    /// when it is on the ancestor line and a Claude harness by its command alone (no session record read), else the nearest such ancestor;
+    /// null when none is or the process table cannot say.
+    /// </summary>
+    int? HarnessAncestor(int? stated = null) => null;
+
+    /// <summary>Whether <paramref name="pid"/> is an ancestor of the calling process; null when the process table cannot say.</summary>
+    bool? IsAncestor(int pid) => null;
+
     /// <summary>The live registrations of <paramref name="pid"/>: for each box address it holds, the start time and session the registration recorded. None when this proof cannot tell.</summary>
     IReadOnlyList<OwnerRegistration> RegistrationsOf(int pid) => [];
 

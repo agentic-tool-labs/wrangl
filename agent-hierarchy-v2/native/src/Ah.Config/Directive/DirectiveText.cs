@@ -320,7 +320,7 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
                 ? $"Agent(subagent_type:\"{type}\") — OMIT `model` entirely (inherits this session's model). Never pass \"inherit\" as a value."
                 : $"Agent(subagent_type:\"{type}\", model:\"{Str(model)}\")";
             var label = Label(role, resolved);
-            if (config.ClassProp(role, resolved, "chain") is not { IsBool: true } chain || !chain.AsBool())
+            if (config.ClassProp(role, resolved, "chain") is not { IsBool: true } chain || !chain.AsBool() || SubagentFirst(resolved))
             {
                 yield return $"- {label}{tag} — {agentCall}";
                 continue;
@@ -359,6 +359,36 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
                 : "its live teammate (names: `ListAgents` / `ah roster teams`)";
             yield return $"- {label}{tag} — SendMessage {target}; none live → spawn per item 13, then SendMessage the name it prints.";
         }
+    }
+
+    /// <summary>The <c>dispatch</c> setting (ah2-200); absent or unknown is <c>peers</c>, today's behaviour.</summary>
+    internal static string DispatchMode(JsonObject resolved) => TextOrNull(resolved.Get("dispatch")) ?? "peers";
+
+    /// <summary>Whether chain role lines carry the Agent call: <c>subagents</c> and <c>prefer-subagents</c>.</summary>
+    private static bool SubagentFirst(JsonObject resolved) => DispatchMode(resolved) is "subagents" or "prefer-subagents";
+
+    /// <summary>The Roles header for the <c>dispatch</c> setting; <c>peers</c> is today's text.</summary>
+    private string RolesHeader(JsonObject resolved, JsonArray? owned)
+    {
+        const string Ultra = " (Ultra-Advisor: no per-spawn approval; inside a /wrangl:pipeline run the run anchor's `ultra-advisor: yes|no`, asked once at run start, decides — item 7)";
+        const string Legwork = " Legwork (Task-Runner) always spawns or delegates to task-gopher; pass `model` on the Agent call — agent frontmatter is fallback only:";
+        const string Chain = "Roles — dispatch route per role below. Ultra-Advisor, Architect, Reviewer, Implementor";
+        const string PeerRoute = "SendMessage the live one; none live → spawn it with the command on its line, then SendMessage the name it prints";
+        const string AgentBrief = "dispatch each with the Agent call on its line; the brief goes in the Agent prompt, with the spec path and the report format (item 12's message file and the PEER BRIEF CONTRACT do not apply to these dispatches); the checklist row is still added before and closed after";
+        const string Departure = " The choice is yours; say in one line when you depart from the default.";
+        var mode = DispatchMode(resolved);
+        // Amendment 1: the role lines carry no spawn under prefer-subagents, so a session that owns a team gets the --team form here.
+        var cwd = Or(resolved.Get("cwd"), "<abs cwd>");
+        var peerSpawn = owned is { Count: > 0 }
+            ? $"spawn it with {Join("; ", owned.Select(item => $"`{config.CliCommand(CliTool.Roster)} spawn-one|spawn-ad-hoc <role> --team {TeamArgName(item.Member("team") ?? JsonValue.Null)} --cwd {cwd}`"))} (spawn-one for a roster member)"
+            : "spawn per item 13";
+        return mode switch
+        {
+            "subagents" => $"{Chain} and the other chain roles are subagents, never peer sessions (dispatch:\"subagents\"): {AgentBrief}{Ultra}.{Legwork}",
+            "prefer-subagents" => $"{Chain} and the other chain roles are subagents by default (dispatch:\"prefer-subagents\"): {AgentBrief}{Ultra}. A peer session ({peerSpawn}, then SendMessage the name it prints) is the better call for work that is long, needs its own work tree, runs beside other streams, or that the user may want to watch or answer.{Departure}{Legwork}",
+            "prefer-peers" => $"{Chain} are peer sessions by default (dispatch:\"prefer-peers\"): {PeerRoute}{Ultra}. A subagent (`Agent(subagent_type:\"{config.PluginName}:<role>\")`, `model` from `ah roster show` or left out; brief in the Agent prompt) is the better call for a short, single-answer or read-only piece of work.{Departure}{Legwork}",
+            _ => $"{Chain} are peer sessions, never subagents: {PeerRoute}{Ultra}.{Legwork}",
+        };
     }
 
     public string BuildDirective(JsonObject fullResolved, string? sessionId, string? hierarchyDirectory = null, string? model = null, bool subOrchestrator = false) =>
@@ -421,7 +451,7 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
             // ah:roles orchestrate
             "On every wake — waiter exit, failsafe hit, peer report, idle notice, compaction, resume — your first action is `ah roster checklist show`. The checklist, not your memory, is what's outstanding. Keep it current as part of every dispatch and every report: each `ah msg new --type request` names `--item <id>` (add the item first if it has none); each report you accept is reflected on its item (`done`, or `set` back to next/blocked with a note). ahd mails you `unlinked-dispatch` for any request the checklist does not track.",
             string.Empty,
-            "Roles — dispatch route per role below. Ultra-Advisor, Architect, Reviewer, Implementor are peer sessions, never subagents: SendMessage the live one; none live → spawn it with the command on its line, then SendMessage the name it prints (Ultra-Advisor: no per-spawn approval; inside a /wrangl:pipeline run the run anchor's `ultra-advisor: yes|no`, asked once at run start, decides — item 7). Legwork (Task-Runner) always spawns or delegates to task-gopher; pass `model` on the Agent call — agent frontmatter is fallback only:",
+            RolesHeader(resolved, config.OwnedTeamConfigs(fullResolved)),
         };
         lines.AddRange(RoleLines(resolved, repoBasename, config.OwnedTeamConfigs(fullResolved)));
         lines.AddRange(registryNotes);
@@ -440,7 +470,12 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
         ]);
         if (confirm)
         {
-            lines.Add("0. Handoff gate — user chose per-handoff approval (config handoffs:\"confirm\"). Before dispatching Ultra-Advisor, Architect, Implementor, or a Reviewer outside an Implementor's review loop, ListAgents first: is its peer present? Then AskUserQuestion naming the role, its model, one line on what you hand it. The ask at an Implementor dispatch also names the Reviewer and the review loop (up to 3 rounds): approving it covers that Reviewer and every round, so you do not ask again before the Reviewer's brief or a round. A new task, a scope change, a 4th round, a push and a release still ask. Peer listed → offer \"Task peer \\\"<name>\\\" via SendMessage (Recommended)\", \"Do it inline yourself\", \"Skip this step\", in that order. Peer not listed → offer \"Spawn the <role> peer (Recommended)\", \"Do it inline yourself\", \"Skip this step\". This item decides only WHETHER to hand off. Ultra-Advisor: gated by item 7's PreToolUse approval gate (it watches SendMessage to the Ultra-Advisor peer) — the peer option never skips user approval. Ask per dispatch, not per plan; never re-ask a dispatch already approved. Legwork (Task-Runner / task-gopher) exempt — errands are not handoffs. When item 7's gate asks for an Ultra-Advisor dispatch, that ask replaces this one: ask once, not twice. \"Task peer\" = SendMessage that peer a brief that must follow the PEER BRIEF CONTRACT above, then await its reply as you would a subagent's completion. \"Do it inline\" = you take that role's contract for that step. \"Skip\" = the step does not happen; say plainly what that leaves undesigned or unverified.");
+            // Amendment 1: under subagents and prefer-subagents the recommended option is the subagent dispatch, not a peer.
+            const string PeerOffers = "Peer listed → offer \"Task peer \\\"<name>\\\" via SendMessage (Recommended)\", \"Do it inline yourself\", \"Skip this step\", in that order. Peer not listed → offer \"Spawn the <role> peer (Recommended)\", \"Do it inline yourself\", \"Skip this step\".";
+            string Offers(string line) => SubagentFirst(resolved)
+                ? line.Replace(PeerOffers, $"Offer \"Dispatch the <role> subagent (Recommended)\", \"Do it inline yourself\", \"Skip this step\", in that order (dispatch:\"{DispatchMode(resolved)}\").", StringComparison.Ordinal)
+                : line;
+            lines.Add(Offers("0. Handoff gate — user chose per-handoff approval (config handoffs:\"confirm\"). Before dispatching Ultra-Advisor, Architect, Implementor, or a Reviewer outside an Implementor's review loop, ListAgents first: is its peer present? Then AskUserQuestion naming the role, its model, one line on what you hand it. The ask at an Implementor dispatch also names the Reviewer and the review loop (up to 3 rounds): approving it covers that Reviewer and every round, so you do not ask again before the Reviewer's brief or a round. A new task, a scope change, a 4th round, a push and a release still ask. Peer listed → offer \"Task peer \\\"<name>\\\" via SendMessage (Recommended)\", \"Do it inline yourself\", \"Skip this step\", in that order. Peer not listed → offer \"Spawn the <role> peer (Recommended)\", \"Do it inline yourself\", \"Skip this step\". This item decides only WHETHER to hand off. Ultra-Advisor: gated by item 7's PreToolUse approval gate (it watches SendMessage to the Ultra-Advisor peer) — the peer option never skips user approval. Ask per dispatch, not per plan; never re-ask a dispatch already approved. Legwork (Task-Runner / task-gopher) exempt — errands are not handoffs. When item 7's gate asks for an Ultra-Advisor dispatch, that ask replaces this one: ask once, not twice. \"Task peer\" = SendMessage that peer a brief that must follow the PEER BRIEF CONTRACT above, then await its reply as you would a subagent's completion. \"Do it inline\" = you take that role's contract for that step. \"Skip\" = the step does not happen; say plainly what that leaves undesigned or unverified."));
         }
 
         var specDir = string.IsNullOrEmpty(hierDir) ? "<hierarchy dir>/specs" : NodePath.Join(hierDir, "specs");
@@ -1122,6 +1157,12 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
         if (TextOrNull(resolved.Get("qaCadence")) is { } qa)
         {
             output.Add($"qa cadence:     {qa} {(qa == "batch" ? "(QA once on a release batch)" : "(QA at each item's merge)")} — from {Str(resolved.Get("qaCadenceSource"))}; switch with /wrangl:hierarchy qa item|batch");
+        }
+
+        // Only when set, like qa cadence: absent means "peers", and an unconfigured repo's report is unchanged.
+        if (TextOrNull(resolved.Get("dispatch")) is { } dispatchMode)
+        {
+            output.Add($"dispatch:       {dispatchMode} (how the Orchestrator runs its chain roles) — from {Str(resolved.Get("dispatchSource"))}; switch with /wrangl:hierarchy dispatch peers|subagents|prefer-peers|prefer-subagents");
         }
         output.Add(string.Empty);
         output.Add("Resolved effective table:");

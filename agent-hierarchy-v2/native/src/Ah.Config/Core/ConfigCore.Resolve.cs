@@ -373,6 +373,8 @@ internal sealed partial class ConfigCore
         // qa.cadence (ah2-154): "item" or "batch", resolved as qaCadence; absent from the result when no layer sets a known value, which callers treat as not configured.
         JsonValue qa = JsonValue.Null;
         JsonValue qaSource = JsonValue.Null;
+        JsonValue dispatchSetting = JsonValue.Null;
+        JsonValue dispatchSource = JsonValue.Null;
 
         JsonValue Layers()
         {
@@ -404,6 +406,13 @@ internal sealed partial class ConfigCore
             {
                 result["qaCadence"] = qa;
                 result["qaCadenceSource"] = qaSource;
+            }
+
+            // dispatch (ah2-200): only when set to a known value; absent means "peers".
+            if (!dispatchSetting.IsNull)
+            {
+                result["dispatch"] = dispatchSetting;
+                result["dispatchSource"] = dispatchSource;
             }
 
             return result;
@@ -456,6 +465,30 @@ internal sealed partial class ConfigCore
             warnings.Add($"ah: handoffs {JsonText.Stringify(handoffs, 0)} is not a mode (allowed: {string.Join(", ", ConfigRegistry.HandoffModes)}) — using \"auto\".");
             handoffs = "auto";
             handoffsSource = "default";
+        }
+
+        string? dispatchText = null;
+        foreach (var layer in layers)
+        {
+            if (layer["data"].AsObject().Get("dispatch") is { IsText: true } dv)
+            {
+                dispatchText = dv.AsString();
+                dispatchSource = layer["scope"];
+            }
+        }
+
+        if (dispatchText is not null && ConfigRegistry.DispatchSettingValues.Contains(dispatchText))
+        {
+            dispatchSetting = dispatchText;
+        }
+        else
+        {
+            if (dispatchText is not null)
+            {
+                warnings.Add($"ah: dispatch {JsonText.Stringify(dispatchText, 0)} is not a mode (allowed: {string.Join(", ", ConfigRegistry.DispatchSettingValues)}) — using \"peers\".");
+            }
+
+            dispatchSource = JsonValue.Null;
         }
 
         // qa.cadence lives inside the qa map the QA scheduler also reads (parallel, admit_*); only cadence is read here.

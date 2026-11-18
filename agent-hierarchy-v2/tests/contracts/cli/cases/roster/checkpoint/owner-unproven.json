@@ -16,7 +16,7 @@
   },
   "expect": {
     "stdout": "{\n  \"status\": \"refused\",\n  \"refused\": \"owner-unproven\",\n  \"proof\": \"no-orchestrator\"\n}\n",
-    "stderr": "roster.mjs checkpoint: could not prove which Claude session runs this command; nothing was changed. Run it from the Orchestrator's Claude session.\nowner proof: no registered session is an ancestor of this command.\n",
+    "stderr": "roster.mjs checkpoint: could not prove which Claude session runs this command; nothing was changed. Run `roster.mjs checkin` in the Orchestrator's Claude session and retry; if that is refused too, start a new Claude session.\nowner proof: no registered session is an ancestor of this command.\n",
     "exit": 2,
     "tree_diff": {
       "added": [],

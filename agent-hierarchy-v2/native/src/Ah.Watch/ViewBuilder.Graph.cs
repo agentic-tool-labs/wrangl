@@ -33,6 +33,10 @@ internal static partial class ViewBuilder
         };
     }
 
+    /// <summary>The session ids the team files of <paramref name="orch"/> record for their Orchestrator.</summary>
+    private static HashSet<string> OrchSessions(Orch orch) =>
+        orch.Teams.Select(static t => t.Doc.Obj("orchestrator")?.Str("session_id")).OfType<string>().Where(static id => id.Length > 0).ToHashSet(StringComparer.Ordinal);
+
     /// <summary>
     /// The topology of one orchestrator, with no coordinates: its nodes, the edges between them and the order hints a layer lays
     /// them out by. A layer decides positions; two layers given the same hints agree on what is next to what.
@@ -185,6 +189,26 @@ internal static partial class ViewBuilder
                     edges.Add(Edge($"subagent:{subId}", "subagent", memberId, subId, "out", double.IsNaN(startedMs) ? double.NaN : Math.Max(0, c.Now - startedMs), false));
                 }
             }
+        }
+
+        // The Orchestrator's own subagents, under its node (ah2-201).
+        var orchSessions = OrchSessions(orch);
+        foreach (var run in running.Where(r => orchSessions.Contains(r.SessionId)))
+        {
+            var subId = $"{c.OPath(orch)}/sub/{Seg(run.AgentId)}";
+            nodes.Add(new JsonObject
+            {
+                ["id"] = subId,
+                ["kind"] = "subagent",
+                ["role"] = JsonValue.Null,
+                ["state"] = "busy",
+                ["label"] = TextOrNull(src, run.AgentId, NameCap),
+                ["agent_type"] = TextOrNull(src, run.AgentType, NameCap),
+                ["team"] = JsonValue.Null,
+                ["order"] = order++,
+            });
+            var startedMs = ParseMs(run.StartedAt);
+            edges.Add(Edge($"subagent:{subId}", "subagent", c.OPath(orch), subId, "out", double.IsNaN(startedMs) ? double.NaN : Math.Max(0, c.Now - startedMs), false));
         }
 
         var withModel = modelled.Where(static n => n.Str("model") is { Length: > 0 }).ToList();

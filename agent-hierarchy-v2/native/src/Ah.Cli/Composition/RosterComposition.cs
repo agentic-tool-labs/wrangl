@@ -295,6 +295,38 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
         public NearestSession NearestAncestor(string dir, IReadOnlyList<string> rowDirs) =>
             _sessions.NearestSession(System.Environment.ProcessId, env.GetVariable("CLAUDE_PID"), _sessions.Teams(dir), rowDirs);
 
+        public int? HarnessAncestor(int? stated = null)
+        {
+            try
+            {
+                bool Harness(int pid) => MeshModule.IsHarnessProcess(pid, _sessions.Table.Command, p => SessionDirectory.ExecutableOf(g.Runner, p));
+                if (_sessions.Table.Ancestors(System.Environment.ProcessId) is not { } line)
+                {
+                    return null;
+                }
+
+                return stated is { } named && line.Contains(named) && Harness(named)
+                    ? named
+                    : line.Where(Harness).Select(pid => (int?)pid).FirstOrDefault();
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                return null;
+            }
+        }
+
+        public bool? IsAncestor(int pid)
+        {
+            try
+            {
+                return _sessions.Table.HasAncestor(System.Environment.ProcessId, pid);
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                return null;
+            }
+        }
+
         public IReadOnlyList<OwnerRegistration> RegistrationsOf(int pid)
         {
             var found = new List<OwnerRegistration>();

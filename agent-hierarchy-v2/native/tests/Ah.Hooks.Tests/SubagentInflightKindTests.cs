@@ -153,6 +153,23 @@ public sealed class SubagentInflightKindTests
     }
 
     [Fact]
+    public void AnOwningOrchestratorsSubagentStartIsRecordedWithNoPendingRequestAndASessionOwningNothingRecordsNone()
+    {
+        var owner = new HooksHostTests.Rig();
+        var dir = owner.Services.Config.HierarchyDir(owner.Sandbox.Root + "/proj");
+        _ = Directory.CreateDirectory(dir + "/teams");
+        File.WriteAllText(dir + "/teams/tm.json", $"{{\"team\":\"tm\",\"orchestrator\":{{\"session_id\":\"{Session}\"}},\"members\":[],\"streams\":{{}}}}");
+        var nobody = new HooksHostTests.Rig();
+
+        Fire(owner, new JsonObject { ["hook_event_name"] = "SubagentStart", ["agent_id"] = "o1", ["agent_type"] = "wrangl:architect" });
+        Fire(nobody, new JsonObject { ["hook_event_name"] = "SubagentStart", ["agent_id"] = "n1" });
+
+        var row = Assert.Single(Written(owner));
+        Assert.Equal(("o1", "started", "subagent", "wrangl:architect"), (row["agent_id"].AsString(), row["status"].AsString(), row["kind"].AsString(), row["agent_type"].AsString()));
+        Assert.Empty(Written(nobody));
+    }
+
+    [Fact]
     public void NegativeABackgroundTaskAndAStopRecordNoAgentType()
     {
         var rig = PeerOwing();

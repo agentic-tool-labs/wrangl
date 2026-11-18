@@ -743,7 +743,7 @@ internal static partial class DoctorVerb
         var resolved = config.ResolveConfig(c.Cwd, new ResolveOptions(Pid: double.IsNaN(pid) ? null : (JsonValue?)JsonValue.FromNumber(pid)));
         var report = c.Services.Doctor?.StatusReport(c.Cwd) ?? string.Empty;
         var reportLines = report.Split('\n');
-        var detail = string.Join(" | ", reportLines.Take(4).Concat(reportLines.Where(static l => l.StartsWith("qa cadence:", StringComparison.Ordinal)).Take(1)));
+        var detail = string.Join(" | ", reportLines.Take(4).Concat(reportLines.Where(static l => l.StartsWith("qa cadence:", StringComparison.Ordinal) || l.StartsWith("dispatch:", StringComparison.Ordinal)).Take(2)));
         if (!(resolved.Get("configured") is { IsTruthy: true }))
         {
             return new Check("warn", $"not configured — {detail}");
@@ -777,9 +777,10 @@ internal static partial class DoctorVerb
         }
 
         // An unknown qa.cadence, or a string qa (ah2-154): the resolver's warning, named here; either counts as not configured.
+        // An unknown dispatch (ah2-200) likewise, treated as "peers".
         if (resolved.Get("warnings") is { IsArray: true } warnings)
         {
-            problems.AddRange(warnings.AsArray().Where(static w => w.IsText && (w.AsString().StartsWith("ah: qa ", StringComparison.Ordinal) || w.AsString().StartsWith("ah: qa.cadence ", StringComparison.Ordinal))).Select(static w => w.AsString()));
+            problems.AddRange(warnings.AsArray().Where(static w => w.IsText && (w.AsString().StartsWith("ah: qa ", StringComparison.Ordinal) || w.AsString().StartsWith("ah: qa.cadence ", StringComparison.Ordinal) || w.AsString().StartsWith("ah: dispatch ", StringComparison.Ordinal))).Select(static w => w.AsString()));
         }
 
         if (problems.Count > 0)

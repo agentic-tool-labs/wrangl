@@ -69,7 +69,8 @@ internal static partial class SubagentInflight
         {
             if (hookEvent == "SubagentStart")
             {
-                if (PeerLatestFor.Of(c).HasPending(session) || IsMemberSession(c, session))
+                // An owning Orchestrator's subagent is recorded too, for the Graph to draw (ah2-201).
+                if (PeerLatestFor.Of(c).HasPending(session) || IsMemberSession(c, session) || Lifecycle.OrchestratorIdentity.OwnsTeam(c, c.Cwd()))
                 {
                     var agentType = c.Input.NonEmpty("agent_type");
                     peers.AppendSubagentRecord(session, agentId, "started", JsonValue.FromString("subagent"), agentType is null ? (JsonValue?)null : JsonValue.FromString(agentType));

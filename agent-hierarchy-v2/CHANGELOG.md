@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.15] - 2026-11-18
+
+### Added
+
+- **You choose how the Orchestrator runs its roles.** A new `dispatch` setting has four values: `peers` (each role in
+  its own session, the default and the behaviour until now), `subagents` (each role inside the Orchestrator's session),
+  `prefer-peers` and `prefer-subagents` (a default the Orchestrator may depart from, saying so). `/hierarchy init` asks,
+  and `/hierarchy dispatch <value>` changes it later. A subagent starts faster and needs no terminal, but it cannot be
+  messaged while it works and the daemon's timers, mail and alerts do not cover it. Legwork roles stay subagents and
+  sub-orchestrators stay peers under every value.
+- **The Orchestrator's own subagents show on the Graph**, as nodes under the Orchestrator with their agent type, the
+  way a member's subagents already did.
+
+### Fixed
+
+- **An Orchestrator session that was never registered can start its team.** When the session-start hook had not run
+  for a session (for example, the native binary was not built yet when the session started), `ah roster spawn-one` and
+  the other owner commands refused with `owner-unproven`. The session is now registered when it runs one, and the
+  command carries on. A team member is still refused, and a team another live session owns is still not taken over.
+  The refusals that remain say what to run next.
+
 ## [2.0.14] - 2026-11-18
 
 ### Changed
