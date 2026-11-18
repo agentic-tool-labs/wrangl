@@ -4,7 +4,7 @@
 #
 # Usage: scripts/publish-native.sh --dotnet CMD --native DIR --rid RID --out DIR
 #                                  --version V --contract C --name NAME [--warnaserror] [--log-dir DIR] [--artifacts DIR]
-#                                  [--no-smoke]
+#                                  [--no-smoke] [--restore-log FILE]
 #        scripts/publish-native.sh --smoke-only AHD       serve-start AHD in a throwaway sandbox, nothing else
 #        scripts/publish-native.sh --check-log FILE       fail when FILE holds the AOT "will always throw" line, nothing else
 #
@@ -16,6 +16,7 @@
 #   --artifacts DIR   where the build's bin and obj trees go, instead of <native>/artifacts, so a build run from a
 #                     read-only or cached plugin directory writes nothing under it
 #   --no-smoke        skip the serve smoke test (for a binary built for another platform, which cannot run here)
+#   --restore-log FILE  after a successful restore, copy its output to FILE (install.sh reads it for SDK package advisories)
 #
 # A publish can succeed and still yield an ahd whose daemon can never start: the native compiler logs, for the serve verb,
 # "will always throw because: Failed to load assembly" and the binary is some 4 MB smaller. Neither -warnaserror nor
@@ -50,6 +51,7 @@ artifacts=""
 smoke=true
 smoke_only=""
 check_log=""
+restore_log=""
 
 # The line the native compiler writes for a verb it compiled to a throw.
 AOT_THROW='will always throw because: Failed to load assembly'
@@ -69,6 +71,7 @@ while [ $# -gt 0 ]; do
         --no-smoke) smoke=false; shift ;;
         --smoke-only) smoke_only="${2:-}"; shift 2 ;;
         --check-log) check_log="${2:-}"; shift 2 ;;
+        --restore-log) restore_log="${2:-}"; shift 2 ;;
         *) echo "publish-native: unrecognized argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -154,10 +157,12 @@ restore_args=(restore "$native/Ah.sln" --disable-parallel -r "$rid" "-p:AhVersio
 if [ -n "$log_dir" ]; then
     "$dotnet_cmd" "${restore_args[@]}" > "$log_dir/restore.log" 2>&1 \
         || { echo "publish-native: restore failed; see $log_dir/restore.log" >&2; exit 2; }
+    [ -z "$restore_log" ] || cp "$log_dir/restore.log" "$restore_log"
 else
     capture="$(mktemp "${TMPDIR:-/tmp}/publish-native.XXXXXX")" || { echo "publish-native: cannot create a log file" >&2; exit 2; }
     run_progress "restore Ah.sln ($rid)" "$capture" "$dotnet_cmd" "${restore_args[@]}" \
         || { echo "publish-native: restore failed" >&2; exit 2; }
+    [ -z "$restore_log" ] || cp "$capture" "$restore_log"
     rm -f "$capture"
 fi
 

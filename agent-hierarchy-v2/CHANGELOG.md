@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.14] - 2026-11-18
+
+### Changed
+
+- **The installer makes sure the .NET SDK can build this version.** When the installed .NET 10 SDK is out of date (a
+  NuGet advisory names one of the packages it supplies), the installer says so with the SDK's version and path. At a
+  terminal it offers to install the current .NET 10 SDK privately under the Wrangl home and build with that; it offers
+  the same when a build fails with the system SDK. Nothing is installed without a yes, and the build already made is
+  kept if that update fails. Without a terminal it prints the command to run. A private SDK is used before the system
+  one, and a private SDK that cannot build falls back to the system SDK.
+
 ## [2.0.13] - 2026-11-18
 
 ### Added
