@@ -394,15 +394,19 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
     public string MemberVerdict(string hierarchyDir, string team, string member)
     {
         string? pane = null;
+        JsonValue? memberRow = null;
         var teamRecord = g.Roster.ReadTeamRecord(hierarchyDir, team);
         if (teamRecord is { IsMap: true } record && record.AsObject().Get("members") is { IsArray: true } rows)
         {
             foreach (var row in rows.AsArray())
             {
-                if (row.IsMap && row.AsObject().Get("name") is { IsText: true } name && name.AsString() == member
-                    && row.AsObject().Get("transport_id") is { IsText: true } transport)
+                if (row.IsMap && row.AsObject().Get("name") is { IsText: true } name && name.AsString() == member)
                 {
-                    pane = global::Ah.Abstractions.HeadlessTransport.PaneOf(transport.AsString()) ?? pane;
+                    memberRow = row;
+                    if (row.AsObject().Get("transport_id") is { IsText: true } transport)
+                    {
+                        pane = global::Ah.Abstractions.HeadlessTransport.PaneOf(transport.AsString()) ?? pane;
+                    }
                 }
             }
         }
@@ -412,7 +416,8 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
             pane,
             () =>
             {
-                var state = g.Launch.HerdrFor(teamRecord).AgentState(member);
+                // ah2-145: the row's stamp beats an untagged team's tui; ahd's own env is no session's, so it is never the fallback
+                var state = g.Launch.HerdrFor(Ah.Core.Mux.HerdrFlavour.Resolve(null, teamRecord, null, memberRow) ?? Ah.Core.Mux.HerdrFlavour.Tui).AgentState(member);
                 return new Ah.Hierarchy.PaneProbe(state.Indeterminate, state.AgentStatus, state.AgentType, state.Why);
             });
         if (verdict.Status == Ah.Hierarchy.Verdict.Live

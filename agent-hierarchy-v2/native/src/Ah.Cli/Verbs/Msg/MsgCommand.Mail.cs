@@ -164,6 +164,25 @@ internal sealed partial class MsgCommand
         return Principal.Kind == PrincipalKind.User ? [] : Me(write: true).Select(b => b.Address).ToList();
     }
 
+    /// <summary>ah2-150: the <c>orchestrator@</c> boxes of the admin's own session, which its send with no --from acts as; none for any other caller.</summary>
+    private List<string> AdminOrchestratorAddresses()
+    {
+        if (Principal.Kind != PrincipalKind.User || Principal.Sessions.Count == 0)
+        {
+            return [];
+        }
+
+        try
+        {
+            return Me(write: true).Select(b => b.Address).Where(static a => a.StartsWith("orchestrator@", StringComparison.Ordinal)).ToList();
+        }
+        catch (MailFailure)
+        {
+            // D5: a writing session that cannot be resolved or is not held sends as the user, as before ah2-150, never a refusal
+            return [];
+        }
+    }
+
     /// <summary>The session a send names: <see cref="WritingSession"/>, but none for the admin, which still sends as the user (ah2-50).</summary>
     private string? SendingSession => Principal.Kind == PrincipalKind.User ? null : WritingSession;
 
@@ -289,12 +308,13 @@ internal sealed partial class MsgCommand
         }
 
         var explicitFrom = Str("from");
-        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), team, explicitFrom));
+        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), team, explicitFrom, string.IsNullOrEmpty(explicitFrom) ? AdminOrchestratorAddresses() : null, Str("team")));
         var request = new JsonObject
         {
             ["to"] = to,
             ["from"] = from == "user" && string.IsNullOrEmpty(explicitFrom) ? JsonValue.Null : from,
-            ["session_id"] = SendingSession is { } sid ? sid : JsonValue.Null,
+            // ah2-150: an admin sending as its team's Orchestrator names its own session, which holds that address
+            ["session_id"] = (from != "user" && Principal.Kind == PrincipalKind.User ? WritingSession : SendingSession) is { } sid ? sid : JsonValue.Null,
         };
         AddContext(request, ctx);
         request["id"] = Str("id") is { Length: > 0 } given ? given : mailbox.NewId();
@@ -319,7 +339,20 @@ internal sealed partial class MsgCommand
             request["hold_exempt"] = true;
         }
 
-        var result = SendEntry(request);
+        JsonObject result;
+        try
+        {
+            result = SendEntry(request);
+        }
+        catch (MailFailure refused) when (refused.Code == "from_mismatch" && string.IsNullOrEmpty(explicitFrom) && from != "user" && Principal.Kind == PrincipalKind.User)
+        {
+            // ah2-150 D7: the admin's own choice of sender never costs the send; once more as before ah2-150, as the user
+            from = "user";
+            request["from"] = JsonValue.Null;
+            request["session_id"] = SendingSession is { } own ? own : JsonValue.Null;
+            result = SendEntry(request);
+        }
+
         JournalReport(result, ctx, toHome, team, from);
         var text = mailbox.RenderSend(result);
         RecordRelayObligation(result, toDir);

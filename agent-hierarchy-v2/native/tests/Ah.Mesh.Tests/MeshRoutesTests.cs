@@ -84,16 +84,26 @@ public sealed class MeshRoutesTests
             Func<string, string, DateTimeOffset?>? removedAt = null,
             Action<string>? log = null,
             long slowSendMs = 2000,
-            TimeSpan? sendDelay = null)
+            TimeSpan? sendDelay = null,
+            bool admin = false)
         {
             var sandbox = UnitSandbox.Create();
             Root = sandbox.Root;
             Hierarchy = Root + "/proj/.claude/ah2";
             Directory.CreateDirectory(Hierarchy);
             var vars = new Dictionary<string, string> { ["HOME"] = sandbox.Home, ["AH_HOME"] = Root + "/ah" };
-            // the caller is this test process: the user at a terminal unless a test registers it as a session
-            var fx = MeshFixture.Create(vars, Now, Root, table: new UserTerminalTable(Ah.Platform.PlatformModule.CreateProcessTable(Ah.Platform.PlatformModule.CreateProcessRunner())));
+            // the caller is this test process: the user at a terminal unless a test registers it as a session; with `admin` it is
+            // the Claude harness holding the admin grant (ah2-32), so it is the user and also holds the sessions it registers
+            var real = Ah.Platform.PlatformModule.CreateProcessTable(Ah.Platform.PlatformModule.CreateProcessRunner());
+            var fx = MeshFixture.Create(vars, Now, Root, table: admin ? new ClaudeSelfTable(real) : new UserTerminalTable(real));
             Fx = fx;
+            if (admin)
+            {
+                File.WriteAllText(
+                    Ah.Mesh.AdminGrant.LegacyPathIn(Root + "/ah"),
+                    JsonText.Stringify(new JsonObject { ["pid"] = Environment.ProcessId, ["pid_start"] = fx.OwnStart ?? string.Empty, ["session_id"] = "s-orch" }, 0));
+            }
+
             var teamFile = fx.Roster.TeamPath(Hierarchy, "tm");
             TeamFile = teamFile;
             Directory.CreateDirectory(Path.GetDirectoryName(teamFile)!);
@@ -102,7 +112,14 @@ public sealed class MeshRoutesTests
                 new JsonObject { ["name"] = "imp", ["role"] = "implementor", ["kind"] = "claude" },
                 new JsonObject { ["name"] = "bot", ["role"] = "reviewer", ["kind"] = "custom", ["harness"] = "my-harness" },
             };
-            File.WriteAllText(teamFile, JsonText.Stringify(new JsonObject { ["orchestrator"] = new JsonObject { ["pid"] = Environment.ProcessId }, ["members"] = members }, 0));
+            // the admin's team records it with its start, so its orchestrator@tm registration is proven
+            var orchestrator = new JsonObject { ["pid"] = Environment.ProcessId };
+            if (admin)
+            {
+                orchestrator["pid_start"] = fx.OwnStart ?? string.Empty;
+            }
+
+            File.WriteAllText(teamFile, JsonText.Stringify(new JsonObject { ["orchestrator"] = orchestrator, ["members"] = members }, 0));
             var config = ConfigModule.CreateCore(fx.Files, fx.Environment, () => fx.Roster, new ProcessFacts(Root, 4242));
             var effects = new Effects();
             var lookups = MeshModule.CreateContractLookups(fx.Mailbox, fx.Hierarchy.Core, config);
@@ -286,6 +303,61 @@ public sealed class MeshRoutesTests
 
         Assert.Equal("from_mismatch", Error(asMember.Body)["code"].AsString());
         Assert.Equal((403, "not_your_session"), (asSession.Status, Error(asSession.Body)["code"].AsString()));
+    }
+
+    /// <summary>ah2-150 D4: the admin sends as an address its own named session proves, keeping that session; nothing else it may claim.</summary>
+    [Fact]
+    public async Task TheAdminSendsAsTheOrchestratorItsNamedSessionHolds()
+    {
+        var rig = new Rig(admin: true);
+        rig.Register("s-orch", rig.TeamFile, "orchestrator@tm");
+        var principal = rig.Fx.Mailbox.PrincipalOf(Environment.ProcessId);
+        Assert.Equal(PrincipalKind.User, principal.Kind);
+        Assert.Equal(["orchestrator@tm"], Assert.Single(principal.Sessions).Addresses);
+
+        var r = await rig.Call("POST /v1/send", body: $"{{\"to\":\"imp@tm\",\"text\":\"hello\",\"from\":\"orchestrator@tm\",\"session_id\":\"s-orch\",{rig.ContextBody}}}");
+        var asUser = await rig.Call("POST /v1/send", body: $"{{\"to\":\"imp@tm\",\"text\":\"hi\",\"from\":\"user\",{rig.ContextBody}}}");
+
+        Assert.True(r.Status == 200, JsonText.Stringify(r.Body, 0));
+        Assert.True(asUser.Status == 200, JsonText.Stringify(asUser.Body, 0));
+        var froms = rig.Fx.Mailbox.ReadEntries(rig.Fx.Mailbox.BoxDirFor(rig.TeamFile, "imp")).Entries.Select(static e => e.Member("from")!.Value.AsString()).ToList();
+        Assert.Equal(["orchestrator@tm", "user"], froms);
+    }
+
+    [Fact]
+    public async Task NegativeTheAdminNamingASessionItDoesNotHoldIsRefused()
+    {
+        var rig = new Rig(admin: true);
+        rig.Register("s-orch", rig.TeamFile, "orchestrator@tm");
+
+        var r = await rig.Call("POST /v1/send", body: $"{{\"to\":\"imp@tm\",\"text\":\"hello\",\"from\":\"orchestrator@tm\",\"session_id\":\"s-other\",{rig.ContextBody}}}");
+
+        // today's refusal of an unheld session_id comes first (CallerOf) and is kept as it is
+        Assert.Equal((403, "not_your_session"), (r.Status, Error(r.Body)["code"].AsString()));
+    }
+
+    [Theory]
+    [InlineData("imp@tm")]
+    [InlineData("orchestrator@zz")]
+    public async Task NegativeTheAdminsHeldSessionWithoutTheAddressIsRefused(string held)
+    {
+        var rig = new Rig(admin: true);
+        rig.Register("s-orch", rig.TeamFile, held);
+
+        var r = await rig.Call("POST /v1/send", body: $"{{\"to\":\"imp@tm\",\"text\":\"hello\",\"from\":\"orchestrator@tm\",\"session_id\":\"s-orch\",{rig.ContextBody}}}");
+
+        Assert.Equal((403, "from_mismatch"), (r.Status, Error(r.Body)["code"].AsString()));
+    }
+
+    [Fact]
+    public async Task NegativeTheAdminWithNoSessionIdMaySendOnlyAsUser()
+    {
+        var rig = new Rig(admin: true);
+        rig.Register("s-orch", rig.TeamFile, "orchestrator@tm");
+
+        var r = await rig.Call("POST /v1/send", body: $"{{\"to\":\"imp@tm\",\"text\":\"hello\",\"from\":\"orchestrator@tm\",{rig.ContextBody}}}");
+
+        Assert.Equal((403, "from_mismatch"), (r.Status, Error(r.Body)["code"].AsString()));
     }
 
     private static string Code(JsonValue body) => body.IsMap && body.AsObject().ContainsKey("error") ? Error(body)["code"].AsString() : string.Empty;

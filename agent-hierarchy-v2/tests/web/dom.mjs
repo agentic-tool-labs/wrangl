@@ -30,6 +30,10 @@ class Node_ {
   append(...nodes) {
     nodes.forEach((n) => this.appendChild(n));
   }
+  prepend(...nodes) {
+    const first = this.firstChild;
+    nodes.forEach((n) => this.insertBefore(n, first));
+  }
   insertBefore(c, ref) {
     if (ref == null) {
       return this.appendChild(c);
@@ -125,6 +129,7 @@ class Element_ extends Node_ {
     this.scrollTop = 0;
     const el = this;
     this.classList = {
+      contains: (c) => (el.attrs.get("class") ?? "").split(/\s+/).filter(Boolean).includes(c),
       toggle: (c, on) => {
         const set = new Set((el.attrs.get("class") ?? "").split(/\s+/).filter(Boolean));
         on === false || (on === undefined && set.has(c)) ? set.delete(c) : set.add(c);
