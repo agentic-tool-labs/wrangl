@@ -251,6 +251,33 @@ public sealed class WorkChecklistAliasTests : IDisposable
     }
 
     [Fact]
+    public void ClosingTheLastSubItemClosesTheParentAndNegativeAnOpenRowOrAnotherOpenSubItemHoldsIt()
+    {
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "Epic", "--kind", "epic", "--wave", "now").Code);
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "Sub", "--wave", "now", "--parent", "b1").Code);
+        Assert.Equal(0, Checklist("add", "Own", "--parent", "b1").Code);
+
+        // the parent's own open row holds it
+        Assert.Equal(0, Cli(BacklogVerb.Run, "done", "b2", "--commit", "abc1234").Code);
+        Assert.Equal("not_started", Backlog("b1").State);
+
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "Epic2", "--kind", "epic", "--wave", "now").Code);
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "A", "--wave", "now", "--parent", "b3").Code);
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "B", "--wave", "now", "--parent", "b3").Code);
+
+        // another open sub-item holds it
+        Assert.Equal(0, Cli(BacklogVerb.Run, "done", "b4", "--commit", "def5678").Code);
+        Assert.Equal("not_started", Backlog("b3").State);
+
+        // the last one closes it, with that sub-item's commit and a note naming it
+        Assert.Equal(0, Cli(BacklogVerb.Run, "done", "b5", "--commit", "fed8765").Code);
+        var parent = Backlog("b3");
+        Assert.Equal("done", parent.State);
+        Assert.Equal(["fed8765"], parent.Commits);
+        Assert.Contains("closed with its last sub-item b5", parent.Note ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ARowWithNoParentClosesNoBacklogItem()
     {
         _ = BacklogRow("Ship it");

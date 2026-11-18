@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { settingsOf, shownTeams, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
+import { settingsOf, shownTeams, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS, updateDialogOf, outputOf, claimFresh, CLAIM_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
 
 // atp-1727: maximize and restore reopen the Desk window on the same tab; the next plain open (the strip toggle, Needs you) reads the
 // size from the key's `max`, as dock.js openDeskWindow does.
@@ -148,4 +148,70 @@ test("the About section names the product and shows the versions the update chec
   assert.match(ABOUT.url, /^https:\/\/github\.com\/agentic-tool-labs\/wrangl$/);
   assert.equal(aboutVersions({ installed: "2.0.0", bundled: "2.0.1" }), "mod v2.0.0 · ah v2.0.1");
   assert.equal(aboutVersions(undefined), "mod — · ah —");
+});
+
+// ah2-192: the update dialog is drawn from REBUILD_KEY and UPDATE_KEY alone.
+test("the update dialog: building, then installing, a failed install's reason, and nothing running", () => {
+  const now = Date.parse("2026-11-18T12:00:00Z");
+  const started = { version: "2.0.13", at: "2026-11-18T11:59:00Z", state: "started" };
+  const old = { installed: "2.0.12", bundled: "2.0.12" };
+  const states = (d) => d.steps.map((s) => s.state);
+
+  const building = updateDialogOf(started, old, now);
+  assert.deepEqual(states(building), ["running", "waiting"]);
+  assert.equal(building.steps[0].label, "Build the daemon (ahd 2.0.13)");
+  assert.equal(building.steps[0].word, "Running…");
+  assert.equal(building.steps[1].label, "Install the herdr mod (2.0.13)", "the version the build makes");
+  assert.equal(building.heading, "Updating Wrangl to 2.0.13…");
+  assert.equal(building.want, true);
+
+  const ready = { ...started, state: "ok" };
+  const installing = updateDialogOf(ready, { installed: "2.0.12", bundled: "2.0.13", installing: now - 5000 }, now);
+  assert.deepEqual(states(installing), ["done", "running"]);
+  assert.equal(installing.steps[1].label, "Install the herdr mod (2.0.13)");
+  assert.equal(installing.heading, "Updating Wrangl to 2.0.13…");
+
+  const failed = updateDialogOf(ready, { installed: "2.0.12", bundled: "2.0.13", failed: { version: "2.0.13", text: "herdr home not writable", at: now - 1000 } }, now, now, "/h");
+  assert.deepEqual(states(failed), ["done", "failed"]);
+  assert.equal(failed.steps[1].reason, "herdr home not writable");
+  assert.equal(failed.heading, "The update did not finish.");
+  assert.equal(updateDialogOf({ ...started, state: "failed" }, old, now, now, "/h").steps[0].reason, "The build failed; see /h/logs/rebuild.log");
+
+  const landed = updateDialogOf(ready, { installed: "2.0.13", bundled: "2.0.13", landed: now - 2000 }, now);
+  assert.deepEqual([states(landed), landed.heading, landed.finished], [["done", "done"], "Wrangl 2.0.13 is installed.", true]);
+
+  const idle = updateDialogOf({ ...started, state: "ok", at: "2026-11-17T08:00:00Z" }, old, now);
+  assert.deepEqual([states(idle), idle.want], [["none", "none"], false], "nothing running: no dialog wanted");
+  assert.deepEqual(updateDialogOf(null, null, now).steps.map((s) => s.label), ["Build the daemon", "Install the herdr mod"], "no version: none shown");
+});
+
+test("the update dialog offers Install now once the build is done and a newer mod waits for the user, auto-update off (D11)", () => {
+  const now = Date.parse("2026-11-18T12:00:00Z");
+  const ready = { version: "2.0.13", at: "2026-11-18T11:59:00Z", state: "ok" };
+  const newer = { installed: "2.0.12", bundled: "2.0.13" };
+  const d = updateDialogOf(ready, newer, now);
+  assert.deepEqual([d.offer, d.heading, d.steps[1].word], [true, "ahd 2.0.13 is ready. The herdr mod is not installed yet.", "Waiting for you"]);
+  assert.equal(updateDialogOf(ready, newer, now, now, null, true).offer, false, "auto-update on: no offer");
+  assert.equal(updateDialogOf(ready, { ...newer, installing: now - 1000 }, now).offer, false, "an install running: no offer");
+  assert.equal(updateDialogOf(ready, { installed: "2.0.13", bundled: "2.0.13" }, now).offer, false, "nothing to install: no offer");
+  assert.equal(updateDialogOf({ ...ready, state: "started" }, newer, now).offer, false, "the build still runs: no offer");
+});
+
+test("the update dialog shows install output only for the update it shows (Amendment 3)", () => {
+  const now = Date.parse("2026-11-18T12:00:00Z");
+  const started = { version: "2.0.13", at: "2026-11-18T11:59:00Z", state: "started" };
+  const earlier = { installed: "2.0.12", bundled: "2.0.12", output: "installed 2.0.12", landed: now - 86400e3 };
+  assert.equal(updateDialogOf(started, earlier, now).output, null, "a new build: yesterday's install output is not shown");
+  assert.equal(updateDialogOf({ ...started, state: "ok" }, { ...earlier, installed: "2.0.13", bundled: "2.0.13", landed: now - 1000 }, now).output, "installed 2.0.12", "this update's install: shown");
+});
+
+test("the update dialog's output keeps only its last lines, the build log's first, and is claimed once", () => {
+  const log = Array.from({ length: 400 }, (_, i) => `build ${i}`).join("\n");
+  const out = outputOf(log, "installed\nwarn: kept\n", false, 300);
+  assert.equal(out.length, 300);
+  assert.deepEqual(out.slice(-3), ["build 399", "installed", "warn: kept"]);
+  assert.deepEqual(outputOf(null, null, true), ["Installing…"], "an install with no output yet");
+  assert.equal(claimFresh({ overlay: "o1", at: 1000 }, 1000 + CLAIM_MS - 1), true);
+  assert.equal(claimFresh({ overlay: "o1", at: 1000 }, 1000 + CLAIM_MS), false, "a claim left by a crash goes stale");
+  assert.equal(claimFresh(null, 1000), false);
 });

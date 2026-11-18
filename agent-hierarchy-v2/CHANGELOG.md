@@ -4,6 +4,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.13] - 2026-11-18
+
+### Added
+
+- **An update dialog in herdr desktop.** When the daemon is rebuilt after a plugin update, or the herdr mod is
+  installed, a dialog shows the Wrangl logo, the two steps with their state, and a scrolling pane of the build log and
+  the installer's output. Closing it stops nothing. With auto-update off it offers an "Install now" button once the
+  daemon is built. It replaces the "Building ahd" and "ahd is ready" notices while it is open.
+
+### Fixed
+
+- **Installing no longer fails on a NuGet advisory.** The build treated every warning as an error, so once an advisory
+  was published for the compiler package of an older .NET 10 SDK (`NU1903` on `Microsoft.DotNet.ILCompiler`), `ahd`
+  could not be built on a machine with that SDK. Advisories are now reported as warnings. Updating the .NET SDK clears
+  the warning.
+
+### Changed
+
+- **A ship leaves a backlog item open while it has an open sub-item.** A release used to mark an epic done when its own
+  rows shipped, even with work open under it. It now stays open, and closing or dropping its last open sub-item closes
+  it, unless it still has an open checklist row in any team. `ah backlog done` on the epic itself still closes it.
+
 ## [2.0.12] - 2026-11-18
 
 ### Fixed

@@ -26,6 +26,7 @@ import { markCell } from "./marks.js";
 import { shownTeams, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
 import { settings, settingsView, checkUpdate, installClick } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
+import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
 import { ah, target } from "./ah.js";
 import { UNRESOLVED, targetKey } from "./target-model.js";
 import { Link } from "./link-model.js";
@@ -59,6 +60,7 @@ export default class Ah2 extends View {
       return;
     }
     if (this.view === "dismiss") return dismissInit(this, cx); // the Dismiss dialog (dismiss.js): its own bounded task, no poll
+    if (this.view === "update") return updateInit(this, cx); // the update dialog (update.js): its own re-read, no poll
     if (this.view === "menu") { // the strip's … popup (tabs.js): keys only, no poll
       this.keys = cx.focus_handle();
       cx.spawn(async (cx) => {
@@ -99,6 +101,7 @@ export default class Ah2 extends View {
   // Herdr calls this when the copy goes (an overlay closed, or quit). Only our own id: reopening the same key replaces the window.
   async close() {
     this.gone = true; // ends the rebuild watch (rebuild)
+    if (this.view === "update") updateClose(this); // its claim goes with it (update.js)
     if (this.view === "board") boardLeave(this); // the Board's visit ends: store what it saw (board.js)
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     this.graphTravel?.cancel(); // a brief's dot in travel (graph-model.js travelClock) leaves no task behind
@@ -228,6 +231,7 @@ export default class Ah2 extends View {
     if (this.view === "graph") return graphView(this, t, closeOf(), cx);
     if (this.view === "settings") return settingsView(this, t, () => closeOverlay(props().overlay));
     if (this.view === "dismiss") return dismissView(this, t);
+    if (this.view === "update") return updateView(this, t);
     return this.team ? this.sitrep(t) : this.sidebar(t);
   }
 
@@ -301,7 +305,10 @@ export default class Ah2 extends View {
     const held = shared(REBUILD_KEY) ?? null;
     const step = rebuildStep(held, now);
     if (step.keep !== held) setShared(REBUILD_KEY, step.keep);
-    if (step.notice !== null) notify(rebuildNotify(step.notice, home));
+    // ah2-192: a build start opens the update dialog instead of its notice; "ready" is not posted while the dialog shows it; a
+    // failure is posted as well, in case the dialog was closed
+    const inDialog = step.notice?.kind === "building" && openUpdate(); // false: a claim with no dialog here, so the notice still goes
+    if (!inDialog && step.notice !== null && !(step.notice.kind === "ready" && updateOpen())) notify(rebuildNotify(step.notice, home));
     if (step.notice?.kind === "ready") checkUpdate(); // the mod update offer, held during the build, follows the ready notice
     return step.watch;
   }
