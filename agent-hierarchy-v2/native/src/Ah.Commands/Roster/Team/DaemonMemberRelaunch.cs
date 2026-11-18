@@ -115,7 +115,8 @@ internal sealed class DaemonMemberRelaunch(IRosterCliServices services) : IMembe
         string? pane = null;
         if (row.IsMap &&MemberPlanning.Text(row.Member("transport_id")) is { Length: > 0 } recorded)
         {
-            var paneState = launch.PaneStateFor(teamRecord);
+            // ah2-145: the row's stamp beats an untagged team's tui; ahd's own env is no session's, so it is never the fallback
+            var paneState = launch.PaneStateFor(Ah.Core.Mux.HerdrFlavour.Resolve(null, teamRecord, null, row) ?? Ah.Core.Mux.HerdrFlavour.Tui);
             paneState?.Refresh();
             var reading = paneState?.Pane(transport, recorded) ?? new PaneReading(PaneKnowledge.Unknown, null, "this build has no pane reader");
             switch (reading.State)

@@ -287,12 +287,23 @@ internal static partial class MeshRoutes
         var from = Text(req, "from");
         if (principal.Kind == PrincipalKind.User)
         {
-            if (from is not null && from != "user")
+            // ah2-150 D4: the admin may send as an address its own named session holds; the session and its addresses are the
+            // process tree's registrations (CallerIdentity.Choose), the body's session_id only names one of them
+            var asOwnSession = from is not null && from != "user" && Text(req, "session_id") is { Length: > 0 }
+                && choice.Session is not null && choice.Addresses.Contains(from, StringComparer.Ordinal);
+            if (from is not null && from != "user" && !asOwnSession)
             {
                 return Refusal("from_mismatch", $"--from {from} is not the user's address; a caller with no session sends as user");
             }
 
-            req.Remove("session_id");
+            if (asOwnSession)
+            {
+                req["session_id"] = choice.Session!.SessionId;
+            }
+            else
+            {
+                req.Remove("session_id");
+            }
         }
         else
         {

@@ -13,7 +13,9 @@ namespace Ah.Cli.Tests;
 public sealed class HerdrFlavourRoutingTests : IDisposable
 {
     private const string CoreTeam = """{"transport":"herdr","herdr_flavour":"core","members":[]}""";
-    private const string TuiTeam = """{"transport":"herdr","members":[]}""";
+    // ah2-145: a tui team records it; an untagged one says nothing and resolves to the env
+    private const string TuiTeam = """{"transport":"herdr","herdr_flavour":"tui","members":[]}""";
+    private const string UntaggedTeam = """{"transport":"herdr","members":[]}""";
 
     private readonly Sandbox _sandbox = new();
 
@@ -40,6 +42,27 @@ public sealed class HerdrFlavourRoutingTests : IDisposable
         Assert.Equal("tui", HerdrFlavour.Resolve(Doc("""{"herdr_flavour":"tui"}"""), JsonText.Parse(CoreTeam), "core", coreRow));
         Assert.Equal("core", HerdrFlavour.Resolve(null, JsonText.Parse(CoreTeam), "tui", JsonText.Parse("""{"name":"ux"}""")));
         Assert.Equal("core", HerdrFlavour.Resolve(null, JsonText.Parse(CoreTeam), "tui", JsonText.Parse("""{"name":"ux","herdr_flavour":"tmux"}""")));
+    }
+
+    [Fact]
+    public void AnUntaggedTeamResolvesToTheEnvAndARecordedTuiTeamStaysTui()
+    {
+        Assert.Equal("core", HerdrFlavour.Resolve(null, JsonText.Parse(UntaggedTeam), "core"));
+        Assert.Equal("tui", HerdrFlavour.Resolve(null, JsonText.Parse(TuiTeam), "core"));
+        Assert.Null(HerdrFlavour.Resolve(null, JsonText.Parse(UntaggedTeam), null));
+        // a team flavour that is neither tui nor core says nothing either
+        Assert.Equal("core", HerdrFlavour.Resolve(null, JsonText.Parse("""{"herdr_flavour":"tmux","members":[]}"""), "core"));
+    }
+
+    [Fact]
+    public void TheTeamAndMemberFlavoursAreReadInAnyCase()
+    {
+        Assert.Equal("core", HerdrFlavour.RecordedOfTeam(JsonText.Parse("""{"herdr_flavour":"Core"}""")));
+        Assert.Equal("tui", HerdrFlavour.OfMember(JsonText.Parse("""{"name":"a","herdr_flavour":"TUI"}""")));
+        Assert.Equal("core", HerdrFlavour.Resolve(null, JsonText.Parse("""{"herdr_flavour":"CORE"}"""), "tui"));
+        // the nearest value that must not match: a near-miss spelling
+        Assert.Null(HerdrFlavour.RecordedOfTeam(JsonText.Parse("""{"herdr_flavour":"cores"}""")));
+        Assert.Null(HerdrFlavour.OfMember(JsonText.Parse("""{"name":"a","herdr_flavour":" tui"}""")));
     }
 
     [Fact]

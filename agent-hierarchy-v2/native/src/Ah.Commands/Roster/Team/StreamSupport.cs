@@ -115,11 +115,31 @@ internal static partial class StreamSupport
         var launch = c.Services.Launch!;
         JsonArray? agents = null;
         JsonArray? tabs = null;
-        if (wantAgents)
+        IReadOnlyList<Ah.Launch.IHerdr> asked = [];
+        try
+        {
+            asked = IRosterLaunch.TeamHerdrs(launch, c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile), Ah.Core.Mux.HerdrFlavour.SessionFlavour(c.EnvText));
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            warnings.Add(error.Message);
+        }
+
+        // ah2-145: agents come only from the servers the team's members live on; a session on no herdr with no stamped member asks none
+        if (wantAgents && asked.Count > 0)
         {
             try
             {
-                agents = launch.Topology.Query();
+                var found = new JsonArray();
+                foreach (var herdr in asked)
+                {
+                    foreach (var a in ReferenceEquals(herdr, launch.Herdr) ? launch.Topology.Query() : herdr.Agents())
+                    {
+                        found.Add(a);
+                    }
+                }
+
+                agents = found;
             }
             catch (Exception error) when (error is not OutOfMemoryException)
             {
@@ -133,8 +153,6 @@ internal static partial class StreamSupport
         var whole = true;
         try
         {
-            var asked = IRosterLaunch.TeamHerdrs(launch, c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile), Ah.Core.Mux.HerdrFlavour.SessionFlavour(c.EnvText));
-
             // no server asked is no list either: a tab nobody listed is not proven gone
             whole = asked.Count > 0;
             foreach (var herdr in asked)

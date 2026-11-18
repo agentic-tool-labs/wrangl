@@ -963,7 +963,9 @@ internal class WatchHostAdapter(
     {
         var kind = KindOf(memberRow);
         var session = Str(memberRow, "session_id");
-        var flavour = Ah.Core.Mux.HerdrFlavour.Resolve(string.IsNullOrEmpty(session) ? null : graph.Mailbox.ReadRegistration(session), team, null, JsonValue.FromObject(memberRow));
+        // ah2-145: an untagged team with nothing else to go on stays tui; ahd's own env is no session's
+        var flavour = Ah.Core.Mux.HerdrFlavour.Resolve(string.IsNullOrEmpty(session) ? null : graph.Mailbox.ReadRegistration(session), team, null, JsonValue.FromObject(memberRow))
+            ?? Ah.Core.Mux.HerdrFlavour.Tui;
         var screen = seams.Herdr.ReadVisibleScreen(Str(memberRow, "name") ?? string.Empty, flavour);
         var seen = screens.RecognizeScreen(kind, screen, "blocked");
         return new PromptRead(screens.ScreenHash(screen), screen, Str(seen, "prompt"));

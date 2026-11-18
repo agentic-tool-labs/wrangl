@@ -1066,7 +1066,7 @@ internal sealed partial class Mailbox
         && r.Get("pid") is { IsNumber: true } pid && double.IsFinite(pid.AsNumber()) && pid.AsNumber() == Math.Floor(pid.AsNumber())
         && hierarchy.Core.PidRunning(pid, r.Get("pid_start"), Ah.Core.Time.LivenessPolicy.RunningOrUnknown);
 
-    public MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null)
+    public MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null)
     {
         if (!string.IsNullOrEmpty(explicitFrom))
         {
@@ -1086,7 +1086,12 @@ internal sealed partial class Mailbox
 
         if (callerAddresses.Count == 0)
         {
-            return new MailboxOutcome<string>("user", null);
+            // ah2-150: an admin that is a team's Orchestrator sends as it: its one team, else the one --team or the recipient names
+            var held = (adminOrchestrators ?? []).Distinct(StringComparer.Ordinal).ToList();
+            var decided = held.Count == 1
+                ? held[0]
+                : new[] { teamHint, toTeam }.Where(static t => !string.IsNullOrEmpty(t)).Select(static t => $"orchestrator@{t}").FirstOrDefault(held.Contains);
+            return new MailboxOutcome<string>(decided ?? "user", null);
         }
 
         if (callerAddresses.Count == 1)

@@ -441,8 +441,12 @@ public interface IMailbox
     /// <summary>Appends <paramref name="entry"/> to the box, idempotent on its id; the result is <c>{entry, existed}</c>.</summary>
     MailboxOutcome<JsonObject> AppendEntry(string dir, JsonObject entry, JsonObject? attempt = null);
 
-    /// <summary>The address a send is from: the caller's only address, the one in the recipient's team, or the explicit one.</summary>
-    MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null);
+    /// <summary>
+    /// The address a send is from: the caller's only address, the one in the recipient's team, or the explicit one. A caller with no
+    /// address (the user) sends as <c>user</c>, unless <paramref name="adminOrchestrators"/>, the admin's own session's
+    /// <c>orchestrator@</c> boxes, decide one: the only one, else the one of <paramref name="teamHint"/> or <paramref name="toTeam"/>.
+    /// </summary>
+    MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null);
 
     /// <summary>The text a SendMessage relay carries for <paramref name="entry"/> in the box of <paramref name="address"/>.</summary>
     string RelayLine(JsonValue entry, string address);

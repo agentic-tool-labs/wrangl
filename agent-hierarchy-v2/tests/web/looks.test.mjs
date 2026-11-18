@@ -604,3 +604,22 @@ test("the Look page works out a profile's contrasts once a render (b41)", () => 
   const src = readFileSync(new URL("../../web/ui/looks-page.js", import.meta.url), "utf8");
   assert.equal(src.split("this.contrasts(look, tab)").length - 1, 1);
 });
+
+test("looks boot on the shared fake DOM logs no boot failure; a broken boot input still does (ah2-149)", async () => {
+  const { installDom } = await import("./dom.mjs");
+  const logged = [];
+  const error = console.error;
+  console.error = (...a) => logged.push(a.map(String).join(" "));
+  try {
+    installDom();
+    bootLooks(globalThis.document, { localStorage: new Map() });
+    assert.deepEqual(logged.filter((l) => l.includes("boot failed")), []);
+    assert.equal(globalThis.document.body.children.filter((c) => c.className === "look-stage").length, 1);
+    installDom();
+    globalThis.document.body.firstChild.classList = {};
+    bootLooks(globalThis.document, { localStorage: new Map() });
+    assert.equal(logged.filter((l) => l.includes("looks: boot failed, House stays")).length, 1);
+  } finally {
+    console.error = error;
+  }
+});

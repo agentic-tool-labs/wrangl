@@ -77,4 +77,54 @@ public sealed partial class RosterTeamVerbTests
         Assert.False(result.Member("resynced")!.Value.AsBool());
         Assert.Equal("the team record names no transport", result.Member("reason")!.Value.AsString());
     }
+
+    private bool AgentListAsked() => _runner.Calls.Any(c => c.Contains("agent") && c.Contains("list"));
+
+    [Fact]
+    public void StreamStatusOnASessionOnNoHerdrWithAnUntaggedTeamAndNoStampAsksNoAgentList()
+    {
+        ArrangeMove(null, Project);
+
+        var (code, stdout, stderr) = Roster("stream-status", "--team", "proj");
+
+        Assert.True(code == 0, stdout + stderr);
+        Assert.False(AgentListAsked());
+        Assert.Null(JsonText.Parse(stdout).Member("warnings"));
+    }
+
+    [Fact]
+    public void StreamStatusOnATuiSessionWithAnUntaggedTeamStillAsksTheAgentList()
+    {
+        _extraEnv["HERDR_ENV"] = "1";
+        ArrangeMove(null, Project);
+
+        var (code, stdout, stderr) = Roster("stream-status", "--team", "proj");
+
+        Assert.True(code == 0, stdout + stderr);
+        Assert.True(AgentListAsked());
+    }
+
+    private string? DismissPlanHerdrReason(string member)
+    {
+        _extraEnv["HC_TERMINAL_ID"] = "t1";
+        WriteTeam("proj", LiveTeamJson("herdr", member).Replace("\"transport\":\"herdr\"", "\"transport\":null", StringComparison.Ordinal));
+
+        var (code, stdout, stderr) = Roster("dismiss", "proj-reviewer", "--plan", "--team", "proj");
+
+        Assert.True(code == 0, stdout + stderr);
+        return JsonText.Parse(stdout).Member("sources")?.Member("herdr")?.Member("reason") is { IsText: true } r ? r.AsString() : null;
+    }
+
+    [Fact]
+    public void DismissOfACoreStampedMemberOnARecordWithNoTransportGivesNoNotHerdrReason()
+    {
+        var reason = DismissPlanHerdrReason(StampedPeer.Replace("\"tui\"", "\"core\"", StringComparison.Ordinal));
+
+        Assert.NotEqual("team transport is not herdr", reason);
+        Assert.NotEqual("team record names no transport", reason);
+    }
+
+    [Fact]
+    public void DismissOfAnUnstampedMemberOnARecordWithNoTransportSaysTheRecordNamesNone() =>
+        Assert.Equal("team record names no transport", DismissPlanHerdrReason(StampedPeer.Replace(",\"herdr_flavour\":\"tui\"", string.Empty, StringComparison.Ordinal)));
 }

@@ -146,7 +146,7 @@ public sealed record Teardown(
     {
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(context);
-        var query = ArmApplies(dir, scope) ? ArmQuery() : new HerdrArm(false, "team transport is not herdr", new JsonArray(), string.Empty, new JsonArray());
+        var query = ArmNotApplying(dir, scope) is { } why ? new HerdrArm(false, why, new JsonArray(), string.Empty, new JsonArray()) : ArmQuery();
         var prefix = ScopePrefix(scope, context);
         var selfPane = Ah.Core.Mux.HerdrFlavour.SessionPaneId(Environment.GetVariable);
         var real = Messages.RealCwd(context.Cwd);
@@ -918,16 +918,32 @@ public sealed record Teardown(
         }
     }
 
-    /// <summary>A team riding tmux or terminal has no herdr topology that could describe it; with no team file there is no transport to contradict.</summary>
-    private bool ArmApplies(string dir, TeamScope scope)
+    /// <summary>
+    /// Why the herdr arm does not apply, or null when it does. A team riding tmux or terminal has no herdr topology that could describe it;
+    /// with no team file there is no transport to contradict. ah2-145: a record naming no transport applies when a member row was stamped
+    /// for herdr (<see cref="HerdrFlavour.OnHerdr"/>).
+    /// </summary>
+    private string? ArmNotApplying(string dir, TeamScope scope)
     {
         if (scope.NoTeam)
         {
-            return true;
+            return null;
         }
 
         var team = Roster.ReadTeamRecord(dir, string.IsNullOrEmpty(scope.Team) ? null : scope.Team);
-        return !team.IsTruthy || (team.Member("transport") is { IsText: true } t && t.AsString() == "herdr");
+        if (!team.IsTruthy)
+        {
+            return null;
+        }
+
+        if (team.Member("transport") is { IsText: true } t)
+        {
+            return t.AsString() == "herdr" ? null : "team transport is not herdr";
+        }
+
+        return team.Member("members") is { IsArray: true } rows && rows.AsArray().Any(static m => HerdrFlavour.OnHerdr(m, null))
+            ? null
+            : "team record names no transport";
     }
 
     private string ScopePrefix(TeamScope scope, LaunchContext context) =>

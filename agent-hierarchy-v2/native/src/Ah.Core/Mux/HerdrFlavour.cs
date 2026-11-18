@@ -11,7 +11,7 @@ public static class HerdrFlavour
     public const string Tui = "tui";
     public const string Core = "core";
 
-    /// <summary>The team-record field; absent means <see cref="Tui"/>.</summary>
+    /// <summary>The team-record field; absent, <see cref="OfTeam"/> (ahd) reads <see cref="Tui"/> and <see cref="Resolve"/> the env.</summary>
     public const string Field = "herdr_flavour";
 
     /// <summary><c>HERDR_ENV=1</c> → tui; else a non-empty <c>HC_TERMINAL_ID</c> → core; else null (not herdr).</summary>
@@ -40,23 +40,26 @@ public static class HerdrFlavour
     public static string OfTeam(JsonValue? team) =>
         team is { IsMap: true } t && t.Member(Field) is { IsText: true } f && f.AsString() == Core ? Core : Tui;
 
-    /// <summary>The flavour a team record names, or null when it names none: unlike <see cref="OfTeam"/>, an untagged record is unknown, not <see cref="Tui"/>.</summary>
-    public static string? RecordedOfTeam(JsonValue? team) =>
-        team is { IsMap: true } t && t.Member(Field) is { IsText: true } f && f.AsString() is Tui or Core ? f.AsString() : null;
+    /// <summary>The flavour a team record names (any case), or null when it names none: unlike <see cref="OfTeam"/>, an untagged record is unknown, not <see cref="Tui"/>.</summary>
+    public static string? RecordedOfTeam(JsonValue? team) => team is { IsMap: true } t ? Named(t.Member(Field)) : null;
 
     /// <summary>
     /// The flavour of the server an existing agent lives on: its registration's <see cref="Field"/> when present, else its member
-    /// row's (<paramref name="member"/>, stamped at spawn), else its team's (<see cref="OfTeam"/>) when it belongs to one, else <paramref name="env"/>.
+    /// row's (<paramref name="member"/>, stamped at spawn), else the flavour its team records (<see cref="RecordedOfTeam"/>), else
+    /// <paramref name="env"/>. ah2-145: a team record with no flavour says nothing, so it falls to the env.
     /// </summary>
     public static string? Resolve(JsonObject? registration, JsonValue? team, string? env, JsonValue? member = null) =>
         registration?.Get(Field) is { IsText: true } f && f.AsString() is Tui or Core ? f.AsString()
-        : OfMember(member) is { } row ? row
-        : team is { IsMap: true } ? OfTeam(team)
-        : env;
+        : OfMember(member) ?? RecordedOfTeam(team) ?? env;
 
-    /// <summary>The flavour a member row was stamped with at spawn, or null when it carries none.</summary>
-    public static string? OfMember(JsonValue? member) =>
-        member is { IsMap: true } m && m.Member(Field) is { IsText: true } f && f.AsString() is Tui or Core ? f.AsString() : null;
+    /// <summary>The flavour a member row was stamped with at spawn (any case), or null when it carries none.</summary>
+    public static string? OfMember(JsonValue? member) => member is { IsMap: true } m ? Named(m.Member(Field)) : null;
+
+    private static string? Named(JsonValue? field) =>
+        field is not { IsText: true } f ? null
+        : string.Equals(f.AsString(), Tui, StringComparison.OrdinalIgnoreCase) ? Tui
+        : string.Equals(f.AsString(), Core, StringComparison.OrdinalIgnoreCase) ? Core
+        : null;
 
     /// <summary>
     /// Whether <paramref name="member"/> lives on herdr: <paramref name="transport"/> (the row's, else its team's) is <c>"herdr"</c>, or the row

@@ -122,6 +122,54 @@ public sealed class MsgPrincipalTests : IDisposable
         Assert.Equal(PrincipalKind.Session, principal.Kind); // a plain session, not the admin
     }
 
+    /// <summary>ah2-150 D2'': a user caller that holds no session (the UI, a plain terminal) still sends as <c>user</c>.</summary>
+    [Fact]
+    public void NegativeAUserWithNoSessionStillSendsAsUser()
+    {
+        AsAdmin();
+        Assert.Empty(_graph.Mailbox.PrincipalOf(System.Environment.ProcessId).Sessions);
+
+        var (send, sendErr) = Run("send", "tm-implementor@tm", "--text", "hi");
+
+        Assert.True(send == 0, sendErr);
+        var box = Assert.Single(_graph.Mailbox.ListBoxes(), static b => b.Address == "tm-implementor@tm");
+        Assert.Equal("user", Assert.Single(_graph.Mailbox.ReadEntries(box.Dir).Entries).Member("from")!.Value.AsString());
+    }
+
+    /// <summary>
+    /// ah2-150 D5: an admin whose hint names a session or pid it does not hold still sends, as the user, as before ah2-150. With --team
+    /// the verb's team resolution (MsgCommand.cs ResolveTeamArg) does not read the session, so only the send's own choice of sender meets the hint;
+    /// without --team that resolution refuses the hint for every msg verb, as it did before ah2-150.
+    /// </summary>
+    [Theory]
+    [InlineData("--session", "s-other")]
+    [InlineData("--orchestrator-pid", "1")]
+    public void TheAdminWithAnUnheldHintStillSendsAsUser(string option, string value)
+    {
+        AsAdmin();
+        AsOrchestrator();
+
+        var (send, sendErr) = Run("send", "tm-implementor@tm", "--text", "hi", "--team", "tm", option, value);
+
+        Assert.True(send == 0, sendErr);
+        var box = Assert.Single(_graph.Mailbox.ListBoxes(), static b => b.Address == "tm-implementor@tm");
+        Assert.Equal("user", Assert.Single(_graph.Mailbox.ReadEntries(box.Dir).Entries).Member("from")!.Value.AsString());
+    }
+
+    /// <summary>ah2-150 D2': with several orchestrator boxes, only --team or the recipient's team decides; neither naming one leaves <c>user</c>, and an explicit --from is honoured as before.</summary>
+    [Theory]
+    [InlineData("b", null, "orchestrator@b")]
+    [InlineData(null, "c", "orchestrator@c")]
+    [InlineData(null, null, "user")]
+    [InlineData("other", null, "user")]
+    public void TheAdminsTeamIsTheOneTeamOrRecipientNames(string? toTeam, string? teamHint, string expected)
+    {
+        Assert.Equal(expected, _graph.Mailbox.ChooseFrom([], toTeam, null, ["orchestrator@b", "orchestrator@c"], teamHint).Value);
+        Assert.Equal("orchestrator@b", _graph.Mailbox.ChooseFrom([], "other", null, ["orchestrator@b"]).Value); // its one team decides alone
+        Assert.Equal("user", _graph.Mailbox.ChooseFrom([], "b", "user", ["orchestrator@b"]).Value); // explicit --from user is honoured
+        Assert.Null(_graph.Mailbox.ChooseFrom([], "b", "orchestrator@b", ["orchestrator@b"]).Value); // nor may it be claimed explicitly
+    }
+
     [Fact]
     public void NegativeTheAdminCannotTakeAnotherSessionsIdAndWithNoRegistrationHasNoSession()
     {

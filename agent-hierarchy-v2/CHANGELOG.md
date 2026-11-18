@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.9] - 2026-11-17
+
+### Fixed
+
+- **The rest of `ah` follows the herdr your session is on.** `ah roster move`, resume and teardown, and the daemon's
+  relaunch and wake paths, no longer read a team record without a herdr marker as the terminal herdr: a member's own
+  stamp decides, then the session's herdr environment. `ah roster dismiss` on such a team no longer reports "team
+  transport is not herdr" for a member that is on herdr; a team whose record names no transport at all now says so.
+- **An Orchestrator with an admin grant sends its briefs as the Orchestrator.** They were stored as from `user`, so
+  members read "brief from user" and the check-in alarm said "No delivery recorded" for briefs that had arrived. The
+  daemon accepts that sender only for a session the admin holds that itself holds the address; when it does not, the
+  send goes out as `user`, as before.
+
+### Changed
+
+- The web tests' stand-in DOM now lets the looks boot run, so a passing run no longer prints hundreds of
+  "looks: boot failed" lines. No product change.
+
 ## [2.0.8] - 2026-11-17
 
 ### Fixed
