@@ -24,7 +24,13 @@
     "stderr": "",
     "exit": 0,
     "tree_diff": {
-      "added": [],
+      "added": [
+        {
+          "path": "ah/state/ah.db.peer_records.jsonl",
+          "mode": "0644",
+          "content": "{\"type\":\"subagent\",\"session_id\":\"sess-contract\",\"agent_id\":\"a-1\",\"status\":\"started\",\"ts\":\"<ISO:1>\",\"kind\":\"subagent\",\"agent_type\":\"general-purpose\",\"op_id\":\"<OPID:1>\"}\n"
+        }
+      ],
       "removed": [],
       "changed": []
     }

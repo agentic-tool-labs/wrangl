@@ -34,6 +34,7 @@ internal static partial class ConfigRegistry
     internal static readonly string[] RouteValues = ["peers"];
     internal static readonly string[] StaleRouteValues = ["subagents", "prefer-peers"];
     internal static readonly string[] DispatchModes = ["peer", "model"];
+    internal static readonly string[] DispatchSettingValues = ["peers", "subagents", "prefer-peers", "prefer-subagents"];
     internal static readonly string[] RosterLevels = ["repo-user", "repo", "global"];
     internal static readonly string[] RosterLayoutValues = ["auto", "columns", "grid"];
     internal static readonly string[] BuiltinFixedKeys = ["class", "label", "description", "routes"];

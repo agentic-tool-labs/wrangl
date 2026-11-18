@@ -54,6 +54,14 @@ internal sealed partial class RosterContext
     /// <summary>Replaces the proof with one that carries the lane-lead carve an unmarked owner was shown to hold.</summary>
     internal void AdoptProved(ProvedCaller proved) => _proved = proved;
 
+    /// <summary>Drops the cached proof, so the next <see cref="Proved"/> walks again: after the guard registered the session above the command.</summary>
+    internal void ForgetProof()
+    {
+        _proved = null;
+        _soJudged = false;
+        _so = null;
+    }
+
     private ProvedCaller Prove()
     {
         // The daemon's own call acts as no session: its process ancestry is whatever started the daemon, which proves nothing about the team.

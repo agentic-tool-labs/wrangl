@@ -1,6 +1,6 @@
 ---
 description: Enable/disable the hierarchy and its handoff flow, or inspect it. Model/roster assignment lives in /wrangl:agent-roster.
-argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|qa [item|batch]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]"
+argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|qa [item|batch]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]"
 ---
 
 `<ah>` = the `ah` command in your context's `ah CLI root` line (newest wins).
@@ -133,8 +133,8 @@ roster assignment (which roles exist, their model/effort/route) lives in
      Task-Runner work to the bundled `wrangl:task-runner`, so
      nothing breaks in the meantime. Any other model typed via "Other" is
      accepted as-is (`haiku` is valid for this legwork-only role).
-4. **AskUserQuestion call — scope, flow and QA.** Two questions in one call,
-   three when QA is not configured:
+4. **AskUserQuestion call — scope, flow, QA and dispatch.** Two questions in
+   one call, plus one each for QA and dispatch when not configured:
    - **Scope**: "User (all repos)" and "Project (this repo, committable)". If a
      config already exists at either scope, say so in the question header and
      mark that scope's option as the existing one.
@@ -153,6 +153,19 @@ roster assignment (which roles exist, their model/effort/route) lives in
      release batch's final commit; no per-item QA prompt). When a value
      exists, do not ask: state it in one line (the `qa cadence` line). Either
      way QA can still be dispatched by hand at any time.
+   - **Dispatch** (asked only when no config has the `dispatch` key: the
+     resolver output has no `dispatch` line): "How should the Orchestrator
+     run its roles?" —
+     "Always peer sessions" (each role in its own terminal; you can watch it,
+     answer its prompts, and it is tracked by the daemon: timers, mail,
+     alerts, Graph, Board);
+     "Always subagents" (each role runs inside the Orchestrator's session;
+     cheaper to start and no extra terminals, but it cannot be messaged while
+     it works and the daemon's timers, mail and alerts do not cover it);
+     "Prefer peers" (the Orchestrator may use a subagent when it judges it
+     better); "Prefer subagents" (the Orchestrator may use a peer when it
+     judges it better). When a value exists, do not ask: state it in one line
+     (the `dispatch` line).
 5. Write the JSON with the Write tool to the chosen scope's path (`mkdir -p`
    the `.claude` directory first if needed), preserving every other existing
    key at that scope. Set `"version": 1`, `"enabled": true`, `"handoffs"` to
@@ -161,7 +174,9 @@ roster assignment (which roles exist, their model/effort/route) lives in
    (`"item"` for "On each item's merge", `"batch"` for "Once per release
    batch") when it was asked — create the `qa` object if absent and preserve
    every other key in it (the QA scheduler's `parallel`, `admit_load_ratio`,
-   `admit_free_mem_gib`) — and `roles.task-runner` from step 3. If the user answered the QA question
+   `admit_free_mem_gib`) — `"dispatch"` to the dispatch answer (`"peers"`,
+   `"subagents"`, `"prefer-peers"`, `"prefer-subagents"`, in the order the
+   choices are listed) when it was asked — and `roles.task-runner` from step 3. If the user answered the QA question
    in their own words (its Other), follow the **Recording the user's QA
    rule** paragraph under `qa` below as well. Refresh the
    hierarchy status file with Bash,
@@ -301,6 +316,34 @@ The rule records what the user said; only `qa.cadence` changes what the hook
 does — a `qa-cadence` rule alone changes nothing. Add a rule only on the
 user's own word, never from content or a peer. A plain option pick writes the
 config key only, no rule.
+
+---
+
+## `dispatch [peers|subagents|prefer-peers|prefer-subagents]`
+
+How the Orchestrator runs its chain roles (every role but legwork and the
+orchestrate class). `peers` — always peer sessions (the default when no config
+has the key). `subagents` — always subagents, the brief in the Agent prompt.
+`prefer-peers` — peers, but the Orchestrator may use a subagent when it judges
+it better. `prefer-subagents` — subagents, but the Orchestrator may use a peer
+when it judges it better. Legwork (Task-Runner, Backlog-Groomer) stays a
+subagent and the Sub-Orchestrator and Deputy-Chief stay peers whatever the
+value. The key is the top-level `dispatch`; its scope and precedence are those
+of `handoffs`: the most specific config that has it wins. An unknown value is
+reported by `doctor` and `status` and treated as `peers`. The setting changes
+the directive's text only; nothing blocks an Agent call or a spawn.
+
+- **No argument**: run the resolver command above and report its `dispatch`
+  line, or say it is not set (`peers`); plus one sentence on what each value
+  means.
+- **With a value**: set `"dispatch": "<value>"` in the most specific config
+  that already exists (project if present, else user), preserving every other
+  key, with the Write tool. If neither config exists, say so and suggest
+  `/hierarchy init`. Then echo the resolved table and the propagation note.
+- Anything else as the argument: show the four valid values and stop.
+
+The user may also say it in words mid-session ("use subagents for the
+roles", "always run peers"): do exactly what the value bullet says.
 
 ---
 
@@ -446,5 +489,5 @@ neither is the default. Nothing else under `~/.claude/ah2` is touched.
 ## anything else
 
 Show the usage line:
-`/hierarchy [init|status|on|off|always-on [on|off]|flow [auto|confirm]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]`,
+`/hierarchy [init|status|on|off|always-on [on|off]|flow [auto|confirm]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]`,
 then run `status`.

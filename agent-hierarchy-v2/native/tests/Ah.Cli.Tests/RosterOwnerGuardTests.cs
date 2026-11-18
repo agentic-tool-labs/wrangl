@@ -81,13 +81,32 @@ public sealed partial class RosterOwnerGuardTests : IDisposable
         _sandbox.Dispose();
     }
 
-    private sealed class CountingProof(Func<NearestSession> nearest, OwnerProofResult? check = null) : IRosterOwnerProof
+    private sealed class CountingProof(Func<NearestSession> nearest, OwnerProofResult? check = null, Func<int?, int?>? harness = null, Func<int, bool?>? isAncestor = null) : IRosterOwnerProof
     {
         public OwnerProofResult Check(string dir, string? team) => check ?? new(true, null, "orchestrator", false, null);
 
         public OwnerActor Actor() => new(4242, "Thu Oct 15 20:38:50 2026", [], "ah roster gate");
 
         public NearestSession NearestAncestor(string dir, IReadOnlyList<string> rowDirs) => nearest();
+
+        public int? HarnessAncestor(int? stated = null) => harness?.Invoke(stated);
+
+        public bool? IsAncestor(int pid) => isAncestor?.Invoke(pid);
+    }
+
+    /// <summary>The nearest harness the proof's command-only walk finds above the command; null for none.</summary>
+    private int? _harness;
+
+    /// <summary>Further harnesses on the ancestor line, which a <c>CLAUDE_PID</c> may name.</summary>
+    private readonly HashSet<int> _harnessLine = [];
+
+    /// <summary>The pid the fake's harness walk last answered, which the fake walk then finds as a session once it has a row.</summary>
+    private int? _picked;
+
+    private int? PickHarness(int? stated)
+    {
+        _picked = stated is { } s && _harnessLine.Contains(s) ? s : _harness;
+        return _picked;
     }
 
     private sealed class StartedCallers : IRosterCallerRegistry
@@ -176,8 +195,8 @@ public sealed partial class RosterOwnerGuardTests : IDisposable
         var proof = withProof ? new CountingProof(() =>
         {
             _walks++;
-            return _nearest;
-        }, null) : null;
+            return _picked is { } h && _nearest.Kind == NearestKind.None && RowSessions(h).Count > 0 ? new NearestSession(NearestKind.Session, null, null, h) : _nearest;
+        }, null, PickHarness, pid => pid == _harness || _harnessLine.Contains(pid)) : null;
         var services = new Services(graph, io.Files, io.Clock, env, Project, proof, _codexTrust?.Invoke(io.Files, env), _withScratch, _callers);
         CommandsModule.ComposeRoster(() => services);
         var verb = CommandsModule.Registry.Verbs.Single(v => v.Name == "roster");

@@ -98,13 +98,43 @@ internal static class OwnerGuard
             return;
         }
 
+        // ah2-204: a Claude session above the command with no session-pids row gets the row SessionStart would write, then is proved again
+        bool? harnessAbove = null;
+        if (proved.Nearest.Kind == NearestKind.None && !c.DaemonPrincipal && c.Services.OwnerProof is { } ownerProof)
+        {
+            // A3: a CLAUDE_PID that parses is used only on this command's ancestor line; one off the line refuses on its own
+            var stated = StatedHarnessPid(c);
+            if (stated is { } statedPid && ownerProof.IsAncestor(statedPid) == false)
+            {
+                throw new OwnerRefusal(
+                    "owner-unproven",
+                    "no-orchestrator",
+                    $"ah roster {verb}: CLAUDE_PID names pid {statedPid}, which is not a process above this command; nothing was changed. Unset CLAUDE_PID, or run the verb inside that Claude session.",
+                    $"owner proof: CLAUDE_PID {statedPid} is not an ancestor of this command.");
+            }
+
+            var harness = ownerProof.HarnessAncestor(stated);
+            harnessAbove = harness is not null;
+            if (harness is { } harnessPid && RegisterLate(c, harnessPid))
+            {
+                proved = c.Proved();
+                laneTeam = c.TeamFile ?? proved.Nearest.Team;
+            }
+        }
+
         const string Unprovable = "could not prove which Claude session runs this command; nothing was changed. Run it from the Orchestrator's Claude session.";
+        const string NoProof = "owner proof: no registered session is an ancestor of this command.";
         switch (proved.Nearest.Kind)
         {
             case NearestKind.Unavailable:
                 throw new OwnerRefusal("owner-unproven", "unproven", $"ah roster {verb}: {Unprovable}", "owner proof: the process table could not be read.");
             case NearestKind.None:
-                throw new OwnerRefusal("owner-unproven", "no-orchestrator", $"ah roster {verb}: {Unprovable}", "owner proof: no registered session is an ancestor of this command.");
+                throw new OwnerRefusal("owner-unproven", "no-orchestrator", harnessAbove switch
+                {
+                    true => $"ah roster {verb}: could not prove which Claude session runs this command; nothing was changed. Run `ah roster checkin` in the Orchestrator's Claude session and retry; if that is refused too, start a new Claude session.",
+                    false => $"ah roster {verb}: No Claude session is above this command. Run it inside the Orchestrator's Claude session.",
+                    null => $"ah roster {verb}: {Unprovable}",
+                }, NoProof);
             case NearestKind.Member:
                 throw new OwnerRefusal(
                     $"member-cannot-{verb}",
@@ -172,11 +202,44 @@ internal static class OwnerGuard
         throw new OwnerRefusal(
             "not-team-owner",
             "other-team",
-            $"ah roster {verb}: this session does not own {label}; nothing was changed. Its Orchestrator record names pid {held}."
+            $"ah roster {verb}: this session does not own {label}; nothing was changed. Its Orchestrator record names pid {held}. Pass --team <name> for a team this session owns, or run the verb from that Orchestrator's session."
             + (brokenLink is null ? string.Empty : $" {laneTeam} is a lane child whose link to its manager is broken ({brokenLink}); from the manager's Orchestrator session run `ah roster adopt --team {laneTeam}`."),
             $"owner proof: the proved session is pid {proved.Pid}, not the Orchestrator recorded for {label}. {Seen(proved.Nearest)}",
             brokenLink is null ? "owns-neither" : "child-not-valid-lane");
     }
+
+    /// <summary>
+    /// Writes the session-pids row SessionStart writes for <paramref name="harnessPid"/>, the harness above an unmarked command that no walk
+    /// could prove, under <c>CLAUDE_CODE_SESSION_ID</c> in the dirs the proof reads, and walks again. False, writing nothing, when the session
+    /// id is unset, the shell carries a team file marker (A1), or the session id's newest row names another live process (A2); and when
+    /// the walk still proves no Orchestrator or session.
+    /// </summary>
+    private static bool RegisterLate(RosterContext c, int harnessPid)
+    {
+        if (c.EnvText("CLAUDE_CODE_SESSION_ID") is not { } session || c.EnvText("WRANGL_TEAM_FILE") is not null)
+        {
+            return false;
+        }
+
+        var dirs = new[] { c.Dir, c.MainDir }.Where(d => !string.IsNullOrEmpty(d)).Distinct(StringComparer.Ordinal).ToList();
+        var status = c.Services.Hierarchy.Status;
+        if (dirs.Any(d => status.SessionPidsOf(d!).Any(r => r.Key == session && r.Value != harnessPid && c.PidAlive(r.Value))))
+        {
+            return false;
+        }
+
+        foreach (var dir in dirs)
+        {
+            c.Services.Hierarchy.Status.AppendSessionPid(dir!, JsonValue.FromString(session), JsonValue.FromNumber(harnessPid));
+        }
+
+        c.ForgetProof();
+        return c.Proved().Nearest.Kind is NearestKind.Orchestrator or NearestKind.Session;
+    }
+
+    /// <summary>The pid <c>CLAUDE_PID</c> names when it parses as an integer above 1; else null.</summary>
+    private static int? StatedHarnessPid(RosterContext c) =>
+        c.EnvText("CLAUDE_PID") is { } raw && int.TryParse(raw, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var pid) && pid > 1 ? pid : null;
 
     /// <summary>Which link of a lane child's record fails the lane test: the lane leader, or the manager's incarnation.</summary>
     private static string BrokenLink(RosterContext c, string childName, JsonValue record)

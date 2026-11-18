@@ -100,6 +100,14 @@ internal static partial class ViewBuilder
             return new Node { Kind = "orchestrator", Path = c.OPath(orch), Orch = orch };
         }
 
+        if (segs.Count == 4 && segs[2] == "sub")
+        {
+            var sessions = OrchSessions(orch);
+            return c.Runs.Value.FirstOrDefault(r => sessions.Contains(r.SessionId) && r.AgentId == segs[3]) is { } orchRun
+                ? new Node { Kind = "subagent", Path = nearest + "/sub/" + Seg(segs[3]), Orch = orch, Holder = nearest, Run = orchRun }
+                : null;
+        }
+
         if (segs[2] != "t" || segs.Count < 4 || orch.Teams.FirstOrDefault(t => t.Tkey == segs[3]) is not { } team)
         {
             return null;

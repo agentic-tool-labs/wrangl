@@ -97,6 +97,26 @@ public sealed class SubagentNodeDocumentTests
     }
 
     [Fact]
+    public void AStartedRunOfTheOrchestratorsSessionIsASubagentNodeUnderTheOrchestrator()
+    {
+        var src = Source();
+        src.Runs.Add(new SubagentRun("sess-orch", "o1", "started", "2026-06-02T09:12:00.000Z", null, "wrangl:architect"));
+        src.Runs.Add(new SubagentRun("sess-orch", "o2", "stopped", "2026-06-02T09:00:00.000Z", "2026-06-02T09:01:00.000Z"));
+        var orch = src.Paths().Orch;
+
+        var body = src.Build("/graph" + orch).Obj("body")!;
+        var nodes = body["nodes"].AsArray().Select(static n => n.AsObject()).Where(n => n.Str("id")!.StartsWith(orch + "/sub/", StringComparison.Ordinal)).ToList();
+        var node = Assert.Single(nodes);
+        var edge = body["edges"].AsArray().Select(static e => e.AsObject()).Single(e => e.Str("id") == "subagent:" + node.Str("id"));
+        var detail = src.Build("/detail" + orch + "/sub/o1");
+
+        Assert.Equal((orch + "/sub/o1", "subagent", "busy", "wrangl:architect"), (node.Str("id"), node.Str("kind"), node.Str("state"), node.Str("agent_type")));
+        Assert.Equal(orch, edge.Str("from"));
+        Assert.Equal(orch, Field(detail, "parent")["value"].AsString());
+        Assert.Equal(404, ViewBuilder.Build(src, "/detail" + orch + "/sub/a2", ModelSource.Now).Status);
+    }
+
+    [Fact]
     public void TheSubagentDocumentsMatchTheirGoldens()
     {
         var src = Source();

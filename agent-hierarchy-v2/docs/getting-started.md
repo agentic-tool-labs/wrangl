@@ -64,7 +64,7 @@ Check the build. In a new terminal, or in Claude Code with a leading `!`:
 ahd --version
 ```
 
-It prints `ahd 2.0.14 (contract 1)`. If the terminal says `ahd` is not found, add the folder the installer printed (by
+It prints `ahd 2.0.15 (contract 1)`. If the terminal says `ahd` is not found, add the folder the installer printed (by
 default `~/.local/bin`) to your `PATH`.
 
 Optional: if you run `scripts/install.sh` yourself in a terminal, it can also add Claude Code allow rules so the
