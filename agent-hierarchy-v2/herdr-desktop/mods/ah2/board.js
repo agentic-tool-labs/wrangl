@@ -274,7 +274,7 @@ const flagRow = (t, glyph, text, tip, attn = false) => h_flex().gap(4).items_cen
   .child(div().min_w(0).truncate().text_color(t.foreground).child(text));
 function item(t, f, col, c, i) {
   const by = c.blockedOpen > 0 ? `blocked by ${c.blockedOpen}` : "";
-  const full = [c.title, c.workId, c.ref, c.team, c.owner && `owner ${c.owner}`, c.epic && `epic ${c.epic.name}`, c.size && `size ${c.size}`, c.msgs > 0 && `${c.msgs} ${c.msgs === 1 ? "msg" : "msgs"}`, c.blocked, c.queue?.text, c.orch && "waiting on the Orchestrator", by, c.mark].filter(Boolean).join(" · ");
+  const full = [c.title, c.workId, c.ref, c.team, c.owner && `owner ${c.ownerTitle}`, c.epic && `epic ${c.epic.name}`, c.size && `size ${c.size}`, c.msgs > 0 && `${c.msgs} ${c.msgs === 1 ? "msg" : "msgs"}`, c.blocked, c.queue?.text, c.orch && "waiting on the Orchestrator", by, c.mark].filter(Boolean).join(" · ");
   const on = f.sel?.key === c.key;
   const opens = Boolean(c.sel) && !c.ask;
   const inner = v_flex().flex_1().min_w(0).gap(4)
@@ -288,7 +288,7 @@ function item(t, f, col, c, i) {
       .when(Boolean(c.workId), (el) => el.child(metaChip(t, c.workId, `Work id ${c.workId}`, true)))
       .when(Boolean(c.where?.name ?? c.team), (el) => el.child(metaText(c.where?.name ?? c.team).tooltip(c.where?.tip ?? `team ${c.team}`)))
       .when(Boolean(c.epic), (el) => el.child(metaText(c.epic.name).tooltip(`${c.epic.name} (${c.epic.tip})`)))
-      .when(Boolean(c.owner), (el) => el.child(metaText(c.owner)))
+      .when(Boolean(c.owner), (el) => el.child(metaText(c.ownerLabel)))
       .when(Boolean(c.size), (el) => el.child(metaChip(t, c.size, c.sizeFrom ? `Size ${c.size}, from deliverable ${c.sizeFrom}` : `Size ${c.size}`, false)))
       .when(c.msgs > 0, (el) => el.child(metaText(`${c.msgs} ${c.msgs === 1 ? "msg" : "msgs"}`, true)))
       .when(Boolean(c.ref), (el) => el.child(metaText(c.ref, true))))
@@ -342,7 +342,7 @@ function sheet(v, t, f, full) {
     .when(Boolean(r.by), (el) => el.child(div().flex_none().max_w(96).truncate().text_size(11).text_color(t.muted).child(r.by))));
 
   const shut = closeBtn(v, t, f);
-  const focusLabel = term ? `Focus ${s.owner}'s terminal` : s.owner ? `No live terminal for ${s.owner}` : "No owner";
+  const focusLabel = term ? `Focus ${s.ownerTitle}'s terminal` : s.owner ? `No live terminal for ${s.ownerTitle}` : "No owner";
   const focusBtn = v.ring(t, Button.new("kb-sheet-focus"), t.surface).disabled(!term)
     .h(28).px(10).flex().flex_none().items_center().rounded(6).text_size(12)
     .bg(t.surface).border_color(t.border).text_color(term ? t.foreground : t.muted)
@@ -361,7 +361,7 @@ function sheet(v, t, f, full) {
       .child(div().text_size(13.5).font_semibold().text_color(t.foreground).child(s.title))
       .child(h_flex().h(24).gap(8).items_center().text_size(12)
         .when(Boolean(mb), (el) => el.child(markCell(t, mb.state)))
-        .child(div().flex_none().max_w(140).truncate().font_medium().text_color(t.foreground).child(s.owner || "No owner"))
+        .child(div().flex_none().max_w(140).truncate().font_medium().text_color(t.foreground).child(s.ownerLabel || "No owner"))
         .when(Boolean(mb), (el) => el.child(div().flex_1().min_w(0).truncate().text_color(t.muted).child([mb.word.toLowerCase(), mb.age].filter(Boolean).join(" · ")))))
       .child(h_flex().mt(2).child(focusBtn)))
     .child(v_flex().id("kb-log").flex_1().min_h(0).px(16).py(8).overflow_y_scrollbar()

@@ -105,6 +105,20 @@ internal static class RosterCli
         }
 
         var context = new RosterContext(services, opts, command, opts.Text("cwd") ?? services.CurrentDirectory, stdout, stderr, rest);
+        var code = Guarded(context, handler, command, stderr);
+        if (code is not (0 or 3) && command is "spawn-one" or "spawn-ad-hoc" or "create")
+        {
+            stderr.Write(TeamCommandsLine + "\n");
+        }
+
+        return code;
+    }
+
+    /// <summary>ah2-216 D4: the line a refused or failed <c>spawn-one</c>, <c>spawn-ad-hoc</c> or <c>create</c> ends with; not on exit 3, a partial result whose output is JSON (Amendment 4).</summary>
+    internal const string TeamCommandsLine = "Team commands: `ah rules show peer-roster`.";
+
+    private static int Guarded(RosterContext context, Func<RosterContext, int> handler, string command, TextWriter stderr)
+    {
         try
         {
             var prepareStart = Ah.Core.Time.PhaseTrace.Begin();

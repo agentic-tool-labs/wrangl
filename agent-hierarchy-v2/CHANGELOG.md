@@ -4,6 +4,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.17] - 2026-11-18
+
+### Added
+
+- **The team commands are put in front of the Orchestrator.** Its instructions now carry a short "Team commands"
+  block (spawn a member, brief it, read its report, dismiss it, and what to run when a command refuses). It gets a
+  one-time note the first time it runs a chain role through the Agent tool while peers are the setting, starts a
+  session with raw herdr or tmux commands, or spawns or dismisses a member without having read the team rules. When
+  the user asks it to start an agent that matches the hierarchy, it gets the exact spawn command with that prompt. A
+  refused or failed spawn ends by naming `ah rules show peer-roster`, and each chain role's description says how the
+  role is started. All of these are notes: no call is held.
+- **A lane's Orchestrator is labelled "Sub-Orchestrator"** wherever the web UI and the herdr pane name it, with the
+  lane in the tooltip. Addresses, filters and pane lookups still use the real name.
+
+### Fixed
+
+- **The "unreviewed" alarm counts a review the Orchestrator dispatched.** It fired for a report that had been
+  reviewed, whenever the review was sent as its own request to a reviewer and not as a link from the reporting member.
+  A review request on the same checklist item now counts, and an item already done or dropped is never alarmed.
+
+- **An update restarts the daemon without an error.** After placing a new binary the installer asks the running daemon
+  to restart. Run by the background rebuild or from the herdr mod, that request was refused with
+  `error: drain_refused: a drain needs a caller the daemon can name`, and the old daemon kept running until the next
+  `ah` command from a registered session. The daemon now accepts a restart from an unnamed caller when it can see that
+  its own binary file was replaced, and still refuses one when nothing changed. Where a restart is refused anyway, the
+  installer prints a plain warning and no longer exits with an error. On platforms other than macOS on Apple silicon
+  the daemon cannot read that file's identity yet, so the restart still waits for the next `ah` command there.
+
 ## [2.0.16] - 2026-11-18
 
 ### Added

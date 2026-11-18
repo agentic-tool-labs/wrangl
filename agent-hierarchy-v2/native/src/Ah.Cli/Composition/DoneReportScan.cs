@@ -10,13 +10,20 @@ namespace Ah.Cli.Composition;
 /// <param name="TimeOf">A response's seal time (its mtime in files mode), in epoch milliseconds, or null.</param>
 /// <param name="RequestFm">An exchange's request front matter, or null.</param>
 /// <param name="TextOf">A response's text, or null when it cannot be read.</param>
-/// <param name="Reviewed">Whether a review exchange exists for (request id, member address, team).</param>
+/// <param name="Reviewed">Whether a review exchange exists for (request id, member address, the report's scope).</param>
 internal sealed record DoneScanReads(
     Func<string, bool> ImplementRole,
     Func<string, double?> TimeOf,
     Func<JsonObject, JsonObject?> RequestFm,
     Func<string, string?> TextOf,
-    Func<string, string, string?, bool> Reviewed);
+    Func<string, string, ReviewScope, bool> Reviewed);
+
+/// <summary>Where a DONE report sits, for ah2-222's item rule.</summary>
+/// <param name="Team">The request's team, or null.</param>
+/// <param name="Pool">The pool the report was filed in.</param>
+/// <param name="Item">The request's checklist item (<c>stream/id</c>), or null for an unlinked dispatch.</param>
+/// <param name="ReportedMs">When the report was filed, in epoch milliseconds.</param>
+internal sealed record ReviewScope(string? Team, string Pool, string? Item, double ReportedMs);
 
 /// <summary>
 /// The host half of b487's <c>unreviewed-done</c>: the DONE reports still waiting on a review, over the exchanges of the owned teams' pools.
@@ -117,7 +124,7 @@ internal sealed class DoneReportScan(double startedMs)
                 var team = Str(fm, "team");
                 var name = Str(fm, "to_name") is { Length: > 0 } n && n != "null" ? n : to;
                 var member = team is { Length: > 0 } ? $"{name}@{team}" : name;
-                if (reads.Reviewed(id, member, team))
+                if (reads.Reviewed(id, member, new ReviewScope(team, pool, Str(fm, "item"), reportedMs)))
                 {
                     Settle();
                     continue;
@@ -131,29 +138,68 @@ internal sealed class DoneReportScan(double startedMs)
     }
 
     /// <summary>
-    /// Whether request <paramref name="id"/> has a review exchange: a request to a reviewer-class role whose parent is it, or a link with
-    /// <paramref name="member"/> and a reviewer-class member whose task is it or one of its children.
+    /// Whether request <paramref name="id"/> has a review exchange: a request to a reviewer-class role whose parent chain reaches it, or a
+    /// link with <paramref name="member"/> and a reviewer-class member whose task is it or one of its children. With a
+    /// <paramref name="scope"/> whose item is set (ah2-222): the item is done or dropped, or a reviewer-class request on that item, in the
+    /// same pool and team, was created at or after the report.
     /// </summary>
     internal static bool HasReview(
         string id, string member, IReadOnlyList<JsonObject> exchanges, Func<JsonObject, JsonObject?> requestFm, Func<string, string?> classOf,
-        IReadOnlyList<JsonObject> links, Func<string, string?> memberClass)
+        IReadOnlyList<JsonObject> links, Func<string, string?> memberClass, ReviewScope? scope = null, Func<string, bool>? itemClosed = null)
     {
         ArgumentNullException.ThrowIfNull(exchanges);
         ArgumentNullException.ThrowIfNull(requestFm);
         ArgumentNullException.ThrowIfNull(classOf);
         ArgumentNullException.ThrowIfNull(links);
         ArgumentNullException.ThrowIfNull(memberClass);
+        if (scope?.Item is { } closedItem && itemClosed is not null && itemClosed(closedItem))
+        {
+            return true;
+        }
+
+        // created has whole seconds: a review sent in the report's second counts
+        var reportedSec = scope is null ? 0 : Math.Floor(scope.ReportedMs / 1000) * 1000;
         var family = new HashSet<string>(StringComparer.Ordinal) { id };
+        var parents = new Dictionary<string, string>(StringComparer.Ordinal);
+        var reviews = new List<string>();
         foreach (var e in exchanges)
         {
-            if (Str(e, "id") is { } child && child != id && requestFm(e) is { } fm && Str(fm, "parent") == id)
+            if (Str(e, "id") is not { } eid || eid == id || requestFm(e) is not { } fm)
             {
-                if (Str(e, "to") is { } role && classOf(role) == "review")
+                continue;
+            }
+
+            var review = Str(e, "to") is { } role && classOf(role) == "review";
+            if (Str(fm, "parent") is { } parent)
+            {
+                parents[eid] = parent;
+                if (review)
+                {
+                    reviews.Add(eid);
+                }
+                else if (parent == id)
+                {
+                    _ = family.Add(eid);
+                }
+            }
+
+            if (review && scope is { Item: { } item } && Str(fm, "item") == item && Str(fm, "team") == scope.Team && PoolOf(e) == scope.Pool
+                && Ah.Core.Time.Timestamps.TryParseMs(Str(fm, "created"), out var createdMs) && createdMs >= reportedSec)
+            {
+                return true;
+            }
+        }
+
+        // a reviewer-class request whose parent chain reaches the request
+        foreach (var review in reviews)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var at = review; parents.TryGetValue(at, out var up) && seen.Add(at); at = up)
+            {
+                if (up == id)
                 {
                     return true;
                 }
-
-                _ = family.Add(child);
             }
         }
 
@@ -178,6 +224,10 @@ internal sealed class DoneReportScan(double startedMs)
 
         return false;
     }
+
+    /// <summary>The pool an exchange's request was filed in: <c>&lt;pool&gt;/msgs/&lt;file&gt;</c>.</summary>
+    private static string? PoolOf(JsonObject e) =>
+        e.TryGetValue("request", out var r) && r.Kind == JsonKind.Map && Str(r.AsObject(), "path") is { } path ? NodePath.Dirname(NodePath.Dirname(path)) : null;
 
     private static string? Str(JsonObject o, string key) => o.TryGetValue(key, out var v) && v.Kind == JsonKind.Text ? v.AsString() : null;
 }

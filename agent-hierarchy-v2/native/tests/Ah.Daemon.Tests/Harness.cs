@@ -236,6 +236,9 @@ internal sealed class HarnessOptions
     /// <summary>Who each peer is for drain and the UI lease; by default every caller is a session, as a participant's client is.</summary>
     internal Func<int?, PrincipalKind> Principal { get; set; } = _ => PrincipalKind.Session;
 
+    /// <summary>The daemon's own binary file, for the anonymous drain's check; null checks none.</summary>
+    internal string? BinaryPath { get; set; }
+
     /// <summary>The parent of a process, for the service lease; null reads none.</summary>
     internal Func<int, int?>? ParentOf { get; set; }
 
@@ -324,6 +327,7 @@ internal sealed class Harness : IAsyncDisposable
             ThreadCpuNs = Ah.Platform.PlatformModule.ThreadCpuNs,
             UiTeamClose = o.UiTeamClose,
             HerdrAppChild = o.HerdrAppChild,
+            BinaryPath = o.BinaryPath,
         };
         var registry = new ModuleRegistry([], [], o.Routes, o.Jobs, []);
         var log = new StringWriter();

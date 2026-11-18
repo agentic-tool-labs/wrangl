@@ -188,11 +188,12 @@ function group(slices, t, depth, size, o = {}) {
   const members = memberIds(team).map((id) => {
     const m = memberOf(slices, team, id);
     const state = m.running ? "running" : STATES[m.state] ? m.state : "unknown";
-    const name = shortName(id, m.name ?? undefined);
+    // ah2-220: the label, so a lane's orchestrator reads Sub-Orchestrator; its tooltip names the lane
+    const name = shortName(id, m.label ?? m.name ?? undefined);
     const stream = streamOf(slices, team.body, slices.get(id)?.body.placement?.stream ?? null);
     const ctx = m.state === "gone" ? null : m.ctx?.text ?? null;
     // a role that only repeats the name says nothing; a lane orchestrator's "sub-orchestrator" does
-    return { id, name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", stream, share: m.share, ctx, model: m.model ?? "", pane: memberPane(id, served[id]) };
+    return { id, name, title: m.title ?? name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", stream, share: m.share, ctx, model: m.model ?? "", pane: memberPane(id, served[id]) };
   });
 
   const head = slices.get(flowId(team.body))?.body ?? null;
@@ -307,7 +308,7 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
       const m = n.data.m;
       // the ring's share in words too, so it never rests on the drawing alone
       const busy = typeof m.share === "number" ? `busy ${Math.round(m.share * 100)}% of the last hour` : "";
-      return { ...m, full: [m.name, m.role, m.word, m.item, busy].filter(Boolean).join(" · "), x: n.x, y: n.y, r: n.r, tier: TIERS.filter((v) => n.r >= v).length };
+      return { ...m, full: [m.title ?? m.name, m.role, m.word, m.item, busy].filter(Boolean).join(" · "), x: n.x, y: n.y, r: n.r, tier: TIERS.filter((v) => n.r >= v).length };
     });
   return { size, containers, arcs, flights, leaves, focus: top === root ? null : { id: top.data.id, name: top.data.name, zoomed: top !== only } };
 }

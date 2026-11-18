@@ -146,7 +146,7 @@ public sealed class ConfigUnitTableTests
             && sandbox.Verify(c, result, threw) is not null)
         {
             var tablePath = Path.Combine(UnitsDirectory, tableFile);
-            RerecordTextExpect(tablePath, c.Id, text.AsString());
+            RerecordTextExpect(tablePath, c.Id, sandbox.Encode(text).AsString());
             var rewritten = UnitTable.Load(tablePath).Cases.Single(x => x.Id == caseId);
             Assert.True(sandbox.Verify(rewritten, result, threw) is null, $"{table.Fn} / {c.Id}: still differs after the insert: {sandbox.Verify(rewritten, result, threw)}");
             return;

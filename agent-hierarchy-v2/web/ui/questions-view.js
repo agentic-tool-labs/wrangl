@@ -4,6 +4,7 @@ import { Live } from "./live-component.js";
 import { Block } from "./item-log.js";
 import { descriptionBlocks, itemDescId } from "./plans-model.js";
 import { Age } from "./ticker.js";
+import { askerLabel } from "./select.js";
 import { ageText, ageOf } from "./store.js";
 import { ATTENTION_EMPTY, DIRECTION, DISMISS, FACETS, NO_RUN, OTHER_MAX, SEEN, SEEN_POLL, answerBody, answerText, dismissBody, otherOver, answerCommand, attentionOf, replyState, seenOf, startPick, toggle, defaultAt, letterOf, sameText, listRow, qaEmpty, qaListId, qaRows, questionsId, REPLY_LINES, threadListId, threadOf, classLabel } from "./questions-model.js";
 
@@ -249,7 +250,7 @@ class OpenQuestion extends Component {
     const log = itemDescId(teamId.slice("team:".length).replace(/\/[^/]*$/, ""), q.workId);
     return html`<li class=${sent ? "qa-card sent" : "qa-card"}>
   <article aria-labelledby=${`qh-${q.id}`}>
-    <p class="qa-meta"><span class=${`qa-class qa-class-${q.cls}`}>${classLabel(q.cls)}</span>${q.kind === "item" ? null : html`<span class="qa-id mono">${q.id}</span>`}<span>${team}</span>${q.asker ? html`<span>asked by ${q.asker}</span>` : null}${q.item && q.item !== q.text ? html`<span class=${q.kind === "item" ? undefined : "mono"} title="Plan item">${q.item}</span>` : null}<span class="qa-age"><${Age} text=${since(q.at)} /></span></p>
+    <p class="qa-meta"><span class=${`qa-class qa-class-${q.cls}`}>${classLabel(q.cls)}</span>${q.kind === "item" ? null : html`<span class="qa-id mono">${q.id}</span>`}<span>${team}</span>${q.asker ? (({ label, title }) => html`<span title=${title}>asked by ${label}</span>`)(askerLabel(store?.state?.slices, teamId.slice("team:".length).replace(/\/[^/]*$/, ""), teamName(teamId), q.asker) ?? { label: q.asker, title: undefined }) : null}${q.item && q.item !== q.text ? html`<span class=${q.kind === "item" ? undefined : "mono"} title="Plan item">${q.item}</span>` : null}<span class="qa-age"><${Age} text=${since(q.at)} /></span></p>
     <h3 id=${`qh-${q.id}`} class="qa-header">${q.text}</h3>
     ${log ? html`<${CardDescription} store=${store} uid=${q.id} id=${log} />` : null}
     <${AnswerForm} q=${q} team=${team} teamId=${teamId} run=${run} onFull=${onFull} onHold=${onHold} onRelease=${onRelease} onPhase=${this.phase} labelledBy=${`qh-${q.id}`} />

@@ -19,6 +19,15 @@ public static partial class ConfigModule
     /// <summary>The index lines as the directive prints them, one per section.</summary>
     public static IReadOnlyList<string> DirectiveIndexLines() => [.. DirectiveText.Index.Select(DirectiveText.IndexLine)];
 
+    /// <summary>
+    /// The soft-gate rule of the team-commands note (ah2-216): its <c>nudge</c> row is the note given, its <c>read</c> row is
+    /// <c>ah rules show peer-roster</c> run, each for one session since its latest reset.
+    /// </summary>
+    public const string TeamCommandsRule = "team-commands";
+
+    /// <summary>The resolved <c>dispatch</c> setting; absent or unknown is <c>peers</c>.</summary>
+    public static string DispatchMode(Ah.Core.Json.JsonObject resolved) => DirectiveText.DispatchMode(resolved);
+
     /// <summary>The body of an agent file without its frontmatter, trimmed; null when nothing is left.</summary>
     public static string? AgentBody(string fileText) => DirectiveText.AgentBody(fileText);
 

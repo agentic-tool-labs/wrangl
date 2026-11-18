@@ -79,11 +79,11 @@ function nowStrip(v, t, n, terminalOf) {
       .child(div().flex_1().font_medium().child("Now"))
       .child(div().child(counts({ working: n.working, blocked: n.blocked }))))
     .children(n.rows.map((mb) => {
-      const full = `${mb.name} · ${mb.team} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
+      const full = `${mb.title ?? mb.name} · ${mb.team} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
       return focusable(v, t, `feed-now-${mb.key}`, terminalOf(mb), full)
         .h(24).px(6).gap(8).flex().items_center().rounded(5).text_size(12).tooltip(full)
         .child(markCell(t, mb.state))
-        .child(div().w(92).flex_none().truncate().font_medium().text_color(t.foreground).child(mb.name))
+        .child(div().w(92).flex_none().truncate().font_medium().text_color(t.foreground).child(mb.label ?? mb.name))
         .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(mb.what))
         .child(div().w(28).flex_none().text_right().font_family(MONO).text_size(11).text_color(t.muted).child(mb.age))
         // the team in the stream rows' team column

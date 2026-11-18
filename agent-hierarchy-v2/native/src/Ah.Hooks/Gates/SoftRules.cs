@@ -11,7 +11,7 @@ namespace Ah.Hooks.Gates;
 internal static partial class SoftRules
 {
     // Conduit must stay first: the unit's StaysHard (ConduitFires) assumes a soft-rules deny of a conduit call is conduit's.
-    internal static readonly Func<GateContext, HookOutcome?>[] Rows = [Conduit, MsgsFiles, ReviewerWrite, SelfCare, RosterSkill, HerdrName, UltraAdvisor, Worktree];
+    internal static readonly Func<GateContext, HookOutcome?>[] Rows = [Conduit, MsgsFiles, ReviewerWrite, SelfCare, RosterSkill, HerdrName, UltraAdvisor, Worktree, TeamCommands.FirstUse];
 
     public static HookOutcome Run(GateContext c)
     {

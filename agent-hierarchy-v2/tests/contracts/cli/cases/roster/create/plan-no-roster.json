@@ -18,7 +18,7 @@
   },
   "expect": {
     "stdout": "",
-    "stderr": "roster.mjs: a live Team t-tm already exists — disband it first\n",
+    "stderr": "roster.mjs: a live Team t-tm already exists — disband it first\nTeam commands: `ah rules show peer-roster`.\n",
     "exit": 2,
     "tree_diff": {
       "added": [],

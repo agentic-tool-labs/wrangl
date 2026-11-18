@@ -2,7 +2,7 @@ import { html } from "./h.js";
 import { Live } from "./live-component.js";
 import { loadD3 } from "./lazy.js";
 import { flip, forget } from "./flip.js";
-import { memberIds, memberOf } from "./select.js";
+import { memberIds, memberOf, nameIn } from "./select.js";
 import { Age } from "./ticker.js";
 import { ageOf, ageText } from "./store.js";
 import { boardRows, glyphOf, partsOf } from "./graph-world.js";
@@ -133,7 +133,10 @@ export class BoardIcicle extends Live {
     const out = rows.map((r) => {
       const c = r.team ? slices.get(`item-msgs:${r.team}`)?.body : undefined;
       const msgs = r.kind === "task" ? (c ? c.counts?.[r.item] ?? 0 : null) : r.kind === "stream" && r.weight !== undefined && !r.item ? (c ? c.by_stream?.[r.stream] ?? 0 : null) : r.kind === "decision" ? 0 : undefined;
-      return { ...r, msgs, who: r.holder ? people.get(`${r.team}|${r.holder}`) ?? null : null };
+      // ah2-220: how the holder reads (a lane's orchestrator is its Sub-Orchestrator); the holder itself stays the key
+      const who = r.holder ? people.get(`${r.team}|${r.holder}`) ?? null : null;
+      const shown = r.holder && r.team ? nameIn(slices, r.team.slice(0, r.team.lastIndexOf("/")), r.team.slice(r.team.lastIndexOf("/") + 1), r.holder) : { label: r.holder, title: r.holder };
+      return { ...r, msgs, who, holderLabel: shown.label, holderTitle: shown.title };
     });
     const sel = ui.plansSel ?? null;
     const sp = partsOf(sel);
@@ -422,7 +425,7 @@ export class BoardIcicle extends Live {
     // Owners by member (team and name), each a link to the member.
     const owners = [...leaves.reduce((m, l) => {
       const key = l.data.holder ? `member:${l.data.team}/${l.data.holder}` : null;
-      return key ? m.set(key, [l.data.holder, (m.get(key)?.[1] ?? 0) + 1, memberHref(key)]) : m;
+      return key ? m.set(key, [l.data.holderLabel ?? l.data.holder, (m.get(key)?.[1] ?? 0) + 1, memberHref(key)]) : m;
     }, new Map()).values()].sort((a, b) => b[1] - a[1]);
     const state = ns.length > 1 && !(d.kind === "epic" || d.kind === "deliverable") ? rollState(leaves) : ns[0].state;
     const known = ns.filter((n) => n.msgs !== null);
@@ -431,7 +434,7 @@ export class BoardIcicle extends Live {
       kind: d.kind === "root" ? "all teams" : d.kind,
       id: d.item ?? "",
       status: d.kind === "root" || d.kind === "team" || d.kind === "column" ? null : chipOf(state),
-      owner: holder ? { name: d.holder, role: d.who?.role ?? "", state: d.who?.state ?? "unknown", href: memberHref(`member:${d.team}/${d.holder}`) } : null,
+      owner: holder ? { name: d.holderLabel ?? d.holder, role: d.who?.role ?? "", state: d.who?.state ?? "unknown", href: memberHref(`member:${d.team}/${d.holder}`) } : null,
       stream: d.stream ? streamName(d.stream) : null,
       size: d.weight,
       done: sum((n) => n.done),
@@ -482,12 +485,12 @@ export class BoardIcicle extends Live {
     return html`<div key=${n.id} ref=${box} class=${`ice-tile mk-${MARK[st] ?? "idle"}${st === "dropped" ? " dropped" : ""}${on ? " on" : ""}${dim ? " dim" : ""}`}>
       <button type="button" class="ice-hit" ref=${hit} title=${d.item ? `${d.name} · ${d.item}` : d.name}
         aria-pressed=${n === focus ? undefined : on}
-        aria-label=${`${kind} ${d.name}${status}${holder ? `, owner ${d.holder}` : ""}, ${msgsText}${changed}, level ${n.depth + 1}${on && isBox ? ", press again to open" : ""}`}
+        aria-label=${`${kind} ${d.name}${status}${holder ? `, owner ${d.holderTitle ?? d.holder}` : ""}, ${msgsText}${changed}, level ${n.depth + 1}${on && isBox ? ", press again to open" : ""}`}
         onClick=${() => this.click(n)}><span class="t">${dot}${d.name}</span></button>
       <span class="m">
         ${d.kind === "epic" || d.kind === "deliverable" ? html`<span class="k">${d.kind}</span>` : null}
         ${pill ? html`<span class=${`chip pl-chip ${chipOf(st).cls}`}>${statusText}</span>` : null}
-        ${holder ? html`<a class="who" href=${memberHref(`member:${d.team}/${d.holder}`)} title=${`Open ${d.holder}`} aria-label=${`Open member ${d.holder}`}>${d.who?.state && d.who.state !== "unknown" ? html`<span class=${`ice-glyph st-${d.who.state}`} aria-hidden="true">${glyphOf(d.who.state)} </span>` : null}${d.holder}</a>` : null}
+        ${holder ? html`<a class="who" href=${memberHref(`member:${d.team}/${d.holder}`)} title=${`Open ${d.holderTitle ?? d.holder}`} aria-label=${`Open member ${d.holderTitle ?? d.holder}`}>${d.who?.state && d.who.state !== "unknown" ? html`<span class=${`ice-glyph st-${d.who.state}`} aria-hidden="true">${glyphOf(d.who.state)} </span>` : null}${d.holderLabel ?? d.holder}</a>` : null}
         ${isBox ? html`<span class="num">${n.done}/${n.total} done</span>` : null}
         ${n.msgs > 0 ? html`<span class="num" title=${`${n.msgs} ${n.msgs === 1 ? "message" : "messages"}`}><span aria-hidden="true">✉</span> ${n.msgs}</span>` : null}
       </span>

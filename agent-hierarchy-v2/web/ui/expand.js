@@ -47,7 +47,7 @@ export class ExpandOverlay extends Live {
     return {
       tab: snap.ui.expandTab ?? "overview",
       internal: showInternal(snap.ui),
-      name: m?.name ?? memberId.split("/").pop(),
+      name: m?.label ?? memberId.split("/").pop(),
       state: m?.state ?? "gone",
       running: m?.running ?? false,
       role: m?.role ?? "",

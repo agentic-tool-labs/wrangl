@@ -9,9 +9,11 @@ import { props, openOverlay, closeOverlay, notify } from "herdr";
 import { ah } from "./ah.js";
 import { Link } from "./link-model.js";
 import { START, teamClose, runDismiss, buttonsOf } from "./dismiss-model.js";
+import { memberLabel } from "./select.js";
 
-export const openDismiss = (id, name, workRoot = null) =>
-  openOverlay({ mod: "ah2", props: { view: "dismiss", team: id, name, workRoot }, kind: "dialog", key: "ah2-dismiss", width: 440, height: 340 });
+// `lane`: the team's name when it is a lane, so its orchestrator reads Sub-Orchestrator (select.js memberLabel); else null.
+export const openDismiss = (id, name, workRoot = null, lane = null) =>
+  openOverlay({ mod: "ah2", props: { view: "dismiss", team: id, name, workRoot, lane }, kind: "dialog", key: "ah2-dismiss", width: 440, height: 340 });
 
 const LABEL = { pause: "Pause, then quit", force: "Force quit", dismiss: "Dismiss", cancel: "Cancel", leave: "Leave it", ok: "OK" };
 const ENDS = new Set(["cancel", "leave", "ok"]); // these close the dialog; the flow has ended, or ends on the press
@@ -24,6 +26,7 @@ export function dismissInit(v, cx) {
     await cx.sleep(0);
     v.keys.focus();
     const p = props();
+    v.lane = p.lane ?? null;
     const sleep = (ms) => cx.sleep(ms);
     const link = new Link({ fetch: globalThis.fetch, runner: ah, sleep, backoff: [2000] });
     const last = await runDismiss({
@@ -73,9 +76,11 @@ export function dismissView(v, t) {
   const muted = (text) => line(text, t.muted).text_size(11.5);
   const body = [];
   const plan = s.plan;
+  // ah2-220: how a member of the dismissed team reads; a row of another team (no lane known) keeps its name
+  const shown = (name, role, team) => memberLabel(name, name, role, team === null || team === v.lane ? v.lane : null);
   const members = () => (plan?.live ?? []).map((m, i) => h_flex().id(`dz-m-${i}`).min_h(24).gap(8).flex_none().items_center().border_b(1).border_color(t.border)
-    .child(div().flex_none().font_medium().text_color(t.foreground).child(m.name))
-    .child(div().flex_none().text_size(11.5).text_color(t.muted).child(m.role))
+    .child(div().flex_none().font_medium().text_color(t.foreground).child(shown(m.name, m.role, m.team).label))
+    .child(div().flex_none().text_size(11.5).text_color(t.muted).child(shown(m.name, m.role, m.team).role))
     // uncommitted or unmerged work, as ahd's release check words it
     .child(div().flex_1().min_w(0).truncate().text_size(11.5).text_color(m.work ? t.blocked : t.muted).child(m.work)));
 
@@ -85,7 +90,7 @@ export function dismissView(v, t) {
     if (plan.busy) body.push(line(`${plan.live.length === 1 ? "1 session is" : `${plan.live.length} sessions are`} still running:`), ...members());
     else body.push(line(`Dismiss ${name}?`), muted("Nothing of this team is running. It leaves the list; bring it back with ah roster reopen."));
     for (const n of plan.notes) body.push(muted(n));
-    if (plan.leftRunning.length > 0) body.push(muted(`Left running: ${plan.leftRunning.join(", ")}. An Orchestrator's own session is never closed.`));
+    if (plan.leftRunning.length > 0) body.push(muted(`Left running: ${plan.leftRunning.map((n) => shown(n, "", null).label).join(", ")}. An Orchestrator's own session is never closed.`));
     if (plan.busy) body.push(muted("Pause, then quit asks each member to save its work first; the team can be resumed later. Force quit closes the sessions now."));
   }
   if (s.step === "pausing") {

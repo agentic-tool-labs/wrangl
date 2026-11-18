@@ -142,7 +142,28 @@ internal static class RulesVerb
         }
 
         stdout.WriteLine(section);
+        MarkRead(context, graph, keys[0], dir);
         return 0;
+    }
+
+    /// <summary>ah2-216 D3: showing <c>peer-roster</c> leaves this session's <c>read</c> mark; the mark is advice, so a failed write is ignored.</summary>
+    private static void MarkRead(CliContext context, Composition.ServiceGraph graph, string key, string dir)
+    {
+        if (key != "peer-roster" || context.Env.GetVariable("CLAUDE_CODE_SESSION_ID") is not { Length: > 0 } sessionId)
+        {
+            return;
+        }
+
+        try
+        {
+            graph.Hierarchy.Roster.AppendGateRouted(
+                graph.Config.HierarchyDir(dir),
+                new Ah.Core.Json.JsonObject { ["type"] = "soft-gate", ["rule"] = ConfigModule.TeamCommandsRule, ["outcome"] = "read", ["session_id"] = sessionId });
+        }
+        catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException)
+        {
+            // the nudge may repeat once more; the section was shown
+        }
     }
 
     private static int WhoMayMessage(CliContext context, List<string> rest, TextWriter stdout, TextWriter stderr)

@@ -1,7 +1,7 @@
 import { html } from "./h.js";
 import { isInternal, showInternal } from "./msg-filter.js";
 import { Live } from "./live-component.js";
-import { firstTeam, memberOf, partyIdOf, partyName, teamOfMember, stateWord } from "./select.js";
+import { firstTeam, memberLabel, memberOf, partyIdOf, partyName, teamOfMember, stateWord } from "./select.js";
 import { hashOf, memberHref, teamOfMember as teamIdOfMember } from "./deeplink.js";
 import { Age } from "./ticker.js";
 import { ageOf, ageText } from "./store.js";
@@ -21,8 +21,8 @@ export function exchangeRows(slices, ids, n = 12, ui = null) {
     if (!b || b.withdrawn || (!internal && isInternal(b))) {
       continue;
     }
-    const from = partyName(b, "from") ?? "";
-    const to = partyName(b, "to") ?? "";
+    const from = partyName(b, "from", slices) ?? "";
+    const to = partyName(b, "to", slices) ?? "";
     const item = b.title || b.item || b.slug || ""; // the title as people read it, never the raw _run/<slug>
     const pair = [partyIdOf(b, "from"), partyIdOf(b, "to")];
     b.created && rows.push({ at: Date.parse(b.created), kind: "brief", from, to, item, pair });
@@ -45,7 +45,8 @@ export const msgs = (rows, store) => (rows.length === 0
 export const memberLink = (id, name) => (id ? html`<a class="mlink" href=${memberHref(id)}>${name}</a>` : name);
 
 // An exchange party as a link to its member's page, when it resolves to a member; else its name.
-export const party = (b, side) => memberLink(partyIdOf(b, side), partyName(b, side));
+// `lane`: the exchange's team name when that team is a lane (ah2-220: its orchestrator reads Sub-Orchestrator), else null.
+export const party = (b, side, lane = null) => memberLink(partyIdOf(b, side), memberLabel(partyName(b, side), partyName(b, side), "", lane).label);
 
 // The team a member's own data lives under: the team its id names when that is held, else the page's team (or its lane child).
 export const teamFor = (slices, ui, id) => slices.get(teamIdOfMember(id) ?? "") ?? teamOfMember(slices, firstTeam(slices, ui), id);
@@ -66,7 +67,7 @@ export function memberModel(slices, ui, id, n = SUMMARY_MESSAGES) {
   const lead = typeof body?.lead?.name === "string" && typeof body.lead.team === "string" ? body.lead : null;
   const ctx = m.ctx;
   return {
-    id, name: m.name, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
+    id, name: m.name, label: m.label, title: m.title, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
     tool: m.tool, toolAt: m.toolAt, branch: m.branch, workRoot: m.workRoot, slug: m.slug,
     ctx: ctx.text, ctxTitle: ctx.title, ctxOver: ctx.over, contextUsed: m.contextUsed ?? null,
     team: t.name, teamId, dir: t.dir_id, stream,
@@ -108,7 +109,7 @@ const elapsed = (at) => (now) => `${Math.max(0, Math.floor((now - Date.parse(at)
 
 // Name, role and model, state and since, team, lane and lead. `Tag` is the name's heading level; `link` makes the name the page link.
 export const MemberHead = ({ m, Tag = "h2", link = false }) => html`
-  <${Tag} class="mh-name">${link ? html`<a href=${memberHref(m.id)}>${m.name}</a>` : m.name}<//>
+  <${Tag} class="mh-name">${link ? html`<a href=${memberHref(m.id)} title=${m.title !== m.label ? m.title : undefined}>${m.label}</a>` : html`<span title=${m.title !== m.label ? m.title : undefined}>${m.label}</span>`}<//>
   <p class="sub">${m.role || "member"} · ${m.model ?? html`<span class="dim">model not reported</span>`}</p>
   <p class="mh-state"><span class=${`pill st-${m.state}`}><span aria-hidden="true">${glyphOf(m.running ? "working" : m.state)} </span>${stateWord(m.state, m.running)}</span>${m.since > 0 ? html`<span class="dim"> since <${Age} text=${sinceText(m.since)} /></span>` : null}</p>
   <p class="mh-where">team <a href=${m.teamHref}>${m.team}</a>${m.lane ? html` · lane <a href=${m.lane.href}>${m.lane.name}</a>` : null}${m.lead ? html` · takes direction from <a href=${m.lead.href}>${m.lead.name}</a>` : null}</p>`;
@@ -137,7 +138,7 @@ export class MemberSummary extends Live {
     if (!m) {
       return html`<section class="panel msum"><p class="dim">Loading…</p></section>`;
     }
-    return html`<section class="panel msum gm-panel" data-role=${m.role || undefined} data-state=${m.state} aria-live=${live ? "polite" : undefined} aria-label=${`Member ${m.name}`}>
+    return html`<section class="panel msum gm-panel" data-role=${m.role || undefined} data-state=${m.state} aria-live=${live ? "polite" : undefined} aria-label=${`Member ${m.title}`}>
       ${onClose ? html`<button class="close" onClick=${onClose} aria-label="Close panel">×</button>` : null}
       <${MemberHead} m=${m} link=${true} />
       <h3>Now</h3>

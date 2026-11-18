@@ -45,10 +45,10 @@ export function flattenTree(slices, team, collapsed = new Set()) {
     for (const { m } of inRoot) {
       const open = openBriefsOf(slices, team, m.id).sort((a, b) => (a.id < b.id ? -1 : 1));
       const mKey = `m:${m.id}`;
-      rows.push({ key: mKey, kind: "member", depth: 2, id: m.id, label: m.name, detail: m.role, role: m.role, ...ctxFields(m), state: m.state, open: !collapsed.has(mKey), expandable: open.length > 0, count: open.length });
+      rows.push({ key: mKey, kind: "member", depth: 2, id: m.id, label: m.label, title: m.title, detail: m.role, role: m.role, ...ctxFields(m), state: m.state, open: !collapsed.has(mKey), expandable: open.length > 0, count: open.length });
       if (!collapsed.has(mKey)) {
         for (const b of open) {
-          rows.push({ key: `b:${m.id}:${b.id}`, kind: "brief", depth: 3, label: b.body.slug, detail: `${partyName(b.body, "from")} → ${partyName(b.body, "to")}`, state: "open" });
+          rows.push({ key: `b:${m.id}:${b.id}`, kind: "brief", depth: 3, label: b.body.slug, detail: `${partyName(b.body, "from", slices)} → ${partyName(b.body, "to", slices)}`, state: "open" });
         }
       }
     }

@@ -514,7 +514,7 @@ export default class Ah2 extends View {
           .tooltip(`Dismiss ${tm.name}`)
           .accessibility_label(`Dismiss team ${tm.name}`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openDismiss(tm.id, tm.name, this.workRootOf(tm.id)))
+          .on_click(() => openDismiss(tm.id, tm.name, this.workRootOf(tm.id), tm.parent ? tm.name : null))
           .child(svg("mods/ah2/x.svg").size(11))));
       return lead ? div().flex().w_full().gap(4).child(lead).child(row) : row;
     };
@@ -540,7 +540,7 @@ export default class Ah2 extends View {
       const open = (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed");
       for (const r of treeRows(teamTree(tm), open)) {
         const n = r.node;
-        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.name);
+        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label);
         if (n.kind === "lane") {
           rows.push(header(n.team, true, lead));
           teamAlerts(n.team, r);
@@ -650,7 +650,9 @@ export default class Ah2 extends View {
     const mk = rowMark({ role: mb.role, state: mb.state, running: mb.state === "running" }, lt);
     const quiet = mb.state === "idle" || mb.state === "gone" || mb.state === "unknown";
     const word = mb.what === mb.word.toLowerCase() || mb.what === "blocked"; // model.js memberRow: no item, the state's word
-    const full = `${mb.name}${mb.role && mb.role !== mb.name ? ` (${mb.role})` : ""} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
+    // ah2-220: a lane's orchestrator reads Sub-Orchestrator; its tooltip names the lane (select.js memberLabel)
+    const who = mb.title !== mb.name ? mb.title : `${mb.name}${mb.role && mb.role !== mb.name ? ` (${mb.role})` : ""}`;
+    const full = `${who} · ${mb.word} · ${mb.what}${mb.age ? ` · ${mb.age}` : ""}`;
     // Every row has the ring border, linked or not, so their columns line up.
     const row = this.ring(t, address ? Button.new(`m-${mb.key}`) : h_flex().id(`m-${mb.key}`), t.chrome)
       .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12.5)
@@ -659,7 +661,7 @@ export default class Ah2 extends View {
       .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(mk.hue ?? t.foreground))
       .child(div().w(14).flex_none().flex().justify_center().text_size(11).text_color(mk.mark ?? t.blocked).child(mk.glyph))
       // what it is on gives way first, then the name (to 40 px); a bare state word ("idle") never does, so the state is never lost
-      .child(div().flex_auto().min_w(40).truncate().text_color(quiet ? t.muted : t.foreground).child(mb.name))
+      .child(div().flex_auto().min_w(40).truncate().text_color(quiet ? t.muted : t.foreground).child(mb.label))
       .child(div().when(word, (el) => el.flex_none()).when(!word, (el) => el.flex_shrink(100).min_w(0)).truncate().text_size(12).text_color(t.muted).child(mb.what))
       .child(div().w(28).flex_none().text_right().font_family(MONO).text_size(11).text_color(t.muted).child(mb.age));
     return div().flex().w_full().gap(4).child(lead).child(address
@@ -696,7 +698,7 @@ export default class Ah2 extends View {
           .tooltip(`Dismiss ${name}`)
           .accessibility_label(`Dismiss team ${name}`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openDismiss(this.team, name, this.workRootOf(this.team)))
+          .on_click(() => openDismiss(this.team, name, this.workRootOf(this.team), s?.lane ? name : null))
           .child("Dismiss")))
         .child(this.closeButton(t, "ah2-sitrep-close", "Close the sitrep", close)))
       .child(v_flex().id("ov-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_mouse_down("left", (_e, cx) => cx.stop_propagation()).children(body)); // the header drags; the body selects

@@ -1,6 +1,8 @@
 ---
 name: architect
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc architect`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   Design authority for the agent hierarchy. Dispatch it for non-trivial design
   reasoning (structure, approach, contract, edge cases), design-heavy
   analysis, debugging theory and research. It writes a SPEC FILE at the

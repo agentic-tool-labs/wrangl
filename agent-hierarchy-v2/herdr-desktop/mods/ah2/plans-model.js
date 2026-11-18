@@ -1,7 +1,7 @@
 // The Plans view's data, as pure functions of the held slices: no component, no clock, no storage unless one is handed in.
 // The daemon spells out every field of a `plan:` stream, places each item in its column and serves rows in display order; nothing here holds those rules.
 
-import { isQuiet } from "./select.js";
+import { isQuiet, memberLabel } from "./select.js";
 
 export const COUNT_KEYS = ["done", "in_progress", "reported", "in_review", "approved", "not_started", "next", "blocked", "waiting_user", "waiting_orch", "dropped"];
 export const GROUPS = [
@@ -31,6 +31,9 @@ export function fullTree(workRoot, tree) {
 
 const num = (v) => (Number.isFinite(v) ? v : 0);
 
+// An owner's role, label and tooltip: memberLabel over the role its name carries.
+const ownerShown = (owner, lane) => (({ label, role, title }) => ({ role, ownerLabel: label, ownerTitle: title }))(memberLabel(owner, owner, roleOf(owner), lane));
+
 // One `plan:` stream as the view reads it. `team` is the team row the stream belongs to.
 export function streamOf(raw, plan, team, teamStatus = "live") {
   const { counts, total, owner } = raw;
@@ -43,7 +46,9 @@ export function streamOf(raw, plan, team, teamStatus = "live") {
     repo: team.repo,
     stream: raw.stream,
     owner,
-    role: roleOf(owner),
+    // ah2-220: how the owner reads (a lane's orchestrator is its Sub-Orchestrator); `owner` stays the key
+    ...ownerShown(owner, team.lane ?? null),
+    lane: team.lane ?? null,
     branch: raw.branch,
     goal: raw.goal,
     state: raw.state,
@@ -72,7 +77,7 @@ const TEAM_ORDER = { live: 0, stale: 1, ended: 2 };
 
 // The held plan of a team (null while its slice is not held), as the team row and the streams in it.
 export function teamModel(row, plan, now) {
-  const team = { id: row.id, name: row.name, dirId: row.dirId, repo: row.repo, branch: row.branch };
+  const team = { id: row.id, name: row.name, dirId: row.dirId, repo: row.repo, branch: row.branch, lane: row.laneOf ? row.name : null };
   const asOf = num(plan?.as_of);
   const quiet = isQuiet(row.quietAt, now);
   const status = row.status === "live" && quiet ? "stale" : row.status;
@@ -245,7 +250,7 @@ const cardOf = (item, stream, column, laneKey, mark) => ({
   team: stream.team,
   repo: stream.repo,
   owner: item.owner,
-  role: roleOf(item.owner),
+  ...ownerShown(item.owner, stream.lane ?? null),
   branch: stream.branch,
   attn: item.state === "blocked",
   at: column === "done" ? item.done_seen_at : msOf(item.state_since) ?? stream.asOf,

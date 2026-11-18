@@ -3,7 +3,7 @@
 // plan moves, alerts, questions waiting on you, and member state changes the mod saw while it was open (ahd keeps no list of
 // those, so they are labelled as seen here). The team and party reads are the web's own select.js, the plan reads plans-model.js,
 // both byte-identical copies (kept honest by tests). Message rows are the web's Live feed rows (web/ui/app.js FeedRow).
-import { teamRows, partyName } from "./select.js";
+import { askerLabel, teamRows, partyName } from "./select.js";
 import { STATES, age, sidebarModel, qaModel, qaSubs } from "./model.js";
 import { planChangesId, STATE_LABEL, msOf } from "./plans-model.js";
 
@@ -66,7 +66,7 @@ export function seenStates(memo, slices, now) {
     for (const mb of tm.members) {
       states.set(mb.key, mb.state);
       const was = memo?.states?.get(mb.key);
-      if (was && was !== mb.state) events.push({ key: `seen|${mb.key}|${now}`, at: now, dir: tm.dir, team: tm.name, name: mb.name, from: was, to: mb.state });
+      if (was && was !== mb.state) events.push({ key: `seen|${mb.key}|${now}`, at: now, dir: tm.dir, team: tm.name, name: mb.name, label: mb.label ?? mb.name, from: was, to: mb.state });
     }
   }
   return { states, events: [...events, ...(memo?.events ?? [])].slice(0, SEEN_CAP) };
@@ -87,8 +87,10 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
       const b = slices.get(id)?.body;
       if (!b) continue;
       const at = Date.parse(b.created ?? "") || 0;
-      const from = partyName(b, "from") ?? "";
-      const to = partyName(b, "to") ?? "";
+      // ah2-220 Amendment 2: the labels are for display; the terminal lookup (`of`) takes the real name
+      const from = partyName(b, "from", slices) ?? "";
+      const to = partyName(b, "to", slices) ?? "";
+      const toName = partyName(b, "to") ?? "";
       // the daemon's ETA state (EtaProjection.cs), served on an open brief the Orchestrator sent; only overdue is drawn
       const late = b.open === true && b.state === "overdue";
       const isInternal = b.class === "internal";
@@ -97,7 +99,7 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
         glyph: b.open ? "→" : "←", tone: b.open ? "muted" : "done",
         title: b.title || b.slug || "",
         sub: [late && "overdue", b.open ? `${from} → ${to}` : `${to} reported`, isInternal && "internal"].filter(Boolean).join(" · "),
-        mb: of(r.dirId, b.team ?? r.name, to),
+        mb: of(r.dirId, b.team ?? r.name, toName),
       });
     }
     for (const c of (slices.get(planChangesId(r.dirId, r.name))?.body?.rows ?? []).slice(0, PLAN_PER_TEAM)) {
@@ -128,14 +130,14 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
       const [asker, askTeam] = split(c.asker);
       add(dir, name, {
         key: `ask|${c.key}`, kind: "ask", at: c.q.at ?? 0, glyph: "?", tone: "blocked",
-        title: c.text, sub: asker ? `${asker} asks you` : "waiting on you", mb: asker ? of(dir, askTeam ?? name, asker) : null,
+        title: c.text, sub: asker ? `${askerLabel(slices, dir, askTeam ?? name, asker)?.label ?? asker} asks you` : "waiting on you", mb: asker ? of(dir, askTeam ?? name, asker) : null,
       });
     }
   }
   for (const s of seen) {
     add(s.dir, s.team, {
       key: s.key, kind: "seen", at: s.at, mark: s.to,
-      title: `${s.name}: ${word(s.from)} → ${word(s.to)}`, sub: "seen while open", mb: of(s.dir, s.team, s.name),
+      title: `${s.label ?? s.name}: ${word(s.from)} → ${word(s.to)}`, sub: "seen while open", mb: of(s.dir, s.team, s.name),
     });
   }
 

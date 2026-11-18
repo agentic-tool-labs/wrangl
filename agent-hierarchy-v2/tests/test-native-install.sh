@@ -157,6 +157,7 @@ Bash(/p/bin/ah roster three:*)}" ;;
         *) echo '{"ok":false,"error":{"code":"drain_refused","message":"no caller"}}' ;;
       esac
     fi
+    [ "\${FAKE_START_FAIL:-}" = other ] && echo "error: start failed: other" >&2
     [ -n "\${FAKE_START_FAIL:-}" ] && exit 1
     : > "\$AH_HOME/fake-daemon-up" ;;
   status)
@@ -490,6 +491,14 @@ check "--rebuild-only: a restart that fails is a warning and exit 0" both 0 "$rc
 out="$(FAKE_START_FAIL=refused FAKE_STATUS='{"up":true,"version":"1.0.0"}' run_install --apply --rebuild-only --prefix "$T/bin" 2>&1)"; rc=$?
 check "--rebuild-only: a refused restart says the old daemon keeps running, exit 0" both 0 "$rc" 'was refused (drain_refused), so the old daemon keeps running' "$out"
 check "... and does not say it did not come up" sh -c '! printf %s "$1" | grep -q "did not come up"' _ "$out"
+check "... and does not echo the daemon's raw error line" sh -c '! printf %s "$1" | grep -q "^error: drain_refused"' _ "$out"
+: > "$FAKE_LOG"
+out="$(FAKE_START_FAIL=other FAKE_STATUS='{"up":true,"version":"1.0.0"}' run_install --apply --rebuild-only --prefix "$T/bin" 2>&1)"; rc=$?
+check "--rebuild-only: a restart failing for another reason still echoes the daemon's line, exit 0 (nearest non-match)" both 0 "$rc" 'error: start failed: other' "$out"
+: > "$FAKE_LOG"
+out="$(FAKE_START_FAIL=refused FAKE_STATUS='{"up":true,"version":"1.0.0"}' run_install --apply --prefix "$T/bin" 2>&1)"; rc=$?
+check "a refused restart without --rebuild-only is a warning too, exit 0" both 0 "$rc" 'warning: '"'"'.*restart'"'"' was refused (drain_refused)' "$out"
+check "... with no error: line" sh -c '! printf %s "$1" | grep -q "error:"' _ "$out"
 : > "$FAKE_LOG"
 FAKE_STATUS='{"up":true,"version":"1.2.3"}' run_install --apply --rebuild-only --prefix "$T/bin" >/dev/null 2>&1; rc=$?
 check "a running up-to-date daemon is neither started nor restarted, exit 0 (nearest non-match)" test "$rc" -eq 0 -a -z "$(grep -E '^ahd (start|restart)' "$FAKE_LOG")"

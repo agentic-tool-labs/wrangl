@@ -19,7 +19,7 @@
   },
   "expect": {
     "stdout": "",
-    "stderr": "roster.mjs: Unexpected token 'o', \"not-json\" is not valid JSON\n",
+    "stderr": "roster.mjs: Unexpected token 'o', \"not-json\" is not valid JSON\nTeam commands: `ah rules show peer-roster`.\n",
     "exit": 2,
     "tree_diff": {
       "added": [],

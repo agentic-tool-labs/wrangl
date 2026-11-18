@@ -82,3 +82,27 @@ test("one stream: plan moves, questions, alerts and seen state changes by minute
 test("the feed view runs nothing", () => {
   for (const f of ["feed.js", "feed-model.js"]) assert.doesNotMatch(readFileSync(join(mod, f), "utf8"), /\bexec\b/);
 });
+
+// ah2-220 Amendment 2: the label is for display; a lane Orchestrator's rows keep the member and terminal their lookup finds by name.
+test("a lane orchestrator's seen event and a message to it read Sub-Orchestrator and keep a member and a terminal target", async () => {
+  const { terminalFinder } = await import("../../herdr-desktop/mods/ah2/model.js");
+  const sid = "team-summary:a1b2c3d4/lane-herdr";
+  const key = "member:a1b2c3d4/lane-herdr/@orchestrator";
+  const list = "list:feed:team:a1b2c3d4/lane-herdr";
+  const ex = { id: "exchange:a1b2c3d4/20261108-171900-zz01", body: { id: "exchange:a1b2c3d4/20261108-171900-zz01", dir_id: "a1b2c3d4", team: "lane-herdr", from: "architect", from_name: "architect", to: "orchestrator", open: false, created: "2026-11-08T17:19:00.000Z", slug: "lane-report", title: "lane report" } };
+  const base = new Map(slices).set(list, { ...slices.get(list), body: { ...slices.get(list).body, ids: ["20261108-171900-zz01", ...slices.get(list).body.ids] } }).set(ex.id, ex);
+  const first = seenStates(null, base, NOW);
+  const b = base.get(sid).body;
+  const moved = new Map(base).set(sid, { ...base.get(sid), body: { ...b, member_states: { ...b.member_states, [key]: { ...b.member_states[key], state: "blocked" } } } });
+  const seen = seenStates(first, moved, NOW + 1000);
+  const m = feedModel(moved, NOW + 1000, { seen: seen.events });
+  const focus = terminalFinder([{ state: "live", address: "t7", labels: {} }]);
+  const seenRow = m.rows.find((r) => r.kind === "seen" && r.mb?.key === key);
+  const msgRow = m.rows.find((r) => r.key === ex.id);
+  assert.equal(seenRow?.title, "Sub-Orchestrator: working → blocked");
+  assert.equal(msgRow?.sub, "Sub-Orchestrator reported");
+  for (const r of [seenRow, msgRow]) {
+    assert.equal(r.mb?.key, key, "the row still names the lane's orchestrator");
+    assert.equal(focus(r.mb), "t7", "and keeps its Focus terminal");
+  }
+});

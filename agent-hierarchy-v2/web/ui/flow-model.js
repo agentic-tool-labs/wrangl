@@ -208,12 +208,12 @@ export function flowActive(slices, team, nodes) {
 // One card's data: what is known of the member, a field with no source null. A member of a team not (yet) held reads as gone.
 export function flowCardOf(slices, teamId, id) {
   const team = slices.get(teamId);
-  const m = team ? memberOf(slices, team, id) : { id, name: id.split("/").pop(), role: "", state: "gone", running: false, tool: null, model: null, slug: null, lastAt: 0, orchestrator: false };
+  const m = team ? memberOf(slices, team, id) : { id, name: id.split("/").pop(), label: id.split("/").pop(), title: id.split("/").pop(), role: "", state: "gone", running: false, tool: null, model: null, slug: null, lastAt: 0, orchestrator: false };
   const items = team?.body.pipeline?.items ?? [];
   const item = m.slug ? items.find((i) => i.slug === m.slug) : null;
   return {
-    name: shortName(id, m.name),
-    full: m.name,
+    name: shortName(id, m.label),
+    full: m.title,
     role: m.role,
     state: m.state,
     running: m.running === true,

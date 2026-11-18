@@ -1,6 +1,8 @@
 ---
 name: docs-writer
 description: >-
+  A peer session, started with `ah roster spawn-ad-hoc docs-writer`; use the
+  Agent tool for it only when the dispatch setting says subagents.
   Docs-Writer: writes and maintains human-facing documentation outside of code
   (READMEs, docs/, guides, changelogs, troubleshooting pages). Dispatch it with
   the absolute path of the work tree it must write in and a list of what must be

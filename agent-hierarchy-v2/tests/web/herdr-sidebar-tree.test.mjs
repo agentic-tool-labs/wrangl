@@ -65,3 +65,20 @@ test("a row's glyph, mark and role hue for each state are the ones the Graph's c
   // negative: a reviewer at work is the review mark, not the working one
   assert.notEqual(rowMark({ role: "reviewer", state: "working" }, false).mark, rowMark({ role: "implementor", state: "working" }, false).mark);
 });
+
+// ah2-220: a lane's orchestrator reads Sub-Orchestrator in the tree; the top team's reads as before; the key and name stay orchestrator.
+test("a lane's orchestrator row is labelled Sub-Orchestrator, the top one and ordinary members are untouched, the key still matches", () => {
+  const slices = slicesOf(
+    summary("ah2", { "d1/ah2/@orchestrator": live("working"), "d1/ah2/@implementor": live("working") }),
+    summary("lane-herdr", { "d1/lane-herdr/@orchestrator": live("idle") }, "ah2"),
+  );
+  const [tm] = sidebarModel(slices, NOW).teams;
+  const [root] = teamTree(tm);
+  const lane = root.children.find((n) => n.kind === "lane").children[0];
+  assert.deepEqual([root.label, root.title, root.role], ["orchestrator", "orchestrator", "orchestrator"]);
+  assert.deepEqual([lane.label, lane.title, lane.role], ["Sub-Orchestrator", "Sub-Orchestrator of lane-herdr", "sub-orchestrator"]);
+  assert.equal(root.children[0].label, "implementor");
+  // display only: the name and key a lookup uses keep orchestrator
+  assert.deepEqual([lane.name, lane.key], ["orchestrator", "d1/lane-herdr/@orchestrator"]);
+  assert.equal(tm.lanes[0].members.find((m) => m.name === "orchestrator")?.key, lane.key);
+});

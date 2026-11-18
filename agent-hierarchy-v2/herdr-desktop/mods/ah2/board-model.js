@@ -236,12 +236,15 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
     key: c.id,
     mark: markText(c.mark),
     // the item sheet's selection: a plan item only (a decision card answers in Q&A, a changed stream has no single item)
-    sel: c.decision || c.changed ? null : { key: c.id, dirId: c.dirId, team: c.team, stream: c.stream, item: c.key, title: c.title, owner: c.owner || "", log: itemLogId(c.dirId, c.workId), rows: rowsOf(c, x, now), group: x.group, parent: x.parent, epic: x.epicLink, note: c.note || "", goal: c.goal || "", ext: c.extId || c.extUrl ? { id: c.extId ?? c.extUrl, url: httpUrl(c.extUrl) } : null },
+    sel: c.decision || c.changed ? null : { key: c.id, dirId: c.dirId, team: c.team, stream: c.stream, item: c.key, title: c.title, owner: c.owner || "", ownerLabel: c.ownerLabel || c.owner || "", ownerTitle: c.ownerTitle || c.owner || "", log: itemLogId(c.dirId, c.workId), rows: rowsOf(c, x, now), group: x.group, parent: x.parent, epic: x.epicLink, note: c.note || "", goal: c.goal || "", ext: c.extId || c.extUrl ? { id: c.extId ?? c.extUrl, url: httpUrl(c.extUrl) } : null },
     title: c.title,
     id: c.decision ? "" : c.key,
     ref: c.decision ? "" : `${streamName(c.stream)} / ${c.key}`,
     team: c.team,
     owner: c.owner || "",
+    // ah2-220: how the owner reads (plans-model.js ownerShown); `owner` stays the key the filter and the terminal lookup match
+    ownerLabel: c.ownerLabel || c.owner || "",
+    ownerTitle: c.ownerTitle || c.owner || "",
     workId: c.workId ?? "",
     ...x,
     blockedOpen: c.blockedOpen ?? 0,

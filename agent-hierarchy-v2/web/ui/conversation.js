@@ -87,13 +87,13 @@ class MemberRail extends Live {
   select(snap) {
     const team = firstTeam(snap.slices, snap.ui);
     const ids = memberIds(team);
-    return { people: JSON.stringify(ids.map((id) => { const m = memberOf(snap.slices, team, id); const c = m.ctx; return [id, m.name, m.state, m.slug ?? "", m.role, c.text, c.title, c.over]; })), selected: ids.includes(snap.ui.selected) ? snap.ui.selected : ids[0] ?? null };
+    return { people: JSON.stringify(ids.map((id) => { const m = memberOf(snap.slices, team, id); const c = m.ctx; return [id, m.label, m.state, m.slug ?? "", m.role, c.text, c.title, c.over, m.title]; })), selected: ids.includes(snap.ui.selected) ? snap.ui.selected : ids[0] ?? null };
   }
 
   draw({ store }, { people, selected }) {
     return html`<nav class="member-rail" aria-label="Members"><ul>
-      ${JSON.parse(people).map(([id, name, state, slug, role, ctx, ctxTitle, over]) => {
-        return html`<li key=${id} data-role=${role || undefined} data-state=${state} class=${`rail-row st-${state}${selected === id ? " selected" : ""}`}><button class="rail-hit" aria-pressed=${selected === id} aria-label=${`Show ${name}'s conversation, ${state}`} onClick=${() => store.setUi({ selected: id })}></button><span class="rail-body"><span class="dot"></span><span class="n"><a href=${memberHref(id)}>${name}</a></span><span class="s">${state !== "working" && (slug || state !== "idle") ? `${state} · ` : ""}${slug || "idle"}</span><span class=${over ? "ctx over" : "ctx"} title=${`context used · ${ctxTitle}`}><span class="sr">context used </span>${ctx}</span></span></li>`;
+      ${JSON.parse(people).map(([id, name, state, slug, role, ctx, ctxTitle, over, title]) => {
+        return html`<li key=${id} data-role=${role || undefined} data-state=${state} class=${`rail-row st-${state}${selected === id ? " selected" : ""}`}><button class="rail-hit" aria-pressed=${selected === id} aria-label=${`Show ${title}'s conversation, ${state}`} onClick=${() => store.setUi({ selected: id })}></button><span class="rail-body"><span class="dot"></span><span class="n"><a href=${memberHref(id)} title=${title !== name ? title : undefined}>${name}</a></span><span class="s">${state !== "working" && (slug || state !== "idle") ? `${state} · ` : ""}${slug || "idle"}</span><span class=${over ? "ctx over" : "ctx"} title=${`context used · ${ctxTitle}`}><span class="sr">context used </span>${ctx}</span></span></li>`;
       })}
     </ul></nav>`;
   }
@@ -164,7 +164,7 @@ export class TranscriptPane extends Live {
     return {
       hid,
       lid,
-      who: who?.name ?? "",
+      who: mem && who ? mem.label : who?.name ?? "",
       state: mem?.state ?? "gone",
       running: mem?.running ?? false,
       tool: mem?.tool ?? null,
