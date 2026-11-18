@@ -182,9 +182,10 @@ public sealed class OverdueBriefDispatchTests : IDisposable
     }
 
     /// <summary>A graph whose daemon is up and serves the real /v1/send route (as DaemonServices.RegisterMesh wires it); every other call falls back to files.</summary>
-    private sealed record DaemonUp(ServiceGraph Graph, FakeDaemonClient Daemon, Func<int> Sends);
+    private sealed record DaemonUp(ServiceGraph Graph, FakeDaemonClient Daemon, Func<int> Sends, Func<string, RouteResponse> Route);
 
-    private DaemonUp WithDaemonUp()
+    /// <param name="refuseFirst">The first send is answered from_mismatch without reaching the route.</param>
+    private DaemonUp WithDaemonUp(bool refuseFirst = false)
     {
         var routes = new Routes();
         var sends = 0;
@@ -202,9 +203,16 @@ public sealed class OverdueBriefDispatchTests : IDisposable
             }
 
             sends++;
-            var answer = routes.All["POST /v1/send"](new RouteRequest("POST", "/v1/send", string.Empty, new Dictionary<string, string>(), r.Body, new Dictionary<string, string>(), Environment.ProcessId), CancellationToken.None).GetAwaiter().GetResult();
+            if (refuseFirst && sends == 1)
+            {
+                return new DaemonReply(403, "{\"error\":{\"code\":\"from_mismatch\",\"message\":\"injected\"}}"u8.ToArray());
+            }
+
+            var answer = Route(r.Body);
             return new DaemonReply(answer.Status, answer.Body);
         };
+        RouteResponse Route(ReadOnlyMemory<byte> body) =>
+            routes.All["POST /v1/send"](new RouteRequest("POST", "/v1/send", string.Empty, new Dictionary<string, string>(), body, new Dictionary<string, string>(), Environment.ProcessId), CancellationToken.None).GetAwaiter().GetResult();
         var g = ServiceGraph.Build(PlatformModule.CreateIo(null), _env, _runner, daemon);
         var scope = new RequestScope();
         var rule = Ah.Mesh.MeshModule.CreateMeshRule(g.Links, _env);
@@ -222,7 +230,7 @@ public sealed class OverdueBriefDispatchTests : IDisposable
                 g.Mailbox,
                 new AnyContext(),
                 null));
-        return new DaemonUp(g, daemon, () => sends);
+        return new DaemonUp(g, daemon, () => sends, body => _sandbox.Mirrored(() => Route(System.Text.Encoding.UTF8.GetBytes(body))));
     }
 
     private (int Code, string Err) RunOn(ServiceGraph g, params string[] args)
@@ -255,25 +263,37 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         Assert.Equal("orchestrator@" + Team, OnlyFrom(up.Graph));
     }
 
-    /// <summary>
-    /// ah2-150 D7: the team file still names session "o" as its Orchestrator, so the CLI owns the team by that session
-    /// (RosterCore.TeamOwnedBy) and offers orchestrator@tm, but it records another pid, so the route's proof
-    /// (CallerIdentity.IsRecordedOrchestrator: pid and start) drops the address: the route refuses from_mismatch.
-    /// </summary>
-    private void TheRouteNoLongerProvesTheOrchestrator() =>
+    /// <summary>The team file names <paramref name="session"/> as its Orchestrator under a pid that is not this process (a resumed harness when it is "o").</summary>
+    private void TheRecordNames(string session) =>
         _sandbox.PlantTeam(
             Path.Combine(Hierarchy, "teams", Team + ".json"),
-            "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":2147483646,\"pid_start\":\"" + FakeRunner.SelfStart + "\",\"session_id\":\"o\"},"
+            "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":2147483646,\"pid_start\":\"" + FakeRunner.SelfStart + "\",\"session_id\":\"" + session + "\"},"
             + "\"members\":[{\"name\":\"impl-1\",\"role\":\"implementor\",\"route\":\"pane\",\"kind\":\"claude\"}],\"streams\":{}}\n");
 
+    /// <summary>ah2-158 D1/D4: the record still names session "o" under its old pid; the route proves "o" by its role, so the brief is stored from the Orchestrator on the first try and the fallback never fires.</summary>
+    [Fact]
+    public void AResumedOrchestratorsBriefIsFromTheOrchestratorOnTheFirstTry()
+    {
+        var request = NewRequest("orchestrator");
+        NameAddressee(request, "impl-1");
+        AsAdmin();
+        TheRecordNames("o");
+        var up = WithDaemonUp();
+
+        var (code, err) = RunOn(up.Graph, "send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
+
+        Assert.True(code == 0, err);
+        Assert.Equal((1, "orchestrator@" + Team), (up.Sends(), OnlyFrom(up.Graph)));
+    }
+
+    /// <summary>ah2-150 D7, kept as a safety net (ah2-158 D4): an automatically chosen Orchestrator the route refuses is sent once more as user. The refusal is injected, since the CLI and the route now share one predicate.</summary>
     [Fact]
     public void AnAutomaticallyChosenOrchestratorTheRouteRefusesIsSentOnceMoreAsUser()
     {
         var request = NewRequest("orchestrator");
         NameAddressee(request, "impl-1");
         AsAdmin();
-        TheRouteNoLongerProvesTheOrchestrator();
-        var up = WithDaemonUp();
+        var up = WithDaemonUp(refuseFirst: true);
 
         var (code, err) = RunOn(up.Graph, "send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
 
@@ -291,8 +311,8 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         var request = NewRequest("orchestrator");
         NameAddressee(request, "impl-1");
         AsAdmin();
-        TheRouteNoLongerProvesTheOrchestrator();
-        var up = WithDaemonUp();
+        TheRecordNames("o");
+        var up = WithDaemonUp(refuseFirst: true);
 
         var (code, err) = RunOn(up.Graph, "send", "impl-1@" + Team, "--ref", request, "--kind", "brief", "--from", "orchestrator@" + Team);
 
@@ -301,6 +321,59 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         Assert.Equal(0, up.Sends());
         Assert.Null(OnlyFrom(up.Graph));
     }
+
+    /// <summary>ah2-158 negative: the caller holds session "o" with orchestrator@tm registered, but the record names another session under another pid, so the route refuses it.</summary>
+    [Fact]
+    public void NegativeAHeldSessionTheRecordDoesNotNameIsNotTheOrchestratorAtTheRoute()
+    {
+        TheRecordNames("x");
+        var up = WithDaemonUp();
+
+        var r = up.Route("{\"to\":\"impl-1@" + Team + "\",\"text\":\"hello\",\"from\":\"orchestrator@" + Team + "\",\"session_id\":\"o\"," + ContextBody + "}");
+
+        Assert.Equal((403, "from_mismatch"), (r.Status, ErrorCode(r)));
+        Assert.Null(OnlyFrom(up.Graph));
+    }
+
+    /// <summary>ah2-158 negative (D3): the record names session "z", registered to another process; a caller that does not hold "z" naming it in the body gains nothing.</summary>
+    [Fact]
+    public void NegativeTheRecordsSessionNamedInTheBodyByACallerThatDoesNotHoldItIsRefused()
+    {
+        var teamFile = Path.Combine(Hierarchy, "teams", Team + ".json");
+        TheRecordNames("z");
+        Assert.True(_graph.Mailbox.WriteRegistration(new Ah.Mesh.RegistrationWrite(
+            "z", [new Ah.Mesh.BoxRef("orchestrator@" + Team, _graph.Mailbox.BoxDirFor(teamFile, "orchestrator"))], teamFile, "claude", 2147483646, PidStart: FakeRunner.SelfStart, Bound: true)));
+        var up = WithDaemonUp();
+
+        var r = up.Route("{\"to\":\"impl-1@" + Team + "\",\"text\":\"hello\",\"from\":\"orchestrator@" + Team + "\",\"session_id\":\"z\"," + ContextBody + "}");
+
+        Assert.Equal((403, "not_your_session"), (r.Status, ErrorCode(r)));
+        Assert.Null(OnlyFrom(up.Graph));
+    }
+
+    /// <summary>ah2-158 D2: the CLI's owner predicate and the daemon's orchestrator@tm proof agree: same pid, resumed pid, another session.</summary>
+    [Theory]
+    [InlineData("same-pid", true)]
+    [InlineData("o", true)]
+    [InlineData("x", false)]
+    public void TheCliAndTheDaemonAgreeOnTheOrchestrator(string recorded, bool owns)
+    {
+        if (recorded != "same-pid")
+        {
+            TheRecordNames(recorded);
+        }
+
+        var record = _graph.Roster.ReadTeamFileAt(Path.Combine(Hierarchy, "teams", Team + ".json"));
+        var cli = _graph.Roster.IsTeamOwnedBy(record, new TeamInvoker(Environment.ProcessId, null, FakeRunner.SelfStart));
+        var daemon = Assert.Single(_graph.Mailbox.PrincipalOf(Environment.ProcessId).Sessions, static s => s.SessionId == "o").Addresses.Contains("orchestrator@" + Team);
+
+        Assert.Equal((owns, owns), (cli, daemon));
+    }
+
+    private string ContextBody => "\"cwd\":" + Ah.Core.Json.JsonText.Stringify(_sandbox.Root, 0) + ",\"hierarchy_dir\":" + Ah.Core.Json.JsonText.Stringify(Hierarchy, 0);
+
+    private static string? ErrorCode(RouteResponse r) =>
+        Ah.Core.Json.JsonText.Parse(System.Text.Encoding.UTF8.GetString(r.Body.Span)).Member("error")?.Member("code") is { IsText: true } c ? c.AsString() : null;
 
     /// <summary>b271: the watch keeps the brief listing across ticks while no mail is written; an ack is a write, so the next tick reads the brief as read.</summary>
     [Fact]

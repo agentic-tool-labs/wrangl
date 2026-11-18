@@ -13,9 +13,15 @@ public sealed class StopPeerNudgeQaOwedTests
     private static string Msg(string id, string type, string to, string from, string slug, string created, string extra, string body) =>
         $"---\nid: {id}\ntype: {type}\nto: {to}\nfrom: {from}\nslug: {slug}\nparent: null\nreason: null\neta: null\nto_name: {(type == "request" ? to + "-1" : "null")}\nfrom_name: null\nteam: tm\ncreated: {created}\n{extra}---\n\n{body}\n";
 
-    private static (HooksHostTests.Rig Rig, string Dir) Arrange(string role = "implementor", string status = "DONE", string requestExtra = "")
+    private static (HooksHostTests.Rig Rig, string Dir) Arrange(string role = "implementor", string status = "DONE", string requestExtra = "", string? qa = null)
     {
         var rig = new HooksHostTests.Rig();
+        if (qa is not null)
+        {
+            Directory.CreateDirectory(rig.Sandbox.Root + "/proj/.claude/ah2");
+            File.WriteAllText(rig.Sandbox.Root + "/proj/.claude/ah2/agent-hierarchy.json", $"{{\"version\":1,\"qa\":{{\"parallel\":3,\"cadence\":\"{qa}\"}}}}");
+        }
+
         var dir = rig.Services.Config.HierarchyDir(rig.Sandbox.Root + "/proj") + "/msgs";
         _ = Directory.CreateDirectory(dir);
         File.WriteAllText(
@@ -162,17 +168,75 @@ public sealed class StopPeerNudgeQaOwedTests
         Assert.Equal(string.Empty, Stop(rig));
     }
 
+    private static void Spend(HooksHostTests.Rig rig) =>
+        Seed(rig, new JsonObject { ["type"] = "qa-nudge", ["session_id"] = Session, ["task"] = "qa:" + Id, ["ts"] = "2026-10-24T00:00:00.000Z" });
+
     [Fact]
     public void ThePlainThirdStopIsSilentAndLeavesOneJournalRow()
     {
-        var (rig, _) = Arrange();
-        void Spend() => Seed(rig, new JsonObject { ["type"] = "qa-nudge", ["session_id"] = Session, ["task"] = "qa:" + Id, ["ts"] = "2026-10-24T00:00:00.000Z" });
+        var (rig, _) = Arrange(qa: "item");
 
-        Spend();
+        Spend(rig);
         Assert.NotEqual(string.Empty, Stop(rig));
-        Spend();
+        Spend(rig);
 
         Assert.Equal(string.Empty, Stop(rig));
         Assert.Contains(rig.Writer.Arguments, a => a.Contains("qa-waived", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void BatchRaisesNoPerItemQaLine()
+    {
+        var (rig, _) = Arrange(qa: "batch");
+
+        Assert.Equal(string.Empty, Stop(rig));
+    }
+
+    [Fact]
+    public void NegativeBatchLeavesAnotherPendingObligationsBlockStanding()
+    {
+        var (rig, _) = Arrange(qa: "batch");
+        OwePending(rig);
+
+        var output = Stop(rig);
+
+        Assert.Contains("your report to", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("--to qa", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ItemRaisesTheLineWithNoChooseLine()
+    {
+        var (rig, _) = Arrange(qa: "item");
+
+        var output = Stop(rig);
+
+        Assert.Contains("reported DONE on lock", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("/wrangl:hierarchy qa", output, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("nightly")] // an unknown value is not configured
+    public void UnconfiguredRaisesTheLineOnceEndingWithHowToChoose(string? qa)
+    {
+        var (rig, _) = Arrange(qa: qa);
+
+        var reason = JsonText.Parse(Stop(rig)).AsObject().Get("reason")!.Value.AsString();
+        Assert.Contains("reported DONE on lock", reason, StringComparison.Ordinal);
+        Assert.Contains("/wrangl:hierarchy qa item", reason, StringComparison.Ordinal);
+        Assert.Contains("/wrangl:hierarchy qa batch", reason, StringComparison.Ordinal);
+        Spend(rig);
+
+        Assert.Equal(string.Empty, Stop(rig));
+    }
+
+    [Fact]
+    public void NegativeItemIsStillRaisedAfterOneBlock()
+    {
+        var (rig, _) = Arrange(qa: "item");
+        Spend(rig);
+
+        Assert.Contains("reported DONE on lock", Stop(rig), StringComparison.Ordinal);
     }
 }

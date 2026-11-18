@@ -4,6 +4,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.10] - 2026-11-17
+
+### Added
+
+- **The herdr Graph looks like the web's.** The Flow's cards, edges and lanes take the web's styling: an active
+  agent's border lights up, a blocked agent shows its glyph, lanes are colour-coded, and a dot travels along an edge
+  while a brief is in flight. The dots run on a timer only while a brief is in flight and the Flow is shown.
+- **Click an agent in the herdr Graph for its details.** A sheet shows what the web's member summary shows (role,
+  model, state, lane, what it is doing now, its latest messages). Go to pane is the sheet's first button; Open page
+  opens the member in the browser.
+- **Open in browser from the herdr Graph**, scoped to the graph you are looking at.
+- **`qa.cadence`** (`item` or `batch`) says when QA runs. `/hierarchy init` asks when it is not set and records your
+  own words as a rule of engagement. With `batch`, the per-item "Dispatch QA" prompt is not raised.
+
+### Fixed
+
+- **A drag pans the herdr Graph at every scale.** A drag did nothing unless the graph was zoomed past its frame.
+- **The daemon recognises a team's Orchestrator by its role**, as the CLI does, so a resumed Orchestrator session is
+  not treated as a stranger by one and the owner by the other.
+- **The Board shows shipped work as done.** Finishing the last checklist row of a backlog item closes the item, and
+  `ah backlog done` on an item with an open question says the item closed and the question stays open, not
+  "not closed".
+
 ## [2.0.9] - 2026-11-17
 
 ### Fixed

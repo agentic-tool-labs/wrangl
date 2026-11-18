@@ -61,7 +61,14 @@ internal static class BacklogVerb
     }
 
     /// <summary>A ship closed the last open item under backlog row <paramref name="id"/>: an open row closes with <paramref name="sha"/>; a closed or unknown one is left alone. The failure, or null.</summary>
-    internal static string? CloseShipped(ServiceGraph g, string ahHome, string dir, string id, string sha)
+    internal static string? CloseShipped(ServiceGraph g, string ahHome, string dir, string id, string sha) =>
+        CloseDone(g, ahHome, dir, id, [sha], $"shipped {(sha.Length > 7 ? sha[..7] : sha)}");
+
+    /// <summary>
+    /// Closes open backlog row <paramref name="id"/> with <paramref name="commits"/> and <paramref name="note"/>; a closed or unknown row, a project or a goal is left alone,
+    /// and with <paramref name="subItemsHold"/> (board-truth Amendment 2) so is a row with an open backlog sub-item. The failure, or null.
+    /// </summary>
+    internal static string? CloseDone(ServiceGraph g, string ahHome, string dir, string id, IReadOnlyList<string> commits, string note, bool subItemsHold = false)
     {
         if (StateDbModule.OpenReader(ahHome).Reader is not { } reader)
         {
@@ -71,15 +78,25 @@ internal static class BacklogVerb
         using (reader)
         {
             // a project or goal is closed by hand only
-            if (HierarchyModule.BacklogGet(reader.Query, dir, id) is not { } row || row.Item.State is "done" or "dropped" || HierarchyModule.WorkIsContainerKind(row.Item.Kind))
+            if (HierarchyModule.BacklogGet(reader.Query, dir, id) is not { } row || row.Item.State is "done" or "dropped" || HierarchyModule.WorkIsContainerKind(row.Item.Kind)
+                || (subItemsHold && HierarchyModule.BacklogList(reader.Query, dir).Any(r => r.Item.Parent == id && r.Item.State is not ("done" or "dropped"))))
             {
                 return null;
             }
         }
 
-        var commits = new JsonArray();
-        commits.Add(sha);
-        var args = new JsonObject { ["dir"] = dir, ["by"] = "orchestrator", ["item"] = id, ["done"] = true, ["commits"] = commits, ["done_note"] = $"shipped {(sha.Length > 7 ? sha[..7] : sha)}" };
+        var args = new JsonObject { ["dir"] = dir, ["by"] = "orchestrator", ["item"] = id, ["done"] = true, ["done_note"] = note };
+        if (commits.Count > 0)
+        {
+            var list = new JsonArray();
+            foreach (var commit in commits)
+            {
+                list.Add(commit);
+            }
+
+            args["commits"] = list;
+        }
+
         var result = g.Writer.Invoke("progress", HierarchyModule.BacklogWriteOp, JsonText.ToUtf8(args, 0), g.Hierarchy.Messages.PoolContext(dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
         return result.Ok ? null : result.Error ?? result.ErrorCode ?? "the write failed";
     }
@@ -131,13 +148,14 @@ internal static class BacklogVerb
         var by = Flag(args, "by") ?? Caller(context.Env, g, dir);
         string? Alias(string id) => WorkVerb.Resolve(g, context.Env.AhHome, dir, id, WorkVerb.CallerTeam(context.Env)).Row is { IsBacklog: true } row ? row.Item : null;
         // the checklist items of every team in the directory whose parent is the backlog item just closed
-        // a skipped child reads "not closed: <key> (<state>)"
-        IReadOnlyList<string> CloseChildren(string parent) =>
-        [
-            .. new string?[] { null }.Concat(g.Roster.ListTeamNames(dir)).Select(HierarchyModule.ProgressTeamOf).Distinct(StringComparer.Ordinal)
-                .Select(folder => HierarchyModule.ChecklistCloseChildren(g.Hierarchy.Progress, dir, folder, parent, DateTimeOffset.UtcNow, HierarchyModule.OrchestratorAddress(folder), null))
-                .SelectMany(static r => r.Items.Select(static i => "closed checklist item " + i).Concat(r.Skipped.Select(static s => "not closed: " + s))),
-        ];
+        // the held children left open share one line: "<id> is done; left open under it: <key> (<state>)[, …]"
+        IReadOnlyList<string> CloseChildren(string parent)
+        {
+            var results = new string?[] { null }.Concat(g.Roster.ListTeamNames(dir)).Select(HierarchyModule.ProgressTeamOf).Distinct(StringComparer.Ordinal)
+                .Select(folder => HierarchyModule.ChecklistCloseChildren(g.Hierarchy.Progress, dir, folder, parent, DateTimeOffset.UtcNow, HierarchyModule.OrchestratorAddress(folder), null)).ToList();
+            var left = results.SelectMany(static r => r.Skipped).ToList();
+            return [.. results.SelectMany(static r => r.Items.Select(static i => "closed checklist item " + i)), .. left.Count > 0 ? [$"{parent} is done; left open under it: {string.Join(", ", left)}"] : Array.Empty<string>()];
+        }
         return Run(new BacklogDeps(g.Writer, g.Hierarchy.Messages.PoolContext(dir), context.Env.AhHome, dir, origin, by, Alias, () => Composition.SitrepRows.DirItems(g, dir), CloseChildren), args, stdout, stderr);
     }
 

@@ -1065,6 +1065,20 @@ public static partial class HierarchyModule
     }
 
     /// <summary>
+    /// A checklist row under backlog item <paramref name="parent"/> was closed done (board-truth D2): the commits to close <paramref name="parent"/> with, the done rows' commits
+    /// of every team of the pool in order, or null while a row under it is still open work. A row waiting on the user is a question, not work, and does not hold it.
+    /// </summary>
+    public static IReadOnlyList<string>? ChecklistParentFinished(IHierarchyProgress progress, string pool, string team, string parent)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        var rows = progress.DocTeams(pool).Append(team).Distinct(StringComparer.Ordinal).SelectMany(t => ChecklistEntries(progress, pool, t)).Where(e => e.Item.Parent == parent).ToList();
+        // ponytail: a backlog done takes at most MaxCommits commits, so the newest are kept; the rows keep them all
+        return rows.Any(static e => ChecklistRules.IsOpen(e.Item) && e.Item.State != PlanStates.WaitingUser)
+            ? null
+            : [.. rows.Where(static e => e.Item.State == PlanStates.Done).SelectMany(static e => e.Item.Commits).Distinct(StringComparer.Ordinal).TakeLast(ProgressFormat.MaxCommits)];
+    }
+
+    /// <summary>
     /// A team sees a release ref for the first time, with no prior tip to compare: an item waiting in review closes when its reported sha differs from its base and is an ancestor of
     /// <paramref name="sha"/>. A newer dispatch has already moved the item out of review. Any other item waits for a move. The first refusal, or null.
     /// </summary>

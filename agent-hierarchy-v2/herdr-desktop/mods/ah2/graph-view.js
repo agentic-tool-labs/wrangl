@@ -8,22 +8,27 @@
 // (one minute, STEP_MS), never per drag frame. Zoom: a click on a stream circle shows that stream alone; the crumb (or Esc) walks out.
 // Scale: − / + / Fit beside the tabs, and scroll to zoom: a mouse wheel or a trackpad's two-finger scroll, about the pointer, eased
 // out only, in step with the hand (graph-model.js wheelAct, WHEEL_EASE_MS). Drag to pan: a left press on a map or the Flow's stage, moved past DRAG_PX, pans
-// content larger than its frame (grip, dragAct); a press and release short of it is still a click.
+// at every scale, within the keep rule (grip, dragAct, keepPan); a press and release short of it is still a click.
 // Map | Flow: the header's mode tabs switch to the web's Flow (graph-model.js flowModel over the shared flow-model.js): cards in four
 // role columns, links between them, lanes as bands. Read-only as the Map is. The choice is kept in Herdr's shared store (GRAPH_KEY).
 
-import { div, PathBuilder, Background } from "gpui-kit";
+import { div, svg, PathBuilder, Background } from "gpui-kit";
 import { shared, setShared, run, terminals } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
-  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag } from "./graph-model.js";
+  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
+  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
-import { STATES, age, loadingOf, terminalFinder, memberName } from "./model.js";
+import { loadingOf, terminalFinder, memberName } from "./model.js";
 import { target } from "./ah.js";
 import { stateMark } from "./marks.js";
+import { sheetColumn } from "./board.js";
+import { memberModel, graphExtras, SUMMARY_MESSAGES } from "./member-model.js";
+import { glyphOf } from "./graph-world.js";
+import { streamName } from "./plans-model.js";
 
 const MONO = "Geist Mono";
 // Docked, the side column opens 420 px wide: the team's map takes 300 and a lane's 260 (its members' names whole), and every map comes before the links, so a
@@ -139,21 +144,36 @@ function grip(v, key) {
     set(act.pan);
     cx.notify();
   };
-  const stage = (el, pannable, pan, clamp, set) => el.when(pannable && !held(), (x) => x.cursor_grab()).when(held(), (x) => x.cursor_grabbing())
+  const stage = (el, pan, clamp, set) => el.when(!held(), (x) => x.cursor_grab()).when(held(), (x) => x.cursor_grabbing())
     .on_mouse_down("left", down).on_mouse_up("left", end).on_mouse_down_out(end)
     .on_hover((_hovered, cx) => end(null, cx)) // leaving ends it; so does entering, should a leave at the window's edge go unreported
     .on_mouse_move(move(pan, clamp, set));
   return { down, end, stage, clicks: () => !wasDrag(v.graphDrag, Date.now()) };
 }
 
-// ah2-103: a member opens its pane by the sidebar's own path (main.js member): the live terminal terminalFinder gives for the
-// member's served pane, or its ah.name label; none, and the member is inert. `rest` is its border at rest: one already in accent
-// shows focus in foreground. A press on it starts its stage's drag (gr: grip), and the release of a drag does not open it.
+// A member's pane (ah2-103): the live terminal terminalFinder gives for the member's served pane, or its ah.name label; else null.
 const addressOf = (v, id, pane) => v.graphTerminal?.({ pane, name: memberName(id) }) ?? null;
-const opens = (el, t, address, rest, gr) => el.cursor_pointer().hover((s) => s.border_color(t.foreground))
+// A node is a button that opens its member's sheet (spec herdr-graph-agent-details D2, D3): the same node again closes it, another
+// swaps it; a press starts its stage's drag (gr: grip) and the release of a drag is not a click (sheetClick). Go to pane is in the
+// sheet (D4), the sheet's first focus, so a click then Enter jumps. `rest` is its border at rest: one in accent shows focus in
+// foreground. Its focus handle (v.graphNodeKeys) takes focus back when the sheet closes (D7).
+const opens = (el, t, v, id, rest, gr) => el.cursor_pointer().hover((s) => s.border_color(t.foreground))
   .focus((s) => s.border_color(rest === t.accent ? t.foreground : t.accent))
+  .when(Boolean(v.graphNodeKeys?.get(id)), (x) => x.track_focus(v.graphNodeKeys.get(id)))
   .on_mouse_down("left", gr.down).on_mouse_up("left", gr.end)
-  .on_click(() => gr.clicks() && run("pane.focus", { terminal: address }));
+  .on_click((_e, cx) => {
+    const was = v.graphSheet;
+    if (!sheetClick(v, id)) return;
+    if (v.graphSheet) v.graphSheetKey?.focus();
+    else v.graphNodeKeys?.get(was)?.focus();
+    cx.notify();
+  });
+// Close the sheet, focus back on its node (D7).
+function closeSheet(v) {
+  const id = v.graphSheet;
+  v.graphSheet = null;
+  v.graphNodeKeys?.get(id)?.focus();
+}
 
 // graphModel (flowModel in Flow) only when an input changed: the slices (v.sliceGen, bumped by the poll), the shown team, window,
 // cursor, zoom and scale, the size (docked or not), the minute (the scrubber's clock moves in whole minutes), the mode and orientation,
@@ -187,7 +207,7 @@ function choose(v, patch, cx) {
   cx.notify();
 }
 
-export function graphView(v, t, close) {
+export function graphView(v, t, close, cx) {
   const docked = isDocked();
   v.graphTerminal = terminalFinder(terminals(), target()); // per render, as the sidebar's (main.js)
   const { m: got, error } = graphOf(v, docked);
@@ -197,13 +217,22 @@ export function graphView(v, t, close) {
   const loading = loadingOf(v, m.loaded);
   const zoom = (z) => drillTo(v, z);
   const flow = v.graphMode === "flow";
+  // focus handles, made once each (D7): the sheet's first control, and every drawn member's node, so focus can go back to it
+  if (cx) {
+    v.graphSheetKey ??= cx.focus_handle();
+    v.graphNodeKeys ??= new Map();
+    const ids = flow ? (m.cards ?? []).map((c) => c.id) : (m.groups ?? []).flatMap((g) => g.map?.leaves ?? []).map((n) => n.id);
+    for (const id of ids) if (!v.graphNodeKeys.has(id)) v.graphNodeKeys.set(id, cx.focus_handle());
+  }
+  const sheetOn = Boolean(v.graphSheet) && !loading && v.status !== "down" && !error;
+  const sheetEl = sheetOn ? agentSheet(v, t, m, docked) : null;
   let body;
   if (v.status === "down") body = [note(t, v.reason, "Retrying")];
   else if (error) body = [note(t, "Graph unavailable", error)];
   else if (loading) body = [note(t, "Loading graph…")];
   else if (m.empty) body = [note(t, "No teams running.")];
   else if (m.closed) body = [note(t, "Team closed.")];
-  else if (flow) body = flowBody(t, m, v);
+  else if (flow) body = flowBody(t, m, v, cx);
   else {
     const parts = m.groups.map((g) => group(t, g, docked, (node) => zoom({ team: g.id, node }), v));
     body = docked ? [...parts.flatMap((p) => p.map), ...parts.flatMap((p) => p.links)] : parts.flatMap((p) => [...p.map, ...p.links]);
@@ -225,6 +254,7 @@ export function graphView(v, t, close) {
       .on_mouse_down("left", stop)
       .on_click((_e, cx) => {
         v.graphTeam = tm.id;
+        v.graphSheet = null; // another team: its sheet is not this one's
         drillTo(v, null);
         cx.notify();
       })
@@ -244,7 +274,10 @@ export function graphView(v, t, close) {
   return v_flex().id("root").size_full().min_h(0).bg(t.surface).text_size(12.5)
     .track_focus(v.keys)
     .on_key_down((e, cx) => {
-      if (e.keystroke === "escape" && m.crumb) {
+      if (e.keystroke === "escape" && v.graphSheet) {
+        closeSheet(v); // the sheet first (the Board's Esc layering), then the zoom, then the window
+        cx.notify();
+      } else if (e.keystroke === "escape" && m.crumb) {
         zoom(null);
         cx.notify();
       } else if (e.keystroke === "escape") close();
@@ -259,12 +292,15 @@ export function graphView(v, t, close) {
         .children(loading || v.status === "down" ? [] : m.tabs.map(tab)))
       .child(modeTabs(v, t))
       .children(flow ? [orientButton(v, t)] : [])
-      .children(scaleBar(v, t)))
+      .children(scaleBar(v, t, loading || v.status === "down" ? null : m.id)))
     .when(Boolean(m.crumb), (el) => el.child(crumb(t, m.crumb, (_e, cx) => {
       zoom(null);
       cx.notify();
     })))
-    .child(v_flex().id("graph-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_size_change(measure).children(body))
+    // the agent's sheet beside the graph, or the whole column when docked (the Board's sheet, board.js sheetColumn)
+    .child(docked && sheetEl ? sheetEl : h_flex().flex_1().min_h(0)
+      .child(v_flex().id("graph-body").flex_1().min_w(0).h_full().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_size_change(measure).children(body))
+      .children(sheetEl ? [sheetEl] : []))
     .children(flow ? [] : [scrubber(v, t, loading || v.status === "down" ? null : m.scrub)]);
 }
 
@@ -313,7 +349,7 @@ function crumb(t, names, out) {
 }
 
 // The scale controls: −, the scale, +, Fit. A step is ×SCALE_STEP about each map's centre; Fit is scale 1, centred. Both ease (easeTo).
-function scaleBar(v, t) {
+function scaleBar(v, t, team) {
   const s = v.graphScale;
   const btn = (id, text, tip, said, act) => Button.new(id).h(24).min_w(24).px(6).flex().flex_none().items_center().justify_center().rounded(6)
     .cursor_pointer().text_size(11.5).text_color(t.foreground).border(1).border_color(t.input)
@@ -328,7 +364,22 @@ function scaleBar(v, t) {
       .child(`${Math.round(s * 100)}%`),
     btn("graph-scale-in", "+", "Zoom in (scroll to zoom, drag to pan)", "Zoom in", (cx) => easeTo(v, cx, { by: SCALE_STEP })),
     btn("graph-scale-fit", "Fit", "Fit the graph to the view", "Fit the graph to the view", (cx) => easeTo(v, cx, { to: 1 })),
+    openWeb(t, webGraphLink(v.link?.port ?? null, team)),
   ];
+}
+
+// Open in browser (V9), beside Fit: the web UI's Graph for the shown team in the system browser (cx.open_url, which takes only an
+// http(s) URL). Disabled, its tooltip says why, while ahd's page or the team is not known.
+function openWeb(t, link) {
+  return Button.new("graph-open-web").h(24).min_w(24).px(6).flex().flex_none().items_center().justify_center().rounded(6)
+    .text_size(11.5).border(1).border_color(t.input).disabled(!link.url)
+    .when(Boolean(link.url), (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
+    .when(!link.url, (el) => el.text_color(t.muted))
+    .focus((el) => el.border_color(t.accent))
+    .tooltip(link.url ? "Open in browser" : link.why).accessibility_label(link.url ? "Open in browser" : link.why)
+    .on_mouse_down("left", stop)
+    .on_click((_e, cx) => link.url && cx.open_url(link.url))
+    .child("↗");
 }
 
 // The scrubber: the window choice, the readout and Now; then the slider, its track drawn as messages per bar (in the window: accent
@@ -469,7 +520,7 @@ function map(t, g, zoomTo, v) {
       }));
   });
   for (const a of m.arcs) els.push(layer(stroke(a.cmds, a.width, a.kind === 1), Background.solid(t.accent).opacity(a.fade ?? base), S));
-  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, addressOf(v, n.id, n.pane), gr)));
+  m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, v, gr)));
   m.flights.forEach((f, i) => els.push(div().id(`gf-${g.id}-${i}`).absolute().left(f.x - 4).top(f.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(f.title).accessibility_label(f.title)));
   // container names sit on the circle's top edge, on a surface chip that stands in for the web's label halo
@@ -489,17 +540,16 @@ function map(t, g, zoomTo, v) {
     cx.stop_propagation();
     easeTo(v, cx, { by: act.zoom, wheel: true, at: e.local_position ? { id: g.id, x: e.local_position.x, y: e.local_position.y - CHIP } : null });
   };
-  const pannable = S > box.w || S > box.h;
   const now = () => (v.graphScale === s ? clamp(v.graphPan[g.id]) : null);
   // the frame is CHIP taller, the map drawn CHIP down, so a stream's name chip on a circle at the top edge is not clipped
-  return gr.stage(div().id(`gmap-${g.id}`), pannable, now, clamp, (p) => { v.graphPan[g.id] = p; })
+  return gr.stage(div().id(`gmap-${g.id}`), now, clamp, (p) => { v.graphPan[g.id] = p; })
     .relative().w(box.w).h(box.h + CHIP).flex_none().overflow_hidden().accessibility_label(said).on_scroll_wheel(wheel)
     .child(div().id(`gmap-${g.id}-in`).absolute().left(pan.x).top(pan.y + CHIP).size(S).children(els));
 }
 
 // A member: its body, the busy track and ring (the share of the last hour it worked, in its state's tone), then the label tiers
 // its radius has room for: context, state mark and name, role, model · state, item. The mark's shape keeps it from resting on colour.
-function leaf(t, g, n, i, address, gr) {
+function leaf(t, g, n, i, v, gr) {
   const r = n.r;
   const tone = t[n.tone] ?? t.unknown;
   const full = n.full;
@@ -510,10 +560,10 @@ function leaf(t, g, n, i, address, gr) {
   const across = Math.round(r * 2 - 8);
   const tight = n.name.length * 6.2 + 18 > across;
   const mark = stateMark(t, n.state);
-  const at = address ? opens(Button.new(`gm-${g.id}-${i}`), t, address, t.border, gr) : div().id(`gm-${g.id}-${i}`);
+  const at = opens(Button.new(`gm-${g.id}-${i}`), t, v, n.id, t.border, gr);
   return at.absolute().left(n.x - r).top(n.y - r).size(r * 2).rounded(r)
     .bg(t.surface).border(1).border_color(t.border).when(n.state === "gone", (el) => el.opacity(0.4))
-    .tooltip(address ? `${full}. Click to open its pane` : full).accessibility_label(address ? `${full}. Open its pane` : full)
+    .tooltip(`${full}. Click for its details`).accessibility_label(`${full}. Show its details`)
     .child(layer(ring(r, r * 0.86, 1, r * 0.1), t.border, r * 2))
     .child(layer(ring(r, r * 0.86, Math.max(0.04, n.share ?? 0), r * 0.1), tone, r * 2))
     .child(v_flex().size_full().items_center().justify_center().gap(1)
@@ -545,75 +595,109 @@ function link(t, g, l, i, pad, docked) {
     .child(div().w(28).flex_none().text_right().font_family(MONO).text_size(11).text_color(t.muted).child(String(l.n)));
 }
 
-// ---- Flow: graph-model.js flowModel, drawn as the web's Flow (graph.js FlowStage, r6-graph.css .gflow) in Herdr tokens ----
+// ---- Flow: graph-model.js flowModel, drawn as the web's Flow (graph.js FlowStage, r6-graph.css .gflow) ----
+// Neutrals are Herdr's theme() tokens; role, working and review hues are the web's own (graph-model.js WEB, cardStyle, edgeStyle),
+// picked by the theme's lightness, as Herdr's theme has none of them (spec herdr-graph-polish D2, Amendment 1).
 
-// The stage (bands, links, column labels, cards, the in-flight marks) at its pan, then the legend. Text scales with the drawn scale k,
-// as the web's does under its transform; the marks, the legend and "+N more" do not.
-function flowBody(t, m, v) {
+// The web's 20 px dot grid behind the stage (r6-graph.css .gflow .dot-grid): one native fill path, built again only when the stage
+// changes size, so a redraw costs nothing for it.
+const GRID = 20;
+function gridOf(v, w, h) {
+  const g = v.graphGrid;
+  if (g?.w === w && g.h === h) return g.path;
+  let b = PathBuilder.fill();
+  for (let y = GRID / 2; y < h; y += GRID) for (let x = GRID / 2; x < w; x += GRID) b = b.add_polygon([[x - 1, y - 1], [x + 1, y - 1], [x + 1, y + 1], [x - 1, y + 1]], true);
+  v.graphGrid = { w, h, path: b.build() };
+  return v.graphGrid.path;
+}
+
+// The stage (dot grid, bands, links, column labels, cards, the briefs' dots) at its pan, then the legend. Text scales with the drawn
+// scale k, as the web's does under its transform; the dots, the legend and "+N more" do not. A brief's dot runs its link from
+// sender to receiver at the web's pace, round and round while it is in flight (travelsOf, dotAt; one script clock, travelClock).
+function flowBody(t, m, v, cx) {
   if (m.pending) return [quiet(t, "Loading…", 0)];
   if (m.cards.length === 0) return [label(t, "Members", 0, 0), quiet(t, "None", 0)];
   const k = m.k;
   const s = v.graphScale;
+  const lt = light(t.surface);
+  const w = lt ? WEB.light : WEB.dark;
   const gr = grip(v, "flow");
+  const now = Date.now();
+  if (cx) travelClock(v, cx, travelsOf(v, m.dots, now));
   const sized = (el) => el.absolute().top(0).left(0).w(m.size.w).h(m.size.h);
   const els = [];
+  // V10: each lane's faint band first, behind everything (laid out with the model, so a frame adds nothing)
+  (m.lanes ?? []).forEach((l) => els.push(div().absolute().left(l.x - 8 * k).top(l.y - 4 * k).w(Math.max(0, l.w + 16 * k)).h(Math.max(0, l.h)).rounded(6).bg(laneStyle(l.i, lt).band)));
   m.bands.forEach((b, i) => els.push(div().id(`gfb-${i}`).absolute().left(b.x).top(b.y).w(b.w).h(b.h).rounded(6).bg(t.hover)
     .child(div().absolute().left(8).top(2).max_w(Math.max(0, b.w - 16)).truncate().text_size(11 * k).text_color(t.muted).child(b.name))));
   for (const l of m.links) {
-    const w = Math.max(1, (l.kind === "edge" ? 1 : 2) * k);
-    els.push(sized(window.paint_path(stroke(l.cmds, w, l.kind === "review"), l.kind === "edge" ? t.muted : t.accent)));
+    const st = edgeStyle(l.kind, lt);
+    els.push(sized(window.paint_path(stroke(l.cmds, Math.max(1, st.width * k), st.dash), st.color ?? t.muted)));
   }
-  m.labels.forEach((l) => els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).font_semibold().text_color(t.muted).child(l.text)));
-  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, addressOf(v, c.id, c.pane), gr)));
-  m.dots.forEach((d, i) => els.push(div().id(`gfd-${i}`).absolute().left(d.x - 4).top(d.y - 4).size(8).rounded(4)
-    .bg(t.accent).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title)));
+  // column headers as the web's .flabel: small, uppercase, muted (no tracking: the kit has none)
+  // V10: the header in its lane's colour, a 2 px rule of that colour under it, as wide as the lane's cards
+  m.labels.forEach((l, i) => {
+    const ls = laneStyle(i, lt);
+    els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).text_color(ls.color).child(l.text.toUpperCase()));
+    els.push(div().absolute().left(l.x).top(l.y + 16 * k).w(m.lanes?.[i]?.rule ?? 0).h(2).bg(ls.color));
+  });
+  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, v, gr, lt, m.dots.length > 0))); // the clock runs while a dot is drawn
+  m.dots.forEach((d, i) => {
+    const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review);
+    els.push(div().id(`gfd-${i}`).absolute().left(p.x - 4).top(p.y - 4).size(8).rounded(4)
+      .bg(dotColor(d.review, lt)).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title));
+  });
   const clamp = (p) => flowPan(p, m.size, m.stage);
   const pan = clamp(v.graphPan.flow);
-  const big = m.size.w > m.stage.w || m.size.h > m.stage.h;
-  // As the Map's: a scroll zooms, eased about the pointer; a drag pans content larger than the stage, and waits for the redraw after
+  // As the Map's: a scroll zooms, eased about the pointer; a drag pans at every scale (keepPan), and waits for the redraw after
   // a rescale (m is laid out at this render's scale).
-  const wheel = (e, cx) => {
+  const wheel = (e, cx2) => {
     const act = wheelAct(e);
     if (!act) return;
-    cx.stop_propagation();
-    easeTo(v, cx, { by: act.zoom, wheel: true, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
+    cx2.stop_propagation();
+    easeTo(v, cx2, { by: act.zoom, wheel: true, at: e.local_position ? { x: e.local_position.x, y: e.local_position.y } : null });
   };
-  const now = () => (v.graphScale === s ? clamp(v.graphPan.flow) : null);
-  const stage = gr.stage(div().id("gflow"), big, now, clamp, (p) => { v.graphPan = { flow: p }; }).relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)
+  const drawn = () => (v.graphScale === s ? clamp(v.graphPan.flow) : null);
+  const stage = gr.stage(div().id("gflow"), drawn, clamp, (p) => { v.graphPan = { flow: p }; }).relative().mt(12).w(m.stage.w).h(m.stage.h).flex_none().overflow_hidden().accessibility_label(m.said).on_scroll_wheel(wheel)
+    .child(window.paint_path(gridOf(v, m.stage.w, m.stage.h), w.lineRow).absolute().top(0).left(0).w(m.stage.w).h(m.stage.h))
     .child(div().id("gflow-in").absolute().left(pan.x).top(pan.y).w(m.size.w).h(m.size.h).children(els))
     .when(m.rest > 0, (el) => el.child(div().absolute().top(8).right(8).text_size(11).text_color(t.muted).child(`+${m.rest} more briefs`)));
-  return [stage, flowLegend(t)];
+  return [stage, flowLegend(t, lt)];
 }
 
-// What the links mean, under the stage: the same strokes as the links, at legend size.
-function flowLegend(t) {
+// What the links mean, under the stage: the same strokes as the links, at legend size (the web's .flow-legend keys).
+function flowLegend(t, lt) {
   const key = (swatch, text) => h_flex().gap(6).flex_none().items_center().child(swatch).child(text);
-  const dashed = window.paint_path(stroke([["M", 0, 1], ["L", 14, 1]], 2, true), t.accent).w(14).h(2).flex_none();
+  const brief = edgeStyle("brief", lt);
+  const review = edgeStyle("review", lt);
+  const dashed = window.paint_path(stroke([["M", 0, 1], ["L", 14, 1]], 2, true), review.color).w(14).h(2).flex_none();
   return h_flex().id("gflow-legend").h(LEGEND_H).gap(12).flex_none().items_center().text_size(11).text_color(t.muted)
-    .accessibility_label("Flow legend: accent line, brief in flight; dashed accent, sent for review; muted line, reporting line")
-    .child(key(div().w(14).h(2).flex_none().bg(t.accent), "brief in flight"))
+    .accessibility_label("Flow legend: solid accent line with a dot, brief in flight; dashed violet, sent for review; thin muted line, reporting line")
+    .child(key(div().w(14).h(2).flex_none().bg(brief.color), "brief in flight"))
     .child(key(dashed, "sent for review"))
     .child(key(div().w(14).h(1).flex_none().bg(t.muted), "reporting line"))
     .child(div().flex_1().min_w(0).truncate().child("Idle members are one line; a time is the last activity"));
 }
 
-// One member: a card when it is working, blocked or running (accent border, the tag, a stats line), else one line. A field with no
-// source is not drawn (the web's FlowCard).
-function flowCard(t, c, i, k, address, gr) {
+// One member, as the web's FlowCard: a card when it is working, blocked or running (its role's name, the tool or state on the right,
+// a hairline, then the stats left), else one row (glyph, name, the state or the last activity on the right). A field with no source
+// is not drawn. Colours and glyph: cardStyle; the glyph differs by state, so state never rests on colour alone.
+function flowCard(t, c, i, k, v, gr, lt, live) {
   const s = c.card;
   const r = c.rect;
+  const st = cardStyle(s, c.active, lt, t.surface);
   const reviewing = s.role === "reviewer" && s.state === "working";
-  const state = s.running ? "running" : STATES[s.state] ? s.state : "unknown";
   const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
   const duty = DUTY[s.duty] ?? null;
-  const ago = s.lastAt > 0 ? age(Date.now() - s.lastAt) : "";
+  const ago = s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "";
   const tag = c.active ? (reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
     : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
-  const head = h_flex().gap(8 * k).items_center().min_w(0)
-    .child(stateMark(t, state))
-    .child(div().flex_1().min_w(0).truncate().text_size(12.5 * k).text_color(t.foreground).when(c.active, (el) => el.font_semibold()).child(s.name))
+  const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
+    .when(c.active, (el) => el.border_b(1).border_color(t.border))
+    .child(div().flex_none().text_size(12 * k).text_color(st.mark ?? t.blocked).child(st.glyph))
+    .child(div().flex_1().min_w(0).truncate().text_size(12.5 * k).text_color(st.name ?? t.foreground).when(st.bold, (el) => el.font_semibold()).child(s.name))
     .children(duty ? [div().flex_none().text_size(11 * k).text_color(t.muted).child(duty)] : [])
-    .children(tag ? [div().flex_none().text_size(11 * k).text_color(c.active ? t.accent : t.muted).child(tag)] : []);
+    .children(tag ? [div().flex_none().text_size(11 * k).text_color(st.tag ?? t.muted).child(tag)] : []);
   const cell = (value, unit) => h_flex().gap(4 * k).flex_none().child(div().font_semibold().text_color(t.foreground).child(String(value))).children(unit ? [unit] : []);
   const stats = c.active ? [
     s.orchestrator ? cell(c.out, "out") : null,
@@ -622,14 +706,99 @@ function flowCard(t, c, i, k, address, gr) {
     ago ? h_flex().gap(4 * k).flex_none().child("active").child(div().font_semibold().text_color(t.foreground).child(ago)) : null,
   ].filter(Boolean) : [];
   const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
-  const rest = c.active ? t.accent : t.border;
-  const tip = [s.full, s.role, word].filter(Boolean).join(" · ");
-  const at = address ? opens(Button.new(`gfc-${i}`), t, address, rest, gr).flex().flex_col() : v_flex().id(`gfc-${i}`);
-  return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).px(10 * k).py(8 * k).gap(8 * k).when(!c.active, (el) => el.justify_center()).overflow_hidden()
-    .rounded(6).border(1).border_color(rest).bg(c.active ? t.selected : t.raised)
+  const rest = st.line ?? t.border;
+  const tip = [s.full, s.role, word, ago ? `active ${ago}` : null].filter(Boolean).join(" · ");
+  const at = opens(Button.new(`gfc-${i}`), t, v, c.id, rest, gr).flex().flex_col();
+  return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).when(!c.active, (el) => el.justify_center()).overflow_hidden()
+    .rounded(6).border(1).border_color(rest).bg(st.fill ?? t.raised)
     .when(s.state === "gone", (el) => el.opacity(0.4))
-    .tooltip(address ? `${tip}. Click to open its pane` : tip).accessibility_label(address ? `${said}. Open its pane` : said)
+    .tooltip(`${tip}. Click for its details`).accessibility_label(`${said}. Show its details`)
     .child(head)
-    .when(c.active, (el) => el.child(div().h(1).flex_none().bg(t.border))
-      .when(stats.length > 0, (el2) => el2.child(h_flex().gap(8 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats))));
+    .when(stats.length > 0, (el) => el.child(h_flex().px(10 * k).py(6 * k).gap(12 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats)));
+}
+
+// ---- the agent's sheet (spec herdr-graph-agent-details): the web's member summary (member-summary.js MemberSummary, ported in
+// member-model.js), in its order and wording: the name with Go to pane and close, role · model, the state and since, where it
+// sits, Now, in Map the rail's extras (graph-panel.js), the latest messages, and Open page (in the browser). A member that has
+// gone reads as gone; nothing here starts a timer (ages follow the dot clock's rule, ageText).
+
+// A member's pane as the graph drew it: the Flow card's or the Map leaf's.
+const paneIn = (m, id) => (m.cards ?? []).find((c) => c.id === id)?.pane ?? (m.groups ?? []).flatMap((g) => g.map?.leaves ?? []).find((n) => n.id === id)?.pane ?? null;
+
+function agentSheet(v, t, m, full) {
+  const id = v.graphSheet;
+  const slices = v.st.slices;
+  const mm = memberModel(slices, sheetUi(v), id, SUMMARY_MESSAGES);
+  const live = (m.dots?.length ?? 0) > 0; // the dot clock redraws: seconds are true
+  const since = (ms) => ageText(Date.now() - ms, live).replace(" ago", "");
+  const go = paneAct(addressOf(v, id, paneIn(m, id)), mm.name, mm.gone);
+  const page = memberPageLink(v.link?.port ?? null, id);
+  const icon = (bid, file, label, act, why) => Button.new(bid).size(24).flex().flex_none().items_center().justify_center().rounded(6)
+    .border(1).border_color(t.surface).focus((el) => el.border_color(t.accent)).disabled(Boolean(why))
+    .when(!why, (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
+    .when(Boolean(why), (el) => el.text_color(t.muted))
+    .tooltip(why ?? label).accessibility_label(why ?? label)
+    .on_mouse_down("left", stop).on_click((_e, cx) => !why && act(cx))
+    .child(svg(file).size(14));
+  const goBtn = icon("graph-sheet-pane", "mods/ah2/app-window.svg", "Go to pane", () => run(go.cmd, go.args), go.why)
+    .when(Boolean(v.graphSheetKey), (el) => el.track_focus(v.graphSheetKey)); // the sheet's first focus (Amendment 1): click, then Enter
+  const shut = icon("graph-sheet-close", "mods/ah2/x.svg", "Close the details (esc)", (cx) => { closeSheet(v); cx.notify(); }, null);
+  const dim = (text) => div().text_color(t.muted).child(text);
+  const row = (k, val, mono = false) => h_flex().min_h(24).gap(10).items_start().text_size(12)
+    .child(div().w(96).flex_none().pt(1).text_size(11).text_color(t.muted).child(k))
+    .child(div().flex_1().min_w(0).text_color(t.foreground).when(mono, (el) => el.font_family(MONO)).child(val));
+  const head = (text) => div().pt(10).pb(4).text_size(11).font_semibold().text_color(t.muted).child(text);
+  const where = [`team ${mm.team}`, mm.lane ? `lane ${mm.lane.name}` : null, mm.lead ? `takes direction from ${mm.lead.name}` : null].filter(Boolean).join(" · ");
+  const now = [
+    mm.tool ? row("tool", `${mm.tool}${mm.toolAt ? ` · ${since(Date.parse(mm.toolAt))}` : ""}`) : null,
+    mm.item ? row("item", `${mm.item.key}${mm.item.title ? ` · ${mm.item.title}` : ""}`) : null,
+    mm.branch ? row("branch", mm.branch) : null,
+    mm.workRoot ? row("worktree", mm.workRoot, true) : null,
+  ].filter(Boolean);
+  const x = v.graphMode !== "flow" && !mm.gone ? graphExtras(slices, v, mm.teamId, id) : null;
+  const extras = x ? [
+    row("stream", x.stream ? streamName(x.stream) : "—"),
+    row("task", x.task),
+    row("context used", `${x.ctx}${x.ctxAt > 0 ? ` · ${ageText(Date.now() - x.ctxAt, live)}` : ""}`),
+    row(x.busyLabel, x.busy),
+    h_flex().min_h(24).gap(10).items_start().text_size(12)
+      .child(div().w(96).flex_none().pt(1).text_size(11).text_color(t.muted).child("messages"))
+      .child(h_flex().flex_1().min_w(0).gap(4).child(div().text_color(t.foreground).child(String(x.count ?? "—"))).child(dim(x.scope))),
+    ...(x.dir ? [row("sent", String(x.dir.sent)), row("received", String(x.dir.received))] : []),
+    row("tokens", "—"),
+    row("files changed", "—"),
+  ] : [];
+  // the leased exchanges arrive with the next poll after the sheet opens (a long poll is not cut short): until then, Loading
+  const waiting = (slices.get(id)?.body.last_exchanges ?? []).slice(0, SUMMARY_MESSAGES).some((x) => !slices.has(x));
+  const msgs = mm.rows.length === 0 ? [div().py(4).text_size(12).text_color(t.muted).child(waiting ? "Loading…" : "No messages yet.")]
+    : mm.rows.map((r, i) => h_flex().id(`graph-sheet-msg-${i}`).min_h(24).py(2).gap(8).items_start().text_size(12).border_b(1).border_color(t.border)
+      .child(div().w(38).flex_none().pt(1).font_family(MONO).text_size(11).text_color(t.muted).child(r.time))
+      .child(div().w(44).flex_none().text_size(11).text_color(t.muted).child(r.kind))
+      .child(v_flex().flex_1().min_w(0).child(div().truncate().text_color(t.foreground).child(`${r.from} → ${r.to}`))
+        .when(Boolean(r.item), (el) => el.child(div().truncate().text_size(11).text_color(t.muted).child(r.item)))));
+  const pageBtn = Button.new("graph-sheet-page").h(28).px(10).mt(10).flex().flex_none().items_center().rounded(6).text_size(12)
+    .border(1).border_color(t.border).focus((el) => el.border_color(t.accent)).disabled(!page.url)
+    .when(Boolean(page.url), (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
+    .when(!page.url, (el) => el.text_color(t.muted))
+    .tooltip(page.url ? `Open ${mm.name}'s page in the browser` : page.why).accessibility_label(page.url ? `Open ${mm.name}'s page in the browser` : page.why)
+    .on_mouse_down("left", stop).on_click((_e, cx) => page.url && cx.open_url(page.url))
+    .child("Open page");
+  return sheetColumn(t, full, "graph-sheet").accessibility_label(`Member ${mm.name}`)
+    .child(v_flex().px(16).pt(8).pb(10).gap(4).flex_none().border_b(1).border_color(t.border)
+      .child(h_flex().h(28).gap(6).items_center()
+        .child(div().flex_1().min_w(0).truncate().text_size(13.5).font_semibold().text_color(t.foreground).child(mm.name))
+        .child(goBtn).child(shut))
+      .child(h_flex().gap(4).text_size(12).text_color(t.foreground).child(`${mm.role || "member"} ·`)
+        .child(mm.model ? div().child(mm.model) : dim("model not reported")))
+      .child(h_flex().gap(6).items_center().text_size(12)
+        .child(div().flex_none().text_color(t.foreground).child(`${glyphOf(mm.running ? "working" : mm.state)} ${stateWord(mm.state, mm.running)}`))
+        .when(mm.since > 0, (el) => el.child(dim(`since ${since(mm.since)}`))))
+      .child(div().text_size(12).text_color(t.muted).truncate().child(where)))
+    .child(v_flex().id("graph-sheet-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar()
+      .child(head("Now"))
+      .children(now) // the web hides each empty row, and so the whole list when nothing is known
+      .children(extras)
+      .child(head("Latest messages"))
+      .children(msgs)
+      .child(h_flex().child(pageBtn)));
 }

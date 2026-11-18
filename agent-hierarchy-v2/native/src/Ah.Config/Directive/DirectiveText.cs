@@ -1118,6 +1118,11 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
         output.Add($"user config:    {(seen.TryGetValue("user", out var u) && u.Length > 0 ? u : userPath + " (none)")}");
         output.Add($"project config: {(seen.TryGetValue("project", out var p) && p.Length > 0 ? p : (projectPath is { Length: > 0 } pp ? pp : "(unknown cwd)") + " (none)")}");
         output.Add($"handoff flow:   {handoffs} {(handoffs == "confirm" ? "(ask before each reasoning-role dispatch)" : "(automatic handoffs)")} — from {Str(resolved.Get("handoffsSource"))}; switch anytime with /wrangl:hierarchy flow or by asking the Orchestrator");
+        // Only when set, so an unconfigured repo's report is unchanged; an unknown value is named by doctor's config row, not here.
+        if (TextOrNull(resolved.Get("qaCadence")) is { } qa)
+        {
+            output.Add($"qa cadence:     {qa} {(qa == "batch" ? "(QA once on a release batch)" : "(QA at each item's merge)")} — from {Str(resolved.Get("qaCadenceSource"))}; switch with /wrangl:hierarchy qa item|batch");
+        }
         output.Add(string.Empty);
         output.Add("Resolved effective table:");
         output.Add($"  Orchestrator  {"session model".PadRight(14)} fixed (this session's agent)");

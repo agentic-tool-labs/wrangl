@@ -241,8 +241,9 @@ internal sealed partial class MeshSend(
         var team = data.AsObject();
         if (parts.Name == "orchestrator")
         {
-            // the registration must be the very process the team file names as its Orchestrator, else a stale session would hold its rights
-            if (team.Get("orchestrator") is not { IsMap: true } holder || !Holds(holder.AsObject(), reg))
+            // the registration must be the very process the team file names as its Orchestrator, or (ah2-158) own the team by the one
+            // owner predicate, else a stale session would hold its rights. Holds stays so no record accepted before is refused now
+            if (team.Get("orchestrator") is not { IsMap: true } holder || !(Holds(holder.AsObject(), reg) || OwnsByPredicate(data, reg)))
             {
                 throw new MailboxError("team_mismatch", $"this session is not the live Orchestrator the team file {path} names for {parts.Team}");
             }
@@ -300,6 +301,14 @@ internal sealed partial class MeshSend(
     /// The session id is never proof here: it is readable from the team file, so any process of the user could copy it into a registration.
     /// </summary>
     private bool Holds(JsonObject holder, JsonObject? reg) => reg is not null && Running(holder) && HeldRow.SamePid(holder, reg);
+
+    /// <summary>
+    /// ah2-158 D2: whether the registration owns the team in <paramref name="data"/> by the CLI's owner predicate (Mailbox.OwnsTeam). The
+    /// registration is the session the route proved from the caller's process tree; its session id proves only through its live pid and start.
+    /// </summary>
+    private bool OwnsByPredicate(JsonValue data, JsonObject? reg) =>
+        reg?.Get("pid") is { IsNumber: true } pid && double.IsInteger(pid.AsNumber()) && pid.AsNumber() > 1 && pid.AsNumber() <= int.MaxValue
+        && mailbox.OwnsTeam(data, Js(reg.Get("session_id")), (int)pid.AsNumber(), reg.Get("pid_start") is { IsText: true } start ? start.AsString() : null);
 
     /// <summary>
     /// A member relaunched over a row the bare watch marked <c>bare</c>, whose recorded process is gone: the same session id is

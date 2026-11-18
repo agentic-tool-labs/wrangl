@@ -80,8 +80,13 @@ its "Decision needed first" section as above with `--class eventually` and
 
 - the section has real content: not empty and not "None";
 - no `decision` entry is recorded on the item after the section was written;
+- neither the item nor any checklist row under it carries a release or `done`
+  note (`Released in <tag>`, `shipped <sha>`, a row closed done);
 - no open waiting-user checklist item already has that parent
   (`ah work list --state waiting-user --under b<N> --json` lists none).
+
+When a decision entry or a release or `done` note stops you, do not park it:
+report the item as "looks shipped, still open".
 
 ## How you end
 
@@ -90,6 +95,7 @@ its "Decision needed first" section as above with `--class eventually` and
    with your counts after the pass.
 2. Your final report: the counts (untriaged, stale, changed, decisions) and the
    checklist item id and class of each decision you parked. The decisions
-   themselves are the waiting-user items, not report text.
+   themselves are the waiting-user items, not report text. List each item
+   that looks shipped, still open, with the entry or note that shows it.
 
 Chain of command: your parent is your only conduit; you never reach the user (see your directive).

@@ -738,7 +738,8 @@ internal static partial class DoctorVerb
         var pid = c.OrchestratorPid();
         var resolved = config.ResolveConfig(c.Cwd, new ResolveOptions(Pid: double.IsNaN(pid) ? null : (JsonValue?)JsonValue.FromNumber(pid)));
         var report = c.Services.Doctor?.StatusReport(c.Cwd) ?? string.Empty;
-        var detail = string.Join(" | ", report.Split('\n').Take(4));
+        var reportLines = report.Split('\n');
+        var detail = string.Join(" | ", reportLines.Take(4).Concat(reportLines.Where(static l => l.StartsWith("qa cadence:", StringComparison.Ordinal)).Take(1)));
         if (!(resolved.Get("configured") is { IsTruthy: true }))
         {
             return new Check("warn", $"not configured — {detail}");
@@ -769,6 +770,12 @@ internal static partial class DoctorVerb
                 problems.Add(
                     $"role {role} is unavailable: its agent fails the {config.RoleClass(role, resolved)} contract (ah roster role list)");
             }
+        }
+
+        // An unknown qa.cadence, or a string qa (ah2-154): the resolver's warning, named here; either counts as not configured.
+        if (resolved.Get("warnings") is { IsArray: true } warnings)
+        {
+            problems.AddRange(warnings.AsArray().Where(static w => w.IsText && (w.AsString().StartsWith("ah: qa ", StringComparison.Ordinal) || w.AsString().StartsWith("ah: qa.cadence ", StringComparison.Ordinal))).Select(static w => w.AsString()));
         }
 
         if (problems.Count > 0)

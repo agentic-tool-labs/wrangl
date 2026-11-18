@@ -7,8 +7,12 @@ namespace Ah.Commands;
 /// <c>roster checklist show|add|set|done</c>: the Orchestrator's durable list of what is outstanding. It is every plan item of the team's
 /// streams plus the team's loose-end stream <c>_run</c>; every write goes through the one plan writer.
 /// </summary>
-internal static class ChecklistVerb
+internal static partial class ChecklistVerb
 {
+    /// <summary>A title that ends with a work id in brackets, <c>[ah2-12]</c> or <c>[b12]</c>: the id.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"\[([a-z][a-z0-9]{0,7}-[0-9]{1,18}|b[0-9]+)\]\s*\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex NamedWork();
+
     private const string Usage =
         "usage: ah roster checklist show [--all] [--state S] [--stale] [--since <ISO|6h>] | show <id> --trail | add <what> [--role R] [--stream S] [--todo T] [--ref ID] [--parent bN] | set <id> [--state queued|dispatched|waiting-orch|blocked*|waiting-user*|dropped, or a stored name in_progress|waiting_orch|waiting_user*|next|reported|in_review|approved  (* needs --note)] [--owner M] [--todo T] [--ref ID] [--note T] [--option L]... [--for name@team] [--class blocker|soon|eventually] [--parent bN|none] | done <id> [--note T] [--commit SHA]... | ship <sha> [--failed] [--team T] [--plain] | audit [--stream S] [--plain]  — to finish an item use: checklist done <id>. --parent names a backlog epic or deliverable; only its shape is checked, not that it exists. A waiting-user --note (at most 300 characters) names what is asked; the item's description (ah work record <stream>/<item> --type description --title Description --body-file -) says why it reaches the user, what each --option does and what Not needed (Already done, No longer needed) does: the Needs-you card shows it under the note, so the user can answer without coming back to you. Output is JSON; --plain prints text";
 
@@ -400,6 +404,11 @@ internal static class ChecklistVerb
         {
             events.Add(parent with { Item = item });
         }
+        else if (NamedWork().Match(what) is { Success: true } named && c.Services.WorkParent(c.ProgressPool, c.ProgressTeam, named.Groups[1].Value) is { } row)
+        {
+            // board-truth D3: a title ending in a work id that names a backlog row is linked to it; an id that names none is ignored
+            events.Add(new PlanInput(item, "parent") { Parent = row });
+        }
 
         var code = Write(c, progress, stream, item, "add", events, true);
         Supersede(c, progress, auto, stream + "/" + item);
@@ -576,7 +585,15 @@ internal static class ChecklistVerb
         var entry = Find(c, entries, "done", id);
         id = entry.Item.Item;
         commits.AddRange(c.Opts.All("commit"));
-        return Write(c, progress, entry.Stream, id, "done", [new PlanInput(id, "done", Commits: commits.Count > 0 ? commits : null, Note: c.Opts.Text("note")) { Cause = HierarchyModule.ChecklistManualCause(c.Services.Clock.UtcNow) }]);
+        var code = Write(c, progress, entry.Stream, id, "done", [new PlanInput(id, "done", Commits: commits.Count > 0 ? commits : null, Note: c.Opts.Text("note")) { Cause = HierarchyModule.ChecklistManualCause(c.Services.Clock.UtcNow) }]);
+        // board-truth D2: the last open work row under a backlog item closes it
+        if (entry.Item.Parent is { Length: > 0 } parent && HierarchyModule.ChecklistParentFinished(progress, c.ProgressPool, c.ProgressTeam, parent) is { } done
+            && c.Services.CloseDoneBacklog(c.ProgressPool, parent, done, $"checklist {HierarchyModule.ChecklistKey(entry)} done") is { } problem)
+        {
+            c.Warn($"checklist done: backlog row {parent} not closed ({problem})");
+        }
+
+        return code;
     }
 
     /// <summary>

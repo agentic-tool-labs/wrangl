@@ -185,7 +185,8 @@ public sealed class WorkLinkTests : IDisposable
 
         Assert.True(done.Code == 0, done.Err);
         Assert.Contains("closed checklist item _run/child", done.Err, StringComparison.Ordinal);
-        Assert.Contains("not closed: _run/waiter (waiting_user)", done.Err, StringComparison.Ordinal);
+        Assert.Contains("backlog done: b1 is done; left open under it: _run/waiter (waiting_user)\n", done.Err, StringComparison.Ordinal);
+        Assert.DoesNotContain("not closed", done.Err, StringComparison.Ordinal);
         string StateOf(string id) => HierarchyModule.ChecklistEntries(_graph.Hierarchy.Progress, _dir, team).Single(e => e.Item.Item == id).Item.State;
         Assert.Equal("done", StateOf("child"));
         Assert.Equal("waiting_user", StateOf("waiter"));

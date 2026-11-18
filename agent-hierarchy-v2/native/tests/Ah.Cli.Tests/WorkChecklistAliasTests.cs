@@ -171,4 +171,147 @@ public sealed class WorkChecklistAliasTests : IDisposable
         Assert.Contains("no item pro-2", theirs.Err, StringComparison.Ordinal);
         Assert.NotEqual(0, Checklist("show", "pro-99", "--trail").Code);
     }
+
+    private (int Code, string Out, string Err) Cli(Func<CliContext, string[], TextWriter, TextWriter, int> verb, params string[] args)
+    {
+        using var stdout = new StringWriter(CultureInfo.InvariantCulture);
+        using var stderr = new StringWriter(CultureInfo.InvariantCulture);
+        var context = new CliContext(_env, new RecordingExec(), new FakeRunner(), "ah", _sandbox.Executable("install/ah"), _sandbox.Home, 501, null, new Lazy<ServiceGraph>(_graph));
+        var code = verb(context, [.. args, "--cwd", _cwd], stdout, stderr);
+        return (code, stdout.ToString(), stderr.ToString());
+    }
+
+    /// <summary>A new backlog row in wave now; its work id.</summary>
+    private string BacklogRow(string title)
+    {
+        var added = Cli(WorkVerb.Run, "add", title, "--wave", "now");
+        Assert.True(added.Code == 0, added.Err);
+        return added.Out.Trim();
+    }
+
+    private PlanItem Backlog(string id)
+    {
+        using var reader = StateDbModule.OpenReader(_sandbox.AhHome).Reader!;
+        return HierarchyModule.BacklogGet(reader.Query, _dir, id)!.Item;
+    }
+
+    private string? ParentOf(string title) => HierarchyModule.ChecklistEntries(_graph.Hierarchy.Progress, _dir, "tm").Single(e => e.Item.Title == title).Item.Parent;
+
+    [Fact]
+    public void TheLastParentedRowDoneClosesItsBacklogItemWithTheRowsCommits()
+    {
+        _ = BacklogRow("Ship it");
+        Assert.Equal(0, Checklist("add", "First half", "--parent", "b1").Code);
+        Assert.Equal(0, Checklist("add", "Second half", "--parent", "b1").Code);
+
+        Assert.Equal(0, Checklist("done", "first-half", "--commit", "abc1234").Code);
+        Assert.Equal("not_started", Backlog("b1").State);
+
+        var done = Checklist("done", "second-half", "--commit", "def5678");
+
+        Assert.True(done.Code == 0, done.Err);
+        var item = Backlog("b1");
+        Assert.Equal("done", item.State);
+        Assert.Equal(["abc1234", "def5678"], item.Commits);
+    }
+
+    [Fact]
+    public void AnOpenWorkRowHoldsTheBacklogItemAndAWaitingUserQuestionDoesNot()
+    {
+        _ = BacklogRow("Ship it");
+        Assert.Equal(0, Checklist("add", "Build", "--parent", "b1").Code);
+        Assert.Equal(0, Checklist("add", "Other work", "--parent", "b1").Code);
+        Assert.Equal(0, Checklist("add", "Which way", "--parent", "b1").Code);
+        Assert.Null(_graph.Hierarchy.Progress.RecordChecklist(_dir, "tm", "_run", "o", [new PlanInput("which-way", "wait-user", Note: "which way?")]).Refused);
+
+        Assert.Equal(0, Checklist("done", "build", "--commit", "abc1234").Code);
+        Assert.Equal("not_started", Backlog("b1").State);
+
+        Assert.Equal(0, Checklist("done", "other-work", "--commit", "def5678").Code);
+        Assert.Equal("done", Backlog("b1").State);
+        Assert.Equal("waiting_user", HierarchyModule.ChecklistEntries(_graph.Hierarchy.Progress, _dir, "tm").Single(e => e.Item.Item == "which-way").Item.State);
+    }
+
+    [Fact]
+    public void AnOpenBacklogSubItemHoldsTheAutomaticCloseUntilItIsDroppedAndARowThenCloses()
+    {
+        Assert.Equal(0, Cli(WorkVerb.Run, "add", "Epic", "--kind", "epic", "--wave", "now").Code);
+        var sub = Cli(WorkVerb.Run, "add", "Sub", "--wave", "now", "--parent", "b1");
+        Assert.True(sub.Code == 0, sub.Err);
+        Assert.Equal(0, Checklist("add", "Build", "--parent", "b1").Code);
+
+        Assert.Equal(0, Checklist("done", "build", "--commit", "abc1234").Code);
+        Assert.Equal("not_started", Backlog("b1").State);
+
+        Assert.Equal(0, Cli(BacklogVerb.Run, "drop", "b2", "--note", "not needed").Code);
+        Assert.Equal(0, Checklist("add", "Finish", "--parent", "b1").Code);
+        Assert.Equal(0, Checklist("done", "finish", "--commit", "def5678").Code);
+
+        Assert.Equal("done", Backlog("b1").State);
+    }
+
+    [Fact]
+    public void ARowWithNoParentClosesNoBacklogItem()
+    {
+        _ = BacklogRow("Ship it");
+        Assert.Equal(0, Checklist("add", "Loose").Code);
+
+        Assert.Equal(0, Checklist("done", "loose", "--commit", "abc1234").Code);
+
+        Assert.Equal("not_started", Backlog("b1").State);
+    }
+
+    [Fact]
+    public void ATitleEndingInAWorkIdOrABacklogIdLinksTheRow()
+    {
+        var id = BacklogRow("Ship it");
+        _ = BacklogRow("Ship more");
+
+        Assert.Equal(0, Checklist("add", $"Build it [{id}]").Code);
+        Assert.Equal(0, Checklist("add", "Build more [b2]").Code);
+
+        Assert.Equal("b1", ParentOf($"Build it [{id}]"));
+        Assert.Equal("b2", ParentOf("Build more [b2]"));
+    }
+
+    [Theory]
+    [InlineData("Build it [pro-99]")]
+    [InlineData("Build it [b99]")]
+    [InlineData("Build [b1] it")]
+    [InlineData("Build it b1")]
+    public void AnUnknownOrMisplacedIdLinksNothingAndIsNoError(string title)
+    {
+        _ = BacklogRow("Ship it");
+
+        var added = Checklist("add", title);
+
+        Assert.True(added.Code == 0, added.Err);
+        Assert.Null(ParentOf(title));
+    }
+
+    [Fact]
+    public void AnExplicitParentWinsOverTheIdInTheTitle()
+    {
+        _ = BacklogRow("Ship it");
+        _ = BacklogRow("Ship more");
+
+        Assert.Equal(0, Checklist("add", "Build it [b1]", "--parent", "b2").Code);
+
+        Assert.Equal("b2", ParentOf("Build it [b1]"));
+    }
+
+    [Fact]
+    public void BacklogDoneWithAnOpenQuestionClosesTheItemAndNamesTheQuestion()
+    {
+        _ = BacklogRow("Ship it");
+        // the default team's folder: backlog done reads the directory's teams, and it always includes this one
+        Assert.Null(_graph.Hierarchy.Progress.RecordChecklist(_dir, "_default", "_run", "o", [new PlanInput("which-way", "add", "Which way"), new PlanInput("which-way", "parent") { Parent = "b1" }, new PlanInput("which-way", "wait-user", Note: "which way?")]).Refused);
+
+        var done = Cli(BacklogVerb.Run, "done", "b1", "--commit", "abc1234");
+
+        Assert.True(done.Code == 0, done.Err);
+        Assert.Equal("done", Backlog("b1").State);
+        Assert.Single(done.Err.Split('\n', StringSplitOptions.RemoveEmptyEntries), l => l == "backlog done: b1 is done; left open under it: _run/which-way (waiting_user)");
+        Assert.Equal("waiting_user", HierarchyModule.ChecklistEntries(_graph.Hierarchy.Progress, _dir, "_default").Single(e => e.Item.Item == "which-way").Item.State);
+    }
 }

@@ -25,7 +25,7 @@ node preview/render.mjs /tmp/ah2.html && open "file:///tmp/ah2.html#light"   # o
 
 Preview views: `?view=qa|qa2|history|thread|empty|down` for Q&A, `?view=graph` for the Graph (`graph-30`: a 30 minute
 window back in time; `graph-two`, `graph-zoom`: a second stream, zoomed; `graph-flow`, `graph-flow-v`: the team in Flow,
-horizontal and vertical; `dock-flow`: Flow docked), `?view=settings` for the settings dialog,
+horizontal and vertical; `dock-flow`: Flow docked; `graph-shot`: the team in the 2026-11-17 Herdr-vs-web screenshot, in Flow), `?view=settings` for the settings dialog,
 `?view=menu` for the … menu, `?view=dock` for the Graph docked.
 
 - To run the real mod on the fixture, give its layout block the prop
@@ -38,6 +38,8 @@ horizontal and vertical; `dock-flow`: Flow docked), `?view=settings` for the set
 - `mods/ah2/flow-model.js` is a byte-identical copy of `web/ui/flow-model.js`, kept honest by a test
   (`tests/web/herdr-graph-model.test.mjs`), so the Graph's Flow lays out and links its cards through the web Flow's own
   code. Edit the web file, then copy it here.
+- `mods/ah2/deeplink.js` is a byte-identical copy of `web/ui/deeplink.js`, held by the same test, so the Graph's Open in browser builds the
+  web's own Graph address (`#/graph?team=…`). Edit the web file, then copy it here.
 - The update check reads the installed version from line 1 of `mods/ah2/.ah2-owned` (written by `ah herdr install`)
   and the plugin's from `ah where`, which reads files only. It runs when the Wrangl layout opens, hourly while it
   shows, and when the settings dialog opens.

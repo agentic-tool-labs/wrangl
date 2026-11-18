@@ -370,6 +370,10 @@ internal sealed partial class ConfigCore
             sources[role] = "default";
         }
 
+        // qa.cadence (ah2-154): "item" or "batch", resolved as qaCadence; absent from the result when no layer sets a known value, which callers treat as not configured.
+        JsonValue qa = JsonValue.Null;
+        JsonValue qaSource = JsonValue.Null;
+
         JsonValue Layers()
         {
             var array = new JsonArray();
@@ -393,6 +397,13 @@ internal sealed partial class ConfigCore
             if (alwaysOrchestrator)
             {
                 result[AlwaysOrchestratorKey] = true;
+            }
+
+            // Only when set to a known value, so a config without the key resolves exactly as before.
+            if (!qa.IsNull)
+            {
+                result["qaCadence"] = qa;
+                result["qaCadenceSource"] = qaSource;
             }
 
             return result;
@@ -445,6 +456,36 @@ internal sealed partial class ConfigCore
             warnings.Add($"ah: handoffs {JsonText.Stringify(handoffs, 0)} is not a mode (allowed: {string.Join(", ", ConfigRegistry.HandoffModes)}) — using \"auto\".");
             handoffs = "auto";
             handoffsSource = "default";
+        }
+
+        // qa.cadence lives inside the qa map the QA scheduler also reads (parallel, admit_*); only cadence is read here.
+        string? qaText = null;
+        foreach (var layer in layers)
+        {
+            var layerQa = layer["data"].AsObject().Get("qa");
+            if (layerQa is { IsMap: true } map && map.AsObject().Get("cadence") is { IsText: true } q)
+            {
+                qaText = q.AsString();
+                qaSource = layer["scope"];
+            }
+            else if (layerQa is { IsText: true } flat)
+            {
+                warnings.Add($"ah: qa {JsonText.Stringify(flat.AsString(), 0)} at {layer["scope"].AsString()} scope is a string; when QA runs is qa.cadence inside the qa map — ignoring it.");
+            }
+        }
+
+        if (qaText is not null && ConfigRegistry.QaModes.Contains(qaText))
+        {
+            qa = qaText;
+        }
+        else
+        {
+            if (qaText is not null)
+            {
+                warnings.Add($"ah: qa.cadence {JsonText.Stringify(qaText, 0)} is not a mode (allowed: {string.Join(", ", ConfigRegistry.QaModes)}) — treating QA cadence as not configured.");
+            }
+
+            qaSource = JsonValue.Null;
         }
 
         var msgs = "required";

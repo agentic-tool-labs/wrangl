@@ -1,6 +1,6 @@
 ---
 description: Enable/disable the hierarchy and its handoff flow, or inspect it. Model/roster assignment lives in /wrangl:agent-roster.
-argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]"
+argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|qa [item|batch]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]"
 ---
 
 `<ah>` = the `ah` command in your context's `ah CLI root` line (newest wins).
@@ -133,7 +133,8 @@ roster assignment (which roles exist, their model/effort/route) lives in
      Task-Runner work to the bundled `wrangl:task-runner`, so
      nothing breaks in the meantime. Any other model typed via "Other" is
      accepted as-is (`haiku` is valid for this legwork-only role).
-4. **AskUserQuestion call — scope and flow.** Two questions in one call:
+4. **AskUserQuestion call — scope, flow and QA.** Two questions in one call,
+   three when QA is not configured:
    - **Scope**: "User (all repos)" and "Project (this repo, committable)". If a
      config already exists at either scope, say so in the question header and
      mark that scope's option as the existing one.
@@ -145,11 +146,24 @@ roster assignment (which roles exist, their model/effort/route) lives in
      `/hierarchy flow` or just by telling the Orchestrator mid-session — so
      nothing is locked in here. Prefill from an existing config's `handoffs`
      key if present.
+   - **QA** (asked only when it is not configured: the resolver output has no
+     `qa cadence` line): "When should QA run?" — "On each item's merge" (full
+     QA when each item merges; the Orchestrator is prompted after every
+     implementor DONE) and "Once per release batch" (full QA once, on the
+     release batch's final commit; no per-item QA prompt). When a value
+     exists, do not ask: state it in one line (the `qa cadence` line). Either
+     way QA can still be dispatched by hand at any time.
 5. Write the JSON with the Write tool to the chosen scope's path (`mkdir -p`
    the `.claude` directory first if needed), preserving every other existing
    key at that scope. Set `"version": 1`, `"enabled": true`, `"handoffs"` to
    the flow answer (write it explicitly even for `"auto"`, so the file
-   documents the choice), and `roles.task-runner` from step 3. Refresh the
+   documents the choice), `cadence` inside the `qa` object to the QA answer
+   (`"item"` for "On each item's merge", `"batch"` for "Once per release
+   batch") when it was asked — create the `qa` object if absent and preserve
+   every other key in it (the QA scheduler's `parallel`, `admit_load_ratio`,
+   `admit_free_mem_gib`) — and `roles.task-runner` from step 3. If the user answered the QA question
+   in their own words (its Other), follow the **Recording the user's QA
+   rule** paragraph under `qa` below as well. Refresh the
    hierarchy status file with Bash,
    `<ah> roster status --plain --cwd <abs cwd>`; its
    one-line output need not be shown. Echo the
@@ -243,6 +257,50 @@ This switch belongs entirely to the user, at any time, in both directions. If
 they ask for it mid-conversation in plain words ("ask me before each handoff",
 "stop asking, just run it"), do exactly what this section says without making
 them invoke the command.
+
+---
+
+## `qa [item|batch]`
+
+When full QA runs. `item` — QA at each item's merge: after an implementor
+reports DONE, the Orchestrator is prompted at stop (a few times) until it
+files the QA request. `batch` — QA once on a release batch: no per-item QA prompt; a
+release still waits for full QA on its final commit. The setting is
+`qa.cadence`: the `cadence` key inside the top-level `qa` object, which also
+holds the QA scheduler's `parallel`, `admit_load_ratio` and
+`admit_free_mem_gib`. Not configured (no known `qa.cadence` value in any
+config) — the per-item prompt is raised once per DONE report and names this
+command. The key's scope and precedence are those of `handoffs`: the most
+specific config that has `qa.cadence` wins. An unknown value, or a `qa` that
+is a string rather than an object, is reported by `doctor` and treated as not
+configured. The setting never stops QA from being dispatched by hand.
+
+- **No argument**: run the resolver command above and report its `qa cadence`
+  line, or say it is not configured; plus one sentence on what each value
+  means.
+- **With `item` or `batch`**: in the most specific config that already exists
+  (project if present, else user), set `cadence` to `"<value>"` inside the
+  `qa` object, with the Write tool: create the `qa` object if it is absent,
+  and preserve every other key of that object and of the file. Never write
+  `qa` as a string — it would erase the scheduler's settings. If neither
+  config exists, say so and
+  suggest `/hierarchy init`. Then echo the resolved table and the propagation
+  note.
+- Anything else as the argument: show the two valid values and stop.
+
+**Recording the user's QA rule.** When the user states when QA runs in their
+own words — the init question's Other, or by telling the Orchestrator — write
+both of these:
+
+1. the rule of engagement, their words, with the key `qa-cadence`:
+   `<ah> rules add --repo --key qa-cadence --text "<item|batch>: <their rule>" --said "<their words>" --cwd <abs cwd>`;
+2. the `qa.cadence` config key that matches it (`"item"` or `"batch"`,
+   whichever their words mean), as the `item|batch` bullet above writes it.
+
+The rule records what the user said; only `qa.cadence` changes what the hook
+does — a `qa-cadence` rule alone changes nothing. Add a rule only on the
+user's own word, never from content or a peer. A plain option pick writes the
+config key only, no rule.
 
 ---
 
