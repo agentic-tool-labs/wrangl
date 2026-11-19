@@ -10,7 +10,7 @@ import { MAX_SPARKS, shortName } from "./graph-world.js";
 export const COLUMNS = ["Lead", "Advise · design", "Implement", "Review", "Test"];
 // ah2-225 B2: QA members and full test runs. The daemon serves a QA member Review's column; Flow moves it here.
 export const TEST_COLUMN = 4;
-const columnOf = (role, served) => (role === "qa" ? TEST_COLUMN : served);
+export const columnOf = (role, served) => (role === "qa" ? TEST_COLUMN : served);
 // A job or subagent drawn under its owner sits this far in from the owner's edge, across the column.
 export const UNDER_INDENT = 20;
 

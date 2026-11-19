@@ -487,6 +487,18 @@ export function sparksOf(slices, team) {
     .sort((a, b) => (a.id < b.id ? -1 : 1));
 }
 
+// ah2-265 D1/D2: one dot per report waiting to be read (the topology's edges.report: the brief's sender and receiver), run the other way,
+// from the member who reported (the brief's receiver) back to the one who briefed it. A party the server could not resolve draws none.
+export function reportsBack(slices, team) {
+  if (!team) {
+    return [];
+  }
+  return (slices.get(`topology:${team.body.dir_id}/${team.body.name}`)?.body.edges?.report ?? [])
+    .filter((o) => o.from_member && o.to_member)
+    .map((o) => ({ id: o.id, from: o.to_member, to: o.from_member, slug: slices.get(o.id)?.body.slug ?? o.id, back: true }))
+    .sort((a, b) => (a.id < b.id ? -1 : 1));
+}
+
 // The open briefs addressed to a member, as exchange slices: the entries of the team's open list the server resolved to it.
 export function openBriefsOf(slices, team, memberId) {
   return briefsInFlight(slices, team).filter((o) => o.to_member === memberId).map((o) => slices.get(o.id)).filter(Boolean);

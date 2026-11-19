@@ -52,6 +52,24 @@ public sealed partial class TreeLanesTests
         Assert.Contains("\"column\":0", Body(model, $"member:{D}/default/@orchestrator"), StringComparison.Ordinal);
     }
 
+    // ah2-268 P1: the summary's member_states carries the column the member slice serves; negative: the implementor is not in Review's column.
+    [Fact]
+    public void EachMemberStateServesTheMemberSlicesColumnAndNegativeAnImplementorIsNotInReview()
+    {
+        var (model, _) = FlowModel(Truth());
+        using var owner = model;
+        var states = Summary(model).Member("member_states")!.Value;
+        long ColumnOf(string member) => Num(states.Member($"member:{D}/default/{member}")!.Value, "column");
+        Assert.Equal(3, ColumnOf("rev"));
+        Assert.Equal(2, ColumnOf("dev"));
+        Assert.NotEqual(3, ColumnOf("dev"));
+        Assert.Equal(0, ColumnOf("@orchestrator"));
+        foreach (var member in new[] { "rev", "dev", "so-a", "@orchestrator" })
+        {
+            Assert.Contains($"\"column\":{ColumnOf(member)}", Body(model, $"member:{D}/default/{member}"), StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public void AnOpenStreamsSubOrchestratorLeadsABandWithTheMembersItLeadsAndNegativeAClosedStreamOrAnotherTeamsLeadDoesNot()
     {

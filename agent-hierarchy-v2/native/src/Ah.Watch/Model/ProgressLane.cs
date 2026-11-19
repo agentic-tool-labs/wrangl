@@ -397,7 +397,7 @@ internal sealed class ProgressLane(IViewStateReader reader, Func<IPlanFold> newF
                         });
                     }
 
-                    items.Add(new JsonObject
+                    var row = new JsonObject
                     {
                         ["item"] = item.Item,
                         ["stream"] = stream,
@@ -414,7 +414,14 @@ internal sealed class ProgressLane(IViewStateReader reader, Func<IPlanFold> newF
                         ["commits"] = StringArray(item.Commits),
                         ["branch"] = item.Branch is null ? JsonValue.Null : item.Branch,
                         ["issue"] = item.Issue is { } issue ? JsonValue.FromNumber(issue) : JsonValue.Null,
-                    });
+                    };
+                    if (item.State == "reported" && item.Refs is { Count: > 0 } refs)
+                    {
+                        // ah2-268: the request the report answers, for the topology's edges.report
+                        row["last_ref"] = refs[^1];
+                    }
+
+                    items.Add(row);
                 }
 
                 foreach (var c in plan.Fold.Changes)

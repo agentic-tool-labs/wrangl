@@ -19,9 +19,9 @@ public sealed class MsgDaemonStatusLoadTests : IDisposable
 
     private const string Health =
         "{\"pid\":7,\"version\":\"1\",\"root\":\"/r\",\"started_at\":\"2026-10-25T00:00:00.000Z\",\"owns\":{\"mailbox\":true,\"status\":true,\"timers\":[]},"
-        + "\"ladder\":{\"pending\":0},\"timer_state\":{},\"load\":{\"state\":\"overloaded\",\"since\":\"2026-10-25T01:00:00.000Z\",\"triggers\":[\"load1_per_cpu=1.9 (>= 1.5)\"],"
-        + "\"load1_per_cpu\":1.9,\"mem_pressure\":\"warn\",\"harnesses\":7,\"api_errors_10m\":{\"transport\":1,\"rate_limit\":0,\"server\":0,\"other\":0,\"total\":1,\"sessions\":1},"
-        + "\"thresholds\":{\"load1_per_cpu\":1.5},\"problem\":\"ahd-load.json: ticks must be a whole number of at least 1; using the defaults\"}}";
+        + "\"ladder\":{\"pending\":0},\"timer_state\":{},\"load\":{\"state\":\"overloaded\",\"since\":\"2026-10-25T01:00:00.000Z\",\"triggers\":[\"cpu busy 0.94 for 180 s (threshold 0.90)\"],"
+        + "\"cpu_busy\":0.94,\"load1_per_cpu\":1.9,\"cpus\":10,\"mem_pressure\":\"warn\",\"harnesses\":7,\"api_errors_10m\":{\"transport\":1,\"rate_limit\":0,\"server\":0,\"other\":0,\"total\":1,\"sessions\":1},"
+        + "\"thresholds\":{\"cpu_busy\":0.9},\"problem\":\"ahd-load.json: ticks must be a whole number of at least 1; using the defaults\"}}";
 
     private ServiceGraph Graph(FakeDaemonClient daemon)
     {
@@ -51,15 +51,37 @@ public sealed class MsgDaemonStatusLoadTests : IDisposable
         var (_, json) = Status(Up(), "--json");
         var load = JsonText.Parse(json).Member("load")!.Value;
 
-        foreach (var key in new[] { "state", "since", "triggers", "load1_per_cpu", "mem_pressure", "harnesses", "api_errors_10m", "thresholds", "problem" })
+        foreach (var key in new[] { "state", "since", "triggers", "cpu_busy", "load1_per_cpu", "cpus", "mem_pressure", "harnesses", "api_errors_10m", "thresholds", "problem" })
         {
             Assert.True(load.Member(key) is not null, key);
         }
 
         var (_, text) = Status(Up());
-        Assert.Contains("load: overloaded since 2026-10-25T01:00:00.000Z", text, StringComparison.Ordinal);
+        Assert.Contains("load: overloaded since 2026-10-25T01:00:00.000Z; cpu_busy 0.94 (threshold 0.9), load1_per_cpu 1.9 of 10 cpus", text, StringComparison.Ordinal);
         Assert.Contains("problem: ahd-load.json", text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void APlatformWithoutCpuTimesSaysSoInTheTextLine()
+    {
+        var health = Health.Replace("\"cpu_busy\":0.94,", "\"cpu_busy\":null,\"cpu_note\":\"cpu use not read on this platform\",", StringComparison.Ordinal);
+        var daemon = new FakeDaemonClient { Reply = r => r.PathAndQuery == "/v1/health" ? new DaemonReply(200, Encoding.UTF8.GetBytes(health)) : new DaemonReply(200, default) };
+
+        var text = Status(daemon).Out;
+
+        Assert.Contains("; cpu use not read on this platform, load1_per_cpu 1.9 of 10 cpus", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("cpu_busy", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(100, 1000, 150, 1100, 0.5)]
+    [InlineData(100, 1000, 200, 1100, 1.0)]
+    [InlineData(100, 1000, 100, 1100, 0.0)]
+    [InlineData(100, 1000, 150, 1000, null)]
+    [InlineData(100, 1000, 90, 1100, null)]
+    [InlineData(100, 1000, 220, 1100, null)]
+    public void TheCpuShareIsNullWhenAnyCounterWentBackwards(long busy0, long total0, long busy1, long total1, double? expected) =>
+        Assert.Equal(expected, LoadSource.BusyShare((busy0, total0), (busy1, total1)));
 
     [Fact]
     public void ADownDaemonsStatusShowsLoadNull()

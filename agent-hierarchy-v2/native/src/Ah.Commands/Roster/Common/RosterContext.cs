@@ -37,6 +37,9 @@ internal sealed partial class RosterContext
     /// <summary>Set by the owner check when the invoker owns the parent of the lane child the command names and runs one of the parent-owned verbs there.</summary>
     internal Ah.Roster.LaneLeader? ParentOwnerLane { get; set; }
 
+    /// <summary>Set when the owning Orchestrator's <c>--despite-load</c> let this spawn through while the machine is overloaded.</summary>
+    internal bool DespiteLoad { get; set; }
+
     /// <summary>Whether the lane rules bind this caller: a proven sub-orchestrator, or the owner of a lane child's parent acting on that child.</summary>
     internal bool LaneActor => ParentOwnerLane is not null || Proved().Carve is not null;
 

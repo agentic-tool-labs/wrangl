@@ -4,6 +4,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.21] - 2026-11-19
+
+### Added
+
+- **The herdr pane shows a report going back.** While a member's report waits to be taken up, a dot travels from the
+  member back up its line toward whoever briefed it. The daemon serves the waiting reports as `edges.report` on a
+  team's topology. The Graph window does not draw this dot yet.
+
+### Fixed
+
+- **A Q&A History row stays readable in a narrow herdr pane.** In a pane about 400 px wide the question text was
+  squeezed into a column a few characters wide and wrapped one or two letters per line. The row now wraps: time,
+  header and source on the first line, the question on its own line, the answer under it. A long answer is cut to
+  the chip's width with the full text in the tooltip; answers in History are no longer selectable text.
+
+### Changed
+
+- **The machine counts as overloaded on real CPU use, not the load average.** The load trigger was the 1-minute load
+  average per CPU, which counts waiting threads and could read high on a machine whose CPUs were mostly idle. The
+  trigger is now CPU use of 90% or more held for 180 seconds, read from the system's own CPU counters on macOS and
+  Linux. The load average is still shown in `ah msg daemon status` and triggers nothing. In `ahd-load.json`,
+  `cpu_busy` and `cpu_busy_seconds` set the rule; `load1_per_cpu` is accepted and ignored. Where CPU counters cannot
+  be read there is no CPU trigger, and status says so.
+- **Role icons in the herdr pane take their Graph lane's colour.** A member's icon is drawn in the colour of the
+  lane the Graph puts its role in (Lead, Advise · design, Implement, Review, Test) in every state, so the pane and
+  the Graph agree. A gone or no-signal member's icon is dimmed.
+- **The herdr pane does less work while a dispatch dot moves.** The team tree's model was rebuilt on every frame of
+  the dot, about 30 times a second. It is now built once per change of the data, the folds or the age clock.
+- **The "idle and clean" hint reads a team once per check.** Its roster and open-exchange reads were repeated for
+  every idle member inside the prompt hook. They are shared across the members of one check; the answers are the same.
+- **The Orchestrator can override load pacing.** When a spawn is put off because the machine counts as overloaded,
+  the Orchestrator that owns the team is told each trigger with its value, how many Claude sessions run and when the
+  next paced spawn is allowed. Re-running `spawn-one` or `spawn-ad-hoc` with `--despite-load` spawns anyway, prints
+  that it did, and writes a `load-override` row to the daemon's journal. Anyone else passing the flag is still paced.
+
 ## [2.0.20] - 2026-11-19
 
 ### Added

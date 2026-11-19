@@ -27,7 +27,7 @@ internal static partial class CleanClose
     internal static Member MemberOf(string name, JsonValue row, ReleaseGate.Outcome release) =>
         new(name, row, release.Verdicts.FirstOrDefault(v => v.Member == name));
 
-    internal static Reading Read(RosterContext c, Subject subject, string normalToken)
+    internal static Reading Read(RosterContext c, Subject subject, string normalToken, DismissVerb.TeamReads? reads = null)
     {
         if (subject.Members.Count == 0)
         {
@@ -36,7 +36,7 @@ internal static partial class CleanClose
 
         try
         {
-            return ReadCore(c, subject, normalToken);
+            return ReadCore(c, subject, normalToken, reads);
         }
         catch (StoreUnavailableException)
         {
@@ -48,12 +48,12 @@ internal static partial class CleanClose
 
     private const string StoreUnreadable = "message store cannot be read";
 
-    private static Reading ReadCore(RosterContext c, Subject subject, string normalToken)
+    private static Reading ReadCore(RosterContext c, Subject subject, string normalToken, DismissVerb.TeamReads? reads)
     {
         // what is queued or unfiled decides whether a member may close: a message store that cannot answer refuses the clean close
         using var decisions = c.Services.Hierarchy.Core.DecisionReads();
-        var roster = c.Services.Hierarchy.Roster.AttributedRoster(subject.Dir);
-        var open = c.Services.Launch!.Streams.OpenTeamExchanges(subject.Dir, c.TeamFile, allTeams: false);
+        var roster = reads?.Roster ?? c.Services.Hierarchy.Roster.AttributedRoster(subject.Dir);
+        var open = reads?.Open ?? c.Services.Launch!.Streams.OpenTeamExchanges(subject.Dir, c.TeamFile, allTeams: false);
         var failures = new List<string>();
         var entries = new JsonArray();
         var pools = new Dictionary<string, (IReadOnlyList<string> Pools, List<JsonObject> Exchanges)>(StringComparer.Ordinal);

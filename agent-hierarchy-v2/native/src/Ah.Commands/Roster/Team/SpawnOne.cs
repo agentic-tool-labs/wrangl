@@ -99,12 +99,13 @@ internal static class TeamRecords
 internal static class SpawnOne
 {
     private static readonly string[] SpawnOneFlags =
-        ["cwd", "dry-run", "allow-global", "allow-main", "team", "orchestrator-pid", "member", "model", "names-in-use", "stream", "split", "here", "tab", "replace-live", "lane-members", "lane-streams", "headless", "prompt"];
+        ["cwd", "dry-run", "allow-global", "allow-main", "team", "orchestrator-pid", "member", "model", "names-in-use", "stream", "split", "here", "tab", "replace-live", "lane-members", "lane-streams", "headless", "prompt", LoadThrottle.DespiteLoadFlag];
 
     private static readonly string[] AdHocFlags =
     [
         "role", "model", "effort", "route", "kind", "harness", "command", "args", "auto-mode", "on-missing", "cwd", "dry-run",
         "allow-global", "allow-main", "team", "orchestrator-pid", "names-in-use", "stream", "split", "here", "tab", "replace-live", "lane-members", "lane-streams",
+        LoadThrottle.DespiteLoadFlag,
     ];
 
     /// <summary><paramref name="Indeterminate"/> is already narrowed to the undecided member that still holds its name: one with no recent sign of life holds nothing.</summary>
@@ -383,12 +384,12 @@ internal static class SpawnOne
 
         if (custom)
         {
-            if (LoadThrottle.Refuse(c, MemberPlanning.Text(adHoc, "name")) is { } customTempFail)
+            if (LoadThrottle.Refuse(c, MemberPlanning.Text(adHoc, "name"), c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile)) is { } customTempFail)
             {
                 return customTempFail;
             }
 
-            c.Out(SpawnCustomMember(c, adHoc));
+            c.Out(WithDespiteLoad(c, SpawnCustomMember(c, adHoc)));
             return 0;
         }
 
@@ -400,10 +401,23 @@ internal static class SpawnOne
     {
         if (outcome.Result is { } result)
         {
-            c.Out(WithPaneMessage(c, result));
+            c.Out(WithDespiteLoad(c, WithPaneMessage(c, result)));
         }
 
         return outcome.Exit;
+    }
+
+    /// <summary>A spawn the owning Orchestrator's <c>--despite-load</c> let through says so with <c>despite_load: true</c>.</summary>
+    private static JsonObject WithDespiteLoad(RosterContext c, JsonObject result)
+    {
+        if (!c.DespiteLoad)
+        {
+            return result;
+        }
+
+        var copy = result.Clone();
+        copy["despite_load"] = true;
+        return copy;
     }
 
     /// <summary>A spawn or already-live result for a pane-driven member says how to brief it; any other result is returned as it is.</summary>
@@ -833,7 +847,7 @@ internal static class SpawnOne
             throw c.Refuse(fields, MemberPlanning.JsConvertText(fields.Get("message")));
         }
 
-        if (label is "spawn-one" or "spawn-ad-hoc" && LoadThrottle.Refuse(c, memberName) is { } tempFail)
+        if (label is "spawn-one" or "spawn-ad-hoc" && LoadThrottle.Refuse(c, memberName, team) is { } tempFail)
         {
             return new SpawnOutcome(null, tempFail);
         }

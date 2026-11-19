@@ -7,7 +7,7 @@ import { laneChildren, memberIds, memberOf, sparksOf, teamLabel } from "./select
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, graphSources, jobsUnder, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
+import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -550,6 +550,11 @@ export const roleHue = (role, light) => {
   const w = light ? WEB.light : WEB.dark;
   return Object.hasOwn(w.role, role ?? "") && role !== "neutral" ? w.role[role] : w.role.neutral;
 };
+// ah2-265 D6/D7: a member's colour is its Flow lane's (laneStyle over flow-model.js columnOf and the served column), the one lookup
+// the Graph's lanes take. A role not in the role table keeps roleHue (neutral), the orchestrator its ink (null), and with no column
+// served (an older ahd) roleHue.
+export const laneHue = (role, column, light) => (Number.isInteger(column) && role !== "orchestrator" && role !== "neutral"
+  && Object.hasOwn(WEB.dark.role, role ?? "") ? laneStyle(columnOf(role, column), light).color : roleHue(role, light));
 // ah2-207 D3: the roles with an icon of their own (role-<role>.svg); any other role, and a subagent type that is no role, draws role-member.svg.
 const ROLE_ICONS = new Set(["orchestrator", "sub-orchestrator", "deputy-chief", "ultra-advisor", "architect", "implementor", "reviewer", "qa", "ux-engineer", "docs-writer", "task-runner", "backlog-groomer"]);
 export const roleIcon = (role) => `mods/ah2/role-${ROLE_ICONS.has(role) ? role : "member"}.svg`;

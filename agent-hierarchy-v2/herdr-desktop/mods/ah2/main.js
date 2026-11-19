@@ -12,14 +12,14 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows, activitySubs, dotSubs, inFlightTo, rowDot, rowTrack } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree } from "./model.js";
 import { runText, underTip } from "./flow-model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
-import { graphSubs, leaveGraph, rowMark, roleHue, roleIcon, dotColor, dotAt, trackOf, travelsOf, travelClock } from "./graph-model.js";
+import { graphSubs, leaveGraph, rowMark, roleHue, laneHue, roleIcon, dotColor, dotAt, trackOf, travelsOf, travelClock, DOT_MS } from "./graph-model.js";
 import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
@@ -101,7 +101,8 @@ export default class Ah2 extends View {
         this.keys.focus();
       });
     }
-    cx.timer.every(30000, (cx) => cx.notify()); // ages only; data redraws come from the poll
+    this.ageGen = 0; // the age clock: the tree model (model.js paneTree) is rebuilt on each turn, so its ages stay current
+    cx.timer.every(30000, (cx) => { this.ageGen++; cx.notify(); }); // ages only; data redraws come from the poll
     cx.spawn((cx) => this.poll(cx));
   }
 
@@ -465,13 +466,20 @@ export default class Ah2 extends View {
 
   sidebar(t, cx) {
     const now = Date.now();
-    const m = sidebarModel(this.st.slices, now);
+    const set = settings();
+    const folds = shared(TREE_KEY) ?? {};
+    // ah2-252: the model is built once per change of its inputs (model.js paneTree); a dot frame reuses it and computes only dotAt
+    // (the kit consumes elements each render, gpui-kit.d.ts Element, so the rows themselves are rebuilt)
+    // a node starts open, a lane closed under the Lanes: Collapsed setting, until its disclosure is used (kept per team and node)
+    const { m, teams, trees } = paneTree(this.treeMemo ??= {}, [this.sliceGen, this.ageGen, JSON.stringify(folds), set.lanes, set.hidden.join("\n")], this.st.slices, now, {
+      shown: (list) => shownTeams(list, set),
+      open: (tm) => (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed"),
+      track: (r, back) => trackOf(rowTrack(r, STEP), back),
+    });
+    const treeOf = new Map(trees.map((x) => [x.tm, x.rows]));
     // ah2-239: the briefs in flight to the drawn rows, each a dot on its row's elbow; the Graph's clock function on the tree's own state
-    const inFlight = inFlightTo(this.st.slices);
     const travel = (this.treeTravel ??= {});
     const dots = [];
-    const set = settings();
-    const teams = shownTeams(m.teams, set);
     const shown = (list) => list.reduce((n, x) => n + 1 + shown(x.lanes), 0);
     const hiddenN = m.count - shown(teams);
     const terminalOf = terminalFinder(terminals(), target());
@@ -481,7 +489,6 @@ export default class Ah2 extends View {
 
     // ah2-207: each team draws its header, then its tree (model.js teamTree, treeRows); a lane's header is a node of its parent's tree.
     const lt = isLight(t.surface);
-    const folds = shared(TREE_KEY) ?? {};
     const header = (tm, lane, lead) => {
       // ah2-53: a team with a goal of its own shows it as a second muted line under the name, cut by the ellipsis; the row grows to fit it
       const goalTip = tm.goal ? ` · goal: ${tm.goalFull}` : "";
@@ -546,24 +553,22 @@ export default class Ah2 extends View {
     const team = (tm) => {
       rows.push(header(tm, false, null));
       teamAlerts(tm, null);
-      // a node starts open, a lane closed under the Lanes: Collapsed setting, until its disclosure is used (kept per team and node)
-      const open = (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed");
-      const tree = teamTree(tm);
-      // a job's or subagent's parent row, for its tooltip: the member it is a child of; none under the team's header
-      const parentOf = new Map();
-      const walk = (list, p) => list.forEach((x) => { if (x.item) parentOf.set(x.key, p); walk(x.children, x.kind === "member" ? x.name : null); });
-      walk(tree, null);
-      for (const r of treeRows(tree, open)) {
+      for (const { r, d, pts, b, bpts, parent } of treeOf.get(tm)) {
         const n = r.node;
-        const d = rowDot(r, inFlight);
         if (d) dots.push(d);
-        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label, d && { ...d, hue: d.review ? dotColor(true, lt) : roleHue(d.role, lt) ?? t.foreground,
-          at: dotAt(trackOf(rowTrack(r, STEP)), travel.graphTravels?.get(d.key) ?? now, now, d.review) });
+        if (b) dots.push(b);
+        // ah2-265: the brief coming in (D9: the receiver's lane colour), then the report going back up the same track at the review pace
+        // in the member's lane colour, started half a period on (D4) so the two never ride at one phase
+        const marks = [
+          d && { hue: d.review ? dotColor(true, lt) : laneHue(d.role, d.column, lt) ?? t.foreground, at: dotAt(pts, travel.graphTravels?.get(d.key) ?? now, now, d.review) },
+          b && { hue: laneHue(b.role, b.column, lt) ?? t.foreground, at: dotAt(bpts, (travel.graphTravels?.get(b.key) ?? now) - DOT_MS.review / 2, now, true) },
+        ].filter(Boolean);
+        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label, marks);
         if (n.kind === "lane") {
           rows.push(header(n.team, true, lead));
           teamAlerts(n.team, r);
         } else if (n.item) {
-          rows.push(this.under(t, n.item, lead, parentOf.get(n.key) ?? null, lt, now));
+          rows.push(this.under(t, n.item, lead, parent, lt, now));
         } else {
           rows.push(this.member(t, n, lead, lt, terminalOf, order, linked));
           for (const a of n.alerts) rows.push(alert(tm.id, a, r));
@@ -634,9 +639,10 @@ export default class Ah2 extends View {
   // The lead stretches to its row's height, so the lines run on unbroken. The disclosure is 16 x 24, its centre on the line to its
   // children, and stands clear of the row's own target (WCAG 2.2 target spacing). `fold` null: the lead of an alert under the row,
   // only the lines that run on through it (the row's own, and the one down to its children when they show).
-  // ah2-239: `dot` { hue, at }, a brief in flight to the row: a 5 px dot at `at` on the row's elbow, the elbow in its hue at the
-  // Graph's arc strength; the rails past other rows stay t.border.
-  treeLead(t, r, fold, name = "", dot = null) {
+  // ah2-239: `dots` [{ hue, at }], a brief in flight to the row and (ah2-265) a report going back: a 5 px dot at each `at` on the row's
+  // elbow, the elbow in the first one's hue at the Graph's arc strength; the rails past other rows stay t.border.
+  treeLead(t, r, fold, name = "", dots = []) {
+    const dot = dots[0] ?? null;
     const line = () => div().absolute().bg(t.border);
     const deep = r.node.depth > 0;
     const cols = fold === null
@@ -666,11 +672,12 @@ export default class Ah2 extends View {
         // the line down to its children, under the disclosure, to the row's foot
         .when(r.open, (el) => el.child(div().flex_1().ml(7).w(1).bg(t.border)))
       : div().relative().w(STEP).flex_none().when(deep, (el) => el.child(seg(piece().left(0).top(14).w(STEP - 2).h(1), true)))];
-    const mark = dot ? [div().absolute().left(dot.at.x - 2.5).top(dot.at.y - 2.5).size(5).rounded(3).bg(dot.hue)] : [];
+    const mark = dots.map((m) => div().absolute().left(m.at.x - 2.5).top(m.at.y - 2.5).size(5).rounded(3).bg(m.hue));
     return div().relative().flex().flex_none().children([...cols.map(col), ...end, ...mark]);
   }
 
-  // A member's row (ah2-207 D3/D4): its role's icon in the role's hue, its state's glyph and mark as the Graph gives them (graph-model.js
+  // A member's row (ah2-207 D3/D4): its role's icon in its Flow lane's colour (ah2-265 D6, graph-model.js laneHue), drawn at the Graph's
+  // gone strength when gone or with no signal (D8), its state's glyph and mark as the Graph gives them (graph-model.js
   // rowMark), the name, what it is on, the age. The glyph and the words carry the state; the colour only adds to it.
   member(t, mb, lead, lt, terminalOf, order, linked) {
     const address = terminalOf(mb);
@@ -689,7 +696,8 @@ export default class Ah2 extends View {
       .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12.5)
       .tooltip(`${full} · peer session`) // ah2-225 B4: told apart from a subagent row without colour
       .accessibility_label(address ? `${full}, peer session. Focus its terminal` : `${full}, peer session`)
-      .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(mk.hue ?? t.foreground))
+      .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(laneHue(mb.role, mb.column, lt) ?? t.foreground)
+        .when(mb.state === "gone" || mb.state === "unknown", (el) => el.opacity(0.4)))
       .child(div().w(14).flex_none().flex().justify_center().text_size(11).text_color(mk.mark ?? t.blocked).child(mk.glyph))
       // what it is on gives way first, then the name (to 40 px); a bare state word ("idle") never does, so the state is never lost
       .child(div().flex_auto().min_w(40).truncate().text_color(quiet ? t.muted : t.foreground).child(mb.label))

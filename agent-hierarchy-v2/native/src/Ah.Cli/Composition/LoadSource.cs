@@ -15,7 +15,34 @@ internal sealed class LoadSource(string ahHome, IProcessTable processes) : ILoad
 
     public int Cpus => Environment.ProcessorCount;
 
+    private (long Busy, long Total)? _lastCpu;
+
     public double? Load1() => PlatformModule.MachineLoad1();
+
+    public (bool Readable, double? Share) CpuBusy()
+    {
+        var current = PlatformModule.MachineCpuTimes();
+        var previous = _lastCpu;
+        _lastCpu = current;
+        if (current is not { } now)
+        {
+            return (false, null);
+        }
+
+        return (true, previous is { } before ? BusyShare(before, now) : null);
+    }
+
+    /// <summary>Δbusy / Δtotal between two readings; null when total did not advance, when busy or idle went backwards, or outside 0..1.</summary>
+    internal static double? BusyShare((long Busy, long Total) before, (long Busy, long Total) now)
+    {
+        if (now.Total <= before.Total || now.Busy < before.Busy || now.Total - now.Busy < before.Total - before.Busy)
+        {
+            return null;
+        }
+
+        var share = (double)(now.Busy - before.Busy) / (now.Total - before.Total);
+        return share is >= 0 and <= 1 ? share : null;
+    }
 
     public string? MemoryPressure() => PlatformModule.MachineMemoryPressure();
 

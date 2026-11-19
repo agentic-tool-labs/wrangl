@@ -18,6 +18,10 @@ public sealed class LoadWatchTests
 
         public double Load1Value { get; set; } = 0.5;
 
+        public bool CpuReadable { get; set; } = true;
+
+        public double? CpuShare { get; set; } = 0.2;
+
         public bool Fails { get; set; }
 
         public string? Memory { get; set; } = "normal";
@@ -29,6 +33,8 @@ public sealed class LoadWatchTests
         public int Writes { get; private set; }
 
         public double? Load1() => Fails ? throw new InvalidOperationException("no load average") : Load1Value;
+
+        public (bool Readable, double? Share) CpuBusy() => CpuReadable ? (true, CpuShare) : (false, null);
 
         public string? MemoryPressure() => Memory;
 
@@ -129,8 +135,10 @@ public sealed class LoadWatchTests
 
         public BareWatch Watch { get; private set; } = null!;
 
-        public Rig()
+        /// <param name="sustained">False: <c>cpu_busy_seconds</c> is 0, so one busy sample is a trigger and the older tests keep their tick counts.</param>
+        public Rig(bool sustained = false)
         {
+            Source.Config = sustained ? null : "{\"cpu_busy_seconds\":0}";
             Restart();
         }
 
@@ -140,8 +148,9 @@ public sealed class LoadWatchTests
             Watch = new BareWatch(Host, TimeSpan.FromSeconds(30), () => Clock, load: Load);
         }
 
-        public void Sweeps(int count, double perCpu)
+        public void Sweeps(int count, double? cpuBusy, double perCpu = 0.5)
         {
+            Source.CpuShare = cpuBusy;
             Source.Load1Value = perCpu * Source.Cpus;
             for (var i = 0; i < count; i++)
             {
@@ -159,14 +168,14 @@ public sealed class LoadWatchTests
     {
         var rig = new Rig();
 
-        rig.Sweeps(2, 1.6);
+        rig.Sweeps(2, 0.95);
         Assert.Empty(Transitions(rig));
-        rig.Sweeps(1, 1.6);
+        rig.Sweeps(1, 0.95);
 
         Assert.Equal(["overloaded"], Transitions(rig));
         var row = rig.Host.JournalRows.Single(static r => r["kind"].AsString() == "load-transition");
         Assert.Equal(["at", "kind", "state", "triggers"], row.Keys.Order(StringComparer.Ordinal).ToArray());
-        Assert.Contains("load1_per_cpu=1.6", Assert.Single(row["triggers"].AsArray()).AsString(), StringComparison.Ordinal);
+        Assert.Contains("cpu busy 0.95", Assert.Single(row["triggers"].AsArray()).AsString(), StringComparison.Ordinal);
         Assert.Empty(rig.Host.Mails);
     }
 
@@ -174,7 +183,7 @@ public sealed class LoadWatchTests
     public void NoTeamLiveHeldOrWithoutAnOrchestratorIsMailedOnATransition()
     {
         var rig = new Rig();
-        rig.Sweeps(3, 1.6);
+        rig.Sweeps(3, 0.95);
 
         Assert.Single(Transitions(rig));
         Assert.Empty(rig.Host.Mails);
@@ -184,16 +193,16 @@ public sealed class LoadWatchTests
     public void AFlappingMachineJournalsEachTransitionAndMailsNobody()
     {
         var rig = new Rig();
-        rig.Sweeps(3, 1.6);
-        rig.Sweeps(50, 1.6);
+        rig.Sweeps(3, 0.95);
+        rig.Sweeps(50, 0.95);
         Assert.Single(Transitions(rig));
 
-        rig.Sweeps(2, 1.1);
+        rig.Sweeps(2, 0.5);
         Assert.Single(Transitions(rig));
-        rig.Sweeps(1, 1.1);
-        rig.Sweeps(10, 1.1);
-        rig.Sweeps(3, 1.6);
-        rig.Sweeps(3, 1.1);
+        rig.Sweeps(1, 0.5);
+        rig.Sweeps(10, 0.5);
+        rig.Sweeps(3, 0.95);
+        rig.Sweeps(3, 0.5);
 
         Assert.Equal(["overloaded", "ok", "overloaded", "ok"], Transitions(rig));
         Assert.Empty(rig.Host.Mails);
@@ -204,7 +213,7 @@ public sealed class LoadWatchTests
     {
         var rig = new Rig();
         rig.Source.Memory = "critical";
-        rig.Sweeps(3, 0.1);
+        rig.Sweeps(3, 0.2);
 
         Assert.Equal(["overloaded"], Transitions(rig));
         Assert.Empty(rig.Host.Mails);
@@ -214,9 +223,9 @@ public sealed class LoadWatchTests
     public void LoadBetweenEightyPercentAndTheThresholdKeepsTheStateAndJournalsNothingMore()
     {
         var rig = new Rig();
-        rig.Sweeps(3, 1.6);
+        rig.Sweeps(3, 0.95);
 
-        rig.Sweeps(10, 1.3);
+        rig.Sweeps(10, 0.8);
 
         Assert.Single(Transitions(rig));
         Assert.Equal("overloaded", rig.Load.Status().Get("state")!.Value.AsString());
@@ -226,11 +235,11 @@ public sealed class LoadWatchTests
     public void ARestartedDaemonThatAlreadyReportedOverloadedJournalsNothingMore()
     {
         var rig = new Rig();
-        rig.Sweeps(3, 1.6);
+        rig.Sweeps(3, 0.95);
         Assert.Single(Transitions(rig));
 
         rig.Restart();
-        rig.Sweeps(10, 1.6);
+        rig.Sweeps(10, 0.95);
 
         Assert.Single(Transitions(rig));
         Assert.Equal("overloaded", rig.Load.Status().Get("state")!.Value.AsString());
@@ -242,11 +251,12 @@ public sealed class LoadWatchTests
         var rig = new Rig();
         rig.Source.Config = "{\"ticks\":0}";
 
-        rig.Sweeps(3, 1.6);
+        // the defaults need 180 s of busy samples (7 sweeps 30 s apart) and then 3 ticks
+        rig.Sweeps(9, 0.95);
 
         var status = rig.Load.Status();
         Assert.Contains("ahd-load.json", status.Get("problem")!.Value.AsString(), StringComparison.Ordinal);
-        Assert.Equal(1.5, status.Get("thresholds")!.Value.Member("load1_per_cpu")!.Value.AsNumber());
+        Assert.Equal(0.9, status.Get("thresholds")!.Value.Member("cpu_busy")!.Value.AsNumber());
         Assert.Single(Transitions(rig));
     }
 
@@ -258,7 +268,7 @@ public sealed class LoadWatchTests
 
         foreach (var status in new[] { rig.Load.Status(), Sweep(rig) })
         {
-            foreach (var key in new[] { "state", "since", "triggers", "load1_per_cpu", "mem_pressure", "harnesses", "api_errors_10m", "thresholds" })
+            foreach (var key in new[] { "state", "since", "triggers", "cpu_busy", "load1_per_cpu", "cpus", "mem_pressure", "harnesses", "api_errors_10m", "thresholds" })
             {
                 Assert.True(status.Get(key) is not null, key);
             }
@@ -270,7 +280,7 @@ public sealed class LoadWatchTests
 
     private static JsonObject Sweep(Rig rig)
     {
-        rig.Sweeps(1, 0.5);
+        rig.Sweeps(1, 0.2);
         return rig.Load.Status();
     }
 
@@ -279,12 +289,12 @@ public sealed class LoadWatchTests
     {
         var three = new Rig();
         three.Host.Pending.AddRange(Errors(three.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2", "s3"));
-        three.Sweeps(3, 0.1);
+        three.Sweeps(3, 0.2);
         Assert.Single(Transitions(three));
 
         var two = new Rig();
         two.Host.Pending.AddRange(Errors(two.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2"));
-        two.Sweeps(10, 0.1);
+        two.Sweeps(10, 0.2);
         Assert.Empty(Transitions(two));
     }
 
@@ -294,7 +304,7 @@ public sealed class LoadWatchTests
         var rig = new Rig();
         rig.Host.Pending.AddRange(Errors(rig.Clock + TimeSpan.FromSeconds(10), 30, "s1", "s2", "s3", "s4").Select(e => e with { Kind = "rate_limit" }));
 
-        rig.Sweeps(10, 0.1);
+        rig.Sweeps(10, 0.2);
 
         Assert.Empty(Transitions(rig));
         Assert.Equal(30, rig.Load.Status().Get("api_errors_10m")!.Value.Member("rate_limit")!.Value.AsNumber());
@@ -305,11 +315,11 @@ public sealed class LoadWatchTests
     {
         var rig = new Rig();
         rig.Host.Pending.AddRange(Errors(rig.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2", "s3"));
-        rig.Sweeps(3, 0.1);
+        rig.Sweeps(3, 0.2);
         Assert.Single(Transitions(rig));
 
         rig.Clock += TimeSpan.FromMinutes(11);
-        rig.Sweeps(3, 0.1);
+        rig.Sweeps(3, 0.2);
 
         Assert.Equal("ok", Transitions(rig)[^1]);
         Assert.Equal(0, rig.Load.Status().Get("api_errors_10m")!.Value.Member("total")!.Value.AsNumber());
@@ -330,7 +340,61 @@ public sealed class LoadWatchTests
         Assert.Empty(rig.Host.Mails);
     }
 
-    private static void Overload(Rig rig) => rig.Sweeps(3, 1.6);
+    [Fact]
+    public void OnlyCpuUseSustainedForItsSecondsOverloadsAndNeitherTheLoadAverageNorAnUnreadablePlatformDoes()
+    {
+        var loadAverage = new Rig(sustained: true);
+        loadAverage.Sweeps(20, 0.2, perCpu: 3.0);
+        Assert.Empty(Transitions(loadAverage));
+        Assert.Empty(loadAverage.Load.Status().Get("triggers")!.Value.AsArray());
+
+        var brief = new Rig(sustained: true);
+        brief.Sweeps(3, 0.95);
+        brief.Sweeps(20, 0.3);
+        Assert.Empty(Transitions(brief));
+
+        var broken = new Rig(sustained: true);
+        broken.Sweeps(6, 0.95);
+        broken.Sweeps(1, null);
+        broken.Sweeps(6, 0.95);
+        broken.Sweeps(1, null);
+        broken.Sweeps(6, 0.95);
+        Assert.Empty(Transitions(broken));
+
+        var unreadable = new Rig(sustained: true);
+        unreadable.Source.CpuReadable = false;
+        unreadable.Sweeps(20, 0.95, perCpu: 3.0);
+        Assert.Empty(Transitions(unreadable));
+        Assert.Equal("cpu use not read on this platform", unreadable.Load.Status().Get("cpu_note")!.Value.AsString());
+        Assert.Null(new Rig(sustained: true).Load.Status().Get("cpu_note"));
+
+        var sustained = new Rig(sustained: true);
+        sustained.Sweeps(6, 0.95);
+        Assert.Empty(sustained.Load.Status().Get("triggers")!.Value.AsArray());
+        sustained.Sweeps(1, 0.95);
+        Assert.Equal("cpu busy 0.95 for 180 s (threshold 0.90)", Assert.Single(sustained.Load.Status().Get("triggers")!.Value.AsArray()).AsString());
+        sustained.Sweeps(2, 0.95);
+        Assert.Equal(["overloaded"], Transitions(sustained));
+    }
+
+    [Fact]
+    public void TheOldLoadKeyIsAcceptedAndIgnoredAndACpuBusyOutOfRangeGivesTheDefaults()
+    {
+        var (old, oldProblem) = LoadConfig.Parse("{\"load1_per_cpu\": 100, \"api_errors\": 100000}");
+        Assert.Null(oldProblem);
+        Assert.Equal(new LoadThresholds() with { ApiErrors = 100000 }, old);
+
+        Assert.Equal((new LoadThresholds() with { CpuBusy = 1, CpuBusySeconds = 0 }, (string?)null), LoadConfig.Parse("{\"cpu_busy\": 1, \"cpu_busy_seconds\": 0}"));
+
+        foreach (var text in new[] { "{\"cpu_busy\": 0, \"ticks\": 5}", "{\"cpu_busy\": 1.01, \"ticks\": 5}", "{\"cpu_busy\": \"0.9\", \"ticks\": 5}", "{\"cpu_busy_seconds\": -1, \"ticks\": 5}", "{\"cpu_busy_seconds\": 1.5, \"ticks\": 5}" })
+        {
+            var (thresholds, problem) = LoadConfig.Parse(text);
+            Assert.Equal(new LoadThresholds(), thresholds);
+            Assert.Contains("cpu_busy", problem, StringComparison.Ordinal);
+        }
+    }
+
+    private static void Overload(Rig rig) => rig.Sweeps(3, 0.95);
 
     [Fact]
     public void AMachineThatIsNotOverloadedAdmitsEverySpawn()

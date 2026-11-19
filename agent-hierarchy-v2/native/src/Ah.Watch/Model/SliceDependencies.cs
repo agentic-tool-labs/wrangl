@@ -43,6 +43,7 @@ internal static class SliceDependencies
         new("topology:<t>", "worktrees", "worktrees of t"),
         new("topology:<t>", "registrations", "sessions of t's members"),
         new("topology:<t>", "messages", "exchanges of t"),
+        new("topology:<t>", "progress", "plan of t"),
         new("worktree:<w>", "worktrees", "w"),
         new("worktree:<w>", "teams", "team(w)"),
         new("exchange:<x>", "messages", "x"),

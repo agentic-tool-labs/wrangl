@@ -635,6 +635,7 @@ function histBody(v, t) {
   return out;
 }
 
+const QMIN = 180; // a History question's narrowest readable width (ah2-256)
 function historyRow(v, t, r, i) {
   // a question-log row: who asked (DIRECTION's label) in the by column; a typed prompt also shows its team
   const log = r.dir === "jim" || r.dir === "terminal";
@@ -651,7 +652,7 @@ function historyRow(v, t, r, i) {
   const full = `${r.team} · ${r.header ? `${r.header} · ` : ""}${r.text} · ${log ? "" : "answered "}${r.answer}${by ? ` · ${by}` : ""}${r.age ? ` · ${r.age} ago` : ""}${preview ? `. Reply: ${preview}` : ""}`;
   // a row that opens its thread is a button, so the keyboard reaches it; its focus is the hover fill with an accent rule under it
   const open = row.dir === "jim";
-  return (open ? Button.new(`qa-h-${i}`).flex() : h_flex().id(`qa-h-${i}`)).min_h(32).py(6).gap(8).items_center().border_b(1).border_color(t.border).text_size(12)
+  return (open ? Button.new(`qa-h-${i}`).flex() : h_flex().id(`qa-h-${i}`)).relative().flex_wrap().min_h(32).py(6).pr(80).gap(8).items_center().border_b(1).border_color(t.border).text_size(12)
     .tooltip(full).accessibility_label(open ? `${full}. Open its thread` : full)
     .when(open, (el) => el.cursor_pointer().hover((s) => s.bg(t.raised)).focus((s) => s.bg(t.raised).border_color(t.accent))
       .on_click((_e, cx) => openThread(v, row, cx)))
@@ -659,13 +660,16 @@ function historyRow(v, t, r, i) {
     .when(open, (el) => el.child(div().flex_none().max_w(96).truncate().font_family(MONO).text_size(11).text_color(t.muted).child(r.team)))
     .when(Boolean(r.header), (el) => el.child(div().flex_none().max_w(96).truncate().font_family(MONO).text_size(11).text_color(t.muted).child(r.header)))
     // a row that opens its thread stays one line, and its reply's preview a second muted one under the question, as the sidebar's
-    // team row carries its goal (main.js); its thread panel is selectable. The others' question and answer are selectable.
-    .child(!open ? div().flex_1().min_w(0).text_color(t.foreground).child(sel(`qa-h-${i}-q`, r.text))
-      : preview ? v_flex().flex_1().min_w(0).text_color(t.foreground)
+    // team row carries its goal (main.js); its thread panel is selectable. The others' question is selectable.
+    // ah2-256: the question never narrows below QMIN; a narrow pane wraps the row instead, the question onto its own line and the
+    // chip under or after it. The by column sits in the row's right gutter (pr 80) on the first line, whatever wraps.
+    .child(!open ? div().flex_1().min_w(QMIN).text_color(t.foreground).child(sel(`qa-h-${i}-q`, r.text))
+      : preview ? v_flex().flex_1().min_w(QMIN).text_color(t.foreground)
         .child(div().min_w(0).truncate().child(r.text))
         .child(div().min_w(0).truncate().text_size(11.5).text_color(t.muted).child(preview))
-      : div().flex_1().min_w(0).text_color(t.foreground).truncate().child(r.text))
+      : div().flex_1().min_w(QMIN).text_color(t.foreground).truncate().child(r.text))
+    // the chip keeps to 140 px: a long answer truncates, whole in the row's tooltip (a selectable TextView did not truncate)
     .child(div().flex_none().max_w(140).min_h(20).px(8).flex().items_center().rounded(6).border(1).border_color(t.border).bg(t.surface)
-      .text_size(11.5).text_color(waiting ? t.muted : t.foreground).child(open ? div().truncate().child(r.answer) : sel(`qa-h-${i}-a`, r.answer)))
-    .child(div().w(72).flex_none().text_right().text_size(11).text_color(t.muted).child(by));
+      .text_size(11.5).text_color(waiting ? t.muted : t.foreground).child(div().truncate().child(r.answer)))
+    .child(div().absolute().top(6).right(0).w(72).h(20).flex().items_center().justify_end().text_size(11).text_color(t.muted).child(by));
 }

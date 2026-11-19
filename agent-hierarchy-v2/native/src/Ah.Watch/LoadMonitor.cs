@@ -4,14 +4,16 @@ using Ah.Core.Json;
 namespace Ah.Watch;
 
 /// <summary>How the load monitor decides, from <c>&lt;AhHome&gt;/ahd-load.json</c> or the defaults.</summary>
-/// <param name="Load1PerCpu">The 1-minute load average per processor at or above which the machine is loaded.</param>
+/// <param name="CpuBusy">The share of CPU time busy at or above which every sample of <paramref name="CpuBusySeconds"/> must be.</param>
+/// <param name="CpuBusySeconds">How long CPU use must stay at or above <paramref name="CpuBusy"/> before it triggers.</param>
 /// <param name="MemPressure">The memory pressure level (<c>warn</c> or <c>critical</c>) at or above which the machine is loaded.</param>
 /// <param name="ApiErrors">The transport plus server API errors in ten minutes that count, with <paramref name="ApiErrorSessions"/>.</param>
 /// <param name="ApiErrorSessions">How many distinct sessions those errors must come from.</param>
 /// <param name="Ticks">How many consecutive ticks a change needs.</param>
 /// <param name="SpawnGapSeconds">The least time between two spawns while overloaded.</param>
 internal sealed record LoadThresholds(
-    double Load1PerCpu = 1.5,
+    double CpuBusy = 0.90,
+    int CpuBusySeconds = 180,
     string MemPressure = "critical",
     int ApiErrors = 10,
     int ApiErrorSessions = 3,
@@ -23,7 +25,8 @@ internal sealed record LoadThresholds(
 
     public JsonObject ToJson() => new()
     {
-        ["load1_per_cpu"] = Load1PerCpu,
+        ["cpu_busy"] = CpuBusy,
+        ["cpu_busy_seconds"] = CpuBusySeconds,
         ["mem_pressure"] = MemPressure,
         ["api_errors"] = ApiErrors,
         ["api_error_sessions"] = ApiErrorSessions,
@@ -52,11 +55,16 @@ internal sealed record ApiErrorCounts(int Transport, int RateLimit, int Server, 
 }
 
 /// <summary>One tick's reading of the machine.</summary>
-/// <param name="Load1PerCpu">The 1-minute load average divided by the processor count.</param>
+/// <param name="At">When it was taken.</param>
+/// <param name="Load1PerCpu">The 1-minute load average divided by the processor count; information only, never a trigger.</param>
+/// <param name="Cpus">The processor count.</param>
+/// <param name="CpuReadable">Whether this machine's CPU times can be read at all; when not, there is no CPU trigger.</param>
+/// <param name="CpuBusy">The share of CPU time busy since the previous sample; null when there is none.</param>
 /// <param name="MemPressure"><c>normal</c>, <c>warn</c> or <c>critical</c>; null when it cannot be read.</param>
 /// <param name="Harnesses">How many Claude harness processes run.</param>
 /// <param name="Api">The API errors of the last ten minutes.</param>
-internal sealed record LoadSample(double Load1PerCpu, string? MemPressure, int Harnesses, ApiErrorCounts Api);
+internal sealed record LoadSample(
+    DateTimeOffset At, double Load1PerCpu, int Cpus, bool CpuReadable, double? CpuBusy, string? MemPressure, int Harnesses, ApiErrorCounts Api);
 
 /// <summary>What the monitor has reported, kept so a restarted daemon does not report it again.</summary>
 internal sealed record LoadState(string State, string Since, bool Alarmed, string? LastAdmit = null)
@@ -154,8 +162,23 @@ internal static class LoadConfig
             }
         }
 
+        // load1_per_cpu is no longer a trigger: the key is accepted and ignored
+        var cpuBusy = defaults.CpuBusy;
+        if (root.Member("cpu_busy") is { } c)
+        {
+            if (c.IsNumber && c.AsNumber() is > 0 and <= 1)
+            {
+                cpuBusy = c.AsNumber();
+            }
+            else
+            {
+                problem ??= "ahd-load.json: cpu_busy must be a number above 0 and at most 1";
+            }
+        }
+
         var parsed = new LoadThresholds(
-            Number("load1_per_cpu", defaults.Load1PerCpu, 0.1, whole: false),
+            cpuBusy,
+            (int)Number("cpu_busy_seconds", defaults.CpuBusySeconds, 0, whole: true),
             memory,
             (int)Number("api_errors", defaults.ApiErrors, 1, whole: true),
             (int)Number("api_error_sessions", defaults.ApiErrorSessions, 1, whole: true),
@@ -186,6 +209,7 @@ internal sealed class LoadMonitor
 {
     private readonly LoadThresholds _t;
     private int _streak;
+    private DateTimeOffset? _cpuSince;
 
     /// <param name="thresholds">How to decide.</param>
     /// <param name="restored">What was reported before a restart (null: nothing); the streaks always start from zero.</param>
@@ -207,9 +231,17 @@ internal sealed class LoadMonitor
     private List<string> Firing(LoadSample s, double scale)
     {
         var firing = new List<string>();
-        if (s.Load1PerCpu >= _t.Load1PerCpu * scale)
+        if (scale < 1)
         {
-            firing.Add(string.Create(CultureInfo.InvariantCulture, $"load1_per_cpu={s.Load1PerCpu:0.##} (>= {_t.Load1PerCpu * scale:0.##})"));
+            // recovery needs every sample under 80% of the threshold, so a single busy sample is enough to hold it
+            if (s.CpuBusy is { } share && share >= _t.CpuBusy * scale)
+            {
+                firing.Add(string.Create(CultureInfo.InvariantCulture, $"cpu busy {share:0.00} (>= {_t.CpuBusy * scale:0.00})"));
+            }
+        }
+        else if (_cpuSince is { } since && s.At - since >= TimeSpan.FromSeconds(_t.CpuBusySeconds))
+        {
+            firing.Add(string.Create(CultureInfo.InvariantCulture, $"cpu busy {s.CpuBusy:0.00} for {(s.At - since).TotalSeconds:0} s (threshold {_t.CpuBusy:0.00})"));
         }
 
         // for recovery (scale under 1) only "critical" or "warn" itself counts, never the level below the threshold
@@ -231,6 +263,9 @@ internal sealed class LoadMonitor
     {
         ArgumentNullException.ThrowIfNull(sample);
         var over = Current.State == LoadState.Overloaded;
+
+        // the CPU run starts at its first sample at or above the threshold; a sample under it, or with no reading, ends it
+        _cpuSince = sample.CpuBusy >= _t.CpuBusy ? _cpuSince ?? sample.At : null;
         Triggers = Firing(sample, 1);
         var changing = over ? Firing(sample, LoadThresholds.Recovery).Count == 0 : Triggers.Count > 0;
         _streak = changing ? _streak + 1 : 0;
@@ -265,12 +300,19 @@ internal sealed class LoadMonitor
             ["state"] = Current.State,
             ["since"] = Current.Since,
             ["triggers"] = triggers,
+            ["cpu_busy"] = sample.CpuBusy is { } share ? share : JsonValue.Null,
             ["load1_per_cpu"] = sample.Load1PerCpu,
+            ["cpus"] = sample.Cpus,
             ["mem_pressure"] = sample.MemPressure is null ? JsonValue.Null : sample.MemPressure,
             ["harnesses"] = sample.Harnesses,
             ["api_errors_10m"] = sample.Api.ToJson(),
             ["thresholds"] = _t.ToJson(),
         };
+        if (!sample.CpuReadable)
+        {
+            status["cpu_note"] = "cpu use not read on this platform";
+        }
+
         if (problem is not null)
         {
             status["problem"] = problem;

@@ -441,7 +441,10 @@
         "stdout"
       ],
       "keys": [
+        "cpu_busy",
         "load1_per_cpu",
+        "cpus",
+        "cpu_note",
         "mem_pressure",
         "harnesses",
         "api_errors_10m"

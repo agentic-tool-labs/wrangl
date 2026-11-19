@@ -308,6 +308,48 @@ public sealed partial class RosterTeamVerbTests
         Assert.Empty(ready);
     }
 
+    /// <summary>A herdr team of two idle clean implementors and a third whose stream is not done, every pane live in herdr.</summary>
+    private string[] ArrangeHerdrTeamOfThree()
+    {
+        string[] names = [Impl, "proj-implementor-2", "proj-implementor-3"];
+        var members = string.Join(",", Member("implementor", names[0], "%1"), Member("implementor", names[1], "%2"), CleanMember(names[2], "%3", "s1"));
+        WriteTeam("proj", LiveTeamJson("herdr", members).TrimEnd('}') + ",\"streams\":{\"s1\":{\"state\":\"open\"}}}");
+        for (var i = 0; i < names.Length; i++)
+        {
+            PeerUp(names[i], $"%{i + 1}", session: $"sess-{i + 1}");
+        }
+
+        _branch = "ah/feature";
+        ScriptGit();
+        var git = _runner.Output;
+        var agents = string.Join(",", names.Select((n, i) => $"{{\"name\":\"{n}\",\"pane_id\":\"%{i + 1}\",\"tab_id\":\"t1\",\"workspace_id\":\"w1\"}}"));
+        _runner.Output = argv => argv.Contains("agent") && argv.Contains("list") ? $"{{\"result\":{{\"agents\":[{agents}]}}}}" : git!(argv);
+        return names;
+    }
+
+    [Fact]
+    public void TheDismissNudgeCheckOfSeveralIdleMembersNamesTheCleanOnesAndQueriesHerdrOnce()
+    {
+        var names = ArrangeHerdrTeamOfThree();
+
+        var ready = Ah.Commands.CommandsModule.ReadyToDismiss(ComposeServices(), Hierarchy, Project, "proj", names);
+
+        Assert.Equal(names[..2], ready);
+        Assert.Equal(1, _runner.Calls.Count(argv => argv.Contains("agent") && argv.Contains("list")));
+        Assert.DoesNotContain(_runner.Calls, argv => argv.Contains("close"));
+    }
+
+    [Fact]
+    public void TheDismissNudgeCheckNamesNobodyWhenTheMessageStoreCannotBeRead()
+    {
+        var names = ArrangeHerdrTeamOfThree();
+        BreakMessageStore();
+
+        var ready = Ah.Commands.CommandsModule.ReadyToDismiss(ComposeServices(), Hierarchy, Project, "proj", names);
+
+        Assert.Empty(ready);
+    }
+
     [Fact]
     public void TheBareCloseTheDismissNudgePrintsClosesAnIdleCleanMemberInOneCall()
     {

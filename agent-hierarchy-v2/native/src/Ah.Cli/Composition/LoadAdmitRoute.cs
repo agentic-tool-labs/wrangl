@@ -7,7 +7,7 @@ namespace Ah.Cli.Composition;
 
 /// <summary>
 /// <c>POST /v1/load/admit-spawn</c>: whether a new spawn may start now. Body <c>{team, member, dry_run}</c>; the answer is
-/// <c>{admitted, next_at, triggers}</c>. It paces spawns and protects nothing, so it asks for no proof of the caller; the spawn's own
+/// <c>{admitted, next_at, triggers, harnesses}</c>. It paces spawns and protects nothing, so it asks for no proof of the caller; the spawn's own
 /// owner proof still applies. An admitted spawn is recorded unless <c>dry_run</c>.
 /// </summary>
 internal sealed class LoadAdmitRoute(ILoadWatch load)
@@ -44,6 +44,7 @@ internal sealed class LoadAdmitRoute(ILoadWatch load)
             ["admitted"] = admission.Admitted,
             ["next_at"] = admission.NextAt is { } next ? next.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture) : JsonValue.Null,
             ["triggers"] = triggers,
+            ["harnesses"] = admission.Harnesses,
         }));
     }
 }

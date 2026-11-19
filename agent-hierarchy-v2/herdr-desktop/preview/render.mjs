@@ -19,12 +19,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart, teamTree, treeRows, inFlightTo, rowDot, rowTrack } from "../mods/ah2/model.js";
+import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart, teamTree, treeRows, inFlightTo, rowDot, rowTrack, reportsFrom, rowReport } from "../mods/ah2/model.js";
 import { descriptionBlocks, inlineParts } from "../mods/ah2/plans-model.js";
 import { answerText, DIRECTION, threadOf } from "../mods/ah2/questions-model.js";
 import { boardModel, ownerOf } from "../mods/ah2/board-model.js";
 import { feedModel } from "../mods/ah2/feed-model.js";
-import { graphModel, flowModel, flowPan, KNOB, rowMark, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, isReviewing, roleHue, DOT_MS } from "../mods/ah2/graph-model.js";
+import { graphModel, flowModel, flowPan, KNOB, rowMark, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, laneHue, isReviewing, roleHue, DOT_MS } from "../mods/ah2/graph-model.js";
 import { runText, underTip, pathText } from "../mods/ah2/flow-model.js";
 import { memberModel, SUMMARY_MESSAGES } from "../mods/ah2/member-model.js";
 import { glyphOf } from "../mods/ah2/graph-world.js";
@@ -38,6 +38,20 @@ const out = process.argv[2] ?? join(tmpdir(), "ah2-preview.html");
 const reply = JSON.parse(readFileSync(join(here, "..", "fixture", "events.json"), "utf8"));
 const NOW = Date.parse(reply.observed_at);
 const slices = new Map(reply.slices.map((s) => [s.id, s]));
+// ah2-265: what ahd serves since ah2-268, added to the saved reply: each member state's Flow column (by the role its name carries), and
+// on ah2-tm4's topology a report the architect filed that the orchestrator has not read
+for (const [id, sl] of slices) {
+  if (id.startsWith("team-summary:") && sl.body.member_states) {
+    const ms = Object.fromEntries(Object.entries(sl.body.member_states).map(([k, m]) => [k, { ...m, column: FLOW_COLUMN[k.split("/").pop().replace(/^@/, "")] ?? 2 }]));
+    slices.set(id, { ...sl, body: { ...sl.body, member_states: ms } });
+  }
+}
+{
+  const id = "topology:a1b2c3d4/ah2-tm4";
+  const tp = slices.get(id);
+  const report = [{ id: "exchange:a1b2c3d4/20261108-170500-a801", from_member: "member:a1b2c3d4/ah2-tm4/@orchestrator", to_member: "member:a1b2c3d4/ah2-tm4/architect" }];
+  slices.set(id, { ...tp, body: { ...tp.body, edges: { ...tp.body.edges, report } } });
+}
 const side = sidebarModel(slices, NOW);
 const team = "a1b2c3d4/ah2-tm4";
 const rep = sitrepModel(slices, team, NOW);
@@ -75,6 +89,10 @@ const ASKED = { dir: "jim", question: true, replies: 3, at: NOW - 6 * 60000, age
 const LATER_DOC = { prompt: { id: "p8", text: "Did the nightly run pass?" }, replies: [
   { id: "t3", at: NOW - 4 * 60000, trigger: "later", final: "Yes: the nightly run passed, 412 tests, no flakes.", text: "The reviewer's hand-back came in.\n\nYes: the nightly run passed, 412 tests, no flakes." },
 ] };
+// ah2-256: the row of Jim's screenshot, a long question with a 25-character answer under header "Next work"; `&w=400` narrows
+// the window to the herdr pane it was in.
+const NARROW = { at: NOW - 2 * 60000, age: "2m", team: "ah2-tm4", header: "Next work", by: "terminal", answer: "Pane and hook performance",
+  text: "2.0.20 is out and the load alarms no longer wake Orchestrators. Which should come next: the pane and hook performance pass, or the Board's filter row?" };
 const WAITING = { dir: "jim", question: true, replies: 0, at: NOW - 60000, age: "1m", team: "ah2-tm4", header: null, text: "Does the Board keep its filter row across a restart?", ...historyReply(null) };
 // agents() is Herdr's live data, not ah's: one plain codex terminal stands in for it.
 const others = [{ name: "Codex", space: "bloom", state: "working" }];
@@ -105,25 +123,32 @@ const icon = (role) => readFileSync(join(here, "..", "mods", "ah2", `role-${ICON
 // AH2_PREVIEW_FOLD=<node key>[,…] folds those nodes, to show a collapsed row
 const FOLDED = new Set((process.env.AH2_PREVIEW_FOLD ?? "").split(",").filter(Boolean));
 // ah2-239: a brief in flight to the row runs as a dot along its elbow (main.js treeLead; CSS offset-path for the script clock), the elbow tinted
+// ah2-265: a report filed and not yet read runs back up the same track (offset-path reversed by the animation's direction), at the review
+// pace in the member's lane colour, half a period on; the elbow takes the brief's tint when both draw
 const IN_FLIGHT = inFlightTo(slices);
+const REPORTS = reportsFrom(slices);
 const lead = (r) => {
   const deep = r.node.depth > 0;
   const d = rowDot(r, IN_FLIGHT);
-  const fly = d ? ["l", "d"].map((th) => `--dh-${th}:${d.review ? dotColor(true, th === "l") : roleHue(d.role, th === "l") ?? "var(--foreground)"}`).join(";") : "";
-  const dot = d ? `<b class="dt" style="offset-path:path('${pathText(rowTrack(r, 16))}');animation-duration:${d.review ? DOT_MS.review : DOT_MS.brief}ms" aria-hidden="true"></b>` : "";
+  const b = rowReport(r, REPORTS);
+  const tint = d ? (lt) => (d.review ? dotColor(true, lt) : laneHue(d.role, d.column, lt)) : b ? (lt) => laneHue(b.role, b.column, lt) : null;
+  const fly = tint ? ["l", "d"].map((th) => `--dh-${th}:${tint(th === "l") ?? "var(--foreground)"}`).join(";") : "";
+  const back = b ? ["l", "d"].map((th) => `--bh-${th}:${laneHue(b.role, b.column, th === "l") ?? "var(--foreground)"}`).join(";") : "";
+  const dot = (d ? `<b class="dt" style="offset-path:path('${pathText(rowTrack(r, 16))}');animation-duration:${d.review ? DOT_MS.review : DOT_MS.brief}ms" aria-hidden="true"></b>` : "")
+    + (b ? `<b class="dt bk" style="offset-path:path('${pathText(rowTrack(r, 16))}');animation-duration:${DOT_MS.review}ms;animation-delay:-${DOT_MS.review / 2}ms;${back}" aria-hidden="true"></b>` : "");
   const cols = deep ? [...r.rails.map((on) => `<i class="tc2">${on ? '<b class="rv"></b>' : ""}</i>`), `<i class="tc2">${r.last ? "" : '<b class="rv"></b>'}<b class="re"></b><b class="rh"></b></i>`] : [];
   const end = r.kids
     ? `<i class="tc2 tk"><button class="fold" aria-label="${r.open ? "Collapse" : "Expand"} ${esc(r.node.name ?? r.node.team?.name)}">${r.open ? "▾" : "▸"}</button>${r.open ? '<b class="rd"></b>' : ""}</i>`
     : `<i class="tc2">${deep ? '<b class="rl"></b>' : ""}</i>`;
-  return `<span class="lead${d ? " fly" : ""}"${d ? ` style="${fly}"` : ""}>${cols.join("")}${end}${dot}</span>`;
+  return `<span class="lead${tint ? " fly" : ""}"${tint ? ` style="${fly}"` : ""}>${cols.join("")}${end}${dot}</span>`;
 };
 const alertLead = (r) => `<span class="lead">${[...(r.node.depth > 0 ? [...r.rails, !r.last] : []), r.open].map((on) => `<i class="tc2">${on ? '<b class="rv"></b>' : ""}</i>`).join("")}</span>`;
 function treeMember(m) {
   const mk = { l: rowMark({ role: m.role, state: m.state, running: m.state === "running" }, true), d: rowMark({ role: m.role, state: m.state, running: m.state === "running" }, false) };
-  const v = ["l", "d"].map((th) => `--hu-${th}:${mk[th].hue ?? "var(--foreground)"};--mk-${th}:${mk[th].mark ?? "var(--blocked)"}`).join(";");
+  const v = ["l", "d"].map((th) => `--hu-${th}:${laneHue(m.role, m.column, th === "l") ?? "var(--foreground)"};--mk-${th}:${mk[th].mark ?? "var(--blocked)"}`).join(";");
   const full = `${m.name}${m.role && m.role !== m.name ? ` (${m.role})` : ""} · ${m.word} · ${m.what}${m.age ? ` · ${m.age}` : ""}`;
   const quiet = ["idle", "gone", "unknown"].includes(m.state);
-  return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
+  return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri${m.state === "gone" || m.state === "unknown" ? " off" : ""}" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
 }
 // ah2-225: a job's or subagent's leaf row, as main.js under() draws it; a subagent's own elbow dashed (class dsh on its lead)
 function treeUnder(x, parent) {
@@ -211,7 +236,7 @@ function qaBody(view) {
   if (view === "down") return '<div class="qnote">ahd not running<br><small>Retrying</small></div>';
   if (view === "thread" || view === "thread-open") return threadHtml(DOC, view === "thread-open" ? new Set(["more", "later", "l0"]) : new Set());
   if (view === "thread-later") return threadHtml(LATER_DOC, new Set());
-  if (view === "history") return [WAITING, ASKED, ...qa.history].map((r) => {
+  if (view === "history") return [WAITING, ASKED, NARROW, ...qa.history].map((r) => {
     const log = r.dir === "jim";
     const by = log ? DIRECTION.jim : r.by === "user" ? "you" : r.by;
     const answer = log ? (r.replyAt ? `replied ${clock(r.replyAt)}` : r.replies > 0 ? `${r.replies} later ${r.replies === 1 ? "reply" : "replies"}` : "no reply yet") : r.answer;
@@ -219,7 +244,7 @@ function qaBody(view) {
     const full = `${r.team} · ${r.header ? `${r.header} · ` : ""}${log ? `? ${r.text}` : r.text} · ${log ? "" : "answered "}${answer} · ${by}${r.age ? ` · ${r.age} ago` : ""}${log && r.preview ? `. Reply: ${r.preview}` : ""}`;
     // the question and, for a typed one with a reply, its preview as a second muted line in the same cell (qa.js, as main.js's goal line)
     const q = log && r.preview ? `<span class="hq2"><span class="hq">? ${esc(r.text)}</span><span class="hp">${esc(r.preview)}</span></span>` : `<span class="hq">${esc(log ? `? ${r.text}` : r.text)}</span>`;
-    const line = `<span class="tm">${clock(r.at)}</span>${log ? `<span class="hk">${esc(r.team)}</span>` : ""}${r.header ? `<span class="hk">${esc(r.header)}</span>` : ""}${q}<span class="achip${quiet ? " quiet" : ""}">${esc(answer)}</span><span class="by">${esc(by)}</span>`;
+    const line = `<span class="tm">${clock(r.at)}</span>${log ? `<span class="hk">${esc(r.team)}</span>` : ""}${r.header ? `<span class="hk">${esc(r.header)}</span>` : ""}${q}<span class="achip${quiet ? " quiet" : ""}"><span>${esc(answer)}</span></span><span class="by">${esc(by)}</span>`;
     if (!log) return `<div class="hr" title="${esc(full)}" aria-label="${esc(full)}">${line}</div>`;
     return `<button class="hr open" title="${esc(full)}" aria-label="${esc(`${full}. Open its thread`)}">${line}</button>`;
   }).join("");
@@ -644,7 +669,7 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 .tabs{height:42px;flex:none;display:flex;align-items:center;gap:6px;padding:0 12px}.tab{height:26px;padding:0 12px;display:flex;align-items:center;font-size:12px;color:var(--muted);border-radius:13px}.tab.on{background:var(--raised);color:var(--foreground)}
 .pane{flex:1;margin:0 8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--canvas);padding:14px 12px;font:13px/1.5 "JetBrains Mono",ui-monospace,Menlo,monospace;color:var(--muted);white-space:pre;overflow:hidden}
 .sbar{height:28px;flex:none}
-.ov{position:absolute;left:340px;top:72px;width:620px;height:min(600px,calc(100% - 96px));background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.ov{position:absolute;left:340px;top:72px;width:var(--ovw,620px);height:min(600px,calc(100% - 96px));background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column}
 .ovh{height:44px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--border)}.ovh h1{font-size:13px;font-weight:600;margin:0;flex:1}
 .x{width:24px;height:24px;border:1px solid var(--surface);border-radius:6px;background:none;color:var(--muted);font-size:15px;cursor:pointer}.x:hover{background:var(--hover);color:var(--foreground)}
 .ovb{flex:1;min-height:0;overflow:auto;padding:0 16px 12px;font-size:12.5px}
@@ -676,10 +701,10 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 .send{padding:1px;border:1px solid var(--raised);border-radius:7px;background:none}.send span{height:22px;padding:0 12px;display:flex;align-items:center;border-radius:6px;background:var(--accent);color:var(--surface);font:600 11.5px Geist,ui-sans-serif,system-ui,sans-serif}.send:disabled span{opacity:.45}
 .nn{height:24px;padding:0 6px;border:1px solid var(--raised);border-radius:6px;background:none;color:var(--muted);font:11.5px Geist,ui-sans-serif,system-ui,sans-serif}.nn:disabled{opacity:.6}
 .done1{margin-bottom:8px;min-height:34px;padding:0 12px;display:flex;gap:6px;align-items:center;border-radius:8px;background:var(--raised);font-size:12px}.done1 .m{color:var(--muted)}
-.hr:first-child{margin-top:8px}.hr{min-height:32px;padding:6px 0;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);font-size:12px}
+.hr:first-child{margin-top:8px}.hr{position:relative;min-height:32px;padding:6px 80px 6px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--border);font-size:12px}
 .hr .tm{width:38px;flex:none;font:11px "Geist Mono",ui-monospace,monospace;color:var(--muted)}.hr .hk{max-width:96px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px "Geist Mono",ui-monospace,monospace;color:var(--muted)}
-.hr .hq{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.achip{max-width:140px;height:20px;padding:0 8px;flex:none;display:flex;align-items:center;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:11.5px;overflow:hidden;white-space:nowrap}.hr .by{width:72px;flex:none;text-align:right;font-size:11px;color:var(--muted)}
-.hr.open{width:100%;padding:6px 0;border:0;border-bottom:1px solid var(--border);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}.hr .hq2{flex:1;min-width:0;display:flex;flex-direction:column}.hr .hp{min-width:0;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.achip.quiet{color:var(--muted)}.hr.open:hover{background:var(--raised)}.hr.open:focus-visible{outline:none;background:var(--raised);border-bottom-color:var(--accent)}
+.hr .hq{flex:1;min-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hr:not(.open) .hq{white-space:normal}.achip span{min-width:0;overflow:hidden;text-overflow:ellipsis}.achip{max-width:140px;height:20px;padding:0 8px;flex:none;display:flex;align-items:center;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:11.5px;overflow:hidden;white-space:nowrap}.hr .by{position:absolute;top:6px;right:0;width:72px;height:20px;display:flex;align-items:center;justify-content:flex-end;font-size:11px;color:var(--muted)}
+.hr.open{width:100%;padding:6px 80px 6px 0;border:0;border-bottom:1px solid var(--border);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}.hr .hq2{flex:1;min-width:180px;display:flex;flex-direction:column}.hr .hp{min-width:0;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.achip.quiet{color:var(--muted)}.hr.open:hover{background:var(--raised)}.hr.open:focus-visible{outline:none;background:var(--raised);border-bottom-color:var(--accent)}
 .tback{margin:8px 0;height:24px;padding:0 8px;display:flex;align-items:center;border:1px solid var(--surface);border-radius:6px;background:none;color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.tback:hover{color:var(--foreground)}.tback:focus-visible{outline:none;border-color:var(--accent)}.tq{font-size:12px;white-space:pre-line}.tl{margin-top:10px;font-size:11px;color:var(--muted)}.tfold{margin-top:10px;height:24px;padding:0 8px;display:flex;gap:6px;align-items:center;border:1px solid var(--surface);border-radius:6px;background:none;color:var(--muted);font:11.5px Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.tfold span{width:10px;flex:none}.tu{margin:4px 0 0 12px;padding-left:10px;border-left:1px solid var(--border)}.tu>.tl:first-child{margin-top:0}.tfold:hover{color:var(--foreground)}.tfold:focus-visible{outline:none;border-color:var(--accent)}
 .empty{padding:40px 0;display:flex;flex-direction:column;align-items:center;gap:4px}.empty b{font-size:13px;font-weight:500}.empty span{font-size:12px;color:var(--muted)}
 .qnote{padding:12px 0;font-size:12px;color:var(--muted)}.qnote small{font-size:11px}
@@ -709,7 +734,7 @@ html[data-view=dock-sheet] .dock.dsh[data-v=dock-sheet],html[data-view=dock-shee
 .shp{margin-top:10px;height:28px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif}
 .ov.gr{height:min(720px,calc(100% - 96px))}${Object.keys(FLOWS).map((v) => `html[data-view=${v}] .ov.gr[data-v=${v}]{display:flex}`).join("")}html[data-view=dock] .dock.dfl{display:none}html[data-view=dock-flow] .dock.dfl{display:flex}.fhd{height:34px;flex:none;padding:8px 16px 0;display:flex;align-items:center;gap:8px}.fhd .vt{flex:1;min-width:0;height:auto;padding:0}.fhd .gmd{flex:none}.gmd button{height:24px;padding:0 8px;font-size:11.5px}.vt button.on{background:var(--raised);border-color:var(--raised);color:var(--foreground)}.ori{height:24px;min-width:24px;padding:0 6px;border:1px solid var(--input);border-radius:6px;background:none;color:var(--foreground);font:11.5px Geist,ui-sans-serif,system-ui,sans-serif}.gflow{position:relative;margin-top:12px;overflow:hidden;flex:none;background-image:radial-gradient(circle,var(--grid) 1px,transparent 1.5px);background-size:20px 20px}.fin{position:absolute}.fin>*{position:absolute}.fb{border-radius:6px;background:var(--hover)}.fb span{position:absolute;left:8px;top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}.flk{left:0;top:0;fill:none;overflow:visible}.flk path{stroke:var(--wb)}.flk path.review{stroke:var(--wr)}.flk path.edge{stroke:var(--muted)}.flk path.review{stroke-dasharray:5 4}.fl{white-space:nowrap;color:var(--lc-l,var(--muted))}:root[data-theme=dark] .fl{color:var(--lc-d,var(--muted))}.fln{display:block;border-radius:6px;background:var(--lb-l)}:root[data-theme=dark] .fln{background:var(--lb-d)}.flr{display:block;height:2px;background:var(--lc-l)}:root[data-theme=dark] .flr{background:var(--lc-d)}.fc{box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border:1px solid var(--cl-l,var(--border));border-radius:6px;background:var(--cf-l,var(--raised))}.fc.on{justify-content:flex-start}:root[data-theme=dark] .fc{border-color:var(--cl-d,var(--border));background:var(--cf-d,var(--raised))}.fc.gone{opacity:.4}.fh{display:flex;align-items:center;min-width:0;flex:none}.fh.on{border-bottom:1px solid var(--border)}.fg{flex:none;color:var(--cm-l,var(--blocked))}:root[data-theme=dark] .fg{color:var(--cm-d,var(--blocked))}.fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cn-l,var(--foreground))}.fn.b{font-weight:600}:root[data-theme=dark] .fn{color:var(--cn-d,var(--foreground))}.fx{flex:none;color:var(--muted)}.ft{color:var(--ct-l,var(--muted))}:root[data-theme=dark] .ft{color:var(--ct-d,var(--muted))}.gfl.fdt{width:6px;height:6px;background:var(--cd-l)}:root[data-theme=dark] .gfl.fdt{background:var(--cd-d)}.fr{display:block;height:1px;flex:none;background:var(--border)}.fs{display:flex;align-items:center;color:var(--muted)}.fs b{font-weight:600;color:var(--foreground)}.fmore{position:absolute;top:8px;right:8px;font-size:11px;color:var(--muted)}.flg{height:24px;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--muted);white-space:nowrap}.flg span{display:flex;align-items:center;gap:6px;flex:none}.flg i{display:block;flex:none;padding:0;border-radius:0}.flg i.kb{width:14px;height:2px;background:var(--wb)}.flg i.ke{width:14px;height:1px;background:var(--muted)}.flg svg path{stroke:var(--wr);stroke-width:2;stroke-dasharray:5 4}.flg .fd2{flex:1;min-width:0;display:block;overflow:hidden;text-overflow:ellipsis}.gmap-w{margin-top:12px;display:flex;justify-content:center}.gmap{position:relative;flex:none}.gmap>*{position:absolute}
 .gc{border-radius:50%;background:var(--raised);border:1px solid var(--muted)}.garcs{left:0;top:0;overflow:visible}.garcs path{fill:none;stroke:var(--accent);stroke-opacity:.6;stroke-linecap:round}:root:not([data-theme=dark]) .garcs path{stroke-opacity:.75}.garcs path.rep{stroke-dasharray:5 4;stroke-linecap:butt}
-.lead.fly{position:relative}.lead.fly .re,.lead.fly .rh,.lead.fly .rl{background:var(--dh-l);opacity:.75}:root[data-theme=dark] .lead.fly .re,:root[data-theme=dark] .lead.fly .rh,:root[data-theme=dark] .lead.fly .rl{background:var(--dh-d);opacity:.6}.dt{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;background:var(--dh-l);offset-rotate:0deg;animation:dt linear infinite}:root[data-theme=dark] .dt{background:var(--dh-d)}@keyframes dt{from{offset-distance:0%}to{offset-distance:100%}}@media (prefers-reduced-motion:reduce){.dt{animation:none;offset-distance:50%}}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh,.trow.dsh .tc2 .re{background:none;border:0 dashed var(--border)}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh{border-top-width:1px}.trow.dsh .tc2 .re{border-left-width:1px}.row.tun{font-size:12px}.rg.ju{color:var(--muted)}.stg{height:16px;padding:0 5px;flex:none;display:flex;align-items:center;border:1px dashed var(--muted);border-radius:4px;font-size:10.5px;color:var(--muted)}.odu{flex:none;font-size:11px;font-weight:600;color:var(--blocked)}.wt.rt{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px}.gu{box-sizing:border-box;border-radius:50%;background:var(--surface);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.gu.sub{border-style:dashed}.gu.over{border:2px solid var(--blocked)}.gus{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gul path{stroke:var(--muted);stroke-width:1;stroke-dasharray:5 4;fill:none}.fc.fu{background:var(--raised);border-color:var(--border)}.fc.fu.sub{border-style:dashed;border-color:var(--muted)}.fn.fnq{color:var(--muted)}.fu .ri{color:var(--hu-l)}:root[data-theme=dark] .fu .ri{color:var(--hu-d)}.fu .ri svg{width:100%;height:100%}.flk path.subagent{stroke:var(--muted);stroke-dasharray:5 4}.flg svg path.ks{stroke:var(--muted);stroke-width:1}
+.lead.fly{position:relative}.lead.fly .re,.lead.fly .rh,.lead.fly .rl{background:var(--dh-l);opacity:.75}:root[data-theme=dark] .lead.fly .re,:root[data-theme=dark] .lead.fly .rh,:root[data-theme=dark] .lead.fly .rl{background:var(--dh-d);opacity:.6}.dt{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;background:var(--dh-l);offset-rotate:0deg;animation:dt linear infinite}:root[data-theme=dark] .dt{background:var(--dh-d)}@keyframes dt{from{offset-distance:0%}to{offset-distance:100%}}.dt.bk{background:var(--bh-l);animation-direction:reverse}:root[data-theme=dark] .dt.bk{background:var(--bh-d)}.ri.off{opacity:.4}@media (prefers-reduced-motion:reduce){.dt{animation:none;offset-distance:50%}}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh,.trow.dsh .tc2 .re{background:none;border:0 dashed var(--border)}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh{border-top-width:1px}.trow.dsh .tc2 .re{border-left-width:1px}.row.tun{font-size:12px}.rg.ju{color:var(--muted)}.stg{height:16px;padding:0 5px;flex:none;display:flex;align-items:center;border:1px dashed var(--muted);border-radius:4px;font-size:10.5px;color:var(--muted)}.odu{flex:none;font-size:11px;font-weight:600;color:var(--blocked)}.wt.rt{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px}.gu{box-sizing:border-box;border-radius:50%;background:var(--surface);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.gu.sub{border-style:dashed}.gu.over{border:2px solid var(--blocked)}.gus{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gul path{stroke:var(--muted);stroke-width:1;stroke-dasharray:5 4;fill:none}.fc.fu{background:var(--raised);border-color:var(--border)}.fc.fu.sub{border-style:dashed;border-color:var(--muted)}.fn.fnq{color:var(--muted)}.fu .ri{color:var(--hu-l)}:root[data-theme=dark] .fu .ri{color:var(--hu-d)}.fu .ri svg{width:100%;height:100%}.flk path.subagent{stroke:var(--muted);stroke-dasharray:5 4}.flg svg path.ks{stroke:var(--muted);stroke-width:1}
 .gm{border-radius:50%;background:var(--surface);border:1px solid var(--border);box-sizing:border-box}.gm.gone{opacity:.4}.gm>svg{position:absolute;left:-1px;top:-1px}.gm>svg path{fill:none}.gm .trk{stroke:var(--border)}.gm .busy{stroke:currentColor}
 .gls{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.gl{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gl b{font-size:9px;font-weight:400}.gl.sub{font-size:11px;color:var(--muted)}.gl.val{font:600 11px "Geist Mono",ui-monospace,monospace}
 .gfl{width:8px;height:8px;border-radius:50%;background:var(--accent);border:1px solid var(--surface);box-sizing:border-box}.gcl{height:16px;display:flex;justify-content:center}.gcl span{height:16px;padding:0 4px;display:flex;align-items:center;border-radius:4px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -766,7 +791,8 @@ html[data-view=dock-sheet] .dock.dsh[data-v=dock-sheet],html[data-view=dock-shee
 .bar{width:48px;height:4px;flex:none;border-radius:2px;background:var(--hover);display:flex}.bar i{height:4px;border-radius:2px;background:var(--muted)}.gr-lane{margin-top:16px;height:20px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted)}.ov.gr .reg h2{margin-top:12px}.ov.gr .ovb{margin-top:0}
 </style>
 <script>document.documentElement.dataset.theme = location.hash === "#light" ? "light" : "dark";
-const v = new URLSearchParams(location.search).get("view"); if (v) document.documentElement.dataset.view = v;</script>
+const v = new URLSearchParams(location.search).get("view"); if (v) document.documentElement.dataset.view = v;
+const w = new URLSearchParams(location.search).get("w"); if (w) document.documentElement.style.setProperty("--ovw", \`\${Number(w)}px\`);</script>
 </head><body>
 <div class="win">
  <div class="lights"><i></i><i></i><i></i></div>

@@ -160,6 +160,9 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         public IRosterSpawnAdmission? SpawnAdmission { get; init; }
 
+        /// <summary>The real wake files, for the tests that read the journal; off by default.</summary>
+        public IRosterWake? Wake { get; init; }
+
         public IRosterCore Roster => graph.Roster;
 
         public Func<Ah.Hierarchy.StateCalls.IHierarchyStateCalls, Ah.Hierarchy.StateCalls.IHierarchyStateCalls>? WrapStateCalls { get; init; }
@@ -381,6 +384,8 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
     private IRosterSpawnAdmission? _spawnAdmission;
 
+    private bool _withJournal;
+
     private readonly Dictionary<string, Ah.Hierarchy.MemberRegistrationLiveness?> _registrationsLater = [];
 
     private (int Code, string Stdout, string Stderr) Roster(params string[] args)
@@ -426,7 +431,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
             ? new ScriptedRows(scripted, _registrationsLater, io.Processes)
             : new PidOnlyRows(graph.Hierarchy.Core.Liveness!, io.Processes, _realPidRunning);
         graph.Launch.PaneState = _graphPanes ?? _panes;
-        var services = new Services(graph, io.Files, (IClock?)_stepClock ?? io.Clock, fake, Project, _callers) { OnSleep = _stepClock is null ? null : span => { _stepClock.UtcNow += span; _onQuitSleep?.Invoke(); }, ExposeMailbox = _exposeMailbox, WithPanes = _withPanes, SpawnAdmission = _spawnAdmission, WrapStateCalls = _wrapStateCalls, EventMail = _eventMail, Detached = _detached, HookErrors = _hookErrors, Briefs = SendBriefFake, OwnerProof = _realWalk ? new RosterComposition(graph, io.Clock, fake).OwnerProof : new AllowingProof(() =>
+        var services = new Services(graph, io.Files, (IClock?)_stepClock ?? io.Clock, fake, Project, _callers) { OnSleep = _stepClock is null ? null : span => { _stepClock.UtcNow += span; _onQuitSleep?.Invoke(); }, ExposeMailbox = _exposeMailbox, WithPanes = _withPanes, SpawnAdmission = _spawnAdmission, Wake = _withJournal ? new WakeComposition(graph, fake) : null,WrapStateCalls = _wrapStateCalls, EventMail = _eventMail, Detached = _detached, HookErrors = _hookErrors, Briefs = SendBriefFake, OwnerProof = _realWalk ? new RosterComposition(graph, io.Clock, fake).OwnerProof : new AllowingProof(() =>
         {
             _nearestAsked++;
             return _nearest;
