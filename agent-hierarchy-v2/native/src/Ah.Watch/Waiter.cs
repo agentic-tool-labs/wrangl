@@ -26,8 +26,8 @@ public interface IWakeHost
     /// <summary>The line every wake starts with (the checklist to read first), or null for none.</summary>
     string? FirstLine => null;
 
-    /// <summary>Whether the waiter exits after a quiet stretch (the Orchestrator's does; a member's does not).</summary>
-    bool Heartbeat => true;
+    /// <summary>The line printed, with exit 0, when the heartbeat passes with nothing to print; null for the Orchestrator's.</summary>
+    string? HeartbeatLine => null;
 
     /// <summary>The line printed when the daemon has been down for over a minute.</summary>
     string DaemonDownLine => "ahd wake: daemon down";
@@ -131,10 +131,10 @@ internal sealed class Waiter(IWakeHost host, StallSettings settings, IReadOnlyLi
                 }
             }
 
-            if (host.Heartbeat && host.Now - started >= settings.Heartbeat)
+            if (host.Now - started >= settings.Heartbeat)
             {
                 PrintFirst();
-                host.Print("ahd wake: heartbeat, nothing pending; restart the waiter if work is in flight");
+                host.Print(host.HeartbeatLine ?? "ahd wake: heartbeat, nothing pending; restart the waiter if work is in flight");
                 return 0;
             }
 

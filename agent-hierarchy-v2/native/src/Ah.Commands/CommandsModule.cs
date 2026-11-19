@@ -37,6 +37,9 @@ public static class CommandsModule
     /// <summary>The close core both daemon routes run: <c>{dir, team, by, reopen?, preview?, confirm_live?}</c>, answering the preview, the result or <c>{refused}</c>.</summary>
     public static Ah.Core.Json.JsonObject TeamClose(IRosterCliServices services, Ah.Core.Json.JsonObject input) => TeamCloseVerb.Apply(services, input);
 
+    /// <summary>The rename core <c>ah roster rename</c> and <c>POST /ui/v1/team-rename</c> run: <c>{dir, team, display_name, by}</c>, answering <c>{ok, team, display_name, previous}</c> or <c>{refused}</c>.</summary>
+    public static Ah.Core.Json.JsonObject TeamRename(IRosterCliServices services, Ah.Core.Json.JsonObject input) => TeamRenameVerb.Apply(services, input);
+
     /// <summary>The daemon's retire, through the same marker write: why it could not write, or null.</summary>
     public static string? TeamRetire(IRosterCliServices services, string hierarchyDir, string team, long lastWorkMs) => TeamCloseVerb.Retire(services, hierarchyDir, team, lastWorkMs);
 

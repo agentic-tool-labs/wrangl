@@ -247,7 +247,7 @@ export function empty(t, text, sub) {
 function team(v, t, tm) {
   const out = [h_flex().mt(12).mb(6).h(16).gap(4).items_center().text_size(11).font_semibold().text_color(t.muted)
     .when(Boolean(tm.lane), (el) => el.child(div().text_color(t.dim).child("↳")))
-    .child(tm.name)];
+    .child(tm.label ?? tm.name)];
   for (const c of tm.cards) out.push(card(v, t, tm, c));
   if (tm.hidden > 0 || tm.truncated) {
     out.push(div().mt(2).text_size(11).text_color(t.muted)
@@ -279,7 +279,7 @@ export function card(v, t, tm, c, compact = false) {
   // ah2-220 Amendment 1: a lane's orchestrator asking reads Sub-Orchestrator (select.js askerLabel); else the asker as today
   const who = askerLabel(v.st.slices, tm.id.slice(0, tm.id.indexOf("/")), tm.name, c.asker)?.label ?? asker(c.asker, tm);
   const head = c.header; // an item's title, a decision's item
-  const meta = [tm.name, c.kind === "item" ? `item${who ? ` · ${who}` : ""}` : who, c.multi ? "pick any" : ""].filter(Boolean);
+  const meta = [tm.label ?? tm.name, c.kind === "item" ? `item${who ? ` · ${who}` : ""}` : who, c.multi ? "pick any" : ""].filter(Boolean);
   const label = `${classLabel(c.cls)}. ${head ? `${head}: ` : ""}${c.text}. Asked by ${who || "unknown"}${c.age ? `, ${c.age} ago` : ""}`;
 
   const chip = (i, text, on, rec) => Button.new(`qa-chip-${c.key}-${i}`).selected(on).disabled(busy)

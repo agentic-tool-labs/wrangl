@@ -2,7 +2,7 @@ import { html } from "./h.js";
 import { Live } from "./live-component.js";
 import { memberLink } from "./member-summary.js";
 import { hashOf } from "./deeplink.js";
-import { askerLabel, isQuiet, nameIn, summaryIdOf } from "./select.js";
+import { askerLabel, isQuiet, nameIn, summaryIdOf, teamLabel } from "./select.js";
 import { historyView } from "./board-icicle.js";
 import { attentionOf, questionsId } from "./questions-model.js";
 import { AnswerForm } from "./questions-view.js";
@@ -334,10 +334,12 @@ export class BoardKanban extends Live {
     };
     // A card's team or lane and epic (they were the swimlane and epic rows): cards keep that order inside each column, team first,
     // then lanes, then epic by backlog rank.
+    // a team or lane by its display name (ah2-218), from its summary; its real name while the summary is not held
+    const shownOf = (teamId) => teamLabel(slices.get(summaryIdOf(teamId))?.body ?? { name: teamId.split("/").pop() });
     const whereOf = (c) => {
       const l = mk ? laneOfCard(c, allLanes, mk) : "top";
       const ln = l === "top" ? null : allLanes.find((x) => x.stream === l);
-      return ln ? { id: `kl:${l}`, name: ln.child ? ln.child.split("/").pop() : l, kind: "lane", tip: `lane · runs ${l}${ln.child ? "" : " (not confirmed)"}`, order: 1 } : { id: `kt:${teamKeyOf(c)}`, name: c.team, kind: "team", tip: `team ${c.team}`, order: 0 };
+      return ln ? { id: `kl:${l}`, name: ln.child ? shownOf(ln.child) : l, kind: "lane", tip: `lane · runs ${l}${ln.child ? "" : " (not confirmed)"}`, order: 1 } : { id: `kt:${teamKeyOf(c)}`, name: shownOf(`team:${teamKeyOf(c)}`), kind: "team", tip: `team ${c.team}`, order: 0 };
     };
     const rank = (k) => (k === NONE ? Infinity : bl.get(k)?.rank ?? 1e9);
     const placed = drawn.map((c) => ({ c, w: whereOf(c) })).sort((a, b) => a.w.order - b.w.order || a.w.name.localeCompare(b.w.name) || rank(a.c.epic) - rank(b.c.epic) || a.c.epic.localeCompare(b.c.epic));
@@ -361,7 +363,7 @@ export class BoardKanban extends Live {
     const laneName = (l) => (l === "top" ? "Top team" : l);
     const crumbs = [{ depth: 0, kind: "", name: "All teams", href: props.teamId ? hashOf({ view: "allplans", team: null }) : null }];
     if (props.teamId) {
-      crumbs.push({ depth: 1, kind: "team", name: teamBody?.name ?? mk.split("/").pop() });
+      crumbs.push({ depth: 1, kind: "team", name: teamBody ? teamLabel(slices.get(summaryIdOf(props.teamId))?.body ?? teamBody) : mk.split("/").pop() });
       if (lane) {
         crumbs.push({ depth: 2, kind: lane === "top" ? "" : "lane", name: laneName(lane) });
       }
@@ -497,7 +499,7 @@ export class BoardKanban extends Live {
         ["Messages", msgsOf(c) === null ? null : String(msgsOf(c))],
         ["Size", c.size ? `${c.size}${c.sizeFrom ? " (deliverable)" : ""}` : null],
         ["Stream", c.stream ? streamName(c.stream) : null, "mono"],
-        ["Team", w.kind === "team" ? null : c.team],
+        ["Team", w.kind === "team" ? null : teamLabel(slices.get(summaryIdOf(`team:${teamKeyOf(c)}`))?.body ?? { name: c.team })],
         ["Branch", c.branch, "mono"],
         ["Changes", out.mark],
       ].filter(([, v]) => v),

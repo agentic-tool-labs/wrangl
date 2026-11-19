@@ -3,7 +3,7 @@
 // are the web's own: select.js (members, briefs in flight) and graph-world.js (the tree, the flow head's whole-run totals, short
 // names, arc widths), both byte-identical copies of web/ui's, kept honest by a test; graph-layout.js is d3's pack and curveBundle.
 import "./intl-shim.js"; // before graph-world.js, which needs Intl when it loads
-import { laneChildren, memberIds, memberOf, sparksOf } from "./select.js";
+import { laneChildren, memberIds, memberOf, sparksOf, teamLabel } from "./select.js";
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
@@ -183,7 +183,7 @@ export function graphSubs(slices, ui = {}, clock = Date.now()) {
 // has not arrived. o: { ui, clock, zoom }, zoom the id of the circle this team's map is zoomed into, or null.
 function group(slices, t, depth, size, o = {}) {
   const team = teamSlice(slices, t.id);
-  if (!team) return { id: t.id, name: t.name, depth, pending: true };
+  if (!team) return { id: t.id, name: t.label ?? t.name, depth, pending: true };
   const served = slices.get(`team-summary:${t.id}`)?.body.member_states ?? {};
   const members = memberIds(team).map((id) => {
     const m = memberOf(slices, team, id);
@@ -240,7 +240,7 @@ function group(slices, t, depth, size, o = {}) {
     return { key: l.key, a: short(a), b: short(b), arrow: both ? "⇄" : "→", n: nx + ny, flight, review, inFlight, title };
   }).sort((p, q) => q.flight - p.flight || q.n - p.n || (p.a + p.b < q.a + q.b ? -1 : 1));
 
-  return { id: t.id, name: t.name, depth, members, links, max: Math.max(1, ...links.map((l) => l.n)), overflow, run: head ? head.run !== null : true,
+  return { id: t.id, name: t.label ?? t.name, depth, members, links, max: Math.max(1, ...links.map((l) => l.n)), overflow, run: head ? head.run !== null : true,
     windowed, head, events: head ? eventsOf(head, pagesOf(slices, team.body, head)) : [], count: view.count, map };
 }
 
@@ -254,7 +254,7 @@ function group(slices, t, depth, size, o = {}) {
 export const FAINT = 0.12;
 export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
   if (members.length === 0) return null;
-  const root = pack(hierarchy(treeOf(id, team.body.name, members)), () => 1, airOf);
+  const root = pack(hierarchy(treeOf(id, teamLabel(team.body), members)), () => 1, airOf);
   const only = root.children?.length === 1 && root.children[0].children ? root.children[0] : root;
   const top = (o.zoom && root.descendants().find((n) => n.data.id === o.zoom && n.children)) || only;
   fitPack(top, size);
@@ -379,7 +379,7 @@ export function stepCursor(sc, by) {
 // size: px, or a function of the group's depth (the docked lanes draw smaller).
 export function graphModel(slices, team = null, size = MAP_PX, ui = {}, clock = Date.now()) {
   const top = sidebarModel(slices, 0).teams;
-  const tabs = top.map((t) => ({ id: t.id, name: t.name }));
+  const tabs = top.map((t) => ({ id: t.id, name: t.label ?? t.name }));
   const all = flat(top);
   const id = team ?? top[0]?.id ?? null;
   const at = all.find((x) => x.t.id === id);
@@ -390,8 +390,8 @@ export function graphModel(slices, team = null, size = MAP_PX, ui = {}, clock = 
   const groups = (z ? shown.filter((x) => x.t.id === z.team) : shown)
     .map(({ t, depth }) => group(slices, t, z ? 0 : depth, typeof size === "function" ? size(z ? 0 : depth) : size, { ui, clock, zoom: z?.node ?? null }));
   const focus = z && groups[0]?.map?.focus;
-  const crumb = focus?.zoomed ? [at.t.name, ...(z.team === at.t.id ? [] : [groups[0].name]), focus.name] : null;
-  return { ...base, closed: false, name: at.t.name, groups, pending: groups.some((g) => g.pending), scrub: scrubberOf(groups, ui, clock), crumb };
+  const crumb = focus?.zoomed ? [at.t.label ?? at.t.name, ...(z.team === at.t.id ? [] : [groups[0].name]), focus.name] : null;
+  return { ...base, closed: false, name: at.t.label ?? at.t.name, groups, pending: groups.some((g) => g.pending), scrub: scrubberOf(groups, ui, clock), crumb };
 }
 
 // ---- Flow: the web's Flow (flow-model.js, a byte-identical copy of web/ui's) for one team, in drawn px
@@ -435,7 +435,7 @@ export function flowRescale(ui, m, s2, px = null, py = null) {
 // `picked` says which (null before the first measure, when the frame draws horizontal). room: the view's measured body, or null.
 export function flowModel(slices, team = null, orient = null, scale = 1, room = null) {
   const top = sidebarModel(slices, 0).teams;
-  const tabs = top.map((t) => ({ id: t.id, name: t.name }));
+  const tabs = top.map((t) => ({ id: t.id, name: t.label ?? t.name }));
   const id = team ?? top[0]?.id ?? null;
   const at = flat(top).find((x) => x.t.id === id);
   const base = { loaded: slices.has("list:teams"), tabs, id, empty: top.length === 0, scrub: null, crumb: null };

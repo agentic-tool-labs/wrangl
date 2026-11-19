@@ -4,6 +4,7 @@ import { Age } from "./ticker.js";
 import { freshness } from "./store.js";
 import { firstTeam, memberIds, memberOf, needsLeaseIds, needsState, needsText, blockedText, teamIdOf, teamRows } from "./select.js";
 import { hintOf } from "./keys.js";
+import { TeamRenameButton } from "./team-rename.js";
 import { choose, lookFor, looksFor, stateOf } from "./looks.js";
 
 // The frame's 40px header and 24px status bar: the team switcher, the five team tabs, the Panel button, the freshness chip,
@@ -70,7 +71,8 @@ export function storedTheme() {
 // The two views of All teams; every other view is of one team.
 export const isLevel0 = (view) => view === "teams" || view === "allplans";
 
-const teamLabel = (row, rows) => (rows.filter((r) => r.name === row.name).length > 1 ? `${row.name} · ${row.repo ?? row.dirId.slice(0, 6)}` : row.name);
+// a team by its display name (select.js teamLabel), told apart by its repo when two read the same
+const teamLabel = (row, rows) => (rows.filter((r) => r.label === row.label).length > 1 ? `${row.label} · ${row.repo ?? row.dirId.slice(0, 6)}` : row.label);
 
 class TeamSwitcher extends Live {
   select(snap) {
@@ -79,16 +81,19 @@ class TeamSwitcher extends Live {
       open: snap.ui.menu === "team",
       level0: isLevel0(snap.ui.view ?? "teams"),
       teamId: teamIdOf(snap.slices, snap.ui),
-      list: rows.map((r) => `${r.id}|${r.name}|${r.repo ?? ""}|${r.dirId}|${r.running ? 1 : 0}`).join("\n"),
+      list: rows.map((r) => `${r.id}|${r.name}|${r.repo ?? ""}|${r.dirId}|${r.running ? 1 : 0}|${r.label.replaceAll("|", "¦")}`).join("\n"),
     };
   }
 
   draw({ store }, s) {
     const rows = s.list === "" ? [] : s.list.split("\n").map((line) => {
-      const [id, name, repo, dirId, running] = line.split("|");
-      return { id, name, repo: repo || null, dirId, running: running === "1" };
+      const [id, name, repo, dirId, running, label] = line.split("|");
+      return { id, name, repo: repo || null, dirId, running: running === "1", label };
     });
-    const current = s.level0 ? "All teams" : (rows.find((r) => r.id === s.teamId) ? teamLabel(rows.find((r) => r.id === s.teamId), rows) : "…");
+    const here = s.level0 ? null : rows.find((r) => r.id === s.teamId);
+    const current = s.level0 ? "All teams" : here ? teamLabel(here, rows) : "…";
+    // a display name hides the real one, which commands and addresses still use: it is the tooltip
+    const real = (r) => (r && r.label !== r.name ? r.name : undefined);
     const choose = (patch) => store.setUi({ menu: null, selected: null, ...patch });
     // From Home a team opens on its Overview, from the Board of all teams on its Board, and from a tab on that tab. "All teams"
     // is the Board of all teams while the Board is current, else Home.
@@ -96,11 +101,11 @@ class TeamSwitcher extends Live {
     const teamView = view === "teams" || view === "member" ? "overview" : view === "allplans" ? "board" : view;
     const allView = view === "board" || view === "allplans" ? "allplans" : "teams";
     return html`<span class="switcher">
-      <button class="switch-btn" aria-haspopup="menu" aria-expanded=${s.open} onClick=${() => store.setUi({ menu: s.open ? null : "team" })}>${current} <span aria-hidden="true">▾</span></button>
+      <button class="switch-btn" title=${real(here)} aria-haspopup="menu" aria-expanded=${s.open} onClick=${() => store.setUi({ menu: s.open ? null : "team" })}>${current} <span aria-hidden="true">▾</span></button>
       ${s.open ? html`<button class="menu-scrim" aria-label="Close menu" onClick=${() => store.setUi({ menu: null })}></button>
         <ul class="menu" role="menu" aria-label="Teams">
           <li role="none"><button role="menuitem" class=${s.level0 ? "on" : ""} onClick=${() => choose({ view: allView })}>All teams</button></li>
-          ${rows.map((r) => html`<li key=${r.id} role="none"><button role="menuitem" class=${!s.level0 && r.id === s.teamId ? "on" : ""} onClick=${() => choose({ team: r.id, view: teamView })}>
+          ${rows.map((r) => html`<li key=${r.id} role="none"><button role="menuitem" class=${!s.level0 && r.id === s.teamId ? "on" : ""} title=${real(r)} onClick=${() => choose({ team: r.id, view: teamView })}>
             <span class=${r.running ? "dot live" : "dot"} aria-hidden="true"></span>${teamLabel(r, rows)}${r.running ? "" : html` <span class="muted">ended</span>`}</button></li>`)}
         </ul>` : null}
     </span>`;
@@ -205,6 +210,8 @@ export class Header extends Live {
       // The team tabs show wherever a team is in scope: its tabs, its member pages and its Inbox.
       tabs: !isLevel0(view) && !(view === "inbox" && !snap.ui.team) && Boolean(mine),
       branch: isLevel0(view) ? null : mine?.branch ?? null,
+      // the team (or lane) the header names, which its Rename acts on (ah2-218 B2)
+      renameId: !isLevel0(view) && !(view === "inbox" && !snap.ui.team) && mine ? mine.id : null,
       // the Sitrep button: on a top-level team's tabs only (ah-ui-ia §1.2, §3.1)
       sitrep: Boolean(mine) && TAB_LABEL[view] !== undefined && mine.laneOf === null && mine.laneClaim === null,
       amber: snap.errorSince !== null || snap.ended,
@@ -213,7 +220,7 @@ export class Header extends Live {
       needsPending: needs.pending,
       needsBlockers: needs.blockers,
       needsTeam: needs.team,
-      title: titleOf(view, isLevel0(view) || (view === "inbox" && !snap.ui.team) ? null : mine?.name ?? null, snap.ui.inboxTab),
+      title: titleOf(view, isLevel0(view) || (view === "inbox" && !snap.ui.team) ? null : mine?.label ?? null, snap.ui.inboxTab),
       paused,
     };
   }
@@ -223,7 +230,7 @@ export class Header extends Live {
       globalThis.document.title = s.title;
     }
     return html`<header class="shell-head">
-      <div class="crumbs"><span class="brand-word">Wrangl</span><span class="sep" aria-hidden="true">/</span><${TeamSwitcher} store=${store} />${s.branch ? html`<span class="branch mono" title=${s.branch}>${s.branch}</span>` : null}</div>
+      <div class="crumbs"><span class="brand-word">Wrangl</span><span class="sep" aria-hidden="true">/</span><${TeamSwitcher} store=${store} />${s.branch ? html`<span class="branch mono" title=${s.branch}>${s.branch}</span>` : null}${s.renameId ? html`<${TeamRenameButton} store=${store} teamId=${s.renameId} />` : null}</div>
       <${RailToggle} store=${store} />
       ${s.groom ? html`<span class="chip amber" title="The backlog is due for grooming">groom due</span>` : null}
       <span class=${s.amber ? "chip amber fresh" : "chip fresh"} title=${freshness(store.state, Date.now()).title}><${Age} text=${(now) => freshness(store.state, now).text} /></span>
@@ -256,7 +263,7 @@ export class Footer extends Live {
       view,
       teams: rows.length,
       running: rows.filter((r) => r.running).length,
-      team: mine?.name ?? null,
+      team: mine?.label ?? null,
       members: mine?.members ?? 0,
       byState: states.some((x) => x !== "gone") ? STATES.map(([state]) => states.filter((x) => x === state).length).join("|") : "",
       needs: needs.n,

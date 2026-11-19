@@ -1,4 +1,4 @@
-import { memberIds, memberOf, openBriefsOf, partyName } from "./select.js";
+import { memberIds, memberOf, openBriefsOf, partyName, teamLabel } from "./select.js";
 
 // The Tree view: team -> worktrees (grouped by work_root) -> members -> the open briefs addressed to each member,
 // flattened to one list of rows with stable keys, so a long team is a virtual window.
@@ -31,7 +31,7 @@ export function flattenTree(slices, team, collapsed = new Set()) {
   }
   const rows = [];
   const teamKey = team.id;
-  rows.push({ key: teamKey, kind: "team", depth: 0, label: t.name, detail: `${members.length} members · ${Math.max(slices.get(`team-summary:${t.dir_id}/${t.name}`)?.body.worktrees ?? 0, workRoots(slices, team).size)} worktrees`, open: !collapsed.has(teamKey), expandable: true });
+  rows.push({ key: teamKey, kind: "team", depth: 0, label: teamLabel(t), detail: `${members.length} members · ${Math.max(slices.get(`team-summary:${t.dir_id}/${t.name}`)?.body.worktrees ?? 0, workRoots(slices, team).size)} worktrees`, open: !collapsed.has(teamKey), expandable: true });
   if (collapsed.has(teamKey)) {
     return rows;
   }

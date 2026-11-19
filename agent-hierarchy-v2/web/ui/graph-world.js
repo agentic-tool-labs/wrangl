@@ -387,14 +387,14 @@ export function partsOf(ent) {
 // A row: { id, ent, parent, kind, name, col, order, state, holder, weight (leaves), done, total, team, stream, item, mark }. id is
 // unique per column (`<col>#<ent>`); ent names the thing, the same in every column (partsOf reads it). Team keys are `<dirId>/<team>`.
 // keep: a card filter (the stream filter today; a team or lane filter the same way), or null for every card.
-export function boardRows({ columns, cells, caps = {}, backlogs = null, keep = null, scope = null }) {
+export function boardRows({ columns, cells, caps = {}, backlogs = null, keep = null, scope = null, shown = (c) => c.team }) {
   const rows = [{ id: "root", ent: "root", parent: null, kind: scope === null ? "root" : "team", name: scope ?? "All teams" }];
   const added = new Set();
   const add = (r) => (added.has(r.id) ? null : (added.add(r.id), rows.push(r)));
   const all = Object.values(cells).flat().filter((c) => !keep || keep(c));
   const dirsOf = new Map();
   all.forEach((c) => dirsOf.set(c.team, new Set([...(dirsOf.get(c.team) ?? []), c.dirId])));
-  const labelOf = (c) => (dirsOf.get(c.team).size > 1 ? `${c.team} · ${c.repo ?? c.dirId.slice(0, 6)}` : c.team);
+  const labelOf = (c) => (dirsOf.get(c.team).size > 1 ? `${shown(c)} · ${c.repo ?? c.dirId.slice(0, 6)}` : shown(c));
   columns.forEach(([col, label], order) => {
     const cid = `c:${col}`;
     // The filter first, then the cap (newest first, as boardOf sorts Done), so "N of M" counts only what the filter keeps.

@@ -2,7 +2,7 @@
 // The columns and the cards are the web Board's: plans-model.js boardOf over select.js teamRows, both byte-identical copies of
 // web/ui's (kept honest by tests/web/herdr-board-model.test.mjs). The Waiting on you column is the Q&A window's own cards (qaModel).
 import { COLUMNS, DAY_MS, DONE_CAP, STATE_LABEL, WAVES, boardOf, descriptionBlocks, historyOf, httpUrl, itemLogId, itemsId, planChangesId, planIdOf, queueRows, stalledOf, streamName, teamModel, waveColumns } from "./plans-model.js";
-import { isQuiet, teamRows } from "./select.js";
+import { isQuiet, teamRows, teamLabel } from "./select.js";
 import { questionsId } from "./questions-model.js";
 import { qaModel, age, sidebarModel, within, late, NO_ANSWER } from "./model.js";
 import { marksOf, snapshotOf } from "./plans-seen.js";
@@ -200,11 +200,13 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
   const epicKey = (c) => chainFor(c).epic?.key ?? NONE;
   const delivKey = (c) => chainFor(c).deliverable?.key ?? NONE;
   const laneOf = (c) => (team ? laneOfCard(c, allLanes, team) : "top");
+  // a team or lane by its display name (ah2-218), from its summary; its real name while the summary is not held
+  const shownOf = (teamId) => teamLabel(slices.get(`team-summary:${teamId.slice("team:".length)}`)?.body ?? { name: teamId.split("/").pop() });
   const whereOf = (c) => {
     const l = laneOf(c);
     const ln = l === "top" ? null : allLanes.find((x) => x.stream === l);
-    return ln ? { id: `kl:${l}`, name: ln.child ? ln.child.split("/").pop() : l, kind: "lane", tip: `lane · runs ${l}${ln.child ? "" : " (not confirmed)"}`, order: 1 }
-      : { id: `kt:${c.dirId}/${c.team}`, name: c.team, kind: "team", tip: `team ${c.team}`, order: 0 };
+    return ln ? { id: `kl:${l}`, name: ln.child ? shownOf(ln.child) : l, kind: "lane", tip: `lane · runs ${l}${ln.child ? "" : " (not confirmed)"}`, order: 1 }
+      : { id: `kt:${c.dirId}/${c.team}`, name: shownOf(`team:${c.dirId}/${c.team}`), kind: "team", tip: `team ${c.team}`, order: 0 };
   };
   // `only`: the stream filter ({team: "dir/name", stream}), set from the item sheet's Stream row (Amendment 1; the web's List chip)
   const scopeOk = (c) => (!only || (`${c.dirId}/${c.team}` === only.team && c.stream === only.stream)) && (!lane || laneOf(c) === lane) && (!scopeEpic || epicKey(c) === scopeEpic) && (!scopeDeliv || delivKey(c) === scopeDeliv);
@@ -328,7 +330,7 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
   const delivName = (k) => (k === NONE ? "No deliverable" : bl.get(k)?.title ?? k);
   const crumbs = [{ depth: 0, kind: "", name: "All teams" }];
   if (team) {
-    crumbs.push({ depth: 1, kind: "team", name: slices.get(`team:${team}`)?.body?.name ?? team.split("/").pop() });
+    crumbs.push({ depth: 1, kind: "team", name: teamLabel(slices.get(`team-summary:${team}`)?.body ?? slices.get(`team:${team}`)?.body ?? { name: team.split("/").pop() }) });
     if (lane) crumbs.push({ depth: 2, kind: lane === "top" ? "" : "lane", name: lane === "top" ? "Top team" : lane });
   }
   if (scopeEpic) crumbs.push({ depth: 3, kind: "epic", name: epicName(scopeEpic) });
@@ -384,8 +386,8 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
     // only cards drawn as Buttons (they open a sheet), so a focus handle always has an element to track
     nav: [backlog.waves.flatMap((g) => g.rows.map((r) => r.id)), ...columns.map((c) => c.cards.filter((x) => !x.qa && x.sel && !x.ask).map((x) => x.key))].filter((col) => col.length > 0),
     // the quiet teams shown again, each with its Hide (open drops it, and boardSubs its plan and items); loading until its plan is read
-    unstale: visible.filter((t) => t.quiet && open.has(t.id)).map((t) => ({ id: t.id, name: t.name, loading: !slices.has(planIdOf(t)) })),
-    teams: running.map((t) => ({ key: keyOf(t), name: t.name, lane: isLane(t), on: !hide.has(keyOf(t)) })),
+    unstale: visible.filter((t) => t.quiet && open.has(t.id)).map((t) => ({ id: t.id, name: t.shown ?? t.name, loading: !slices.has(planIdOf(t)) })),
+    teams: running.map((t) => ({ key: keyOf(t), name: t.shown ?? t.name, lane: isLane(t), on: !hide.has(keyOf(t)) })),
     owners: [...owners].sort(),
   };
 }

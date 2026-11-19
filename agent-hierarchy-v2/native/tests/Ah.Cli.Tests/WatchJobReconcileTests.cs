@@ -512,6 +512,118 @@ public sealed class WatchJobReconcileTests : IDisposable
         Assert.Equal(1, kept.Count(static j => j.Pid is null));
     }
 
+    [Theory]
+    [InlineData("/p/bin/ahd --plugin-root /p ah roster wake --cwd /w", null)]
+    [InlineData("/p/bin/ahd --plugin-root /p ah roster overdue --cwd /w", null)]
+    [InlineData("/p/bin/ahd --plugin-root /p ah roster doctor --cwd /w", 90)]
+    public void AnAhJobNeverTakesAWaitersProcessButAnotherAhProcessStillMatches(string command, int? expected)
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(new ProcessNode(90, started, command, Owner));
+        _ = Put(graph, "verb", null, label: "ah roster doctor --cwd /w");
+
+        var kept = host.ReconcileJobs("s-a", Hier, "tm", Read(graph));
+
+        Assert.Equal(expected, kept.Single().Pid);
+    }
+
+    private const string TestRunLabel = "ah test run --eta large -- node tests/perf/ui-e4.mjs";
+
+    private static ProcessNode Wrapper(int pid, DateTimeOffset started) =>
+        new(pid, started, "/bin/bash /p/bin/ah-test-run --eta large -- node tests/perf/ui-e4.mjs", Owner);
+
+    [Theory]
+    [InlineData(TestRunLabel)]
+    [InlineData("tests/with-slot.sh --eta large -- node tests/perf/ui-e4.mjs")]
+    [InlineData("/p/bin/ah-test-run --eta large -- node tests/perf/ui-e4.mjs")]
+    public void AnAhTestRunJobBindsItsWrapperAndNotALaterAhProcess(string label)
+    {
+        // ah2-233: `ah test run` and with-slot.sh exec bin/ah-test-run under their own pid; neither it nor the test below it has an `ah` word
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var doctor = new ProcessNode(90, started.AddSeconds(1), "/p/bin/ahd --plugin-root /p ah roster doctor --cwd /w", Owner);
+        var node = new ProcessNode(91, started.AddSeconds(1), "node tests/perf/ui-e4.mjs", 89);
+        var (host, graph) = Make(Wrapper(89, started), node, doctor);
+        _ = Put(graph, "run", null, label: label);
+
+        Assert.Equal(89, host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).Single().Pid);
+    }
+
+    [Fact]
+    public void AnAhTestRunJobWhoseWrapperIsGoneBindsNothingElse()
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(
+            new ProcessNode(91, started, "node tests/perf/ui-e4.mjs", Owner),
+            new ProcessNode(90, started.AddSeconds(1), "/p/bin/ahd --plugin-root /p ah roster doctor --cwd /w", Owner));
+        _ = Put(graph, "run", null, label: TestRunLabel);
+
+        Assert.Null(host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).Single().Pid);
+    }
+
+    [Fact]
+    public void TwoTestRunJobsOfOneSessionBindTwoWrappersOldestFirst()
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(Wrapper(89, started.AddSeconds(2)), Wrapper(88, started));
+        _ = Put(graph, "a", null, label: TestRunLabel);
+        _ = Put(graph, "b", null, label: TestRunLabel);
+
+        var kept = host.ReconcileJobs("s-a", Hier, "tm", Read(graph));
+
+        Assert.Equal([88, 89], kept.Select(static j => j.Pid!.Value));
+    }
+
+    [Fact]
+    public void ATestRunJobBindsTheOuterWrapperWhenANestedOneIsAlreadyRunning()
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(
+            Wrapper(88, started),
+            new ProcessNode(91, started.AddSeconds(1), "node tests/perf/ui-e4.mjs", 88),
+            new ProcessNode(92, started.AddSeconds(2), "/bin/bash /p/bin/ah-test-run --eta small -- node tests/perf/fixture.mjs", 91));
+        _ = Put(graph, "run", null, label: TestRunLabel);
+
+        Assert.Equal(88, host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).Single().Pid);
+    }
+
+    [Fact]
+    public void ADirectAhTestRunLabelBindsTheWrapperAndNotTheOlderToolCallShellThatNamesIt()
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(
+            new ProcessNode(87, started, "/bin/zsh -c source /h/snap.sh && eval '/p/bin/ah-test-run --eta large -- node tests/perf/ui-e4.mjs'", Owner),
+            Wrapper(89, started.AddSeconds(1)) with { Parent = 87 });
+        _ = Put(graph, "run", null, label: "/p/bin/ah-test-run --eta large -- node tests/perf/ui-e4.mjs");
+
+        Assert.Equal(89, host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).Single().Pid);
+    }
+
+    [Theory]
+    [InlineData("/bin/bash /p/bin/ah-test-run --eta small -- dotnet test --configuration Release", false)]
+    [InlineData("/bin/bash /p/bin/ah-test-run --eta small -- dotnet test --exact", false)]
+    [InlineData("bash -lc 'dotnet test'", true)]
+    [InlineData("/bin/zsh -c source /h/snap.sh", true)]
+    [InlineData("/bin/bash --login -c 'make'", true)]
+    [InlineData("/bin/bash -- -c", false)]
+    public void AShellIsAWrapperOnlyByItsOwnDashCFlag(string command, bool wrapper)
+    {
+        Assert.Equal(wrapper, WatchModule.JobIsWrapper(command));
+    }
+
+    [Theory]
+    [InlineData("cd /w/native; MSBUILDDISABLENODEREUSE=1 ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
+    [InlineData("cd /w/native && ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
+    [InlineData("make x && ah test run --eta large -- node tests/perf/ui-e4.mjs", null)]
+    [InlineData("cd /w extra; ah test run --eta large -- node tests/perf/ui-e4.mjs", null)]
+    public void OneLeadingCdDoesNotHideATestRunButAnyOtherLeadingCommandStillDoes(string label, int? expected)
+    {
+        var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
+        var (host, graph) = Make(Wrapper(89, started));
+        _ = Put(graph, "run", null, label: label);
+
+        Assert.Equal(expected, host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).Single().Pid);
+    }
+
     [Fact]
     public void AJobWithNoProcessGetsTheMatchingOneBelowItsOwnersSessionAndAnUnrelatedOneIsLeftAlone()
     {
@@ -642,7 +754,7 @@ public sealed class WatchJobReconcileTests : IDisposable
         Assert.StartsWith("live — ", wake.MemberVerdict(Hier, "tm", "impl"), StringComparison.Ordinal);
     }
 
-    private sealed class MemberHost(WakeComposition wake, string hierarchyDir, string name, string session, int polls) : IWakeHost
+    private sealed class MemberHost(WakeComposition wake, string hierarchyDir, string name, string session, int polls, bool member = true, IReadOnlySet<int>? kin = null) : IWakeHost
     {
         private int _sleeps;
 
@@ -671,12 +783,12 @@ public sealed class WatchJobReconcileTests : IDisposable
 
         public void Print(string line) => Out.Add(line);
 
-        public bool Heartbeat => false;
+        public string? HeartbeatLine => member ? "ahd wake: heartbeat; a background job is still open; restart the waiter to keep watching it" : null;
 
-        public string? NothingLeftLine => "ahd wake: no open background job; nothing left to watch";
+        public string? NothingLeftLine => member ? "ahd wake: no open background job; nothing left to watch" : null;
 
         public bool NothingLeft() =>
-            !WatchModule.MemberHasOpenBackgroundJob(wake.Jobs(hierarchyDir, "tm"), name, session, wake.JobOpen);
+            !WatchModule.MemberHasOpenBackgroundJob(wake.Jobs(hierarchyDir, "tm"), name, session, wake.JobOpen, kin);
     }
 
     [Fact]
@@ -714,8 +826,10 @@ public sealed class WatchJobReconcileTests : IDisposable
         Assert.False(WatchModule.JobExcluded("/other/install/bin/ah roster doctor --cwd /w", word => word, ["/real/bin/ah"], _ => true));
     }
 
+    private static readonly StallSettings ShortBound = StallSettings.Defaults with { WakePoll = TimeSpan.FromSeconds(10), Heartbeat = TimeSpan.FromSeconds(30) };
+
     [Fact]
-    public void AMemberWhoseOnlyBackgroundCommandIsItsOwnWaiterHasNoOpenJobAndAYoungBackgroundJobKeepsTheWaiterRunning()
+    public void AMemberWhoseOnlyBackgroundCommandIsItsOwnWaiterHasNoOpenJobAndAYoungBackgroundJobKeepsTheWaiterRunningUntilTheBound()
     {
         var (_, graph) = Make();
         var wake = new WakeComposition(graph, graph.Environment);
@@ -725,7 +839,42 @@ public sealed class WatchJobReconcileTests : IDisposable
         Assert.Equal(0, WatchModule.RunWaiter(alone, StallSettings.Defaults));
 
         _ = PutAt(graph, "young", TimeSpan.FromSeconds(10), background: true);
-        var busy = new MemberHost(wake, Hier, "impl", "s-a", 3);
-        _ = Assert.Throws<TimeoutException>(() => WatchModule.RunWaiter(busy, StallSettings.Defaults));
+        var beforeBound = new MemberHost(wake, Hier, "impl", "s-a", 2);
+        _ = Assert.Throws<TimeoutException>(() => WatchModule.RunWaiter(beforeBound, ShortBound));
+
+        var atBound = new MemberHost(wake, Hier, "impl", "s-a", 3);
+        Assert.Equal(0, WatchModule.RunWaiter(atBound, ShortBound));
+        Assert.Equal("ahd wake: heartbeat; a background job is still open; restart the waiter to keep watching it", Assert.Single(atBound.Out));
+    }
+
+    [Fact]
+    public void AnOrchestratorsWaiterWithNoEventExitsAtTheBoundAndNotBefore()
+    {
+        var (_, graph) = Make();
+        var wake = new WakeComposition(graph, graph.Environment);
+
+        _ = Assert.Throws<TimeoutException>(() => WatchModule.RunWaiter(new MemberHost(wake, Hier, "orchestrator", "s-o", 2, member: false), ShortBound));
+
+        var waiter = new MemberHost(wake, Hier, "orchestrator", "s-o", 3, member: false);
+        Assert.Equal(0, WatchModule.RunWaiter(waiter, ShortBound));
+        Assert.Equal("ahd wake: heartbeat, nothing pending; restart the waiter if work is in flight", Assert.Single(waiter.Out));
+    }
+
+    [Fact]
+    public void AMembersWaiterDoesNotWaitOnAJobWhoseProcessIsItselfButDoesOnAnyOtherProcess()
+    {
+        var (_, graph) = Make();
+        var wake = new WakeComposition(graph, graph.Environment);
+        Store(graph, Path.Combine(Hier, "jobs", "tm", "self.json"), WatchModule.JobNewRecord(
+            "self", "tm", "impl", "s-a", new JobSpec("slot", "large", "ah test run --eta large -- node x.mjs", true), Environment.ProcessId,
+            Ah.Core.Time.Timestamps.ToIsoString(DateTimeOffset.UtcNow), null, null));
+
+        var self = new MemberHost(wake, Hier, "impl", "s-a", 3, kin: wake.Kin());
+        Assert.Equal(0, WatchModule.RunWaiter(self, ShortBound));
+        Assert.Equal("ahd wake: no open background job; nothing left to watch", Assert.Single(self.Out));
+
+        var other = new MemberHost(wake, Hier, "impl", "s-a", 3, kin: new HashSet<int> { Environment.ProcessId + 1 });
+        Assert.Equal(0, WatchModule.RunWaiter(other, ShortBound));
+        Assert.Equal("ahd wake: heartbeat; a background job is still open; restart the waiter to keep watching it", Assert.Single(other.Out));
     }
 }

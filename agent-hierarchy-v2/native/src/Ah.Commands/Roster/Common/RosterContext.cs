@@ -211,11 +211,11 @@ internal sealed partial class RosterContext
     private bool? _userActs;
 
     /// <summary>
-    /// The user at a plain terminal runs this <c>quit</c>, <c>pause</c> or <c>stop</c>: no Claude harness above the command and no
+    /// The user at a plain terminal runs this <c>quit</c>, <c>pause</c>, <c>stop</c> or <c>rename</c>: no Claude harness above the command and no
     /// member marker. The user is never refused, so the owner check is skipped and the folder's teams stand in for "the teams this
     /// session owns". A session, a member and the daemon's own call are judged as before.
     /// </summary>
-    internal bool UserActs => _userActs ??= Command is "quit" or "pause" or "stop" && !DaemonPrincipal
+    internal bool UserActs => _userActs ??= Command is "quit" or "pause" or "stop" or "rename" && !DaemonPrincipal
         && EnvText(Ah.Mesh.MeshModule.MemberMarkerEnv) is null && Services.OwnerProof?.IsUser() == true;
 
     /// <summary>

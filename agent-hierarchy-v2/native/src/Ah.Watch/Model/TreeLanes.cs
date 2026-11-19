@@ -211,6 +211,11 @@ internal sealed class TeamLane(IViewStateReader reader, Func<IReadOnlyList<strin
             value["expected_root"] = workRoot;
         }
 
+        if (LaneParts.Text(doc, "display_name") is { } displayName)
+        {
+            value["display_name"] = displayName;
+        }
+
         if (doc.Member("closed") is { IsMap: true } closed && LaneParts.Text(closed, "at") is { } closedAt)
         {
             value["closed"] = new JsonObject { ["at"] = closedAt };

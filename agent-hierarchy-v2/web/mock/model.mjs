@@ -116,6 +116,7 @@ export function summaryBody(slices, memo, now) {
   return {
     team: TEAM_ID,
     name: team.body.name,
+    display_name: team.body.display_name ?? null,
     work_root: slices.get(team.body.worktrees?.[0])?.body.work_root ?? null,
     branch: lead?.placement?.stream ?? null,
     running: members.some((m) => m.state !== "gone"),
@@ -745,6 +746,16 @@ export function createMock({ now = Date.now } = {}) {
     },
 
     publish,
+
+    // POST /ui/v1/team-rename on the mock (ah2-218): the fixture team only, its display name set or cleared; false for any other team.
+    rename(team, displayName) {
+      const t = slices.get(TEAM_ID);
+      if (!t || t.body.name !== team) {
+        return false;
+      }
+      publish([{ id: TEAM_ID, as_of: now(), body: { ...t.body, display_name: displayName } }]);
+      return true;
+    },
   };
 }
 

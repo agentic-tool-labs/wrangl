@@ -1,7 +1,7 @@
 import { html } from "./h.js";
 import { isInternal, showInternal } from "./msg-filter.js";
 import { Live } from "./live-component.js";
-import { firstTeam, memberLabel, memberOf, partyIdOf, partyName, teamOfMember, stateWord } from "./select.js";
+import { firstTeam, memberLabel, memberOf, partyIdOf, partyName, teamOfMember, stateWord, teamLabel } from "./select.js";
 import { hashOf, memberHref, teamOfMember as teamIdOfMember } from "./deeplink.js";
 import { Age } from "./ticker.js";
 import { ageOf, ageText } from "./store.js";
@@ -70,7 +70,7 @@ export function memberModel(slices, ui, id, n = SUMMARY_MESSAGES) {
     id, name: m.name, label: m.label, title: m.title, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
     tool: m.tool, toolAt: m.toolAt, branch: m.branch, workRoot: m.workRoot, slug: m.slug,
     ctx: ctx.text, ctxTitle: ctx.title, ctxOver: ctx.over, contextUsed: m.contextUsed ?? null,
-    team: t.name, teamId, dir: t.dir_id, stream,
+    team: t.name, teamShown: teamLabel(t), teamId, dir: t.dir_id, stream,
     teamHref: hashOf({ view: "overview", team: teamId }),
     lane: lane && typeof lane.stream === "string" && typeof lane.parent_team === "string"
       ? { name: lane.stream, href: hashOf({ view: "board", team: `team:${t.dir_id}/${lane.parent_team}`, lane: lane.stream }) }
@@ -112,7 +112,7 @@ export const MemberHead = ({ m, Tag = "h2", link = false }) => html`
   <${Tag} class="mh-name">${link ? html`<a href=${memberHref(m.id)} title=${m.title !== m.label ? m.title : undefined}>${m.label}</a>` : html`<span title=${m.title !== m.label ? m.title : undefined}>${m.label}</span>`}<//>
   <p class="sub">${m.role || "member"} · ${m.model ?? html`<span class="dim">model not reported</span>`}</p>
   <p class="mh-state"><span class=${`pill st-${m.state}`}><span aria-hidden="true">${glyphOf(m.running ? "working" : m.state)} </span>${stateWord(m.state, m.running)}</span>${m.since > 0 ? html`<span class="dim"> since <${Age} text=${sinceText(m.since)} /></span>` : null}</p>
-  <p class="mh-where">team <a href=${m.teamHref}>${m.team}</a>${m.lane ? html` · lane <a href=${m.lane.href}>${m.lane.name}</a>` : null}${m.lead ? html` · takes direction from <a href=${m.lead.href}>${m.lead.name}</a>` : null}</p>`;
+  <p class="mh-where">team <a href=${m.teamHref}>${m.teamShown ?? m.team}</a>${m.lane ? html` · lane <a href=${m.lane.href}>${m.lane.name}</a>` : null}${m.lead ? html` · takes direction from <a href=${m.lead.href}>${m.lead.name}</a>` : null}</p>`;
 
 // What the member is doing: the tool and how long, the current item (a Board link), the branch and the work tree.
 export const MemberNow = ({ m }) => html`<dl class="mh-now">

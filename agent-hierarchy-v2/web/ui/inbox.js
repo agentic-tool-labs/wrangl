@@ -3,7 +3,7 @@ import { Live } from "./live-component.js";
 import { Age } from "./ticker.js";
 import { ageText, ageOf } from "./store.js";
 import { hashOf } from "./deeplink.js";
-import { inboxTeams, needsState, needsText, blockedText, teamNeeds } from "./select.js";
+import { inboxTeams, needsState, needsText, blockedText, teamNeeds, teamRows, parentLabel } from "./select.js";
 import { AttentionView, QAView } from "./questions-view.js";
 import { INBOX_EMPTY } from "./questions-model.js";
 
@@ -27,7 +27,7 @@ const AlertRow = ({ c }) => {
   </li>`;
 };
 
-const lanesNote = (r) => (r.laneOf ? html` <span class="inbox-lane">lane of ${r.laneOf}</span>` : null);
+const lanesNote = (r) => (r.parent ? html` <span class="inbox-lane">lane of ${r.parent}</span>` : null);
 
 class InboxTabs extends Live {
   select(snap, { teamId }) {
@@ -46,7 +46,8 @@ class InboxTabs extends Live {
 
 class Attention extends Live {
   select(snap, { teamId }) {
-    return { rows: JSON.stringify(inboxTeams(snap.slices, teamId).map((r) => ({ id: r.id, name: r.name, laneOf: r.laneOf, items: r.items, orch: r.orch, ...teamNeeds(r) }))) };
+    const all = teamRows(snap.slices);
+    return { rows: JSON.stringify(inboxTeams(snap.slices, teamId).map((r) => ({ id: r.id, name: r.label, parent: parentLabel(all, r), items: r.items, orch: r.orch, ...teamNeeds(r) }))) };
   }
 
   draw({ store, teamId }, s) {
@@ -74,7 +75,8 @@ class Attention extends Live {
 
 class QA extends Live {
   select(snap, { teamId }) {
-    return { rows: JSON.stringify(inboxTeams(snap.slices, teamId).map((r) => [r.id, r.name, r.laneOf])) };
+    const all = teamRows(snap.slices);
+    return { rows: JSON.stringify(inboxTeams(snap.slices, teamId).map((r) => [r.id, r.label, parentLabel(all, r)])) };
   }
 
   draw({ store, teamId }, s) {
@@ -82,8 +84,8 @@ class QA extends Live {
     if (rows.length === 1 && rows[0][0] === teamId) {
       return html`<${QAView} store=${store} teamId=${teamId} />`;
     }
-    return html`<div class="inbox-groups">${rows.map(([id, name, laneOf]) => html`<section key=${id} class="inbox-team">
-      <h2 class="inbox-head">${name}${lanesNote({ laneOf })}</h2>
+    return html`<div class="inbox-groups">${rows.map(([id, name, parent]) => html`<section key=${id} class="inbox-team">
+      <h2 class="inbox-head">${name}${lanesNote({ parent })}</h2>
       <${QAView} store=${store} teamId=${id} />
     </section>`)}</div>`;
   }

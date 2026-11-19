@@ -70,6 +70,24 @@ export function goalOf(b) {
 // The goal a row of its own shows: a lane's inherited goal is already on its parent's row.
 export const ownGoal = (g, name) => (g && g.team === name ? g : null);
 
+// A team's display name (ah2-218): the served display_name as one inert line, trimmed; null when none or blank. Display only: nothing
+// finds a team, member, pane or file by it, and no id, address or `--team` value is built from it.
+export const displayNameOf = (b) => inert(b?.display_name).trim() || null;
+// The name a team is shown by, in both UIs: its own display name, else its real name. A lane's is the lane's own.
+export const teamLabel = (b) => displayNameOf(b) ?? b?.name ?? "";
+// The real name as the secondary line or tooltip beside a display name; null when the two are the same.
+export const realNameNote = (b) => (displayNameOf(b) && displayNameOf(b) !== b?.name ? b.name : null);
+
+// The display name rule (A1), as the rename dialog shows it while it is broken: null when `text` may be saved.
+export const DISPLAY_NAME_MAX = 60;
+export function displayNameProblem(text) {
+  const v = String(text ?? "").trim();
+  if (v === "") return "Empty. Type a name, or use Clear.";
+  if (/[\p{Cc}\u2028\u2029]/u.test(v)) return "No line breaks or control characters.";
+  const n = [...v].length;
+  return n > DISPLAY_NAME_MAX ? `${n} characters. At most ${DISPLAY_NAME_MAX}.` : null;
+}
+
 // A team's summary slice id from its team id: team:<dirId>/<name> -> team-summary:<dirId>/<name>.
 export const summaryIdOf = (teamId) => `team-summary:${teamId.slice("team:".length)}`;
 
@@ -80,7 +98,7 @@ export function summaryRow(slice) {
   const b = slice.body;
   const teamId = b.team;
   const cards = (b.alerts ?? []).map((a) => {
-    const card = { teamId, team: b.name, title: a.title, context: a.detail, at: Date.parse(a.since ?? "") || 0 };
+    const card = { teamId, team: b.name, teamLabel: teamLabel(b), title: a.title, context: a.detail, at: Date.parse(a.since ?? "") || 0 };
     if (a.kind === "needs_you") {
       return { ...card, key: `needs_you|${teamId}|${a.text}`, kind: "Decision", memberId: null };
     }
@@ -102,6 +120,10 @@ export function summaryRow(slice) {
   return {
     id: teamId,
     name: b.name,
+    // what the row is shown by; `name` stays the key (ah2-218)
+    label: teamLabel(b),
+    displayName: displayNameOf(b),
+    realNote: realNameNote(b),
     dirId: teamId.slice("team:".length).split("/")[0],
     branch: b.branch ?? null,
     repo: b.work_root ? b.work_root.split("/").filter(Boolean).pop() : null,
@@ -145,6 +167,9 @@ export function summaryRow(slice) {
 
 // A team's confirmed lanes: the summaries in its dir whose lane names it as the parent (by name, or by team id).
 export const isLaneOf = (row, parent) => row.laneOf !== null && row.dirId === parent.dirId && (row.laneOf === parent.name || row.laneOf === parent.id);
+
+// A lane's parent as it is shown (ah2-218): the parent row's display name, else the served parent name; null for a top-level team.
+export const parentLabel = (rows, lane) => (lane.laneOf === null ? null : rows.find((p) => p !== lane && isLaneOf(lane, p))?.label ?? lane.laneOf);
 
 // The teams the Inbox scopes to, each with its alerts: one team and its lanes, or every team (teamId null), lanes after their parent.
 export function inboxTeams(slices, teamId) {

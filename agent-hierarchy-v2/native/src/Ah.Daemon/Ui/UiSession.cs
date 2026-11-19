@@ -25,7 +25,7 @@ internal sealed class UiBindException(string message, Exception? inner = null) :
 internal sealed class UiSession : IDisposable
 {
     /// <summary>The routes the listener serves, exactly. Everything else is 404.</summary>
-    internal static readonly IReadOnlyList<string> RouteTable = ["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}"];
+    internal static readonly IReadOnlyList<string> RouteTable = ["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "POST /ui/v1/team-rename", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}"];
 
     internal const int MaxBodyBytes = 4096;
 
@@ -44,6 +44,7 @@ internal sealed class UiSession : IDisposable
     private const string AnswerStatusPath = "/ui/v1/answer-status";
     private const string HistoryPath = "/ui/v1/history";
     private const string TeamClosePath = "/ui/v1/team-close";
+    private const string TeamRenamePath = "/ui/v1/team-rename";
     private const string RulesPath = "/ui/v1/rules";
     private const string LooksPath = "/ui/v1/looks";
     private const string LooksMergePath = "/ui/v1/looks/merge";
@@ -188,6 +189,7 @@ internal sealed class UiSession : IDisposable
         AnswerStatus,
         History,
         TeamClose,
+        TeamRename,
         Rules,
         Looks,
         LooksMerge,
@@ -199,6 +201,7 @@ internal sealed class UiSession : IDisposable
         AnswerStatusPath => Kind.AnswerStatus,
         HistoryPath => Kind.History,
         TeamClosePath => Kind.TeamClose,
+        TeamRenamePath => Kind.TeamRename,
         RulesPath => Kind.Rules,
         LooksPath => Kind.Looks,
         LooksMergePath => Kind.LooksMerge,
@@ -287,7 +290,7 @@ internal sealed class UiSession : IDisposable
             return;
         }
 
-        var allowed = kind is Kind.Answer or Kind.TeamClose or Kind.LooksMerge ? "POST" : "GET";
+        var allowed = kind is Kind.Answer or Kind.TeamClose or Kind.TeamRename or Kind.LooksMerge ? "POST" : "GET";
         if (req.Method != allowed && !(kind is Kind.Looks or Kind.Rules && req.Method == "POST"))
         {
             res.Headers["Allow"] = kind is Kind.Looks or Kind.Rules ? "GET, POST" : allowed;
@@ -326,7 +329,14 @@ internal sealed class UiSession : IDisposable
         if (kind == Kind.TeamClose)
         {
             Touch();
-            await ServeTeamCloseAsync(ctx).ConfigureAwait(false);
+            await ServeTeamCloseAsync(ctx, TeamClosePath, "team-close", _o.TeamClose, TeamCloseRoute.Run).ConfigureAwait(false);
+            return;
+        }
+
+        if (kind == Kind.TeamRename)
+        {
+            Touch();
+            await ServeTeamCloseAsync(ctx, TeamRenamePath, "team-rename", _o.TeamClose is { Rename: not null } s ? s : null, TeamRenameRoute.Run).ConfigureAwait(false);
             return;
         }
 
@@ -657,15 +667,17 @@ internal sealed class UiSession : IDisposable
         }
     }
 
-    /// <summary><c>POST /ui/v1/team-close</c>: the request guard is the proof of the user, as for the answer route. One log line per outcome.</summary>
-    private async Task ServeTeamCloseAsync(HttpContext ctx)
-    {
-        void Log(string outcome) => _o.Log($"ui team-close: route={TeamClosePath} outcome={Safe(outcome)}");
+    private delegate (int Status, JsonObject Reply, string Outcome) TeamRouteRun(UiTeamCloseSupport support, ReadOnlySpan<byte> body, string by);
 
-        if (_o.TeamClose is not { } support)
+    /// <summary><c>POST /ui/v1/team-close</c> and <c>POST /ui/v1/team-rename</c>: the request guard is the proof of the user, as for the answer route. One log line per outcome.</summary>
+    private async Task ServeTeamCloseAsync(HttpContext ctx, string path, string name, UiTeamCloseSupport? wired, TeamRouteRun run)
+    {
+        void Log(string outcome) => _o.Log($"ui {name}: route={path} outcome={Safe(outcome)}");
+
+        if (wired is not { } support)
         {
             Log("unavailable");
-            await WriteJsonAsync(ctx, 503, new JsonObject { ["error"] = "unavailable", ["detail"] = "team close not wired" }).ConfigureAwait(false);
+            await WriteJsonAsync(ctx, 503, new JsonObject { ["error"] = "unavailable", ["detail"] = $"{name.Replace('-', ' ')} not wired" }).ConfigureAwait(false);
             return;
         }
 
@@ -686,7 +698,7 @@ internal sealed class UiSession : IDisposable
         // not cancelled by the client going away: sessions may already be closing, and the line is the record
         try
         {
-            var (status, reply, outcome) = await Task.Run(() => TeamCloseRoute.Run(support, body, "ui"), CancellationToken.None).ConfigureAwait(false);
+            var (status, reply, outcome) = await Task.Run(() => run(support, body, "ui"), CancellationToken.None).ConfigureAwait(false);
             Log(outcome);
             if (!ctx.RequestAborted.IsCancellationRequested)
             {

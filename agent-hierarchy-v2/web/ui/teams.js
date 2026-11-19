@@ -79,7 +79,7 @@ export function recentAcross(lists, rows, ui = null) {
   for (const r of rows) {
     for (const x of shownOf(lists.get(feedIdOf(r))?.windows[0]?.items ?? [], ui, (i) => i.body).slice(0, RECENT_PER_TEAM)) {
       const b = x.body;
-      out.push({ id: x.id, at: Date.parse(b.created ?? "") || 0, team: r.name, text: `${b.open ? "brief" : "done"} ${b.title || b.slug} · ${b.from_name ?? b.from} → ${b.to_name ?? b.to}`, eta: b.open && b.state ? { state: b.state, due_at: b.due_at, overdue_by: b.overdue_by } : null });
+      out.push({ id: x.id, at: Date.parse(b.created ?? "") || 0, team: r.label ?? r.name, text: `${b.open ? "brief" : "done"} ${b.title || b.slug} · ${b.from_name ?? b.from} → ${b.to_name ?? b.to}`, eta: b.open && b.state ? { state: b.state, due_at: b.due_at, overdue_by: b.overdue_by } : null });
     }
   }
   return out.sort((a, b) => b.at - a.at || (a.id < b.id ? 1 : -1)).slice(0, RECENT_SHOWN);
@@ -119,7 +119,7 @@ const subOrchestratorOf = (slices, top, lane) => {
 export function homeRows(slices, { query = "", sort = "activity", now = Date.now() } = {}) {
   const all = teamRows(slices);
   const q = query.trim().toLowerCase();
-  const tops = sortRows(all.filter((r) => r.laneOf === null && (q === "" || `${r.name} ${r.repo ?? ""} ${r.branch ?? ""}`.toLowerCase().includes(q))), sort);
+  const tops = sortRows(all.filter((r) => r.laneOf === null && (q === "" || `${r.name} ${r.label} ${r.repo ?? ""} ${r.branch ?? ""}`.toLowerCase().includes(q))), sort);
   const rows = tops.map((t) => ({ t, lanes: all.filter((r) => r !== t && isLaneOf(r, t)) }));
   return {
     // what the toggle hides: quiet lanes, and each quiet team none of whose lanes is still on show
@@ -127,6 +127,8 @@ export function homeRows(slices, { query = "", sort = "activity", now = Date.now
     rows: rows.map(({ t, lanes }) => ({
       id: t.id,
       name: t.name,
+      label: t.label,
+      real: t.realNote,
       sub: [t.repo, t.branch].filter(Boolean).join(" · "),
       word: stateWord(t),
       ended: t.ended,
@@ -144,7 +146,7 @@ export function homeRows(slices, { query = "", sort = "activity", now = Date.now
       total: t.itemsTotal,
       planLoaded: t.planLoaded,
       goal: ownGoal(t.goal, t.name),
-      lanes: lanes.map((l) => ({ id: l.id, raw: l.laneStream ?? l.name, stream: streamName(l.laneStream ?? l.name), word: stateWord(l), ended: l.ended, quiet: isQuiet(l.quietAt, now), so: subOrchestratorOf(slices, t, l), goal: ownGoal(l.goal, l.name) })),
+      lanes: lanes.map((l) => ({ id: l.id, raw: l.laneStream ?? l.name, stream: l.displayName ?? streamName(l.laneStream ?? l.name), word: stateWord(l), ended: l.ended, quiet: isQuiet(l.quietAt, now), so: subOrchestratorOf(slices, t, l), goal: ownGoal(l.goal, l.name) })),
     })),
   };
 }
@@ -205,9 +207,9 @@ export class TeamsView extends Live {
         : html`<table class="teams-table home-table">
           <thead><tr><th>Team</th><th>State</th><th>Health</th><th>Members</th><th class="num">Progress</th><th class="num">In flight</th><th class="num">Updated</th><th class="c-act"><span class="sr">Sitrep</span></th></tr></thead>
           ${rows.map((r) => html`<tbody key=${r.id}>
-            <tr data-row tabindex="0" class=${r.ended ? "ended" : ""} aria-label=${`${r.name}, ${r.word}${goalLabel(r.goal)}`} onClick=${(e) => onControl(e) || this.open(r.id)} onKeyDown=${(e) => e.key === "Enter" && e.target === e.currentTarget && this.open(r.id)}>
+            <tr data-row tabindex="0" class=${r.ended ? "ended" : ""} aria-label=${`${r.label}, ${r.word}${goalLabel(r.goal)}`} onClick=${(e) => onControl(e) || this.open(r.id)} onKeyDown=${(e) => e.key === "Enter" && e.target === e.currentTarget && this.open(r.id)}>
               <td class="t-name">
-                <a class="home-link name" href=${hashOf({ view: "overview", team: r.id })}>${r.name}</a>
+                <a class="home-link name" href=${hashOf({ view: "overview", team: r.id })} title=${r.real ?? undefined}>${r.label}</a>
                 ${goalLine(r.goal)}
                 ${r.sub ? html`<div class="t-sub mono" title=${r.sub}>${r.sub}</div>` : null}
                 ${r.claim ? html`<div class="t-note">says it is a lane of ${r.claim} (not confirmed)</div>` : null}
@@ -223,11 +225,11 @@ export class TeamsView extends Live {
               <td class="num">${r.planLoaded === false ? "not loaded yet" : r.total > 0 ? `${r.done} of ${r.total} items done` : html`<span class="dim">No items</span>`}</td>
               <td class="num">${r.inFlight}</td>
               <td class="num"><${Age} text=${ageSince(r.updated)} /></td>
-              <td class="c-act">${r.claim ? null : html`<button type="button" class="tab" aria-label=${`Sitrep, ${r.name}`} onClick=${() => this.sitrep(r.id)}>Sitrep</button>`} <${TeamCloseButton} store=${store} teamId=${r.id} /></td>
+              <td class="c-act">${r.claim ? null : html`<button type="button" class="tab" aria-label=${`Sitrep, ${r.label}`} onClick=${() => this.sitrep(r.id)}>Sitrep</button>`} <${TeamCloseButton} store=${store} teamId=${r.id} /></td>
             </tr>
-            ${r.lanes.map((l) => html`<tr key=${l.id} data-row data-lane tabindex="0" class=${l.ended ? "lane-row ended" : "lane-row"} aria-label=${`Lane ${l.stream} of ${r.name}, ${l.word}${goalLabel(l.goal)}`} onClick=${(e) => onControl(e) || this.board(r.id, l.raw)} onKeyDown=${(e) => e.key === "Enter" && e.target === e.currentTarget && this.board(r.id, l.raw)}>
+            ${r.lanes.map((l) => html`<tr key=${l.id} data-row data-lane tabindex="0" class=${l.ended ? "lane-row ended" : "lane-row"} aria-label=${`Lane ${l.stream} of ${r.label}, ${l.word}${goalLabel(l.goal)}`} onClick=${(e) => onControl(e) || this.board(r.id, l.raw)} onKeyDown=${(e) => e.key === "Enter" && e.target === e.currentTarget && this.board(r.id, l.raw)}>
               <td class="t-name t-lane">
-                <a class="home-link" href=${hashOf({ view: "board", team: r.id, lane: l.raw })}><span class="sr">Lane of ${r.name}: </span>${l.stream}</a>
+                <a class="home-link" href=${hashOf({ view: "board", team: r.id, lane: l.raw })}><span class="sr">Lane of ${r.label}: </span>${l.stream}</a>
                 ${goalLine(l.goal)}
                 ${l.so ? html`<div class="t-sub">sub-orchestrator <a class="home-link" href=${memberHref(l.so)}>${memberName(l.so)}</a></div>` : null}
               </td>
@@ -248,7 +250,7 @@ export function railCards(slices) {
     const waiting = r.waitingOnYou;
     const alert = r.items.find((c) => c.kind === "Decision");
     const rest = r.items.filter((c) => c.kind !== "Decision");
-    return waiting > 0 ? [{ key: `decision|${r.id}|${waiting}`, kind: "Decision", teamId: r.id, team: r.name, title: `Waiting on you · ${waiting}`, context: null, at: alert?.at ?? 0, memberId: null }, ...rest] : rest;
+    return waiting > 0 ? [{ key: `decision|${r.id}|${waiting}`, kind: "Decision", teamId: r.id, team: r.name, teamLabel: r.label, title: `Waiting on you · ${waiting}`, context: null, at: alert?.at ?? 0, memberId: null }, ...rest] : rest;
   });
 }
 
@@ -266,12 +268,12 @@ export class TeamsRail extends Live {
         this.props.store.page(feedIdOf(r), { limit: RECENT_PER_TEAM }).then(
           () => {
             this.gate.ok(r.id);
-            this.mark(r.name, false);
+            this.mark(r.label, false);
           },
           () => {
             this.paged.delete(r.id);
             this.gate.fail(r.id);
-            this.mark(r.name, true);
+            this.mark(r.label, true);
           },
         );
       }
@@ -347,7 +349,7 @@ export class TeamsRail extends Live {
         <h2 data-text="Needs you">Needs you</h2>
         <div class="snooze-note" role="status">${undo ? html`<span>Snoozed for 24 h: ${undo.title}</span><button type="button" class="tab" onClick=${this.unsnooze}>Undo</button><button type="button" class="tab" onClick=${() => this.setState({ undo: null })}>Dismiss</button>` : null}</div>
         ${cards.length === 0 ? html`<p class="dim">${asleep > 0 ? `All ${asleep} snoozed.` : "Nothing is waiting on you."}</p>` : cards.map((c) => html`<article class="need-card" key=${c.key} data-card=${c.key}>
-          <div class="need-meta"><span class=${c.kind === "Error" || c.kind === "Alarm" ? "need-kind err" : "need-kind"}>${c.kind}</span> · ${c.team}${c.at > 0 ? html` · <${Age} text=${ageSince(c.at)} />` : null}</div>
+          <div class="need-meta"><span class=${c.kind === "Error" || c.kind === "Alarm" ? "need-kind err" : "need-kind"}>${c.kind}</span> · ${c.teamLabel ?? c.team}${c.at > 0 ? html` · <${Age} text=${ageSince(c.at)} />` : null}</div>
           <div class="need-title">${c.title}</div>
           ${c.context ? html`<div class="need-ctx">${c.context}</div>` : null}
           <div class="need-actions"><button type="button" class="tab primary" onClick=${() => this.open(c)}>Open</button>${c.until > 0 ? html`<span class="need-asleep">Snoozed until ${hhmm.format(new Date(c.until))}</span>` : html`<button type="button" class="tab" onClick=${() => this.snooze(c)}>Snooze 24 h</button>`}</div>

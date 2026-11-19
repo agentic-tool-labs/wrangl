@@ -22,7 +22,7 @@ const GLYPH = { done: "✓", in_progress: "◐", blocked: "⚠", waiting: "⚠",
 export { choose, cycle, prefOf };
 
 // The label every row and card is read by: which team, which repo, which branch.
-export const labelOf = (s) => [s.team, s.repo, s.branch].filter(Boolean).join(" · ");
+export const labelOf = (s) => [s.teamLabel ?? s.team, s.repo, s.branch].filter(Boolean).join(" · ");
 
 const percent = (n, total) => (total > 0 ? `${Math.round((n / total) * 1000) / 10}%` : "0%");
 
@@ -49,7 +49,7 @@ const StreamRow = ({ s, showTeam, open, onOpen, onBoard }) => {
     <button class="pl-main" data-row aria-pressed=${open} aria-label=${`${streamName(s.stream)}, ${labelOf(s)}, ${chip.text}${s.mark.changed ? SEEN_SUFFIX : ""}`} onClick=${() => onOpen(s.id)}>
       <span class=${`pl-glyph st-${s.status}`} aria-hidden="true">${GLYPH[s.status]}</span>
       <span class="pl-name"><b>${s.mark.changed ? html`<${Dot} />` : null}${streamName(s.stream)}</b>${s.goal ? html`<span class="pl-goal">${s.goal}</span>` : null}${delta ? html`<span class="pl-delta">${delta}</span>` : null}</span>
-      ${showTeam ? html`<span class="pl-team">${s.team}</span>` : null}
+      ${showTeam ? html`<span class="pl-team">${s.teamLabel ?? s.team}</span>` : null}
       <span class="pl-owner" data-role=${s.role || undefined} title=${s.ownerTitle !== s.ownerLabel ? s.ownerTitle : undefined}>${s.ownerLabel || "—"}</span>
       <${Bar} s=${s} />
       <span class=${`chip pl-chip st-${chip.cls}`}>${chip.text}</span>
@@ -76,7 +76,7 @@ const ownerId = (s, who) => (who.startsWith("member:") ? who : s.dirId && s.team
 
 const Detail = ({ s, items, truncated, onClose, changesOnly, showAll, onShowAll }) => html`<aside class="pl-detail" aria-label=${`Stream ${streamName(s.stream)}`}>
   <button class="close" aria-label="Close detail" onClick=${onClose}>×</button>
-  <p class="pl-where mono">${[s.team, s.repo].filter(Boolean).join(" · ")}</p>
+  <p class="pl-where mono">${[s.teamLabel ?? s.team, s.repo].filter(Boolean).join(" · ")}</p>
   <h2>${streamName(s.stream)}</h2>
   ${s.goal ? html`<p class="pl-goal-full">${s.goal}</p>` : null}
   <dl>
@@ -158,8 +158,8 @@ export class PlansView extends Live {
     const laneTeams = new Set(teamId ? lanesOf(slices.get(teamId)?.body).map((l) => l.child).filter(Boolean) : []);
     const rows = teamRows(slices).filter((r) => !teamId || r.id === teamId || laneTeams.has(r.id));
     const all = rows.map((r) => teamModel(r, slices.get(planIdOf(r))?.body, now));
-    const dup = (name) => all.filter((t) => t.name === name).length > 1;
-    const teams = sortTeams(all.filter((t) => !(hideEnded && t.status === "ended"))).map((t) => ({ ...t, label: dup(t.name) ? `${t.name} · ${t.repo ?? t.dirId.slice(0, 6)}` : t.name }));
+    const dup = (shown) => all.filter((t) => t.shown === shown).length > 1;
+    const teams = sortTeams(all.filter((t) => !(hideEnded && t.status === "ended"))).map((t) => ({ ...t, label: dup(t.shown) ? `${t.shown} · ${t.repo ?? t.dirId.slice(0, 6)}` : t.shown }));
     const changesOnly = prefOf(ui, "plansChanges", this.stored) === "on";
     const scopeOf = (s) => `${s.dirId}/${s.team}`;
     const sinceOf = (s) => (this.track.blocked ? null : this.track.look[scopeOf(s)] ?? null);

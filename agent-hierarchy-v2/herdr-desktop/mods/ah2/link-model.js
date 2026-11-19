@@ -209,6 +209,13 @@ export class Link {
     return this.post("/ui/v1/team-close", body, timeout, sleep);
   }
 
+  // Rename a team (rename-model.js teamRename): POST /ui/v1/team-rename, by the same rules as teamClose.
+  async teamRename(body, timeout, sleep = this.sleep) {
+    const r = this.runnerNow();
+    if (!this.execWhy && this.port === null && r.target.kind !== "unresolved") await this.discover(r);
+    return this.post("/ui/v1/team-rename", body, timeout, sleep);
+  }
+
   async post(path, body, timeout, sleep) {
     this.runnerNow();
     if (this.execWhy || this.port === null) return null;

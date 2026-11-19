@@ -2,7 +2,7 @@ import { html } from "./h.js";
 import { Live } from "./live-component.js";
 import { loadD3 } from "./lazy.js";
 import { flip, forget } from "./flip.js";
-import { memberIds, memberOf, nameIn } from "./select.js";
+import { memberIds, memberOf, nameIn, summaryIdOf, teamLabel } from "./select.js";
 import { Age } from "./ticker.js";
 import { ageOf, ageText } from "./store.js";
 import { boardRows, glyphOf, partsOf } from "./graph-world.js";
@@ -120,7 +120,7 @@ export class BoardIcicle extends Live {
     const keep = only ? (c) => teamOf(c) === only.key && c.stream === only.stream : null;
     const dirs = [...new Set(Object.values(b.cells).flat().map((c) => c.dirId))];
     const backlogs = epics ? new Map(dirs.map((d) => [d, new Map((slices.get(`backlog:${d}`)?.body.items ?? []).map((x) => [x.key, x]))])) : null;
-    const rows = boardRows({ columns: COLUMNS, cells: b.cells, caps: b.caps ?? {}, backlogs, keep, scope: props.teamId ? props.teamId.split("/").pop() : null });
+    const rows = boardRows({ columns: COLUMNS, cells: b.cells, caps: b.caps ?? {}, backlogs, keep, scope: props.teamId ? teamLabel(slices.get(summaryIdOf(props.teamId))?.body ?? { name: props.teamId.split("/").pop() }) : null, shown: (c) => teamLabel(slices.get(summaryIdOf(`team:${c.dirId}/${c.team}`))?.body ?? { name: c.team }) });
     // A holder's state and role from its member slice; one not held reads as unknown, never as gone.
     const people = new Map();
     const focus = this.teamKeyOf(ui, props.teamId);

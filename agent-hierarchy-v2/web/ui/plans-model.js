@@ -42,6 +42,7 @@ export function streamOf(raw, plan, team, teamStatus = "live") {
     teamStatus,
     teamId: team.id,
     team: team.name,
+    teamLabel: team.shown ?? team.name,
     dirId: team.dirId,
     repo: team.repo,
     stream: raw.stream,
@@ -77,7 +78,7 @@ const TEAM_ORDER = { live: 0, stale: 1, ended: 2 };
 
 // The held plan of a team (null while its slice is not held), as the team row and the streams in it.
 export function teamModel(row, plan, now) {
-  const team = { id: row.id, name: row.name, dirId: row.dirId, repo: row.repo, branch: row.branch, lane: row.laneOf ? row.name : null };
+  const team = { id: row.id, name: row.name, shown: row.label ?? row.name, dirId: row.dirId, repo: row.repo, branch: row.branch, lane: row.laneOf ? row.name : null };
   const asOf = num(plan?.as_of);
   const quiet = isQuiet(row.quietAt, now);
   const status = row.status === "live" && quiet ? "stale" : row.status;
@@ -132,7 +133,7 @@ export function groupsOf(by, teams, { query = "", titlesOf = () => null, onlyMat
   };
   if (by === "team") {
     return teams
-      .map((t) => ({ key: t.id, label: t.name, team: t, ...split(t.streams) }))
+      .map((t) => ({ key: t.id, label: t.label ?? t.shown ?? t.name, team: t, ...split(t.streams) }))
       .filter((g) => (query.trim() === "" && !onlyMatches) || g.rows.length + g.done.length > 0);
   }
   const groups = new Map();
@@ -273,7 +274,7 @@ const cardOf = (item, stream, column, laneKey, mark) => ({
 export function boardOf(teams, { itemsOf, lanes, query = "", dayStart, expanded = [], markOf = () => null, changesOnly = false, blockedOnly = false, showFinished = false }) {
   const open = new Set(expanded);
   const shown = teams.filter((t) => !t.quiet || open.has(t.id));
-  const stale = teams.filter((t) => t.quiet && !open.has(t.id)).map((t) => ({ id: t.id, name: t.name, updated: t.updated, streams: t.streams.length, done: t.itemsDone, total: t.itemsTotal }));
+  const stale = teams.filter((t) => t.quiet && !open.has(t.id)).map((t) => ({ id: t.id, name: t.label ?? t.shown ?? t.name, updated: t.updated, streams: t.streams.length, done: t.itemsDone, total: t.itemsTotal }));
   const bucket = new Map();
   const lane = (key, label, team) => bucket.get(key) ?? bucket.set(key, { key, label, team, cells: Object.fromEntries(COLUMNS.map(([c]) => [c, []])) }).get(key);
   const laneOf = (team, owner, stream) =>
@@ -317,7 +318,7 @@ export function boardOf(teams, { itemsOf, lanes, query = "", dayStart, expanded 
     }
     if (t.decisionsWaiting > 0 && !changesOnly) {
       const [key, label, team] = laneOf(t, "you");
-      lane(key, label, team).cells.waiting.push({ id: `${t.id}|decision`, column: "waiting", lane: key, decision: true, title: `Waiting on you · ${t.decisionsWaiting}`, dirId: t.dirId, team: t.name, repo: t.repo, stream: "", owner: "", role: "", branch: t.branch ?? "", attn: true, at: t.updated, streamId: null });
+      lane(key, label, team).cells.waiting.push({ id: `${t.id}|decision`, column: "waiting", lane: key, decision: true, title: `Waiting on you · ${t.decisionsWaiting}`, dirId: t.dirId, team: t.name, teamLabel: t.label ?? t.shown ?? t.name, repo: t.repo, stream: "", owner: "", role: "", branch: t.branch ?? "", attn: true, at: t.updated, streamId: null });
     }
   }
   const out = [...bucket.values()].map((l) => {
