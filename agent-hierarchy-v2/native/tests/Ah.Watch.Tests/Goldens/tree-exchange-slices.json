@@ -410,6 +410,7 @@
             "liveness": "unknown",
             "process": "unknown",
             "column": 0,
+            "role": "orchestrator",
             "located": true,
             "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:00:00.000Z"
@@ -419,6 +420,7 @@
             "liveness": "unknown",
             "process": "unknown",
             "column": 2,
+            "role": "developer",
             "located": true,
             "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:05:00.000Z"
@@ -428,6 +430,7 @@
             "liveness": "unknown",
             "process": "unknown",
             "column": 2,
+            "role": "tester",
             "located": true,
             "stuck_as_unknown": true
           }

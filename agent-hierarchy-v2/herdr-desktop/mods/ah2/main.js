@@ -136,10 +136,10 @@ export default class Ah2 extends View {
   subs() {
     if (this.desk) {
       const s = this.st.slices;
-      return unionSubs(["view:summary"], qaSubs(s), boardSubs(s, Date.now(), { open: this.kb?.open, log: this.view === "board" ? this.kb?.sel?.log : null, shown: this.view === "board", team: this.kb?.team, hide: this.kb?.hide }), feedSubs(s), graphSubs(s, this));
+      return unionSubs(["view:summary"], qaSubs(s), boardSubs(s, Date.now(), { open: this.kb?.open, log: this.view === "board" ? this.kb?.sel?.log : null, shown: this.view === "board", team: this.kb?.team, hide: this.kb?.hide, member: this.view === "board" ? this.kb?.sel : null }), feedSubs(s), graphSubs(s, this));
     }
     if (this.view === "qa") return ["view:summary", ...qaSubs(this.st.slices)];
-    if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide })];
+    if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide, member: this.kb?.sel })];
     if (this.view === "feed") return ["view:summary", ...feedSubs(this.st.slices)];
     if (this.view === "graph") return ["view:summary", ...graphSubs(this.st.slices, this)];
     return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary", ...activitySubs(this.st.slices), ...dotSubs(this.st.slices)];

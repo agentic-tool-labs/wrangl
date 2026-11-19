@@ -6,12 +6,10 @@
 import { div } from "gpui-kit";
 import { v_flex, h_flex, Button, Popover, Tabs, Tab, Input, InputState, TextView } from "gpui-base";
 import { ah } from "./ah.js";
-import { openView } from "./dock.js";
 import { Buffer } from "buffer";
-import { qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
+import { askerText, qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
-import { askerLabel } from "./select.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
 import { FILTER0, TIMES, STATES, NO_MATCH, SCOPE, DEBOUNCE_MS, filterActive, historyDirs, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "./qa-history-model.js";
 
@@ -256,12 +254,10 @@ function team(v, t, tm) {
   return out;
 }
 
-// An asker reads `role@team`; under its own team's label the team part says nothing.
-const asker = (a, tm) => (a ?? "").replace(new RegExp(`@${tm.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
-
-// `compact` (the Board's Waiting on you column): the question, the pick as one chip, Send and More… (the full card in Q&A). A card
-// whose pick cannot be sent as it stands (pick any, an item with no options) says how many options it has and opens Q&A instead.
-export function card(v, t, tm, c, compact = false) {
+// One card for both surfaces: the Q&A window and the Board's Waiting on you column draw this same card, with every option, Other…,
+// Send and Not needed ▾. `noDesc` (the Board) leaves out the item's description, as the web Board card does; `extra` (the Board's
+// Details, into the item sheet) is drawn after Not needed ▾ when given. Nothing else differs.
+export function card(v, t, tm, c, noDesc = false, extra = null) {
   const cs = cardState(v, c);
   const r = cs.reply;
   if (r?.done) {
@@ -276,8 +272,8 @@ export function card(v, t, tm, c, compact = false) {
   }
   const busy = cs.sending;
   const ok = !busy && canSend(c, cs.pick);
-  // ah2-220 Amendment 1: a lane's orchestrator asking reads Sub-Orchestrator (select.js askerLabel); else the asker as today
-  const who = askerLabel(v.st.slices, tm.id.slice(0, tm.id.indexOf("/")), tm.name, c.asker)?.label ?? asker(c.asker, tm);
+  // ah2-220 Amendment 1: a lane's orchestrator asking reads Sub-Orchestrator (model.js askerText); else the asker as today
+  const who = askerText(v.st.slices, tm, c.asker);
   const head = c.header; // an item's title, a decision's item
   const meta = [tm.label ?? tm.name, c.kind === "item" ? `item${who ? ` · ${who}` : ""}` : who, c.multi ? "pick any" : ""].filter(Boolean);
   const label = `${classLabel(c.cls)}. ${head ? `${head}: ` : ""}${c.text}. Asked by ${who || "unknown"}${c.age ? `, ${c.age} ago` : ""}`;
@@ -350,7 +346,7 @@ export function card(v, t, tm, c, compact = false) {
   const top = h_flex().mb(4).gap(6).items_center().text_size(11).text_color(t.muted)
     .child(div().flex_none().px(5).rounded(4).border(1).border_color(c.cls === "blocker" ? t.blocked : t.border)
       .when(c.cls === "blocker", (el) => el.text_color(t.blocked).font_semibold()).child(classLabel(c.cls)))
-    .when(Boolean(head), (el) => el.child(div().flex_none().max_w(compact ? 96 : 160).truncate().font_family(MONO).text_color(t.foreground).child(head)))
+    .when(Boolean(head), (el) => el.child(div().flex_none().max_w(160).truncate().font_family(MONO).text_color(t.foreground).child(head)))
     .child(div().min_w(0).truncate().child(`${head ? "· " : ""}${meta.join(" · ")}`))
     .child(div().flex_1())
     .child(div().flex_none().font_family(MONO).child(c.age));
@@ -358,48 +354,18 @@ export function card(v, t, tm, c, compact = false) {
     .child(div().flex_none().text_color(t.blocked).child("⚠"))
     .child(div().flex_1().min_w(0).text_color(t.foreground).child(sel(`qa-ref-${c.key}`, r.text))));
 
-  if (compact) {
-    const sendable = busy || canSend(c, cs.pick);
-    const picked = cs.pick.picked.map((i) => c.options[i]).join(", ");
-    const rec = cs.pick.picked.length === 1 && cs.pick.picked[0] === c.recommended;
-    const n = c.options.length + (c.more ?? 0);
-    const more = Button.new(`qa-more-${c.key}`)
-      .h(24).px(6).flex().flex_none().items_center().rounded(6).cursor_pointer().text_size(11.5).text_color(t.muted)
-      .border(1).border_color(t.raised)
-      .hover((s) => s.text_color(t.foreground))
-      .focus((s) => s.border_color(t.accent))
-      .accessibility_label(sendable ? "More: every option and Not needed, in Q&A" : `${n} options. Answer in Q&A`)
-      .on_mouse_down("left", stop)
-      .on_click(() => openView("qa"))
-      .child(sendable ? "More…" : `${n} options · Answer in Q&A`);
-    return v_flex().id(`qa-card-${c.key}`).mb(8).px(12).py(8).rounded(8).bg(t.raised).border(1).border_color(r ? t.blocked : t.raised)
-      .accessibility_label(label)
-      .child(top)
-      .child(div().text_color(t.foreground).child(sel(`qa-q-${c.key}`, c.text)))
-      .when(Boolean(r), refused)
-      .child(h_flex().mt(8).gap(6).items_center()
-        // the pick, shown as the chip it is in Q&A; it changes there (More…), so here it is not a control
-        .when(sendable, (el) => el.child(h_flex().h(24).px(8).gap(4).min_w(0).flex_shrink().items_center().rounded(6).text_size(11.5)
-          .border(1).border_color(t.border).bg(t.selected).text_color(t.foreground)
-          .tooltip(`${picked || "Other"}${rec ? ", recommended" : ""}`)
-          .child(div().flex_none().text_size(10).text_color(t.accent).child("✓"))
-          .child(div().min_w(0).truncate().child(picked || "Other"))))
-        .when(sendable, (el) => el.child(sendBtn))
-        .child(more));
-  }
-
   return v_flex().id(`qa-card-${c.key}`).mb(8).px(12).py(10).rounded(8).bg(t.raised).border(1).border_color(r ? t.blocked : t.raised)
     .accessibility_label(label)
     .child(top)
     .child(div().mb(8).text_color(t.foreground).child(sel(`qa-q-${c.key}`, c.text)))
-    .when(Boolean(c.desc), (el) => el.child(description(v, t, c)))
+    .when(!noDesc && Boolean(c.desc), (el) => el.child(description(v, t, c)))
     .child(h_flex().flex_wrap().gap(6).items_center()
       .children(c.options.map((o, i) => chip(i, o, cs.pick.picked.includes(i), i === c.recommended)))
       .child(chip("other", "Other…", cs.pick.other, false)))
     .when(Boolean(other), (el) => el.child(other))
     .when(c.more > 0, (el) => el.child(div().mt(6).text_size(11).text_color(t.muted).child(`+ ${c.more} more options · answer in the web Inbox`)))
     .when(Boolean(r), refused)
-    .child(h_flex().mt(8).gap(8).items_center().child(sendBtn).child(nn));
+    .child(h_flex().mt(8).gap(8).items_center().child(sendBtn).child(nn).when(Boolean(extra), (el) => el.child(extra)));
 }
 
 // A waiting item's description under its note, folded to about four lines with More. The text is drawn plain (marks dropped) and

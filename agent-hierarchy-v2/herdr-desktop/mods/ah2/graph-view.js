@@ -18,17 +18,15 @@ import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, Sl
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
-  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
+  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
 import { loadingOf, terminalFinder, memberName } from "./model.js";
 import { target } from "./ah.js";
 import { stateMark } from "./marks.js";
-import { sheetColumn } from "./board.js";
-import { memberModel, graphExtras, SUMMARY_MESSAGES } from "./member-model.js";
-import { glyphOf } from "./graph-world.js";
-import { streamName } from "./plans-model.js";
+import { memberSheet } from "./member-sheet.js";
+import { graphExtras } from "./member-model.js";
 
 const MONO = "Geist Mono";
 // Docked, the side column opens 420 px wide: the team's map takes 300 and a lane's 260 (its members' names whole), and every map comes before the links, so a
@@ -222,7 +220,12 @@ export function graphView(v, t, close, cx) {
   const zoom = (z) => drillTo(v, z);
   const flow = v.graphMode === "flow";
   const sheetOn = Boolean(v.graphSheet) && !loading && v.status !== "down" && !error;
-  const sheetEl = sheetOn ? agentSheet(v, t, m, docked) : null;
+  const sheetEl = sheetOn ? memberSheet(v, t, {
+    id: v.graphSheet, ui: sheetUi(v), close: () => closeSheet(v), focus: v.graphSheetKey,
+    live: (m.dots?.length ?? 0) > 0, // the dot clock redraws: seconds are true
+    address: addressOf(v, v.graphSheet, paneOfMember(v.st.slices, v.graphSheet)),
+    extras: v.graphMode !== "flow" ? (mm) => graphExtras(v.st.slices, v, mm.teamId, v.graphSheet) : null,
+  }, docked) : null;
   let body;
   if (v.status === "down") body = [note(t, v.reason, "Retrying")];
   else if (error) body = [note(t, "Graph unavailable", error)];
@@ -294,7 +297,7 @@ export function graphView(v, t, close, cx) {
       zoom(null);
       cx.notify();
     })))
-    // the agent's sheet beside the graph, or the whole column when docked (the Board's sheet, board.js sheetColumn)
+    // the member sheet beside the graph, or the whole column when docked (member-sheet.js memberSheet in sheetColumn)
     .child(docked && sheetEl ? sheetEl : h_flex().flex_1().min_h(0)
       .child(v_flex().id("graph-body").flex_1().min_w(0).h_full().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_size_change(measure).children(body))
       .children(sheetEl ? [sheetEl] : []))
@@ -757,86 +760,3 @@ function flowUnder(t, u, i, k, lt) {
       .child(div().min_w(0).truncate().child(x.ownerName || "team")).child(run)));
 }
 
-// ---- the agent's sheet (spec herdr-graph-agent-details): the web's member summary (member-summary.js MemberSummary, ported in
-// member-model.js), in its order and wording: the name with Go to pane and close, role · model, the state and since, where it
-// sits, Now, in Map the rail's extras (graph-panel.js), the latest messages, and Open page (in the browser). A member that has
-// gone reads as gone; nothing here starts a timer (ages follow the dot clock's rule, ageText).
-
-
-function agentSheet(v, t, m, full) {
-  const id = v.graphSheet;
-  const slices = v.st.slices;
-  const mm = memberModel(slices, sheetUi(v), id, SUMMARY_MESSAGES);
-  const live = (m.dots?.length ?? 0) > 0; // the dot clock redraws: seconds are true
-  const since = (ms) => ageText(Date.now() - ms, live).replace(" ago", "");
-  const go = paneAct(addressOf(v, id, paneOfMember(slices, id)), mm.label ?? mm.name, mm.gone);
-  const page = memberPageLink(v.link?.port ?? null, id);
-  const icon = (bid, file, label, act, why) => Button.new(bid).size(24).flex().flex_none().items_center().justify_center().rounded(6)
-    .border(1).border_color(t.surface).focus((el) => el.border_color(t.accent)).disabled(Boolean(why))
-    .when(!why, (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
-    .when(Boolean(why), (el) => el.text_color(t.muted))
-    .tooltip(why ?? label).accessibility_label(why ?? label)
-    .on_mouse_down("left", stop).on_click((_e, cx) => !why && act(cx))
-    .child(svg(file).size(14));
-  const goBtn = icon("graph-sheet-pane", "mods/ah2/app-window.svg", "Go to pane", () => run(go.cmd, go.args), go.why)
-    .when(Boolean(v.graphSheetKey), (el) => el.track_focus(v.graphSheetKey)); // the sheet's first focus (Amendment 1): click, then Enter
-  const shut = icon("graph-sheet-close", "mods/ah2/x.svg", "Close the details (esc)", (cx) => { closeSheet(v); cx.notify(); }, null);
-  const dim = (text) => div().text_color(t.muted).child(text);
-  const row = (k, val, mono = false) => h_flex().min_h(24).gap(10).items_start().text_size(12)
-    .child(div().w(96).flex_none().pt(1).text_size(11).text_color(t.muted).child(k))
-    .child(div().flex_1().min_w(0).text_color(t.foreground).when(mono, (el) => el.font_family(MONO)).child(val));
-  const head = (text) => div().pt(10).pb(4).text_size(11).font_semibold().text_color(t.muted).child(text);
-  const where = [`team ${mm.teamShown ?? mm.team}`, mm.lane ? `lane ${mm.lane.name}` : null, mm.lead ? `takes direction from ${mm.lead.name}` : null].filter(Boolean).join(" · ");
-  const now = [
-    mm.tool ? row("tool", `${mm.tool}${mm.toolAt ? ` · ${since(Date.parse(mm.toolAt))}` : ""}`) : null,
-    mm.item ? row("item", `${mm.item.key}${mm.item.title ? ` · ${mm.item.title}` : ""}`) : null,
-    mm.branch ? row("branch", mm.branch) : null,
-    mm.workRoot ? row("worktree", mm.workRoot, true) : null,
-  ].filter(Boolean);
-  const x = v.graphMode !== "flow" && !mm.gone ? graphExtras(slices, v, mm.teamId, id) : null;
-  const extras = x ? [
-    row("stream", x.stream ? streamName(x.stream) : "—"),
-    row("task", x.task),
-    row("context used", `${x.ctx}${x.ctxAt > 0 ? ` · ${ageText(Date.now() - x.ctxAt, live)}` : ""}`),
-    row(x.busyLabel, x.busy),
-    h_flex().min_h(24).gap(10).items_start().text_size(12)
-      .child(div().w(96).flex_none().pt(1).text_size(11).text_color(t.muted).child("messages"))
-      .child(h_flex().flex_1().min_w(0).gap(4).child(div().text_color(t.foreground).child(String(x.count ?? "—"))).child(dim(x.scope))),
-    ...(x.dir ? [row("sent", String(x.dir.sent)), row("received", String(x.dir.received))] : []),
-    row("tokens", "—"),
-    row("files changed", "—"),
-  ] : [];
-  // the leased exchanges arrive with the next poll after the sheet opens (a long poll is not cut short): until then, Loading
-  const waiting = (slices.get(id)?.body.last_exchanges ?? []).slice(0, SUMMARY_MESSAGES).some((x) => !slices.has(x));
-  const msgs = mm.rows.length === 0 ? [div().py(4).text_size(12).text_color(t.muted).child(waiting ? "Loading…" : "No messages yet.")]
-    : mm.rows.map((r, i) => h_flex().id(`graph-sheet-msg-${i}`).min_h(24).py(2).gap(8).items_start().text_size(12).border_b(1).border_color(t.border)
-      .child(div().w(38).flex_none().pt(1).font_family(MONO).text_size(11).text_color(t.muted).child(r.time))
-      .child(div().w(44).flex_none().text_size(11).text_color(t.muted).child(r.kind))
-      .child(v_flex().flex_1().min_w(0).child(div().truncate().text_color(t.foreground).child(`${r.from} → ${r.to}`))
-        .when(Boolean(r.item), (el) => el.child(div().truncate().text_size(11).text_color(t.muted).child(r.item)))));
-  const pageBtn = Button.new("graph-sheet-page").h(28).px(10).mt(10).flex().flex_none().items_center().rounded(6).text_size(12)
-    .border(1).border_color(t.border).focus((el) => el.border_color(t.accent)).disabled(!page.url)
-    .when(Boolean(page.url), (el) => el.cursor_pointer().text_color(t.foreground).hover((s) => s.bg(t.hover)))
-    .when(!page.url, (el) => el.text_color(t.muted))
-    .tooltip(page.url ? `Open ${mm.label ?? mm.name}'s page in the browser` : page.why).accessibility_label(page.url ? `Open ${mm.label ?? mm.name}'s page in the browser` : page.why)
-    .on_mouse_down("left", stop).on_click((_e, cx) => page.url && cx.open_url(page.url))
-    .child("Open page");
-  return sheetColumn(t, full, "graph-sheet").accessibility_label(`Member ${mm.title ?? mm.name}`)
-    .child(v_flex().px(16).pt(8).pb(10).gap(4).flex_none().border_b(1).border_color(t.border)
-      .child(h_flex().h(28).gap(6).items_center()
-        .child(div().flex_1().min_w(0).truncate().text_size(13.5).font_semibold().text_color(t.foreground).child(mm.label ?? mm.name))
-        .child(goBtn).child(shut))
-      .child(h_flex().gap(4).text_size(12).text_color(t.foreground).child(`${mm.role || "member"} ·`)
-        .child(mm.model ? div().child(mm.model) : dim("model not reported")))
-      .child(h_flex().gap(6).items_center().text_size(12)
-        .child(div().flex_none().text_color(t.foreground).child(`${glyphOf(mm.running ? "working" : mm.state)} ${stateWord(mm.state, mm.running)}`))
-        .when(mm.since > 0, (el) => el.child(dim(`since ${since(mm.since)}`))))
-      .child(div().text_size(12).text_color(t.muted).truncate().child(where)))
-    .child(v_flex().id("graph-sheet-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar()
-      .child(head("Now"))
-      .children(now) // the web hides each empty row, and so the whole list when nothing is known
-      .children(extras)
-      .child(head("Latest messages"))
-      .children(msgs)
-      .child(h_flex().child(pageBtn)));
-}

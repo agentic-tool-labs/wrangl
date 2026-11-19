@@ -49,6 +49,13 @@ test("a team with only an orchestrator is one node; a name that is no role's is 
   assert.equal(teamTree(odd)[0].children[0].role, "");
 });
 
+// ah2-272 D2: a name carrying its team's prefix still gives the role when none is served; negative: a prefixed name that is no role's.
+test("a member named <team>-<role>-N with no served role has that role; <team>-helper has none", () => {
+  const [tm] = sidebarModel(slicesOf(summary("ah2", { "d1/ah2/@orchestrator": live("idle"), "d1/ah2/@ah2-ux-engineer-2": live("idle"), "d1/ah2/@ah2-helper": live("idle") })), NOW).teams;
+  const roles = Object.fromEntries(teamTree(tm)[0].children.map((n) => [n.name, n.role]));
+  assert.deepEqual(roles, { "ah2-ux-engineer-2": "ux-engineer", "ah2-helper": "" });
+});
+
 test("a row's glyph, mark and role hue for each state are the ones the Graph's card gives", () => {
   for (const light of [false, true]) {
     for (const [state, running] of [["working", false], ["running", true], ["blocked", false], ["idle", false], ["gone", false], ["unknown", false]]) {

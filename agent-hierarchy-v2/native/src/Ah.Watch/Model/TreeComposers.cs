@@ -30,9 +30,12 @@ internal static class TreeIds
         _ => 2,
     };
 
-    /// <summary>The Flow's column of a team member: the Orchestrator's is the reserved role's, anyone else's its row's role.</summary>
-    public static int MemberColumn(TeamEntry team, string member) =>
-        FlowColumn(member == Orchestrator ? ReservedName : team.Row(member) is { } row ? LaneParts.Text(row, "role") : null);
+    /// <summary>A team member's role: the Orchestrator's is the reserved name, anyone else's its row's role; null when the row has none.</summary>
+    public static string? MemberRole(TeamEntry team, string member) =>
+        member == Orchestrator ? ReservedName : team.Row(member) is { } row ? LaneParts.Text(row, "role") : null;
+
+    /// <summary>The Flow's column of a team member, by its <see cref="MemberRole"/>.</summary>
+    public static int MemberColumn(TeamEntry team, string member) => FlowColumn(MemberRole(team, member));
 
     /// <summary>The first segment of a <see cref="NodePath"/>.</summary>
     public const string NodePathRoot = "t";
@@ -588,7 +591,7 @@ internal sealed class MemberComposer(ILaneFacts? lanes = null) : ISliceComposer
         {
             ["id"] = sliceId,
             ["name"] = member == TreeIds.Orchestrator ? TreeIds.ReservedName : member,
-            ["role"] = member == TreeIds.Orchestrator ? TreeIds.ReservedName : row is { } r ? LaneParts.TextOrNull(r, "role") : JsonValue.Null,
+            ["role"] = TreeIds.MemberRole(team, member) is { } role ? role : JsonValue.Null,
             ["session"] = session is null ? JsonValue.Null : session,
             ["activity"] = session is null ? JsonValue.Null : "activity:" + dirId + "/" + session,
             ["liveness"] = JsonValue.FromObject(new JsonObject
@@ -1677,6 +1680,10 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
             var entry = new JsonObject { ["state"] = m.State, ["liveness"] = SummaryData.LivenessWord(m.Verdict) };
             entry["process"] = SummaryData.ProcessLine(SummaryData.LivenessWord(m.Verdict), m.State);
             entry["column"] = TreeIds.MemberColumn(team, m.Member);
+            if (TreeIds.MemberRole(team, m.Member) is { } role)
+            {
+                entry["role"] = role;
+            }
 
             // What the Overview tells of a member, each only when known: its tool, its item, its branch and its worktree.
             var row = team.Row(m.Member);

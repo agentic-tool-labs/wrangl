@@ -1,7 +1,8 @@
 // ah2 in Herdr: the Board (props {view:"board"}): the web Board's state columns over every running team, as a kanban. It is a tab
 // of the Desk, in the ah2 side column or the Desk window (dock.js). Colours are theme() tokens only.
-// The data is board-model.js's. A card waiting on you is the Q&A window's own card, compact (qa.js card): its Send is the only thing
-// here that sends, through model.js sendAnswer, and only from its on_click. A plan card opens the item sheet: its owner, Focus
+// The data is board-model.js's. A card waiting on you is the Q&A window's own card (qa.js card), every option and Not needed ▾,
+// without the item description, and Details into its plan item's sheet when that item is held: its Send and dismiss are the only
+// things here that send, through model.js sendAnswer, and only from their on_click. A plan card opens the item sheet: its owner, Focus
 // terminal and the item's log, read once on the click.
 
 import { div, svg } from "gpui-kit";
@@ -10,19 +11,16 @@ import { run, props, terminals, shared, setShared } from "herdr";
 import { loadTrack, saveTrack } from "./plans-seen.js";
 import { ah, target } from "./ah.js";
 import { openView, isDocked } from "./dock.js";
-import { boardModel, trackAfter, nothingChanged, ownerOf, readItemLog, workLog, whenOf, LOG_PAGE, WAVE_CAP } from "./board-model.js";
+import { memberSheet, sheetColumn } from "./member-sheet.js";
+import { boardModel, trackAfter, nothingChanged, ownerOf, readItemLog, workLog, whenOf, LOG_PAGE, WAVE_CAP, memberItems } from "./board-model.js";
+import { paneOfMember } from "./graph-model.js";
 import { streamName, inlineParts } from "./plans-model.js";
-import { loadingOf, terminalFinder } from "./model.js";
+import { loadingOf, terminalFinder, memberName } from "./model.js";
 import { card, note, empty, clock } from "./qa.js";
 import { markCell } from "./marks.js";
 
 const MONO = "Geist Mono";
 const COL_W = 184; // six columns fit about 1200 px; narrower, the board scrolls sideways
-const SHEET_W = 300;
-// The one sheet frame (the Board's item, backlog and group sheets, and the Graph's agent sheet, graph-view.js): SHEET_W beside the
-// content, or the whole column when docked (`full`).
-export const sheetColumn = (t, full, id) => v_flex().id(id).when(full, (el) => el.w_full()).when(!full, (el) => el.w(SHEET_W).border_l(1).border_color(t.border))
-  .flex_none().h_full().min_h(0).bg(t.surface);
 const STRIP_W = 40; // an empty column, as the web's 40px strip
 const META_W = COL_W - 26; // the widest a card's chip or text runs: the column less the card's padding and border
 
@@ -80,7 +78,7 @@ export function boardView(v, t, close) {
     body = h_flex().size_full().min_h(0)
       .child(v_flex().flex_1().min_w(0).h_full().min_h(0)
         .child(filters(v, t, f, m))
-        .when(Boolean(m.laneHead), (el) => el.child(laneHeadRow(t, m.laneHead)))
+        .when(Boolean(m.laneHead), (el) => el.child(laneHeadRow(t, f, m.laneHead)))
         .when(m.stale.length + m.unstale.length > 0, (el) => el.child(staleRow(t, f, m.stale, m.unstale)))
         .child(div().id("kb-cols").flex_1().min_h(0).px(16).pt(8).pb(12).child(cards)))
       .when(Boolean(f.sel), (el) => el.child(sheet(v, t, f, false)));
@@ -236,7 +234,7 @@ function column(v, t, f, col) {
       .child(col.label)
       .child(div().font_family(MONO).font_medium().child(capped ? `${col.cards.length} of ${col.count}` : String(col.head))))
     .child(v_flex().id(`kb-cards-${col.key}`).flex_1().min_h(0).overflow_y_scrollbar()
-      .children(col.cards.map((c, i) => (c.qa ? card(v, t, c.tm, c.qa, true) : item(t, f, col.key, c, i))))
+      .children(col.cards.map((c, i) => (c.qa ? card(v, t, c.tm, c.qa, true /* noDesc */, c.sel ? textBtn(t, `kb-qa-details-${c.qa.key}`, "Details", `${f.sel?.key === c.sel.key ? "Close" : "Open"} the sheet of ${c.sel.item}`, (cx) => select(f, c.sel, cx)) : null) : item(t, f, col.key, c, i))))
       .when(col.folds, (el) => el.child(h_flex().pb(4).child(textBtn(t, `kb-more-${col.key}`, more, col.open ? `Show fewer ${col.label} cards` : `${more}, ${col.label}`, flip)))));
 }
 
@@ -252,7 +250,7 @@ function select(f, sel, cx) {
   f.logAll = false; // the timeline's Show all
   f.bodies = new Set(); // the timeline entries whose Details are open
   cx.notify();
-  if (sel.bl || sel.group) return; // a backlog row, team or lane has no plan-changes history (the web's panel reads none)
+  if (sel.bl || sel.group || sel.member) return; // a backlog row, team, lane or member has no plan-changes history (the web's panel reads none)
   cx.spawn(async (cx) => {
     const sleep = (ms) => cx.sleep(ms);
     const link = f.link?.();
@@ -321,10 +319,11 @@ function item(t, f, col, c, i) {
 // The item sheet: what the item is, its owner with Focus terminal (when exactly one live terminal is theirs), then the web item
 // dialog's detail in its order: rows, Ext id, Description, Notes, Stream goal, History (the one plan-changes read), Timeline, Links,
 // Attachments. The last four come from the item-log: slice, held while the sheet is open (board-model boardSubs); an item with no
-// work id has none, as on the web.
+// work id has none, and says so under Notes. A waiting item's Q&A card opens this sheet from its Details, with Asked by first.
 function sheet(v, t, f, full) {
   if (f.sel.bl) return blSheetView(v, t, f, full);
   if (f.sel.group) return groupSheetView(v, t, f, full);
+  if (f.sel.member) return memberSheetView(v, t, f, full);
   // the card as drawn now (state, column, marks move under an open sheet); the opening snapshot when it is past a column's cap
   const s = f.memo?.m.sels.get(f.sel.key) ?? f.sel;
   const mb = ownerOf(v.st.slices, s, Date.now());
@@ -361,7 +360,9 @@ function sheet(v, t, f, full) {
       .child(div().text_size(13.5).font_semibold().text_color(t.foreground).child(s.title))
       .child(h_flex().h(24).gap(8).items_center().text_size(12)
         .when(Boolean(mb), (el) => el.child(markCell(t, mb.state)))
-        .child(div().flex_none().max_w(140).truncate().font_medium().text_color(t.foreground).child(s.ownerLabel || "No owner"))
+        // the owner opens its member sheet when the team has that member (Part C); else plain text
+        .child(mb ? memberLink(t, f, "kb-sheet-owner", `member:${s.dirId}/${s.team}/${s.owner}`, s.ownerLabel || s.owner).flex_none().max_w(140).font_medium()
+          : div().flex_none().max_w(140).truncate().font_medium().text_color(t.foreground).child(s.ownerLabel || "No owner"))
         .when(Boolean(mb), (el) => el.child(div().flex_1().min_w(0).truncate().text_color(t.muted).child([mb.word.toLowerCase(), mb.age].filter(Boolean).join(" · ")))))
       .child(h_flex().mt(2).child(focusBtn)))
     .child(v_flex().id("kb-log").flex_1().min_h(0).px(16).py(8).overflow_y_scrollbar()
@@ -375,6 +376,8 @@ function sheet(v, t, f, full) {
       }) }))
       .when(wl?.state === "ok" && Boolean(wl.desc), (el) => el.child(head(t, "Description")).child(descView(t, wl.desc)))
       .when(Boolean(s.note), (el) => el.child(head(t, "Notes")).child(para(t, s.note)))
+      // no work id, so no item-log: say so, where the web shows nothing and the sections seem to vanish
+      .when(!s.log, (el) => el.child(div().mt(12).text_size(12).text_color(t.muted).child("Not registered as work: no description or timeline.")))
       .when(Boolean(s.goal), (el) => el.child(head(t, "Stream goal")).child(para(t, s.goal)))
       .child(head(t, "History"))
       .children(rows)
@@ -476,6 +479,25 @@ const closeBtn = (v, t, f) => v.ring(t, Button.new("kb-sheet-close"), t.surface)
     cx.notify();
   })
   .child(svg("mods/ah2/x.svg").size(14));
+
+// A member name that opens its member sheet in the Board's sheet slot (Part C): one sheet at a time, its close returns to the cards.
+const memberSel = (id) => ({ key: `mb:${id}`, member: id, ui: { team: id.replace(/^member:/, "team:").replace(/\/[^/]+$/, ""), showInternal: false } });
+const memberLink = (t, f, bid, id, name) => linkBtn(t, bid, name, (cx) => select(f, memberSel(id), cx)).accessibility_label(`${name}: open the member's details`);
+// A list of { id, name } as comma-separated member links.
+const names = (t, f, bid, list) => list.map((x, i) => h_flex().child(memberLink(t, f, `${bid}-${i}`, x.id, x.name)).when(i < list.length - 1, (el) => el.child(",")));
+
+// The member sheet on the Board (Part C): the Graph's (member-sheet.js), with no Graph extras and with the items it holds, each
+// opening its item sheet. Go to pane by the Graph's own path (paneOfMember, terminalFinder).
+function memberSheetView(v, t, f, full) {
+  const id = f.sel.member;
+  const slices = v.st.slices;
+  const history = memberItems(slices, id, f.memo?.m.sels).map((h) => ({ ...h, act: h.sel ? (cx) => select(f, h.sel, cx) : null }));
+  return memberSheet(v, t, {
+    id, ui: f.sel.ui, close: () => { f.sel = null; },
+    address: terminalFinder(terminals(), target())({ pane: paneOfMember(slices, id), name: memberName(id) }),
+    history,
+  }, full);
+}
 
 // The Backlog column (board-kanban.js grid): its head folds it to a strip; by wave, WAVE_CAP rows each until Show all. Empty, or
 // folded, it is a strip; folded, the strip unfolds it.
@@ -632,11 +654,11 @@ function crumbsRow(t, f, m) {
 }
 
 // The lane header (board-kanban.js laneHead): the lane's stream, its sub-orchestrator, members, branch to base, state, reported.
-function laneHeadRow(t, h) {
+function laneHeadRow(t, f, h) {
   return h_flex().id("kb-lanehead").min_h(32).px(16).gap(12).flex_none().flex_wrap().items_center().border_b(1).border_color(t.border).text_size(11.5).text_color(t.muted)
     .child(div().font_family(MONO).font_semibold().text_color(t.foreground).child(h.stream))
-    .child(div().child(`sub-orchestrator ${h.so}`))
-    .when(h.members.length > 0, (el) => el.child(div().child(`members ${h.members.join(", ")}`)))
+    .child(h_flex().gap(4).child("sub-orchestrator").child(h.soMember?.id ? memberLink(t, f, "kb-lanehead-so", h.soMember.id, h.so) : div().child(h.so ?? "")))
+    .when(h.members.length > 0, (el) => el.child(h_flex().gap(4).flex_wrap().child("members").children(names(t, f, "kb-lanehead-mb", h.members))))
     .when(Boolean(h.branch), (el) => el.child(div().font_family(MONO).child(h.branch)))
     .child(div().child(h.state))
     .when(Boolean(h.report), (el) => el.child(div().h(18).px(6).flex().items_center().rounded(4).border(1).border_color(t.border).text_color(t.foreground).child(h.report)));
@@ -655,7 +677,7 @@ function groupSheetView(v, t, f, full) {
   const body = v_flex().id("kb-log").flex_1().min_h(0).px(16).py(8).overflow_y_scrollbar();
   const out = !p ? body.child(para(t, "Not on this board").text_color(t.muted)) : body
     .when(p.rows.length > 0, (el) => el.child(facts(t, p)))
-    .when(p.members.length > 0, (el) => el.child(head(t, "Members")).child(para(t, p.members.join(", "))))
+    .when(p.members.length > 0, (el) => el.child(head(t, "Members")).child(h_flex().gap(4).flex_wrap().text_size(12).children(names(t, f, "kb-grp-mb", p.members))))
     .child(head(t, "Plan items"))
     .when(p.items.length === 0, (el) => el.child(para(t, "No items in the plan yet.").text_color(t.muted)))
     .children(p.items.map((it, i) => {

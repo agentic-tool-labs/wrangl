@@ -522,7 +522,7 @@ function flowStage(m) {
   return `<div class="gflow" style="width:${m.stage.w}px;height:${m.stage.h}px" aria-label="${esc(m.said)}"><div class="fin" style="left:${px(pan.x)};top:${px(pan.y)};width:${px(m.size.w)};height:${px(m.size.h)}">${[...lanes, ...bands, links, ...labels, ...cards, ...unders, ...dots].join("")}</div>${m.rest > 0 ? `<span class="fmore">+${m.rest} more briefs</span>` : ""}</div>
   <div class="flg" role="group" aria-label="Flow legend"><span><i class="kb"></i>brief in flight</span><span><svg width="14" height="2" aria-hidden="true"><path d="M 0 1 L 14 1"/></svg>sent for review</span><span><i class="ke"></i>reporting line</span><span><svg width="14" height="2" aria-hidden="true"><path class="ks" d="M 0 1 L 14 1"/></svg>subagent</span><span>◷ job</span><span class="fd2">Idle members are one line; a time is the last activity</span></div>`;
 }
-// The agent's sheet, mirroring graph-view.js agentSheet (Flow: no Map extras). The preview has no ahd port: Open page is disabled.
+// The member sheet, mirroring member-sheet.js memberSheet as the Graph opens it (Flow: no Map extras). The preview has no ahd port: Open page is disabled.
 const APPW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></svg>';
 const XIC = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 function sheetHtml(sl, team, id, live, pane, full) {
@@ -601,7 +601,7 @@ const dockFlow = `<aside class="dock dfl" aria-label="Wrangl desk">
   ${deskTabs("graph", false)}
   ${flowHead(fmDock)}<div class="ovb reg">${flowStage(fmDock)}</div>
  </aside>`;
-// Docked, the open sheet takes the whole column (the Board's sheet, board.js sheetColumn full): `dock-sheet`, `dock-sheet-gone`.
+// Docked, the open sheet takes the whole column (member-sheet.js sheetColumn full): `dock-sheet`, `dock-sheet-gone`.
 const dockSheets = Object.keys(SHEETS).map((v) => `<aside class="dock dsh" data-v="dock-${v.slice(6)}" aria-label="Wrangl desk">
   ${deskTabs("graph", false)}
   ${flowHead(fmDock)}${sheetOf(v, true)}

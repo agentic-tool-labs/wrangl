@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { boardModel, boardSubs, itemLog, workLog, LOG_PAGE, trackAfter, nothingChanged } from "../../herdr-desktop/mods/ah2/board-model.js";
+import { boardModel, boardSubs, itemLog, workLog, LOG_PAGE, trackAfter, nothingChanged, memberItems } from "../../herdr-desktop/mods/ah2/board-model.js";
+import { memberLeaseIds } from "../../herdr-desktop/mods/ah2/member-model.js";
 import { loadTrack, saveTrack } from "../../herdr-desktop/mods/ah2/plans-seen.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -268,4 +269,44 @@ test("Show only this stream keeps that stream's cards; a chip off outside the sc
   // Changed since last visit, nothing changed: first visit, under a minute, or since when
   assert.deepEqual([nothingChanged(null, NOW), nothingChanged(NOW - 30_000, NOW), nothingChanged(NOW - 3 * 3_600_000, NOW)],
     ["Nothing to compare yet: this is your first visit", "Nothing changed since just now", "Nothing changed since 3h ago"]);
+});
+
+test("a waiting item's Q&A card opens its held plan item's sheet with Asked by first; a decision, or an unheld stream, opens none", () => {
+  const items = "plan-items:a1b2c3d4/ah2-tm4/core";
+  const qs = slices.get("questions:a1b2c3d4/ah2-tm4");
+  const asked = new Map(withItems(items, (all) => all.map((i) => (i.key === "core:atp-1140" ? { ...i, work_id: "ah2-9" } : i))))
+    .set(qs.id, { ...qs, body: { ...qs.body, items: qs.body.items.map((i) => (i.key === "core:atp-1140" ? { ...i, asker: "architect@ah2-tm4" } : i)) } });
+  const waiting = (sl) => cardsOf(boardModel(sl, NOW), "waiting").filter((x) => x.qa);
+  const m = boardModel(asked, NOW);
+  const item = cardsOf(m, "waiting").find((x) => x.qa?.q.id === "core:atp-1140");
+  assert.equal(item.sel?.item, "atp-1140", "the plan item's selection");
+  assert.equal(item.sel.log, "item-log:a1b2c3d4/9", "its work id's item-log");
+  assert.deepEqual(item.sel.rows.slice(0, 2), [["Asked by", "architect"], ["Work id", "ah2-9", true]], "Asked by, as the card's meta, before Work id");
+  assert.equal(m.sels.get(item.sel.key), item.sel, "the sheet's live snapshot");
+  const decisions = waiting(asked).filter((x) => x.qa.q.kind !== "item");
+  assert.ok(decisions.length > 0 && decisions.every((x) => x.sel === null), "a decision card carries none");
+  // held in another column (served next while its question waits): the join reads the held items, not this column
+  const moved = new Map(asked).set(items, { ...asked.get(items), body: { ...asked.get(items).body, items: asked.get(items).body.items.map((i) => (i.key === "core:atp-1140" ? { ...i, state: "next", column: "next" } : i)) } });
+  assert.equal(waiting(moved).find((x) => x.qa.q.id === "core:atp-1140")?.sel?.item, "atp-1140", "an item held outside Waiting on you still opens its sheet");
+  const unheld = new Map(asked);
+  unheld.delete(items);
+  const still = waiting(unheld).find((x) => x.qa.q.id === "core:atp-1140");
+  assert.ok(still && still.sel === null, "its stream not held: the card answers, no sheet");
+});
+
+test("a member sheet on the Board holds exactly its member leases while open; its History is the items it holds across held streams", () => {
+  const id = "member:a1b2c3d4/ah2-tm4/implementor";
+  const sel = { member: id, ui: { team: "team:a1b2c3d4/ah2-tm4", showInternal: false } };
+  const base = boardSubs(slices, NOW);
+  const open = boardSubs(slices, NOW, { member: sel });
+  const lease = [id, ...memberLeaseIds(slices, sel.ui, id)];
+  assert.ok(lease.length > 1, "the fixture's member has leases");
+  assert.deepEqual(open.filter((x) => !base.includes(x)).sort(), [...new Set(lease)].filter((x) => !base.includes(x)).sort(), "the member and its leases, nothing else");
+  assert.ok(!base.includes(id), "the member slice comes with the sheet");
+  assert.deepEqual(boardSubs(slices, NOW, { member: { key: "kt:x", group: true } }), base, "no member sheet, no member leases");
+  const m = boardModel(slices, NOW);
+  const h = memberItems(slices, id, m.sels);
+  assert.deepEqual(h.map((x) => x.key).sort(), ["core:atp-1131", "core:atp-1136", "web:b341"], "its items in both held streams, no one else's");
+  assert.ok(h.find((x) => x.key === "web:b341").sel?.item === "b341", "an item the board draws opens its sheet");
+  assert.deepEqual(memberItems(new Map([...slices].filter(([k]) => k !== "plan-items:a1b2c3d4/ah2-tm4/web")), id).map((x) => x.key).sort(), ["core:atp-1131", "core:atp-1136"], "an unheld stream adds none");
 });
