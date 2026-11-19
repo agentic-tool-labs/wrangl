@@ -409,6 +409,7 @@
             "state": "idle",
             "liveness": "unknown",
             "process": "unknown",
+            "column": 0,
             "located": true,
             "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:00:00.000Z"
@@ -417,6 +418,7 @@
             "state": "idle",
             "liveness": "unknown",
             "process": "unknown",
+            "column": 2,
             "located": true,
             "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:05:00.000Z"
@@ -425,6 +427,7 @@
             "state": "idle",
             "liveness": "unknown",
             "process": "unknown",
+            "column": 2,
             "located": true,
             "stuck_as_unknown": true
           }
@@ -515,7 +518,8 @@
               "to": "member:f28aaefa/default/dev",
               "brief": "in_flight"
             }
-          ]
+          ],
+          "report": []
         }
       }
     },

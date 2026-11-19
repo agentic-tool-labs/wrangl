@@ -1196,7 +1196,10 @@ internal sealed partial class MsgCommand
         }
 
         var triggers = l.Member("triggers") is { IsArray: true } t ? string.Join("; ", t.AsArray().Select(x => JsConvert.ToJsString(x))) : string.Empty;
-        return $"load: {JsConvert.ToJsString(l.Member("state"))} since {JsConvert.ToJsString(l.Member("since"))}; load1_per_cpu {Undefined(l.Member("load1_per_cpu"))}, mem_pressure {Undefined(l.Member("mem_pressure"))}, harnesses {Undefined(l.Member("harnesses"))}"
+        var cpu = l.Member("cpu_note") is { IsText: true } note
+            ? note.AsString()
+            : $"cpu_busy {Undefined(l.Member("cpu_busy"))} (threshold {Undefined(l.Member("thresholds")?.Member("cpu_busy"))})";
+        return $"load: {JsConvert.ToJsString(l.Member("state"))} since {JsConvert.ToJsString(l.Member("since"))}; {cpu}, load1_per_cpu {Undefined(l.Member("load1_per_cpu"))} of {Undefined(l.Member("cpus"))} cpus, mem_pressure {Undefined(l.Member("mem_pressure"))}, harnesses {Undefined(l.Member("harnesses"))}"
             + (triggers.Length > 0 ? $"; triggers: {triggers}" : string.Empty)
             + (l.Member("problem") is { IsText: true } p ? $"; problem: {p.AsString()}" : string.Empty);
     }

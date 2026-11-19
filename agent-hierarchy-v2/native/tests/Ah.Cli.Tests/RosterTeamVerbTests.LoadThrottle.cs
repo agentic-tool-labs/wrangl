@@ -1,4 +1,6 @@
+using Ah.Cli.Composition;
 using Ah.Commands;
+using Ah.Core.Json;
 
 namespace Ah.Cli.Tests;
 
@@ -16,7 +18,7 @@ public sealed partial class RosterTeamVerbTests
         }
     }
 
-    private static SpawnAdmissionReply Refused => new(false, "2026-10-25T01:40:00.000Z", ["load1_per_cpu=1.9 (>= 1.5)"], null);
+    private static SpawnAdmissionReply Refused => new(false, "2026-10-25T01:40:00.000Z", ["cpu busy 0.94 for 180 s (threshold 0.90)"], null);
 
     [Fact]
     public void ASpawnTheDaemonPutsOffExitsSeventyFiveWithTheReasonAndLaunchesNothing()
@@ -28,9 +30,47 @@ public sealed partial class RosterTeamVerbTests
         var (code, stdout, stderr) = Roster(["spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self]);
 
         Assert.Equal(75, code);
-        Assert.Contains("machine overloaded (load1_per_cpu=1.9 (>= 1.5)); next spawn allowed after 2026-10-25T01:40:00.000Z; nothing was launched", stderr, StringComparison.Ordinal);
+        Assert.Contains("machine overloaded (cpu busy 0.94 for 180 s (threshold 0.90)); next spawn allowed after 2026-10-25T01:40:00.000Z; nothing was launched", stderr, StringComparison.Ordinal);
         Assert.DoesNotContain("\"spawned\"", stdout, StringComparison.Ordinal);
         Assert.Single(admission.Asked);
+    }
+
+    [Fact]
+    public void TheOwningOrchestratorIsToldTheLoadAndMaySpawnDespiteItWhileAnyoneElseWithTheFlagIsStillPaced()
+    {
+        OnTmux();
+        _withJournal = true;
+        _spawnAdmission = new FakeAdmission(Refused with { Harnesses = 12 });
+        string[] spawn = ["spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self];
+        string[] LoadOverrides() => StallStore.JournalRows(_sandbox.AhHome).Where(r => r.Contains("\"load-override\"", StringComparison.Ordinal)).ToArray();
+
+        // no team file: the caller is not a team's Orchestrator (a foreign team's owner guard refuses before pacing is asked)
+        var (otherCode, otherOut, otherErr) = Roster([.. spawn, "--despite-load"]);
+        Assert.True(otherCode == 75, otherOut + otherErr);
+        Assert.Contains("only the team's Orchestrator can override", otherErr, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"spawned\"", otherOut, StringComparison.Ordinal);
+        Assert.Empty(LoadOverrides());
+
+        WriteTeam("proj", LiveTeamJson("tmux", string.Empty));
+        var (pacedCode, pacedOut, pacedErr) = Roster(spawn);
+        Assert.Equal(75, pacedCode);
+        Assert.Contains("12 Claude harness processes run. To spawn anyway, assess the risk and re-run with --despite-load.", pacedErr, StringComparison.Ordinal);
+        var paced = JsonText.Parse(pacedOut);
+        Assert.Equal("machine-overloaded", paced.Member("refused")!.Value.AsString());
+        Assert.Equal(12, paced.Member("harnesses")!.Value.AsNumber());
+
+        var (dryCode, _, _) = Roster([.. spawn, "--despite-load", "--dry-run"]);
+        Assert.Equal(0, dryCode);
+        Assert.Empty(LoadOverrides());
+
+        AgeSpawnedRows();
+        var (code, stdout, stderr) = Roster([.. spawn, "--despite-load"]);
+        Assert.True(code == 0, stdout + stderr);
+        Assert.Contains("ah roster: spawned despite machine load (cpu busy 0.94 for 180 s (threshold 0.90))", stderr, StringComparison.Ordinal);
+        Assert.True(JsonText.Parse(stdout).Member("despite_load")!.Value.AsBool());
+        var row = JsonText.Parse(Assert.Single(LoadOverrides()));
+        Assert.Equal("proj", row.Member("team")!.Value.AsString());
+        Assert.Equal(["cpu busy 0.94 for 180 s (threshold 0.90)"], row.Member("triggers")!.Value.AsArray().Select(t => t.AsString()));
     }
 
     [Fact]

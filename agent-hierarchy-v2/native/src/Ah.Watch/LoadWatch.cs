@@ -14,6 +14,12 @@ public interface ILoadSource
     /// <summary>The 1-minute load average; null when the system does not say.</summary>
     double? Load1();
 
+    /// <summary>
+    /// Whether the machine's CPU times can be read, and the share of CPU time that was busy since the previous call: null on the first
+    /// call, when no CPU time passed, when a counter went backwards, and always when they cannot be read.
+    /// </summary>
+    (bool Readable, double? Share) CpuBusy();
+
     /// <summary><c>normal</c>, <c>warn</c> or <c>critical</c>; null when it cannot be read.</summary>
     string? MemoryPressure();
 
@@ -30,7 +36,11 @@ public interface ILoadSource
 }
 
 /// <summary>What a spawn asked of the pacing: whether it may start now, and when the next one may when it may not.</summary>
-public sealed record SpawnAdmission(bool Admitted, DateTimeOffset? NextAt, IReadOnlyList<string> Triggers);
+/// <param name="Admitted">Whether the spawn may start now.</param>
+/// <param name="NextAt">When the next spawn may start; set when not admitted.</param>
+/// <param name="Triggers">The load triggers that hold, with their values.</param>
+/// <param name="Harnesses">How many Claude harness processes ran at the last sample; no new read is made for it.</param>
+public sealed record SpawnAdmission(bool Admitted, DateTimeOffset? NextAt, IReadOnlyList<string> Triggers, int Harnesses = 0);
 
 /// <summary>A change of the load state that the Orchestrators are told about once.</summary>
 public sealed record LoadAlarm(string Kind, string Text, JsonObject Data);
@@ -69,7 +79,7 @@ internal sealed class LoadWatch(ILoadSource source, Func<DateTimeOffset> now) : 
     private LoadThresholds _thresholds = new();
     private string? _problem;
     private string? _lastAdmit;
-    private LoadSample _sample = new(0, null, 0, new ApiErrorCounts(0, 0, 0, 0, 0));
+    private LoadSample _sample = new(default, 0, 0, CpuReadable: true, null, null, 0, new ApiErrorCounts(0, 0, 0, 0, 0));
 
     private static string Iso(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 
@@ -146,7 +156,9 @@ internal sealed class LoadWatch(ILoadSource source, Func<DateTimeOffset> now) : 
         var at = now();
         var from = at - ErrorWindow;
         var fresh = newErrors(from);
-        var load1 = (source.Load1() ?? 0) / Math.Max(1, source.Cpus);
+        var cpus = Math.Max(1, source.Cpus);
+        var load1 = (source.Load1() ?? 0) / cpus;
+        var cpu = source.CpuBusy();
         var memory = source.MemoryPressure();
         var harnesses = source.Harnesses();
         lock (_gate)
@@ -154,7 +166,7 @@ internal sealed class LoadWatch(ILoadSource source, Func<DateTimeOffset> now) : 
             var monitor = Ensure(at);
             _errors.AddRange(fresh);
             _ = _errors.RemoveAll(e => e.At < from);
-            _sample = new LoadSample(load1, memory, harnesses, Count(_errors));
+            _sample = new LoadSample(at, load1, cpus, cpu.Readable, cpu.Share, memory, harnesses, Count(_errors));
             var transition = monitor.Tick(_sample, Iso(at));
             if (transition == LoadTransition.None)
             {
@@ -192,7 +204,7 @@ internal sealed class LoadWatch(ILoadSource source, Func<DateTimeOffset> now) : 
             IReadOnlyList<string> triggers = monitor.Current.State == LoadState.Overloaded ? monitor.Triggers : [];
             if (monitor.Current.State == LoadState.Overloaded && ParseIso(_lastAdmit) is { } last && last + TimeSpan.FromSeconds(_thresholds.SpawnGapSeconds) > at)
             {
-                return new SpawnAdmission(false, last + TimeSpan.FromSeconds(_thresholds.SpawnGapSeconds), triggers);
+                return new SpawnAdmission(false, last + TimeSpan.FromSeconds(_thresholds.SpawnGapSeconds), triggers, _sample.Harnesses);
             }
 
             if (!dryRun)
@@ -201,7 +213,7 @@ internal sealed class LoadWatch(ILoadSource source, Func<DateTimeOffset> now) : 
                 Save(monitor);
             }
 
-            return new SpawnAdmission(true, null, triggers);
+            return new SpawnAdmission(true, null, triggers, _sample.Harnesses);
         }
     }
 }

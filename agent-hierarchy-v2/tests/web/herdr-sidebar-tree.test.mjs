@@ -103,3 +103,62 @@ test("a brief in flight to a member gives its row a dot; an answered one, a suba
   // the track runs down the row's own elbow and across to its icon (a leaf at depth 1: no rails)
   assert.deepEqual(rowTrack({ rails: [], kids: false }, 16), [["M", 7.5, 0], ["L", 7.5, 14.5], ["L", 30, 14.5]]);
 });
+
+// ah2-252: a dot frame reuses the tree model (model.js paneTree) and moves only the dot; a changed input builds it again.
+test("renders with the same inputs and a later now build the tree model once and move the dot; a changed input builds it again", async () => {
+  const { paneTree, rowTrack } = await import("../../herdr-desktop/mods/ah2/model.js");
+  const { dotAt, trackOf } = await import("../../herdr-desktop/mods/ah2/graph-model.js");
+  const open = ["list:open:team:d1/ah2", { id: "list:open:team:d1/ah2", body: { open: [{ id: "x1", from_member: "d1/ah2/@orchestrator", to_member: "d1/ah2/@implementor" }] } }];
+  const slices = slicesOf(summary("ah2", { "d1/ah2/@orchestrator": live("working"), "d1/ah2/@implementor": live("working") }), open);
+  const fns = { shown: (l) => l, open: () => () => true, track: (r) => trackOf(rowTrack(r, 16)) };
+  const memo = {};
+  const key = (gen, age = 0, folds = "{}") => [gen, age, folds, "nested", ""];
+  // one second of the dot clock's 33 ms frames: before ah2-252 each one built the model (30 builds a second); now one does
+  const at = [];
+  for (let f = 0; f < 30; f++) {
+    const { trees } = paneTree(memo, key(1), slices, NOW + f * 33, fns);
+    const row = trees[0].rows.find((x) => x.d);
+    at.push(dotAt(row.pts, NOW, NOW + f * 33, row.d.review));
+  }
+  assert.equal(memo.builds, 1);
+  assert.notDeepEqual(at[0], at[15], "the dot moves between frames");
+  // negative: a poll (the generation), the age clock and a fold each build it again
+  paneTree(memo, key(2), slices, NOW, fns);
+  paneTree(memo, key(2, 1), slices, NOW, fns);
+  paneTree(memo, key(2, 1, '{"x":false}'), slices, NOW, fns);
+  assert.equal(memo.builds, 4);
+});
+
+// ah2-265: a report filed and not yet read (the topology's edges.report) runs back from its member's row; each icon takes its Flow lane's
+// colour (graph-model.js laneHue over the served column) whatever the member's state.
+test("an unread report gives its member's row a dot back to its briefer and a read one none; icons take their lane's colour in every state", async () => {
+  const { paneTree, rowTrack } = await import("../../herdr-desktop/mods/ah2/model.js");
+  const { laneHue, laneStyle, trackOf, WEB } = await import("../../herdr-desktop/mods/ah2/graph-model.js");
+  const topo = (report) => ["topology:d1/ah2", { id: "topology:d1/ah2", body: { edges: { brief: [], report } } }];
+  const col = { reviewer: 3, implementor: 2, qa: 3, "ux-engineer": 2, orchestrator: 0 };
+  const states = (state) => Object.fromEntries(Object.entries(col).map(([r, c]) => [`d1/ah2/@${r}`, { ...live(state), role: r, column: c }]));
+  const fns = { shown: (l) => l, open: () => () => true, track: (r, back) => trackOf(rowTrack(r, 16), back) };
+  const rowsOf = (slices) => paneTree({}, [1], slices, NOW, fns).trees[0].rows;
+  const report = { id: "r1", from_member: "d1/ah2/@orchestrator", to_member: "d1/ah2/@reviewer" };
+  const waiting = rowsOf(slicesOf(summary("ah2", states("idle")), topo([report, { id: "r2", from_member: null, to_member: "d1/ah2/@qa" }])));
+  assert.deepEqual(waiting.filter((x) => x.b).map((x) => [x.r.node.name, x.b.key]), [["reviewer", "back|r1"]]); // a null party draws none
+  const row = waiting.find((x) => x.b);
+  assert.deepEqual(row.bpts[0], { ...trackOf(rowTrack(row.r, 16)).at(-1), d: 0 }, "the report starts at the member's icon end of the track");
+  // read: it leaves edges.report, and the dot goes with it
+  assert.deepEqual(rowsOf(slicesOf(summary("ah2", states("idle")), topo([]))).filter((x) => x.b), []);
+  // the icon colour of a reviewer, an implementor and a QA member is their lane's (Review, Implement, Test) in every state and theme
+  for (const state of ["working", "idle", "blocked", "gone"]) {
+    const nodes = rowsOf(slicesOf(summary("ah2", states(state)), topo([]))).map((x) => x.r.node);
+    for (const light of [false, true]) {
+      const hue = (name) => { const n = nodes.find((x) => x.name === name); return laneHue(n.role, n.column, light); };
+      assert.equal(hue("reviewer"), laneStyle(3, light).color);
+      assert.equal(hue("implementor"), laneStyle(2, light).color);
+      assert.equal(hue("qa"), laneStyle(4, light).color);
+      assert.equal(hue("ux-engineer"), laneStyle(2, light).color, "a role in the table takes its lane's, not its own hue");
+      assert.equal(hue("orchestrator"), null, "the top orchestrator keeps the ink");
+    }
+  }
+  // negative: a role not in the table, or no column served (an older ahd), keeps its role hue
+  assert.equal(laneHue("custom-role", 2, false), WEB.dark.role.neutral);
+  assert.equal(laneHue("reviewer", null, false), WEB.dark.role.reviewer);
+});

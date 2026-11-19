@@ -159,12 +159,12 @@ internal static class DismissVerb
     internal const string CleanMeans =
         "A clean member is released and idle, has no open request, has finished its stream, and has no uncommitted or unmerged work (its work tree is clean and every commit is on origin).";
 
-    /// <summary>The one clean check a bare <c>dismiss</c> closes on, and the dismiss nudge asks: the member's plan and what <see cref="CleanClose"/> reads of it.</summary>
-    internal static (MemberPlan Plan, CleanClose.Reading Clean) CleanOf(RosterContext c, string dir, string name, JsonValue team, JsonValue target)
+    /// <summary>The one clean check a bare <c>dismiss</c> closes on, and the dismiss nudge asks: the member's plan and what <see cref="CleanClose"/> reads of it. A check of several members passes the team-wide reads it made once (<see cref="ReadsOf"/>); null reads them for this one.</summary>
+    internal static (MemberPlan Plan, CleanClose.Reading Clean) CleanOf(RosterContext c, string dir, string name, JsonValue team, JsonValue target, TeamReads? reads = null)
     {
-        var memberPlan = PlanMember(c, dir, name, team, target);
+        var memberPlan = PlanMember(c, dir, name, team, target, reads);
         var nothing = memberPlan.Closable.Count == 0 && memberPlan.Release.Verdicts.Count == 0;
-        return (memberPlan, CleanClose.Read(c, new CleanClose.Subject(dir, team, nothing ? [] : [CleanClose.MemberOf(name, memberPlan.HealedTarget, memberPlan.Release)]), memberPlan.Token));
+        return (memberPlan, CleanClose.Read(c, new CleanClose.Subject(dir, team, nothing ? [] : [CleanClose.MemberOf(name, memberPlan.HealedTarget, memberPlan.Release)]), memberPlan.Token, reads));
     }
 
     /// <summary>The team <c>dismiss</c> acts on, as it reads it: the team record merged with any split copy it may act on.</summary>
@@ -210,7 +210,7 @@ internal static class DismissVerb
     /// Whether the caller is the Orchestrator that owns <paramref name="team"/>, as the owner guard proved it (pid and start, after any
     /// late registration), or the manager's Orchestrator acting on a lane child through the parent-owner path; a lane lead is not.
     /// </summary>
-    private static bool OwningOrchestrator(RosterContext c, JsonValue team)
+    internal static bool OwningOrchestrator(RosterContext c, JsonValue team)
     {
         if (team.IsNull)
         {
@@ -509,35 +509,56 @@ internal static class DismissVerb
     internal sealed record MemberPlan(string? Transport, JsonValue HealedTarget, List<JsonValue> Closable, ReleaseGate.Outcome Release, string Token);
 
     /// <summary>The plan of closing one member, shared by <c>dismiss</c> and the managing orchestrator's <c>close-approve</c>.</summary>
-    internal static MemberPlan PlanMember(RosterContext c, string dir, string name, JsonValue team, JsonValue target)
+    internal static MemberPlan PlanMember(RosterContext c, string dir, string name, JsonValue team, JsonValue target, TeamReads? reads = null)
     {
         var teardown = c.Services.Launch!.Teardown;
         var transport = MemberPlanning.Text(team.Member("transport"));
-        var healedMembers = Members(team);
-        if (transport == "herdr")
-        {
-            var result = Resync.ResyncMembers(c, team);
-            healedMembers = result.QueryOk && result.Members is { } rm
-                ? rm.ToList()
-                : Members(team).Select(m =>
-                {
-                    if (!m.IsMap)
-                    {
-                        return m;
-                    }
-
-                    var copy = m.AsObject().Clone();
-                    copy["status"] = "unqueried";
-                    return (JsonValue)copy;
-                }).ToList();
-        }
-
+        var healedMembers = reads?.Healed ?? HealedMembers(c, team);
         var healedTarget = healedMembers.Cast<JsonValue?>().FirstOrDefault(m => MemberPlanning.Text(m!.Value.Member("name")) == name) ?? target;
         var closable = transport == "terminal" ? [] : teardown.ClosableMembers([healedTarget]).ToList();
-        var planRelease = ReleaseGate.Apply(c, dir, closable, TeamNames(team));
+        var planRelease = ReleaseGate.Apply(c, dir, closable, TeamNames(team), reads?.Roster);
         closable = planRelease.Closable;
         var token = teardown.CloseToken(team.Member("team_id") ?? JsonValue.Null, closable);
         return new MemberPlan(transport, healedTarget, closable, planRelease, token);
+    }
+
+    /// <summary>The team's members as the transport reports them: resynced with herdr on a herdr team (each <c>unqueried</c> when herdr cannot answer), else as recorded.</summary>
+    private static List<JsonValue> HealedMembers(RosterContext c, JsonValue team)
+    {
+        if (MemberPlanning.Text(team.Member("transport")) != "herdr")
+        {
+            return Members(team);
+        }
+
+        var result = Resync.ResyncMembers(c, team);
+        return result.QueryOk && result.Members is { } rm
+            ? rm.ToList()
+            : Members(team).Select(m =>
+            {
+                if (!m.IsMap)
+                {
+                    return m;
+                }
+
+                var copy = m.AsObject().Clone();
+                copy["status"] = "unqueried";
+                return (JsonValue)copy;
+            }).ToList();
+    }
+
+    /// <summary>What the clean check reads that is the same for every member of one team, read once for a check of several members.</summary>
+    internal sealed record TeamReads(List<JsonValue> Healed, JsonArray Roster, JsonArray Open);
+
+    /// <summary>
+    /// Reads <see cref="TeamReads"/> for <paramref name="team"/>: one herdr resync, the attributed roster and the team's open exchanges.
+    /// Throws <see cref="StoreUnavailableException"/> when the store cannot answer.
+    /// </summary>
+    internal static TeamReads ReadsOf(RosterContext c, string dir, JsonValue team)
+    {
+        var healed = HealedMembers(c, team);
+        using var decisions = c.Services.Hierarchy.Core.DecisionReads();
+        return new TeamReads(
+            healed, c.Services.Hierarchy.Roster.AttributedRoster(dir), c.Services.Launch!.Streams.OpenTeamExchanges(dir, c.TeamFile, allTeams: false));
     }
 
     private static int Plan(

@@ -35,7 +35,9 @@ internal sealed class SpawnAdmissionComposition(ServiceGraph graph) : IRosterSpa
                 var triggers = answer.Member("triggers") is { IsArray: true } list
                     ? list.AsArray().Where(t => t.IsText).Select(t => t.AsString()).ToList()
                     : [];
-                return new SpawnAdmissionReply(admitted.AsBool(), answer.Member("next_at") is { IsText: true } next ? next.AsString() : null, triggers, null);
+                return new SpawnAdmissionReply(
+                    admitted.AsBool(), answer.Member("next_at") is { IsText: true } next ? next.AsString() : null, triggers, null,
+                    answer.Member("harnesses") is { IsNumber: true } harnesses ? (int)harnesses.AsNumber() : null);
             }
         }
         catch (JsonParseException)

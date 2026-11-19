@@ -30,6 +30,10 @@ internal static class TreeIds
         _ => 2,
     };
 
+    /// <summary>The Flow's column of a team member: the Orchestrator's is the reserved role's, anyone else's its row's role.</summary>
+    public static int MemberColumn(TeamEntry team, string member) =>
+        FlowColumn(member == Orchestrator ? ReservedName : team.Row(member) is { } row ? LaneParts.Text(row, "role") : null);
+
     /// <summary>The first segment of a <see cref="NodePath"/>.</summary>
     public const string NodePathRoot = "t";
 
@@ -602,7 +606,7 @@ internal sealed class MemberComposer(ILaneFacts? lanes = null) : ISliceComposer
             ["last_exchanges"] = TreeData.Ids(last.Select(x => MessagesLane.SliceIdOfDirId(dirId, x.Id))),
             ["last_report_at"] = LastReportAt(exchanges, team, member),
             ["node_path"] = TreeIds.NodePath(dirId, teamName, member),
-            ["column"] = TreeIds.FlowColumn(member == TreeIds.Orchestrator ? TreeIds.ReservedName : row is { } columnRow ? LaneParts.Text(columnRow, "role") : null),
+            ["column"] = TreeIds.MemberColumn(team, member),
         };
         var rowModel = row is { } modelRow ? LaneParts.Text(modelRow, "model") : null;
         if (rowModel is not null)
@@ -641,7 +645,7 @@ internal sealed class TopologyComposer(ILaneFacts? lanes = null) : ISliceCompose
 {
     public string SlicePrefix => "topology";
 
-    public IReadOnlyList<string> Lanes => [TeamLane.LaneName, WorktreeLane.LaneName, MessagesLane.LaneName];
+    public IReadOnlyList<string> Lanes => [TeamLane.LaneName, WorktreeLane.LaneName, MessagesLane.LaneName, ProgressLane.LaneName];
 
     public IReadOnlyList<string> Affected(LaneKey changed, LaneRecord? previous, LaneRecord? current, IRecordView records)
     {
@@ -651,6 +655,11 @@ internal sealed class TopologyComposer(ILaneFacts? lanes = null) : ISliceCompose
         }
 
         var (dir, second) = LaneParts.Split(changed.Key);
+        if (changed.Lane == ProgressLane.LaneName)
+        {
+            return [TreeIds.Topology(dir, ProgressLane.TeamNameOf(second))];
+        }
+
         return changed.Lane == TeamLane.LaneName
             ? [.. (TeamLane.NameOf(dir, second) is { } name ? [TreeIds.Topology(dir, name)] : Array.Empty<string>())
                 .Concat(LaneView.TeamsAround(changed, previous, current, records).Select(static t => "topology:" + t.DirId + "/" + t.Name))
@@ -740,6 +749,32 @@ internal sealed class TopologyComposer(ILaneFacts? lanes = null) : ISliceCompose
         return briefs;
     }
 
+    /// <summary>
+    /// The team's exchanges whose response is filed and whose checklist row is <c>reported</c> with its last ref naming the exchange (the
+    /// rule report-waiting uses), each with the brief's two ends; an end that resolves to nobody is null.
+    /// </summary>
+    private static JsonArray Reports(TeamEntry team, string dirId, IRecordView records, IReadOnlyList<JsonValue> items)
+    {
+        var reported = items
+            .Where(static i => LaneParts.Text(i, "state") == "reported")
+            .Select(static i => LaneParts.Text(i, "last_ref"))
+            .OfType<string>()
+            .ToHashSet(StringComparer.Ordinal);
+        var reports = new JsonArray();
+        foreach (var (id, record) in ExchangeFiling.OfTeam(records, dirId, team.Name).Where(x => reported.Contains(x.Id) && LaneParts.Text(x.Record.Value, "response_created") is not null))
+        {
+            var (to, from) = ExchangeFiling.Resolve(record, team);
+            reports.Add(JsonValue.FromObject(new JsonObject
+            {
+                ["id"] = MessagesLane.SliceIdOfDirId(dirId, id),
+                ["from_member"] = from is null ? JsonValue.Null : TreeIds.Member(team.Dir, team.Name, from),
+                ["to_member"] = to is null ? JsonValue.Null : TreeIds.Member(team.Dir, team.Name, to),
+            }));
+        }
+
+        return reports;
+    }
+
     public IReadOnlyList<string> AllIds(IRecordView records) => [.. TreeData.Teams(records).Select(static t => TreeIds.Topology(t.Dir, t.Name))];
 
     public SliceChange Compose(string sliceId, IRecordView records)
@@ -770,13 +805,15 @@ internal sealed class TopologyComposer(ILaneFacts? lanes = null) : ISliceCompose
             nodes["live_paths"] = JsonValue.FromObject(livePaths);
         }
 
+        var plan = SummaryData.PlanRecord(records, dirId, name);
+        IReadOnlyList<JsonValue> items = plan?.Value.Member("items") is { IsArray: true } listed ? listed.AsArray() : [];
         var body = new JsonObject
         {
             ["team"] = TreeIds.Team(team.Dir, name),
             ["nodes"] = JsonValue.FromObject(nodes),
-            ["edges"] = JsonValue.FromObject(new JsonObject { ["parent_child"] = JsonValue.FromArray(parentChild), ["member_worktree"] = JsonValue.FromArray(memberWorktree), ["brief"] = JsonValue.FromArray(Briefs(team, dirId, records)) }),
+            ["edges"] = JsonValue.FromObject(new JsonObject { ["parent_child"] = JsonValue.FromArray(parentChild), ["member_worktree"] = JsonValue.FromArray(memberWorktree), ["brief"] = JsonValue.FromArray(Briefs(team, dirId, records)), ["report"] = JsonValue.FromArray(Reports(team, dirId, records, items)) }),
         };
-        return new SliceChange(sliceId, JsonText.ToUtf8(JsonValue.FromObject(body), 0), team.AsOfMs);
+        return new SliceChange(sliceId, JsonText.ToUtf8(JsonValue.FromObject(body), 0), Math.Max(team.AsOfMs, plan?.AsOfMs ?? 0));
     }
 }
 
@@ -951,19 +988,23 @@ internal static class SummaryData
             : [];
 
     /// <summary>The items of a team's plan record that wait on the user or are under way, as the progress lane holds them.</summary>
-    public static IReadOnlyList<JsonValue> WorkItems(IRecordView records, string dirId, string name)
+    public static IReadOnlyList<JsonValue> WorkItems(IRecordView records, string dirId, string name) =>
+        PlanRecord(records, dirId, name) is { } record && record.Value.Member("work_items") is { IsArray: true } items ? items.AsArray() : [];
+
+    /// <summary>The team's plan record in the progress lane, or null when the lane holds none.</summary>
+    public static LaneRecord? PlanRecord(IRecordView records, string dirId, string name)
     {
         var folder = ProgressLane.FolderOf(name);
         foreach (var key in records.Keys(ProgressLane.LaneName))
         {
             var (dir, t) = ProgressLane.Split(key);
-            if (t == folder && ActivityLane.DirId(dir) == dirId && records.Get(ProgressLane.LaneName, key) is { IsAbsent: false } record && record.Value.Member("work_items") is { IsArray: true } items)
+            if (t == folder && ActivityLane.DirId(dir) == dirId && records.Get(ProgressLane.LaneName, key) is { IsAbsent: false } record)
             {
-                return items.AsArray();
+                return record;
             }
         }
 
-        return [];
+        return null;
     }
 
     /// <summary>
@@ -1635,6 +1676,7 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
         {
             var entry = new JsonObject { ["state"] = m.State, ["liveness"] = SummaryData.LivenessWord(m.Verdict) };
             entry["process"] = SummaryData.ProcessLine(SummaryData.LivenessWord(m.Verdict), m.State);
+            entry["column"] = TreeIds.MemberColumn(team, m.Member);
 
             // What the Overview tells of a member, each only when known: its tool, its item, its branch and its worktree.
             var row = team.Row(m.Member);

@@ -39,6 +39,8 @@
       },
       "load": {
         "api_errors_10m": "<LOAD>",
+        "cpu_busy": "<LOAD>",
+        "cpus": "<LOAD>",
         "harnesses": "<LOAD>",
         "load1_per_cpu": "<LOAD>",
         "mem_pressure": "<LOAD>",
@@ -47,7 +49,8 @@
         "thresholds": {
           "api_error_sessions": 3,
           "api_errors": 10,
-          "load1_per_cpu": 1.5,
+          "cpu_busy": 0.9,
+          "cpu_busy_seconds": 180,
           "mem_pressure": "critical",
           "spawn_gap_s": 300,
           "ticks": 3

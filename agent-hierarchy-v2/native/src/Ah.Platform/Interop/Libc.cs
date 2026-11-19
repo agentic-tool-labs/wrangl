@@ -87,6 +87,13 @@ internal static partial class Libc
     [LibraryImport("libc", EntryPoint = "getloadavg", SetLastError = true)]
     internal static partial int GetLoadAvg(Span<double> loadavg, int count);
 
+    /// <summary><c>HOST_CPU_LOAD_INFO</c>: the <c>host_statistics</c> flavor of four <c>natural_t</c> tick counters (user, system, idle, nice). macOS only.</summary>
+    internal const int HostCpuLoadInfo = 3;
+
+    /// <summary><c>host_statistics(host, flavor, info, &amp;count)</c>: <c>KERN_SUCCESS</c> (0) or an error. macOS only.</summary>
+    [LibraryImport("libc", EntryPoint = "host_statistics")]
+    internal static partial int HostStatistics(uint host, int flavor, Span<uint> info, ref uint count);
+
     [LibraryImport("libc", EntryPoint = "open", StringMarshalling = StringMarshalling.Utf8, SetLastError = true)]
     internal static partial int Open(string path, int flags);
 

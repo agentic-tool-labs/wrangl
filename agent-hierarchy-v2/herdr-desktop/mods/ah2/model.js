@@ -4,7 +4,7 @@
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
-import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf } from "./select.js";
+import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf, reportsBack } from "./select.js";
 import "./intl-shim.js"; // before flow-model.js's graph-world.js, which needs Intl when it loads
 import { activityId, jobsUnder, subagentsUnder, underOf } from "./flow-model.js";
 
@@ -82,7 +82,7 @@ function memberRow(key, m, now) {
   const s = STATES[state];
   const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
   return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
-    pane: memberPane(key, m), served: typeof m.role === "string" ? m.role : "" };
+    pane: memberPane(key, m), served: typeof m.role === "string" ? m.role : "", column: Number.isInteger(m.column) ? m.column : null };
 }
 
 // ah2-207 Amendment 1: a member's role, for its icon and hue. The served role; else the orchestrator (a lane's is its sub-orchestrator);
@@ -136,14 +136,35 @@ export function inFlightTo(slices) {
   }
   return out;
 }
-// The dot a tree row draws (ah2-239 D1/D6): { key, review, role } of the brief in flight to its member, or to a folded lane's
-// Sub-Orchestrator; null at depth 0 (no connector), on a job's or subagent's row, or with nothing in flight.
-export function rowDot(r, inFlight) {
+// ah2-265 D1: the reports waiting to be read from each member, by member id, from the shared rule (select.js reportsBack): the first
+// one (by id) is the one its row's dot draws.
+export function reportsFrom(slices) {
+  const out = new Map();
+  for (const { t } of runningTeams(slices)) {
+    for (const s of reportsBack(slices, { body: { dir_id: t.dir_id, name: t.name } })) if (!out.has(s.from)) out.set(s.from, s);
+  }
+  return out;
+}
+// The member a tree row's dots belong to: its own, or a folded lane's Sub-Orchestrator; null at depth 0 (no connector) and on a job's
+// or subagent's row.
+function dotMember(r) {
   const n = r.node;
   if (n.depth === 0) return null;
-  const to = n.kind === "member" ? n : n.kind === "lane" && !r.open ? n.children.find((c) => c.kind === "member" && c.key.endsWith("/@orchestrator")) : null;
+  return n.kind === "member" ? n : n.kind === "lane" && !r.open ? n.children.find((c) => c.kind === "member" && c.key.endsWith("/@orchestrator")) ?? null : null;
+}
+// The dot a tree row draws (ah2-239 D1/D6): { key, review, role, column } of the brief in flight to its member, or to a folded lane's
+// Sub-Orchestrator; null at depth 0 (no connector), on a job's or subagent's row, or with nothing in flight.
+export function rowDot(r, inFlight) {
+  const to = dotMember(r);
   const s = to && inFlight.get(to.key);
-  return s ? { key: s.id, review: s.review === true, role: to.role } : null;
+  return s ? { key: s.id, review: s.review === true, role: to.role, column: to.column ?? null } : null;
+}
+// ah2-265 D1/D4: the report a tree row's member has filed and its briefer not yet read, by the same rows as rowDot: { key, role,
+// column }, the key told apart from a brief's on the one clock.
+export function rowReport(r, reports) {
+  const from = dotMember(r);
+  const s = from && reports.get(from.key);
+  return s ? { key: `back|${s.id}`, role: from.role, column: from.column ?? null } : null;
 }
 // The dot's track (ah2-239 D2), in main.js treeLead's coordinates: down the row's own elbow from its parent's rail, then across to
 // the disclosure (a row with children) or, at a leaf, on through the carried elbow to the icon. Lines are 1 px; the track is their centre.
@@ -151,6 +172,34 @@ export function rowTrack(r, step) {
   const x = r.rails.length * step + 7.5;
   const end = (r.rails.length + 1) * step + (r.kids ? 0 : step - 2);
   return [["M", x, 0], ["L", x, 14.5], ["L", end, 14.5]];
+}
+
+// ah2-252: what the pane's tree draws, built only when an input changes (graph-view.js graphOf's kind), so a dot frame computes only
+// dotAt. `key`: the slices' generation (bumped by the poll), the age clock (the 30 s timer's count: ages are the build's, as fresh
+// as that timer keeps them), the folds and the settings; never the time. `shown(teams)` is the settings' filter, `open(tm)` a team's
+// fold rule, `track(r, back)` a row's dot track (back: reversed). Per team: { tm, rows: [{ r, d (rowDot), pts (track, only with a
+// dot), b (rowReport), bpts (the track reversed, only with a report), parent }] }.
+export function paneTree(memo, key, slices, now, { shown, open, track }) {
+  if (memo.key?.length === key.length && key.every((k, i) => k === memo.key[i])) return memo.m;
+  memo.builds = (memo.builds ?? 0) + 1;
+  const m = sidebarModel(slices, now);
+  const inFlight = inFlightTo(slices);
+  const reports = reportsFrom(slices);
+  const teams = shown(m.teams);
+  const of = (tm) => {
+    const tree = teamTree(tm);
+    // a job's or subagent's parent row, for its tooltip: the member it is a child of; none under the team's header
+    const parentOf = new Map();
+    const walk = (list, p) => list.forEach((x) => { if (x.item) parentOf.set(x.key, p); walk(x.children, x.kind === "member" ? x.name : null); });
+    walk(tree, null);
+    return { tm, rows: treeRows(tree, open(tm)).map((r) => {
+      const d = rowDot(r, inFlight);
+      const b = rowReport(r, reports);
+      return { r, d, pts: d && track(r), b, bpts: b && track(r, true), parent: parentOf.get(r.node.key) ?? null };
+    }) };
+  };
+  memo.key = key;
+  return (memo.m = { m, teams, trees: teams.map(of) });
 }
 
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.

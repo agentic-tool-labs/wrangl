@@ -110,10 +110,22 @@ internal static partial class ReleaseGate
         var c = new RosterContext(services, RosterArgs.Parse(["--team", team]), "dismiss", projectRoot, TextWriter.Null, TextWriter.Null) { TeamArg = team, TeamFile = team };
         c.PinDir(dir);
         var (_, record) = DismissVerb.TeamOf(c, dir, []);
+        DismissVerb.TeamReads reads;
+        try
+        {
+            // ah2-253: the herdr resync, roster and open exchanges are the same for every member, so one read serves them all
+            reads = DismissVerb.ReadsOf(c, dir, record);
+        }
+        catch (StoreUnavailableException)
+        {
+            // as each member's own read would: no member is clean while the store cannot answer
+            return [];
+        }
+
         var ready = new List<string>();
         foreach (var m in DismissVerb.Members(record))
         {
-            if (m.Member("name") is { IsText: true } n && names.Contains(n.AsString()) && DismissVerb.CleanOf(c, dir, n.AsString(), record, m).Clean.Token is not null)
+            if (m.Member("name") is { IsText: true } n && names.Contains(n.AsString()) && DismissVerb.CleanOf(c, dir, n.AsString(), record, m, reads).Clean.Token is not null)
             {
                 ready.Add(n.AsString());
             }
@@ -127,15 +139,15 @@ internal static partial class ReleaseGate
     /// are the members that have a row in the team file: their work tree comes from their grants or their row, and any other
     /// member's from the cwd of its latest peers row.
     /// </summary>
-    internal static Outcome Apply(RosterContext c, string dir, IReadOnlyList<JsonValue> closable, IReadOnlySet<string> teamNames)
+    internal static Outcome Apply(RosterContext c, string dir, IReadOnlyList<JsonValue> closable, IReadOnlySet<string> teamNames, JsonArray? sharedRoster = null)
     {
         var hierarchy = c.Services.Hierarchy;
 
         using var decisions = hierarchy.Core.DecisionReads();
-        JsonArray? roster;
+        JsonArray? roster = sharedRoster;
         try
         {
-            roster = hierarchy.Roster.AttributedRoster(dir);
+            roster ??= hierarchy.Roster.AttributedRoster(dir);
         }
         catch (StoreUnavailableException)
         {

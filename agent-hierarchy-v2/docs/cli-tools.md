@@ -2345,13 +2345,18 @@ The Host and Origin checks are what keep other web pages in the browser, and DNS
 
 ## Machine load
 
-The daemon samples the machine once per bare-watch pass: the 1-minute load average per processor, the macOS memory-pressure level
+The daemon samples the machine once per bare-watch pass: the share of CPU time that was busy since the previous sample (macOS:
+`host_statistics(HOST_CPU_LOAD_INFO)`; Linux: the first `cpu` line of `/proc/stat`; iowait counts as idle; not read on Windows), the
+1-minute load average per processor (information only; it never triggers anything), the macOS memory-pressure level
 (`normal`, `warn` or `critical`; `null` elsewhere or when unreadable), the number of Claude harness processes, and the API errors
 (`transport`, `rate_limit`, `server` = `server_error` + `overloaded`, `other`) found in the last ten minutes in the transcripts of the
 watched teams' registered sessions. It never stops, quits, holds or signals anything because of load.
 
 The state is `overloaded` after `ticks` consecutive samples with a trigger, and `ok` again after `ticks` consecutive samples with every
-trigger under 80% of its threshold (the memory trigger clears when the level is not `critical`). The API trigger needs `api_errors`
+trigger under 80% of its threshold (the memory trigger clears when the level is not `critical`). The CPU trigger holds when every
+sample over the last `cpu_busy_seconds` was busy at least `cpu_busy` and those samples span at least that long; a sample with no
+reading breaks the run, and where CPU times cannot be read there is no CPU trigger at all. The `cpu_busy_seconds` are when the CPU
+trigger starts to hold; the state changes on the `ticks`-th sample in a row with the trigger holding. The API trigger needs `api_errors`
 transport plus server errors from at least `api_error_sessions` distinct sessions, and stays on while at least 80% of `api_errors`
 (rounded up) from at least that many sessions remain. A change of state is journaled (a `load-transition` row) and shown
 in `ah msg daemon status`; it is not mailed to any Orchestrator or member. The reported state and the time of the last admitted
@@ -2362,19 +2367,27 @@ the default, and an invalid file gives every default and `load.problem` in `ah m
 
 | key | default | meaning |
 |---|---|---|
-| `load1_per_cpu` | `1.5` | load average per processor at or above which the machine is loaded |
+| `cpu_busy` | `0.90` | share of CPU time busy (above 0, at most 1) at or above which every sample must be |
+| `cpu_busy_seconds` | `180` | how long CPU use must stay at or above `cpu_busy` |
+| `load1_per_cpu` | — | accepted and ignored; the load average no longer triggers anything |
 | `mem_pressure` | `"critical"` | `"warn"` or `"critical"`: the level at or above which it is loaded |
 | `api_errors` | `10` | transport + server API errors in ten minutes |
 | `api_error_sessions` | `3` | distinct sessions those errors must come from |
 | `ticks` | `3` | consecutive samples a change of state needs |
 | `spawn_gap_s` | `300` | least seconds between two admitted spawns while overloaded |
 
-`ah msg daemon status` (up) gains `load`: `{state, since, triggers, load1_per_cpu, mem_pressure, harnesses, api_errors_10m: {transport,
-rate_limit, server, other, total, sessions}, thresholds, problem?}` (JSON), and a `load:` line in text; it is `null` when the daemon is down.
+`ah msg daemon status` (up) gains `load`: `{state, since, triggers, cpu_busy, load1_per_cpu, cpus, mem_pressure, harnesses,
+api_errors_10m: {transport, rate_limit, server, other, total, sessions}, thresholds, cpu_note?, problem?}` (JSON; `cpu_note` is
+`cpu use not read on this platform` where CPU times cannot be read), and a `load:` line in text; it is `null` when the daemon is down.
 
 While overloaded, `roster spawn-one` and `roster spawn-ad-hoc` ask the daemon (`POST /v1/load/admit-spawn`, body `{team, member,
-dry_run}`, answer `{admitted, next_at, triggers}`) and are admitted once per `spawn_gap_s`; otherwise they exit 75 with `machine
-overloaded (<triggers>); next spawn allowed after <time>; nothing was launched`. `--dry-run` is answered but not recorded. With no
+dry_run}`, answer `{admitted, next_at, triggers, harnesses}`) and are admitted once per `spawn_gap_s`; otherwise they exit 75 with `machine
+overloaded (<triggers>); next spawn allowed after <time>; nothing was launched`. For the team's own Orchestrator (or the user) the
+line goes on with `; <n> Claude harness processes run. To spawn anyway, assess the risk and re-run with --despite-load.` and stdout
+gets `{refused: "machine-overloaded", triggers, next_at, harnesses, message}`. `--despite-load` from that caller is admitted whatever
+the load: stderr says `ah roster: spawned despite machine load (<triggers>)`, the result gains `"despite_load": true`, one journal row
+`{at, kind: "load-override", team, member, triggers}` is written, and the pacing clock does not move. From anyone else the flag is
+ignored and said so; with the machine not overloaded or the load unknown it changes nothing. `--dry-run` is answered but not recorded. With no
 daemon (or an error from it) the spawn goes ahead and stderr says `load unknown`. Briefs, resumes, relaunches, `dismiss` and `quit`
 are never paced.
 
