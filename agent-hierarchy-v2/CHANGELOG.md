@@ -4,6 +4,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.23] - 2026-11-19
+
+### Added
+
+- **`/wrangl:hierarchy update`.** Rebuilds the native binaries for the installed plugin version and updates the
+  install stamp, with no questions. For after a plugin update when the background rebuild did not start. It leaves
+  the `ahd` link, PATH and the login item alone.
+
+### Changed
+
+- **The Orchestrator's crown is gold in the herdr pane.** The top Orchestrator's icon was the theme's text colour.
+  A Sub-Orchestrator's stays purple and members keep their lane colours.
+
 ## [2.0.22] - 2026-11-19
 
 ### Added
