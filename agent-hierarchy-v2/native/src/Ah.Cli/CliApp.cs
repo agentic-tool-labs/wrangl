@@ -47,18 +47,8 @@ internal static class CliApp
         }
     }
 
-    /// <summary>The Wrangl mascot in 24-bit colour, embedded from <c>assets/mascot.ansi</c> (made by <c>scripts/gen-mascot.py</c>).</summary>
-    internal static string Mascot()
-    {
-        using var stream = typeof(CliApp).Assembly.GetManifestResourceStream("mascot.ansi");
-        if (stream is null)
-        {
-            return string.Empty;
-        }
-
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
-    }
+    /// <summary>The Wrangl mascot in 24-bit colour, read by <see cref="Ah.Core.Text.Mascot"/>.</summary>
+    internal static string Mascot() => Ah.Core.Text.Mascot.Ansi();
 
     /// <summary>
     /// The verbs that must run whatever the state home is: they report where things are, are how a user recovers, or (a hook)

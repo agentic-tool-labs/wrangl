@@ -576,10 +576,13 @@ rebuild_lock_round() {
         return 2
     fi
     seen_pid=$(printf '%s' "$seen" | sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p')
-    if [ -n "$seen_pid" ] && kill -0 "$seen_pid" 2>/dev/null; then
+    # alive means the process exists: kill -0 also fails for another user's process (EPERM), which ps -p still finds
+    if [ -n "$seen_pid" ] && { kill -0 "$seen_pid" 2>/dev/null || ps -p "$seen_pid" >/dev/null 2>&1; }; then
         seen_age_min=$(( (now_ms - ${seen_at:-0}) / 60000 ))
         return 3
     fi
+    # two installers can both judge this stale lock (no flock(1) to serialise them); the move aside and compare below makes
+    # one lose cleanly: the loser treats the round as held, and no lock is deleted that its taker did not judge
     local aside="$lock_file.stale.$$.$RANDOM"
     mv "$lock_file" "$aside" 2>/dev/null || return 2
     if [ "$(cat "$aside" 2>/dev/null)" = "$seen" ]; then

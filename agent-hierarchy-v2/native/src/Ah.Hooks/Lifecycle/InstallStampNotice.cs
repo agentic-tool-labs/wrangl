@@ -133,14 +133,20 @@ internal static class InstallStampNotice
             case "auto-off":
                 return [$"{BehindText(d)}; run /wrangl:hierarchy install to rebuild it"];
             case "failed":
-                return [$"the background rebuild of ahd failed; see {InjectedText.Quote(RebuildLog(home))}"];
+                return [FailedLine(home)];
             case "spawn-depth" or "no-plugin-root" or "no-installer":
                 return [$"{BehindText(d)}; it was not rebuilt in the background because {Reason(d, s.Environment)}; run /wrangl:hierarchy update"];
         }
 
-        StartRebuild(host, s.Environment, stamp!, file, d.Script!, pluginVersion, s.Clock.UtcNow);
+        if (StartRebuild(host, s.Environment, stamp!, file, d.Script!, pluginVersion, s.Clock.UtcNow) is not null)
+        {
+            return [FailedLine(home)];
+        }
+
         return [$"ahd is being rebuilt in the background for {InjectedText.Clean(pluginVersion, 40)}"];
     }
+
+    private static string FailedLine(string home) => $"the background rebuild of ahd failed; see {InjectedText.Quote(RebuildLog(home))}";
 
     /// <summary>
     /// <c>roster doctor --fix</c> for the <c>ahd-build</c> row: starts the rebuild through <see cref="StartRebuild"/> unless the
@@ -164,15 +170,20 @@ internal static class InstallStampNotice
                 return $"ahd-build {shown}: cannot fix: {Reason(d, env)}; no rebuild started";
         }
 
-        StartRebuild(host, env, stamp!, file, d.Script!, pluginVersion, now);
+        if (StartRebuild(host, env, stamp!, file, d.Script!, pluginVersion, now) is { } reason)
+        {
+            return $"ahd-build {shown}: rebuild could not start: {reason}";
+        }
+
         return $"ahd-build {shown}: rebuild started; log {InjectedText.Quote(RebuildLog(home))}; run ah roster doctor again to see the result";
     }
 
     /// <summary>
     /// The one way a rebuild starts, for SessionStart and <c>roster doctor --fix</c>: records <c>last_rebuild</c> as started in the
-    /// stamp, then starts the installer detached with <c>AH_SPAWN_DEPTH</c> one deeper.
+    /// stamp, then starts the installer detached with <c>AH_SPAWN_DEPTH</c> one deeper. When the installer cannot be started the
+    /// stamp is written again with <c>failed</c> (once, no retry) and the reason is returned; null when it started.
     /// </summary>
-    private static void StartRebuild(IInstallStampHost host, IAhEnvironment env, JsonObject stamp, string file, string script, string pluginVersion, DateTimeOffset now)
+    private static string? StartRebuild(IInstallStampHost host, IAhEnvironment env, JsonObject stamp, string file, string script, string pluginVersion, DateTimeOffset now)
     {
         var home = env.AhHome;
         var updated = new JsonObject();
@@ -181,24 +192,38 @@ internal static class InstallStampNotice
             updated[key] = stamp[key];
         }
 
-        updated["last_rebuild"] = new JsonObject
+        void Write(string state, DateTimeOffset at)
         {
-            ["version"] = pluginVersion,
-            ["at"] = Timestamps.ToIsoString(now),
-            ["state"] = "started",
-        };
-        // One line, "key":value: the form install.sh writes and its sed readers (stamp_raw_field, fail_step) match.
-        host.WriteStamp(file, JsonText.Stringify(updated, 0) + "\n");
-        host.StartRebuild(
-            script,
-            home,
-            new Dictionary<string, string?>(StringComparer.Ordinal)
+            updated["last_rebuild"] = new JsonObject
             {
-                ["HOME"] = env.HomeDirectory,
-                ["PATH"] = env.GetVariable("PATH"),
-                ["AH_HOME"] = home,
-                ["AH_SPAWN_DEPTH"] = (SpawnDepth(env) + 1).ToString(CultureInfo.InvariantCulture),
-            });
+                ["version"] = pluginVersion,
+                ["at"] = Timestamps.ToIsoString(at),
+                ["state"] = state,
+            };
+            // One line, "key":value: the form install.sh writes and its sed readers (stamp_raw_field, fail_step) match.
+            host.WriteStamp(file, JsonText.Stringify(updated, 0) + "\n");
+        }
+
+        Write("started", now);
+        try
+        {
+            host.StartRebuild(
+                script,
+                home,
+                new Dictionary<string, string?>(StringComparer.Ordinal)
+                {
+                    ["HOME"] = env.HomeDirectory,
+                    ["PATH"] = env.GetVariable("PATH"),
+                    ["AH_HOME"] = home,
+                    ["AH_SPAWN_DEPTH"] = (SpawnDepth(env) + 1).ToString(CultureInfo.InvariantCulture),
+                });
+            return null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            Write("failed", now);
+            return string.IsNullOrEmpty(e.Message) ? e.GetType().Name : e.Message;
+        }
     }
 
     /// <summary>

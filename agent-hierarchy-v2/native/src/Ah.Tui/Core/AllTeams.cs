@@ -59,6 +59,9 @@ internal static class AllTeams
     /// short of room shows in place of <c>Name</c>.</summary>
     internal sealed record AgentRow(string Id, string Name, StatusLanguage.Status Status, string? Since, string Working, string? Short = null, string? Liveness = null)
     {
+        /// <summary>The member's role, which picks its colour.</summary>
+        internal string? Role { get; init; }
+
         /// <summary>The item title the daemon serves for the member.</summary>
         internal string? Item { get; init; }
 

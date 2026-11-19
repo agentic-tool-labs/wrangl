@@ -48,9 +48,20 @@ internal static class TeamSlices
         slices.GetValueOrDefault(id) is { IsMap: true } team && (Obj(team, "lane") is not null || Obj(team, "lane_claim") is not null);
 
     /// <summary>The team's on-duty line, <c>Deputy on duty: &lt;name&gt; since &lt;time&gt; · the chief is with the user</c>; null when no deputy is on duty.</summary>
-    internal static string? DutyLine(IReadOnlyDictionary<string, JsonValue> slices, string id) =>
+    internal static string? DutyLine(IReadOnlyDictionary<string, JsonValue> slices, string id) => Duty(slices, id)?.Line;
+
+    /// <summary>What the duty line starts with, before the deputy's name.</summary>
+    internal const string DutyLead = "Deputy on duty: ";
+
+    /// <summary>The duty line, the deputy's name in it, and the deputy's role (null when the deputy is not a member).</summary>
+    internal sealed record DutyText(string Line, string Deputy, string? Role);
+
+    internal static DutyText? Duty(IReadOnlyDictionary<string, JsonValue> slices, string id) =>
         slices.GetValueOrDefault(id) is { IsMap: true } team && Obj(team, "duty") is { } duty && duty.Member("deputy") is { IsText: true } deputy
-            ? $"Deputy on duty: {deputy.AsString()}{(duty.Member("since") is { IsText: true } since ? " since " + since.AsString() : string.Empty)} · the chief is with the user{TallyText(duty)}"
+            ? new DutyText(
+                $"{DutyLead}{deputy.AsString()}{(duty.Member("since") is { IsText: true } since ? " since " + since.AsString() : string.Empty)} · the chief is with the user{TallyText(duty)}",
+                deputy.AsString(),
+                DutyMember(team) is { } member ? RoleOf(slices, team, member) : null)
             : null;
 
     /// <summary><c> · N handled, M escalated, K waiting on you</c> from the duty's recorded tally; empty before the first one.</summary>
@@ -397,6 +408,7 @@ internal static class TeamSlices
 
             agents.Add(new(m, label, status, since, mine?.What ?? "–", shortName, liveness is "" ? null : liveness)
             {
+                Role = RoleOf(slices, team, m),
                 Item = Text(Obj(states, m), "item"),
                 Live = states is null ? "–" : liveness is "" ? "live" : liveness ?? "–",
                 Tool = Text(Obj(states, m), "tool"),
@@ -527,10 +539,14 @@ internal static class TeamSlices
     private static Dictionary<string, string> AgentNames(IReadOnlyDictionary<string, JsonValue> slices, JsonValue team)
     {
         var ids = MemberIds(team);
-        var roleOf = (string id) => Text(slices.GetValueOrDefault(id), "role") ?? (id == Text(team, "orchestrator") ? "orchestrator" : Last(id));
+        var roleOf = (string id) => RoleOf(slices, team, id);
         var repeated = ids.GroupBy(roleOf, StringComparer.Ordinal).Where(static g => g.Count() > 1).Select(static g => g.Key).ToHashSet(StringComparer.Ordinal);
         return ids.ToDictionary(id => id, id => repeated.Contains(roleOf(id)) ? $"{roleOf(id)} ({Last(id)})" : roleOf(id), StringComparer.Ordinal);
     }
+
+    /// <summary>A member's role: its record's, else the orchestrator's for the team's orchestrator, else the last part of its id.</summary>
+    private static string RoleOf(IReadOnlyDictionary<string, JsonValue> slices, JsonValue team, string id) =>
+        Text(slices.GetValueOrDefault(id), "role") ?? (id == Text(team, "orchestrator") ? "orchestrator" : Last(id));
 
     private static List<string> MemberIds(JsonValue? team)
     {

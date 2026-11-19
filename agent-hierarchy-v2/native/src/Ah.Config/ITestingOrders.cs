@@ -19,7 +19,7 @@ public interface ITestingOrders
     [
         ("implementor", "touched: only the test classes or files for the code you changed; never a whole project or the full set"),
         ("ux-engineer", "touched: only the test classes or files for the code you changed, plus your own visual and contrast checks; E4 only when the brief asks"),
-        ("reviewer", "none: delegate any run you need"),
+        ("reviewer", "none: delegate any run you need, unless a rule of engagement says reviewers run nothing; then ask for no run"),
         ("qa", "full: the full set once per ship batch"),
         ("e4", "background: run the E4 perf harness in the background"),
     ];

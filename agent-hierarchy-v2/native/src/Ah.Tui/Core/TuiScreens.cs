@@ -42,8 +42,11 @@ internal enum TuiLineKind
     Dim,
 }
 
-/// <summary>One line of a frame, plain; <paramref name="Tone"/> names the status tone of the span from <paramref name="ToneAt"/>.</summary>
-internal sealed record TuiLine(string Text, TuiLineKind Kind = TuiLineKind.Normal, int ToneAt = 0, int ToneLength = 0, string? Tone = null);
+/// <summary>A run of a line's text, from <paramref name="At"/> for <paramref name="Length"/> characters, painted in <paramref name="Color"/>.</summary>
+internal sealed record TuiSpan(int At, int Length, TuiRgb Color);
+
+/// <summary>One line of a frame, plain; <paramref name="Spans"/> are the runs of it painted in a colour.</summary>
+internal sealed record TuiLine(string Text, TuiLineKind Kind = TuiLineKind.Normal, IReadOnlyList<TuiSpan>? Spans = null);
 
 /// <summary>Where an open dialog sits on screen, end exclusive; its close control is three cells at <paramref name="CloseX"/> on its top line.</summary>
 internal sealed record TuiBox(int X0, int Y0, int X1, int Y1, int CloseX);
@@ -141,12 +144,12 @@ internal static class TuiScreens
     {
         if (input.Down)
         {
-            return new TuiFrame([new TuiLine(TuiText.Fit(DownLine, Math.Max(1, cols)))], Hit.Empty, [], [], 0, 0);
+            return new TuiFrame([Whole(TuiText.Fit(DownLine, Math.Max(1, cols)), TuiLineKind.Normal, TuiTheme.Blocked)], Hit.Empty, [], [], 0, 0);
         }
 
         if (s.Help && rows is not null)
         {
-            return new TuiFrame([new TuiLine(TuiText.Fit("ah › keys", cols), TuiLineKind.Title), .. HelpPage.Select(l => new TuiLine(TuiText.Fit(l, cols)))], Hit.Empty, [], [], 0, 0);
+            return new TuiFrame([new TuiLine(TuiText.Fit("ah › keys", cols), TuiLineKind.Title, [new TuiSpan(0, 2, TuiTheme.Title)]), .. HelpPage.Select(l => new TuiLine(TuiText.Fit(l, cols)))], Hit.Empty, [], [], 0, 0);
         }
 
         var plain = rows is null;
@@ -160,7 +163,11 @@ internal static class TuiScreens
         return s.Detail is { } card && rows is { } total ? WithDialog(frame, card, s.DetailScroll, input, cols, total) : frame;
     }
 
-    private sealed record Page(List<(string Text, string Path)> Crumbs, string Right, List<TuiLine> Fixed, List<TuiLine> Body, List<string> RowIds, List<int> RowLines, string Footer);
+    /// <summary>A screen before it is fitted; <paramref name="TitleSpans"/> are placed in the joined crumbs, <paramref name="RightSpans"/> in <paramref name="Right"/>.</summary>
+    private sealed record Page(List<(string Text, string Path)> Crumbs, string Right, List<TuiLine> Fixed, List<TuiLine> Body, List<string> RowIds, List<int> RowLines, string Footer, IReadOnlyList<TuiSpan>? TitleSpans = null, IReadOnlyList<TuiSpan>? RightSpans = null);
+
+    /// <summary>A line painted in one colour from end to end.</summary>
+    private static TuiLine Whole(string text, TuiLineKind kind, TuiRgb color) => new(text, kind, [new TuiSpan(0, text.Length, color)]);
 
     private static TuiFrame Assemble(Page p, TuiLevel level, TuiScreenInput input, int cols, int? rows)
     {
@@ -179,10 +186,18 @@ internal static class TuiScreens
         }
 
         var room = cols - TuiText.Width(title) - 2;
-        var head = room >= 4 && p.Right.Length > 0
-            ? title + new string(' ', Math.Max(2, cols - TuiText.Width(title) - Math.Min(room, TuiText.Width(p.Right)))) + TuiText.Fit(p.Right, room)
+        var withRight = room >= 4 && p.Right.Length > 0;
+        var right = withRight ? TuiText.Fit(p.Right, room) : string.Empty;
+        var head = withRight
+            ? title + new string(' ', Math.Max(2, cols - TuiText.Width(title) - Math.Min(room, TuiText.Width(p.Right)))) + right
             : TuiText.Fit(title, cols);
-        var lines = new List<TuiLine> { new(head, TuiLineKind.Title) };
+        List<TuiSpan> titleSpans = [new TuiSpan(0, p.Crumbs[0].Text.Length, TuiTheme.Title), .. p.TitleSpans ?? []];
+        if (withRight)
+        {
+            titleSpans.AddRange((p.RightSpans ?? []).Select(sp => sp with { At = head.Length - right.Length + sp.At }));
+        }
+
+        var lines = new List<TuiLine> { new(head, TuiLineKind.Title, titleSpans) };
         lines.AddRange(p.Fixed);
         var top = lines.Count;
         var hitRows = new List<HitRow>();
@@ -204,10 +219,11 @@ internal static class TuiScreens
                 lines.Add(new TuiLine(string.Empty));
             }
 
-            var foot = input.Fault.Length > 0 ? TuiText.Plain(input.Fault) : p.Footer;
             if (total > 1)
             {
-                lines.Add(new TuiLine(TuiText.Fit(foot, cols), TuiLineKind.Dim));
+                lines.Add(input.Fault.Length > 0
+                    ? Whole(TuiText.Fit(TuiText.Plain(input.Fault), cols), TuiLineKind.Dim, TuiTheme.Blocked)
+                    : new TuiLine(TuiText.Fit(p.Footer, cols), TuiLineKind.Dim));
             }
         }
 
@@ -226,25 +242,29 @@ internal static class TuiScreens
         return at >= 0 ? at : Math.Clamp(level.Index, 0, ids.Count - 1);
     }
 
-    /// <summary>A row's cells at their widths, with the status cell's place: columns too wide for the screen have been dropped from the right already.</summary>
-    private static TuiLine Row(string marker, IReadOnlyList<(string Text, int Width, bool Right)> cells, bool selected, int toneCell = -1, string? tone = null)
+    /// <summary>A row's cells at their widths, each painted in its colour if it has one: columns too wide for the screen have been dropped from the right already.</summary>
+    private static TuiLine Row(string marker, IReadOnlyList<(string Text, int Width, bool Right)> cells, bool selected, params (int Cell, TuiRgb? Color)[] colors)
     {
         var text = marker;
-        var (at, length) = (0, 0);
+        var spans = new List<TuiSpan>();
         for (var i = 0; i < cells.Count; i++)
         {
             var (cell, width, right) = cells[i];
             var fit = TuiText.Fit(cell, width);
-            if (i == toneCell)
+            var padded = right ? TuiText.PadLeft(fit, width) : TuiText.Pad(fit, width);
+            if (colors.FirstOrDefault(c => c.Cell == i).Color is { } color && fit.Length > 0)
             {
-                (at, length) = (text.Length, fit.Length);
+                spans.Add(new TuiSpan(text.Length + (right ? padded.Length - fit.Length : 0), fit.Length, color));
             }
 
-            text += (right ? TuiText.PadLeft(fit, width) : TuiText.Pad(fit, width)) + (i < cells.Count - 1 ? "  " : string.Empty);
+            text += padded + (i < cells.Count - 1 ? "  " : string.Empty);
         }
 
-        return new TuiLine(text.TrimEnd(), selected ? TuiLineKind.Selected : TuiLineKind.Normal, at, length, selected ? null : tone);
+        return new TuiLine(text.TrimEnd(), selected ? TuiLineKind.Selected : TuiLineKind.Normal, spans);
     }
+
+    /// <summary>A count's colour: none for a zero or an unknown.</summary>
+    private static TuiRgb? CountColor(string count, TuiRgb color) => count is "0" or "–" ? null : color;
 
     /// <summary>The widths left of these columns, the first flexing into what remains of <paramref name="cols"/>; those on the right go until it has <paramref name="least"/>.</summary>
     private static int[] Widths(int cols, int least, params int[] rest)
@@ -312,6 +332,8 @@ internal static class TuiScreens
         {
             var (row, lane) = shown[i];
             var needs = TeamSlices.NeedsShown(row.NeedsYou, !row.PlanLoaded) is { } n ? n.ToString(CultureInfo.InvariantCulture) : "–";
+            var working = row.Working.ToString(CultureInfo.InvariantCulture);
+            var blocked = row.Blocked.ToString(CultureInfo.InvariantCulture);
             lines.Add(body.Count);
             body.Add(Row(
                 i == chosen ? "▸ " : "  ",
@@ -319,13 +341,15 @@ internal static class TuiScreens
                     ((lane ? "  " : string.Empty) + TuiText.Plain(row.Name), false),
                     (StateWord(row.Status, row.Since), false),
                     (needs, true),
-                    (row.Working.ToString(CultureInfo.InvariantCulture), true),
-                    (row.Blocked.ToString(CultureInfo.InvariantCulture), true),
+                    (working, true),
+                    (blocked, true),
                     ($"{row.ItemsDone.ToString(CultureInfo.InvariantCulture)}/{row.ItemsTotal.ToString(CultureInfo.InvariantCulture)}", true),
                     (row.Updated ?? "–", false)),
                 i == chosen,
-                1,
-                row.Status.Tone));
+                (1, TuiTheme.Tone(row.Status.Tone)),
+                (2, CountColor(needs, TuiTheme.Attention)),
+                (3, CountColor(working, TuiTheme.Working)),
+                (4, CountColor(blocked, TuiTheme.Blocked))));
         }
 
         return new Page(crumbs, right, fixedLines, body, ids, lines, Foot);
@@ -344,9 +368,11 @@ internal static class TuiScreens
         var detail = tree is null ? null : TeamSlices.Team(tree, slices, id, input.Now);
         var agents = slices.ContainsKey(id) && detail is { } d ? d.Detail.Agents : null;
         body.Add(new TuiLine("AGENTS", TuiLineKind.Heading));
-        if (TeamSlices.DutyLine(slices, id) is { } onDuty)
+        if (TeamSlices.Duty(slices, id) is { } onDuty)
         {
-            body.Add(new TuiLine(TuiText.Fit("  " + TuiText.Plain(onDuty), cols), TuiLineKind.Dim));
+            var at = "  ".Length + TeamSlices.DutyLead.Length;
+            TuiSpan[] deputy = TuiTheme.Role(onDuty.Role) is { } color ? [new TuiSpan(at, TuiText.Plain(onDuty.Deputy).Length, color)] : [];
+            body.Add(new TuiLine(TuiText.Fit("  " + TuiText.Plain(onDuty.Line), cols), TuiLineKind.Dim, deputy));
         }
 
         var lane = TeamSlices.IsLane(slices, id);
@@ -368,7 +394,7 @@ internal static class TuiScreens
                 var a = agents[i];
                 string[] all = [TuiText.Plain(a.Short ?? a.Name), StateWord(a.Status, a.Since), a.Live, TuiText.Plain(a.Item ?? a.Working)];
                 lines.Add(body.Count);
-                body.Add(Row(i == chosen ? "▸ " : "  ", [.. widths.Select((width, c) => (all[c], width, false))], i == chosen, widths.Length > 1 ? 1 : -1, a.Status.Tone));
+                body.Add(Row(i == chosen ? "▸ " : "  ", [.. widths.Select((width, c) => (all[c], width, false))], i == chosen, (0, TuiTheme.Role(a.Role)), (1, TuiTheme.Tone(a.Status.Tone))));
             }
         }
 
@@ -402,9 +428,9 @@ internal static class TuiScreens
             body.Add(new TuiLine(TuiText.Fit((here ? "▸ " : "  ") + (l.Heading ? string.Empty : "  ") + l.Text, cols), here ? TuiLineKind.Selected : l.Heading ? TuiLineKind.Heading : l.Stop is null ? TuiLineKind.Dim : TuiLineKind.Normal));
         }
 
-        var counts = TeamCounts(tree, id);
+        var (counts, countSpans) = TeamCounts(tree, id);
         var left = sitrep is { Left: > 0 } gone ? gone.Left.ToString(CultureInfo.InvariantCulture) + " left the view" : string.Empty;
-        return new Page(crumbs, Join(counts, Updated(input), left), [], body, ids, lines, "click or ⏎ open or fold  esc teams  q quit");
+        return new Page(crumbs, Join(counts, Updated(input), left), [], body, ids, lines, "click or ⏎ open or fold  esc teams  q quit", RightSpans: countSpans);
     }
 
     /// <summary>The name, state, liveness and item columns that fit, the rightmost going first; the item takes what is left.</summary>
@@ -420,16 +446,34 @@ internal static class TuiScreens
             : [Math.Max(1, total)];
     }
 
-    /// <summary>The team's own counts for the header, in the Sitrep's glyphs.</summary>
-    private static string TeamCounts(TeamSlices.Tree? tree, string id)
+    /// <summary>The team's own counts for the header, in the Sitrep's glyphs, each but a zero in its state's colour.</summary>
+    private static (string Text, List<TuiSpan> Spans) TeamCounts(TeamSlices.Tree? tree, string id)
     {
         if (tree is null || !tree.Own.TryGetValue(id, out var row))
         {
-            return string.Empty;
+            return (string.Empty, []);
         }
 
         var needs = TeamSlices.NeedsShown(row.NeedsYou, !row.PlanLoaded) is { } n ? n.ToString(CultureInfo.InvariantCulture) : "–";
-        return $"?{needs} ▶{row.Working.ToString(CultureInfo.InvariantCulture)} ‖{row.Blocked.ToString(CultureInfo.InvariantCulture)}";
+        var text = string.Empty;
+        var spans = new List<TuiSpan>();
+        foreach (var (glyph, count, color) in new[]
+        {
+            ("?", needs, TuiTheme.Attention),
+            ("▶", row.Working.ToString(CultureInfo.InvariantCulture), TuiTheme.Working),
+            ("‖", row.Blocked.ToString(CultureInfo.InvariantCulture), TuiTheme.Blocked),
+        })
+        {
+            text += text.Length > 0 ? " " : string.Empty;
+            if (CountColor(count, color) is { } c)
+            {
+                spans.Add(new TuiSpan(text.Length, glyph.Length + count.Length, c));
+            }
+
+            text += glyph + count;
+        }
+
+        return (text, spans);
     }
 
     private static Page AgentPage(TuiScreenState s, TuiScreenInput input, int cols, bool plain)
@@ -489,7 +533,9 @@ internal static class TuiScreens
             }
         }
 
-        return new Page(crumbs, right, [], body, ids, lines, "click or ⏎ open  esc team  q quit");
+        var crumbAt = crumbs[0].Text.Length + Sep.Length + crumbs[1].Text.Length + Sep.Length;
+        TuiSpan[] role = agent is { Role: { } named } && TuiTheme.Role(named) is { } color ? [new TuiSpan(crumbAt, name.Length, color)] : [];
+        return new Page(crumbs, right, [], body, ids, lines, "click or ⏎ open  esc team  q quit", role);
     }
 
     /// <summary>A work item's popup over the frame on show, centred, four fifths of the screen each way: its state, holder, note and log, scrolled inside.</summary>

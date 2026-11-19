@@ -53,9 +53,8 @@ internal static class TuiApp
                 return NotImplemented;
             }
 
-            var color = TuiTheme.UseColor(host.GetVariable("NO_COLOR"));
             return await InteractiveTui
-                .RunAsync(parsed.Team, host.Terminal, host.Source, host.Discovery, host.Clock, color, host.Stderr, cancellationToken, caps)
+                .RunAsync(parsed.Team, host.Terminal, host.Source, host.Discovery, host.Clock, TuiTheme.Depth(host.GetVariable), host.Stderr, cancellationToken, caps)
                 .ConfigureAwait(false);
         }
 
