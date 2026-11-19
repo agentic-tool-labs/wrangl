@@ -103,7 +103,7 @@ AH_DAEMON=off pstart s2base
 PBASE=$OUT
 stamp 0.1.0 "$CONTRACT" false
 start s2u
-check "P-17 an unregistered session gets no stamp line (byte-identical to the baseline)" '[ -z "$(notice_lines)" ] && [ "$OUT" = "$BASE" ]'
+check "P-17 an unregistered session gets the stamp line too (D7)" '[ "$(notice_lines)" = "ahd in \"/sandbox/bin/ahd\" is older than the plugin (0.1.0 < $PLUGIN_VERSION); run /wrangl:hierarchy install to rebuild it" ]'
 pstart s2a
 L=$(notice_lines)
 check "P-17 an older stamp, auto_rebuild false: exactly one version notice" '[ "$L" = "ahd in \"/sandbox/bin/ahd\" is older than the plugin (0.1.0 < $PLUGIN_VERSION); run /wrangl:hierarchy install to rebuild it" ]'
@@ -143,7 +143,9 @@ startsp() { OUT=$(printf '{"session_id":"%s","cwd":"%s","source":"startup","hook
 startsp_plain() { OUT=$(printf '{"session_id":"%s","cwd":"%s","source":"startup","hook_event_name":"SessionStart"}' "$1" "$PROJ" | AH_PLUGIN_ROOT="$SP" ah_test_in_harness sh "$SP/bin/ah-hook" sessionstart 2>"$T/err"); RC=$?; }
 stamp 0.1.0 "$CONTRACT" true
 startsp_plain s3u
-check "P-18 an unregistered session with a behind stamp and auto_rebuild true starts no rebuild and records nothing" 'sleep 0.5; [ "$(rb_calls)" = 0 ] && [ -z "$(notice_lines)" ] && [ "$(node -e "console.log(JSON.parse(require(\"fs\").readFileSync(process.argv[1],\"utf8\")).last_rebuild)" "$AH_HOME/install.json")" = null ]'
+check "P-18 an unregistered session with a behind stamp and auto_rebuild true starts the rebuild and gets the line (D7)" 'waitfor "[ \"\$(rb_calls)\" = 1 ]" 30 && [ "$(notice_lines)" = "ahd is being rebuilt in the background for $PLUGIN_VERSION" ]'
+# reset: the member rows below count their own starts from a fresh stamp
+rm -f "$RB"; stamp 0.1.0 "$CONTRACT" true
 startsp s3a
 L=$(notice_lines)
 check "P-18 auto_rebuild true and behind: one line, and the rebuild starts once with --apply --rebuild-only --quiet" 'waitfor "[ \"\$(rb_calls)\" = 1 ]" 30 && [ "$L" = "ahd is being rebuilt in the background for $PLUGIN_VERSION" ] && grep -q "argv: --apply --rebuild-only --quiet" "$RB"'
@@ -162,7 +164,7 @@ check "P-18 a rebuild last started 25 h ago may start again" 'waitfor "[ \"\$(rb
 stamp 0.1.0 "$CONTRACT" true
 mv "$SP/scripts/install.sh" "$SP/scripts/install.sh.off"
 startsp s3e
-check "P-18 no install script: nothing started, no line added, exit 0" '[ -z "$(notice_lines)" ] && [ $RC = 0 ] && [ "$(rb_calls)" = 2 ]'
+check "P-18 no install script: nothing started, one line naming the missing script and the fix (D3), exit 0" 'L=$(notice_lines); [[ "$L" == "ahd in \"/sandbox/bin/ahd\" is older than the plugin"*"; it was not rebuilt in the background because the install script "*" is missing; run /wrangl:hierarchy update" ]] && [ "$(printf %s "$L" | wc -l | tr -d " ")" = 0 ] && [ $RC = 0 ] && [ "$(rb_calls)" = 2 ]'
 mv "$SP/scripts/install.sh.off" "$SP/scripts/install.sh"
 stamp 0.1.0 "$CONTRACT" false
 startsp s3f

@@ -46,7 +46,7 @@ public sealed class InstallStampNoticeTests
 
     private sealed class Rig
     {
-        public Rig(string contract = "1", bool withScript = true, string? spawnDepth = null)
+        public Rig(string contract = "1", bool withScript = true, string? spawnDepth = null, bool withPlugin = true)
         {
             Sandbox = UnitSandbox.Create();
             Home = Sandbox.Root + "/ah";
@@ -70,7 +70,7 @@ public sealed class InstallStampNoticeTests
                 variables["AH_SPAWN_DEPTH"] = spawnDepth;
             }
 
-            var env = new FakeEnvironment(variables, new PluginInfo(PluginRoot, "wrangl", PluginVersion, contract));
+            var env = new FakeEnvironment(variables, withPlugin ? new PluginInfo(PluginRoot, "wrangl", PluginVersion, contract) : null);
             var io = PlatformModule.CreateIo(null);
             Clock = new FakeClock(new DateTimeOffset(2026, 10, 11, 12, 0, 0, TimeSpan.Zero));
             var facts = new ProcessFacts(Sandbox.Root, 4242);
@@ -101,6 +101,8 @@ public sealed class InstallStampNoticeTests
         public void WriteStamp(string json) => File.WriteAllText(StampPath, json);
 
         public IReadOnlyList<string> Lines() => HooksModule.InstallStampLines(Services, Host, PluginVersion);
+
+        public (string Level, string Detail) Doctor() => HooksModule.AhdBuildRow(Services.Environment, Services.Files, PluginVersion, Clock.UtcNow);
     }
 
     private sealed class NoWriter : IStateWriter
@@ -144,7 +146,7 @@ public sealed class InstallStampNoticeTests
     [InlineData("""{"version":"0.2.0","contract":1}""")]
     [InlineData("""{"version":"0.3.0","contract":1}""")]
     [InlineData("""{"contract":1}""")]
-    [InlineData("""{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:00:00.000Z","state":"started"}}""")]
+    [InlineData("""{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:55:00.000Z","state":"started"}}""")]
     public void AStampThatIsNotBehindOrIsAlreadyBeingRebuiltGivesNoLine(string stamp)
     {
         var rig = new Rig();
@@ -185,7 +187,9 @@ public sealed class InstallStampNoticeTests
         var first = rig.Lines();
 
         Assert.Equal(["ahd is being rebuilt in the background for 0.2.0"], first);
-        var written = JsonText.Parse(Assert.Single(rig.Host.Writes).Text);
+        var text = Assert.Single(rig.Host.Writes).Text;
+        Assert.Matches("""^\{"version":"0\.1\.0",.*"last_rebuild":\{"version":"0\.2\.0","at":"[^"]*","state":"started"\}\}\n$""", text);
+        var written = JsonText.Parse(text);
         Assert.Equal("started", written.Member("last_rebuild")!.Value.Member("state")!.Value.AsString());
         Assert.Equal("0.2.0", written.Member("last_rebuild")!.Value.Member("version")!.Value.AsString());
         Assert.Equal("0.1.0", written.Member("version")!.Value.AsString());
@@ -224,14 +228,32 @@ public sealed class InstallStampNoticeTests
     }
 
     [Fact]
-    public void ARebuildStartedOneMillisecondInsideTheDayIsStillRecent()
+    public void ARebuildStartedOneMillisecondInsideFifteenMinutesIsInProgress()
     {
         var rig = new Rig();
         rig.WriteStamp(
-            """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-10T12:00:00.001Z","state":"started"}}""");
+            """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:45:00.001Z","state":"started"}}""");
 
         Assert.Empty(rig.Lines());
         Assert.Empty(rig.Host.Rebuilds);
+        Assert.Equal("ok", rig.Doctor().Level);
+        Assert.Contains("in progress", rig.Doctor().Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARebuildStartedTwentyMinutesAgoIsStalledAndStartedAgain()
+    {
+        var rig = new Rig();
+        rig.WriteStamp(
+            """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:40:00.000Z","state":"started"}}""");
+
+        var doctor = rig.Doctor();
+        Assert.Equal("warn", doctor.Level);
+        Assert.Contains("started 20m ago never finished", doctor.Detail, StringComparison.Ordinal);
+        Assert.Empty(rig.Host.Rebuilds);
+
+        Assert.Equal(["ahd is being rebuilt in the background for 0.2.0"], rig.Lines());
+        Assert.Single(rig.Host.Rebuilds);
     }
 
     [Fact]
@@ -278,27 +300,102 @@ public sealed class InstallStampNoticeTests
     }
 
     [Fact]
-    public void AMissingInstallScriptStartsNothingAndRecordsNothing()
+    public void AMissingInstallScriptStartsNothingRecordsNothingAndSaysWhy()
     {
         var rig = new Rig(withScript: false);
         rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
 
-        Assert.Empty(rig.Lines());
+        Assert.Equal(
+            [$"ahd in \"ahd\" is older than the plugin (0.1.0 < 0.2.0); it was not rebuilt in the background because the install script \"{rig.PluginRoot}/scripts/install.sh\" is missing; run /wrangl:hierarchy update"],
+            rig.Lines());
         Assert.Empty(rig.Host.Rebuilds);
         Assert.Empty(rig.Host.Writes);
+    }
+
+    [Fact]
+    public void AnUnknownPluginRootStartsNothingAndSaysWhy()
+    {
+        var rig = new Rig(withPlugin: false);
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
+
+        var line = Assert.Single(rig.Lines());
+        Assert.EndsWith("because the plugin root is not known; run /wrangl:hierarchy update", line, StringComparison.Ordinal);
+        Assert.Empty(rig.Host.Rebuilds);
     }
 
     [Theory]
     [InlineData("1")]
     [InlineData("3")]
-    public void ASpawnDepthAboveZeroRefusesTheRebuild(string depth)
+    public void ASpawnDepthAboveZeroRefusesTheRebuildAndSaysWhy(string depth)
     {
         var rig = new Rig(spawnDepth: depth);
         rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
 
-        Assert.Empty(rig.Lines());
+        Assert.Equal(
+            [$"ahd in \"ahd\" is older than the plugin (0.1.0 < 0.2.0); it was not rebuilt in the background because this process was started by another ah process (AH_SPAWN_DEPTH={depth}); run /wrangl:hierarchy update"],
+            rig.Lines());
         Assert.Empty(rig.Host.Rebuilds);
         Assert.Empty(rig.Host.Writes);
+    }
+
+    [Fact]
+    public void DoctorOnACurrentStampIsOkAndNamesBothVersions()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.2.0","contract":1}""");
+
+        Assert.Equal(("ok", "stamp 0.2.0 contract 1, plugin 0.2.0 contract 1"), rig.Doctor());
+    }
+
+    [Fact]
+    public void DoctorWithoutAStampSaysNotInstalledAndTheInstallFix()
+    {
+        var rig = new Rig();
+
+        var (level, detail) = rig.Doctor();
+
+        Assert.Equal("warn", level);
+        Assert.Equal($"not installed: no \"{rig.StampPath}\"; run /wrangl:hierarchy install", detail);
+        Assert.False(File.Exists(rig.StampPath));
+    }
+
+    [Fact]
+    public void DoctorOnABehindStampWarnsWithReasonAndFixAndWritesNothing()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
+        var before = File.ReadAllText(rig.StampPath);
+
+        Assert.Equal(
+            ("warn", "stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; no background rebuild has started yet; the next session start starts one; run /wrangl:hierarchy update"),
+            rig.Doctor());
+        Assert.Equal(before, File.ReadAllText(rig.StampPath));
+        Assert.Empty(rig.Host.Rebuilds);
+    }
+
+    [Fact]
+    public void DoctorWithAutoRebuildOffWarnsAutoOff()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":false}""");
+
+        var (level, detail) = rig.Doctor();
+
+        Assert.Equal("warn", level);
+        Assert.Contains("auto_rebuild is off", detail, StringComparison.Ordinal);
+        Assert.EndsWith("run /wrangl:hierarchy update", detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DoctorOnARecentFailureNamesTheLogAndTheUpdateFix()
+    {
+        var rig = new Rig();
+        rig.WriteStamp(
+            """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:00:00.000Z","state":"failed"}}""");
+
+        Assert.Equal(
+            ("warn", $"stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; the background rebuild failed 1h ago; see \"{rig.Home}/logs/rebuild.log\"; run /wrangl:hierarchy update"),
+            rig.Doctor());
     }
 
     [Theory]

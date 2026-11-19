@@ -37,6 +37,13 @@ public static class HooksModule
     public static IReadOnlyList<string> InstallStampLines(GateServices services, IInstallStampHost host, string pluginVersion) =>
         InstallStampNotice.Lines(services, host, pluginVersion);
 
+    /// <summary>
+    /// The <c>ahd-build</c> row of <c>roster doctor</c> (<c>ok</c> or <c>warn</c> and its text), from the same decision SessionStart
+    /// uses. Reads only; a stamp that cannot be read or parsed throws.
+    /// </summary>
+    public static (string Level, string Detail) AhdBuildRow(IAhEnvironment env, IFileReader files, string pluginVersion, DateTimeOffset now) =>
+        InstallStampNotice.DoctorRow(env, files, pluginVersion, now);
+
     /// <summary>The context line SessionStart adds when the herdr desktop mod's marker is older than the plugin (zero or one). Never throws.</summary>
     public static IReadOnlyList<string> HerdrModLines(GateServices services, string pluginVersion) =>
         HerdrModNotice.Lines(services, pluginVersion);

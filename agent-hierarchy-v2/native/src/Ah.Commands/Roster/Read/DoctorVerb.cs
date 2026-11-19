@@ -287,6 +287,7 @@ internal static partial class DoctorVerb
         Add("codex-grants", () => CodexGrants(c));
         Add("state-db", () => StateDbRow(c));
         Add("ahd-heal", () => AhdHealRow(c));
+        Add("ahd-build", () => AhdBuildRow(c));
         List<string> paused = [];
         try
         {

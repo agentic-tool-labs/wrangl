@@ -414,6 +414,13 @@ check "P-15 ... records last_rebuild failed" grep -q '"last_rebuild":{"version":
 check "P-15 ... and keeps every other field" same "$good_stamp_head" "$(sed 's/"last_rebuild":.*//' "$AH_HOME/install.json")"
 check "P-15 ... and leaves the lock released" test ! -e "$AH_HOME/bin/.rebuild.lock"
 
+# the SessionStart hook records "started" in this one-line form (InstallStampNotice); a failed rebuild must still record failed
+sed -E 's/"last_rebuild":(null|\{[^}]*\})\}$/"last_rebuild":{"version":"1.2.3","at":"2026-10-11T12:00:00.000Z","state":"started"}}/' "$AH_HOME/install.json" > "$T/hook-stamp" && mv -f "$T/hook-stamp" "$AH_HOME/install.json"
+check "P-15 the hook-form seed says started" grep -q '"state":"started"}}$' "$AH_HOME/install.json"
+FAKE_PUBLISH_FAIL=1 run_install --apply --rebuild-only --quiet --prefix "$T/bin2" >/dev/null 2>&1
+check "P-15 a failed rebuild over the hook's started stamp records failed" grep -q '"last_rebuild":{"version":"1.2.3","at":"[^"]*","state":"failed"}}$' "$AH_HOME/install.json"
+rm -f "$AH_HOME/bin/.rebuild.lock"
+
 # --- the rebuild lock without flock(1): a stale lock is reported and left alone ------------------------------
 now_ms=$(( $(date +%s) * 1000 ))
 printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
