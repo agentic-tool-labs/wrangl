@@ -421,16 +421,31 @@ FAKE_PUBLISH_FAIL=1 run_install --apply --rebuild-only --quiet --prefix "$T/bin2
 check "P-15 a failed rebuild over the hook's started stamp records failed" grep -q '"last_rebuild":{"version":"1.2.3","at":"[^"]*","state":"failed"}}$' "$AH_HOME/install.json"
 rm -f "$AH_HOME/bin/.rebuild.lock"
 
-# --- the rebuild lock without flock(1): a stale lock is reported and left alone ------------------------------
+# --- the rebuild lock without flock(1): a stale lock of a gone pid is taken over; of a live pid, named and failed ---
 now_ms=$(( $(date +%s) * 1000 ))
-printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
+sh -c 'exit 0' & dead_pid=$!; wait "$dead_pid"
+printf '{"pid":%s,"at":%s,"nonce":"old"}' "$dead_pid" "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
 p3="$(publishes)"
 out="$(AH_INSTALL_FLOCK=off run_install --apply --rebuild-only --prefix "$T/bin2" 2>&1)"; rc=$?
-check "P-15 no flock(1): a stale lock is not taken over: exit 0, busy" both 0 "$rc" 'rebuild already running' "$out"
-check "P-15 ... the message names the lock and says to remove it by hand" sh -c 'printf %s "$1" | grep -q "rebuild lock at .*/.rebuild.lock looks stale; remove it by hand if no install is running"' _ "$out"
-check "P-15 ... no publish ran" test "$(publishes)" -eq "$p3"
-check "P-15 ... and the lock is untouched" grep -q '"nonce":"old"' "$AH_HOME/bin/.rebuild.lock"
-check "P-15 ... and no aside copy was made" test -z "$(ls -a "$AH_HOME/bin" | grep 'rebuild.lock.stale')"
+check "P-15 no flock(1): a stale lock of a gone pid is taken over and the rebuild runs" test "$rc" -eq 0 -a "$(publishes)" -gt "$p3"
+check "P-15 ... one line says the stale lock of that pid was removed" sh -c 'printf %s "$1" | grep -q "removed the stale rebuild lock of pid $2 at .*/.rebuild.lock"' _ "$out" "$dead_pid"
+check "P-15 ... and the run's own lock is released, with no aside copy left" test ! -e "$AH_HOME/bin/.rebuild.lock" -a -z "$(ls -a "$AH_HOME/bin" | grep 'rebuild.lock.stale')"
+# negative: a lock under 10 minutes old with a gone pid is not taken over
+printf '{"pid":%s,"at":%s,"nonce":"held"}' "$dead_pid" "$now_ms" > "$AH_HOME/bin/.rebuild.lock"
+p3="$(publishes)"
+out="$(AH_INSTALL_FLOCK=off run_install --apply --rebuild-only --prefix "$T/bin2" 2>&1)"; rc=$?
+check "P-15 no flock(1): a fresh lock of a gone pid stays: exit 0, busy, no publish" test "$rc" -eq 0 -a "$(publishes)" -eq "$p3" -a "$(grep -c 'rebuild already running' <<<"$out")" -gt 0
+check "P-15 ... and the lock is untouched" grep -q '"nonce":"held"' "$AH_HOME/bin/.rebuild.lock"
+# negative: a stale lock whose pid is alive is left alone, named, and the rebuild records failed
+sed -E 's/"last_rebuild":(null|\{[^}]*\})\}$/"last_rebuild":{"version":"1.2.3","at":"2026-10-11T12:00:00.000Z","state":"started"}}/' "$AH_HOME/install.json" > "$T/hook-stamp" && mv -f "$T/hook-stamp" "$AH_HOME/install.json"
+printf '{"pid":%s,"at":%s,"nonce":"old"}' "$$" "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
+p3="$(publishes)"
+out="$(AH_INSTALL_FLOCK=off run_install --apply --rebuild-only --prefix "$T/bin2" 2>&1)"; rc=$?
+check "P-15 no flock(1): a stale lock of a live pid fails the run: exit 1, no publish" test "$rc" -eq 1 -a "$(publishes)" -eq "$p3"
+check "P-15 ... the message names the lock and the pid" sh -c 'printf %s "$1" | grep -q "rebuild lock at .*/.rebuild.lock is stale ([0-9]* min old) but its pid $2 is still running"' _ "$out" "$$"
+check "P-15 ... the lock is untouched" grep -q '"nonce":"old"' "$AH_HOME/bin/.rebuild.lock"
+check "P-15 ... no aside copy was made" test -z "$(ls -a "$AH_HOME/bin" | grep 'rebuild.lock.stale')"
+check "P-15 ... and the stamp records failed" grep -q '"last_rebuild":{"version":"1.2.3","at":"[^"]*","state":"failed"}}$' "$AH_HOME/install.json"
 rm -f "$AH_HOME/bin/.rebuild.lock"
 if command -v flock >/dev/null 2>&1; then
   printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"

@@ -103,6 +103,8 @@ public sealed class InstallStampNoticeTests
         public IReadOnlyList<string> Lines() => HooksModule.InstallStampLines(Services, Host, PluginVersion);
 
         public (string Level, string Detail) Doctor() => HooksModule.AhdBuildRow(Services.Environment, Services.Files, PluginVersion, Clock.UtcNow);
+
+        public string? Fix() => HooksModule.AhdBuildFix(Host, Services.Environment, Services.Files, PluginVersion, Clock.UtcNow);
     }
 
     private sealed class NoWriter : IStateWriter
@@ -367,7 +369,7 @@ public sealed class InstallStampNoticeTests
         var before = File.ReadAllText(rig.StampPath);
 
         Assert.Equal(
-            ("warn", "stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; no background rebuild has started yet; the next session start starts one; run /wrangl:hierarchy update"),
+            ("warn", "stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; no background rebuild has started yet; the next session start starts one; run /wrangl:hierarchy update or ah roster doctor --fix"),
             rig.Doctor());
         Assert.Equal(before, File.ReadAllText(rig.StampPath));
         Assert.Empty(rig.Host.Rebuilds);
@@ -383,7 +385,7 @@ public sealed class InstallStampNoticeTests
 
         Assert.Equal("warn", level);
         Assert.Contains("auto_rebuild is off", detail, StringComparison.Ordinal);
-        Assert.EndsWith("run /wrangl:hierarchy update", detail, StringComparison.Ordinal);
+        Assert.EndsWith("run /wrangl:hierarchy update or ah roster doctor --fix", detail, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -394,8 +396,64 @@ public sealed class InstallStampNoticeTests
             """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:00:00.000Z","state":"failed"}}""");
 
         Assert.Equal(
-            ("warn", $"stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; the background rebuild failed 1h ago; see \"{rig.Home}/logs/rebuild.log\"; run /wrangl:hierarchy update"),
+            ("warn", $"stamp 0.1.0 contract 1, plugin 0.2.0 contract 1; the background rebuild failed 1h ago; see \"{rig.Home}/logs/rebuild.log\"; run /wrangl:hierarchy update or ah roster doctor --fix"),
             rig.Doctor());
+    }
+
+    [Fact]
+    public void FixOnABehindStampStartsTheRebuildAndWritesStarted()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
+
+        var entry = rig.Fix();
+
+        Assert.Equal($"ahd-build start: rebuild started; log \"{rig.Home}/logs/rebuild.log\"; run ah roster doctor again to see the result", entry);
+        Assert.Contains("\"last_rebuild\":{\"version\":\"0.2.0\",\"at\":\"2026-10-11T12:00:00.000Z\",\"state\":\"started\"}", Assert.Single(rig.Host.Writes).Text, StringComparison.Ordinal);
+        Assert.Equal(rig.PluginRoot + "/scripts/install.sh", Assert.Single(rig.Host.Rebuilds).Script);
+    }
+
+    [Fact]
+    public void FixWithAutoRebuildOffStillStarts()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":false}""");
+
+        Assert.StartsWith("ahd-build auto-off: rebuild started", rig.Fix(), StringComparison.Ordinal);
+        Assert.Single(rig.Host.Rebuilds);
+    }
+
+    [Fact]
+    public void FixOnACurrentStampStartsNothing()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.2.0","contract":1,"auto_rebuild":false}""");
+
+        Assert.Null(rig.Fix());
+        Assert.Empty(rig.Host.Writes);
+        Assert.Empty(rig.Host.Rebuilds);
+    }
+
+    [Fact]
+    public void FixWithARebuildInProgressStartsNothing()
+    {
+        var rig = new Rig();
+        rig.WriteStamp(
+            """{"version":"0.1.0","contract":1,"auto_rebuild":true,"last_rebuild":{"version":"0.2.0","at":"2026-10-11T11:50:00.000Z","state":"started"}}""");
+
+        Assert.Contains("in progress; no rebuild started", rig.Fix(), StringComparison.Ordinal);
+        Assert.Empty(rig.Host.Writes);
+        Assert.Empty(rig.Host.Rebuilds);
+    }
+
+    [Fact]
+    public void FixWithNoStampAddsNoEntryAndStartsNothing()
+    {
+        var rig = new Rig();
+
+        Assert.Null(rig.Fix());
+        Assert.False(File.Exists(rig.StampPath));
+        Assert.Empty(rig.Host.Rebuilds);
     }
 
     [Theory]

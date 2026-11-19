@@ -59,6 +59,14 @@ internal sealed class DoctorComposition(ServiceGraph graph, IAhEnvironment envir
     public (string Level, string Detail) AhdBuild() =>
         Ah.Hooks.HooksModule.AhdBuildRow(environment, _files, Ah.Core.Json.JsConvert.ToJsString(graph.Config.PluginVersion()), graph.Io.Clock.UtcNow);
 
+    public string? AhdBuildFix() =>
+        Ah.Hooks.HooksModule.AhdBuildFix(
+            new InstallStampHost(graph.Io.Writer, Ah.Platform.PlatformModule.CreateDetachedSpawner()),
+            environment,
+            _files,
+            Ah.Core.Json.JsConvert.ToJsString(graph.Config.PluginVersion()),
+            graph.Io.Clock.UtcNow);
+
     public (string Level, string Detail) StateDb()
     {
         var health = Ah.StateDb.StateDbModule.CreateBackups().Health(environment.AhHome, graph.Io.Clock.UtcNow, Ah.StateDb.BackupSettings.Default);

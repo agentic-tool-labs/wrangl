@@ -29,6 +29,27 @@ html:has(> body.r6), body.r6 { height: 100%; overflow: hidden; }
 .r6 .menu .menu-sep { height: 1px; margin: var(--sp-4) 0; background: var(--line-control); }
 .r6 .menu .menu-label { padding: var(--sp-4) var(--sp-8) var(--sp-2); color: var(--muted); font-size: var(--text-11); }
 .r6 .menu .menu-group { margin: 0; padding: 0; list-style: none; }
+/* The Settings menu's theme section (ah2-276): it scrolls inside the viewport under the 40px header; the light/dark switch is a
+   track (muted edge, accent when on) with a knob; a preset's swatch is its page and accent, drawn from its own tokens (presets.css). */
+.r6 .menu.settings-menu { max-height: calc(100dvh - 2 * var(--sp-24) - var(--sp-8)); overflow-y: auto; overscroll-behavior: contain; }
+.r6 .menu button.mode-toggle { position: relative; }
+.r6 .menu button.mode-toggle::after {
+  content: ""; flex: none; width: calc(var(--sp-24) + var(--sp-4)); height: var(--sp-16); margin-left: auto; box-sizing: border-box;
+  border: 1px solid var(--muted); border-radius: var(--sp-8); background: none;
+}
+/* The knob: a 10px circle 2px inside the track, flat (the house sheets carry no gradients). */
+.r6 .menu button.mode-toggle::before {
+  content: ""; position: absolute; top: 50%; right: calc(var(--sp-8) + var(--sp-16) - 1px); width: calc(var(--sp-8) + var(--sp-2)); height: calc(var(--sp-8) + var(--sp-2));
+  border-radius: var(--radius-dot); background: var(--muted); transform: translateY(-50%); pointer-events: none;
+}
+.r6 .menu button.mode-toggle[aria-checked="true"]::after { border-color: var(--accent); background: var(--accent); }
+.r6 .menu button.mode-toggle[aria-checked="true"]::before { right: calc(var(--sp-8) + var(--sp-4) - 1px); background: var(--on-accent); }
+/* A preset's swatch: page over accent on the diagonal, drawn as four 8px border triangles (top+left page, right+bottom accent). */
+.r6 .menu .preset-swatch {
+  flex: none; width: var(--sp-16); height: var(--sp-16); margin-right: var(--sp-8); border-radius: var(--radius); box-sizing: border-box;
+  border: var(--sp-8) solid; border-color: var(--bg) var(--accent) var(--accent) var(--bg);
+  outline: 1px solid var(--line-control); outline-offset: -1px;
+}
 .r6 .shell-head .inbox-btn .num { font-variant-numeric: tabular-nums; }
 /* Settings closes the row after the tabs and Inbox (both order 1 in r6.css), so the visual order is the DOM's. */
 .r6 .shell-head > .settings { order: 1; }

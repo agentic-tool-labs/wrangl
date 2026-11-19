@@ -2,6 +2,7 @@ import { html, Component } from "./h.js";
 import { sheet } from "./lazy.js";
 import { kbCard, kbHead } from "./board-kanban.js";
 import { Footer, Header } from "./shell.js";
+import { choosePreset, DEFAULT as DEFAULT_PRESET } from "./presets.js";
 import {
   ACCENT_IDS, BD_RANGES, BUILTINS, CARD_RANGES, HOUSE, MARK_TOKENS, PATTERNS, PATTERN_NAMES, RANGES, ROLES, ROLE_FONTS, ROLE_SIZE, TEXT_TOKENS,
   apply, boxOf, contrastOf, copyOf, exportLook, importLooks, lookFor, nameError, onLooks, profileOf, save, stateOf, themeOf, withoutLook,
@@ -170,6 +171,8 @@ export class LooksPage extends Component {
 
   use = () => {
     const look = this.look();
+    // a look is drawn only under the Default preset, so using one returns its mode to Default (as the Settings menu's pickLook does)
+    choosePreset(look.theme, DEFAULT_PRESET);
     this.commit({ ...this.state.optics, active: { ...this.state.optics.active, [look.theme]: look.id } });
   };
 

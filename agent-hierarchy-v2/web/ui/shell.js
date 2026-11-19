@@ -5,7 +5,8 @@ import { freshness } from "./store.js";
 import { firstTeam, memberIds, memberOf, needsLeaseIds, needsState, needsText, blockedText, teamIdOf, teamRows } from "./select.js";
 import { hintOf } from "./keys.js";
 import { TeamRenameButton } from "./team-rename.js";
-import { choose, lookFor, looksFor, stateOf } from "./looks.js";
+import { applyStored, choose, lookFor, looksFor, stateOf } from "./looks.js";
+import { choosePreset, DEFAULT, modeOf, presetsFor, storedPresets } from "./presets.js";
 
 // The frame's 40px header and 24px status bar: the team switcher, the five team tabs, the Panel button, the freshness chip,
 // the Inbox button and the Settings menu; and the status bar's context, the members by state, the counts the operator
@@ -43,6 +44,8 @@ export function titleOf(view, team, inboxTab) {
   return ["ah", view === "allplans" ? "All teams" : view === "teams" ? null : team, page].filter(Boolean).join(" · ");
 }
 
+// The light/dark choice (R1): with nothing stored the page follows the OS scheme ("system", the default until the first toggle);
+// the toggle stores "light" or "dark". A stored choice from before the toggle reads the same.
 const THEME_KEY = "ah-theme";
 const THEMES = ["system", "light", "dark"];
 
@@ -113,11 +116,10 @@ class TeamSwitcher extends Live {
 }
 
 // The Settings menu (P1): focus moves to the first item when it opens, ↑ ↓ move within it, and focus returns to the button
-// when it closes. Theme is a three-way radio here until glass G2 moves it to the top bar's "Theme / Optics" button.
-const THEME_LABEL = { system: "System", light: "Light", dark: "Dark" };
-
+// when it closes. Below the separator: the light/dark toggle, the shown mode's presets (ah2-276) and the looks editor. The presets
+// are the mode's looks on the house palette, by name (House, the glass looks, saved ones), then the palettes, which draw flat.
 class SettingsMenu extends Live {
-  state = { theme: storedTheme(), optics: stateOf() };
+  state = { mode: modeOf(), presets: storedPresets(), optics: stateOf() };
 
   select(snap, { paused }) {
     return { open: snap.ui.menu === "more", diagnostics: snap.ui.diagnostics === true, paused };
@@ -126,21 +128,31 @@ class SettingsMenu extends Live {
   componentDidUpdate() {
     if (this.sel.open && !this.wasOpen) {
       this.list?.querySelectorAll?.("[role^=menuitem]")[0]?.focus?.();
-      // The Looks page may have saved, renamed or deleted a look since the menu last drew.
-      this.setState({ optics: stateOf() });
+      // The OS scheme may have flipped, and the Looks page may have saved, renamed or deleted a look, since the menu last drew.
+      this.setState({ mode: modeOf(), presets: storedPresets(), optics: stateOf() });
     } else if (!this.sel.open && this.wasOpen && this.list === null && (!globalThis.document?.activeElement || globalThis.document.activeElement === globalThis.document.body)) {
       this.btn?.focus();
     }
     this.wasOpen = this.sel.open;
   }
 
-  pick = (theme) => {
-    applyTheme(theme);
-    this.setState({ theme });
+  toggleMode = () => {
+    const mode = this.state.mode === "dark" ? "light" : "dark";
+    // looks.js's data-theme observer re-applies the preset and the look
+    applyTheme(mode);
+    this.setState({ mode });
   };
 
-  pickLook = (theme, id) => {
-    this.setState({ optics: choose(theme, id) });
+  pickPreset = (id) => {
+    const presets = choosePreset(this.state.mode, id);
+    applyStored();
+    this.setState({ presets });
+  };
+
+  // A look is the Default preset with that look for the mode.
+  pickLook = (id) => {
+    const presets = choosePreset(this.state.mode, DEFAULT);
+    this.setState({ presets, optics: choose(this.state.mode, id) });
   };
 
   onKey = (e) => {
@@ -155,6 +167,8 @@ class SettingsMenu extends Live {
   };
 
   draw({ store, onPause }, s) {
+    const { mode, optics } = this.state;
+    const onDefault = this.state.presets[mode] === DEFAULT;
     const close = (fn) => () => {
       store.setUi({ menu: null });
       fn();
@@ -162,21 +176,22 @@ class SettingsMenu extends Live {
     return html`<span class="switcher settings">
       <button class="more-btn" aria-haspopup="menu" aria-expanded=${s.open} ref=${(el) => (this.btn = el)} onClick=${() => store.setUi({ menu: s.open ? null : "more" })}>Settings</button>
       ${s.open ? html`<button class="menu-scrim" aria-label="Close menu" tabindex="-1" onClick=${() => store.setUi({ menu: null })}></button>
-        <ul class="menu right" role="menu" aria-label="Settings" ref=${(el) => (this.list = el)} onKeyDown=${this.onKey}>
+        <ul class="menu right settings-menu" role="menu" aria-label="Settings" ref=${(el) => (this.list = el)} onKeyDown=${this.onKey}>
           <li role="none"><button role="menuitemcheckbox" aria-checked=${s.paused} onClick=${close(onPause)}>Pause motion</button></li>
           <li role="none"><button role="menuitemcheckbox" aria-checked=${s.diagnostics} onClick=${close(() => store.setUi({ diagnostics: !s.diagnostics }))}>Performance strip</button></li>
           <li role="none"><button role="menuitem" onClick=${close(() => store.setUi({ help: true }))}>Keys and actions</button></li>
           <li role="none"><button role="menuitem" onClick=${close(() => store.setUi({ rules: true }))}>Rules…</button></li>
           <li role="separator" class="menu-sep"></li>
-          <li role="none" class="menu-label" id="theme-label">Theme</li>
-          <li role="none"><ul class="menu-group" role="group" aria-labelledby="theme-label">
-            ${THEMES.map((t) => html`<li key=${t} role="none"><button role="menuitemradio" aria-checked=${this.state.theme === t} onClick=${() => this.pick(t)}>${THEME_LABEL[t]}</button></li>`)}
+          <li role="none"><button role="menuitemcheckbox" class="mode-toggle" aria-checked=${mode === "dark"} onClick=${this.toggleMode}>Dark mode</button></li>
+          <li role="none" class="menu-label" id="preset-label">${mode === "dark" ? "Dark presets" : "Light presets"}</li>
+          <li role="none"><ul class="menu-group" role="group" aria-labelledby="preset-label">
+            ${looksFor(optics, mode).map((l) => html`<li key=${`${mode}-look-${l.id}`} role="none"><button role="menuitemradio" aria-checked=${onDefault && lookFor(optics, mode).id === l.id} onClick=${() => this.pickLook(l.id)}>
+              <span class="preset-swatch" data-preset=${`default-${mode}`} aria-hidden="true"></span>${l.name}</button></li>`)}
+            ${presetsFor(mode).filter((p) => p.file).map((p) => html`<li key=${`${mode}-${p.id}`} role="none"><button role="menuitemradio" aria-checked=${this.state.presets[mode] === p.id} onClick=${() => this.pickPreset(p.id)}>
+              <span class="preset-swatch" data-preset=${p.id} aria-hidden="true"></span>${p.name}</button></li>`)}
           </ul></li>
-          <li role="none"><button role="menuitem" onClick=${close(() => store.setUi({ view: "looks" }))}>Looks…</button></li>
-          ${["light", "dark"].map((slot) => html`<li key=${slot} role="none" class="menu-label" id=${`look-${slot}-label`}>${slot === "light" ? "Light look" : "Dark look"}</li>
-          <li key=${`${slot}-group`} role="none"><ul class="menu-group" role="group" aria-labelledby=${`look-${slot}-label`}>
-            ${looksFor(this.state.optics, slot).map((l) => html`<li key=${l.id} role="none"><button role="menuitemradio" aria-checked=${lookFor(this.state.optics, slot).id === l.id} onClick=${() => this.pickLook(slot, l.id)}>${l.name}</button></li>`)}
-          </ul></li>`)}
+          <li role="separator" class="menu-sep"></li>
+          <li role="none"><button role="menuitem" title="Edit the looks: House, the glass looks and your own" onClick=${close(() => store.setUi({ view: "looks" }))}>Customize…</button></li>
         </ul>` : null}
     </span>`;
   }

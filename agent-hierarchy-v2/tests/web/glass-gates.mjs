@@ -152,3 +152,13 @@ export function gate3(colours, houseColours) {
   }
   return { fail, report, protanopia: deltaMatrix(colours, "protanopia") };
 }
+
+// The presets' deuteranopia floor (ah2-276 R6): ΔE min(10, house) where the glass looks hold min(15, house). A dark preset with a
+// mid-tone page (Nord #2e3440, Everforest #2d353b) leaves its states L .78-.95 for 4.5:1, too little room to part yellow, green and
+// red by 15 under deuteranopia. Normal vision keeps gate 2's ΔE 20, and a state is never shown by colour alone (its label carries it).
+export const PRESET_DEUT_FLOOR = 10;
+export function gate3Preset(colours, houseColours) {
+  const now = deltaMatrix(colours, "deuteranopia");
+  const house = deltaMatrix(Object.fromEntries(Object.entries(houseColours).filter(([k]) => k in colours)), "deuteranopia");
+  return Object.entries(now).filter(([p, d]) => d < Math.min(PRESET_DEUT_FLOOR, house[p] ?? PRESET_DEUT_FLOOR)).map(([p, d]) => `${p} deut ΔE ${d} (house ${house[p]})`);
+}

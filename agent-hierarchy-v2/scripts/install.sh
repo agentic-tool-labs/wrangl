@@ -547,8 +547,9 @@ resolve_auto_rebuild() {
 }
 
 # Rebuild lock: a file {pid, at, nonce}, linked into place; stale after 10 minutes. Creating it and removing a stale one happen
-# under flock(1) on <lock>.guard where flock(1) exists. Without it a stale lock is never taken over: moving a file aside cannot
-# tell the judged lock from one another installer has just put there, so the lock is reported and left for a person to remove.
+# under flock(1) on <lock>.guard where flock(1) exists. Without it a stale lock whose pid is gone (or unreadable) is moved aside
+# and compared with what was judged: removed when they match, put back (or dropped, if a new lock is already there) when another
+# installer replaced it in between. A stale lock whose pid is alive is left alone and the run fails naming it (status 3).
 # AH_INSTALL_FLOCK=off makes the script behave as if flock(1) were absent.
 rebuild_lock_round() {
     local nonce at tmp seen seen_at now_ms
@@ -574,7 +575,21 @@ rebuild_lock_round() {
         fi
         return 2
     fi
-    say "rebuild lock at $lock_file looks stale; remove it by hand if no install is running"
+    seen_pid=$(printf '%s' "$seen" | sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p')
+    if [ -n "$seen_pid" ] && kill -0 "$seen_pid" 2>/dev/null; then
+        seen_age_min=$(( (now_ms - ${seen_at:-0}) / 60000 ))
+        return 3
+    fi
+    local aside="$lock_file.stale.$$.$RANDOM"
+    mv "$lock_file" "$aside" 2>/dev/null || return 2
+    if [ "$(cat "$aside" 2>/dev/null)" = "$seen" ]; then
+        rm -f "$aside"
+        say "removed the stale rebuild lock of pid ${seen_pid:-unknown} at $lock_file"
+        return 2
+    fi
+    # another installer replaced the lock in between: its lock goes back unless a newer one is already in place
+    ln "$aside" "$lock_file" 2>/dev/null
+    rm -f "$aside"
     return 1
 }
 
@@ -599,6 +614,7 @@ take_rebuild_lock() {
                 return 0
                 ;;
             1) return 1 ;;
+            3) return 3 ;;
         esac
     done
     return 1
@@ -748,7 +764,10 @@ stage="$ah_home/build/stage.$$"
 if $apply; then
     mkdir -p "$ah_home/bin" || fail_step "cannot create $ah_home/bin"
     chmod 0755 "$ah_home/bin"
-    if ! take_rebuild_lock; then
+    take_rebuild_lock; lock_rc=$?
+    if [ "$lock_rc" -eq 3 ]; then
+        fail_step "rebuild lock at $lock_file is stale (${seen_age_min} min old) but its pid $seen_pid is still running; stop that process, or remove the file if it is not an install: rm $lock_file"
+    elif [ "$lock_rc" -ne 0 ]; then
         say "rebuild already running"
         exit 0
     fi

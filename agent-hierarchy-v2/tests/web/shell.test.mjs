@@ -71,7 +71,7 @@ test("a team that is not listed opens All teams with a toast; a listed one does 
   assert.equal(m.store.state.ui.team, null);
 });
 
-test("the Performance strip is off until the Settings menu turns it on; focus moves into the menu and the theme is a radio", async () => {
+test("the Performance strip is off until the Settings menu turns it on; focus moves into the menu; one light/dark toggle, then the presets", async () => {
   const m = await mountApp({ view: "graph" });
   assert.equal(find(m.root, ".perf-strip").length, 0);
   click(find(m.root, "button.more-btn")[0]);
@@ -79,12 +79,20 @@ test("the Performance strip is off until the Settings menu turns it on; focus mo
   assert.equal(text(find(m.root, "button.more-btn")[0]), "Settings");
   // ok(a === b), never equal(a, b): a failing equal on two DOM nodes diffs their whole (circular) tree without bound.
   assert.ok(globalThis.document.activeElement === menu(m.root)[0], "focus moves to the first item (P1)");
-  const radios = find(m.root, "ul.menu")[0].all("button").filter((b) => b.getAttribute("role") === "menuitemradio");
-  // The theme, then the look for each theme slot (ah-ui-looks §6): House is in both.
-  assert.deepEqual(radios.map((b) => text(b).trim()), ["System", "Light", "Dark", "House", "Light Inky", "Light Emissive", "House", "Dark Emissive"]);
-  const checked = (list) => list.filter((b) => b.getAttribute("aria-checked") === "true").map((b) => text(b).trim());
-  assert.equal(checked(radios.slice(0, 3)).length, 1, "one theme is checked");
-  assert.deepEqual([checked(radios.slice(3, 6)), checked(radios.slice(6))], [["Light Inky"], ["Dark Emissive"]], "each slot checks its default look");
+  const items = menu(m.root);
+  const toggles = items.filter((b) => b.classList.contains("mode-toggle"));
+  assert.equal(toggles.length, 1, "one light/dark toggle (ah2-276 R1)");
+  assert.equal(toggles[0].getAttribute("role"), "menuitemcheckbox");
+  const radios = items.filter((b) => b.getAttribute("role") === "menuitemradio");
+  const names = radios.map((b) => text(b).trim());
+  const dark = toggles[0].getAttribute("aria-checked") === "true";
+  // The mode's looks by name (amendment 2), then the palettes; no theme radio and no second slot's looks (A1).
+  assert.deepEqual(names.slice(0, 2), dark ? ["House", "Dark Emissive"] : ["House", "Light Inky", "Light Emissive"].slice(0, 2), names.join(", "));
+  assert.ok(names.includes(dark ? "Nord" : "One Light"), names.join(", "));
+  assert.equal(names.some((n) => /System|Default/.test(n) || n === (dark ? "Light Inky" : "Dark Emissive")), false, names.join(", "));
+  assert.deepEqual(radios.filter((b) => b.getAttribute("aria-checked") === "true").map((b) => text(b).trim()), [dark ? "Dark Emissive" : "Light Inky"], "the mode's default look is checked with nothing stored");
+  assert.ok(items.indexOf(toggles[0]) < items.indexOf(radios[0]), "the toggle, then the presets");
+  assert.ok(items.some((b) => text(b).trim() === "Customize…"), "the looks editor stays reachable");
   assert.equal(menu(m.root).some((b) => /Diagnostics|Theme:/.test(text(b))), false);
   click(menu(m.root).find((b) => text(b).trim() === "Performance strip"));
   await until(() => find(m.root, ".perf-strip").length === 1, "the strip");

@@ -22,4 +22,16 @@ public sealed partial class RosterDoctorVerbTests
         Assert.Equal(status, row["status"].AsString());
         Assert.Equal("schema v1, integrity ok, 3 backup(s), newest 12m old, 40 KiB", row["detail"].AsString());
     }
+
+    [Fact]
+    public void FixWithAnUnreadableStampAddsAFailedEntryAndKeepsTheExitCode()
+    {
+        Directory.CreateDirectory(_sandbox.AhHome);
+        File.WriteAllText(Path.Combine(_sandbox.AhHome, "install.json"), "not json");
+
+        var (code, stdout, stderr) = Roster(null, "doctor", "--fix");
+
+        Assert.True(code == 0, stderr);
+        Assert.Contains(Parse(stdout)["fix"].AsArray(), x => x.AsString().StartsWith("ahd-build: fix failed: ", StringComparison.Ordinal));
+    }
 }
