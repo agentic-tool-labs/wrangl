@@ -447,6 +447,14 @@ check "P-15 ... the lock is untouched" grep -q '"nonce":"old"' "$AH_HOME/bin/.re
 check "P-15 ... no aside copy was made" test -z "$(ls -a "$AH_HOME/bin" | grep 'rebuild.lock.stale')"
 check "P-15 ... and the stamp records failed" grep -q '"last_rebuild":{"version":"1.2.3","at":"[^"]*","state":"failed"}}$' "$AH_HOME/install.json"
 rm -f "$AH_HOME/bin/.rebuild.lock"
+# negative: a stale lock whose pid exists but cannot be signalled (pid 1, another user's: kill -0 fails with EPERM) is alive
+printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
+p3="$(publishes)"
+out="$(AH_INSTALL_FLOCK=off run_install --apply --rebuild-only --prefix "$T/bin2" 2>&1)"; rc=$?
+check "P-15 no flock(1): a stale lock of a live pid that cannot be signalled fails the run: exit 1, no publish" test "$rc" -eq 1 -a "$(publishes)" -eq "$p3"
+check "P-15 ... the message names pid 1" sh -c 'printf %s "$1" | grep -q "rebuild lock at .*/.rebuild.lock is stale ([0-9]* min old) but its pid 1 is still running"' _ "$out"
+check "P-15 ... the lock is still there" grep -q '"pid":1,.*"nonce":"old"' "$AH_HOME/bin/.rebuild.lock"
+rm -f "$AH_HOME/bin/.rebuild.lock"
 if command -v flock >/dev/null 2>&1; then
   printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
   p5="$(publishes)"

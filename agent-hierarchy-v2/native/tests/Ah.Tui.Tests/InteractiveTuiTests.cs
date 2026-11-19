@@ -162,8 +162,8 @@ public sealed class InteractiveTuiTests
 
         internal Task<int>? Running { get; private set; }
 
-        internal void Start(string? team = null, bool color = false, TuiCaps? caps = null) =>
-            Running = InteractiveTui.RunAsync(team, Terminal, Source, Discovery, Clock, color, Stderr, Cancel.Token, caps, TimeZoneInfo.Utc);
+        internal void Start(string? team = null, ColorDepth depth = ColorDepth.None, TuiCaps? caps = null) =>
+            Running = InteractiveTui.RunAsync(team, Terminal, Source, Discovery, Clock, depth, Stderr, Cancel.Token, caps, TimeZoneInfo.Utc);
 
         internal Task<bool> Shows(string text) => Until(() => Terminal.Snapshot().Count > 0 && Terminal.Snapshot()[^1].Contains(text, StringComparison.Ordinal));
 
@@ -413,14 +413,92 @@ public sealed class InteractiveTuiTests
     public async Task ColourIsOnlyWrittenWhenAskedAndTheLayoutIsTheSame()
     {
         await using var plain = new Rig();
-        plain.Start(color: false);
+        plain.Start(depth: ColorDepth.None);
         Assert.True(await plain.Shows(Row));
         await using var coloured = new Rig();
-        coloured.Start(color: true);
-        Assert.True(await coloured.Shows("\u001b[32m● working"));
+        coloured.Start(depth: ColorDepth.TrueColor);
+        Assert.True(await coloured.Shows("\u001b[38;2;143;193;255m● working"));
 
         Assert.DoesNotMatch(@"\u001b\[(?:3[0-7]|9[0-7])m", plain.Terminal.All());
         Assert.Contains("\u001b[1m", plain.Terminal.All(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("xterm-256color", null, "1", "None")]
+    [InlineData("dumb", "truecolor", null, "None")]
+    [InlineData("xterm-256color", null, "", "Palette256")]
+    [InlineData("xterm", "truecolor", null, "TrueColor")]
+    [InlineData("xterm", "24bit", null, "TrueColor")]
+    [InlineData("xterm-256color", "yes", null, "Palette256")]
+    [InlineData("xterm-color", null, null, "Sixteen")]
+    [InlineData(null, null, null, "Sixteen")]
+    public void TheDepthIsReadOnceFromTheEnvironmentAndOneFunctionMapsAColourToIt(string? term, string? colorTerm, string? noColor, string expected)
+    {
+        var env = new Dictionary<string, string?> { ["TERM"] = term, ["COLORTERM"] = colorTerm, ["NO_COLOR"] = noColor };
+        Assert.Equal(Enum.Parse<ColorDepth>(expected), TuiTheme.Depth(k => env.GetValueOrDefault(k)));
+
+        var blue = TuiRgb.Hex("#8fc1ff");
+        Assert.Equal("38;2;143;193;255", TuiTheme.Code(blue, ColorDepth.TrueColor));
+        Assert.Equal("48;5;111", TuiTheme.Code(blue, ColorDepth.Palette256, background: true));
+        Assert.Equal("38;5;244", TuiTheme.Code(new TuiRgb(128, 128, 128), ColorDepth.Palette256));
+        Assert.Equal("91", TuiTheme.Code(new TuiRgb(250, 10, 10), ColorDepth.Sixteen));
+        Assert.Equal("31", TuiTheme.Code(new TuiRgb(200, 10, 10), ColorDepth.Sixteen));
+        Assert.Equal(string.Empty, TuiTheme.Code(blue, ColorDepth.None));
+    }
+
+    [Fact]
+    public async Task AMemberRowCarriesItsRoleColourAndTheOrchestratorAndASelectedRowNone()
+    {
+        await using var rig = new Rig();
+        rig.Start("ah2-tm4", ColorDepth.TrueColor);
+
+        Assert.True(await rig.Shows("\u001b[38;2;86;200;232mimpl-41\u001b[39m"));
+        Assert.True(await rig.Shows("\u001b[38;2;228;123;209mreviewer-9\u001b[39m"));
+        rig.Terminal.Type("j");
+        Assert.True(await rig.Shows("\u001b[7m▸ impl-41"));
+        Assert.Contains("\r\n  orchestrator  ", rig.Terminal.Snapshot()[^1], StringComparison.Ordinal);
+        var selected = rig.Terminal.Snapshot()[^1].Split("\r\n").Single(l => l.Contains("▸ ", StringComparison.Ordinal));
+        Assert.DoesNotContain("\u001b[38;", selected, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task NegativeWithNoColorTheSameRowHasNoColourCodes()
+    {
+        await using var rig = new Rig();
+        rig.Start("ah2-tm4", TuiTheme.Depth(k => k switch { "NO_COLOR" => "1", "COLORTERM" => "truecolor", _ => null }));
+
+        Assert.True(await rig.Shows("impl-41"));
+        Assert.DoesNotMatch(@"\u001b\[(?:38;|3[0-7]m|9[0-7]m)", rig.Terminal.All());
+        Assert.Contains("\u001b[1m", rig.Terminal.All(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheMascotIsInTheFirstFrameAndGoneAfterAKey()
+    {
+        var art = InteractiveTui.Art(ColorDepth.None);
+        await using var rig = new Rig();
+        rig.Start();
+
+        Assert.True(await rig.Shows(Row));
+        Assert.Contains(art[0], rig.Terminal.Snapshot()[1], StringComparison.Ordinal);
+        Assert.Contains(art[0], rig.Terminal.Snapshot()[^1], StringComparison.Ordinal);
+        rig.Terminal.Type("j");
+
+        Assert.True(await Until(() => !rig.Terminal.Snapshot()[^1].Contains(art[0], StringComparison.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData(23, false)]
+    [InlineData(24, true)]
+    public async Task TheMascotIsSkippedUnderTwentyFourRows(int rows, bool shown)
+    {
+        var art = InteractiveTui.Art(ColorDepth.None);
+        await using var rig = new Rig();
+        rig.Terminal.Rows = rows;
+        rig.Start();
+
+        Assert.True(await rig.Shows(Row));
+        Assert.Equal(shown, rig.Terminal.Snapshot()[^1].Contains(art[0], StringComparison.Ordinal));
     }
 
     [Fact]
@@ -431,7 +509,8 @@ public sealed class InteractiveTuiTests
         Assert.True(await rig.Shows(Row));
         Assert.True(await Until(() => rig.Source.Polls.Count > 0));
 
-        rig.Terminal.Type(ScreenFixtures.Click(4, 2));
+        // The first frames have the mascot above the screen, so the row is clicked where it is drawn, under the art.
+        rig.Terminal.Type(ScreenFixtures.Click(4, 2 + InteractiveTui.Art(ColorDepth.None).Count));
 
         Assert.True(await rig.Shows("AGENTS"));
         Assert.True(await Until(() =>

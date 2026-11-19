@@ -29,8 +29,17 @@ public sealed class InstallStampNoticeTests
             File.WriteAllText(path, text);
         }
 
-        public void StartRebuild(string script, string home, IReadOnlyDictionary<string, string?> environment) =>
+        /// <summary>When set, <see cref="StartRebuild"/> records the call and then throws with this message, as a failed spawn does.</summary>
+        public string? StartFails { get; set; }
+
+        public void StartRebuild(string script, string home, IReadOnlyDictionary<string, string?> environment)
+        {
             Rebuilds.Add((script, home, environment));
+            if (StartFails is not null)
+            {
+                throw new IOException(StartFails);
+            }
+        }
     }
 
     private sealed class NoMesh : IMeshGate
@@ -411,6 +420,38 @@ public sealed class InstallStampNoticeTests
         Assert.Equal($"ahd-build start: rebuild started; log \"{rig.Home}/logs/rebuild.log\"; run ah roster doctor again to see the result", entry);
         Assert.Contains("\"last_rebuild\":{\"version\":\"0.2.0\",\"at\":\"2026-10-11T12:00:00.000Z\",\"state\":\"started\"}", Assert.Single(rig.Host.Writes).Text, StringComparison.Ordinal);
         Assert.Equal(rig.PluginRoot + "/scripts/install.sh", Assert.Single(rig.Host.Rebuilds).Script);
+    }
+
+    [Fact]
+    public void ARebuildThatCannotStartRecordsFailedOnceAndGivesTheFailureLine()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
+        rig.Host.StartFails = "posix_spawn failed (errno 2)";
+
+        var first = rig.Lines();
+
+        Assert.Equal([$"the background rebuild of ahd failed; see \"{rig.Home}/logs/rebuild.log\""], first);
+        Assert.Equal(2, rig.Host.Writes.Count);
+        Assert.Contains("\"state\":\"started\"}}\n", rig.Host.Writes[0].Text, StringComparison.Ordinal);
+        Assert.Matches("""^\{"version":"0\.1\.0",.*"last_rebuild":\{"version":"0\.2\.0","at":"2026-10-11T12:00:00\.000Z","state":"failed"\}\}\n$""", File.ReadAllText(rig.StampPath));
+
+        // the 24-hour hold after failed: no retry on the next session start, the same failure line
+        Assert.Equal(first, rig.Lines());
+        Assert.Single(rig.Host.Rebuilds);
+        Assert.Equal(2, rig.Host.Writes.Count);
+    }
+
+    [Fact]
+    public void FixWhenTheRebuildCannotStartSaysWhyAndRecordsFailed()
+    {
+        var rig = new Rig();
+        rig.WriteStamp("""{"version":"0.1.0","contract":1,"auto_rebuild":true}""");
+        rig.Host.StartFails = "posix_spawn failed (errno 2)";
+
+        Assert.Equal("ahd-build start: rebuild could not start: posix_spawn failed (errno 2)", rig.Fix());
+        Assert.Contains("\"state\":\"failed\"}}\n", File.ReadAllText(rig.StampPath), StringComparison.Ordinal);
+        Assert.Single(rig.Host.Rebuilds);
     }
 
     [Fact]

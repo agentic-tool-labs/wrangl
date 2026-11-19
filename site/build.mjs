@@ -114,7 +114,8 @@ function renderDoc(page, ctx) {
   return { h1: h1 ?? esc(page.title), body, toc, sections };
 }
 
-const MOON = '<svg class="icon" viewBox="0 0 8 8" aria-hidden="true" shape-rendering="crispEdges"><path d="M3 0h3v1H3zM2 1h2v1H2zM1 2h2v4H1zM2 6h2v1H2zM3 7h3v1H3zM6 6h1v1H6z"/></svg>';
+const SUN = '<svg class="icon sun" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><path d="M3 3h3v3H3zM4 0h1v2H4zM4 7h1v2H4zM0 4h2v1H0zM7 4h2v1H7zM1 1h1v1H1zM7 1h1v1H7zM1 7h1v1H1zM7 7h1v1H7z"/></svg>';
+const MOON = '<svg class="icon moon" viewBox="0 0 8 8" aria-hidden="true" shape-rendering="crispEdges"><path d="M3 0h3v1H3zM2 1h2v1H2zM1 2h2v4H1zM2 6h2v1H2zM3 7h3v1H3zM6 6h1v1H6z"/></svg>';
 
 function layout({ site, repo, title, description, body, navHtml, isDoc }) {
   const pageTitle = title ? `${title} – ${site}` : site;
@@ -143,7 +144,7 @@ function layout({ site, repo, title, description, body, navHtml, isDoc }) {
     <div id="q-results" class="results" hidden></div>
     <p id="q-status" class="visually-hidden" role="status"></p>
   </div>
-  <button class="theme-btn" type="button" aria-pressed="false">${MOON}<span>Dark theme</span></button>
+  <button class="theme-btn" type="button" role="switch" aria-checked="false" aria-label="Dark theme"><span class="theme-track"><span class="theme-knob">${SUN}${MOON}</span></span></button>
 </header>
 ${isDoc ? `<div class="shell">
 <nav id="docs-nav" class="sidebar" aria-label="Docs">

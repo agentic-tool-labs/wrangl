@@ -180,6 +180,9 @@ shell suites run hooks from their own scripts, outside the Bash tool, so the gat
 A crashed rebuild leaves `~/.claude/ah2/bin/.rebuild.lock`; `ah roster doctor` names it in a `rebuild-lock` row. Once it is
 over 10 minutes old the next install takes it over when its pid is gone. On macOS (no flock(1)), when its pid is still running,
 the install fails naming the lock and pid (a background rebuild records `failed`); stop that process or remove the file.
+Without flock(1) two installers can both judge the same stale lock;
+it is safe, because each moves the lock aside and compares it with what it judged, so the loser treats the round as held and
+no lock is deleted that its taker did not judge.
 
 A bug report that can be acted on:
 

@@ -97,12 +97,16 @@ internal sealed class SliceFeed(IViewSource source, IDaemonDiscovery discovery, 
     /// Whether every one of these ids is settled: held, or wanted for <see cref="TuiClientRules.Settling"/> without arriving, so it is not served.
     /// A reply alone says nothing: a poll returns as soon as anything is ready, and a lane leased by that poll is composed after it.
     /// </summary>
-    internal bool Answered(IEnumerable<string> ids)
+    internal bool Answered(IEnumerable<string> ids) => Answered(ids, null);
+
+    /// <summary>As <see cref="Answered(IEnumerable{string})"/>, with "held" judged against <paramref name="held"/>: a snapshot taken earlier, so a frame drawn from it never counts a slice that arrived after it.</summary>
+    internal bool Answered(IEnumerable<string> ids, IReadOnlyDictionary<string, JsonValue>? held)
     {
         lock (_gate)
         {
             var now = clock.UtcNow;
-            return ids.All(id => _slices.ContainsKey(id) || (_wantedAt.TryGetValue(id, out var at) && now - at >= TuiClientRules.Settling));
+            var slices = held ?? _slices;
+            return ids.All(id => slices.ContainsKey(id) || (_wantedAt.TryGetValue(id, out var at) && now - at >= TuiClientRules.Settling));
         }
     }
 

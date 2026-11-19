@@ -24,8 +24,4 @@
     <ProjectReference Include="../Ah.Commands/Ah.Commands.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="../../../assets/mascot.ansi" LogicalName="mascot.ansi" />
-  </ItemGroup>
-
 </Project>

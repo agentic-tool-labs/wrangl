@@ -1,4 +1,7 @@
+using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
+using Ah.Core.Text;
 
 namespace Ah.Tui.Core;
 
@@ -25,15 +28,20 @@ internal interface ITuiTerminal
 /// The interactive client: an alternate screen with the cursor hidden and the mouse on, a frame drawn from the pure screens whenever the
 /// slices, the state, the size or the clock changes it, keys and mouse reports decoded and applied, and the terminal put back on every way out.
 /// </summary>
-internal sealed class InteractiveTui : IDisposable
+internal sealed partial class InteractiveTui : IDisposable
 {
+    /// <summary>The fewest rows a terminal has for the mascot to show.</summary>
+    internal const int ArtLeastRows = 24;
+
     internal const string EnterScreen = TuiModes.ScreenOn + TuiModes.MouseOn;
     internal const string LeaveScreen = TuiModes.MouseOff + TuiModes.ScreenOff;
 
     private readonly object _gate = new();
     private readonly ITuiTerminal _term;
     private readonly ITuiClock _clock;
-    private readonly bool _color;
+    private readonly ColorDepth _depth;
+    private readonly IReadOnlyList<string> _art;
+    private readonly int _artWidth;
     private readonly bool _mouse;
     private readonly TimeZoneInfo _zone;
     private readonly SliceFeed _feed;
@@ -45,12 +53,20 @@ internal sealed class InteractiveTui : IDisposable
     private string? _failure;
     private string? _usage;
 
-    private InteractiveTui(string? team, ITuiTerminal term, IViewSource source, IDaemonDiscovery discovery, ITuiClock clock, bool color, bool mouse, TimeZoneInfo zone)
+    /// <summary>Whether the mascot is still shown: until the first key or mouse event.</summary>
+    private bool _artOn = true;
+
+    /// <summary>The rows of art above the last frame drawn.</summary>
+    private int _artDrawn;
+
+    private InteractiveTui(string? team, ITuiTerminal term, IViewSource source, IDaemonDiscovery discovery, ITuiClock clock, ColorDepth depth, bool mouse, TimeZoneInfo zone)
     {
         _team = team;
         _term = term;
         _clock = clock;
-        _color = color;
+        _depth = depth;
+        _art = Art(depth);
+        _artWidth = _art.Count == 0 ? 0 : _art.Max(static l => TuiText.Width(TuiText.Plain(l)));
         _mouse = mouse;
         _zone = zone;
         _feed = new SliceFeed(source, discovery, clock, Draw, OnFailed);
@@ -63,13 +79,13 @@ internal sealed class InteractiveTui : IDisposable
         IViewSource source,
         IDaemonDiscovery discovery,
         ITuiClock clock,
-        bool color,
+        ColorDepth depth,
         TextWriter stderr,
         CancellationToken cancellationToken,
         TuiCaps? caps = null,
         TimeZoneInfo? zone = null)
     {
-        using var client = new InteractiveTui(team, term, source, discovery, clock, color, (caps?.Mouse ?? MouseLevel.Basic) != MouseLevel.Off, zone ?? TimeZoneInfo.Local);
+        using var client = new InteractiveTui(team, term, source, discovery, clock, depth, (caps?.Mouse ?? MouseLevel.Basic) != MouseLevel.Off, zone ?? TimeZoneInfo.Local);
         return await client.RunCoreAsync(stderr, cancellationToken).ConfigureAwait(false);
     }
 
@@ -218,11 +234,14 @@ internal sealed class InteractiveTui : IDisposable
     /// <summary>Applies each event of a chunk; true when the session should end.</summary>
     private bool HandleInput(string chunk)
     {
-        foreach (var ev in TuiNav.ParseInput(chunk))
+        foreach (var input in TuiNav.ParseInput(chunk))
         {
             NavAction? action;
             lock (_gate)
             {
+                // A click lands on the rows as drawn, under the art; the first key or mouse event takes the art away for good.
+                var ev = input is MouseEvent mouse && _artDrawn > 0 ? mouse with { Y = mouse.Y - _artDrawn } : input;
+                _artOn = false;
                 var slices = _feed.Slices;
                 (_state, action) = TuiScreens.Reduce(TuiScreens.Settle(_state, slices), ev, _frame, slices);
             }
@@ -243,11 +262,31 @@ internal sealed class InteractiveTui : IDisposable
         return false;
     }
 
-    private static string Painted(TuiLine line, bool color)
+    /// <summary>The one painter: a line's spans in their colours at the depth (none on a selected line), then its kind.</summary>
+    internal static string Painted(TuiLine line, ColorDepth depth)
     {
-        var text = line.Tone is { } tone && color && ToneCode(tone) is { } code && line.ToneLength > 0
-            ? string.Concat(line.Text.AsSpan(0, line.ToneAt), $"\u001b[{code}m", line.Text.AsSpan(line.ToneAt, line.ToneLength)) + "\u001b[39m" + line.Text[(line.ToneAt + line.ToneLength)..]
-            : line.Text;
+        var text = line.Text;
+        if (depth != ColorDepth.None && line.Kind != TuiLineKind.Selected && line.Spans is { Count: > 0 } spans)
+        {
+            var painted = new StringBuilder();
+            var at = 0;
+            foreach (var span in spans.OrderBy(static s => s.At))
+            {
+                var start = Math.Clamp(span.At, at, text.Length);
+                var end = Math.Clamp(span.At + span.Length, start, text.Length);
+                if (end == start)
+                {
+                    continue;
+                }
+
+                _ = painted.Append(text, at, start - at).Append("\u001b[").Append(TuiTheme.Code(span.Color, depth)).Append('m')
+                    .Append(text, start, end - start).Append("\u001b[39m");
+                at = end;
+            }
+
+            text = painted.Append(text, at, text.Length - at).ToString();
+        }
+
         return line.Kind switch
         {
             TuiLineKind.Title or TuiLineKind.Heading => "\u001b[1m" + text + "\u001b[0m",
@@ -257,13 +296,23 @@ internal sealed class InteractiveTui : IDisposable
         };
     }
 
-    private static string? ToneCode(string tone) => tone switch
+    [GeneratedRegex(@"([34])8;2;(\d+);(\d+);(\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex TrueColorRe();
+
+    /// <summary>The mascot's lines at a depth: the 24-bit art, that art in the 256 palette, or the plain art.</summary>
+    internal static IReadOnlyList<string> Art(ColorDepth depth)
     {
-        "bad" => "31",
-        "warn" => "33",
-        "work" => "32",
-        _ => null,
-    };
+        var art = depth switch
+        {
+            ColorDepth.TrueColor => Mascot.Ansi(),
+            ColorDepth.Palette256 => TrueColorRe().Replace(Mascot.Ansi(), m => TuiTheme.Code(
+                new TuiRgb(int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), int.Parse(m.Groups[4].Value, CultureInfo.InvariantCulture)),
+                ColorDepth.Palette256,
+                m.Groups[1].Value == "4")),
+            _ => Mascot.Plain(),
+        };
+        return art.Split('\n').Select(static l => l.TrimEnd('\r')).Where(static l => l.Length > 0).ToList();
+    }
 
     private void Draw()
     {
@@ -290,8 +339,11 @@ internal sealed class InteractiveTui : IDisposable
             var input = new TuiScreenInput(slices, _clock.UtcNow, _zone, _feed.Down, _feed.Fault, _feed.LastGood, _feed.Answered);
             var cols = _term.Columns;
             var rows = _term.Rows;
-            _frame = TuiScreens.Frame(_state, input, cols, rows);
-            var lines = _frame.Lines.Take(rows).Select(l => Painted(l, _color)).ToList();
+            // The art sits above the screen, which draws in the rows left under it; a terminal too small for both shows no art.
+            IReadOnlyList<string> art = _artOn && rows >= ArtLeastRows && cols >= _artWidth ? _art : [];
+            _artDrawn = art.Count;
+            _frame = TuiScreens.Frame(_state, input, cols, rows - art.Count);
+            var lines = art.Concat(_frame.Lines.Take(rows - art.Count).Select(l => Painted(l, _depth))).ToList();
             var text = string.Join("\r\n", lines);
             if (text == _lastFrame)
             {

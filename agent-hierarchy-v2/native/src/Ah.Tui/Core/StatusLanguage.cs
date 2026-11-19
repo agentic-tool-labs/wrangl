@@ -2,7 +2,7 @@ namespace Ah.Tui.Core;
 
 /// <summary>
 /// The status language the terminal shares with the mod and the web: per status, its glyph (one code point, so its shape tells
-/// the status without colour), the plain word shown for it, its tone (bad, warn, work or idle) and its sort rank (0 needs
+/// the status without colour), the plain word shown for it, its tone (bad, warn, work, ok or idle) and its sort rank (0 needs
 /// attention first). <see cref="Of"/> reads a raw member activity or dispatch state as one of them. The same table is
 /// <c>tests/fixtures/status-language.json</c>, and the tests hold this one, the mod's and that file to the same values.
 /// </summary>
@@ -20,7 +20,7 @@ internal static class StatusLanguage
         new("waitingOrch", "◐", "waiting for the orchestrator", "idle", 5),
         new("idle", "○", "idle", "idle", 6),
         new("held", "‖", "Held", "idle", 6),
-        new("done", "✓", "done", "idle", 7),
+        new("done", "✓", "done", "ok", 7),
         new("ended", "×", "ended", "idle", 8),
         new("unknown", "?", "unknown", "idle", 9),
     ];

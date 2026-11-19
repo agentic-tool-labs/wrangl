@@ -208,7 +208,8 @@ internal static class TuiOnce
                     feed.Want(ids);
                     // A count from a plan not yet read is printed as unknown, so a frame waits for the plan as it waits for a building daemon's list.
                     var planWait = TeamSlices.AnyPlanNotRead(slices) && clock.UtcNow < ceiling;
-                    if (!planWait && (feed.Answered(ids) || settled))
+                    // Judged on the snapshot the frame is drawn from: a reply merged since it was taken would answer ids the frame does not show.
+                    if (!planWait && (feed.Answered(ids, slices) || settled))
                     {
                         await PrintAsync(state, slices).ConfigureAwait(false);
                         break;

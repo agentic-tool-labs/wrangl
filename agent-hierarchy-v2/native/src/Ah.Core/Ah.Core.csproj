@@ -4,4 +4,9 @@
     <ProjectReference Include="../Ah.Abstractions/Ah.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="../../../assets/mascot.ansi" LogicalName="mascot.ansi" />
+    <EmbeddedResource Include="../../../assets/mascot.txt" LogicalName="mascot.txt" />
+  </ItemGroup>
+
 </Project>

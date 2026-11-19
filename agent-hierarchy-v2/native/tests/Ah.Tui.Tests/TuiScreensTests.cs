@@ -942,6 +942,33 @@ public sealed class TuiAppTests
     }
 
     [Fact]
+    public async Task AnIdIsAnsweredOnASnapshotOnlyWhenTheSnapshotHoldsItAndNegativeNotWhenOnlyTheFeedDoes()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var clock = new ManualClock();
+        using var feed = new SliceFeed(new SliceSource(Slices), new FakeDiscovery(), clock, static () => { }, static _ => { });
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var before = feed.Slices;
+        var running = feed.RunAsync(stop.Token);
+        feed.Want(["list:teams"]);
+        var ceiling = DateTime.UtcNow.AddSeconds(30);
+        while (!feed.Slices.ContainsKey("list:teams") && DateTime.UtcNow < ceiling)
+        {
+            await Task.Delay(10, token);
+        }
+
+        Assert.True(feed.Answered(["list:teams"]));
+        Assert.True(feed.Answered(["list:teams"], feed.Slices));
+        Assert.False(feed.Answered(["list:teams"], before));
+
+        clock.Advance(TuiClientRules.Settling);
+        Assert.True(feed.Answered(["list:teams"], before));
+
+        await stop.CancelAsync();
+        await running.WaitAsync(TimeSpan.FromSeconds(30), token);
+    }
+
+    [Fact]
     public async Task OnceWithNoTeamListPrintsAtTheDeadlineAndNegativeNotBefore()
     {
         var token = TestContext.Current.CancellationToken;

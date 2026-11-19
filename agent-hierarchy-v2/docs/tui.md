@@ -21,8 +21,16 @@ first, then less often).
 | `--once` | print one plain frame and exit: the teams, or the team with `--team`. Exit 3 if the daemon is down |
 | `--help` | usage |
 
-With `TERM=dumb`, or when input or output is not a terminal, it behaves as `--once`. With `NO_COLOR` set it has no
-colour. In a narrow window the rightmost columns drop first.
+With `TERM=dumb`, or when input or output is not a terminal, it behaves as `--once`. In a narrow window the rightmost
+columns drop first.
+
+Roles, states, counts and errors are drawn in the web UI's colours, at the depth the terminal says it has, read once at
+start: 24-bit when `COLORTERM` is `truecolor` or `24bit`, the 256-colour palette when `TERM` contains `256color`, and
+the basic 16 otherwise, each the nearest to the web colour. With `NO_COLOR` set and non-empty there is no colour; bold,
+dim and inverse stay. A selected row is drawn without colour so it stays readable.
+
+The first frames show the mascot above the screen, until the first key or mouse event; a terminal under 24 rows, or
+narrower than the art, skips it.
 
 From the Claude Code band, **View → TUI** opens `ahd tui` in a pane beside your session (needs herdr; otherwise it
 tells you to run `ahd tui` yourself).

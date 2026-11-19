@@ -52,6 +52,11 @@
   --rule-strong: #74869c; --link: #8fbaf0; --link-hover: #b9d4f6; --accent: #f0a57e; --stamp: #000000;
   --term-bg: #08101a; --term-rule: #2c3d52; --term-ink: #e4eaf1; --term-muted: #a9b8c9; --focus: #8fbaf0;
   --note-bg: #14253b; --note-rule: #8fbaf0; --warn-bg: #2b1b13; --warn-rule: #f0a57e; --hit-bg: #6a4f0f; --hit-ink: #ffffff;
+  --tk-x: 32px; --tk-sun: 0; --tk-moon: 1; --tk-ink: #e3e9f0; --tk-stars: 1;
+  --tk-track: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .02)), rgb(8 16 26 / .65);
+  --tk-track-edge: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 -6px 10px rgb(0 0 0 / .45), 0 0 0 1px rgb(116 134 156 / .55), 0 1px 3px rgb(0 0 0 / .5);
+  --tk-knob: radial-gradient(120% 120% at 30% 18%, rgb(255 255 255 / .5) 0%, rgb(170 195 230 / .2) 50%, rgb(110 145 200 / .32) 100%);
+  --tk-knob-edge: inset 0 1px 1px rgb(255 255 255 / .75), inset 0 -4px 7px rgb(0 0 0 / .4), 0 0 14px rgb(143 186 240 / .5), 0 2px 4px rgb(0 0 0 / .55);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -59,6 +64,11 @@
     --rule-strong: #74869c; --link: #8fbaf0; --link-hover: #b9d4f6; --accent: #f0a57e; --stamp: #000000;
     --term-bg: #08101a; --term-rule: #2c3d52; --term-ink: #e4eaf1; --term-muted: #a9b8c9; --focus: #8fbaf0;
     --note-bg: #14253b; --note-rule: #8fbaf0; --warn-bg: #2b1b13; --warn-rule: #f0a57e; --hit-bg: #6a4f0f; --hit-ink: #ffffff;
+  --tk-x: 32px; --tk-sun: 0; --tk-moon: 1; --tk-ink: #e3e9f0; --tk-stars: 1;
+  --tk-track: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .02)), rgb(8 16 26 / .65);
+  --tk-track-edge: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 -6px 10px rgb(0 0 0 / .45), 0 0 0 1px rgb(116 134 156 / .55), 0 1px 3px rgb(0 0 0 / .5);
+  --tk-knob: radial-gradient(120% 120% at 30% 18%, rgb(255 255 255 / .5) 0%, rgb(170 195 230 / .2) 50%, rgb(110 145 200 / .32) 100%);
+  --tk-knob-edge: inset 0 1px 1px rgb(255 255 255 / .75), inset 0 -4px 7px rgb(0 0 0 / .4), 0 0 14px rgb(143 186 240 / .5), 0 2px 4px rgb(0 0 0 / .55);
   }
 }
 
@@ -95,15 +105,53 @@ code, kbd, pre { font-family: var(--font-mono); }
 }
 .brand img { width: 32px; height: 32px; image-rendering: pixelated; }
 .brand:hover { color: var(--ink); }
-.menu-btn, .theme-btn, .btn, .copy {
+.menu-btn, .btn, .copy {
   font: 600 var(--text-sm)/1 var(--font-ui); color: var(--ink); background: var(--surface);
   border: 2px solid var(--ink); border-radius: 0; cursor: pointer; min-height: 36px; padding: var(--s2) var(--s3);
 }
 .menu-btn { display: none; }
-.theme-btn { display: inline-flex; align-items: center; gap: var(--s2); margin-inline-start: auto; white-space: nowrap; }
+/* The theme switch: a glass track with a glass knob that carries a pixel sun (light) or moon (dark). Its state is
+   drawn from the theme itself (the --tk-* tokens below), so it is right at first paint, before any script runs. */
+:root {
+  --tk-x: 0px; --tk-sun: 1; --tk-moon: 0; --tk-ink: #5a3505; --tk-stars: 0;
+  --tk-track: linear-gradient(180deg, rgb(255 255 255 / .7), rgb(255 255 255 / .2)), rgb(207 215 225 / .55);
+  --tk-track-edge: inset 0 1px 0 rgb(255 255 255 / .9), inset 0 -6px 10px rgb(23 33 46 / .12), 0 0 0 1px rgb(23 33 46 / .22), 0 1px 3px rgb(23 33 46 / .2);
+  --tk-knob: radial-gradient(120% 120% at 30% 18%, #fff6cf 0%, #f8cd5e 42%, #e79a1e 100%);
+  --tk-knob-edge: inset 0 1px 1px rgb(255 255 255 / .95), inset 0 -4px 7px rgb(160 84 0 / .4), 0 0 16px rgb(245 180 60 / .75), 0 2px 4px rgb(23 33 46 / .3);
+}
+.theme-btn {
+  display: inline-flex; align-items: center; justify-content: center; margin-inline-start: auto; min-height: 36px;
+  padding: 0; border: 0; border-radius: 18px; background: none; color: inherit; cursor: pointer;
+}
+.theme-track {
+  position: relative; display: block; width: 68px; height: 36px; border-radius: 18px; background: var(--tk-track);
+  box-shadow: var(--tk-track-edge); -webkit-backdrop-filter: blur(8px) saturate(1.5); backdrop-filter: blur(8px) saturate(1.5);
+  transition: background .35s ease, box-shadow .35s ease;
+}
+.theme-track::before { /* pixel stars, dark only */
+  content: ""; position: absolute; left: 12px; top: 10px; width: 2px; height: 2px; background: #e3e9f0; opacity: var(--tk-stars);
+  box-shadow: 9px 6px 0 #e3e9f0, 16px -2px 0 rgb(227 233 240 / .7), 4px 13px 0 rgb(227 233 240 / .6), 20px 11px 0 #e3e9f0;
+  transition: opacity .35s ease;
+}
+.theme-knob {
+  position: absolute; left: 3px; top: 3px; width: 30px; height: 30px; border-radius: 10px; color: var(--tk-ink);
+  background: var(--tk-knob); box-shadow: var(--tk-knob-edge); transform: translateX(var(--tk-x));
+  -webkit-backdrop-filter: blur(6px) brightness(1.25); backdrop-filter: blur(6px) brightness(1.25);
+  transition: transform .4s cubic-bezier(.3, 1.45, .5, 1), background .35s ease, box-shadow .35s ease, color .35s ease;
+}
+.theme-knob::after { /* the glass's top highlight */
+  content: ""; position: absolute; left: 3px; right: 3px; top: 2px; height: 42%; border-radius: 8px 8px 12px 12px;
+  background: linear-gradient(180deg, rgb(255 255 255 / .8), rgb(255 255 255 / 0)); pointer-events: none;
+}
+.theme-knob .icon { position: absolute; left: 7px; top: 7px; width: 16px; height: 16px; transition: opacity .25s ease, transform .4s ease; }
+.theme-knob .sun { opacity: var(--tk-sun); transform: rotate(calc(var(--tk-moon) * 90deg)); }
+.theme-knob .moon { opacity: var(--tk-moon); transform: rotate(calc(var(--tk-sun) * -90deg)); }
+.theme-btn:hover .theme-knob { filter: brightness(1.08); }
+.theme-btn:active .theme-knob { width: 34px; }
+.theme-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .theme-track, .theme-track::before, .theme-knob, .theme-knob .icon { transition: none; } }
 .search + .theme-btn { margin-inline-start: 0; }
 .icon { width: 16px; height: 16px; fill: currentColor; }
-.theme-btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 
 .search { display: none; position: relative; margin-inline-start: auto; flex: 0 1 22rem; min-width: 0; }
 .js .search { display: block; }
@@ -329,7 +377,6 @@ code, kbd, pre { font-family: var(--font-mono); }
   .masthead .theme-btn { min-height: 44px; min-width: 44px; justify-content: center; margin-inline-start: auto; }
   .is-doc .masthead .theme-btn { margin-inline-start: 0; }
   .is-doc .menu-btn { margin-inline-start: auto; }
-  .theme-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 var(--s4); }
   .sidebar { position: static; max-height: none; padding: var(--s4) 0; border-bottom: 2px solid var(--rule); }
   .js .sidebar:not(.open) { display: none; }

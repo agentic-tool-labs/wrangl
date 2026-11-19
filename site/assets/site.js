@@ -6,7 +6,7 @@
   // Theme: follows the system until the reader picks one; the pick is kept per browser.
   const themeBtn = $('.theme-btn');
   const dark = () => (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
-  const syncTheme = () => themeBtn && themeBtn.setAttribute('aria-pressed', String(dark()));
+  const syncTheme = () => themeBtn && themeBtn.setAttribute('aria-checked', String(dark()));
   syncTheme();
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncTheme);
   themeBtn?.addEventListener('click', () => {

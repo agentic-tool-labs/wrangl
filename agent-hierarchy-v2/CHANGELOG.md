@@ -4,6 +4,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.27] - 2026-11-19
+
+### Added
+
+- **Colour in the terminal view.** `ahd tui` paints each member in its role's colour (the web page's palette), and
+  working, blocked, waiting-on-you and done in their state colours. It uses 24-bit colour when the terminal says it
+  can, otherwise 256 or 16 colours. `NO_COLOR`, `TERM=dumb` and `--once` are unchanged.
+- **The mascot at launch.** An interactive `ahd tui` shows the Wrangl mascot above the first screen until your first
+  key or click. It is skipped on a terminal with fewer than 24 rows.
+
+### Changed
+
+- **The documentation site's theme button is a glass switch** with a pixel sun and moon. The old button read "Dark
+  theme" whatever the theme was.
+- **Reviewer wording defers to a "reviewers run nothing" rule.** Where the directive, the role notice and the default
+  reviewer order tell a Reviewer to delegate a run or ask for one, they now add: unless a rule of engagement says
+  reviewers run nothing.
+
+### Fixed
+
+- **`ahd tui --once --team` could print a screen missing rows** on a busy machine: it judged the data as loaded on the
+  live feed, then drew from an older copy. It now judges the copy it draws.
+- **A rebuild lock held by another user's process is no longer taken over.** Only a process that does not exist counts
+  as gone.
+- **A background rebuild that cannot be started is recorded as failed at once**, where it used to read "in progress"
+  for 15 minutes. `ah roster doctor --fix` says "rebuild could not start" with the reason.
+
 ## [2.0.26] - 2026-11-19
 
 ### Added
