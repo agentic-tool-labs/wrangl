@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.24] - 2026-11-19
+
+### Added
+
+- **`ah roster doctor` checks the ahd build.** A new `ahd-build` row compares the installed binary's stamp with the
+  plugin. When the binary is behind it gives the reason no background rebuild started and the command that fixes it.
+  It only reads.
+
+### Fixed
+
+- **A stale ahd build is no longer silent.** When the binary is behind the plugin and no background rebuild can start,
+  session start now says why in one line and names `/wrangl:hierarchy update`.
+- **The rebuild check runs whether or not the session registered with the daemon.** A session that had not registered
+  at the moment of a plugin reload skipped the check and started no rebuild.
+- **A background rebuild that stalled is retried after 15 minutes**, not left for 24 hours.
+- **A failed background rebuild is recorded as failed.** The hook wrote the install stamp in a form the installer could
+  not patch, so a failed rebuild stayed "started" and nothing reported it.
+
 ## [2.0.23] - 2026-11-19
 
 ### Added

@@ -14,6 +14,18 @@ internal static partial class DoctorVerb
         return new Check(level == "error" ? "red" : level, detail);
     }
 
+    /// <summary>The install stamp's row: whether ahd is built for this plugin, and if not why and the fix; it starts nothing.</summary>
+    private static Check AhdBuildRow(RosterContext c)
+    {
+        if (c.Services.Doctor is not { } doctor)
+        {
+            return new Check("ok", "not checked in this process");
+        }
+
+        var (level, detail) = doctor.AhdBuild();
+        return new Check(level, detail);
+    }
+
     /// <summary>The state database's row: its schema and integrity and how fresh its backups are; a damaged database is red.</summary>
     private static Check StateDbRow(RosterContext c)
     {

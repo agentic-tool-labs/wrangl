@@ -358,22 +358,26 @@ internal static class SessionStart
         // An empty context is the top-level Orchestrator's, whose directive is another unit's: it still gets the lines below.
         static string With(string? context, string line) => string.IsNullOrEmpty(context) ? line : $"{context}\n\n{line}";
 
-        // Only a participant (a non-subagent session with a mailbox address) touches the daemon or the install stamp.
+        // The install stamp is checked for every session that gets here (a subagent returned in Run), registered or not: a
+        // registration that missed a daemon restart must not skip the rebuild.
+        var stampSpan = PhaseTrace.Begin();
+        try
+        {
+            foreach (var line in InstallStampNotice.Lines(s, advisory.InstallStamp, JsConvert.ToJsString(s.Config.PluginVersion())))
+            {
+                context = With(context, line);
+            }
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            c.LogError(e);
+        }
+
+        PhaseTrace.End("sessionstart.install-stamp", stampSpan);
+
+        // Only a participant (a non-subagent session with a mailbox address) touches the daemon.
         if (registered)
         {
-            var stampSpan = PhaseTrace.Begin();
-            try
-            {
-                foreach (var line in InstallStampNotice.Lines(s, advisory.InstallStamp, JsConvert.ToJsString(s.Config.PluginVersion())))
-                {
-                    context = With(context, line);
-                }
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                c.LogError(e);
-            }
-
             foreach (var line in HerdrModNotice.Lines(s, JsConvert.ToJsString(s.Config.PluginVersion())))
             {
                 context = With(context, line);
@@ -391,8 +395,6 @@ internal static class SessionStart
             {
                 c.LogError(e);
             }
-
-            PhaseTrace.End("sessionstart.install-stamp", stampSpan);
         }
 
         // Every session start refreshes the status file, role or not, enabled or not, so a reboot or a crash heals at the next

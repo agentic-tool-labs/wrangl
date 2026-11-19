@@ -55,6 +55,9 @@ public interface IRosterDoctor
     /// <summary>The <c>ahd-heal</c> row of <c>roster doctor</c>: <c>ok</c>, <c>warn</c> or <c>error</c> with the text to show (heal restarts, the cap, a failed heal). Reads only.</summary>
     (string Level, string Detail) AhdHeal() => ("ok", "not checked in this process");
 
+    /// <summary>The <c>ahd-build</c> row of <c>roster doctor</c>: <c>ok</c> or <c>warn</c> with the install stamp against the plugin, the reason and the fix. Reads only.</summary>
+    (string Level, string Detail) AhdBuild() => ("ok", "not checked in this process");
+
     /// <summary>The state-database row of <c>roster doctor</c>: <c>ok</c>, <c>warn</c> or <c>error</c> with the text to show (schema, integrity, backups).</summary>
     (string Level, string Detail) StateDb();
 }

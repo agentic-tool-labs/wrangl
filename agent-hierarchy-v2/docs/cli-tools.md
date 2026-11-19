@@ -1671,6 +1671,8 @@ Run by `install.sh` for the user's own terminal, never by an agent: see [Lifecyc
 
 Read-only JSON, one row per thing that can be wrong; `--check` exits 1 on any red row With a grants document it adds `gate-*` rows: mode and the normalisation note (`ok`), a moved or missing work tree and a member without a record (`red`), tmp alias, size over 1 GiB, dismissed leftovers over 7 days and an unignored tmp root (`warn`; over 4 GiB `red`), gate internal errors and a tripped breaker in the last 24 h (`red`), grants documents left in a work tree's own pool (`warn`) and member scratch left in the team home (`ok`).
 
+An `ahd-build` row compares `install.json`'s version and contract with the plugin's and, when ahd is behind, says why it was not rebuilt and the fix (`/wrangl:hierarchy update`, or `/wrangl:hierarchy install` when not installed); `ok` when current or a rebuild is in progress, else `warn`.
+
 `teams` adds `gate: {mode, members, would_refuse_24h, deny_24h}` per team, `null` without a document. A `progress` row is `ok`, `off`, or `warn` (never red). The rows `version`, `team`, `peers`, `registrations`, `rejected-requests`, `hooks-syntax` and `marketplace` each print what they checked in their detail.
 
 #### Split decision (tests)
