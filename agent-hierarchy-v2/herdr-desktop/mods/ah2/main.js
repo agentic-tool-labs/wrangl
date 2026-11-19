@@ -12,13 +12,14 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows, activitySubs } from "./model.js";
+import { runText, underTip } from "./flow-model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
-import { graphSubs, leaveGraph, rowMark } from "./graph-model.js";
+import { graphSubs, leaveGraph, rowMark, roleHue, roleIcon } from "./graph-model.js";
 import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
@@ -36,12 +37,10 @@ const WAIT_S = "25"; // fits inside the 35 s exec timeout fetch passes
 const BACKOFF_MS = [2000, 4000, 8000, 16000, 30000];
 const MONO = "Geist Mono"; // ships with Herdr; gives ages and counts even digit widths (GPUI has no tabular-nums)
 const AGENT_STATE = { working: "working", blocked: "blocked", done: "done", idle: "idle" };
-// ah2-207 D2/D3: the tree's indent step (one connector column, and the disclosure's column) and the roles with an icon of their own
-// (role-<role>.svg; any other role draws role-member.svg). The folds live in Herdr's shared store, keyed "<team id>|<node key>".
+// ah2-207 D2/D3: the tree's indent step (one connector column, and the disclosure's column); the roles' icons are graph-model.js
+// roleIcon. The folds live in Herdr's shared store, keyed "<team id>|<node key>".
 const STEP = 16;
 const TREE_KEY = "ah2-sidebar-tree";
-const ROLE_ICONS = new Set(["orchestrator", "sub-orchestrator", "deputy-chief", "ultra-advisor", "architect", "implementor", "reviewer", "qa", "ux-engineer", "docs-writer", "task-runner", "backlog-groomer"]);
-const roleIcon = (role) => `mods/ah2/role-${ROLE_ICONS.has(role) ? role : "member"}.svg`;
 
 const openTeam = (id) => openOverlay({ mod: "ah2", props: { view: "sitrep", team: id }, kind: "window", key: "ah2-sitrep", width: 620, height: 600 });
 
@@ -141,7 +140,7 @@ export default class Ah2 extends View {
     if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide })];
     if (this.view === "feed") return ["view:summary", ...feedSubs(this.st.slices)];
     if (this.view === "graph") return ["view:summary", ...graphSubs(this.st.slices, this)];
-    return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary"];
+    return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary", ...activitySubs(this.st.slices)];
   }
 
   // One reply: from `ah view events`, or from props.fixture (a saved reply, for running without a daemon).
@@ -544,12 +543,19 @@ export default class Ah2 extends View {
       teamAlerts(tm, null);
       // a node starts open, a lane closed under the Lanes: Collapsed setting, until its disclosure is used (kept per team and node)
       const open = (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed");
-      for (const r of treeRows(teamTree(tm), open)) {
+      const tree = teamTree(tm);
+      // a job's or subagent's parent row, for its tooltip: the member it is a child of; none under the team's header
+      const parentOf = new Map();
+      const walk = (list, p) => list.forEach((x) => { if (x.item) parentOf.set(x.key, p); walk(x.children, x.kind === "member" ? x.name : null); });
+      walk(tree, null);
+      for (const r of treeRows(tree, open)) {
         const n = r.node;
         const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label);
         if (n.kind === "lane") {
           rows.push(header(n.team, true, lead));
           teamAlerts(n.team, r);
+        } else if (n.item) {
+          rows.push(this.under(t, n.item, lead, parentOf.get(n.key) ?? null, lt, now));
         } else {
           rows.push(this.member(t, n, lead, lt, terminalOf, order, linked));
           for (const a of n.alerts) rows.push(alert(tm.id, a, r));
@@ -623,9 +629,13 @@ export default class Ah2 extends View {
     const cols = fold === null
       ? [...(deep ? [...r.rails, !r.last] : []), r.open].map((on) => [on, false])
       : deep ? [...r.rails.map((on) => [on, false]), [!r.last, true]] : [];
+    // ah2-225 B3: a subagent's own elbow is dashed; the lines that run on past it stay solid
+    const dash = fold !== null && r.node.kind === "subagent";
+    const seg = (el, across) => (dash ? el.border_dashed().border_color(t.border).when(across, (e) => e.border_t(1)).when(!across, (e) => e.border_l(1)) : el.bg(t.border));
+    const piece = () => div().absolute();
     const col = ([down, elbow]) => div().relative().w(STEP).flex_none()
       .when(down, (el) => el.child(line().left(7).top(0).w(1).h_full()))
-      .when(elbow, (el) => el.child(line().left(7).top(0).w(1).h(15)).child(line().left(7).top(14).w(STEP - 7).h(1)));
+      .when(elbow, (el) => el.child(seg(piece().left(7).top(0).w(1).h(15), false)).child(seg(piece().left(7).top(14).w(STEP - 7).h(1), true)));
     const end = fold === null ? [] : [r.kids
       ? div().w(STEP).flex_none().flex().flex_col().pt(3)
         .child(Button.new(`fold-${fold}`).w(STEP).h(24).flex().flex_none().items_center().justify_center().rounded(4).cursor_pointer()
@@ -641,7 +651,7 @@ export default class Ah2 extends View {
           .child(r.open ? "▾" : "▸"))
         // the line down to its children, under the disclosure, to the row's foot
         .when(r.open, (el) => el.child(div().flex_1().ml(7).w(1).bg(t.border)))
-      : div().relative().w(STEP).flex_none().when(deep, (el) => el.child(line().left(0).top(14).w(STEP - 2).h(1)))];
+      : div().relative().w(STEP).flex_none().when(deep, (el) => el.child(seg(piece().left(0).top(14).w(STEP - 2).h(1), true)))];
     return div().flex().flex_none().children([...cols.map(col), ...end]);
   }
 
@@ -662,8 +672,8 @@ export default class Ah2 extends View {
     // Every row has the ring border, linked or not, so their columns line up.
     const row = this.ring(t, address ? Button.new(`m-${mb.key}`) : h_flex().id(`m-${mb.key}`), t.chrome)
       .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12.5)
-      .tooltip(full)
-      .accessibility_label(address ? `${full}. Focus its terminal` : full)
+      .tooltip(`${full} · peer session`) // ah2-225 B4: told apart from a subagent row without colour
+      .accessibility_label(address ? `${full}, peer session. Focus its terminal` : `${full}, peer session`)
       .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(mk.hue ?? t.foreground))
       .child(div().w(14).flex_none().flex().justify_center().text_size(11).text_color(mk.mark ?? t.blocked).child(mk.glyph))
       // what it is on gives way first, then the name (to 40 px); a bare state word ("idle") never does, so the state is never lost
@@ -673,6 +683,27 @@ export default class Ah2 extends View {
     return div().flex().w_full().gap(4).child(lead).child(address
       ? row.cursor_pointer().hover((el) => el.bg(t.hover)).on_click(() => run("pane.focus", { terminal: address }))
       : row);
+  }
+
+  // ah2-225 B1/B3: a job's or subagent's leaf row under its parent: the job mark or the subagent's role icon (the generic one when its
+  // type is no role), the label, the "subagent" tag, the time against its estimate (or the run's age), and an overdue mark that is a
+  // glyph and a word. No pane to go to, so not a button: the tooltip carries the full text. The same 30 px height as a member row.
+  under(t, x, lead, parent, lt, now) {
+    const tip = underTip(x, parent, now);
+    const sub = x.kind === "subagent";
+    const row = this.ring(t, h_flex().id(`u-${x.key}`), t.chrome)
+      .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12)
+      .tooltip(tip).accessibility_label(tip)
+      .child(sub ? svg(roleIcon(x.role)).size(14).flex_none().text_color(roleHue(x.role, lt) ?? t.foreground)
+        : div().w(14).flex_none().flex().justify_center().text_size(12).text_color(t.muted).child("◷"))
+      .child(div().flex_auto().min_w(40).truncate().text_color(t.muted).child(x.label))
+      .when(sub, (el) => el.child(div().h(16).px(5).flex().flex_none().items_center().rounded(4).border(1).border_dashed().border_color(t.muted)
+        .text_size(10.5).text_color(t.muted).child("subagent")))
+      // the time keeps its width (only "waiting for the test slot" gives way); an overdue one carries ⚠ in the blocked tone, the word in the tooltip
+      .child(div().when(x.queued, (el) => el.flex_shrink(100).min_w(0)).when(!x.queued, (el) => el.flex_none()).truncate().font_family(MONO).text_size(11)
+        .when(x.overdue, (el) => el.font_semibold().text_color(t.blocked)).when(!x.overdue, (el) => el.text_color(t.muted))
+        .child(x.overdue ? `⚠ ${runText(x, now)}` : runText(x, now)));
+    return div().flex().w_full().gap(4).child(lead).child(row);
   }
 
   // ---- window overlay: one team's full sitrep ----

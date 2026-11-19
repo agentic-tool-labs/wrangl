@@ -141,6 +141,7 @@ public static partial class WatchModule
         Model.ItemLogLane? itemLogRef = null;
         Model.SitrepLane? sitrepLane = null;
         Model.JobsLane? jobsLane = null;
+        Model.SubagentsLane? subagentsLane = null;
         Model.IModelLane activity = new Model.ActivityLane(reader, dirs.Refresh, () => dirs.Current, changed: (dir, subject) => messagesRef?.RereadSession(dir, subject));
         Model.TimelineRecorder? recorder = null;
         if (timeline is not null)
@@ -303,6 +304,12 @@ public static partial class WatchModule
                 jobsLane = new Model.JobsLane(() => dirs.Current, id => model!.Leases.IsSubscribed(id), jobsProbe, options.JobsVersion);
                 lanes.Add(jobsLane);
             }
+
+            if (options?.SubagentsProbe is { } subagentsProbe)
+            {
+                subagentsLane = new Model.SubagentsLane(() => dirs.Current, id => model!.Leases.IsSubscribed(id), subagentsProbe, () => model!.Records, options.SubagentsVersion);
+                lanes.Add(subagentsLane);
+            }
         }
 
         if (options?.BacklogProbe is { } backlogProbe)
@@ -370,6 +377,11 @@ public static partial class WatchModule
                 foreach (var held in jobsLane?.Keys() ?? [])
                 {
                     model!.Emit(Model.JobsLane.LaneName, held);
+                }
+
+                foreach (var held in subagentsLane?.Keys() ?? [])
+                {
+                    model!.Emit(Model.SubagentsLane.LaneName, held);
                 }
 
                 backlogLane?.EmitHeld(model!.Emit);
@@ -724,6 +736,7 @@ public static partial class WatchModule
         {
             read.ForgetParsed();
             (read.Lane(Model.JobsLane.LaneName) as Model.JobsLane)?.Forget();
+            (read.Lane(Model.SubagentsLane.LaneName) as Model.SubagentsLane)?.Forget();
             (read.Lane(Model.MessagesLane.LaneName) as Model.MessagesLane)?.ForgetKeys();
             ((read.Lane(Model.ProcessesLane.LaneName) as Model.LazyLane)?.Inner as Model.ProcessesLane)?.ForgetPids();
         }

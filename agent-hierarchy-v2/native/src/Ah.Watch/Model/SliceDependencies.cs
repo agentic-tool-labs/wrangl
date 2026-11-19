@@ -80,6 +80,7 @@ internal static class SliceDependencies
         new("sitrep:<dirId>/<t>", "activity", "who is working in t or a lane team, as the team summary sees a change"),
         new("sitrep:<dirId>/<t>", "processes", "who is running in t or a lane team, as the team summary sees a change"),
         new("jobs:<dirId>/<t>", "reconcile", "each tick while held"),
+        new("subagents:<dirId>/<t>", "reconcile", "each tick while held"),
         new("list:plan:<dirId>/<t>", "progress", "(dir, t)"),
         new("list:plan-changes:<dirId>/<t>", "progress", "(dir, t)"),
         new("list:teams", "teams", "*"),

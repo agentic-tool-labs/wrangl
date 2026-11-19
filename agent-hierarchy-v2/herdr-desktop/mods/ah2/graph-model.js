@@ -4,10 +4,10 @@
 // names, arc widths), both byte-identical copies of web/ui's, kept honest by a test; graph-layout.js is d3's pack and curveBundle.
 import "./intl-shim.js"; // before graph-world.js, which needs Intl when it loads
 import { laneChildren, memberIds, memberOf, sparksOf, teamLabel } from "./select.js";
-import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
+import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes } from "./flow-model.js";
+import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, graphSources, jobsUnder, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -162,7 +162,7 @@ export function graphSubs(slices, ui = {}, clock = Date.now()) {
     const mids = memberIds(teamSlice(slices, k));
     // the plan names the streams (the Map's circles); a member's activity slice holds its busy share (the ring)
     const acts = mids.map((id) => slices.get(id)?.body.activity).filter(Boolean);
-    ids.push(`team:${k}`, `flow:${k}`, `topology:${k}`, `plan:${k}`, `list:open:team:${k}`, ...mids, ...acts, ...openIds(slices, k));
+    ids.push(`team:${k}`, `flow:${k}`, `topology:${k}`, `plan:${k}`, `list:open:team:${k}`, ...mids, ...acts, ...openIds(slices, k), activityId("jobs", k), activityId("subagents", k));
     const head = slices.get(`flow:${k}`)?.body;
     const tb = teamSlice(slices, k)?.body;
     if (head?.run && tb) {
@@ -217,7 +217,9 @@ function group(slices, t, depth, size, o = {}) {
   const sparks = live ? sparksOf(slices, team) : [];
   for (const s of sparks) link(s.from, s.to).flight.push(s);
   const overflow = windowed ? 0 : (head?.totals ?? []).filter(([a]) => a < 0).reduce((n, r) => n + r[2] + r[3], 0);
-  const map = mapOf(slices, team, t.id, members, head, size, { pairs: view.pairs, sc, sparks, zoom: o.zoom ?? null });
+  // ah2-225: this team's share of the shown teams' jobs and subagents (o.under, graphModel's): its members' and its header's
+  const mine = new Map([...members.map((m) => m.id), `team:${t.id}`].filter((k) => o.under?.has(k)).map((k) => [k, o.under.get(k)]));
+  const map = mapOf(slices, team, t.id, members, head, size, { pairs: view.pairs, sc, sparks, zoom: o.zoom ?? null, under: mine.size ? mine : null, clock: o.clock });
   // zoomed into a circle, only the links between the members inside it
   const inside = o.zoom && map ? new Set(map.leaves.map((n) => n.id)) : null;
 
@@ -254,7 +256,7 @@ function group(slices, t, depth, size, o = {}) {
 export const FAINT = 0.12;
 export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
   if (members.length === 0) return null;
-  const root = pack(hierarchy(treeOf(id, teamLabel(team.body), members)), () => 1, airOf);
+  const root = pack(hierarchy(treeOf(id, teamLabel(team.body), members, o.under ?? null)), radiusOf, airOf);
   const only = root.children?.length === 1 && root.children[0].children ? root.children[0] : root;
   const top = (o.zoom && root.descendants().find((n) => n.data.id === o.zoom && n.children)) || only;
   fitPack(top, size);
@@ -310,7 +312,15 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
       const busy = typeof m.share === "number" ? `busy ${Math.round(m.share * 100)}% of the last hour` : "";
       return { ...m, full: [m.title ?? m.name, m.role, m.word, m.item, busy].filter(Boolean).join(" · "), x: n.x, y: n.y, r: n.r, tier: TIERS.filter((v) => n.r >= v).length };
     });
-  return { size, containers, arcs, flights, leaves, focus: top === root ? null : { id: top.data.id, name: top.data.name, zoomed: top !== only } };
+  // ah2-225: jobs and subagents beside their owner (an undrawn group, graph-world.js treeOf); `link` the owner's centre for a subagent
+  const now = o.clock ?? Date.now();
+  const unders = top.leaves().filter((n) => n.data.type === "job" || n.data.type === "subagent").map((n) => {
+    const x = n.data.x;
+    const g = n.parent?.data.type === "group" && n.parent.data.id.startsWith("with:") ? byId.get(n.parent.data.id.slice("with:".length)) : null;
+    return { key: x.key, kind: x.kind, x: n.x, y: n.y, r: n.r, overdue: x.overdue, run: runText(x, now), tip: underTip(x, g ? g.data.m.name : null, now),
+      link: x.kind === "subagent" && g ? { x: g.x, y: g.y } : null };
+  });
+  return { size, containers, arcs, flights, leaves, unders, focus: top === root ? null : { id: top.data.id, name: top.data.name, zoomed: top !== only } };
 }
 
 // The scrubber under the maps, over every shown team's flow: the span from the oldest run start to now in whole minutes, the
@@ -387,8 +397,16 @@ export function graphModel(slices, team = null, size = MAP_PX, ui = {}, clock = 
   if (!at) return { ...base, closed: id !== null, groups: [], scrub: null, crumb: null };
   const shown = flat([at.t]);
   const z = ui.graphZoom && shown.find((x) => x.t.id === ui.graphZoom.team) ? ui.graphZoom : null;
+  // ah2-225: the shown teams' jobs and subagents at once, so a run in a lane's slice and its parent's is drawn once, in the lane
+  const src = (kind) => shown.map(({ t }) => {
+    const tm = teamSlice(slices, t.id);
+    const ids = memberIds(tm);
+    const [s0] = graphSources(slices, tm, ids, [], kind);
+    return s0 ? { ...s0, header: `team:${t.id}` } : { rows: [], owners: new Map(), header: `team:${t.id}` };
+  });
+  const under = underOf(jobsUnder(src("jobs")), subagentsUnder(src("subagents"), clock));
   const groups = (z ? shown.filter((x) => x.t.id === z.team) : shown)
-    .map(({ t, depth }) => group(slices, t, z ? 0 : depth, typeof size === "function" ? size(z ? 0 : depth) : size, { ui, clock, zoom: z?.node ?? null }));
+    .map(({ t, depth }) => group(slices, t, z ? 0 : depth, typeof size === "function" ? size(z ? 0 : depth) : size, { ui, clock, zoom: z?.node ?? null, under }));
   const focus = z && groups[0]?.map?.focus;
   const crumb = focus?.zoomed ? [at.t.label ?? at.t.name, ...(z.team === at.t.id ? [] : [groups[0].name]), focus.name] : null;
   return { ...base, closed: false, name: at.t.label ?? at.t.name, groups, pending: groups.some((g) => g.pending), scrub: scrubberOf(groups, ui, clock), crumb };
@@ -433,7 +451,7 @@ export function flowRescale(ui, m, s2, px = null, py = null) {
 // The shown team as Flow draws it, every position in drawn px (world × k from the layout box's corner). orient: the stored or chosen
 // one, or null: then it is picked from the stage's shape, vertical when the stage is narrower than the horizontal layout, and
 // `picked` says which (null before the first measure, when the frame draws horizontal). room: the view's measured body, or null.
-export function flowModel(slices, team = null, orient = null, scale = 1, room = null) {
+export function flowModel(slices, team = null, orient = null, scale = 1, room = null, clock = Date.now()) {
   const top = sidebarModel(slices, 0).teams;
   const tabs = top.map((t) => ({ id: t.id, name: t.label ?? t.name }));
   const id = team ?? top[0]?.id ?? null;
@@ -444,8 +462,12 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const tm = slices.get(teamId);
   if (!tm) return { ...base, closed: false, name: at.t.name, pending: true };
   const ids = memberIds(tm);
-  const nodes = flowNodes(slices, tm, ids, laneChildren(slices, tm, ids));
-  const active = flowActive(slices, tm, nodes);
+  const children = laneChildren(slices, tm, ids);
+  const members = flowNodes(slices, tm, ids, children);
+  const active = flowActive(slices, tm, members);
+  // ah2-225: the team's and its lanes' jobs and subagents, as Flow's extra nodes (flow-model.js flowExtras); `clock` ages them
+  const extras = flowExtras(members, underOf(jobsUnder(graphSources(slices, tm, ids, children, "jobs")), subagentsUnder(graphSources(slices, tm, ids, children, "subagents"), clock)));
+  const nodes = extras.length ? [...members, ...extras] : members;
   const stage = room ? { w: room.w, h: Math.max(0, room.h - LEGEND_H) } : { w: MAP_PX, h: MAP_PX };
   let picked = null;
   let o = orient;
@@ -467,9 +489,12 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const fl = flowLinks(edges, sparks, layout.pos, o);
   // a lane's member reads its pane from its lane's summary, as the sidebar's row does (memberPane)
   const paneAt = (n) => memberPane(n.id, slices.get((n.team || teamId).replace(/^team:/, "team-summary:"))?.body.member_states?.[n.id]);
-  const cards = nodes.filter((n) => layout.pos.has(n.id)).map((n) => ({ id: n.id, rect: rect(layout.pos.get(n.id)), card: flowCardOf(slices, n.team || teamId, n.id),
+  const cards = members.filter((n) => layout.pos.has(n.id)).map((n) => ({ id: n.id, rect: rect(layout.pos.get(n.id)), card: flowCardOf(slices, n.team || teamId, n.id),
     active: active.has(n.id), out: sparks.filter((s) => s.from === n.id).length, pane: paneAt(n) }));
-  const links = fl.links.map((l) => ({ key: l.key, kind: l.kind, cmds: scaled(l.cmds) }));
+  const nameOf = (id) => shortName(id, slices.get(id)?.body.name ?? undefined);
+  const unders = extras.filter((n) => layout.pos.has(n.id)).map((n) => ({ key: n.id, rect: rect(layout.pos.get(n.id)), item: n.item, role: n.role,
+    card: !n.after && layout.pos.get(n.id).h > FLOW.row.h, run: runText(n.item, clock), tip: underTip(n.item, n.after ? nameOf(n.after) : null, clock) }));
+  const links = [...fl.links, ...underLinks(extras, layout.pos, o)].map((l) => ({ key: l.key, kind: l.kind, cmds: scaled(l.cmds) }));
   // flowLinks orders a path's ends along the columns, so a brief from the later card travels it backwards (sender to receiver)
   const dots = fl.dots.map((d) => {
     const a = layout.pos.get(d.from);
@@ -482,7 +507,7 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const said = `${at.t.name} Flow: ${cards.length} members, ${lines} reporting lines, ${dots.length} briefs in flight${fl.rest > 0 ? `, ${fl.rest} more not drawn` : ""}`;
   return { ...base, closed: false, name: at.t.name, pending: false, orient: o, picked, stage, fit, k, box,
     size: box ? { w: box.w * k, h: box.h * k } : { w: 0, h: 0 },
-    cards, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y) })),
+    cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y) })),
     // V10: each lane's column from its header to the stage's foot (vertical: its row, across the laid-out width; the content is centred), and its cards' width for the header's rule
     lanes: layout.labels.map((l, i) => (o === "vertical"
       ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h) * k, rule: FLOW.card.w * k }
@@ -525,6 +550,9 @@ export const roleHue = (role, light) => {
   const w = light ? WEB.light : WEB.dark;
   return Object.hasOwn(w.role, role ?? "") && role !== "neutral" ? w.role[role] : w.role.neutral;
 };
+// ah2-207 D3: the roles with an icon of their own (role-<role>.svg); any other role, and a subagent type that is no role, draws role-member.svg.
+const ROLE_ICONS = new Set(["orchestrator", "sub-orchestrator", "deputy-chief", "ultra-advisor", "architect", "implementor", "reviewer", "qa", "ux-engineer", "docs-writer", "task-runner", "backlog-groomer"]);
+export const roleIcon = (role) => `mods/ah2/role-${ROLE_ICONS.has(role) ? role : "member"}.svg`;
 // ah2-207 D4: a Wrangl sidebar row in the Graph's look: its state's glyph and mark as the Flow card gives them (cardStyle, active as
 // isActive; mark null is the theme's blocked), and its role's hue for the icon. s: { role, state, running }.
 export function rowMark(s, light) {
@@ -548,6 +576,7 @@ export function edgeStyle(kind, light) {
   const w = light ? WEB.light : WEB.dark;
   if (kind === "review") return { color: w.review, width: 2, dash: true };
   if (kind === "brief") return { color: w.accent, width: 2, dash: false };
+  if (kind === "subagent") return { color: w.dim, width: 1, dash: true }; // ah2-225 B3: a subagent's link to its owner
   return { color: null, width: 1, dash: false };
 }
 export const dotColor = (review, light) => (review ? (light ? WEB.light : WEB.dark).review : markOf(light ? WEB.light : WEB.dark, light));
@@ -690,9 +719,9 @@ export const memberPageLink = (port, id) => (port ? { url: `http://127.0.0.1:${p
 
 // ---- V10 (spec herdr-graph-polish Amendment 5): each Flow lane in the colour of the role class that lives in it, from the web's role
 // tokens: Lead the sub-orchestrator's (the orchestrator's own token is the ink, no hue), Advise · design the architect's, Implement the
-// implementor's, Review the review violet. A lane past these is neutral. `band`: the colour at LANE_ALPHA, behind the lane's cards,
+// implementor's, Review the review violet, Test (ah2-225 B2) the QA's. A lane past these is neutral. `band`: the colour at LANE_ALPHA, behind the lane's cards,
 // which keep their own opaque fill, so a card's state still reads first.
-export const LANE_CLASS = ["sub-orchestrator", "architect", "implementor", "review"];
+export const LANE_CLASS = ["sub-orchestrator", "architect", "implementor", "review", "qa"];
 export const LANE_ALPHA = 0.05;
 export function laneStyle(i, light) {
   const w = light ? WEB.light : WEB.dark;

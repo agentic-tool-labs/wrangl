@@ -200,7 +200,11 @@ export const fadeOf = (cursor, t, win) => (win === null || t === null ? null : M
 // The packed tree: the team at the root, then one circle per stream holding the stream's members. When the team has streams, its
 // team-level (loose) members sit together in an undrawn group of their own, so they pack apart from the stream circles.
 // members: [{id, stream}], in the order to draw. Streams sort by name.
-export function treeOf(teamId, teamName, members) {
+// ah2-225: `under` (flow-model.js underOf) puts a member's jobs and subagents in an undrawn group with it, so they pack beside it at
+// UNDER_R; one under no member here packs at the team's top level. With nothing under anyone the tree is as it was.
+export const UNDER_R = 0.4;
+export const radiusOf = (n) => (n.data.type === "member" ? 1 : UNDER_R);
+export function treeOf(teamId, teamName, members, under = null) {
   const streams = new Map();
   const top = [];
   for (const m of members) {
@@ -210,7 +214,11 @@ export function treeOf(teamId, teamName, members) {
       top.push(m);
     }
   }
-  const leaf = (m) => ({ id: m.id, type: "member", name: m.name ?? m.id, m });
+  const extra = (x) => ({ id: x.key, type: x.kind, name: x.label, x });
+  const own = (m) => ({ id: m.id, type: "member", name: m.name ?? m.id, m });
+  const leaf = (m) => (under?.get(m.id)?.length ? { id: `with:${m.id}`, type: "group", name: m.name ?? m.id, children: [own(m), ...under.get(m.id).map(extra)] } : own(m));
+  const ids = new Set(members.map((m) => m.id));
+  const loose = under ? [...under].filter(([k]) => !ids.has(k)).flatMap(([, list]) => list.map(extra)) : [];
   return {
     id: teamId,
     type: "team",
@@ -218,6 +226,7 @@ export function treeOf(teamId, teamName, members) {
     children: [
       ...(streams.size && top.length ? [{ id: `loose:${teamId}`, type: "group", name: teamName, children: top.map(leaf) }] : top.map(leaf)),
       ...[...streams.keys()].sort().map((s) => ({ id: `stream:${s}`, type: "stream", name: streamName(s), children: streams.get(s).map(leaf) })),
+      ...loose,
     ],
   };
 }

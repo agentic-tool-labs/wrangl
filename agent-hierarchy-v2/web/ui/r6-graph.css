@@ -180,3 +180,24 @@
 .r6 .gm-msgs .kind { justify-self: start; }
 .r6 .gm-msgs .route-line { overflow-wrap: anywhere; }
 .r6 .gm-msgs .route { display: block; color: var(--muted-2); font-size: var(--text-11); }
+
+/* ah2-225: jobs and subagents. Flow: a row under its owner (a card in Test for a full run), not a target; a subagent dashed and tagged.
+   Map: a small circle beside its owner; a subagent dashed, with a dashed line to its owner; the job mark ◷, ⚠ when overdue. */
+.r6 .fcard.funder { cursor: default; background: var(--bar); }
+.r6 .fcard.k-subagent { border-style: dashed; border-color: var(--dim); }
+.r6 .funder .fname { flex: 1; min-width: 0; color: var(--ink-2); }
+.r6 .funder .glyph { color: var(--muted); }
+.r6 .funder .tag { margin-left: 0; }
+.r6 .funder .frun { flex: none; color: var(--muted); font-size: var(--text-11); font-variant-numeric: tabular-nums; }
+.r6 .funder .eta { height: 16px; padding: 0 var(--sp-4); font-size: var(--text-11); }
+.r6 .funder.fcard-test .fhead { border-bottom: 1px solid var(--line); }
+.r6 .funder.fcard-test .fstats { justify-content: space-between; }
+.r6 .gflow .edge-sub { stroke: var(--dim); stroke-dasharray: 4 3; }
+.r6 .graph i.k-sub { border-top: 1px dashed var(--dim); }
+.r6 .flow-legend .k-job, .r6 .gm-legend .sw-job { font-weight: 400; color: var(--muted); }
+.r6 .gm-legend .sw.sub { width: 12px; height: 12px; border: 1px dashed var(--dim); border-radius: 50%; box-sizing: border-box; }
+.r6 .gpack .gm-under .body { fill: var(--surface-1); stroke: var(--muted); vector-effect: non-scaling-stroke; }
+.r6 .gpack .gm-under.k-subagent .body { stroke: var(--dim); stroke-dasharray: 3 2; }
+.r6 .gpack .gm-under.over .body { stroke: var(--overdue); stroke-width: 2; }
+.r6 .gpack .gm-under-link { stroke: var(--dim); stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.r6 .gpack .gm-under:is(:not([data-z]), [data-z="0"], [data-z="1"]) .t2 { display: none; }

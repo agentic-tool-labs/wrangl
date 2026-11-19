@@ -521,6 +521,22 @@ export function buildSlices(now, runStart = now - RUN_MIN * MIN) {
   const waiting = SCENARIO || globalThis.process?.env?.AH_MOCK_WAITING !== "1" ? [] : [{ key: "ah/ui-r6:guide", item: "guide", stream: "ah/ui-r6", title: "Upgrade guide for 2.5", text: "Which font should the guide's code samples use?", options: ["JetBrains Mono", "System monospace"], since: iso(t(40)), owner: "docs-writer" }];
   out.push(slice(`questions:${DIR}/${TEAM}`, questionsBody(now, SCENARIO?.decisions, waiting), t(12)));
   out.push(slice(`list:questions:${DIR}/${TEAM}`, { rows: questionRows(now, SCENARIO?.decisions) }, t(12)));
+  // ah2-225: a scenario's jobs and subagents, one jobs: and subagents: slice per team it names (null the ship team, else the lane key),
+  // as the daemon serves them (JobsLane, SubagentsLane): file facts, the job's served state at its as_of
+  const teamOf = (l) => (l ? `${TEAM}-lane-${l}` : TEAM);
+  const rowsBy = (list, row) => {
+    const by = new Map();
+    for (const r of list ?? []) by.set(teamOf(r[0]), [...(by.get(teamOf(r[0])) ?? []), row(r)]);
+    return by;
+  };
+  const jobs = rowsBy(SCENARIO?.jobs, ([, owner, kind, label, min, threshold, o = {}]) => ({ id: `job-${kind}-${owner}`, owner, kind, label, pid: 5100, eta: threshold >= 900 ? "large" : "small", threshold_s: threshold,
+    sent_at: iso(t(min)), extended_at: null, cap_at: null, ended_at: o.ended === undefined ? null : iso(t(o.ended)), background: true, slot_phase: o.slot ?? null, slot_since: o.slot ? iso(t(o.slotMin ?? min)) : null,
+    state: o.overdue ? "overdue" : "working", due_at: null, overdue_by: o.overdue ? 60 * o.overdue : null }));
+  const subs = rowsBy(SCENARIO?.subagents, ([, owner, kind, id, type, min]) => ({ agent_id: id, agent_type: type, owner, owner_kind: kind, started_at: iso(t(min)), ttl_s: 3600 }));
+  for (const name of new Set([...jobs.keys(), ...subs.keys()])) {
+    out.push(slice(`jobs:${DIR}/${name}`, { rows: jobs.get(name) ?? [] }, t(0)));
+    out.push(slice(`subagents:${DIR}/${name}`, { rows: subs.get(name) ?? [] }, t(0)));
+  }
   return wanted("AH_MOCK_WORK") ? withWork(out, slice, DIR, now) : out;
 }
 

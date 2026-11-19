@@ -24,7 +24,8 @@ import { descriptionBlocks, inlineParts } from "../mods/ah2/plans-model.js";
 import { answerText, DIRECTION, threadOf } from "../mods/ah2/questions-model.js";
 import { boardModel, ownerOf } from "../mods/ah2/board-model.js";
 import { feedModel } from "../mods/ah2/feed-model.js";
-import { graphModel, flowModel, flowPan, KNOB, rowMark, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, isReviewing } from "../mods/ah2/graph-model.js";
+import { graphModel, flowModel, flowPan, KNOB, rowMark, cardStyle, edgeStyle, dotColor, ageText, sheetUi, paneAct, memberPageLink, laneStyle, isReviewing, roleHue } from "../mods/ah2/graph-model.js";
+import { runText, underTip } from "../mods/ah2/flow-model.js";
 import { memberModel, SUMMARY_MESSAGES } from "../mods/ah2/member-model.js";
 import { glyphOf } from "../mods/ah2/graph-world.js";
 import { DUTY, DUTY_TITLE, stateWord } from "../mods/ah2/select.js";
@@ -119,6 +120,13 @@ function treeMember(m) {
   const quiet = ["idle", "gone", "unknown"].includes(m.state);
   return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
 }
+// ah2-225: a job's or subagent's leaf row, as main.js under() draws it; a subagent's own elbow dashed (class dsh on its lead)
+function treeUnder(x, parent) {
+  const tip = underTip(x, parent, NOW);
+  const sub = x.kind === "subagent";
+  const hue = ["l", "d"].map((th) => `--hu-${th}:${roleHue(x.role, th === "l")}`).join(";");
+  return `<div class="row tr tun" style="${hue}" title="${esc(tip)}" aria-label="${esc(tip)}">${sub ? `<span class="ri" aria-hidden="true">${icon(x.role)}</span>` : '<span class="rg ju" aria-hidden="true">◷</span>'}<span class="nm quiet">${esc(x.label)}</span>${sub ? '<span class="stg">subagent</span>' : ""}${x.overdue ? `<span class="odu rt">⚠ ${esc(runText(x, NOW))}</span>` : `<span class="wt rt${x.queued ? "" : " wd"}">${esc(runText(x, NOW))}</span>`}</div>`;
+}
 const treeAlarm = (r) => (a) => `<div class="trow">${alertLead(r)}<div class="alarm" style="margin-left:5px;flex:1;min-width:0" title="${esc(a.text)}"><b aria-hidden="true">⚠</b><span>${esc(a.text)}</span></div></div>`;
 
 function teamHead(t, lane) {
@@ -135,9 +143,14 @@ function teamRows(t) {
   const keys = (tm) => new Set(tm.members.map((m) => m.key));
   const teamLevel = (tm) => tm.alerts.filter((a) => !a.member || !keys(tm).has(a.member));
   const out = [teamHead(t, false), ...teamLevel(t).map(alarm(8))];
-  for (const r of treeRows(teamTree(t), (n) => !FOLDED.has(n.key))) {
+  const tree = teamTree(t);
+  const parentOf = new Map();
+  const walk = (list, p) => list.forEach((x) => { if (x.item) parentOf.set(x.key, p); walk(x.children, x.kind === "member" ? x.name : null); });
+  walk(tree, null);
+  for (const r of treeRows(tree, (n) => !FOLDED.has(n.key))) {
     const n = r.node;
-    if (n.kind === "lane") out.push(`<div class="trow">${lead(r)}${teamHead(n.team, true)}</div>`, ...teamLevel(n.team).map(treeAlarm(r)));
+    if (n.item) out.push(`<div class="trow${n.kind === "subagent" ? " dsh" : ""}">${lead(r)}${treeUnder(n.item, parentOf.get(n.key) ?? null)}</div>`);
+    else if (n.kind === "lane") out.push(`<div class="trow">${lead(r)}${teamHead(n.team, true)}</div>`, ...teamLevel(n.team).map(treeAlarm(r)));
     else out.push(`<div class="trow">${lead(r)}${treeMember(n)}</div>`, ...n.alerts.map(treeAlarm(r)));
   }
   return out;
@@ -350,8 +363,10 @@ function graphMap(g) {
     return `<div class="gm${n.state === "gone" ? " gone" : ""}" style="left:${px(n.x - n.r)};top:${px(n.y - n.r)};width:${px(2 * n.r)};height:${px(2 * n.r)}" title="${esc(full)}" aria-label="${esc(full)}"><svg width="${r1(2 * n.r)}" height="${r1(2 * n.r)}" aria-hidden="true"><path class="trk" d="${ringD(n.r, n.r * 0.86, 1)}" stroke-width="${r1(n.r * 0.1)}"/><path class="busy t-${n.tone}" d="${ringD(n.r, n.r * 0.86, Math.max(0.04, n.share ?? 0))}" stroke-width="${r1(n.r * 0.1)}"/></svg><div class="gls">${tiers}</div></div>`;
   });
   const flights = m.flights.map((f) => `<i class="gfl" style="left:${px(f.x - 4)};top:${px(f.y - 4)}" title="${esc(f.title)}" aria-label="${esc(f.title)}"></i>`);
+  const ulinks = `<svg class="garcs gul" width="${m.size}" height="${m.size}" aria-hidden="true">${(m.unders ?? []).filter((u) => u.link).map((u) => `<path d="M${r1(u.x)},${r1(u.y)}L${r1(u.link.x)},${r1(u.link.y)}"/>`).join("")}</svg>`;
+  const unders = (m.unders ?? []).map((u) => `<div class="gu${u.kind === "subagent" ? " sub" : ""}${u.overdue ? " over" : ""}" style="left:${px(u.x - u.r)};top:${px(u.y - u.r)};width:${px(2 * u.r)};height:${px(2 * u.r)}" title="${esc(u.tip)}" aria-label="${esc(u.tip)}"><span>${u.overdue ? "⚠" : u.kind === "subagent" ? "◇" : "◷"}</span>${u.r >= 24 ? `<span class="gus" style="max-width:${Math.round(u.r * 1.7)}px">${esc(u.kind === "subagent" ? "subagent" : u.run)}</span>` : ""}</div>`);
   const labels = m.containers.filter((c) => c.label).map((c) => `<div class="gcl" style="left:${px(c.x - c.r)};top:${px(c.y - c.r - 8)};width:${px(2 * c.r)}"><span style="max-width:${px(c.r * 1.6)}">${esc(c.name)}</span></div>`);
-  return `<div class="gmap-w" style="padding-left:${g.depth * 14}px"><div class="gmap" style="width:${m.size}px;height:${m.size}px">${[...ctrs, arcs, ...leaves, ...flights, ...labels].join("")}</div></div>`;
+  return `<div class="gmap-w" style="padding-left:${g.depth * 14}px"><div class="gmap" style="width:${m.size}px;height:${m.size}px">${[...ctrs, arcs, ulinks, ...leaves, ...unders, ...flights, ...labels].join("")}</div></div>`;
 }
 function graphGroup(g, docked) {
   const pad = g.depth * 14;
@@ -460,11 +475,22 @@ function flowStage(m) {
     const head = `<div class="fh${c.active ? " on" : ""}" style="${pad(8)}"><span class="fg" style="${fz(12)}">${st(false).glyph}</span><span class="fn${st(false).bold ? " b" : ""}" style="${fz(12.5)}">${esc(s.name)}</span>${duty ? `<span class="fx" style="${fz(11)}">${esc(duty)}</span>` : ""}${tag ? `<span class="fx ft" style="${fz(11)}">${esc(tag)}</span>` : ""}</div>`;
     return `<div class="fc${c.active ? " on" : ""}${s.state === "gone" ? " gone" : ""}" style="left:${px(c.rect.x)};top:${px(c.rect.y)};width:${px(c.rect.w)};height:${px(c.rect.h)};${look}" title="${esc([s.full, s.role, word, ago ? `active ${ago}` : null].filter(Boolean).join(" · "))}" aria-label="${esc(`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`)}">${head}${stats.length ? `<div class="fs" style="${pad(6).replace(/gap:[^;]+/, `gap:${r1(12 * k)}px`)};${fz(11)}">${stats.join("")}</div>` : ""}</div>`;
   });
+  // ah2-225: jobs and subagents, as graph-view.js flowUnder
+  const unders = (m.unders ?? []).map((u) => {
+    const x = u.item;
+    const sub = x.kind === "subagent";
+    const pad = (y) => `padding:${r1(y * k)}px ${r1(10 * k)}px;gap:${r1(8 * k)}px`;
+    const hue = ["l", "d"].map((th) => `--hu-${th}:${roleHue(x.role, th === "l")}`).join(";");
+    const late = x.overdue ? `<span class="odu" style="${fz(11)}">⚠ overdue</span>` : "";
+    const run = x.overdue && !u.card ? `<span class="odu" style="${fz(11)}">⚠ ${esc(u.run)}</span>` : `<span class="fx frn" style="${fz(11)}">${esc(u.run)}</span>`;
+    const head = `<div class="fh${u.card ? " on" : ""}" style="${pad(8)}">${sub ? `<span class="ri" style="width:${r1(12 * k)}px;height:${r1(12 * k)}px;${hue}" aria-hidden="true">${icon(x.role)}</span>` : `<span class="fx" style="${fz(12)}">◷</span>`}<span class="fn fnq" style="${fz(12)}">${esc(x.label)}</span>${sub ? `<span class="fx" style="${fz(11)}">subagent</span>` : ""}${u.card ? late : run}</div>`;
+    return `<div class="fc fu${sub ? " sub" : ""}${u.card ? " on" : ""}" style="left:${px(u.rect.x)};top:${px(u.rect.y)};width:${px(u.rect.w)};height:${px(u.rect.h)}" title="${esc(u.tip)}" aria-label="${esc(u.tip)}">${head}${u.card ? `<div class="fs" style="${pad(6)};justify-content:space-between;${fz(11)}"><span>${esc(x.ownerName || "team")}</span>${run}</div>` : ""}</div>`;
+  });
   // the dots, still at the midpoint here (the mod moves them on its clock)
   const dots = m.dots.map((d) => `<i class="gfl fdt" style="left:${px(d.x - 3)};top:${px(d.y - 3)};${vars((lt) => ({ cd: dotColor(d.review, lt) }))}" title="${esc(d.title)}" aria-label="${esc(d.title)}"></i>`);
   const pan = flowPan(null, m.size, m.stage);
-  return `<div class="gflow" style="width:${m.stage.w}px;height:${m.stage.h}px" aria-label="${esc(m.said)}"><div class="fin" style="left:${px(pan.x)};top:${px(pan.y)};width:${px(m.size.w)};height:${px(m.size.h)}">${[...lanes, ...bands, links, ...labels, ...cards, ...dots].join("")}</div>${m.rest > 0 ? `<span class="fmore">+${m.rest} more briefs</span>` : ""}</div>
-  <div class="flg" role="group" aria-label="Flow legend"><span><i class="kb"></i>brief in flight</span><span><svg width="14" height="2" aria-hidden="true"><path d="M 0 1 L 14 1"/></svg>sent for review</span><span><i class="ke"></i>reporting line</span><span class="fd2">Idle members are one line; a time is the last activity</span></div>`;
+  return `<div class="gflow" style="width:${m.stage.w}px;height:${m.stage.h}px" aria-label="${esc(m.said)}"><div class="fin" style="left:${px(pan.x)};top:${px(pan.y)};width:${px(m.size.w)};height:${px(m.size.h)}">${[...lanes, ...bands, links, ...labels, ...cards, ...unders, ...dots].join("")}</div>${m.rest > 0 ? `<span class="fmore">+${m.rest} more briefs</span>` : ""}</div>
+  <div class="flg" role="group" aria-label="Flow legend"><span><i class="kb"></i>brief in flight</span><span><svg width="14" height="2" aria-hidden="true"><path d="M 0 1 L 14 1"/></svg>sent for review</span><span><i class="ke"></i>reporting line</span><span><svg width="14" height="2" aria-hidden="true"><path class="ks" d="M 0 1 L 14 1"/></svg>subagent</span><span>◷ job</span><span class="fd2">Idle members are one line; a time is the last activity</span></div>`;
 }
 // The agent's sheet, mirroring graph-view.js agentSheet (Flow: no Map extras). The preview has no ahd port: Open page is disabled.
 const APPW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4M2 8h20M6 4v4"/></svg>';
@@ -528,8 +554,8 @@ const shotSlices = shotOf();
 const FLOWS = {
   "graph-shot": flowModel(shotSlices, SHOT, "horizontal", 1, { w: 1000, h: 560 }),
   "graph-shot-blocked": flowModel(shotOf("implementor-3"), SHOT, "horizontal", 1, { w: 1000, h: 560 }),
-  "graph-flow": flowModel(flowSlices, team, "horizontal", 1, ROOM),
-  "graph-flow-v": flowModel(flowSlices, team, "vertical", 1, ROOM),
+  "graph-flow": flowModel(flowSlices, team, "horizontal", 1, ROOM, NOW),
+  "graph-flow-v": flowModel(flowSlices, team, "vertical", 1, ROOM, NOW),
 };
 const goneShot = shotOf(null, "reviewer-3");
 const SHEETS = { "graph-sheet": [shotSlices, `member:${SHOT}/implementor-2`, "t2"], "graph-sheet-gone": [goneShot, `member:${SHOT}/reviewer-3`, null] };
@@ -540,7 +566,7 @@ const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" da
   ${flowHead(m)}${SHEETS[v] ? `<div class="shrow"><div class="ovb reg">${flowStage(m)}</div>${sheetOf(v, false)}</div>` : `<div class="ovb reg">${flowStage(m)}</div>`}
  </div>`).join("");
 // Docked: the 420 px column, its height as tall as the preview's window allows; no stored orientation, so the shape picks it.
-const fmDock = flowModel(flowSlices, team, null, 1, { w: 420 - 2 - 32, h: 640 });
+const fmDock = flowModel(flowSlices, team, null, 1, { w: 420 - 2 - 32, h: 640 }, NOW);
 const dockFlow = `<aside class="dock dfl" aria-label="Wrangl desk">
   ${deskTabs("graph", false)}
   ${flowHead(fmDock)}<div class="ovb reg">${flowStage(fmDock)}</div>
@@ -678,6 +704,7 @@ html[data-view=dock-sheet] .dock.dsh[data-v=dock-sheet],html[data-view=dock-shee
 .shp{margin-top:10px;height:28px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif}
 .ov.gr{height:min(720px,calc(100% - 96px))}${Object.keys(FLOWS).map((v) => `html[data-view=${v}] .ov.gr[data-v=${v}]{display:flex}`).join("")}html[data-view=dock] .dock.dfl{display:none}html[data-view=dock-flow] .dock.dfl{display:flex}.fhd{height:34px;flex:none;padding:8px 16px 0;display:flex;align-items:center;gap:8px}.fhd .vt{flex:1;min-width:0;height:auto;padding:0}.fhd .gmd{flex:none}.gmd button{height:24px;padding:0 8px;font-size:11.5px}.vt button.on{background:var(--raised);border-color:var(--raised);color:var(--foreground)}.ori{height:24px;min-width:24px;padding:0 6px;border:1px solid var(--input);border-radius:6px;background:none;color:var(--foreground);font:11.5px Geist,ui-sans-serif,system-ui,sans-serif}.gflow{position:relative;margin-top:12px;overflow:hidden;flex:none;background-image:radial-gradient(circle,var(--grid) 1px,transparent 1.5px);background-size:20px 20px}.fin{position:absolute}.fin>*{position:absolute}.fb{border-radius:6px;background:var(--hover)}.fb span{position:absolute;left:8px;top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}.flk{left:0;top:0;fill:none;overflow:visible}.flk path{stroke:var(--wb)}.flk path.review{stroke:var(--wr)}.flk path.edge{stroke:var(--muted)}.flk path.review{stroke-dasharray:5 4}.fl{white-space:nowrap;color:var(--lc-l,var(--muted))}:root[data-theme=dark] .fl{color:var(--lc-d,var(--muted))}.fln{display:block;border-radius:6px;background:var(--lb-l)}:root[data-theme=dark] .fln{background:var(--lb-d)}.flr{display:block;height:2px;background:var(--lc-l)}:root[data-theme=dark] .flr{background:var(--lc-d)}.fc{box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border:1px solid var(--cl-l,var(--border));border-radius:6px;background:var(--cf-l,var(--raised))}.fc.on{justify-content:flex-start}:root[data-theme=dark] .fc{border-color:var(--cl-d,var(--border));background:var(--cf-d,var(--raised))}.fc.gone{opacity:.4}.fh{display:flex;align-items:center;min-width:0;flex:none}.fh.on{border-bottom:1px solid var(--border)}.fg{flex:none;color:var(--cm-l,var(--blocked))}:root[data-theme=dark] .fg{color:var(--cm-d,var(--blocked))}.fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cn-l,var(--foreground))}.fn.b{font-weight:600}:root[data-theme=dark] .fn{color:var(--cn-d,var(--foreground))}.fx{flex:none;color:var(--muted)}.ft{color:var(--ct-l,var(--muted))}:root[data-theme=dark] .ft{color:var(--ct-d,var(--muted))}.gfl.fdt{width:6px;height:6px;background:var(--cd-l)}:root[data-theme=dark] .gfl.fdt{background:var(--cd-d)}.fr{display:block;height:1px;flex:none;background:var(--border)}.fs{display:flex;align-items:center;color:var(--muted)}.fs b{font-weight:600;color:var(--foreground)}.fmore{position:absolute;top:8px;right:8px;font-size:11px;color:var(--muted)}.flg{height:24px;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--muted);white-space:nowrap}.flg span{display:flex;align-items:center;gap:6px;flex:none}.flg i{display:block;flex:none;padding:0;border-radius:0}.flg i.kb{width:14px;height:2px;background:var(--wb)}.flg i.ke{width:14px;height:1px;background:var(--muted)}.flg svg path{stroke:var(--wr);stroke-width:2;stroke-dasharray:5 4}.flg .fd2{flex:1;min-width:0;display:block;overflow:hidden;text-overflow:ellipsis}.gmap-w{margin-top:12px;display:flex;justify-content:center}.gmap{position:relative;flex:none}.gmap>*{position:absolute}
 .gc{border-radius:50%;background:var(--raised);border:1px solid var(--muted)}.garcs{left:0;top:0;overflow:visible}.garcs path{fill:none;stroke:var(--accent);stroke-opacity:.6;stroke-linecap:round}:root:not([data-theme=dark]) .garcs path{stroke-opacity:.75}.garcs path.rep{stroke-dasharray:5 4;stroke-linecap:butt}
+.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh,.trow.dsh .tc2 .re{background:none;border:0 dashed var(--border)}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh{border-top-width:1px}.trow.dsh .tc2 .re{border-left-width:1px}.row.tun{font-size:12px}.rg.ju{color:var(--muted)}.stg{height:16px;padding:0 5px;flex:none;display:flex;align-items:center;border:1px dashed var(--muted);border-radius:4px;font-size:10.5px;color:var(--muted)}.odu{flex:none;font-size:11px;font-weight:600;color:var(--blocked)}.wt.rt{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px}.gu{box-sizing:border-box;border-radius:50%;background:var(--surface);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.gu.sub{border-style:dashed}.gu.over{border:2px solid var(--blocked)}.gus{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gul path{stroke:var(--muted);stroke-width:1;stroke-dasharray:5 4;fill:none}.fc.fu{background:var(--raised);border-color:var(--border)}.fc.fu.sub{border-style:dashed;border-color:var(--muted)}.fn.fnq{color:var(--muted)}.fu .ri{color:var(--hu-l)}:root[data-theme=dark] .fu .ri{color:var(--hu-d)}.fu .ri svg{width:100%;height:100%}.flk path.subagent{stroke:var(--muted);stroke-dasharray:5 4}.flg svg path.ks{stroke:var(--muted);stroke-width:1}
 .gm{border-radius:50%;background:var(--surface);border:1px solid var(--border);box-sizing:border-box}.gm.gone{opacity:.4}.gm>svg{position:absolute;left:-1px;top:-1px}.gm>svg path{fill:none}.gm .trk{stroke:var(--border)}.gm .busy{stroke:currentColor}
 .gls{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.gl{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gl b{font-size:9px;font-weight:400}.gl.sub{font-size:11px;color:var(--muted)}.gl.val{font:600 11px "Geist Mono",ui-monospace,monospace}
 .gfl{width:8px;height:8px;border-radius:50%;background:var(--accent);border:1px solid var(--surface);box-sizing:border-box}.gcl{height:16px;display:flex;justify-content:center}.gcl span{height:16px;padding:0 4px;display:flex;align-items:center;border-radius:4px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

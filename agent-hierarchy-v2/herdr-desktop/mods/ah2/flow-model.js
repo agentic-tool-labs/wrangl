@@ -1,12 +1,18 @@
 // Flow's maths, shared by the web's Flow (graph.js) and the Herdr mod's (herdr-desktop/mods/ah2/graph-model.js): the columns by role,
 // where each card goes, the links between them as path commands, and what each card shows. Pure: no DOM. The mod holds a byte-identical
-// copy (tests/web/herdr-graph-model.test.mjs), so edit this file and copy it.
-import { laneOf, memberOf } from "./select.js";
+// copy (tests/web/herdr-graph-model.test.mjs), so edit this file and copy it. It also holds the jobs and subagents under their owners
+// (ah2-225 B6), which the Herdr sidebar's tree, both Graphs and the web Overview draw.
+import { inert, laneOf, memberOf } from "./select.js";
 import { MAX_SPARKS, shortName } from "./graph-world.js";
 
 // ---- the columns by role, and where each card goes
 
-export const COLUMNS = ["Lead", "Advise · design", "Implement", "Review"];
+export const COLUMNS = ["Lead", "Advise · design", "Implement", "Review", "Test"];
+// ah2-225 B2: QA members and full test runs. The daemon serves a QA member Review's column; Flow moves it here.
+export const TEST_COLUMN = 4;
+const columnOf = (role, served) => (role === "qa" ? TEST_COLUMN : served);
+// A job or subagent drawn under its owner sits this far in from the owner's edge, across the column.
+export const UNDER_INDENT = 20;
 
 export const FLOW = { card: { w: 220, h: 64 }, row: { w: 200, h: 36 }, gap: 16, band: 64, lane: 100, top: 90, left: 40 };
 
@@ -21,7 +27,8 @@ export function flowLayout(nodes, active, orient) {
   const bandOf = new Map([["", 0], ...leaders.map((l, i) => [l.id, i + 1])]);
   const bands = [[], ...leaders.map(() => [])];
   byName.forEach((n) => bands[bandOf.get(n.lane || "") ?? 0].push(n));
-  const size = (n) => (active.has(n.id) ? FLOW.card : FLOW.row);
+  // a full test run in the Test column is a card; any other job or subagent a row (flowExtras)
+  const size = (n) => (n.item ? (n.after ? FLOW.row : n.item.kind === "job" && n.column === TEST_COLUMN ? FLOW.card : FLOW.row) : active.has(n.id) ? FLOW.card : FLOW.row);
   const along = (n) => (horizontal ? size(n).h : size(n).w);
   const step = horizontal ? FLOW.card.w + FLOW.lane : FLOW.card.h + FLOW.lane;
   const pos = new Map();
@@ -34,7 +41,14 @@ export function flowLayout(nodes, active, orient) {
       continue;
     }
     const cols = COLUMNS.map(() => []);
-    band.forEach((n) => (cols[n.column] ?? cols[2]).push(n));
+    band.forEach((n) => !n.after && (cols[n.column] ?? cols[2]).push(n));
+    // a job or subagent under its owner goes right after the owner and the owner's earlier ones
+    band.forEach((n) => {
+      if (!n.after) return;
+      const col = cols.find((c) => c.some((m) => m.id === n.after)) ?? cols[n.column] ?? cols[2];
+      const at = col.reduce((last, m, i) => (m.id === n.after || m.after === n.after ? i : last), -1);
+      at < 0 ? col.push(n) : col.splice(at + 1, 0, n);
+    });
     const spans = cols.map((c) => c.reduce((sum, n) => sum + along(n) + FLOW.gap, -FLOW.gap));
     const tallest = Math.max(0, ...spans);
     cols.forEach((c, ci) => {
@@ -42,7 +56,8 @@ export function flowLayout(nodes, active, orient) {
       const base = FLOW.left + ci * step;
       c.forEach((n) => {
         const { w, h } = size(n);
-        pos.set(n.id, horizontal ? { x: base, y: at, w, h } : { x: FLOW.left + (at - FLOW.top), y: FLOW.top + ci * step, w, h });
+        const inset = n.after ? UNDER_INDENT : 0;
+        pos.set(n.id, horizontal ? { x: base + inset, y: at, w, h } : { x: FLOW.left + (at - FLOW.top), y: FLOW.top + ci * step + inset, w, h });
         at += along(n) + FLOW.gap;
       });
     });
@@ -189,7 +204,7 @@ export const modelTag = (model) => (typeof model === "string" ? (/opus|sonnet|ha
 // The shown team's nodes: its members (`ids`), then its lanes' members (`children`, laneChildren's), each {id, role, name, lane, team, column}.
 export function flowNodes(slices, team, ids, children) {
   const lane = laneOf(slices, team, ids);
-  const node = (id, laneId, teamOf) => ({ id, role: slices.get(id)?.body.role ?? "", name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: slices.get(id)?.body.column });
+  const node = (id, laneId, teamOf) => ({ id, role: slices.get(id)?.body.role ?? "", name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: columnOf(slices.get(id)?.body.role, slices.get(id)?.body.column) });
   return [...ids.map((id) => node(id, lane(id), "")), ...children.map((c) => node(c.id, c.lane, c.team))];
 }
 
@@ -225,6 +240,155 @@ export function flowCardOf(slices, teamId, id) {
     decisions: team?.body.pipeline?.decisions_count ?? null,
     round: item && Number.isFinite(item.rounds) ? `r${item.rounds}/${item.round_cap ?? 3}` : null,
   };
+}
+
+// ---- jobs and subagents under their owners (ah2-225 B1-B3, B6)
+
+// One team's served rows, for jobsUnder and subagentsUnder: `rows` its jobs: or subagents: slice's rows; `owners` maps an owner name as
+// the slice gives it (a member's name, "orchestrator" for the team's Orchestrator) to the key of the row or node it is drawn under;
+// `header` is the key a row whose owner is no one here is drawn under (the team's header).
+const ownerIn = (src, name) => src.owners.get(name) ?? src.header;
+const msOf = (iso) => Date.parse(iso ?? "") || 0;
+const LABEL_MAX = 48;
+const lineOf = (s) => {
+  const t = inert(s).trim();
+  return t.length > LABEL_MAX ? `${t.slice(0, LABEL_MAX - 1)}…` : t;
+};
+const byStart = (out) => {
+  for (const list of out.values()) list.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
+  return out;
+};
+const push = (out, k, v) => (out.has(k) ? out.get(k).push(v) : out.set(k, [v]));
+
+// The open jobs, as Map(key -> [job]) in start order; a row that carries ended_at is not drawn. A job's clock starts when it holds the
+// test slot, else when it was sent; `est` is its eta in seconds; `overdue` is the daemon's served state (JobProjection).
+export function jobsUnder(sources) {
+  const out = new Map();
+  for (const src of sources) {
+    for (const r of src.rows ?? []) {
+      if (r?.ended_at || typeof r?.id !== "string") continue;
+      const queued = r.slot_phase === "queued";
+      const start = !queued && r.slot_phase && r.slot_since ? msOf(r.slot_since) : msOf(r.sent_at);
+      push(out, ownerIn(src, r.owner), { key: `job:${r.id}`, kind: "job", jobKind: r.kind ?? "", owner: ownerIn(src, r.owner), ownerName: inert(r.owner ?? ""),
+        label: lineOf(r.label) || r.kind || "job", start, est: Number(r.threshold_s) || 0, queued, overdue: r.state === "overdue" });
+    }
+  }
+  return byStart(out);
+}
+
+// The running subagents, as Map(key -> [subagent]) in start order; a run older than its ttl_s is lapsed and not drawn. One run is drawn
+// once (Amendment 2): a Sub-Orchestrator's run is in its parent team's slice and its lane's, and the lane's copy (owner_kind
+// orchestrator) wins. `role` is the agent type's role (after any "plugin:"), the generic icon when it is no role.
+export function subagentsUnder(sources, now) {
+  const runs = new Map();
+  for (const src of sources) {
+    for (const r of src.rows ?? []) {
+      if (typeof r?.agent_id !== "string") continue;
+      const start = msOf(r.started_at);
+      if (Number(r.ttl_s) > 0 && now - start > r.ttl_s * 1000) continue;
+      const had = runs.get(r.agent_id);
+      if (had && !(r.owner_kind === "orchestrator" && had.kind !== "orchestrator")) continue;
+      const type = inert(r.agent_type ?? "") || "subagent";
+      runs.set(r.agent_id, { kind: r.owner_kind, item: { key: `subagent:${r.agent_id}`, kind: "subagent", owner: ownerIn(src, r.owner), ownerName: inert(r.owner ?? ""),
+        type, role: type.slice(type.lastIndexOf(":") + 1), label: type, start, end: Number(r.ttl_s) > 0 ? start + r.ttl_s * 1000 : Infinity } });
+    }
+  }
+  const out = new Map();
+  for (const { item } of runs.values()) push(out, item.owner, item);
+  return byStart(out);
+}
+
+// Amendment 3: the jobs: slice is keyed by the team's progress folder (HierarchyModule.ProgressFolderOf), so the default team's is
+// _default; subagents: takes the team's name. `team` is "<dirId>/<team name>".
+const progressFolder = (name) => (!name || name === "default" || name === "null" ? "_default" : name);
+export function activityId(kind, team) {
+  const at = team.indexOf("/");
+  return kind === "jobs" ? `jobs:${team.slice(0, at)}/${progressFolder(team.slice(at + 1))}` : `${kind}:${team}`;
+}
+
+// The jobs: and subagents: slice ids (`kinds`) of a team and of its lanes drawn with it (`children`, laneChildren's).
+export function activityIds(team, children = [], kinds = ["jobs", "subagents"]) {
+  const t = team?.body;
+  if (!t) return [];
+  return [`${t.dir_id}/${t.name}`, ...new Set(children.map((c) => c.team.slice("team:".length)))].flatMap((k) => kinds.map((kind) => activityId(kind, k)));
+}
+
+// A Graph's sources (`kind` "jobs" or "subagents"): the team's members by name, the Orchestrator as "orchestrator", a stray row under
+// the team (key ""); then each lane drawn with it, whose Orchestrator, and any stray row, is its leader's node.
+export function graphSources(slices, team, ids, children, kind) {
+  const t = team?.body;
+  if (!t) return [];
+  const nameOf = (id) => slices.get(id)?.body.name ?? id.split("/").pop();
+  const rows = (k) => slices.get(activityId(kind, k))?.body.rows ?? [];
+  const own = new Map(ids.map((id) => [nameOf(id), id]));
+  if (t.orchestrator) own.set("orchestrator", t.orchestrator);
+  const out = [{ rows: rows(`${t.dir_id}/${t.name}`), owners: own, header: "" }];
+  const lanes = new Map();
+  for (const c of children) {
+    if (!lanes.has(c.team)) lanes.set(c.team, { rows: rows(c.team.slice("team:".length)), owners: new Map([["orchestrator", c.lane]]), header: c.lane });
+    lanes.get(c.team).owners.set(nameOf(c.id), c.id);
+  }
+  return [...out, ...lanes.values()];
+}
+
+// When the first drawn subagent lapses (Infinity when none will): a surface draws again then, on its age tick (Amendment 3).
+export const lapseAt = (under) => Math.min(Infinity, ...[...under.values()].flat().map((x) => x.end ?? Infinity));
+
+// Both kinds under one key, in start order: what a surface draws under a row.
+export function underOf(jobs, subagents) {
+  const out = new Map();
+  for (const m of [subagents, jobs]) for (const [k, list] of m) for (const x of list) push(out, k, x);
+  return byStart(out);
+}
+
+// A full test run: kind test or slot. A bg job's served label cannot tell a full run apart, so it is not one (B2).
+export const isFullRun = (x) => x.kind === "job" && (x.jobKind === "test" || x.jobKind === "slot");
+
+const minutes = (ms) => {
+  const m = Math.max(1, Math.round(ms / 60_000));
+  return m < 120 ? `${m}m` : `${Math.round(m / 60)}h`;
+};
+// "8m of ~15m", "waiting for the test slot", or the age of a subagent's run.
+export function runText(x, now) {
+  if (x.kind === "subagent") return minutes(now - x.start);
+  if (x.queued) return "waiting for the test slot";
+  return x.est > 0 ? `${minutes(now - x.start)} of ~${minutes(x.est * 1000)}` : minutes(now - x.start);
+}
+// A row's tooltip and accessible name. `parent` is the drawn name of the row it sits under, or null under a team header.
+export function underTip(x, parent, now) {
+  if (x.kind === "subagent") return `${x.type}: subagent of ${parent ?? (x.ownerName || "the team")}, running ${minutes(now - x.start)}`;
+  return `job ${x.label}${parent ? ` of ${parent}` : x.ownerName ? ` of ${x.ownerName}` : ""} · ${runText(x, now)}${x.overdue ? " · overdue" : ""}`;
+}
+
+// Flow's nodes for the jobs and subagents (`under`, underOf's): a full test run is a card in the Test column with its owner named;
+// any other is a row right under its owner, in the owner's column and band (`after` the owner's id). One whose key is no node here
+// (a team header's) sits at the foot of the Lead column. {id, role, name, lane, team, column, after, item}.
+export function flowExtras(nodes, under) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const out = [];
+  for (const [k, list] of under) {
+    const o = byId.get(k);
+    for (const x of list) {
+      const test = isFullRun(x);
+      out.push({ id: x.key, role: x.kind === "subagent" ? x.role : "", name: x.key, lane: o?.lane ?? "", team: o?.team ?? "", column: test ? TEST_COLUMN : o ? o.column : 0,
+        after: o && !test ? o.id : null, item: x });
+    }
+  }
+  return out;
+}
+
+// The dashed connector from each subagent's owner to it (B3), as path commands: down the owner's near edge, then in to the row.
+export function underLinks(nodes, rects, orient) {
+  const out = [];
+  for (const n of nodes) {
+    const a = n.after && n.item?.kind === "subagent" ? rects.get(n.after) : null;
+    const b = rects.get(n.id);
+    if (!a || !b) continue;
+    out.push({ key: `under:${n.id}`, kind: "subagent", cmds: orient === "vertical"
+      ? [["M", a.x + a.w, a.y + 10], ["L", b.x + b.w / 2, a.y + 10], ["L", b.x + b.w / 2, b.y]]
+      : [["M", a.x + 10, a.y + a.h], ["L", a.x + 10, b.y + b.h / 2], ["L", b.x, b.y + b.h / 2]] });
+  }
+  return out;
 }
 
 // ---- the view that fits

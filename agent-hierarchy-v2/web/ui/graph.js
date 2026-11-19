@@ -5,7 +5,7 @@ import { ageOf, ageText } from "./store.js";
 import { hoverProps } from "./hover.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { MAX_SPARKS, MODES, glyphOf, modeOf, shortName } from "./graph-world.js";
-import { COLUMNS, FLOW, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, pairKey, pathText, sparkKinds } from "./flow-model.js";
+import { COLUMNS, FLOW, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, pairKey, pathText, runText, sparkKinds, underLinks, underTip } from "./flow-model.js";
 
 export { shortName, COLUMNS, FLOW, ZOOM, fitView, flowLayout, flowPath, isActive, pairKey, sparkKinds };
 
@@ -100,15 +100,35 @@ export class FlowCard extends Live {
   }
 }
 
+// ah2-225: a job or subagent in Flow (flow-model.js flowExtras). Not a click target: it opens no pane. A row under its owner, or, for a
+// full test run in the Test column, a card with its owner named. A subagent's outline is dashed and it carries the "subagent" tag; a
+// job carries the job mark ◷ and, when overdue, the overdue chip (glyph and word, never the colour alone).
+export const UNDER_GLYPH = { job: "◷", subagent: "◇" };
+export function FlowUnder({ n, rect, owner }) {
+  const x = n.item;
+  const card = rect.h > FLOW.row.h;
+  const place = { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` };
+  // a row has no room for both: an overdue row's time is its overdue chip (⚠, the word in its title); a card has both
+  const late = x.overdue ? html`<span class="eta overdue"><span class="eta-glyph" aria-hidden="true">⚠</span>overdue</span>` : null;
+  const run = x.overdue && !card
+    ? html`<span class="eta overdue" title="overdue"><span class="eta-glyph" aria-hidden="true">⚠</span><${Age} text=${(now) => runText(x, now)} /></span>`
+    : html`<span class="frun"><${Age} text=${(now) => runText(x, now)} /></span>`;
+  const tag = x.kind === "subagent" ? html`<span class="tag">subagent</span>` : null;
+  return html`<div class=${`fcard funder k-${x.kind}${card ? " fcard-test" : ""}`} data-role=${n.role || undefined} style=${place} title=${underTip(x, owner, Date.now())}>
+    <div class="fhead"><span class="glyph" aria-hidden="true">${UNDER_GLYPH[x.kind]}</span><span class="fname">${x.label}</span>${tag}${card ? late : run}</div>
+    ${card ? html`<div class="fstats"><span>${x.ownerName || "team"}</span>${run}</div>` : null}
+  </div>`;
+}
+
 // ---- Flow's stage: pan and zoom over the cards, the links between them
 
 export const VIEW = { w: 1000, h: 700 };
 
 // Flow's links: reporting lines from card to card, a brief in flight accent with a dot, a brief sent for review dashed.
-const FlowLinks = memo(function FlowLinks({ edges, sparks, rects, orient }) {
+const FlowLinks = memo(function FlowLinks({ edges, sparks, rects, orient, nodes }) {
   const { links, dots } = flowLinks(edges, sparks, rects, orient);
   return html`<g class="links">
-    <g class="edges">${links.map((l) => html`<path key=${l.key} class=${`edge${l.kind === "review" ? " edge-review" : l.kind === "brief" ? " edge-live" : ""}`} d=${pathText(l.cmds)} />`)}</g>
+    <g class="edges">${links.map((l) => html`<path key=${l.key} class=${`edge${l.kind === "review" ? " edge-review" : l.kind === "brief" ? " edge-live" : ""}`} d=${pathText(l.cmds)} />`)}${underLinks(nodes, rects, orient).map((l) => html`<path key=${l.key} class="edge edge-sub" d=${pathText(l.cmds)} />`)}</g>
     <g class="dots">${dots.map((d) => html`<circle key=${d.key} class=${`dot${d.review ? " dot-review" : ""}`} r="3" style=${{ offsetPath: `path("${pathText(d.cmds)}")` }} />`)}</g>
   </g>`;
 });
@@ -298,6 +318,7 @@ export class FlowStage extends Component {
 
   render({ store, teamId, nodes, edges, sparks, selected, onSelect, orient = "horizontal", activeKey = "" }) {
     const { pos, labels, bands } = this.layout(nodes, edges, orient, activeKey);
+    const byId = new Map(nodes.map((n) => [n.id, n])); // a job's or subagent's owner is named by its member name, as the mod names it
     const { w, h: ht } = this.size();
     const v = this.current();
     const rest = sparks.length - Math.min(sparks.length, MAX_SPARKS);
@@ -307,16 +328,16 @@ export class FlowStage extends Component {
       <svg class="stage" viewBox=${`0 0 ${w} ${ht}`} role="group" aria-label="Team graph, Flow: + and − zoom, 0 fits, arrows pan" tabindex="0" ref=${(el) => (this.svg = el)} onWheel=${this.onWheel} onPointerDown=${this.onPointerDown} onPointerMove=${this.onPointerMove} onPointerUp=${this.onPointerUp} onPointerCancel=${this.onPointerUp} onClickCapture=${this.onClickCapture} onKeyDown=${this.onKeyDown}>
         <defs><pattern id="flow-dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle class="dot-grid" cx="10" cy="10" r="1" /></pattern></defs><rect width="100%" height="100%" fill="url(#flow-dots)" pointer-events="none" />
         <g class=${`world${instant}`} style=${world}>
-          <${FlowLinks} edges=${edges} sparks=${sparks} rects=${pos} orient=${orient} />
+          <${FlowLinks} edges=${edges} sparks=${sparks} rects=${pos} orient=${orient} nodes=${nodes} />
         </g>
         ${rest > 0 ? html`<text class="more" x=${w - 20} y="30" text-anchor="end">+${rest} more briefs</text>` : null}
       </svg>
       <div class="flow-layer"><div class=${`world flow-world${instant}`} style=${world}>
         ${bands.map((b) => html`<div key=${`lane:${b.id}`} class="flane" style=${{ left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px` }}><span class="flane-label">${b.name}</span></div>`)}
         ${labels.map((l) => html`<span key=${l.text} class="flabel" style=${{ left: `${l.x}px`, top: `${l.y}px` }}>${l.text}</span>`)}
-        ${nodes.map((n) => (pos.has(n.id) ? h(FlowCard, { key: n.id, store, teamId: n.team || teamId, id: n.id, rect: pos.get(n.id), selected: selected === n.id, onSelect, out: sparks.filter((s) => s.from === n.id).length }) : null))}
+        ${nodes.map((n) => (!pos.has(n.id) ? null : n.item ? h(FlowUnder, { key: n.id, n, rect: pos.get(n.id), owner: n.after ? shortName(n.after, byId.get(n.after)?.name) : null }) : h(FlowCard, { key: n.id, store, teamId: n.team || teamId, id: n.id, rect: pos.get(n.id), selected: selected === n.id, onSelect, out: sparks.filter((s) => s.from === n.id).length })))}
       </div></div>
-      <div class="flow-legend" role="group" aria-label="Flow legend"><span><i class="k-brief"></i>brief in flight</span><span><i class="k-review"></i>sent for review</span><span><i class="k-edge"></i>reporting line</span><span class="dim">Idle members collapse to one line; a time is the member's last activity</span></div>
+      <div class="flow-legend" role="group" aria-label="Flow legend"><span><i class="k-brief"></i>brief in flight</span><span><i class="k-review"></i>sent for review</span><span><i class="k-edge"></i>reporting line</span><span><i class="k-sub"></i>subagent</span><span><b class="k-job" aria-hidden="true">◷</b>job</span><span class="dim">Idle members collapse to one line; a time is the member's last activity</span></div>
       <div class="graph-controls" role="group" aria-label="Graph toolbar">
         <${GraphToggle} store=${store} />
         <button class="orient" aria-label="Switch between horizontal and vertical" title="Horizontal ⇄ Vertical" onClick=${() => setGraph(store, { orient: orient === "vertical" ? "horizontal" : "vertical" })}>${orient === "vertical" ? "Vertical ⇄ Horizontal" : "Horizontal ⇄ Vertical"}</button>

@@ -30,7 +30,7 @@ export const VIEWS = {
 const involves = (exchange, member) => member !== undefined && [["to", "to_name"], ["from", "from_name"]].some(([role, name]) => (exchange[name] ?? null) === null ? exchange[role] === member.role && member.role === "orchestrator" : exchange[name] === member.name);
 
 // Plan slices are in no view: the server publishes them only to a client that names them in its subscription.
-const isPlan = (id) => /^(plan|plan-items|queue|sitrep|backlog|questions|list:plan|list:plan-changes|list:questions|flow|flow-page|item-msgs|item-log|item-desc):/.test(id);
+const isPlan = (id) => /^(plan|plan-items|queue|sitrep|backlog|questions|list:plan|list:plan-changes|list:questions|flow|flow-page|item-msgs|item-log|item-desc|jobs|subagents):/.test(id);
 
 export const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 export const MAX_LIST = 200;

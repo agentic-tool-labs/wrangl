@@ -4,6 +4,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.19] - 2026-11-18
+
+### Added
+
+- **Running jobs are shown on the team.** A test run or other background job a member or the Orchestrator started
+  now appears under whoever started it, in the web UI's tree, Map, Flow and Overview and in the herdr pane, so a
+  long QA run no longer looks like nothing is happening.
+- **The Flow has a Test column.** Work that is being tested is drawn in its own column between build and review.
+- **Subagents are shown, and told apart from peers.** A subagent the Orchestrator or a member is running appears
+  under its parent while it runs and leaves when it ends. Subagents are marked as such, and a peer's row and card say
+  "peer session" in their tooltip.
+
 ## [2.0.18] - 2026-11-18
 
 ### Added
