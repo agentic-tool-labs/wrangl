@@ -4,8 +4,9 @@
 import { COLUMNS, DAY_MS, DONE_CAP, STATE_LABEL, WAVES, boardOf, descriptionBlocks, historyOf, httpUrl, itemLogId, itemsId, planChangesId, planIdOf, queueRows, stalledOf, streamName, teamModel, waveColumns } from "./plans-model.js";
 import { isQuiet, teamRows, teamLabel } from "./select.js";
 import { questionsId } from "./questions-model.js";
-import { qaModel, age, sidebarModel, within, late, NO_ANSWER } from "./model.js";
+import { askerText, qaModel, age, sidebarModel, within, late, NO_ANSWER } from "./model.js";
 import { marksOf, snapshotOf } from "./plans-seen.js";
+import { memberLeaseIds } from "./member-model.js";
 import { eventsQuery } from "./link-model.js";
 
 const dayStartOf = (now) => new Date(now).setHours(0, 0, 0, 0);
@@ -26,8 +27,9 @@ function teams(slices, now, mk = null) {
 // the Board tab is on screen, so it holds what only the board draws (the web's leases): the backlog of its directory, and per team
 // drawn its queue and message counts.
 // `team`: the scope's team (its lanes' teams come with it); `hide`: the team keys switched off by their chips, whose queue and
-// message counts are not held.
-export function boardSubs(slices, now = Date.now(), { open = new Set(), log = null, shown = false, team = null, hide = new Set() } = {}) {
+// message counts are not held. `member`: the open member sheet's selection ({ member, ui }): its member: slice and that slice's
+// leases (member-model.js memberLeaseIds, as the Graph's), held only while it is open on the Board tab.
+export function boardSubs(slices, now = Date.now(), { open = new Set(), log = null, shown = false, team = null, hide = new Set(), member = null } = {}) {
   const day = dayStartOf(now);
   const all = teams(slices, now, team);
   const drawn = all.filter((t) => !t.quiet || open.has(t.id));
@@ -36,6 +38,7 @@ export function boardSubs(slices, now = Date.now(), { open = new Set(), log = nu
     ...all.flatMap((t) => [questionsId(t.id), ...(drawn.includes(t) ? [planIdOf(t), ...t.streams.filter((s) => s.state !== "done" || s.asOf >= day).map(itemsId)] : [])]),
     ...(shown ? [...(dir ? [`backlog:${dir}`] : []), ...drawn.filter((t) => !hide.has(`${t.dirId}/${t.name}`)).flatMap((t) => [`queue:${t.dirId}/${t.name}`, `item-msgs:${t.dirId}/${t.name}`])] : []),
     ...(log ? [log] : []),
+    ...(member?.member ? [member.member, ...memberLeaseIds(slices, member.ui, member.member)] : []),
   ];
 }
 
@@ -273,10 +276,22 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
       // In a scope the same: an item's question with its item; a decision as its team's decision card would be scoped.
       const inScope = new Set(running.map(keyOf));
       const decisionOk = (id) => scopeOk({ id: `${id}|decision`, dirId: id.split("/")[0], team: id.split("/").slice(1).join("/"), stream: "", decision: true });
+      // A waiting item's card opens its plan item's sheet (the web item card's dialog), with the web's Asked by row first, when
+      // that plan item is in the held plan-items slices, whatever column it is in and whatever the filters hide; a decision, or an
+      // item whose stream is not held, carries none. The held cards come from one unfiltered boardOf, made only when an item asks.
+      let plans = null;
+      const heldPlans = () => plans ??= new Map(Object.values(boardOf(running.map(withMark), { itemsOf, lanes: "none", dayStart, expanded: running.map((t) => t.id), markOf: (st, item) => marks.get(st.id)?.items.get(item.key) ?? null, showFinished: true }).lanes[0]?.cells ?? {})
+        .flat().filter((p) => !p.decision && !p.changed).map((p) => [`${p.dirId}/${p.team}|${p.stream}:${p.key}`, p]));
+      const selOf = (c, tm) => {
+        const p = c.q.kind === "item" ? heldPlans().get(`${tm.id}|${c.q.id}`) : null;
+        if (!p) return null;
+        const s = plain(p).sel;
+        return { ...s, rows: [["Asked by", askerText(slices, tm, c.asker)], ...s.rows].filter(([, v]) => v) };
+      };
       const asks = qa.teams.filter((tm) => !hide.has(tm.id) && inScope.has(tm.id)).flatMap((tm) => tm.cards
         .filter((c) => ownerOk(nameOf(c.asker)) && (!changesOnly || marked.has(`${tm.id}|${c.q.id}`))
           && (c.q.kind === "item" ? (!query.trim() && !lane && !scopeEpic && !only) || marked.has(`${tm.id}|${c.q.id}`) : decisionOk(tm.id)))
-        .map((c) => ({ qa: c, tm })));
+        .map((c) => ({ qa: c, tm, sel: selOf(c, tm) })));
       cards = [...asks, ...all.filter((c) => !covered(c)).map(plain).sort(order)];
     }
     else cards = all.map(plain);
@@ -284,7 +299,7 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
     // elements built on Herdr's UI thread
     const cap = expand.has(key) ? Infinity : key === "done" ? DONE_CAP : COLUMN_CAP;
     const drawn = key === "waiting" ? cards.slice(0, cap) : key === "done" ? cards.slice(0, cap).sort(order) : cards.sort(order).slice(0, cap);
-    for (const c of cards) if (c.sel) sels.set(c.key, c.sel); // every card's, drawn or past the cap: a sheet's link opens any
+    for (const c of cards) if (c.sel) sels.set(c.sel.key, c.sel); // every card's (a waiting item's too), drawn or past the cap: a sheet's link opens any
     // the head: the served count, unfiltered (… while a plan is unread and it serves 0); else what the column holds
     const head = served[key] === undefined ? cards.length : served[key] === 0 && served.pending ? "…" : served[key];
     return { key, label, cards: drawn, count: cards.length, head, more: Math.max(0, cards.length - cap), open: expand.has(key), folds: (key === "done" ? DONE_CAP : COLUMN_CAP) < cards.length };
@@ -356,9 +371,12 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
   // The lane header: one line about the chosen lane, from the manager's streams row and the child team.
   const ln = lane && lane !== "top" ? allLanes.find((l) => l.stream === lane) : null;
   const child = ln?.child ? slices.get(ln.child)?.body : null;
-  const memberNames = (body) => (Array.isArray(body?.members) ? body.members : []).filter((id) => typeof id === "string").map((id) => slices.get(id)?.body?.name ?? id.split("/").pop());
+  // each { id, name }: the id opens its member sheet (Part C)
+  const memberNames = (body) => (Array.isArray(body?.members) ? body.members : []).filter((id) => typeof id === "string").map((id) => ({ id, name: slices.get(id)?.body?.name ?? id.split("/").pop() }));
+  // a lane's sub-orchestrator as a member of its child team, when that team lists it; else no id (plain text)
+  const soOf = (l, body) => (l?.so ? { name: l.so, id: memberNames(body).find((x) => x.name === l.so)?.id ?? null } : null);
   const laneHead = ln ? {
-    stream: ln.stream, so: ln.so, members: memberNames(child), branch: ln.branch ? `${ln.branch} → ${ln.base ?? "main"}` : "", state: ln.state,
+    stream: ln.stream, so: ln.so, soMember: soOf(ln, child), members: memberNames(child), branch: ln.branch ? `${ln.branch} → ${ln.base ?? "main"}` : "", state: ln.state,
     report: child?.lane?.reported?.state ? REPORT[child.lane.reported.state] ?? child.lane.reported.state : ln.child ? "" : "Not confirmed",
   } : null;
   // The team and lane sheets (board-kanban.js panel kt:/kl:): members, a lane's branch, state and sub-orchestrator, and its cards.
@@ -481,3 +499,20 @@ export async function readItemLog(exec, sel, sleep = null, read = null) {
 
 export const itemLog = (reply, sel) =>
   historyOf((reply.slices ?? []).find((s) => s.id === planChangesId(sel.dirId, sel.team))?.body?.rows?.filter((r) => r.item === sel.item) ?? [], sel.stream, said);
+
+// The member sheet's History (the web member page's): the items the member holds (holder, else owner, is its name or id) in its
+// own team's held plan-items: slices, newest first, each with the Board's sheet selection when the board draws it (`sels`, by card).
+// No new read: a stream the Board does not hold has no items here.
+export function memberItems(slices, id, sels = new Map()) {
+  const p = /^member:([^/]+)\/(.+)\/([^/]+)$/.exec(id ?? "");
+  if (!p) return [];
+  const [, dir, team, name] = p;
+  const pre = `plan-items:${dir}/${team}/`;
+  const at = (i) => Date.parse(i.updated_at ?? i.state_since ?? i.done_seen_at ?? "") || 0;
+  const bySel = new Map();
+  for (const s of sels.values()) if (s.item && s.dirId === dir && s.team === team) bySel.set(`${s.stream}:${s.item}`, s).set(s.item, s);
+  return [...slices].filter(([k]) => k.startsWith(pre)).flatMap(([, s]) => s?.body?.items ?? [])
+    .filter((i) => (i.holder ?? i.owner) === name || i.holder === id)
+    .sort((a, b) => at(b) - at(a))
+    .map((i) => ({ key: i.key, title: i.title ?? "", label: STATE_LABEL[i.state] ?? i.state ?? "", sel: bySel.get(i.key) ?? null }));
+}

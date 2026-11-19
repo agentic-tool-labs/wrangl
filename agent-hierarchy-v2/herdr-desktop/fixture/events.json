@@ -263,7 +263,7 @@
     "work_root": "/Users/example/git/repos/agent-tools",
     "branch": "main",
     "running": true,
-    "members": 2,
+    "members": 4,
     "working": 1,
     "blocked": 0,
     "needs_you": 0,
@@ -316,6 +316,20 @@
       "process": "not running",
       "tool": "claude",
       "state_at": "2026-11-08T15:20:00.000Z"
+     },
+     "member:9f8e7d6c/engram-rc/engram-rc-reviewer": {
+      "state": "idle",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:10:00.000Z"
+     },
+     "member:9f8e7d6c/engram-rc/engram-rc-ux-engineer-2": {
+      "state": "idle",
+      "liveness": "live",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:12:00.000Z"
      }
     }
    }

@@ -70,6 +70,22 @@ public sealed partial class TreeLanesTests
         }
     }
 
+    // ah2-272 D1: member_states carries the role the member slice serves; negative: a member whose row has no role serves none.
+    [Fact]
+    public void EachMemberStateServesItsRoleAndNegativeARowWithoutARoleServesNone()
+    {
+        var reader = Truth();
+        reader.Teams[TeamPath] = FlowDoc.Replace("{\"name\":\"rev\",\"role\":\"reviewer\"}", "{\"name\":\"rev\",\"role\":\"reviewer\"},{\"name\":\"bare\"}", StringComparison.Ordinal);
+        var (model, _) = Seeded(reader);
+        using var owner = model;
+        var states = Summary(model).Member("member_states")!.Value;
+        JsonValue StateOf(string member) => states.Member($"member:{D}/default/{member}")!.Value;
+        Assert.Equal("reviewer", Text(StateOf("rev"), "role"));
+        Assert.Equal("implementor", Text(StateOf("dev"), "role"));
+        Assert.Equal("orchestrator", Text(StateOf("@orchestrator"), "role"));
+        Assert.Null(StateOf("bare").Member("role"));
+    }
+
     [Fact]
     public void AnOpenStreamsSubOrchestratorLeadsABandWithTheMembersItLeadsAndNegativeAClosedStreamOrAnotherTeamsLeadDoesNot()
     {

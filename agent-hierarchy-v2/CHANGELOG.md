@@ -4,6 +4,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.22] - 2026-11-19
+
+### Added
+
+- **Answer a question on its herdr Board card.** A card in the Board's "Waiting on you" column is now the full
+  question card: every option, Other with your own text, Send, and Not needed (Already done, No longer needed). It
+  sends the same way the Q&A window does.
+- **Item details from a waiting card.** A waiting item's card has a Details button that opens the item's sheet, which
+  starts with who asked. An item that is not registered as work says so instead of showing an empty sheet.
+- **Agent details on the herdr Board.** A member's name in an item's owner, a team's Members list or a lane's header
+  opens the member's sheet in the Board: its state, pane and page links as on the Graph, and a History of the items
+  it holds, each linking to its item sheet. The Graph's own agent sheet is unchanged.
+
+### Fixed
+
+- **Role icons and colours show for a real team's members in the herdr pane.** A member named `<team>-<role>` was
+  drawn with the generic icon and no colour, because the pane was not sent the member's role and could only read it
+  from a name that began with the role. The daemon now serves each member's role with its state, and the pane also
+  reads the role from a team-prefixed name.
+
 ## [2.0.21] - 2026-11-19
 
 ### Added

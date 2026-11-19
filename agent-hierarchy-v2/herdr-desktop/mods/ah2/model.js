@@ -4,7 +4,7 @@
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
-import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf, reportsBack } from "./select.js";
+import { askerLabel, goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf, reportsBack } from "./select.js";
 import "./intl-shim.js"; // before flow-model.js's graph-world.js, which needs Intl when it loads
 import { activityId, jobsUnder, subagentsUnder, underOf } from "./flow-model.js";
 
@@ -87,7 +87,9 @@ function memberRow(key, m, now) {
 
 // ah2-207 Amendment 1: a member's role, for its icon and hue. The served role; else the orchestrator (a lane's is its sub-orchestrator);
 // else the role its name carries (plans-model.js roleOf, as the Board reads it); else "" (the generic icon, the neutral hue).
-const roleIn = (mb, lane) => mb.served || (mb.name === "orchestrator" ? (lane ? "sub-orchestrator" : "orchestrator") : roleOf(mb.name));
+// ah2-272 D2: a name that carries no role is tried again without its own team's "<team>-" prefix, for a daemon that serves no role.
+const nameRole = (name, team) => roleOf(name) || (team && name.startsWith(`${team}-`) ? roleOf(name.slice(team.length + 1)) : "");
+const roleIn =(mb, lane, team) => mb.served || (mb.name === "orchestrator" ? (lane ? "sub-orchestrator" : "orchestrator") : nameRole(mb.name, team));
 
 // ah2-207 D1: one team's tree. Its orchestrator is the root, with the other members, then the lanes, under it; a lane is a node
 // that draws its header row, with the lane's own tree under it. A team without an orchestrator row has its members as roots.
@@ -98,7 +100,7 @@ const roleIn = (mb, lane) => mb.served || (mb.name === "orchestrator" ? (lane ? 
 export function teamTree(tm, depth = 0, lane = Boolean(tm.parent)) {
   const orch = tm.members.find((mb) => mb.name === "orchestrator");
   const extras = (key, d) => (tm.under?.get(key) ?? []).map((x) => ({ kind: x.kind, key: x.key, depth: d, role: x.role ?? "", item: x, alerts: [], children: [] }));
-  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: extras(mb.key, d + 1) });
+  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane, tm.name), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: extras(mb.key, d + 1) });
   const under = (d) => [
     ...tm.members.filter((mb) => mb !== orch).map((mb) => node(mb, d)),
     ...tm.lanes.map((l) => ({ kind: "lane", key: `lane:${l.id}`, depth: d, team: l, children: teamTree(l, d + 1, true) })),
@@ -565,3 +567,8 @@ export async function pollExec(start, sleep, timeout, held) {
 // down for less than 2 minutes (`downMs`), so a daemon back within that is seen within 8 s.
 export const QUICK_RETRY_MS = 120000;
 export const retryMs = (backoff, fails, downMs) => Math.min(backoff[Math.min(fails, backoff.length - 1)], downMs < QUICK_RETRY_MS ? 8000 : Infinity);
+
+// An asker as the Q&A card's meta reads it (the Board sheet's Asked by row too): a lane's orchestrator reads Sub-Orchestrator
+// (ah2-220, select.js askerLabel); else `role@team` with the team part dropped under its own team's label.
+export const askerText = (slices, tm, a) => askerLabel(slices, tm.id.slice(0, tm.id.indexOf("/")), tm.name, a)?.label
+  ?? (a ?? "").replace(new RegExp(`@${tm.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
