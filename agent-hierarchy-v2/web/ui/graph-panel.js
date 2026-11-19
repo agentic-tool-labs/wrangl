@@ -2,7 +2,7 @@ import { html } from "./h.js";
 import { Live } from "./live-component.js";
 import { ageOf, ageText } from "./store.js";
 import { Age } from "./ticker.js";
-import { busyLabel, laneChildren, memberIds, memberOf, stateWord } from "./select.js";
+import { busyLabel, laneChildren, memberIds, memberOf, stateWord, teamLabel } from "./select.js";
 import { idsOf } from "./transcript-rows.js";
 import { streamName } from "./plans-model.js";
 import { MemberActions } from "./member-actions.js";
@@ -84,7 +84,7 @@ function modelOf(slices, ui, teamId) {
   }
   // Map draws the team's own members; members of child-team lanes are left out, and the team card says how many.
   const lanes = stream === null ? laneChildren(slices, team, ids).length : 0;
-  return { kind: "container", type: stream === null ? "team" : "stream", name: stream === null ? t.name : streamName(stream), n: members.length, counts, running, rows, lanes };
+  return { kind: "container", type: stream === null ? "team" : "stream", name: stream === null ? teamLabel(t) : streamName(stream), n: members.length, counts, running, rows, lanes };
 }
 
 export class GraphPanel extends Live {

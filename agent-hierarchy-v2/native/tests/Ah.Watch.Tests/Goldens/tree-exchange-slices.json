@@ -259,6 +259,7 @@
           {
             "id": "team:f28aaefa/default",
             "name": "default",
+            "display_name": null,
             "dir_id": "f28aaefa"
           }
         ]
@@ -375,6 +376,7 @@
       "body": {
         "team": "team:f28aaefa/default",
         "name": "default",
+        "display_name": null,
         "work_root": null,
         "branch": null,
         "running": true,
@@ -434,6 +436,7 @@
       "as_of": 1780309200000,
       "body": {
         "name": "default",
+        "display_name": null,
         "dir_id": "f28aaefa",
         "orchestrator": "member:f28aaefa/default/@orchestrator",
         "members": [

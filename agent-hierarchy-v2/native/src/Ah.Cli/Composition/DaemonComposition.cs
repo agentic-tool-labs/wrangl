@@ -91,7 +91,8 @@ internal static class DaemonComposition
                 UiAnswer = UiAnswer(graph, services.HierarchyDirs),
                 UiTeamClose = new UiTeamCloseSupport(
                     dir => Ah.Watch.WatchModule.DirOfId(dir, services.HierarchyDirs()) ?? services.HierarchyDirs().FirstOrDefault(known => known == dir),
-                    input => Ah.Commands.CommandsModule.TeamClose(new RosterComposition(graph.Value, io.Clock, env), input)),
+                    input => Ah.Commands.CommandsModule.TeamClose(new RosterComposition(graph.Value, io.Clock, env), input),
+                    input => Ah.Commands.CommandsModule.TeamRename(new RosterComposition(graph.Value, io.Clock, env), input)),
                 HerdrAppChild = pid => Ah.Mesh.MeshModule.IsHerdrAppChild(processes, pid, p => SessionDirectory.ExecutableOf(runner, p)),
                 UiRules = new UiRulesSupport(
                     team => new RulesUi(graph.Value, env.AhHome, services.HierarchyDirs, () => stateDb.Value, () => io.Clock.UtcNow).Read(team),

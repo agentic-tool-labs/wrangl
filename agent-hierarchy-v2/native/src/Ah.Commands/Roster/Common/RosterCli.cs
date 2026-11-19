@@ -53,7 +53,7 @@ internal static class RosterCli
     {
         "create", "spawn-one", "spawn-ad-hoc", "dismiss", "disband", "snapshot", "untrack", "resync", "move", "transfer", "deliver",
         "answer", "stream-open", "stream-status", "stream-done", "stream-label", "progress", "stream-report", "checkpoint", "checklist", "lane-caps", "ledger", "timing",
-        "quit", "pause", "stop", "duty", "pause-member", "resume-member",
+        "quit", "pause", "stop", "duty", "pause-member", "resume-member", "rename",
     };
 
     /// <summary>The verb words of the Node CLI, in its usage message.</summary>

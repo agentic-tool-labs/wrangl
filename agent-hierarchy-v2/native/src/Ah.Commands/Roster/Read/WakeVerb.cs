@@ -95,7 +95,7 @@ internal static class WakeVerb
 
         public string? FirstLine => member is null ? FirstLineOf(c) : null;
 
-        public bool Heartbeat => member is null;
+        public string? HeartbeatLine => member is null ? null : "ahd wake: heartbeat; a background job is still open; restart the waiter to keep watching it";
 
         public string DaemonDownLine => member is null
             ? "ahd wake: daemon down"
@@ -105,7 +105,9 @@ internal static class WakeVerb
 
         public bool NothingLeft() =>
             member is not null
-            && !WatchModule.MemberHasOpenBackgroundJob(wake.Jobs(member.HierarchyDir, member.Team), member.Name, session, wake.JobOpen);
+            && !WatchModule.MemberHasOpenBackgroundJob(wake.Jobs(member.HierarchyDir, member.Team), member.Name, session, wake.JobOpen, _kin ??= wake.Kin());
+
+        private IReadOnlySet<int>? _kin;
     }
 
     /// <summary>The line every wake starts with: read the checklist before anything else.</summary>

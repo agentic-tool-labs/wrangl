@@ -10,7 +10,8 @@
 // `?view=graph` the Graph window (graph-view.js) on ah2-tm4 and its lane: the web's Map, then the links, then the scrubber;
 // `graph-30` a 30 min window 90 min back, `graph-two` a second stream, `graph-zoom` zoomed into it; `graph-flow` the same team in Flow
 // (graph-model.js flowModel: cards by role, links, legend), `graph-flow-v` Flow vertical, `dock-flow` Flow in the docked column.
-// `?view=settings` the settings dialog (settings.js) with an update ready and What's new open; the ah2 tab shows its dot.
+// `?view=renamed` ah2-tm4 with a display name (ah2-218): the sidebar and the sitrep header show it, the real name in the tooltip;
+// `?view=rename` its Rename dialog (rename.js) with a name too long. `?view=settings` the settings dialog (settings.js) with an update ready and What's new open; the ah2 tab shows its dot.
 // `?view=menu` the strip's … popup (tabs.js) with an update ready; `?view=dock` the desk open on the Graph (dock.js, tabs.js
 // panelTabsView). Every view shows the desk's status segment (main.js statusSegment) and the Needs-you drawer peeking
 // (main.js peek); `?view=peek` shows the drawer slid out, as on hover.
@@ -29,6 +30,7 @@ import { glyphOf } from "../mods/ah2/graph-world.js";
 import { DUTY, DUTY_TITLE, stateWord } from "../mods/ah2/select.js";
 import { FLOW_COLUMN } from "../../web/mock/model.mjs";
 import { settingsOf, STRIP, INTERVALS, changelogEntry } from "../mods/ah2/settings-model.js";
+import { renameForm } from "../mods/ah2/rename-model.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = process.argv[2] ?? join(tmpdir(), "ah2-preview.html");
@@ -38,6 +40,11 @@ const slices = new Map(reply.slices.map((s) => [s.id, s]));
 const side = sidebarModel(slices, NOW);
 const team = "a1b2c3d4/ah2-tm4";
 const rep = sitrepModel(slices, team, NOW);
+// the same fixture with a display name on ah2-tm4, for ?view=renamed and ?view=rename
+const NAMED = new Map(slices);
+NAMED.set(`team-summary:${team}`, { ...slices.get(`team-summary:${team}`), body: { ...slices.get(`team-summary:${team}`).body, display_name: "Herdr desktop" } });
+const sideNamed = sidebarModel(NAMED, NOW);
+const repNamed = sitrepModel(NAMED, team, NOW);
 const qa = qaModel(slices, NOW);
 const qaEmpty = qaModel(new Map([...slices].filter(([id]) => !id.startsWith("questions:"))), NOW);
 // The card states the Q&A views show, as qa.js keeps them (seeded the same way as the herdr-app check copies).
@@ -116,10 +123,10 @@ const treeAlarm = (r) => (a) => `<div class="trow">${alertLead(r)}<div class="al
 
 function teamHead(t, lane) {
   return [
-    `<button class="team" style="padding-left:${lane ? 4 : 8}px${lane ? ";flex:1;min-width:0" : ""}" title="Open the ${esc(t.name)} sitrep"><span class="tn">${esc(t.name)}</span>`,
+    `<button class="team" style="padding-left:${lane ? 4 : 8}px${lane ? ";flex:1;min-width:0" : ""}" title="Open the ${esc(t.label)} sitrep${t.real ? ` · ${esc(t.real)}` : ""}"><span class="tn">${esc(t.label)}</span>`,
     t.needsYou ? `<span class="cnt" title="${t.needsYou} needs you">${t.needsYou}</span>` : "",
     t.working || t.blocked ? `<span class="tc">${esc(counts({ working: t.working, blocked: t.blocked }))}</span>` : "",
-    `<span class="spill" role="button" title="Open the ${esc(t.name)} sitrep" aria-label="Open the ${esc(t.name)} sitrep">Sitrep</span>`,
+    `<span class="spill" role="button" title="Open the ${esc(t.label)} sitrep" aria-label="Open the ${esc(t.label)} sitrep">Sitrep</span>`,
     "</button>",
   ].join("");
 }
@@ -402,6 +409,18 @@ const evAge = ev ? (Math.floor((NOW - ev.at) / 60000) < 1 ? "now" : `${Math.floo
 const statusRow = `<div class="srow2"><span class="ws">my-repo · ⎇ main</span><div class="seg2" aria-label="Wrangl status">
   ${desk.working ? `<span class="st2">${mark("running")}<b>${desk.working}</b>working</span>` : ""}${desk.blocked ? `<span class="st2">${mark("blocked")}<b>${desk.blocked}</b>blocked</span>` : ""}${needs(desk.needsYou)}
   ${ev ? `<span class="ev2" title="${esc(`${ev.team} · ${ev.text} · ${evAge}`)}"><i>${evAge}</i><span>${esc(ev.text)}</span></span>` : ""}</div></div>`;
+// ah2-218 B2: the sitrep header with Rename beside Dismiss (main.js sitrep), and the Rename dialog (rename.js renameView)
+const TYPED = "Herdr desktop, the pane that draws every team the daemon serves";
+const typed = renameForm(TYPED, { touched: true, current: repNamed.displayName ?? "" });
+const renameWins = `<div class="ov sit sitn" role="dialog" aria-label="${esc(repNamed.name)} sitrep">
+  <div class="ovh"><h1 title="${esc(repNamed.real ?? "")}">${esc(repNamed.name)} · sitrep</h1>${needs(repNamed.needsYou)}<button class="hb" title="Dismiss ${esc(repNamed.name)}" aria-label="Dismiss team ${esc(repNamed.name)}">Dismiss</button><button class="hb" title="Give ${esc(repNamed.name)} a display name" aria-label="Rename team ${esc(repNamed.name)}">Rename</button><button class="x" title="Close (esc)" aria-label="Close the sitrep">×</button></div>
+  <div class="ovb">${repNamed.regions.map(region).join("")}</div>
+ </div>
+ <div class="ov rn" role="dialog" aria-label="Rename ${esc(repNamed.name)}">
+  <div class="ovh"><h1>Rename ${esc(repNamed.name)}</h1><button class="x" title="Close (esc)" aria-label="Close">×</button></div>
+  <div class="rnb"><div class="rnl">Display name</div><div class="rnf ${typed.problem ? "bad" : "on"}" aria-label="Display name. ${esc(typed.problem ?? "")}">${esc(TYPED)}</div><div class="rnp">${esc(typed.problem ?? "")}</div><div class="rnh">Shown wherever the team is named. Commands and addresses keep ${esc(repNamed.realName)}.</div></div>
+  <div class="rnft"><button class="sb pri">Save</button>${typed.clear ? '<button class="sb">Clear</button>' : ""}<button class="sb">Cancel</button></div>
+ </div>`;
 const drawer = `<aside class="peek" aria-label="Needs you"><div class="pin"><button class="pr"><span class="pt"><b>Needs you</b><small>Open Q&amp;A</small></span><span class="pb">${desk.needsYou}</span></button>${desk.needing.map((tm) => `<button class="pr" title="${esc(tm.name)} · ${tm.n} need you"><span class="pt">${esc(tm.name)}</span><span class="pc"><span class="pb s">${tm.n}</span></span></button>`).join("")}</div></aside>`;
 const graphWin = Object.entries(GRAPHS).map(([v, m]) => `<div class="ov gr" data-v="${v}" role="dialog" aria-label="Graph">
   ${deskTabs("graph", true)}
@@ -683,6 +702,12 @@ html[data-view=dock-sheet] .dock.dsh[data-v=dock-sheet],html[data-view=dock-shee
 .ax{height:14px;display:flex;justify-content:space-between;font:10.5px "Geist Mono",ui-monospace,monospace;color:var(--muted)}.ax span:nth-child(2){font-family:Geist,ui-sans-serif,system-ui,sans-serif}
 .crumb{height:28px;flex:none;padding:0 16px;display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}.crumb b{color:var(--foreground);font-weight:500}.crumb button{height:24px;padding:0 6px;border:1px solid var(--surface);border-radius:6px;background:none;color:var(--muted);font:inherit}
 .gc.zm{cursor:pointer;padding:0}.gc.zm:hover{border-color:var(--foreground)}.gc.zm:focus-visible{outline:none;border-color:var(--accent)}
+.lst-plain,.lst-named{display:contents}.lst-named{display:none}html[data-view=renamed] .lst-plain,html[data-view=rename] .lst-plain{display:none}html[data-view=renamed] .lst-named,html[data-view=rename] .lst-named{display:contents}
+.ov.sitn,.ov.rn{display:none}html[data-view=renamed] .ov.sitn,html[data-view=rename] .ov.sitn{display:flex}html[data-view=rename] .ov.rn{display:flex}html[data-view=rename] .scrim{display:block}
+.ovh .hb{height:24px;padding:0 8px;display:flex;align-items:center;border:1px solid var(--surface);border-radius:6px;background:none;color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.ovh .hb:hover{background:var(--hover);color:var(--foreground)}.ovh .hb:focus-visible{outline:none;border-color:var(--accent)}
+.ov.rn{left:calc(50% - 200px);top:120px;width:400px;height:228px;z-index:6}.rnb{flex:1;min-height:0;padding:12px 16px 0;display:flex;flex-direction:column;gap:4px}.rnl,.rnh{font-size:11.5px;color:var(--muted)}.rnp{min-height:16px;font-size:11.5px;color:var(--blocked)}
+.rnf{height:28px;flex:none;padding:0 8px;display:flex;align-items:center;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:12.5px;color:var(--foreground);overflow:hidden;white-space:nowrap}.rnf.bad{border-color:var(--blocked)}.rnf.on{border-color:var(--accent)}
+.rnft{height:48px;flex:none;padding:0 16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)}
 .ov.set,.scrim{display:none}html[data-view=settings] .ov.set{display:flex}html[data-view=settings] .scrim{display:block}html[data-view=settings] .ov.sit{display:none}
 .scrim{position:absolute;inset:0;background:#0006}.ov.set{left:calc(50% - 240px);top:24px;width:480px;height:min(640px,calc(100% - 48px))}
 .ss{margin-top:16px}.ss h2{height:20px;margin:0;display:flex;align-items:center;font-size:11px;font-weight:600;color:var(--muted)}
@@ -720,7 +745,8 @@ const v = new URLSearchParams(location.search).get("view"); if (v) document.docu
   <div class="ah2">
    <div class="head"><span class="lbl">Wrangl</span>${needs(side.needsYou)}</div>
    <div class="list">
-    ${side.teams.flatMap((t) => teamRows(t)).join("\n    ")}
+    <div class="lst-plain">${side.teams.flatMap((t) => teamRows(t)).join("\n    ")}</div>
+    <div class="lst-named">${sideNamed.teams.flatMap((t) => teamRows(t)).join("\n    ")}</div>
     <div class="grp">Other agents</div>
     ${others.map((a) => member({ ...STATES[a.state], state: a.state, name: a.name, what: a.space, age: "" }, 14)).join("")}
    </div>
@@ -743,6 +769,7 @@ const v = new URLSearchParams(location.search).get("view"); if (v) document.docu
   <div class="ovh"><h1>${esc(rep.name)} · sitrep</h1>${needs(rep.needsYou)}<button class="x" title="Close (esc)" aria-label="Close the sitrep">×</button></div>
   <div class="ovb">${rep.regions.map(region).join("")}</div>
  </div>
+ ${renameWins}
  ${boardWin}
  ${graphWin}
  ${flowWin}

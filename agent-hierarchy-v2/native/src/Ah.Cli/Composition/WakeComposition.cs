@@ -21,6 +21,9 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
 
     public int Pid => System.Environment.ProcessId;
 
+    public IReadOnlySet<int> Kin() =>
+        new HashSet<int>([Pid, .. _table.Ancestors(Pid) ?? [], .. _table.Descendants(Pid)?.Select(static n => n.Pid) ?? []]);
+
     internal ServiceGraph Graph => g;
 
     public (string Address, string Dir)? OrchestratorBox(string sessionId)

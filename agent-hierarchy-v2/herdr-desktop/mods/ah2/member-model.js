@@ -3,7 +3,7 @@
 // Those web files import Preact, so they cannot be copied whole: this is their code, line for line, without the drawing, and a test
 // (tests/web/herdr-graph-model.test.mjs) holds every function here to the web's own output on the fixture. Internal messages are
 // hidden, the web's default (msg-filter.js isInternal / showInternal; the mod has no toggle). No herdr or gpui imports.
-import { busyLabel, firstTeam, memberOf, partyIdOf, partyName, teamOfMember } from "./select.js";
+import { busyLabel, firstTeam, memberOf, partyIdOf, partyName, teamOfMember, teamLabel } from "./select.js";
 import { hashOf, memberHref, teamOfMember as teamIdOfMember } from "./deeplink.js";
 import { currentItem, flowId, hhmm, itemsId, modeOf, pagesOf, planId, planStreams, radialView, scrubbed, scrubOf, sentReceived, streamOf } from "./graph-world.js";
 
@@ -52,7 +52,7 @@ export function memberModel(slices, ui, id, n = SUMMARY_MESSAGES) {
     id, name: m.name, label: m.label, title: m.title, role: m.role, model: m.model ?? null, state: m.state, running: m.running, since: m.since ?? 0, gone: m.state === "gone",
     tool: m.tool, toolAt: m.toolAt, branch: m.branch, workRoot: m.workRoot, slug: m.slug,
     ctx: ctx.text, ctxTitle: ctx.title, ctxOver: ctx.over, contextUsed: m.contextUsed ?? null,
-    team: t.name, teamId, dir: t.dir_id, stream,
+    team: t.name, teamShown: teamLabel(t), teamId, dir: t.dir_id, stream,
     teamHref: hashOf({ view: "overview", team: teamId }),
     lane: lane && typeof lane.stream === "string" && typeof lane.parent_team === "string"
       ? { name: lane.stream, href: hashOf({ view: "board", team: `team:${t.dir_id}/${lane.parent_team}`, lane: lane.stream }) }

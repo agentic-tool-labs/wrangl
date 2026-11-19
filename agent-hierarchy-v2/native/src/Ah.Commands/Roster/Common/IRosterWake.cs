@@ -70,6 +70,9 @@ public interface IRosterWake
 
     int Pid { get; }
 
+    /// <summary>This process, its ancestors and its descendants, as far as the process table says.</summary>
+    IReadOnlySet<int> Kin() => new HashSet<int> { Pid };
+
     /// <summary>The recorded start of process <paramref name="pid"/>, or null when it cannot be read.</summary>
     string? StartOf(int pid);
 

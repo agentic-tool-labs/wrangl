@@ -2,6 +2,7 @@ import { html } from "./h.js";
 import { hoverProps } from "./hover.js";
 import { GraphMap } from "./graph-pack.js";
 import { fadeOf, glyphOf, kindOf, RADIAL_CAP, radialView, treeOf } from "./graph-world.js";
+import { teamLabel } from "./select.js";
 
 // Graph · Radial: the same team, data, panel, scrubber, keys and breadcrumbs as Map (it is Map with another layout and world), drawn as
 // a ring. Members sit on the ring, a band per stream outside it, and one bundled path per message in the scrubber's view, through the
@@ -65,7 +66,7 @@ export class GraphRadial extends GraphMap {
     const d3 = this.d3;
     this.struct = struct;
     const R = Math.max(40, Math.min(W, H) / 2 - LABEL_ROOM);
-    const root = d3.cluster().size([2 * Math.PI, R]).separation((a, b) => (a.parent === b.parent ? 1 : 1.6))(d3.hierarchy(treeOf(team.id ?? "team", team.body.name, rows)));
+    const root = d3.cluster().size([2 * Math.PI, R]).separation((a, b) => (a.parent === b.parent ? 1 : 1.6))(d3.hierarchy(treeOf(team.id ?? "team", teamLabel(team.body), rows)));
     const [cx, cy] = [W / 2, H / 2];
     root.each((n) => {
       n.a = n.x;

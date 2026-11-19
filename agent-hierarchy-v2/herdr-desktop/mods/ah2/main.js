@@ -26,6 +26,7 @@ import { markCell } from "./marks.js";
 import { shownTeams, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
 import { settings, settingsView, checkUpdate, installClick } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
+import { openRename, renameInit, renameView } from "./rename.js";
 import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
 import { ah, target } from "./ah.js";
 import { UNRESOLVED, targetKey } from "./target-model.js";
@@ -66,6 +67,7 @@ export default class Ah2 extends View {
       return;
     }
     if (this.view === "dismiss") return dismissInit(this, cx); // the Dismiss dialog (dismiss.js): its own bounded task, no poll
+    if (this.view === "rename") return renameInit(this, cx); // the Rename dialog (rename.js): its field and focus, no poll
     if (this.view === "update") return updateInit(this, cx); // the update dialog (update.js): its own re-read, no poll
     if (this.view === "menu") { // the strip's … popup (tabs.js): keys only, no poll
       this.keys = cx.focus_handle();
@@ -237,6 +239,7 @@ export default class Ah2 extends View {
     if (this.view === "graph") return graphView(this, t, closeOf(), cx);
     if (this.view === "settings") return settingsView(this, t, () => closeOverlay(props().overlay));
     if (this.view === "dismiss") return dismissView(this, t);
+    if (this.view === "rename") return renameView(this, t);
     if (this.view === "update") return updateView(this, t);
     return this.team ? this.sitrep(t) : this.sidebar(t);
   }
@@ -271,7 +274,7 @@ export default class Ah2 extends View {
     this.seenAlerts = seen;
     if (!settings().notify) return;
     for (const x of fresh.slice(0, 3)) {
-      notify({ title: `Wrangl alarm · ${x.team.name}`, body: x.alert.text, level: "warning", action: { name: "layout.switch", args: { name: "wrangl" } } });
+      notify({ title: `Wrangl alarm · ${x.team.label ?? x.team.name}`, body: x.alert.text, level: "warning", action: { name: "layout.switch", args: { name: "wrangl" } } });
     }
   }
 
@@ -478,21 +481,23 @@ export default class Ah2 extends View {
     const header = (tm, lane, lead) => {
       // ah2-53: a team with a goal of its own shows it as a second muted line under the name, cut by the ellipsis; the row grows to fit it
       const goalTip = tm.goal ? ` · goal: ${tm.goalFull}` : "";
+      // ah2-218: shown by its display name; the real name, which commands and addresses use, is in the tooltip
+      const realTip = tm.real ? ` · ${tm.real}` : "";
       const row = this.ring(t, Button.new(`team-${tm.id}`), t.chrome)
         .when(!tm.goal, (el) => el.h(30)).when(Boolean(tm.goal), (el) => el.min_h(30).py(4))
         .when(lane, (el) => el.flex_1().min_w(0).pl(4)).when(!lane, (el) => el.pl(8))
         .pr(8).gap(4).flex().items_center().rounded(6).cursor_pointer()
         .text_size(11).font_semibold().text_color(t.muted)
         .hover((s) => s.bg(t.hover).text_color(t.foreground))
-        .tooltip(`Open the ${tm.name} sitrep${counts(tm) ? ` · ${counts(tm)}` : ""}${goalTip}`)
-        .accessibility_label(`${tm.name}${lane ? ", lane" : ""}. ${counts(tm) || "nothing running"}${goalTip}. Open its sitrep`)
+        .tooltip(`Open the ${tm.label} sitrep${realTip}${counts(tm) ? ` · ${counts(tm)}` : ""}${goalTip}`)
+        .accessibility_label(`${tm.label}${lane ? ", lane" : ""}. ${counts(tm) || "nothing running"}${goalTip}. Open its sitrep`)
         .on_click(() => openTeam(tm.id))
         // the name keeps its width: working/blocked shrinks first (its full text is in the label), needs you never does
         .child(tm.goal
           ? v_flex().flex_auto().min_w(0)
-            .child(div().min_w(0).truncate().child(tm.name))
+            .child(div().min_w(0).truncate().child(tm.label))
             .child(div().min_w(0).truncate().text_size(10.5).font_medium().text_color(t.muted).child(tm.goal))
-          : div().flex_auto().min_w(0).truncate().child(tm.name))
+          : div().flex_auto().min_w(0).truncate().child(tm.label))
         // needs you as a count pill, so the name keeps its room (the words are in the tooltip and the label)
         .when(tm.needsYou > 0, (el) => el.child(div().h(16).px(5).flex().flex_none().items_center().rounded(8).border(1).border_color(t.blocked)
           .font_family(MONO).text_size(10.5).font_medium().text_color(t.foreground).child(String(tm.needsYou))))
@@ -503,18 +508,18 @@ export default class Ah2 extends View {
           .h(18).px(6).flex().flex_none().items_center().rounded(9).cursor_pointer()
           .text_size(10.5).font_medium().text_color(t.muted)
           .hover((s) => s.bg(t.raised).text_color(t.foreground))
-          .tooltip(`Open the ${tm.name} sitrep`)
-          .accessibility_label(`Open the ${tm.name} sitrep`)
+          .tooltip(`Open the ${tm.label} sitrep`)
+          .accessibility_label(`Open the ${tm.label} sitrep`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
           .on_click(() => openTeam(tm.id))
           .child("Sitrep"))
         .when(!lane, (el) => el.child(this.ring(t, Button.new(`team-dismiss-${tm.id}`), t.chrome)
           .size(18).flex().flex_none().items_center().justify_center().rounded(9).cursor_pointer().text_color(t.muted)
           .hover((s) => s.bg(t.raised).text_color(t.foreground))
-          .tooltip(`Dismiss ${tm.name}`)
-          .accessibility_label(`Dismiss team ${tm.name}`)
+          .tooltip(`Dismiss ${tm.label}`)
+          .accessibility_label(`Dismiss team ${tm.label}`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openDismiss(tm.id, tm.name, this.workRootOf(tm.id), tm.parent ? tm.name : null))
+          .on_click(() => openDismiss(tm.id, tm.label, this.workRootOf(tm.id), tm.parent ? tm.name : null))
           .child(svg("mods/ah2/x.svg").size(11))));
       return lead ? div().flex().w_full().gap(4).child(lead).child(row) : row;
     };
@@ -524,7 +529,8 @@ export default class Ah2 extends View {
         .tooltip(a.text).accessibility_label(`Alert: ${a.text}`)
         .child(div().flex_none().text_color(t.blocked).child("⚠"))
         .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(a.text));
-      return r ? div().flex().w_full().gap(4).child(this.treeLead(t, r, null)).child(el) : el;
+      // always inside a row: bare in the list's column, flex_1 would grow it down the pane and leave a tall gap
+      return r ? div().flex().w_full().gap(4).child(this.treeLead(t, r, null)).child(el) : div().flex().w_full().child(el);
     };
     // A team's own alerts sit under its header, so they never read as a member's (ah2-133 D4); so does a member alert whose member has no row.
     const teamAlerts = (tm, r) => {
@@ -689,7 +695,7 @@ export default class Ah2 extends View {
         if (e.keystroke === "escape") close();
       })
       .child(h_flex().h(44).px(16).gap(10).flex_none().items_center().border_b(1).border_color(t.border)
-        .child(div().min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).child(`${name} · sitrep`))
+        .child(div().id("ah2-sitrep-title").min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).when(Boolean(s?.real), (el) => el.tooltip(s.real)).child(`${name} · sitrep`))
         .when((s?.needsYou ?? 0) > 0, (el) => el.child(this.needs(t, s.needsYou, "Needs you", 0, s.blocked)))
         .child(div().flex_1())
         .when(Boolean(s) && !s.closed && !s.lane, (el) => el.child(this.ring(t, Button.new("ah2-sitrep-dismiss"), t.surface)
@@ -700,6 +706,15 @@ export default class Ah2 extends View {
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
           .on_click(() => openDismiss(this.team, name, this.workRootOf(this.team), s?.lane ? name : null))
           .child("Dismiss")))
+        // ah2-218 B2: beside Dismiss; a lane is renamed too (the dialog acts as the user)
+        .when(Boolean(s) && !s.closed, (el) => el.child(this.ring(t, Button.new("ah2-sitrep-rename"), t.surface)
+          .h(24).px(8).flex().flex_none().items_center().rounded(6).cursor_pointer().text_size(12).text_color(t.muted)
+          .hover((x) => x.bg(t.hover).text_color(t.foreground))
+          .tooltip(`Give ${name} a display name`)
+          .accessibility_label(`Rename team ${name}`)
+          .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+          .on_click(() => openRename(this.team, name, s.displayName, s.realName, this.workRootOf(this.team)))
+          .child("Rename")))
         .child(this.closeButton(t, "ah2-sitrep-close", "Close the sitrep", close)))
       .child(v_flex().id("ov-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_mouse_down("left", (_e, cx) => cx.stop_propagation()).children(body)); // the header drags; the body selects
   }

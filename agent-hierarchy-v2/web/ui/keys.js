@@ -47,7 +47,7 @@ export const GLOBAL_KEYS = ["1", "2", "3", "4", "5", "ArrowDown", "ArrowUp", "En
 
 const TEAM_VIEWS = { 1: "overview", 2: "board", 3: "graph", 4: "timeline", 5: "conversation" };
 
-const dialogOpen = (ui) => ui.help === true || ui.rules === true || ui.sitrep === true || Boolean(ui.expand || ui.pair);
+const dialogOpen = (ui) => ui.help === true || ui.rules === true || ui.sitrep === true || Boolean(ui.expand || ui.pair || ui.rename);
 
 const classesOf = (el) => String(el?.getAttribute?.("class") ?? "").split(/\s+/);
 

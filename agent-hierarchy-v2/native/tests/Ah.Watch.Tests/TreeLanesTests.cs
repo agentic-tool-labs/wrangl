@@ -268,7 +268,7 @@ public sealed partial class TreeLanesTests
             }.Order(StringComparer.Ordinal),
             ids);
         Assert.Equal(
-            "{\"name\":\"default\",\"dir_id\":\"" + D + "\",\"orchestrator\":\"member:" + D + "/default/@orchestrator\",\"members\":[\"member:" + D + "/default/dev\",\"member:" + D + "/default/qa\"],"
+            "{\"name\":\"default\",\"display_name\":null,\"dir_id\":\"" + D + "\",\"orchestrator\":\"member:" + D + "/default/@orchestrator\",\"members\":[\"member:" + D + "/default/dev\",\"member:" + D + "/default/qa\"],"
             + "\"plan\":\"plan:" + D + "/_default\",\"pipeline\":{\"run\":\"run1\",\"decisions_count\":2,\"last_decision_at\":\"2026-06-01T10:20:00Z\",\"scope\":\"dir\"},\"worktrees\":[\"worktree:" + D + "/default/dev\"]}",
             Body(model, $"team:{D}/default"));
         Assert.Equal(
@@ -281,7 +281,7 @@ public sealed partial class TreeLanesTests
             "{\"id\":\"worktree:" + D + "/default/dev\",\"team\":\"default\",\"assigned_member\":\"dev\",\"grant_state\":\"enforce\",\"work_root\":\"/wt/dev\",\"stream\":\"s1\"}",
             Body(model, $"worktree:{D}/default/dev"));
         Assert.Contains("\"member_worktree\":[{\"from\":\"member:" + D + "/default/dev\",\"to\":\"worktree:" + D + "/default/dev\"}]", Body(model, $"topology:{D}/default"), StringComparison.Ordinal);
-        Assert.Equal("{\"teams\":[{\"id\":\"team:" + D + "/default\",\"name\":\"default\",\"dir_id\":\"" + D + "\"}]}", Body(model, "list:teams"));
+        Assert.Equal("{\"teams\":[{\"id\":\"team:" + D + "/default\",\"name\":\"default\",\"display_name\":null,\"dir_id\":\"" + D + "\"}]}", Body(model, "list:teams"));
         Assert.Equal(DateTimeOffset.Parse("2026-06-01T10:00:30Z", System.Globalization.CultureInfo.InvariantCulture).ToUnixTimeMilliseconds(), model.Store.Current.Slices[$"member:{D}/default/@orchestrator"].AsOfMs);
         Assert.Equal(DateTimeOffset.Parse("2026-06-01T10:20:00Z", System.Globalization.CultureInfo.InvariantCulture).ToUnixTimeMilliseconds(), model.Store.Current.Slices[$"team:{D}/default"].AsOfMs);
     }
@@ -404,6 +404,41 @@ public sealed partial class TreeLanesTests
         Assert.True(model.Store.Current.Slices.ContainsKey($"member:{D}/default/ops"));
         Assert.False(model.Store.Current.Slices.ContainsKey($"member:{D}/default/qa"));
         AssertEqualsRebuild(model, reader);
+    }
+
+    [Fact]
+    public void ARenameIsServedAsDisplayNameOnTheTeamTheListAndTheSummaryAndTheNameStays()
+    {
+        var reader = Truth();
+        var (model, clock) = Seeded(reader);
+        using var owner = model;
+        reader.Teams[TeamPath] = Doc("so", "dev", "qa").Replace("{\"team_id\"", "{\"display_name\":\"Night shift\",\"team_id\"", StringComparison.Ordinal);
+        model.Emit("teams", TeamKey());
+        Drain(model, clock);
+
+        foreach (var id in new[] { $"team:{D}/default", $"team-summary:{D}/default" })
+        {
+            var body = JsonText.Parse(Body(model, id));
+            Assert.Equal(("default", "Night shift"), (body.Member("name")!.Value.AsString(), body.Member("display_name")!.Value.AsString()));
+        }
+
+        var row = Assert.Single(JsonText.Parse(Body(model, "list:teams")).Member("teams")!.Value.AsArray());
+        Assert.Equal(("default", "Night shift"), (row.Member("name")!.Value.AsString(), row.Member("display_name")!.Value.AsString()));
+        AssertEqualsRebuild(model, reader);
+    }
+
+    [Fact]
+    public void NegativeAnEmptyDisplayNameIsServedAsNone()
+    {
+        var reader = Truth();
+        var (model, clock) = Seeded(reader);
+        using var owner = model;
+        reader.Teams[TeamPath] = Doc("so", "dev", "qa").Replace("{\"team_id\"", "{\"display_name\":\"\",\"team_id\"", StringComparison.Ordinal);
+        model.Emit("teams", TeamKey());
+        Drain(model, clock);
+
+        Assert.True(JsonText.Parse(Body(model, $"team-summary:{D}/default")).Member("display_name")!.Value.IsNull);
+        Assert.Contains("\"display_name\":null", Body(model, "list:teams"), StringComparison.Ordinal);
     }
 
     [Fact]

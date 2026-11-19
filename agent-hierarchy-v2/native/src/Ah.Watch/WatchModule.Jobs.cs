@@ -85,12 +85,15 @@ public static partial class WatchModule
             ? new OverdueLaneItem(LaneEscalation.RequestIdOf(parentTeam, stream), subOrchestrator, epoch, silent, charter)
             : null;
 
-    /// <summary>Whether <paramref name="name"/>'s session <paramref name="session"/> still has an open background job: what keeps a member's waiter running.</summary>
-    public static bool MemberHasOpenBackgroundJob(IReadOnlyList<JobFact> jobs, string name, string session, Func<JobFact, bool> jobOpen)
+    /// <summary>
+    /// Whether <paramref name="name"/>'s session <paramref name="session"/> still has an open background job: what keeps a member's waiter running.
+    /// A job whose recorded process is in <paramref name="kin"/> (the waiter itself, its ancestors and descendants) does not count: a waiter never waits on itself.
+    /// </summary>
+    public static bool MemberHasOpenBackgroundJob(IReadOnlyList<JobFact> jobs, string name, string session, Func<JobFact, bool> jobOpen, IReadOnlySet<int>? kin = null)
     {
         ArgumentNullException.ThrowIfNull(jobs);
         ArgumentNullException.ThrowIfNull(jobOpen);
-        return jobs.Any(j => j.Background && j.Owner == name && j.Session == session && jobOpen(j));
+        return jobs.Any(j => j.Background && j.Owner == name && j.Session == session && !(j.Pid is { } pid && kin?.Contains(pid) == true) && jobOpen(j));
     }
 
     /// <summary>

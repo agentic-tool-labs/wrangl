@@ -1,6 +1,6 @@
 import { html } from "./h.js";
 import { Live } from "./live-component.js";
-import { DUTY, DUTY_TITLE, memberIds, memberOf, sparksOf, stateWord } from "./select.js";
+import { DUTY, DUTY_TITLE, memberIds, memberOf, sparksOf, stateWord, teamLabel } from "./select.js";
 import { hoverProps } from "./hover.js";
 import { loadD3 } from "./lazy.js";
 import { GraphToggle, setGraph } from "./graph.js";
@@ -356,7 +356,7 @@ export class GraphMap extends Live {
     }
     const d3 = this.d3;
     this.struct = struct;
-    const tree = treeOf(team.id ?? "team", team.body.name, rows);
+    const tree = treeOf(team.id ?? "team", teamLabel(team.body), rows);
     // Air scales with the member circles, not with the canvas (graph-world.js airOf), then the whole is fitted to the 1000-unit square.
     const root = d3.pack().radius(() => 1).padding(airOf)(d3.hierarchy(tree).sum((d) => (d.type === "member" ? 1 : 0)));
     fitPack(root, 1000);

@@ -286,7 +286,7 @@ test("an older exchange of the pair that exists only after a newer one is shown 
 test("the mock's team-summary carries every field of the composed summary and follows its fixture", async () => {
   const { createMock } = await import("../../web/mock/model.mjs");
   const model = createMock();
-  const fields = ["team", "name", "work_root", "branch", "running", "members", "working", "blocked", "needs_you", "waiting_on_you", "waiting_rows", "in_progress_now", "stuck", "in_flight", "streams_open", "streams_total", "items_done", "items_total", "oldest_in_flight_at", "updated_at", "feed_newest_at", "alerts", "state", "member_states", "stale_ids", "stale_at", "ended", "status", "held", "quiet_at"];
+  const fields = ["team", "name", "display_name", "work_root", "branch", "running", "members", "working", "blocked", "needs_you", "waiting_on_you", "waiting_rows", "in_progress_now", "stuck", "in_flight", "streams_open", "streams_total", "items_done", "items_total", "oldest_in_flight_at", "updated_at", "feed_newest_at", "alerts", "state", "member_states", "stale_ids", "stale_at", "ended", "status", "held", "quiet_at"];
   const body = model.slice(SUMMARY).body;
   assert.deepEqual(Object.keys(body).sort(), [...fields].sort());
   assert.equal(body.team, TEAM);

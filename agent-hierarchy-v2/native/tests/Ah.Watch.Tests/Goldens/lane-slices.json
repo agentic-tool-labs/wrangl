@@ -4,6 +4,7 @@
       "id": "team:f28aaefa/mgr",
       "body": {
         "name": "mgr",
+        "display_name": null,
         "dir_id": "f28aaefa",
         "orchestrator": "member:f28aaefa/mgr/@orchestrator",
         "members": [
@@ -44,6 +45,7 @@
       "id": "team:f28aaefa/mgr-s1",
       "body": {
         "name": "mgr-s1",
+        "display_name": null,
         "dir_id": "f28aaefa",
         "orchestrator": "member:f28aaefa/mgr-s1/@orchestrator",
         "members": [],

@@ -4,6 +4,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.18] - 2026-11-18
+
+### Added
+
+- **A team can be given a display name.** `ah roster rename "<name>"` (and `--clear`) stores a name of up to 60
+  characters that both UIs show wherever the team is named. The web UI has a Rename button in the team's header and
+  the herdr pane has one beside Dismiss in the team's sitrep window; each opens a small dialog with Save, Clear and
+  Cancel. Only what is shown changes: member names, mail addresses, `--team` values and records keep the team's real
+  name, which stays visible as a tooltip.
+
+### Fixed
+
+- **A member's waiter always ends.** A member that ran a background test and then waited with `ah roster wake` could
+  wait for over an hour: the job was tied to the waiter's own process, so the waiter waited on itself, kept the
+  member's session busy and blocked its dismiss. A waiter is never taken as a job's process, never counts a job tied
+  to itself, and a member's waiter now ends at the same 20-minute limit as an Orchestrator's.
+- **A job started with `ah test run` is tied to its real process.** It was matched by the word `ah`, which the
+  wrapper script and the test command do not carry, so it took the next `ah` command the session ran, or none, and
+  was then reported overdue or ended as unseen while the test ran on. It now binds the wrapper script's own process,
+  the outer one when a test starts a nested run, and a label that begins with `cd <dir>` is read correctly.
+
+- **No tall gap around a team's alert in the herdr pane.** A team-level alert such as "Waiting on you" grew to fill
+  the free height of the pane, leaving a large empty space between the team header and its first row. It is one line
+  high again.
+
 ## [2.0.17] - 2026-11-18
 
 ### Added

@@ -50,7 +50,7 @@ export class TeamCloseButton extends Live {
 
   select(snap, { teamId }) {
     const row = teamRows(snap.slices).find((r) => r.id === teamId);
-    return { name: row?.name ?? "", closed: (row?.closedAt ?? 0) > 0, lane: row ? row.laneOf !== null : true, noRecord: row?.noRecord === true, row: JSON.stringify(row ?? null) };
+    return { name: row?.label ?? "", closed: (row?.closedAt ?? 0) > 0, lane: row ? row.laneOf !== null : true, noRecord: row?.noRecord === true, row: JSON.stringify(row ?? null) };
   }
 
   send = (more) => postTeamClose(bodyOf(this.props.teamId, more));

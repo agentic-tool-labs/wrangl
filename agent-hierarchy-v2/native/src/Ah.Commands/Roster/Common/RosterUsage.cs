@@ -190,6 +190,9 @@ validation and reads/writes only, so validation lives in one place.
   ah roster reopen <team> [--cwd <path>]
                       The user only. Marks a team closed, or removes the mark; nothing is deleted. Running
                       members end only when each is named with --confirm-live.
+  ah roster rename  "<display name>" | --clear [--team <T>] [--cwd <path>]
+                      The user or the team's Orchestrator. Sets the team's display name (1 to 60 characters, no
+                      control characters), a label only; the team's name, addresses and lookups do not change.
   ah roster reap    [--commit] [--cwd <path>]
   ah roster scratch-sweep [--commit] [--cwd <path>]
                       (bare: lists orphaned team records — dead/null orchestrator pid,

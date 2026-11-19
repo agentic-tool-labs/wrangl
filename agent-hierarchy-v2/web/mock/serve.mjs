@@ -59,6 +59,16 @@ export function createMockServer({ model = createMock(), host = "127.0.0.1" } = 
       if (url.pathname === "/ui/v1/team-close") {
         return json(200, { ok: true, preview: true, live: [], unknown: [], held: [], left_running: [] });
       }
+      if (url.pathname === "/ui/v1/team-rename") {
+        let body;
+        try {
+          body = JSON.parse(await readBody(req));
+        } catch {
+          return json(400, { error: "bad-request", detail: "the body must be one JSON object" });
+        }
+        const name = typeof body.display_name === "string" ? body.display_name.trim() : null;
+        return model.rename(body.team, name || null) ? json(200, { ok: true, team: body.team, display_name: name || null, previous: null }) : json(409, { refused: true, reason: "unknown-team", detail: `no team ${body.team}` });
+      }
       if (url.pathname === "/ui/v1/rules") {
         if (req.method !== "GET" && req.method !== "POST") {
           return json(405, { error: "method" });

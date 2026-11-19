@@ -4,7 +4,7 @@
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
-import { goalOf, ownGoal, memberLabel } from "./select.js";
+import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf } from "./select.js";
 
 // State words and glyphs, as the web UI says them (web/ui/select.js STATE_WORD). `tone` is the Herdr theme() token.
 export const STATES = {
@@ -149,7 +149,7 @@ export function sidebarModel(slices, now) {
     const alerts = (b.alerts ?? []).filter((a) => a.audience !== "orchestrator").map((a) => ({ key: `${a.kind}|${a.since ?? a.text ?? a.title}`, kind: a.kind, text: a.text || a.title, age: since(a.since, now), at: Date.parse(a.since ?? "") || 0, member: a.member ?? null }));
     // ah2-53: only the team's own goal; a lane's inherited one is already on its parent's row above
     const own = ownGoal(goalOf(b), b.name ?? t.name);
-    teams.push({ id, dir: t.dir_id, name: b.name ?? t.name, parent: b.lane?.parent_team ?? null, needsYou: b.waiting_on_you ?? 0, blockers: b.waiting_blockers ?? 0, working: b.working ?? 0, blocked: b.blocked ?? 0, members, alerts, lanes: [], goal: own?.text ?? null, goalFull: own?.full ?? null });
+    teams.push({ id, dir: t.dir_id, name: b.name ?? t.name, label: teamLabel({ ...b, name: b.name ?? t.name }), real: realNameNote({ ...b, name: b.name ?? t.name }), parent: b.lane?.parent_team ?? null, needsYou: b.waiting_on_you ?? 0, blockers: b.waiting_blockers ?? 0, working: b.working ?? 0, blocked: b.blocked ?? 0, members, alerts, lanes: [], goal: own?.text ?? null, goalFull: own?.full ?? null });
   }
   const byName = new Map(teams.map((t) => [`${t.dir}/${t.name}`, t]));
   const top = [];
@@ -201,8 +201,8 @@ export function deskModel(slices, now) {
   let newest = null;
   const seen = (at, text, team) => { if (at > (newest?.at ?? 0)) newest = { at, text, team }; };
   for (const t of all) {
-    for (const mb of t.members) seen(mb.at, mb.what === mb.word.toLowerCase() ? `${mb.label} ${mb.what}` : `${mb.label} ${mb.word.toLowerCase()}: ${mb.what}`, t.name);
-    for (const a of t.alerts) seen(a.at, `⚠ ${a.text}`, t.name);
+    for (const mb of t.members) seen(mb.at, mb.what === mb.word.toLowerCase() ? `${mb.label} ${mb.what}` : `${mb.label} ${mb.word.toLowerCase()}: ${mb.what}`, t.label);
+    for (const a of t.alerts) seen(a.at, `⚠ ${a.text}`, t.label);
   }
   return {
     working: all.reduce((n, t) => n + t.working, 0),
@@ -210,7 +210,7 @@ export function deskModel(slices, now) {
     needsYou: m.needsYou,
     blockers: all.reduce((n, t) => n + t.blockers, 0),
     waiting: qaModel(slices, now).count,
-    needing: all.filter((t) => t.needsYou > 0).map((t) => ({ id: t.id, name: t.name, n: t.needsYou, blockers: t.blockers, blocked: t.blocked })),
+    needing: all.filter((t) => t.needsYou > 0).map((t) => ({ id: t.id, name: t.label, n: t.needsYou, blockers: t.blockers, blocked: t.blocked })),
     newest,
   };
 }
@@ -231,7 +231,7 @@ export function sitrepModel(slices, id, now, gone = null) {
     return { list: k, label: r.label, optional: r.optional, rows, total, more: Math.max(0, total - rows.length) };
   }).filter((r) => !r.optional || r.rows.length > 0);
   // `lane`: a lane closes with its parent team, never alone, so its sitrep offers no Dismiss
-  return { name: sum?.name ?? id.split("/")[1], lane: Boolean(sum?.lane?.parent_team), needsYou: sum?.waiting_on_you ?? 0, blocked: sum?.blocked ?? 0, regions };
+  return { name: sum ? teamLabel(sum) : id.split("/")[1], realName: sum?.name ?? id.split("/")[1], real: sum ? realNameNote(sum) : null, displayName: displayNameOf(sum), lane: Boolean(sum?.lane?.parent_team), needsYou: sum?.waiting_on_you ?? 0, blocked: sum?.blocked ?? 0, regions };
 }
 
 function sitrepRow(list, x, now) {
@@ -292,7 +292,7 @@ export function qaModel(slices, now) {
     // no run is no reason to hide: a waiting item (a groom's question, a solo Orchestrator's park) has no run behind it
     if (q.open.length === 0 && q.hidden === 0) continue;
     teams.push({
-      id, name: b.name ?? t.name, lane: b.lane?.parent_team ?? null, run: q.run,
+      id, name: b.name ?? t.name, label: teamLabel({ ...b, name: b.name ?? t.name }), lane: b.lane?.parent_team ?? null, run: q.run,
       cards: q.open.map((c) => qaCard(teamId, q.run, c, now, c.workId ? body(slices, itemDescId(t.dir_id, c.workId))?.description : null)),
       hidden: q.hidden, truncated: q.truncated,
     });

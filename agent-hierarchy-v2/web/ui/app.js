@@ -15,6 +15,7 @@ import { PerfStrip } from "./perfstrip.js";
 import { HoverCard } from "./hover.js";
 import { ExpandOverlay } from "./expand.js";
 import { HelpDialog, helpKey } from "./member-actions.js";
+import { TeamRenameDialog } from "./team-rename.js";
 import { globalKey } from "./keys.js";
 import { Header, Footer, applyTheme, storedTheme } from "./shell.js";
 import { bootLooks, looksNote, onLooks } from "./looks.js";
@@ -345,7 +346,7 @@ export class App extends Live {
     const topo = team ? slices.get(`topology:${team.body.dir_id}/${team.body.name}`) : null;
     const sparksKey = sparksOf(slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${s.review ? 1 : 0}|${s.slug}`).join("\n");
     const selected = snap.ui.selected ?? null;
-    return { large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...flowActive(slices, team, nodes)].join("\n") : "" };
+    return { large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, rename: snap.ui.rename ?? null, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...flowActive(slices, team, nodes)].join("\n") : "" };
   }
 
   componentDidMount() {
@@ -468,6 +469,7 @@ export class App extends Live {
       <${HoverCard} store=${store} />
       ${s.expand ? html`<${ExpandOverlay} key=${s.expand} store=${store} memberId=${s.expand} onClose=${this.onExpandClose} />` : null}
       ${s.help ? html`<${HelpDialog} store=${store} onClose=${this.onHelpClose} />` : null}
+      ${s.rename ? html`<${TeamRenameDialog} key=${s.rename} store=${store} teamId=${s.rename} />` : null}
       ${s.rules ? html`<${RulesDialog} key=${s.teamId} store=${store} team=${s.teamId?.split("/").pop() ?? null} onClose=${this.onRulesClose} />` : null}
       ${s.sitrep === "open" ? html`<${SitrepDialog} key=${store.state.ui.team} store=${store} teamId=${store.state.ui.team} name=${store.state.ui.team.split("/").pop()} onClose=${this.onSitrepClose} />` : null}
       ${s.pair ? html`<${PairDialog} key=${s.pair.join("|")} store=${store} pair=${s.pair} onClose=${this.onPairClose} />` : null}

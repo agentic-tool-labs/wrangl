@@ -80,7 +80,9 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
   const { of, byKey } = memberIndex(teams);
   const lanes = new Set(teams.filter((t) => t.parent).map((t) => `${t.dir}/${t.name}`));
   const all = [];
-  const add = (dir, name, e) => all.push({ ...e, teamId: `${dir}/${name}`, team: name, lane: lanes.has(`${dir}/${name}`), clock: hhmm(e.at), age: e.at ? age(now - e.at) : "" });
+  // `team` is what the row shows: the team's display name (ah2-218); `teamId` stays the key
+  const shown = new Map(teams.map((t) => [`${t.dir}/${t.name}`, t.label ?? t.name]));
+  const add = (dir, name, e) => all.push({ ...e, teamId: `${dir}/${name}`, team: shown.get(`${dir}/${name}`) ?? name, lane: lanes.has(`${dir}/${name}`), clock: hhmm(e.at), age: e.at ? age(now - e.at) : "" });
 
   for (const r of running(slices)) {
     for (const id of newestIds(slices, r)) {
@@ -162,7 +164,7 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
   if (newCount > 0 && newCount === rows.length) groups.push({ key: "new", divider: newCount });
 
   const shownTeams = team ? teams.filter((t) => `${t.dir}/${t.name}` === team) : teams;
-  const busy = shownTeams.flatMap((t) => t.members.filter((m) => m.state === "working" || m.state === "blocked").map((m) => ({ ...m, team: t.name })))
+  const busy = shownTeams.flatMap((t) => t.members.filter((m) => m.state === "working" || m.state === "blocked").map((m) => ({ ...m, team: t.label ?? t.name })))
     .sort((a, b) => Number(a.state === "blocked") - Number(b.state === "blocked"));
   return {
     loaded: slices.has("list:teams"),
@@ -170,6 +172,6 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
     groups, rows, newCount,
     empty: all.length === 0, filteredOut: all.length > 0 && rows.length === 0,
     overdue: rows.filter((x) => x.late).length,
-    teams: teams.map((t) => ({ id: `${t.dir}/${t.name}`, name: t.name })),
+    teams: teams.map((t) => ({ id: `${t.dir}/${t.name}`, name: t.label ?? t.name })),
   };
 }

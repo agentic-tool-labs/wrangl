@@ -31,12 +31,12 @@ internal static class OwnerGuard
 {
     private static readonly HashSet<string> Guarded = new(StringComparer.Ordinal)
     {
-        "create", "spawn-one", "spawn-ad-hoc", "dismiss", "disband", "untrack", "reap", "adopt", "move", "transfer", "stream-open", "stream-done", "progress", "close-approve", "checkpoint", "lane-caps", "quit", "pause", "stop", "duty", "pause-member", "resume-member",
+        "create", "spawn-one", "spawn-ad-hoc", "dismiss", "disband", "untrack", "reap", "adopt", "move", "transfer", "stream-open", "stream-done", "progress", "close-approve", "checkpoint", "lane-caps", "quit", "pause", "stop", "duty", "pause-member", "resume-member", "rename",
     };
 
     private static readonly HashSet<string> ActOnExistingTeam = new(StringComparer.Ordinal)
     {
-        "spawn-one", "spawn-ad-hoc", "dismiss", "disband", "untrack", "move", "transfer", "stream-open", "stream-done", "progress", "close-approve", "checkpoint", "lane-caps", "quit", "pause", "stop", "duty", "pause-member", "resume-member",
+        "spawn-one", "spawn-ad-hoc", "dismiss", "disband", "untrack", "move", "transfer", "stream-open", "stream-done", "progress", "close-approve", "checkpoint", "lane-caps", "quit", "pause", "stop", "duty", "pause-member", "resume-member", "rename",
     };
 
     private static readonly HashSet<string> CreatesTeam = new(StringComparer.Ordinal)

@@ -743,7 +743,7 @@ function agentSheet(v, t, m, full) {
     .child(div().w(96).flex_none().pt(1).text_size(11).text_color(t.muted).child(k))
     .child(div().flex_1().min_w(0).text_color(t.foreground).when(mono, (el) => el.font_family(MONO)).child(val));
   const head = (text) => div().pt(10).pb(4).text_size(11).font_semibold().text_color(t.muted).child(text);
-  const where = [`team ${mm.team}`, mm.lane ? `lane ${mm.lane.name}` : null, mm.lead ? `takes direction from ${mm.lead.name}` : null].filter(Boolean).join(" · ");
+  const where = [`team ${mm.teamShown ?? mm.team}`, mm.lane ? `lane ${mm.lane.name}` : null, mm.lead ? `takes direction from ${mm.lead.name}` : null].filter(Boolean).join(" · ");
   const now = [
     mm.tool ? row("tool", `${mm.tool}${mm.toolAt ? ` · ${since(Date.parse(mm.toolAt))}` : ""}`) : null,
     mm.item ? row("item", `${mm.item.key}${mm.item.title ? ` · ${mm.item.title}` : ""}`) : null,

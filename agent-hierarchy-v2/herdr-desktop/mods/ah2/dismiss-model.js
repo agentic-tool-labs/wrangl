@@ -45,10 +45,10 @@ export function dismissPlan(preview) {
 
 // ahd's error can be an envelope ({code, message}), not a string: show its words, never "[object Object]"
 const words = (v) => (v && typeof v === "object" ? v.message || v.detail || v.reason || v.code || JSON.stringify(v) : v);
-const detailOf = (got) => words(got?.reply?.detail) || words(got?.reply?.reason) || words(got?.reply?.error) || (got?.status ? `status ${got.status}` : "no answer");
+export const detailOf = (got) => words(got?.reply?.detail) || words(got?.reply?.reason) || words(got?.reply?.error) || (got?.status ? `status ${got.status}` : "no answer");
 
 // The verb's exit and stdout as the bridge would have answered: 0 is the 200 body, 3 the 409 refusal, anything else a failure.
-function execReply(r) {
+export function execReply(r) {
   let reply = null;
   try {
     reply = JSON.parse(r.code === 0 ? r.stdout : r.stderr || r.stdout);

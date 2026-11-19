@@ -81,6 +81,19 @@ export async function postTeamClose(body, ms = 90_000) {
   });
 }
 
+// Sets or clears a team's display name (POST /ui/v1/team-rename, ah2-218): {dir, team, display_name: string|null}. Replies as postAnswer does.
+export async function postTeamRename(body, ms = 15_000) {
+  return within("team-rename", ms, undefined, async (signal) => {
+    const reply = await fetch("/ui/v1/team-rename", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+    return { status: reply.status, body: await reply.json().catch(() => null) };
+  });
+}
+
 // The rules of engagement (GET and POST /ui/v1/rules, rules-of-engagement §6). A refusal is an answer: the reply carries its status and the server's words.
 export async function getRules(team, ms = 15_000) {
   return within("rules", ms, undefined, async (signal) => {

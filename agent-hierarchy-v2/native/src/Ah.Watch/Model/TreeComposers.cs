@@ -392,6 +392,7 @@ internal sealed class TeamComposer(ILaneFacts? lanes = null) : ISliceComposer
         var body = new JsonObject
         {
             ["name"] = name,
+            ["display_name"] = LaneParts.TextOrNull(team.Value, "display_name"),
             ["dir_id"] = dirId,
             ["orchestrator"] = team.Value.Member("orchestrator") is { IsMap: true } ? TreeIds.Member(team.Dir, name, TreeIds.Orchestrator) : JsonValue.Null,
             ["members"] = TreeData.Ids(team.MemberNames.Where(static n => n != TreeIds.Orchestrator).Select(n => TreeIds.Member(team.Dir, name, n))),
@@ -849,7 +850,7 @@ internal sealed class TeamListComposer : ISliceComposer
         var asOf = 0L;
         foreach (var team in TreeData.Teams(records).Where(t => dirs.Contains(t.Dir)).OrderBy(static t => TreeIds.Team(t.Dir, t.Name), StringComparer.Ordinal))
         {
-            teams.Add(JsonValue.FromObject(new JsonObject { ["id"] = TreeIds.Team(team.Dir, team.Name), ["name"] = team.Name, ["dir_id"] = team.DirId }));
+            teams.Add(JsonValue.FromObject(new JsonObject { ["id"] = TreeIds.Team(team.Dir, team.Name), ["name"] = team.Name, ["display_name"] = LaneParts.TextOrNull(team.Value, "display_name"), ["dir_id"] = team.DirId }));
             asOf = Math.Max(asOf, team.AsOfMs);
         }
 
@@ -1464,6 +1465,7 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
         {
             ["team"] = TreeIds.Team(team.Dir, name),
             ["name"] = name,
+            ["display_name"] = LaneParts.TextOrNull(team.Value, "display_name"),
             // The Orchestrator's grant when it has one; no live team has, so else the team file's root. The branch read from that root says nothing of a granted root.
             ["work_root"] = grantedRoot is not null ? grantedRoot : LaneParts.TextOrNull(team.Value, "expected_root"),
             ["branch"] = orchestratorRow is { } b && LaneParts.Text(b, "stream") is { } grantedBranch ? grantedBranch : grantedRoot is null ? LaneParts.TextOrNull(team.Value, "branch") : JsonValue.Null,
