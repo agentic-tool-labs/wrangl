@@ -4,6 +4,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.20] - 2026-11-19
+
+### Added
+
+- **The herdr pane shows a dispatch in flight.** While a member is being briefed or reviewed, a small dot in that
+  member's role colour travels down its connector line in the team tree, and the line takes the same colour, until
+  the brief is picked up or answered. It follows the same rule and timing as the Graph window's dots; a dispatch
+  into a folded sub-team shows on that sub-team's row. Nothing moves, and no timer runs, when nothing is in flight.
+
+### Changed
+
+- **A member reads Idle by default; "No signal" means it cannot be located.** A member with no activity record yet
+  (just spawned, between heartbeats, or after a daemon restart) read "No signal". It now reads Idle. "No signal" is
+  shown only for an idle member that nothing locates: no running registered process, no fresh heartbeat, no herdr
+  pane showing an agent, and no sign of life for 30 minutes. Blocked and Gone are unchanged, and no stuck or blocked
+  alert changes.
+- **The Orchestrator's dismiss is never refused as not clean.** `ah roster dismiss <member>` run by the Orchestrator
+  that owns the team (or the top Orchestrator for a sub-team's member) closes the member and returns the reasons it
+  was not clean as `warnings`. The work tree, its branch and uncommitted files stay. Other callers are still refused
+  and use `--close`.
+
+### Fixed
+
+- **A member that is starting up no longer flashes Blocked.** A permission notice during a member's first turn was
+  read as blocked for a few seconds and could raise an alert. While a herdr member is starting it reads Working; a
+  prompt actually seen on its screen still reads Blocked.
+- **A question asked again shows as an open card in the herdr pane.** When the same checklist row was set to wait on
+  the user again with a new question, the pane kept the closed card with the earlier answer.
+- **The "idle and clean" hint agrees with dismiss.** The hint used a different check from the dismiss it suggested, so
+  it could name a member that a bare dismiss then refused, and it suggested `--close`. It now runs the same check and
+  names the bare dismiss.
+- **Dismiss works in a repository with no `origin` remote.** Whether a member's work is shipped was judged only against
+  `origin`, so without one no member was ever clean. It is now judged against the local main line.
+- **Machine load no longer wakes Orchestrators.** Every change of the machine-load state (overloaded, ok) mailed each
+  team's Orchestrator and started a turn, so a machine hovering near the threshold woke every Orchestrator again and
+  again with nothing to act on. A change is now written to the daemon's journal and shown in `ah msg daemon status`,
+  and nobody is mailed. Spawn pacing is unchanged.
+- **An idle-capacity alarm is told once.** The 20-minute `work-still-waiting` reminder repeated the idle-capacity
+  alarm for as long as the same members stayed idle. The reminder no longer lists it, and no reminder is sent when a
+  team has no outstanding work.
+
 ## [2.0.19] - 2026-11-18
 
 ### Added

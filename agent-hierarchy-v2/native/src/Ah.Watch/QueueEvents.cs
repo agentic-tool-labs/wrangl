@@ -113,11 +113,12 @@ internal static class QueueEvents
         var active = new HashSet<string>(StringComparer.Ordinal);
         foreach (var team in owned)
         {
-            var entries = checklist(team.Name);
+            var allEntries = checklist(team.Name);
             var teamName = team.Name ?? "_default";
-            entries = HierarchyModule.ChecklistWithoutRunningDispatch(entries, candidates.Where(static c => c.Open).Select(static c => c.RequestId));
+            var entries = HierarchyModule.ChecklistWithoutRunningDispatch(allEntries, candidates.Where(static c => c.Open).Select(static c => c.RequestId));
+            QueueMemberFact[] memberFacts = [.. team.Members.Select(m => new QueueMemberFact(m.Name, m.Row.Str("role") ?? string.Empty, m.Live, m.Activity, m.ActivityAt, m.Row.Get("dismissed") is { IsTruthy: true }, onJob(m), m.Row.Str("spawned_at"), m.Row.Str("stream"), StreamClosed(team.Doc, m.Row.Str("stream"))))];
             var (members, dispatches) = Facts(
-                [.. team.Members.Select(m => new QueueMemberFact(m.Name, m.Row.Str("role") ?? string.Empty, m.Live, m.Activity, m.ActivityAt, m.Row.Get("dismissed") is { IsTruthy: true }, onJob(m), m.Row.Str("spawned_at"), m.Row.Str("stream"), StreamClosed(team.Doc, m.Row.Str("stream"))))],
+                memberFacts,
                 [.. candidates.Select(c => new QueueDispatchFact(c.ToName, c.ToAddr, c.Created, c.Open))]);
             var teamStart = events.Count;
             // ah2-180 A3: each condition that holds this tick, with the row work-still-waiting names it by, built from the key's own parts
@@ -155,6 +156,8 @@ internal static class QueueEvents
             }
 
             // ah2-180 A3: every LeadRemindMs, one mail listing what was told and still holds; the clock starts when the list first has a row.
+            // ah2-247: idle-capacity is told once and never listed here; with nothing outstanding (no row open and not waiting on the user,
+            // no open request to a member, no member working, no member on a job) nothing is reminded and the clock does not run.
             void StillWaiting()
             {
                 if (remindAt is null)
@@ -162,16 +165,14 @@ internal static class QueueEvents
                     return;
                 }
 
-                var rows = holding.Where(h => told.Contains(h.Key))
+                var outstanding = allEntries.Any(static e => e.Item.State is not ("done" or "dropped" or "waiting_user"))
+                    || members.Any(static m => m.OpenDispatch || m.BlockedOnJob)
+                    || memberFacts.Any(static m => m.Activity == "working");
+                List<string> rows = !outstanding ? [] : holding.Where(h => told.Contains(h.Key))
                     .Select(static h => h.Row)
                     .Distinct(StringComparer.Ordinal)
                     .Order(StringComparer.Ordinal)
                     .ToList();
-                if (readyBacklog is not null && idleCapacityAt is not null && idleCapacityAt.ContainsKey(UnstaffedTeamKey(session, team.Name))
-                    && IdleCapacityEvent(team.Name, unpaused, now, readyBacklog) is { } idleHolds)
-                {
-                    rows.Add($"{IdleCapacityName} {IdleCapacitySignature(idleHolds).Split('|')[0]}");
-                }
 
                 var remindKey = UnstaffedTeamKey(session, team.Name);
                 if (rows.Count == 0)

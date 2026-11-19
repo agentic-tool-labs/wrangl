@@ -539,6 +539,65 @@ public sealed class QueueEventsTests
     }
 
     [Fact]
+    public void WorkStillWaitingNeverListsIdleCapacityAndIsNotRaisedWithNothingOutstanding()
+    {
+        var told = new HashSet<string>(StringComparer.Ordinal);
+        var remindAt = new Dictionary<string, double>(StringComparer.Ordinal);
+        var idleAt = new Dictionary<string, (double At, string Signature)>(StringComparer.Ordinal);
+        IReadOnlyList<WatchEvent> Tick(double minutes, OwnedTeam team, params ChecklistEntry[] entries)
+        {
+            var events = QueueEvents.Evaluate("s1", Ms(minutes), [team], [], _ => entries, _ => false, told, out var keys,
+                readyBacklog: _ => [new ReadyBacklogItem("b260", "Ready work", "now", 1)], idleCapacityAt: idleAt, remindAt: remindAt);
+            foreach (var key in keys.Values)
+            {
+                _ = told.Add(key);
+            }
+
+            foreach (var ev in events)
+            {
+                if (ev.Name == "idle-capacity")
+                {
+                    idleAt[QueueEvents.UnstaffedTeamKey("s1", ev.Team)] = (Ms(minutes), QueueEvents.IdleCapacitySignature(ev));
+                }
+                else if (ev.Name == "work-still-waiting")
+                {
+                    remindAt[QueueEvents.UnstaffedTeamKey("s1", ev.Team)] = Ms(minutes);
+                }
+            }
+
+            return events;
+        }
+
+        // idle-capacity alone for an hour, with a member working: told once, never reminded
+        var busy = Team(Member("impl-1"), Member("impl-2", activity: "working"));
+        Assert.Equal("idle-capacity", Assert.Single(Tick(11, busy)).Name);
+        foreach (var minutes in new[] { 12.0, 32, 52, 71 })
+        {
+            Assert.Empty(Tick(minutes, busy));
+        }
+
+        Assert.Empty(remindAt);
+
+        // idle-capacity with a told report-waiting: the reminder at 20 minutes lists the report only
+        var reported = Item("a", state: "reported", holder: "impl-2", queuedAt: 60);
+        Assert.Equal("report-waiting", Assert.Single(Tick(72, busy, reported)).Name);
+        Assert.Empty(Tick(73, busy, reported));
+        var still = Assert.Single(Tick(93, busy, reported));
+        Assert.Equal("ahd alarm: work-still-waiting — still waiting on you: report-waiting _run/a", still.Text);
+
+        // negative: the only open row waits on the user and nothing is in flight, so nothing is outstanding and no reminder runs
+        told.Clear();
+        remindAt.Clear();
+        idleAt.Clear();
+        var idle = Team(Member("impl-1"));
+        var userRow = Item("u", state: "waiting_user", holder: "impl-1");
+        Assert.Equal("idle-capacity", Assert.Single(Tick(11, idle, userRow)).Name);
+        Assert.Empty(Tick(12, idle, userRow));
+        Assert.Empty(Tick(40, idle, userRow));
+        Assert.Empty(remindAt);
+    }
+
+    [Fact]
     public void NegativeWorkStillWaitingNeverListsAConditionNotYetTold()
     {
         var told = new HashSet<string>(StringComparer.Ordinal);

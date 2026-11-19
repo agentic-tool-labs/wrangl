@@ -164,7 +164,7 @@ public sealed class EtaReadModelTests
     private static string Assignee => "member:" + TeamKey + "/cd";
 
     /// <summary>Publishes the team summary a served state reads: one member's state, a composed needs_you count and a composed alert.</summary>
-    private sealed class FixedSummary(string? state, int needsYou, string? liveness = null, string? closedMark = null) : ISliceComposer
+    private sealed class FixedSummary(string? state, int needsYou, string? liveness = null, string? closedMark = null, bool stuckAsUnknown = false) : ISliceComposer
     {
         public string SlicePrefix => "team-summary";
 
@@ -183,6 +183,11 @@ public sealed class EtaReadModelTests
                 if (liveness is not null)
                 {
                     entry["liveness"] = liveness;
+                }
+
+                if (stuckAsUnknown)
+                {
+                    entry[TeamSummaryComposer.StuckAsUnknownKey] = true;
                 }
 
                 states[Assignee] = JsonValue.FromObject(entry);
@@ -210,9 +215,9 @@ public sealed class EtaReadModelTests
     private sealed record Stuck(JsonObject Entry, JsonObject Exchange, JsonObject List, JsonObject Summary);
 
     /// <summary>One open task (sent at the fixture's created time) served at <paramref name="nowMs"/> with its assignee in <paramref name="state"/> and last active at <paramref name="activityMs"/>.</summary>
-    private static Stuck ServedStuck(string? state, long nowMs, long activityMs, int composedNeedsYou = 0, bool roleOnly = false, long heardMs = 0, string? closedMark = null, string? liveness = null)
+    private static Stuck ServedStuck(string? state, long nowMs, long activityMs, int composedNeedsYou = 0, bool roleOnly = false, long heardMs = 0, string? closedMark = null, string? liveness = null, bool stuckAsUnknown = false)
     {
-        var (model, reader, clock, wall) = Make(new ComposerRegistry().Register(new FixedOpenList(A)).Register(new FixedSummary(state, composedNeedsYou, liveness, closedMark)));
+        var (model, reader, clock, wall) = Make(new ComposerRegistry().Register(new FixedOpenList(A)).Register(new FixedSummary(state, composedNeedsYou, liveness, closedMark, stuckAsUnknown)));
         using var owner = model;
         reader.Open[(Canon, A)] = true;
         reader.Activity[A] = activityMs;
@@ -306,6 +311,16 @@ public sealed class EtaReadModelTests
     [InlineData(null)]
     public void ATaskWhoseAssigneeIsNotServedAsWorkingOrIdleIsNotStuck(string? state) =>
         Assert.False(ServedStuck(state, CreatedMs + 30 * Min, CreatedMs).Entry.Get("stuck")!.Value.AsBool());
+
+    // ah2-242 G1: an assignee idle only for want of an activity record and not live is unknown to the stuck rule, as before C1
+    [Fact]
+    public void ATaskWhoseAssigneeIsIdleOnlyForWantOfAnActivityRecordIsNotStuck()
+    {
+        Assert.False(ServedStuck("idle", CreatedMs + 30 * Min, CreatedMs, liveness: "unknown", stuckAsUnknown: true).Entry.Get("stuck")!.Value.AsBool());
+
+        // negative: the same idle assignee without the mark is stuck
+        Assert.True(ServedStuck("idle", CreatedMs + 30 * Min, CreatedMs, liveness: "unknown").Entry.Get("stuck")!.Value.AsBool());
+    }
 
     [Fact]
     public void ABlockedAssigneesTaskIsNotStuckAndNeedsYouIsNotCountedTwice()

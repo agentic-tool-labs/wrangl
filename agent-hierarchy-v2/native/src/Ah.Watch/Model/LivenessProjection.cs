@@ -6,7 +6,8 @@ namespace Ah.Watch;
 /// <summary>
 /// The part of a team summary's liveness that depends on the time of the response. The composed <c>member_states</c> says <c>unknown</c> for a member
 /// nothing decides; here such a member whose last sign of life is absent or at least <see cref="LivenessRules.FreshSeconds"/> old becomes
-/// <c>not_seen</c>, and <c>liveness_counts</c> tallies the four words from that one pass.
+/// <c>not_seen</c>, its <c>working</c> or <c>idle</c> state becomes <c>unknown</c> (an idle one only when the composer did not mark it
+/// <see cref="Model.TeamSummaryComposer.LocatedKey"/>, which is never served), and <c>liveness_counts</c> tallies the four words from that one pass.
 /// </summary>
 internal static class LivenessProjection
 {
@@ -30,6 +31,8 @@ internal static class LivenessProjection
                 }
 
                 var fields = entry.AsObject();
+                var located = fields.Remove(Model.TeamSummaryComposer.LocatedKey);
+                _ = fields.Remove(Model.TeamSummaryComposer.StuckAsUnknownKey);
                 var word = fields.Str("liveness");
                 if (word == "unknown" && (LastLifeMs(fields) is not { } life || nowMs - life >= FreshMs))
                 {
@@ -42,6 +45,11 @@ internal static class LivenessProjection
                     {
                         fields["state"] = "unknown";
                         notWorking++;
+                    }
+                    else if (fields.Str("state") == "idle" && !located)
+                    {
+                        // ah2-242 C2: an idle member nothing locates reads No signal.
+                        fields["state"] = "unknown";
                     }
                 }
 

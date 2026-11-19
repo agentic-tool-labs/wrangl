@@ -269,6 +269,23 @@ test("a team with waiting items and no pipeline run still gets its For you cards
   assert.equal(m.teams[0].cards[0].kind, "item");
 });
 
+test("an item asked again is a new card with the new question; negative: the same question polled again keeps its card (ah2-194)", () => {
+  const at = (since, text, options) => new Map([
+    ["list:teams", { id: "list:teams", body: { teams: [{ id: "team:d1/solo", name: "solo", dir_id: "d1" }] } }],
+    ["team-summary:d1/solo", { id: "team-summary:d1/solo", body: { name: "solo", running: true, waiting_on_you: 1 } }],
+    ["questions:d1/solo", { id: "questions:d1/solo", body: { open: [], recent: [], open_total: 0, waiting_total: 1,
+      items: [{ key: "_run:colour", item: "colour", stream: "_run", title: "Colour", text, options, since }] } }],
+  ]);
+  const cardOf = (s) => qaModel(s, Date.parse("2026-11-18T12:00:00Z")).teams[0].cards[0];
+  const asked = cardOf(at("2026-11-18T10:00:00Z", "Red or blue?", ["Red", "Blue"]));
+  const reAsked = cardOf(at("2026-11-18T11:00:00Z", "Green or gold?", ["Green", "Gold"]));
+  // qa.js keeps a card's recorded answer under its key (v.cards) and drops a key no longer drawn (qaPrune)
+  assert.notEqual(reAsked.key, asked.key, "a re-ask must not reuse the answered card's state");
+  assert.equal(reAsked.text, "Green or gold?");
+  assert.deepEqual(reAsked.options, ["Green", "Gold"]);
+  assert.equal(cardOf(at("2026-11-18T10:00:00Z", "Red or blue?", ["Red", "Blue"])).key, asked.key, "an unchanged question keeps its card across polls");
+});
+
 test("after a failed poll the retry stays at or under 8 s for the first 2 minutes down, then takes the 16 s and 30 s steps (ah2-122 D5)", () => {
   const steps = [2000, 4000, 8000, 16000, 30000];
   assert.deepEqual([0, 1, 2, 3, 4, 9].map((f) => retryMs(steps, f, 0)), [2000, 4000, 8000, 8000, 8000, 8000]);

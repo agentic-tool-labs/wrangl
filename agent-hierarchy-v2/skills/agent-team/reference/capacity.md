@@ -12,7 +12,7 @@ Read this before a spawn, a reuse or a dismiss. These are rules the Orchestrator
 
 ## Budget adjustment
 
-Before every spawn, and on a `machine-overloaded` or `machine-load-ok` mail, read `<ah> msg daemon status`:
+Before every spawn, read `<ah> msg daemon status` (a change of load state is journaled and shown there; it is not mailed):
 
 - Lower the budget by 2, at most once per 10 min, floor 4, while `load.state` is overloaded, `mem_pressure` is warn/critical, or `api_errors_10m.rate_limit` is 3 or more.
 - Raise it by 2, at most once per 30 min, up to the starting value, after 30 min of `state` ok, `mem_pressure` normal and `rate_limit` 0.

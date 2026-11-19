@@ -61,8 +61,7 @@ internal static class DismissVerb
         var teardown = launch.Teardown;
         var context = c.LaunchContext();
         var warnings = new List<string>();
-        var read = TeardownSupport.TeardownTeam(c, dir, warnings);
-        var team = read.Team.IsNull ? JsonValue.Null : TeardownSupport.MergedTeam(read.Team, read.Extra);
+        var (read, team) = TeamOf(c, dir, warnings);
         var teamMembers = team.IsNull ? [] : Members(team);
         JsonValue? target = teamMembers.Cast<JsonValue?>().FirstOrDefault(m => MemberPlanning.Text(m!.Value.Member("name")) == name);
         var scope = team.IsNull ? TeardownSupport.NoTeamScope : TeardownSupport.ScopeOf(c);
@@ -160,23 +159,37 @@ internal static class DismissVerb
     internal const string CleanMeans =
         "A clean member is released and idle, has no open request, has finished its stream, and has no uncommitted or unmerged work (its work tree is clean and every commit is on origin).";
 
-    /// <summary>A bare <c>dismiss &lt;name&gt;</c>: closes a clean member at once; a member that is not clean is refused with its reasons.</summary>
+    /// <summary>The one clean check a bare <c>dismiss</c> closes on, and the dismiss nudge asks: the member's plan and what <see cref="CleanClose"/> reads of it.</summary>
+    internal static (MemberPlan Plan, CleanClose.Reading Clean) CleanOf(RosterContext c, string dir, string name, JsonValue team, JsonValue target)
+    {
+        var memberPlan = PlanMember(c, dir, name, team, target);
+        var nothing = memberPlan.Closable.Count == 0 && memberPlan.Release.Verdicts.Count == 0;
+        return (memberPlan, CleanClose.Read(c, new CleanClose.Subject(dir, team, nothing ? [] : [CleanClose.MemberOf(name, memberPlan.HealedTarget, memberPlan.Release)]), memberPlan.Token));
+    }
+
+    /// <summary>The team <c>dismiss</c> acts on, as it reads it: the team record merged with any split copy it may act on.</summary>
+    internal static (TeardownSupport.TeamRead Read, JsonValue Team) TeamOf(RosterContext c, string dir, List<string> warnings)
+    {
+        var read = TeardownSupport.TeardownTeam(c, dir, warnings);
+        return (read, read.Team.IsNull ? JsonValue.Null : TeardownSupport.MergedTeam(read.Team, read.Extra));
+    }
+
+    /// <summary>A bare <c>dismiss &lt;name&gt;</c>: closes a clean member at once; a member that is not clean is refused with its reasons, unless the caller is the user or the team's own Orchestrator.</summary>
     private static int CloseIfClean(
         RosterContext c, string dir, string name, TeardownSupport.TeamRead read, JsonValue team, JsonValue target, List<string> warnings,
         Func<JsonObject> sources)
     {
-        var memberPlan = PlanMember(c, dir, name, team, target);
-        var nothing = memberPlan.Closable.Count == 0 && memberPlan.Release.Verdicts.Count == 0;
-        var clean = CleanClose.Read(c, new CleanClose.Subject(dir, team, nothing ? [] : [CleanClose.MemberOf(name, memberPlan.HealedTarget, memberPlan.Release)]), memberPlan.Token);
+        var (memberPlan, clean) = CleanOf(c, dir, name, team, target);
         if (clean.Token is not null)
         {
             return Close(c, dir, name, read, team, target, warnings, sources);
         }
 
-        if (c.Services.OwnerProof?.IsUser() == true)
+        if (c.Services.OwnerProof?.IsUser() == true || OwningOrchestrator(c, read.Team))
         {
-            // ah2-76: the user, and the session the user made admin, are never refused: say why it is not clean, then close.
-            c.Stderr.WriteLine($"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}); closing it because the caller is the user or the admin Orchestrator");
+            // ah2-76, ah2-245: the user, the admin Orchestrator and the team's own Orchestrator are never refused: say why it is not clean, then close.
+            c.Stderr.WriteLine($"dismiss: {name} is not clean ({string.Join("; ", clean.Failures)}); closing it because the caller is the user or the team's Orchestrator");
+            warnings.AddRange(clean.Failures.Select(static f => $"not clean: {f}"));
             return Close(c, dir, name, read, team, target, warnings, sources);
         }
 
@@ -191,6 +204,31 @@ internal static class DismissVerb
                 ["message"] = message,
             },
             message);
+    }
+
+    /// <summary>
+    /// Whether the caller is the Orchestrator that owns <paramref name="team"/>, as the owner guard proved it (pid and start, after any
+    /// late registration), or the manager's Orchestrator acting on a lane child through the parent-owner path; a lane lead is not.
+    /// </summary>
+    private static bool OwningOrchestrator(RosterContext c, JsonValue team)
+    {
+        if (team.IsNull)
+        {
+            return false;
+        }
+
+        if (c.ParentOwnerLane is not null)
+        {
+            return true;
+        }
+
+        if (c.LaneActor)
+        {
+            return false;
+        }
+
+        var proved = c.Proved();
+        return proved.Acts && c.Services.Roster.IsTeamOwnedBy(team, new Ah.Abstractions.TeamInvoker(proved.Pid, null, proved.PidStart));
     }
 
     // ---------------------------------------------------------------- a live peer outside the team record

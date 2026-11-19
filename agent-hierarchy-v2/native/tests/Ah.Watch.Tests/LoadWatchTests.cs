@@ -78,7 +78,13 @@ public sealed class LoadWatchTests
 
         public void Mail(WatchMail mail) => Mails.Add(mail);
 
-        public void Journal(JsonObject row) => JournalKinds.Add(row["kind"].AsString());
+        public List<JsonObject> JournalRows { get; } = [];
+
+        public void Journal(JsonObject row)
+        {
+            JournalKinds.Add(row["kind"].AsString());
+            JournalRows.Add(row);
+        }
 
         public JsonValue? ReadRecord(StallTeam team, string member) => null;
 
@@ -145,70 +151,88 @@ public sealed class LoadWatchTests
         }
     }
 
+    private static string[] Transitions(Rig rig) =>
+        rig.Host.JournalRows.Where(static r => r["kind"].AsString() == "load-transition").Select(static r => r["state"].AsString()).ToArray();
+
     [Fact]
-    public void ThreeLoadedSweepsMailEachLiveTeamsOrchestratorOnceAndNobodyElse()
+    public void ThreeLoadedSweepsJournalOneTransitionWithItsTriggersAndMailNobody()
     {
         var rig = new Rig();
 
         rig.Sweeps(2, 1.6);
-        Assert.Empty(rig.Host.Mails);
+        Assert.Empty(Transitions(rig));
         rig.Sweeps(1, 1.6);
 
-        var mail = Assert.Single(rig.Host.Mails);
-        Assert.Equal(LoadWatch.AlarmOverloaded, mail.Event);
-        Assert.Equal("alpha-orchestrator@alpha", mail.To);
-        Assert.Contains("nothing is stopped", mail.Text, StringComparison.Ordinal);
+        Assert.Equal(["overloaded"], Transitions(rig));
+        var row = rig.Host.JournalRows.Single(static r => r["kind"].AsString() == "load-transition");
+        Assert.Equal(["at", "kind", "state", "triggers"], row.Keys.Order(StringComparer.Ordinal).ToArray());
+        Assert.Contains("load1_per_cpu=1.6", Assert.Single(row["triggers"].AsArray()).AsString(), StringComparison.Ordinal);
+        Assert.Empty(rig.Host.Mails);
     }
 
     [Fact]
-    public void AHeldTeamAndATeamWithoutAnOrchestratorGetNoAlarm()
+    public void NoTeamLiveHeldOrWithoutAnOrchestratorIsMailedOnATransition()
     {
         var rig = new Rig();
         rig.Sweeps(3, 1.6);
 
-        Assert.DoesNotContain(rig.Host.Mails, m => m.To == "beta-orchestrator@beta");
-        Assert.All(rig.Host.Mails, m => Assert.Equal("alpha-orchestrator@alpha", m.To));
+        Assert.Single(Transitions(rig));
+        Assert.Empty(rig.Host.Mails);
     }
 
     [Fact]
-    public void FiftyMoreLoadedSweepsMailNothingAndThreeClearOnesMailRecoveryOnce()
+    public void AFlappingMachineJournalsEachTransitionAndMailsNobody()
     {
         var rig = new Rig();
         rig.Sweeps(3, 1.6);
         rig.Sweeps(50, 1.6);
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
 
         rig.Sweeps(2, 1.1);
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
         rig.Sweeps(1, 1.1);
         rig.Sweeps(10, 1.1);
+        rig.Sweeps(3, 1.6);
+        rig.Sweeps(3, 1.1);
 
-        Assert.Equal([LoadWatch.AlarmOverloaded, LoadWatch.AlarmRecovered], rig.Host.Mails.Select(m => m.Event).ToArray());
+        Assert.Equal(["overloaded", "ok", "overloaded", "ok"], Transitions(rig));
+        Assert.Empty(rig.Host.Mails);
     }
 
     [Fact]
-    public void LoadBetweenEightyPercentAndTheThresholdKeepsTheStateAndMailsNothing()
+    public void CriticalMemoryPressureJournalsATransitionAndMailsNobody()
+    {
+        var rig = new Rig();
+        rig.Source.Memory = "critical";
+        rig.Sweeps(3, 0.1);
+
+        Assert.Equal(["overloaded"], Transitions(rig));
+        Assert.Empty(rig.Host.Mails);
+    }
+
+    [Fact]
+    public void LoadBetweenEightyPercentAndTheThresholdKeepsTheStateAndJournalsNothingMore()
     {
         var rig = new Rig();
         rig.Sweeps(3, 1.6);
 
         rig.Sweeps(10, 1.3);
 
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
         Assert.Equal("overloaded", rig.Load.Status().Get("state")!.Value.AsString());
     }
 
     [Fact]
-    public void ARestartedDaemonThatAlreadyReportedOverloadedMailsNothingMore()
+    public void ARestartedDaemonThatAlreadyReportedOverloadedJournalsNothingMore()
     {
         var rig = new Rig();
         rig.Sweeps(3, 1.6);
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
 
         rig.Restart();
         rig.Sweeps(10, 1.6);
 
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
         Assert.Equal("overloaded", rig.Load.Status().Get("state")!.Value.AsString());
     }
 
@@ -223,7 +247,7 @@ public sealed class LoadWatchTests
         var status = rig.Load.Status();
         Assert.Contains("ahd-load.json", status.Get("problem")!.Value.AsString(), StringComparison.Ordinal);
         Assert.Equal(1.5, status.Get("thresholds")!.Value.Member("load1_per_cpu")!.Value.AsNumber());
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
     }
 
     [Fact]
@@ -256,12 +280,12 @@ public sealed class LoadWatchTests
         var three = new Rig();
         three.Host.Pending.AddRange(Errors(three.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2", "s3"));
         three.Sweeps(3, 0.1);
-        Assert.Single(three.Host.Mails);
+        Assert.Single(Transitions(three));
 
         var two = new Rig();
         two.Host.Pending.AddRange(Errors(two.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2"));
         two.Sweeps(10, 0.1);
-        Assert.Empty(two.Host.Mails);
+        Assert.Empty(Transitions(two));
     }
 
     [Fact]
@@ -272,7 +296,7 @@ public sealed class LoadWatchTests
 
         rig.Sweeps(10, 0.1);
 
-        Assert.Empty(rig.Host.Mails);
+        Assert.Empty(Transitions(rig));
         Assert.Equal(30, rig.Load.Status().Get("api_errors_10m")!.Value.Member("rate_limit")!.Value.AsNumber());
     }
 
@@ -282,12 +306,12 @@ public sealed class LoadWatchTests
         var rig = new Rig();
         rig.Host.Pending.AddRange(Errors(rig.Clock + TimeSpan.FromSeconds(10), 10, "s1", "s2", "s3"));
         rig.Sweeps(3, 0.1);
-        Assert.Single(rig.Host.Mails);
+        Assert.Single(Transitions(rig));
 
         rig.Clock += TimeSpan.FromMinutes(11);
         rig.Sweeps(3, 0.1);
 
-        Assert.Equal(LoadWatch.AlarmRecovered, rig.Host.Mails[^1].Event);
+        Assert.Equal("ok", Transitions(rig)[^1]);
         Assert.Equal(0, rig.Load.Status().Get("api_errors_10m")!.Value.Member("total")!.Value.AsNumber());
     }
 

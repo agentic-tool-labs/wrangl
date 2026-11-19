@@ -33,7 +33,7 @@ public sealed partial class TreeLanesTests
         Assert.Equal("idle", Text(states.Member(MemberId(model, TreeIds.Orchestrator))!.Value, "state"));
         Assert.Equal("blocked", Text(states.Member(MemberId(model, "blk"))!.Value, "state"));
         Assert.Equal("gone", Text(states.Member(MemberId(model, "gn"))!.Value, "state"));
-        Assert.Equal("unknown", Text(states.Member(MemberId(model, "qa"))!.Value, "state"));
+        Assert.Equal("idle", Text(states.Member(MemberId(model, "qa"))!.Value, "state")); // ah2-242 C1: no activity record
         var served = states.AsObject().Keys.Select(k => Text(states.Member(k)!.Value, "state")).ToList();
         Assert.Equal(5, served.Count);
         Assert.Equal(Num(body, "working"), served.Count(static s => s == "working"));

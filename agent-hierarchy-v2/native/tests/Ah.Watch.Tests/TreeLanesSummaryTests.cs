@@ -349,6 +349,57 @@ public sealed partial class TreeLanesTests
         }
     }
 
+    // ah2-242 C1: a registered member with no activity record and an undecided verdict composes idle, and the stuck rule still reads it unknown
+    [Fact]
+    public void ARegisteredMemberWithNoActivityRecordAndAnUndecidedVerdictComposesIdle()
+    {
+        var (model, _) = SeededWithActivity(PidLess());
+        using var owner = model;
+
+        var entry = Summary(model).Member("member_states")!.Value.Member(MemberId("cust"))!.Value;
+        Assert.Equal("unknown", Text(entry, "liveness"));
+        Assert.Equal("idle", Text(entry, "state"));
+        Assert.True(entry.Member(TeamSummaryComposer.StuckAsUnknownKey)!.Value.AsBool());
+
+        // negative: a live member with no record was idle before C1 too, so the stuck rule reads it idle
+        var dev = Summary(model).Member("member_states")!.Value.Member(MemberId("dev"))!.Value;
+        Assert.Equal("idle", Text(dev, "state"));
+        Assert.Null(dev.Member(TeamSummaryComposer.StuckAsUnknownKey));
+    }
+
+    // ah2-242 S1: a starting herdr Claude member's unmarked permission record reads working; with a prompt on screen, blocked
+    [Theory]
+    [InlineData("", "working", null)]
+    [InlineData(",\"screen_prompt_at\":\"2026-06-01T12:00:15.000Z\"", "blocked", "Waiting on a permission")] // negative: a prompt was read
+    public void AStartingHerdrMembersPermissionRecordReadsWorking(string extra, string state, string? alert)
+    {
+        var reader = Truth();
+        reader.Teams[TeamPath] = reader.Teams[TeamPath].Replace("{\"team_id\"", "{\"transport\":\"herdr\",\"team_id\"", StringComparison.Ordinal);
+        reader.LivePids.AddRange([1, 42]);
+        reader.Activities["s-dev"] = "{\"activity\":\"blocked\",\"blocked_by\":\"permission\",\"at\":\"2026-06-01T12:00:00Z\",\"turn_at\":\"2026-06-01T12:00:00Z\"" + extra + "}";
+        FactsOfDir = _ => new MemberFacts([], new Dictionary<string, string>(), ["dev"]);
+        try
+        {
+            var (model, _) = SeededWithActivity(reader);
+            using var owner = model;
+
+            var body = Summary(model);
+            Assert.Equal(state, Text(body.Member("member_states")!.Value.Member(MemberId("dev"))!.Value, "state"));
+            if (alert is null)
+            {
+                Assert.Empty(body.Member("alerts")!.Value.AsArray());
+            }
+            else
+            {
+                Assert.Equal(alert, AlertText(body));
+            }
+        }
+        finally
+        {
+            FactsOfDir = null;
+        }
+    }
+
     // ah2-102 F3/F7: a covered member pending its read flips to blocked when the watcher publishes an empty set, with no other write
     [Fact]
     public void APendingMemberShowsBlockedOnceTheWatcherPublishesNoCoverage()
@@ -566,7 +617,7 @@ public sealed partial class TreeLanesTests
     }
 
     [Fact]
-    public void AMemberWithNoActivityRecordIsIdleWhenRegisteredAndLiveElseUnknownAndNotCountedWorking()
+    public void AMemberWithNoActivityRecordIsIdleAndNotCountedWorkingAndUnknownToTheStuckRuleUnlessRegisteredAndLive()
     {
         var reader = Truth();
         reader.LivePids.AddRange([1, 42]);
@@ -575,26 +626,30 @@ public sealed partial class TreeLanesTests
 
         Assert.Equal(3, Num(Summary(model), "members"));
         Assert.Equal(0, Num(Summary(model), "working"));
-        // ah2-133 D2: registered and live with no turn yet is idle; qa has no registration, so it stays unknown (no signal)
-        var states = SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).ToDictionary(static m => m.Member, static m => m.State);
+        // ah2-242 C1: no turn yet is idle, registered or not; qa (no registration) is idle for the stuck rule only as unknown
+        var states = SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).ToDictionary(static m => m.Member);
         Assert.Equal(3, states.Count);
-        Assert.Equal("idle", states[TreeIds.Orchestrator]);
-        Assert.Equal("idle", states["dev"]);
-        Assert.Equal("unknown", states["qa"]);
+        Assert.Equal("idle", states[TreeIds.Orchestrator].State);
+        Assert.Equal("idle", states["dev"].State);
+        Assert.Equal("idle", states["qa"].State);
+        Assert.True(states["qa"].StuckAsUnknown);
+        Assert.False(states["dev"].StuckAsUnknown);
 
-        // negative: registered but liveness not live (no process table observed) stays unknown, as today
+        // registered but liveness not live (no process table observed) is idle too, and unknown to the stuck rule
         var unobserved = SummaryData.Members(model.Records, TreeData.Teams(model.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), observed: false).Single(static m => m.Member == "dev");
         Assert.Equal(Ah.Core.Time.LivenessVerdict.Unknown, unobserved.Verdict);
-        Assert.Equal("unknown", unobserved.State);
+        Assert.Equal("idle", unobserved.State);
+        Assert.True(unobserved.StuckAsUnknown);
 
-        // negative: registered with its pid not in the process table is not live, so unknown, as today
+        // registered with its pid not in the process table is not live: idle, and unknown to the stuck rule
         var notLive = Truth();
         notLive.LivePids.Add(1);
         var (deadModel, _) = SeededWithActivity(notLive);
         using var deadOwner = deadModel;
         var dead = SummaryData.Members(deadModel.Records, TreeData.Teams(deadModel.Records).Single(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).Single(static m => m.Member == "dev");
         Assert.NotEqual(Ah.Core.Time.LivenessVerdict.Live, dead.Verdict);
-        Assert.Equal("unknown", dead.State);
+        Assert.Equal("idle", dead.State);
+        Assert.True(dead.StuckAsUnknown);
 
         reader.Activities["s-dev"] = Act("working");
         var (withRecord, _) = SeededWithActivity(reader);

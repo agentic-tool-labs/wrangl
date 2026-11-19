@@ -406,21 +406,27 @@
         "alerts": [],
         "member_states": {
           "member:f28aaefa/default/@orchestrator": {
-            "state": "unknown",
+            "state": "idle",
             "liveness": "unknown",
             "process": "unknown",
+            "located": true,
+            "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:00:00.000Z"
           },
           "member:f28aaefa/default/dev": {
-            "state": "unknown",
+            "state": "idle",
             "liveness": "unknown",
             "process": "unknown",
+            "located": true,
+            "stuck_as_unknown": true,
             "last_life_at": "2026-06-01T10:05:00.000Z"
           },
           "member:f28aaefa/default/qa": {
-            "state": "unknown",
+            "state": "idle",
             "liveness": "unknown",
-            "process": "unknown"
+            "process": "unknown",
+            "located": true,
+            "stuck_as_unknown": true
           }
         },
         "stale_at": "2026-06-02T11:00:00.000Z",

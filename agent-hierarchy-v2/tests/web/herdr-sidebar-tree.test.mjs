@@ -82,3 +82,24 @@ test("a lane's orchestrator row is labelled Sub-Orchestrator, the top one and or
   assert.deepEqual([lane.name, lane.key], ["orchestrator", "d1/lane-herdr/@orchestrator"]);
   assert.equal(tm.lanes[0].members.find((m) => m.name === "orchestrator")?.key, lane.key);
 });
+
+// ah2-239: a tree row draws a moving dot exactly when the Graph draws one ending at its member (model.js inFlightTo over select.js sparksOf).
+test("a brief in flight to a member gives its row a dot; an answered one, a subagent row and the depth-0 orchestrator none", async () => {
+  const { inFlightTo, rowDot, rowTrack } = await import("../../herdr-desktop/mods/ah2/model.js");
+  const open = (list) => [`list:open:team:d1/ah2`, { id: "list:open:team:d1/ah2", body: { open: list } }];
+  const brief = (id, to) => ({ id, from_member: "d1/ah2/@orchestrator", to_member: `d1/ah2/@${to}` });
+  const team = summary("ah2", { "d1/ah2/@orchestrator": live("working"), "d1/ah2/@implementor": live("working"), "d1/ah2/@reviewer-2": { ...live("idle"), role: "reviewer" } });
+  const subagents = ["subagents:d1/ah2", { id: "subagents:d1/ah2", body: { rows: [{ agent_id: "a1", owner: "implementor", agent_type: "task-runner", started_at: "2026-11-18T11:59:00Z" }] } }];
+  const rowsOf = (slices) => {
+    const [tm] = sidebarModel(slices, NOW).teams;
+    const inFlight = inFlightTo(slices);
+    return treeRows(teamTree(tm), () => true).map((r) => [r.node.kind, r.node.name ?? r.node.kind, rowDot(r, inFlight)?.key ?? null]);
+  };
+  const flying = rowsOf(slicesOf(team, open([brief("x1", "implementor"), brief("x2", "orchestrator")]), subagents));
+  assert.deepEqual(flying.filter(([, , k]) => k), [["member", "implementor", "x1"]]); // the depth-0 orchestrator has no connector
+  assert.ok(flying.some(([kind, , k]) => kind === "subagent" && k === null), "the subagent row is drawn, with no dot");
+  // answered: it leaves the open list, and the dot goes with it
+  assert.deepEqual(rowsOf(slicesOf(team, open([]), subagents)).filter(([, , k]) => k), []);
+  // the track runs down the row's own elbow and across to its icon (a leaf at depth 1: no rails)
+  assert.deepEqual(rowTrack({ rails: [], kids: false }, 16), [["M", 7.5, 0], ["L", 7.5, 14.5], ["L", 30, 14.5]]);
+});

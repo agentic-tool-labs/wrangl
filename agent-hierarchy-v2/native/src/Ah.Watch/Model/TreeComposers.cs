@@ -862,7 +862,7 @@ internal sealed class TeamListComposer : ISliceComposer
 /// One member as the summary reads it: the state the client draws, from the member's registration, activity record and the process table, and the
 /// time that state began (0 when unknown). That time is a state transition, never the record's own as_of, which moves on every tool call.
 /// </summary>
-internal sealed record MemberReading(string Member, string State, string Activity, long StateAtMs, Ah.Core.Time.LivenessVerdict Verdict = Ah.Core.Time.LivenessVerdict.Unknown, long LastLifeMs = 0, string? Tool = null, long? ContextPct = null, string? Question = null, string? Pane = null, bool TurnOpen = false);
+internal sealed record MemberReading(string Member, string State, string Activity, long StateAtMs, Ah.Core.Time.LivenessVerdict Verdict = Ah.Core.Time.LivenessVerdict.Unknown, long LastLifeMs = 0, string? Tool = null, long? ContextPct = null, string? Question = null, string? Pane = null, bool TurnOpen = false, bool Located = false, bool StuckAsUnknown = false);
 
 /// <summary>Reads what the summary slices share: the members of a team and their states, from member rows and never from activity keys.</summary>
 internal static class SummaryData
@@ -1115,8 +1115,8 @@ internal static class SummaryData
     }
 
     /// <summary>
-    /// The member's state: gone when its pid is known not to be live, idle when the activity is idle, blocked when it is blocked or failed,
-    /// with no activity record idle when registered and live and unknown otherwise (the client's <c>stateOf</c> still says unknown there), else working.
+    /// The member's state: gone when its pid is known not to be live, idle when the activity is idle or there is no activity record (ah2-242 C1;
+    /// No signal is decided at serve time by <see cref="LivenessProjection"/>), blocked when it is blocked or failed, else working.
     /// </summary>
     public static IReadOnlyList<MemberReading> Members(IRecordView records, TeamEntry team, long nowMs, long? observedAtMs = null, bool observed = true)
     {
@@ -1135,21 +1135,28 @@ internal static class SummaryData
             var registeredMs = registration is null ? 0 : Math.Max(registration.AsOfMs, LaneParts.Ms(LaneParts.Text(registration.Value, "at")));
             var lastLifeMs = Math.Max(Math.Max(atMs, record is { IsAbsent: false } ? record.AsOfMs : 0), registeredMs);
             var claude = team.Row(member) is not { } memberRow || LaneParts.Text(memberRow, "kind") is null or "" or "claude";
-            var verdict = VerdictOf(registration?.Value, peers?.Member(member), processLane, lastLifeMs, nowMs, observedAtMs ?? nowMs, referenceSeen, claude, member);
+            var (verdict, blind, starting) = VerdictOf(registration?.Value, peers?.Member(member), processLane, lastLifeMs, nowMs, observedAtMs ?? nowMs, referenceSeen, claude, member);
             // ah2-74 B3: a blocked record whose screen the watcher read and found no prompt on (screen_clear_at set) is working.
             // ah2-102 F5: a permission Notification with a prompt mark (a prompt read, or no screen) is blocked; with neither mark it is working
             // only while the watcher's published coverage holds the session (its read is pending), else blocked at once.
+            // ah2-242 S1: or while a herdr Claude member is inside the starting window, before the watcher's coverage has caught up with it.
             var screenClear = activity == "blocked" && record is { IsAbsent: false } && LaneParts.Text(record.Value, "screen_clear_at") is { Length: > 0 };
             var permission = activity == "blocked" && question is null && record is { IsAbsent: false } && LaneParts.Text(record.Value, "blocked_by") == "permission";
             var prompted = permission && LaneParts.Text(record!.Value, "screen_prompt_at") is { Length: > 0 };
-            var pending = permission && !prompted && !screenClear && CoverageLane.Covers(records, session!);
-            // ah2-133 D2: a registered, live member that has had no turn yet (no activity record) is idle, not unknown.
-            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? (registration is not null && verdict == Ah.Core.Time.LivenessVerdict.Live ? "idle" : "unknown") : activity == "idle" ? "idle" : !prompted && (screenClear || pending) ? "working" : activity is "blocked" or "failed" ? "blocked" : "working";
+            var startingRead = starting && claude && team.Row(member) is { } herdrRow && LaneParts.Text(herdrRow, "transport_id") is { Length: > 0 }
+                && Ah.Core.Mux.HerdrFlavour.OnHerdr(herdrRow, LaneParts.Text(herdrRow, "transport"));
+            var pending = permission && !prompted && !screenClear && (CoverageLane.Covers(records, session!) || startingRead);
+            // ah2-242 C1: a member with no activity record is idle; whether anything locates it is decided at serve time (LivenessProjection).
+            var state = verdict == Ah.Core.Time.LivenessVerdict.ProvenDead ? "gone" : activity.Length == 0 ? "idle" : activity == "idle" ? "idle" : !prompted && (screenClear || pending) ? "working" : activity is "blocked" or "failed" ? "blocked" : "working";
+            // ah2-242 G1: the stuck rule reads such a member as unknown where the ah2-133 D2 rule did (not registered and live), so no stuck answer moves.
+            var stuckAsUnknown = state == "idle" && activity.Length == 0 && !(registration is not null && verdict == Ah.Core.Time.LivenessVerdict.Live);
             var context = MemberComposer.ContextOf(record);
             var contextPct = ContextReading.Of((team.Row(member) is { } modelRow ? LaneParts.Text(modelRow, "model") : null) ?? context.Model, context.Used).Pct;
             // The Orchestrator records no activity through its turns, only whether one is open (ah2-62); it counts only while the session is live.
             var turnOpen = member == TreeIds.Orchestrator && verdict == Ah.Core.Time.LivenessVerdict.Live && record is { IsAbsent: false } && record.Value.Member("turn_open") is { IsBool: true } open && open.AsBool();
-            readings.Add(new MemberReading(member, state, activity, atMs, verdict, lastLifeMs, record is { IsAbsent: false } ? LaneParts.Text(record.Value, "tool") : null, contextPct, question, registration is null ? null : LaneParts.Text(registration.Value, "pane_id"), turnOpen));
+            // ah2-242 D1 L3-L5: located whatever its last sign of life says: the Orchestrator not proven dead, a blind lane, a starting member.
+            var located = (member == TreeIds.Orchestrator && verdict != Ah.Core.Time.LivenessVerdict.ProvenDead) || blind || starting;
+            readings.Add(new MemberReading(member, state, activity, atMs, verdict, lastLifeMs, record is { IsAbsent: false } ? LaneParts.Text(record.Value, "tool") : null, contextPct, question, registration is null ? null : LaneParts.Text(registration.Value, "pane_id"), turnOpen, located, stuckAsUnknown));
         }
 
         return readings;
@@ -1185,7 +1192,7 @@ internal static class SummaryData
     /// lane with no observation time, gives no observation, so nothing is proven. The lane's heartbeat and pane facts count only while its
     /// reading is within the observation bound.
     /// </summary>
-    private static Ah.Core.Time.LivenessVerdict VerdictOf(JsonValue? registration, JsonValue? peerRow, JsonValue? lane, long lastLifeMs, long nowMs, long observedAtMs, bool referenceSeen, bool claudeHarness, string member)
+    private static (Ah.Core.Time.LivenessVerdict Verdict, bool Blind, bool Starting) VerdictOf(JsonValue? registration, JsonValue? peerRow, JsonValue? lane, long lastLifeMs, long nowMs, long observedAtMs, bool referenceSeen, bool claudeHarness, string member)
     {
         var now = DateTimeOffset.FromUnixTimeMilliseconds(nowMs);
         var facts = nowMs - observedAtMs <= Ah.Core.Time.LivenessRules.ObservationAgeSeconds * 1000L ? lane : null;
@@ -1210,8 +1217,9 @@ internal static class SummaryData
             registration?.Member("pid_proof") is not { IsNull: false, IsTruthy: false });
 
         // Only the lane says a member is starting (the team slice carries no spawned_at), and an old reading of that errs towards unknown, so it is not bounded.
-        var starting = Lists(lane?.Member("starting"), member) ? 0 : (int?)null;
-        return Ah.Core.Time.LivenessRules.Settle(Ah.Core.Time.LivenessRules.Judge(evidence), LaneParts.Text(facts?.Member("panes") ?? JsonValue.Null, member), starting).Verdict;
+        var listed = Lists(lane?.Member("starting"), member);
+        var starting = listed ? 0 : (int?)null;
+        return (Ah.Core.Time.LivenessRules.Settle(Ah.Core.Time.LivenessRules.Judge(evidence), LaneParts.Text(facts?.Member("panes") ?? JsonValue.Null, member), starting).Verdict, facts is null, listed);
     }
 
     private static bool HeartbeatFresh(JsonValue? facts, string? session) => session is not null && Lists(facts?.Member("heartbeats"), session);
@@ -1576,6 +1584,18 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
     /// </summary>
     public const string UnseenWorkKey = "in_progress_if_seen";
 
+    /// <summary>
+    /// A composed-only member of a <c>member_states</c> entry, removed before it is served: the member is located (ah2-242 D1 L3-L5: the
+    /// Orchestrator not proven dead, a blind processes lane, a starting member) however old its last sign of life, so it is not served as No signal.
+    /// </summary>
+    public const string LocatedKey = "located";
+
+    /// <summary>
+    /// A composed-only member of a <c>member_states</c> entry, removed before it is served: an entry idle only for want of an activity record
+    /// (ah2-242 C1) that the stuck rule reads as <c>unknown</c>, as it did before C1.
+    /// </summary>
+    public const string StuckAsUnknownKey = "stuck_as_unknown";
+
     internal static JsonArray UnseenWork(IReadOnlyList<JsonValue> workItems, TeamEntry team, IReadOnlyList<MemberReading> members, IEnumerable<(string Id, string? To)> openToRunning)
     {
         var byName = members.ToDictionary(static m => m.Member, StringComparer.Ordinal);
@@ -1650,6 +1670,16 @@ internal sealed class TeamSummaryComposer(Func<long>? nowMs = null, Func<long>? 
             if (m.TurnOpen)
             {
                 entry["turn_open"] = true;
+            }
+
+            if (m.Located)
+            {
+                entry[LocatedKey] = true;
+            }
+
+            if (m.StuckAsUnknown)
+            {
+                entry[StuckAsUnknownKey] = true;
             }
 
             // A whole percent, so a tool call republishes nothing; a dead member holds no context.
