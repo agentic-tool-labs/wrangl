@@ -4,7 +4,7 @@
 import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
-import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf } from "./select.js";
+import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf } from "./select.js";
 import "./intl-shim.js"; // before flow-model.js's graph-world.js, which needs Intl when it loads
 import { activityId, jobsUnder, subagentsUnder, underOf } from "./flow-model.js";
 
@@ -127,11 +127,39 @@ export function treeRows(roots, open) {
   return out;
 }
 
+// ah2-239: the briefs in flight to each member, by member id, from the Graph's own rule (select.js sparksOf, over every running team's
+// open list): the first one (by id) is the one its row's dot draws. D6: a folded lane shows the one to its Sub-Orchestrator.
+export function inFlightTo(slices) {
+  const out = new Map();
+  for (const { t } of runningTeams(slices)) {
+    for (const s of sparksOf(slices, { body: { dir_id: t.dir_id, name: t.name } })) if (!out.has(s.to)) out.set(s.to, s);
+  }
+  return out;
+}
+// The dot a tree row draws (ah2-239 D1/D6): { key, review, role } of the brief in flight to its member, or to a folded lane's
+// Sub-Orchestrator; null at depth 0 (no connector), on a job's or subagent's row, or with nothing in flight.
+export function rowDot(r, inFlight) {
+  const n = r.node;
+  if (n.depth === 0) return null;
+  const to = n.kind === "member" ? n : n.kind === "lane" && !r.open ? n.children.find((c) => c.kind === "member" && c.key.endsWith("/@orchestrator")) : null;
+  const s = to && inFlight.get(to.key);
+  return s ? { key: s.id, review: s.review === true, role: to.role } : null;
+}
+// The dot's track (ah2-239 D2), in main.js treeLead's coordinates: down the row's own elbow from its parent's rail, then across to
+// the disclosure (a row with children) or, at a leaf, on through the carried elbow to the icon. Lines are 1 px; the track is their centre.
+export function rowTrack(r, step) {
+  const x = r.rails.length * step + 7.5;
+  const end = (r.rails.length + 1) * step + (r.kids ? 0 : step - 2);
+  return [["M", x, 0], ["L", x, 14.5], ["L", end, 14.5]];
+}
+
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.
 export { inert } from "./select.js";
 
 // ah2-225: the jobs: and subagents: slices of every running team, the tree's one added subscription (Amendment 1).
 export const activitySubs = (slices) => runningTeams(slices).flatMap(({ id }) => [activityId("jobs", id), activityId("subagents", id)]);
+// ah2-239: what the tree's dots read, slices the Graph already polls (graph-model.js graphSubs): the open list, and the topology (reviews).
+export const dotSubs = (slices) => runningTeams(slices).flatMap(({ id }) => [`list:open:team:${id}`, `topology:${id}`]);
 
 // Running teams of every dir, in list order, with their summary body; closed and ended teams left out.
 function runningTeams(slices) {
@@ -333,12 +361,13 @@ export function qaRefresh(qa, slices, now, take, ready) {
   return { shown: qa.shown, pending: qaSig(qaModel(qa.shown, now)) !== qaSig(next) };
 }
 
-// One For you card. `key` keeps a card's local state (selection, sending) across polls: team + run + id, or the item key.
+// One For you card. `key` keeps a card's local state (selection, sending) across polls: team + run + id, or the item key and the
+// time it was asked, so a re-asked item is a new card and not the old one's recorded answer.
 // `recommended` is the default's option index, -1 when it names none or several; `start` is the pick the card opens with.
 function qaCard(teamId, run, c, now, desc = null) {
   const item = c.kind === "item";
   return {
-    key: item ? `${teamId}|item|${c.id}` : `${teamId}|${run}|${c.id}`,
+    key: item ? `${teamId}|item|${c.id}@${c.since}` : `${teamId}|${run}|${c.id}`,
     teamId, run, q: c, kind: item ? "item" : "decision", cls: c.cls,
     header: c.item, text: c.text, asker: c.asker, age: since(c.at, now),
     options: c.options.map((o) => o.label), multi: c.multi, more: c.more,

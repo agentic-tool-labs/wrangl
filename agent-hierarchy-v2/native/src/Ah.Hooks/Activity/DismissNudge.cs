@@ -82,7 +82,7 @@ internal static class DismissNudge
                 }
 
                 lines.AddRange(closable.Where(spells.ContainsKey).Select(name =>
-                    $"ah: {name} is idle and clean — dismiss it if its work is signed off: {s.Config.CliCommand(CliTool.Roster)} dismiss {name} --close --cwd {cwd}"));
+                    $"ah: {name} is idle and clean — dismiss it if its work is signed off: {s.Config.CliCommand(CliTool.Roster)} dismiss {name} --cwd {cwd}"));
             }
         }
         catch (Exception e) when (e is not OperationCanceledException)

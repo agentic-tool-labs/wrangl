@@ -12,14 +12,14 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows, activitySubs } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, teamTree, treeRows, activitySubs, dotSubs, inFlightTo, rowDot, rowTrack } from "./model.js";
 import { runText, underTip } from "./flow-model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
 import { feedView } from "./feed.js";
-import { graphSubs, leaveGraph, rowMark, roleHue, roleIcon } from "./graph-model.js";
+import { graphSubs, leaveGraph, rowMark, roleHue, roleIcon, dotColor, dotAt, trackOf, travelsOf, travelClock } from "./graph-model.js";
 import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
@@ -112,6 +112,7 @@ export default class Ah2 extends View {
     if (this.view === "board") boardLeave(this); // the Board's visit ends: store what it saw (board.js)
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     this.graphTravel?.cancel(); // a brief's dot in travel (graph-model.js travelClock) leaves no task behind
+    this.treeTravel?.graphTravel?.cancel(); // and the tree's (ah2-239), on its own state
     if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
   }
 
@@ -140,7 +141,7 @@ export default class Ah2 extends View {
     if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide })];
     if (this.view === "feed") return ["view:summary", ...feedSubs(this.st.slices)];
     if (this.view === "graph") return ["view:summary", ...graphSubs(this.st.slices, this)];
-    return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary", ...activitySubs(this.st.slices)];
+    return this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : ["view:summary", ...activitySubs(this.st.slices), ...dotSubs(this.st.slices)];
   }
 
   // One reply: from `ah view events`, or from props.fixture (a saved reply, for running without a daemon).
@@ -240,7 +241,7 @@ export default class Ah2 extends View {
     if (this.view === "dismiss") return dismissView(this, t);
     if (this.view === "rename") return renameView(this, t);
     if (this.view === "update") return updateView(this, t);
-    return this.team ? this.sitrep(t) : this.sidebar(t);
+    return this.team ? this.sitrep(t) : this.sidebar(t, cx);
   }
 
   // The Desk window: the Desk's tab row, then the shown tab's view; × and Esc close the window. An opener elsewhere asks for a
@@ -462,9 +463,13 @@ export default class Ah2 extends View {
 
   // ---- sidebar ----
 
-  sidebar(t) {
+  sidebar(t, cx) {
     const now = Date.now();
     const m = sidebarModel(this.st.slices, now);
+    // ah2-239: the briefs in flight to the drawn rows, each a dot on its row's elbow; the Graph's clock function on the tree's own state
+    const inFlight = inFlightTo(this.st.slices);
+    const travel = (this.treeTravel ??= {});
+    const dots = [];
     const set = settings();
     const teams = shownTeams(m.teams, set);
     const shown = (list) => list.reduce((n, x) => n + 1 + shown(x.lanes), 0);
@@ -550,7 +555,10 @@ export default class Ah2 extends View {
       walk(tree, null);
       for (const r of treeRows(tree, open)) {
         const n = r.node;
-        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label);
+        const d = rowDot(r, inFlight);
+        if (d) dots.push(d);
+        const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label, d && { ...d, hue: d.review ? dotColor(true, lt) : roleHue(d.role, lt) ?? t.foreground,
+          at: dotAt(trackOf(rowTrack(r, STEP)), travel.graphTravels?.get(d.key) ?? now, now, d.review) });
         if (n.kind === "lane") {
           rows.push(header(n.team, true, lead));
           teamAlerts(n.team, r);
@@ -573,6 +581,9 @@ export default class Ah2 extends View {
       teams.forEach((tm) => team(tm));
       body = rows;
     }
+
+    // the clock runs only while a drawn row has a dot (graph-model.js travelClock: and ends a second after the pane stops drawing)
+    travelClock(travel, cx, travelsOf(travel, dots, now), 33);
 
     // A hidden team's or collapsed lane's members are ah2's too: hiding them must not move them under Other agents.
     const claim = (list) => list.forEach((tm) => { tm.members.forEach((mb) => terminalOf(mb) && linked.add(terminalOf(mb))); claim(tm.lanes); });
@@ -623,7 +634,9 @@ export default class Ah2 extends View {
   // The lead stretches to its row's height, so the lines run on unbroken. The disclosure is 16 x 24, its centre on the line to its
   // children, and stands clear of the row's own target (WCAG 2.2 target spacing). `fold` null: the lead of an alert under the row,
   // only the lines that run on through it (the row's own, and the one down to its children when they show).
-  treeLead(t, r, fold, name = "") {
+  // ah2-239: `dot` { hue, at }, a brief in flight to the row: a 5 px dot at `at` on the row's elbow, the elbow in its hue at the
+  // Graph's arc strength; the rails past other rows stay t.border.
+  treeLead(t, r, fold, name = "", dot = null) {
     const line = () => div().absolute().bg(t.border);
     const deep = r.node.depth > 0;
     const cols = fold === null
@@ -631,7 +644,8 @@ export default class Ah2 extends View {
       : deep ? [...r.rails.map((on) => [on, false]), [!r.last, true]] : [];
     // ah2-225 B3: a subagent's own elbow is dashed; the lines that run on past it stay solid
     const dash = fold !== null && r.node.kind === "subagent";
-    const seg = (el, across) => (dash ? el.border_dashed().border_color(t.border).when(across, (e) => e.border_t(1)).when(!across, (e) => e.border_l(1)) : el.bg(t.border));
+    const seg = (el, across) => (dash ? el.border_dashed().border_color(t.border).when(across, (e) => e.border_t(1)).when(!across, (e) => e.border_l(1))
+      : dot ? el.bg(dot.hue).opacity(isLight(t.surface) ? 0.75 : 0.6) : el.bg(t.border));
     const piece = () => div().absolute();
     const col = ([down, elbow]) => div().relative().w(STEP).flex_none()
       .when(down, (el) => el.child(line().left(7).top(0).w(1).h_full()))
@@ -652,7 +666,8 @@ export default class Ah2 extends View {
         // the line down to its children, under the disclosure, to the row's foot
         .when(r.open, (el) => el.child(div().flex_1().ml(7).w(1).bg(t.border)))
       : div().relative().w(STEP).flex_none().when(deep, (el) => el.child(seg(piece().left(0).top(14).w(STEP - 2).h(1), true)))];
-    return div().flex().flex_none().children([...cols.map(col), ...end]);
+    const mark = dot ? [div().absolute().left(dot.at.x - 2.5).top(dot.at.y - 2.5).size(5).rounded(3).bg(dot.hue)] : [];
+    return div().relative().flex().flex_none().children([...cols.map(col), ...end, ...mark]);
   }
 
   // A member's row (ah2-207 D3/D4): its role's icon in the role's hue, its state's glyph and mark as the Graph gives them (graph-model.js

@@ -185,6 +185,17 @@ internal sealed class TeamLane(IViewStateReader reader, Func<IReadOnlyList<strin
                     entry["lead"] = lead;
                 }
 
+                // ah2-242 S1: the member's transport (its row's, else its team's, ah2-102 E10) and herdr flavour, so the composer can tell a herdr member.
+                if ((LaneParts.Text(row, "transport") is { Length: > 0 } own ? own : LaneParts.Text(doc, "transport")) is { Length: > 0 } transport)
+                {
+                    entry["transport"] = transport;
+                }
+
+                if (Ah.Core.Mux.HerdrFlavour.OfMember(row) is { } flavour)
+                {
+                    entry[Ah.Core.Mux.HerdrFlavour.Field] = flavour;
+                }
+
                 members.Add(JsonValue.FromObject(entry));
             }
         }

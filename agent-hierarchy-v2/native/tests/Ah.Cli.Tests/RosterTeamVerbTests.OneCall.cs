@@ -73,16 +73,18 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
-    public void ABareDismissOfAMemberThatIsNotCleanRefusesWithItsReasonsAndClosesNothing()
+    public void TheOwningOrchestratorsBareDismissOfAMemberThatIsNotCleanClosesItAndWarnsWithItsReasons()
     {
         ArrangeCleanImplementor(streamState: "open");
 
         var (code, stdout, stderr) = Roster(["dismiss", Impl, "--team", "proj"]);
 
-        Assert.NotEqual(0, code);
-        Assert.Contains("stream s1 is not done", stdout + stderr, StringComparison.Ordinal);
-        Assert.Contains("has no uncommitted or unmerged work", stdout + stderr, StringComparison.Ordinal);
-        Assert.False(Killed("%1"));
+        Assert.True(code == 0, stdout + stderr);
+        Assert.True(Killed("%1"));
+        Assert.Contains(
+            JsonText.Parse(stdout).Member("warnings")!.Value.AsArray(),
+            w => w.AsString().Contains("stream s1 is not done", StringComparison.Ordinal));
+        Assert.Contains("stream s1 is not done", stderr, StringComparison.Ordinal);
     }
 
     /// <summary>

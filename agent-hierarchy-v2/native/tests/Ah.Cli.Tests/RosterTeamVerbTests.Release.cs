@@ -274,7 +274,7 @@ public sealed partial class RosterTeamVerbTests
     [InlineData("dirty")]
     [InlineData("busy")]
     [InlineData("open-request")]
-    public void TheDismissNudgeCheckIsTheReleaseCheckAndReturnsOnlyAnIdleCleanMember(string why)
+    public void TheDismissNudgeCheckReturnsOnlyAnIdleCleanMember(string why)
     {
         _branch = "ah/feature";
         ArrangeImplementor();
@@ -298,12 +298,23 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void TheDismissNudgeCheckLeavesOutAMemberTheReleaseCheckPassesButABareDismissWouldNotCloseAsClean()
+    {
+        ArrangeCleanImplementor(streamState: "open");
+        Assert.Equal("ready", PlanOfImplementor().Status);
+
+        var ready = Ah.Commands.CommandsModule.ReadyToDismiss(ComposeServices(), Hierarchy, Project, "proj", [Impl]);
+
+        Assert.Empty(ready);
+    }
+
+    [Fact]
     public void TheBareCloseTheDismissNudgePrintsClosesAnIdleCleanMemberInOneCall()
     {
         _branch = "ah/feature";
         ArrangeImplementor();
 
-        var (code, _, stderr) = Roster(["dismiss", Impl, "--close"]);
+        var (code, _, stderr) = Roster(["dismiss", Impl]);
 
         Assert.True(code == 0, stderr);
         Assert.True(Killed("%1"));

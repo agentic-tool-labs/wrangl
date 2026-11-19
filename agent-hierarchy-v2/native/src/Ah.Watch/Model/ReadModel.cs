@@ -847,7 +847,7 @@ internal sealed class ReadModel : IReadModel
         StuckProjection.SummaryOf(memberId) is { } summaryId && Store.Current.Slices.TryGetValue(summaryId, out var summary)
         && ParsedOf(summary) is { IsMap: true } parsed
         && SummaryAsServed(parsed.AsObject(), WallClockMs()).Get("member_states")?.Member(memberId!) is { IsMap: true } served
-            ? StuckProjection.ServedState(served)
+            ? served.Member(TeamSummaryComposer.StuckAsUnknownKey) is { IsBool: true } ? "unknown" : StuckProjection.ServedState(served)
             : null;
 
     private (int Overdue, int Stuck) TeamCounts(string openListId, double nowMs)

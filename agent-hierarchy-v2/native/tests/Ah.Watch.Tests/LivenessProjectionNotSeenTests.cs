@@ -81,8 +81,39 @@ public sealed class LivenessProjectionNotSeenTests
 
         LivenessProjection.Project(body, Now);
 
-        Assert.Equal("idle", Entry(body, "member:d/t/a").Str("state"));
+        Assert.Equal("unknown", Entry(body, "member:d/t/a").Str("state"));
         Assert.Equal(1, body.Get("working")!.Value.AsNumber());
+    }
+
+    // ah2-242 C2: an idle member nothing locates reads No signal; a located one (fresh life, live, or marked by the composer) keeps Idle;
+    // working is demoted as before whatever the mark; blocked is never rewritten. The mark is never served.
+    [Theory]
+    [InlineData("unknown", "idle", true, false, "unknown", "not_seen", 1)] // not located: was Idle
+    [InlineData("unknown", "idle", false, false, "idle", "unknown", 1)] // negative: last life fresh (L2)
+    [InlineData("live", "idle", true, false, "idle", "live", 1)] // negative: live verdict (L1)
+    [InlineData("unknown", "idle", true, true, "idle", "not_seen", 1)] // negative: Orchestrator / blind / starting mark (L3-L5)
+    [InlineData("unknown", "working", true, false, "unknown", "not_seen", 0)]
+    [InlineData("unknown", "working", true, true, "unknown", "not_seen", 0)] // the mark does not stop the working demotion
+    [InlineData("unknown", "blocked", true, false, "blocked", "not_seen", 1)] // negative: blocked keeps its alarm
+    public void AnIdleMemberNothingLocatesReadsNoSignal(string liveness, string state, bool old, bool located, string servedState, string servedLiveness, double working)
+    {
+        var lastLife = old ? Old : Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)Now - 1000));
+        var member = Member(liveness, state, lastLife);
+        if (located)
+        {
+            member.AsObject()[TeamSummaryComposer.LocatedKey] = true;
+        }
+
+        var body = Team(1, ("member:d/t/a", member), ("member:d/t/b", Member("live", "working", Old)));
+        // The stuck rule reads the composed entry (ReadModel.AssigneeState does not project), so a demotion here does not move it.
+        Assert.Equal(state, StuckProjection.ServedState(member));
+
+        LivenessProjection.Project(body, Now);
+
+        Assert.Equal(servedState, Entry(body, "member:d/t/a").Str("state"));
+        Assert.Equal(servedLiveness, Entry(body, "member:d/t/a").Str("liveness"));
+        Assert.Equal(working, body.Get("working")!.Value.AsNumber());
+        Assert.False(Entry(body, "member:d/t/a").ContainsKey(TeamSummaryComposer.LocatedKey));
     }
 
     // ah2-31: an item only a member that is no longer seen was on stops counting, so its team goes quiet like any stale team.

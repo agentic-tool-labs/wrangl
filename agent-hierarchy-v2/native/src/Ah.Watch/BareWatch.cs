@@ -367,8 +367,8 @@ internal sealed partial class BareWatch(IBareHost host, TimeSpan period, Func<Da
     }
 
     /// <summary>
-    /// Takes the machine-load sample of this pass and, when the state changed, mails each live team's Orchestrator once. A held team and
-    /// its members get nothing, and a failed sample never stops the sweep.
+    /// Takes the machine-load sample of this pass and, when the state changed, journals one <c>load-transition</c> row. Nobody is
+    /// mailed (ah2-249), and a failed sample never stops the sweep.
     /// </summary>
     private void SampleLoad(IReadOnlyList<StallTeam> teams)
     {
@@ -398,13 +398,13 @@ internal sealed partial class BareWatch(IBareHost host, TimeSpan period, Func<Da
             return;
         }
 
-        foreach (var team in teams)
+        host.Journal(new JsonObject
         {
-            if (team.OrchestratorAddress is { } to && !host.TeamHeld(team))
-            {
-                host.Mail(new WatchMail(to, team.HierarchyDir, team.Cwd, alarm.Kind, alarm.Text, alarm.Data, team.OrchestratorSession));
-            }
-        }
+            ["at"] = now().ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            ["kind"] = "load-transition",
+            ["state"] = alarm.Data["state"],
+            ["triggers"] = alarm.Data["load"].Member("triggers") ?? (JsonValue)new JsonArray(),
+        });
     }
 
     /// <summary>

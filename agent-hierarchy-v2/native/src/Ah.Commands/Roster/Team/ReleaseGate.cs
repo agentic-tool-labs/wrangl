@@ -102,18 +102,24 @@ internal static partial class ReleaseGate
     internal static readonly IReadOnlySet<string> NoTeamRows = new HashSet<string>(StringComparer.Ordinal);
 
     /// <summary>
-    /// Of <paramref name="names"/>, the members of <paramref name="team"/> this check finds live and ready to close (idle, nothing open,
-    /// clean, nothing ahead), judged as <c>dismiss</c> run at <paramref name="projectRoot"/> would judge them. Writes nothing.
+    /// Of <paramref name="names"/>, the members of <paramref name="team"/> a bare <c>dismiss</c> run at <paramref name="projectRoot"/> would
+    /// close as clean now: the same team read and the same clean check (<see cref="DismissVerb.CleanOf"/>). Writes nothing.
     /// </summary>
     internal static IReadOnlyList<string> ReadyOf(IRosterCliServices services, string dir, string projectRoot, string team, IReadOnlyList<string> names)
     {
         var c = new RosterContext(services, RosterArgs.Parse(["--team", team]), "dismiss", projectRoot, TextWriter.Null, TextWriter.Null) { TeamArg = team, TeamFile = team };
         c.PinDir(dir);
-        var rows = services.Roster.ReadTeamRecord(dir, team).Member("members") is { IsArray: true } members
-            ? members.AsArray().Where(m => m.Member("name") is { IsText: true } n && names.Contains(n.AsString())).ToList()
-            : [];
-        var inTeam = names.ToHashSet(StringComparer.Ordinal);
-        return [.. Apply(c, dir, rows, inTeam).Verdicts.Where(static v => v.Closable && v.Live && v.Status == "ready").Select(static v => v.Member)];
+        var (_, record) = DismissVerb.TeamOf(c, dir, []);
+        var ready = new List<string>();
+        foreach (var m in DismissVerb.Members(record))
+        {
+            if (m.Member("name") is { IsText: true } n && names.Contains(n.AsString()) && DismissVerb.CleanOf(c, dir, n.AsString(), record, m).Clean.Token is not null)
+            {
+                ready.Add(n.AsString());
+            }
+        }
+
+        return ready;
     }
 
     /// <summary>

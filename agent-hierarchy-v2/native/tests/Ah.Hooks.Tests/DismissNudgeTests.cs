@@ -66,7 +66,8 @@ public sealed class DismissNudgeTests
         s.Activity("idle", "2026-10-11T11:00:00.000Z");
         var line = Assert.Single(s.Nudge());
         Assert.StartsWith("ah: tm-impl is idle and clean — dismiss it if its work is signed off: ", line, StringComparison.Ordinal);
-        Assert.EndsWith(" dismiss tm-impl --close --cwd " + s.Cwd, line, StringComparison.Ordinal);
+        Assert.EndsWith(" dismiss tm-impl --cwd " + s.Cwd, line, StringComparison.Ordinal);
+        Assert.DoesNotContain("--close", line, StringComparison.Ordinal);
 
         // the same spell: neither a line nor another check
         Assert.Empty(s.Nudge());

@@ -2353,8 +2353,8 @@ watched teams' registered sessions. It never stops, quits, holds or signals anyt
 The state is `overloaded` after `ticks` consecutive samples with a trigger, and `ok` again after `ticks` consecutive samples with every
 trigger under 80% of its threshold (the memory trigger clears when the level is not `critical`). The API trigger needs `api_errors`
 transport plus server errors from at least `api_error_sessions` distinct sessions, and stays on while at least 80% of `api_errors`
-(rounded up) from at least that many sessions remain. A change of state mails each non-held team's Orchestrator once
-(`machine-overloaded`, `machine-load-ok`); members and held teams are never mailed. The reported state and the time of the last admitted
+(rounded up) from at least that many sessions remain. A change of state is journaled (a `load-transition` row) and shown
+in `ah msg daemon status`; it is not mailed to any Orchestrator or member. The reported state and the time of the last admitted
 spawn are kept in `<ah home>/run/load-state.json`, so a restart does not alarm again.
 
 `<ah home>/ahd-load.json` (written by the user only; a member's write to it is denied) holds the thresholds; a missing file or key is

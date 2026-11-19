@@ -597,14 +597,33 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
-    public void CT18NoOriginRemoteGivesAnOrdinaryTokenNamingIt()
+    public void CT18WithNoOriginAHeadOnTheLocalMainLineIsClean()
     {
         ArrangeCleanImplementor(withOrigin: false);
 
         var (_, plan, _) = PlanOne();
 
+        Assert.True(Minted(plan), CleanReasons(plan));
+    }
+
+    [Fact]
+    public void CT18NegativeWithNoOriginACommitOffTheLocalMainLineIsUnshipped()
+    {
+        ArrangeCleanImplementor(withOrigin: false);
+        var main = RealGit("rev-parse", "--abbrev-ref", "HEAD");
+        RealGit("checkout", "-q", "-b", "ah/feature-x");
+        File.WriteAllText(Path.Combine(Project, "b.txt"), "b");
+        RealGit("add", "b.txt");
+        RealGit("commit", "-q", "-m", "two");
+        RealGit("checkout", "-q", main);
+        var tree = Path.Combine(_sandbox.Root, "feature-tree");
+        RealGit("worktree", "add", "-q", tree, "ah/feature-x");
+        WriteCleanTeam(CleanMember(Impl, "%1", "s1").Replace($"\"expected_root\":\"{Project}\"", $"\"expected_root\":\"{tree}\"", StringComparison.Ordinal));
+
+        var (_, plan, _) = PlanOne();
+
         Assert.False(Minted(plan));
-        Assert.Contains("no origin remote", CleanReasons(plan), StringComparison.Ordinal);
+        Assert.Contains($"unshipped commits (1 not on {main})", CleanReasons(plan), StringComparison.Ordinal);
     }
 
     [Fact]

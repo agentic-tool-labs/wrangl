@@ -87,6 +87,20 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void ALaneLeadsBareDismissOfAMemberThatIsNotCleanIsStillRefusedAndClosesNothing()
+    {
+        ArrangeLaneMember();
+        _porcelain = " M src/file.cs\n";
+        AsSubOrchestrator();
+
+        var (code, stdout, stderr) = Roster("dismiss", Impl, "--team", ChildName);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("not-clean", stdout + stderr, StringComparison.Ordinal);
+        Assert.False(Killed("%1"));
+    }
+
+    [Fact]
     public void ALaneLeadsDisbandOfTheChildTeamStillNeedsTheManagersGreenLight()
     {
         ArrangeLaneMember();

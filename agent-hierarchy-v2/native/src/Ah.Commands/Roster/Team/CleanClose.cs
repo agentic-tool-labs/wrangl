@@ -253,14 +253,26 @@ internal static partial class CleanClose
     }
 
     /// <summary>
-    /// Why the tree holds work that is not on a non-backup <c>origin</c> ref, or null when every commit of its HEAD is. Reads the refs as they
-    /// are, never fetches; no <c>origin</c>, a git error or anything unreadable is not clean.
+    /// Why the tree holds work that is not on a non-backup <c>origin</c> ref, or null when every commit of its HEAD is. With no <c>origin</c>,
+    /// shipped is judged against the local main line (<see cref="MainLine"/>). Reads the refs as they are, never fetches; a git error or
+    /// anything unreadable is not clean.
     /// </summary>
     private static string? Unshipped(RosterContext c, string tree)
     {
         if (!ReleaseGate.Git(c, tree, "config", "--get", "remote.origin.url").Ok)
         {
-            return "no origin remote: cannot tell if shipped";
+            if (MainLine(c, tree) is not { } branch)
+            {
+                return "no origin remote and no local main line: cannot tell if shipped";
+            }
+
+            var local = ReleaseGate.Git(c, tree, "rev-list", "--count", "HEAD", "--not", "refs/heads/" + branch);
+            if (!local.Ok || !int.TryParse(local.Stdout.Trim(), out var k))
+            {
+                return $"cannot tell if shipped: {local.Detail}";
+            }
+
+            return k == 0 ? null : $"unshipped commits ({k} not on {branch})";
         }
 
         var count = ReleaseGate.Git(c, tree, "rev-list", "--count", "HEAD", "--not", "--exclude=origin/ah/wip/*", "--remotes=origin");
@@ -271,6 +283,17 @@ internal static partial class CleanClose
 
         return n == 0 ? null : $"unshipped commits ({n} not on origin)";
     }
+
+    /// <summary>
+    /// The repo's local default branch: the branch its main checkout (the first entry of <c>git worktree list</c>) is on; when that
+    /// cannot be told, <c>main</c>, then <c>master</c>, whichever exists. Null when none does.
+    /// </summary>
+    private static string? MainLine(RosterContext c, string tree) =>
+        BranchHygiene.Worktrees(c, tree).FirstOrDefault().Branch is { Length: > 0 } branch && BranchHygiene.HeadOf(c, tree, branch) is not null
+            ? branch
+            : FallbackMainLines.FirstOrDefault(b => BranchHygiene.HeadOf(c, tree, b) is not null);
+
+    private static readonly string[] FallbackMainLines = ["main", "master"];
 
     private static string SessionOf(RosterContext c, JsonValue row, string name, JsonArray roster)
     {

@@ -93,6 +93,22 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal(entry.Member("at")!.Value.AsString(), sent.Data.Get("at")!.Value.AsString());
     }
 
+    [Fact]
+    public void ParentOwnersBareDismissOfALaneMemberThatIsNotCleanClosesItAndWarnsWithItsReasons()
+    {
+        ParentLane(LaneMember);
+        PeerUp("proj-s1-reviewer", "%1");
+
+        var (code, stdout, stderr) = Roster("dismiss", "proj-s1-reviewer", "--team", "proj-s1");
+
+        Assert.True(code == 0, stdout + stderr);
+        Assert.True(Killed("%1"));
+        Assert.Empty(LaneChild()["members"].AsArray());
+        Assert.Contains(
+            JsonText.Parse(stdout).Member("warnings")!.Value.AsArray(),
+            w => w.AsString().StartsWith("not clean: proj-s1-reviewer: ", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData(NearestKind.Session, false)]
     [InlineData(NearestKind.Orchestrator, true)]
