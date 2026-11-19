@@ -360,3 +360,7 @@ code, kbd, pre { font-family: var(--font-mono); }
 @media (forced-colors: active) {
   .prose h2::before, .band > h2::before { forced-color-adjust: none; background: CanvasText; }
 }
+
+/* The landing page's tour video */
+.reel { display: block; width: 100%; max-width: 960px; height: auto; aspect-ratio: 16 / 9; border: 2px solid var(--rule-strong); background: #0f1113; }
+.band > p.reel-credit { margin: var(--s3) 0 0; font-size: 0.875rem; }

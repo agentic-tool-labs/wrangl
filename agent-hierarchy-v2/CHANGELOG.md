@@ -4,6 +4,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.26] - 2026-11-19
+
+### Added
+
+- **A 43-second tour video on the documentation site's landing page**, linked from the README. It shows the roles
+  and hierarchy, one request from brief to merge, `/wrangl:pipeline`, the web page, the terminal view and the Herdr
+  desktop layout. The plugin itself is unchanged from 2.0.25.
+
 ## [2.0.25] - 2026-11-19
 
 ### Added
