@@ -91,7 +91,7 @@ test("Flow with lanes: one band per leader holding its lane's members, after the
   }
 });
 
-test("a team with no lanes lays out exactly as the graph did before lanes, Flow both ways (golden from c3291604)", () => {
+test("a team with no lanes lays out exactly as the graph did before lanes, Flow both ways (golden from c3291604; ah2-225 adds the Test label)", () => {
   const g = JSON.parse(readFileSync(new URL("./fixtures/graph-plain-layout.json", import.meta.url), "utf8"));
   const rows = g.nodes.map((n) => [n.name, n.role]);
   const nodes = nodesOf(rows, []);
@@ -99,7 +99,9 @@ test("a team with no lanes lays out exactly as the graph did before lanes, Flow 
   const obj = (m) => Object.fromEntries(m);
   for (const [orient, want] of [["horizontal", g.flowHorizontal], ["vertical", g.flowVertical]]) {
     const f = flowLayout(nodes, new Set(g.active), orient);
-    assert.deepEqual({ pos: obj(f.pos), labels: f.labels, box: f.box }, want, orient);
+    // the cards are where they were; the fifth column's label (B2) is the one addition, and the box grows to hold it
+    assert.deepEqual({ pos: obj(f.pos), labels: f.labels.slice(0, 4) }, { pos: want.pos, labels: want.labels }, orient);
+    assert.equal(f.labels[4].text, "Test", orient);
   }
 });
 

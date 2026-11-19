@@ -1,7 +1,7 @@
 {
   "name": "wrangl",
   "displayName": "Wrangl: Agent Hierarchy",
-  "version": "2.0.18",
+  "version": "2.0.19",
   "description": "Wrangl: Agent Hierarchy. Turns one Claude Code session into a team of agent roles (an Orchestrator that dispatches an Architect, Implementor, Reviewer and others), each on the right model, coordinated by a local daemon. Commands: ah and ahd. Disable or uninstall ah (v1) before enabling ah2; running both in one session doubles every hook. State lives in ~/.claude/ah2 and <repo>/.claude/ah2.",
   "author": {
     "name": "Jim Cline"

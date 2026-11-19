@@ -136,3 +136,8 @@
 .ctx-dl dd { margin: 0; overflow-wrap: anywhere; }
 .r6 .conversation .ctx h3 { margin: 0; padding: 10px 16px 4px; }
 .r6 .conversation .ctx ul, .r6 .conversation .ctx > p { padding: 0 16px 10px; margin: 0; border-bottom: 1px solid var(--line); }
+/* ah2-225 B1: a member's job, a row after the member's own: the job mark ◷, the label, the overdue chip, the time against its estimate */
+.ov-under { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto auto; gap: var(--sp-8); align-items: center; padding: var(--sp-2) var(--sp-12) var(--sp-4) 34px; color: var(--muted); font-size: var(--text-12); }
+.ov-under .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+.ov-under .since { font-size: var(--text-11); font-variant-numeric: tabular-nums; }
+.ov-under .eta { height: 16px; padding: 0 var(--sp-4); font-size: var(--text-11); }

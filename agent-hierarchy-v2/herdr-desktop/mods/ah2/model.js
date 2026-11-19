@@ -5,6 +5,8 @@ import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
 import { goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf } from "./select.js";
+import "./intl-shim.js"; // before flow-model.js's graph-world.js, which needs Intl when it loads
+import { activityId, jobsUnder, subagentsUnder, underOf } from "./flow-model.js";
 
 // State words and glyphs, as the web UI says them (web/ui/select.js STATE_WORD). `tone` is the Herdr theme() token.
 export const STATES = {
@@ -90,16 +92,21 @@ const roleIn = (mb, lane) => mb.served || (mb.name === "orchestrator" ? (lane ? 
 // ah2-207 D1: one team's tree. Its orchestrator is the root, with the other members, then the lanes, under it; a lane is a node
 // that draws its header row, with the lane's own tree under it. A team without an orchestrator row has its members as roots.
 // A member's own alerts ride on its node. Node: { kind: "member" | "lane", key, depth, role, children, ...the member row or `team` }.
+// ah2-225 B1/B3: a member's jobs and subagents (`tm.under`, sidebarModel's) are leaf nodes first under it, { kind: "job" | "subagent",
+// key, depth, item }; those whose owner is no one on the team lead the team's own rows, under its header.
 // ah2-220 Amendment 2: a team with a parent team is a lane even drawn at the top level (its parent not running).
 export function teamTree(tm, depth = 0, lane = Boolean(tm.parent)) {
   const orch = tm.members.find((mb) => mb.name === "orchestrator");
-  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: [] });
+  const extras = (key, d) => (tm.under?.get(key) ?? []).map((x) => ({ kind: x.kind, key: x.key, depth: d, role: x.role ?? "", item: x, alerts: [], children: [] }));
+  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: extras(mb.key, d + 1) });
   const under = (d) => [
     ...tm.members.filter((mb) => mb !== orch).map((mb) => node(mb, d)),
     ...tm.lanes.map((l) => ({ kind: "lane", key: `lane:${l.id}`, depth: d, team: l, children: teamTree(l, d + 1, true) })),
   ];
-  if (!orch) return under(depth);
-  return [{ ...node(orch, depth), children: under(depth + 1) }];
+  const stray = extras(`team:${tm.id}`, depth);
+  if (!orch) return [...stray, ...under(depth)];
+  const root = node(orch, depth);
+  return [...stray, { ...root, children: [...root.children, ...under(depth + 1)] }];
 }
 
 // The rows a tree draws, in order, with what the connectors need: a row at depth d > 0 draws d columns, its `rails` (one per level
@@ -122,6 +129,9 @@ export function treeRows(roots, open) {
 
 // Text the user typed as one inert line, and a summary's goal: select.js's (a byte-identical copy of web/ui's), shared with the web UI.
 export { inert } from "./select.js";
+
+// ah2-225: the jobs: and subagents: slices of every running team, the tree's one added subscription (Amendment 1).
+export const activitySubs = (slices) => runningTeams(slices).flatMap(({ id }) => [activityId("jobs", id), activityId("subagents", id)]);
 
 // Running teams of every dir, in list order, with their summary body; closed and ended teams left out.
 function runningTeams(slices) {
@@ -151,6 +161,11 @@ export function sidebarModel(slices, now) {
     const own = ownGoal(goalOf(b), b.name ?? t.name);
     teams.push({ id, dir: t.dir_id, name: b.name ?? t.name, label: teamLabel({ ...b, name: b.name ?? t.name }), real: realNameNote({ ...b, name: b.name ?? t.name }), parent: b.lane?.parent_team ?? null, needsYou: b.waiting_on_you ?? 0, blockers: b.waiting_blockers ?? 0, working: b.working ?? 0, blocked: b.blocked ?? 0, members, alerts, lanes: [], goal: own?.text ?? null, goalFull: own?.full ?? null });
   }
+  // ah2-225: every team's jobs and subagents under their owners' keys (one global map: a member's key names its team), a stray one
+  // under its team's header key; a run in a lane's slice and its parent's is drawn once, in the lane (flow-model.js subagentsUnder)
+  const src = (kind) => teams.map((tm) => ({ rows: body(slices, activityId(kind, tm.id))?.rows ?? [], owners: new Map(tm.members.map((mb) => [mb.name, mb.key])), header: `team:${tm.id}` }));
+  const under = underOf(jobsUnder(src("jobs")), subagentsUnder(src("subagents"), now));
+  for (const t of teams) t.under = under;
   const byName = new Map(teams.map((t) => [`${t.dir}/${t.name}`, t]));
   const top = [];
   for (const t of teams) {

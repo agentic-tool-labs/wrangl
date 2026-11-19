@@ -8,6 +8,8 @@ import { flattenTree } from "./treeview.js";
 import { ageOf, ageText } from "./store.js";
 import { Age } from "./ticker.js";
 import { KEY_TABLE } from "./keys.js";
+import { graphSources, jobsUnder, runText, underTip } from "./flow-model.js";
+import { UNDER_GLYPH } from "./graph.js";
 
 // The member-step keys as the help table names them (B6: the hint was "j / k", which nothing binds).
 const MEMBER_KEYS = KEY_TABLE.find((k) => k.hint === "member").label;
@@ -91,15 +93,22 @@ export class OverviewView extends Live {
       name: t.name,
       goal: sum?.goal ?? null,
     };
+    // ah2-225 B1: each member's jobs under its row, and any whose owner is no one here under the Members header
+    this.model.under = jobsUnder(graphSources(snap.slices, team, everyone.map((p) => p.id), [], "jobs"));
     const m = this.model;
-    return { key: JSON.stringify([[...m.working, ...m.blocked, ...m.running, ...m.idle, ...m.unknown, ...m.gone].map((p) => [p.id, p.name, p.role, p.state, p.slug, p.since, p.ctx.text, p.ctx.over, p.facts, p.duty]), m.briefs, m.stale, m.unattended, m.needs, m.needsPending, m.needsAt, m.decisions, m.decidedAt, m.lines, m.goal]), selected: snap.ui.selected ?? null };
+    return { under: JSON.stringify([...m.under]), key: JSON.stringify([[...m.working, ...m.blocked, ...m.running, ...m.idle, ...m.unknown, ...m.gone].map((p) => [p.id, p.name, p.role, p.state, p.slug, p.since, p.ctx.text, p.ctx.over, p.facts, p.duty]), m.briefs, m.stale, m.unattended, m.needs, m.needsPending, m.needsAt, m.decisions, m.decidedAt, m.lines, m.goal]), selected: snap.ui.selected ?? null };
   }
 
   pick = (id) => this.props.store.setUi({ selected: this.props.store.state.ui.selected === id ? null : id });
 
+  // A member's jobs, as rows after its row (or under the Members header): no target, it opens no pane; the full text is the title.
+  unders(list, parent) {
+    return (list ?? []).map((x) => html`<li key=${x.key} class="ov-under" title=${underTip(x, parent, Date.now())}><span class="g" aria-hidden="true">${UNDER_GLYPH.job}</span><span class="who">${x.label}</span>${x.overdue ? html`<span class="eta overdue"><span class="eta-glyph" aria-hidden="true">⚠</span>overdue</span>` : html`<span></span>`}<span class="since"><${Age} text=${(now) => runText(x, now)} /></span></li>`);
+  }
+
   member(m, selected) {
     // The row selects the member (its summary opens in the rail); the name inside it is the link to the member's page.
-    return html`<li key=${m.id} class=${`ov-member st-${m.running ? "working" : m.state}${selected === m.id ? " selected" : ""}`} data-role=${m.role || undefined} data-state=${m.state} ...${hoverProps(this.props.store, m.id, "strip")}><button class="ov-hit" aria-pressed=${selected === m.id} aria-label=${`Select ${m.title}`} onClick=${() => this.pick(m.id)}></button><span class="ov-row"><span class="g" aria-hidden="true">${m.running ? GLYPH.working : GLYPH[m.state] ?? "○"}</span><span class="who"><a class="mlink" href=${memberHref(m.id)} title=${m.title !== m.label ? m.title : undefined}>${m.label}</a>${DUTY_TITLE[m.duty] ? html`<span class="duty-badge">${m.duty === "on" ? DUTY.on : DUTY_TITLE.away}</span>` : null}${m.slug ? html`<small>${m.slug}</small>` : null}${m.facts ? html`<small class="ov-facts">${m.facts}</small>` : null}</span><span class=${m.ctx.over ? "ctx over" : "ctx"} title=${m.ctx.text === NO_CONTEXT.text ? undefined : m.ctx.title}>${m.ctx.text === NO_CONTEXT.text ? "" : m.ctx.text}</span><span class="since" title=${m.since > 0 ? `${stateWord(m.state)} for this long` : undefined}>${m.since > 0 ? timeText(m.since) : ""}</span></span></li>`;
+    return html`<li key=${m.id} class=${`ov-member st-${m.running ? "working" : m.state}${selected === m.id ? " selected" : ""}`} data-role=${m.role || undefined} data-state=${m.state} ...${hoverProps(this.props.store, m.id, "strip")}><button class="ov-hit" aria-pressed=${selected === m.id} aria-label=${`Select ${m.title}`} onClick=${() => this.pick(m.id)}></button><span class="ov-row"><span class="g" aria-hidden="true">${m.running ? GLYPH.working : GLYPH[m.state] ?? "○"}</span><span class="who"><a class="mlink" href=${memberHref(m.id)} title=${m.title !== m.label ? m.title : undefined}>${m.label}</a>${DUTY_TITLE[m.duty] ? html`<span class="duty-badge">${m.duty === "on" ? DUTY.on : DUTY_TITLE.away}</span>` : null}${m.slug ? html`<small>${m.slug}</small>` : null}${m.facts ? html`<small class="ov-facts">${m.facts}</small>` : null}</span><span class=${m.ctx.over ? "ctx over" : "ctx"} title=${m.ctx.text === NO_CONTEXT.text ? undefined : m.ctx.title}>${m.ctx.text === NO_CONTEXT.text ? "" : m.ctx.text}</span><span class="since" title=${m.since > 0 ? `${stateWord(m.state)} for this long` : undefined}>${m.since > 0 ? timeText(m.since) : ""}</span></span></li>${this.unders(this.model.under.get(m.id), m.label)}`;
   }
 
   draw(_, { selected }) {
@@ -112,6 +121,7 @@ export class OverviewView extends Live {
       <nav class="ov-members" aria-label="Members">
         <header><b>Members</b><span class="dim">${m.working.length + m.blocked.length + m.running.length + m.idle.length + m.unknown.length + m.gone.length}${m.goneCount > 0 ? ` · ${m.goneCount} gone` : ""}</span><span class="grow"></span><span class="dim keys">${MEMBER_KEYS}</span></header>
         <div class="ov-scroll">
+          ${m.under.has("") ? html`<ul aria-label="Jobs of no member">${this.unders(m.under.get(""), null)}</ul>` : null}
           <h4>Working · ${m.working.length}</h4>
           <ul>${m.working.map((p) => this.member(p, selected))}</ul>
           ${m.blocked.length > 0 ? html`<h4>Blocked · ${m.blocked.length}</h4><ul>${m.blocked.map((p) => this.member(p, selected))}</ul>` : null}

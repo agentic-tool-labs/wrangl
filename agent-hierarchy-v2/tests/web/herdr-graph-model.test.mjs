@@ -219,7 +219,9 @@ test("Flow's links are the reporting lines and the first 24 briefs in flight, on
 
 test("Flow's drawn scale is the fit times the scale, clamped, and every rect is the world rect × k from the box's corner", () => {
   for (const [scale, orient, room] of [[1, "horizontal", WIDE], [2, "vertical", { w: 420, h: 600 }], [4, "horizontal", { w: 300, h: 300 }], [0.25, "vertical", WIDE]]) {
-    const m = FM.flowModel(slices, TM4, orient, scale, room);
+    // the members alone (no jobs or subagents: ah2-225's rows are laid out with them and tested apart)
+    const plain = new Map([...slices].filter(([sid]) => !/^(jobs|subagents):/.test(sid)));
+    const m = FM.flowModel(plain, TM4, orient, scale, room);
     const team = slices.get(`team:${TM4}`);
     const ids = SEL.memberIds(team);
     const nodes = F.flowNodes(slices, team, ids, SEL.laneChildren(slices, team, ids));
@@ -546,11 +548,11 @@ test("a click on a node opens its sheet, again closes it, another swaps it, a dr
   assert.equal(FM.memberPageLink(null, "member:x/y/z").url, null);
 });
 
-test("V10: each Flow lane takes its role class's web colour (Lead sub-orchestrator, Advise architect, Implement implementor, Review violet); others neutral", () => {
+test("V10: each Flow lane takes its role class's web colour (Lead sub-orchestrator, Advise architect, Implement implementor, Review violet, Test QA); others neutral", () => {
   for (const lt of [false, true]) {
     const w = lt ? FM.WEB.light : FM.WEB.dark;
-    assert.deepEqual([0, 1, 2, 3].map((i) => FM.laneStyle(i, lt).color), [w.role["sub-orchestrator"], w.role.architect, w.role.implementor, w.review]);
-    assert.equal(FM.laneStyle(4, lt).color, w.role.neutral, "a lane with no known class is neutral");
+    assert.deepEqual([0, 1, 2, 3, 4].map((i) => FM.laneStyle(i, lt).color), [w.role["sub-orchestrator"], w.role.architect, w.role.implementor, w.review, w.role.qa]);
+    assert.equal(FM.laneStyle(5, lt).color, w.role.neutral, "a lane with no known class is neutral");
     assert.equal(FM.laneStyle(-1, lt).color, w.role.neutral);
     assert.equal(FM.laneStyle(2, lt).band, `${w.role.implementor}0d`, "the band is the colour at 5 %");
   }

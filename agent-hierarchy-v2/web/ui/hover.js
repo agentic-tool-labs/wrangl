@@ -67,7 +67,7 @@ export class HoverCard extends Live {
     return html`<aside class=${`hover-${s.kind}`} role="tooltip" style=${{ left: `${s.x}px`, top: `${s.y}px`, width: `${CARD.w}px` }}>
       <strong data-role=${s.role || undefined}>${s.name}</strong> <span class=${`pill st-${s.state}`}>${stateWord(s.state, s.running)}</span>
       <div>${s.tool ?? "no tool"}${s.toolAt ? html` · <${Age} text=${elapsed} />` : null}</div>
-      <div>process: ${s.process}</div>
+      <div>peer session · process: ${s.process}</div>
       <div>tokens this turn: ${s.tokens ?? "—"}</div>
       ${s.ctx ? html`<div>context: ${s.ctx.text}${s.ctx.text === "—" ? null : html` <span class="dim">${s.ctx.title}</span>`}</div>` : null}
       <div class="dim">${s.slug ?? "idle"}</div>

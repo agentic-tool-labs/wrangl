@@ -3,10 +3,12 @@ import { Live } from "./live-component.js";
 import { DUTY, DUTY_TITLE, memberIds, memberOf, sparksOf, stateWord, teamLabel } from "./select.js";
 import { hoverProps } from "./hover.js";
 import { loadD3 } from "./lazy.js";
-import { GraphToggle, setGraph } from "./graph.js";
+import { GraphToggle, UNDER_GLYPH, setGraph } from "./graph.js";
+import { graphSources, jobsUnder, lapseAt, runText, subagentsUnder, underOf, underTip } from "./flow-model.js";
+import { ticker } from "./ticker.js";
 import {
   WINDOWS, STEP_MS, currentItem, eventsOf, fadeOf, flowId, flowLeases, hhmm, itemsId, kindOf, lastEventOf, pagesOf, planId, planStreams, readout,
-  scrubOf, scrubbed, shortName, streamOf, treeOf, widthOf, airOf, fitPack, sideways, TIERS, LABEL_AT, MAX_SPARKS,
+  scrubOf, scrubbed, shortName, streamOf, treeOf, widthOf, airOf, fitPack, sideways, TIERS, LABEL_AT, MAX_SPARKS, radiusOf,
 } from "./graph-world.js";
 
 // Graph · Map: the team as packed circles (streams side by side, members inside), message arcs bundled through the circles, a busy ring
@@ -55,6 +57,8 @@ export class GraphMap extends Live {
     return {
       ready: true,
       rows: JSON.stringify(memberRowsOf(snap.slices, team)),
+      // ah2-225: the team's jobs and subagents, under their owners (Map draws no lane, so none of a lane's)
+      under: JSON.stringify([...this.underOf(snap.slices, team)]),
       head: head ? `${head.as_of}|${head.body.pages_rev ?? ""}` : "",
       pages: (head?.body.pages ?? []).map((_, k) => snap.slices.get(`flow-page:${t.dir_id}/${t.name}/${head.body.run}/${k}`)?.as_of ?? "").join(","),
       sparks: sparksOf(snap.slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${overdue.has(s.id) ? 1 : 0}`).join("\n"),
@@ -65,8 +69,16 @@ export class GraphMap extends Live {
     };
   }
 
+  // ah2-225: the team's jobs and subagents under their owners; `lapse` when the first subagent lapses, drawn again then on the age tick
+  underOf(slices, team) {
+    const under = underOf(jobsUnder(graphSources(slices, team, memberIds(team), [], "jobs")), subagentsUnder(graphSources(slices, team, memberIds(team), [], "subagents"), Date.now()));
+    this.lapse = lapseAt(under);
+    return under;
+  }
+
   componentDidMount() {
     super.componentDidMount();
+    this.offLapse = ticker.subscribe((now) => now >= (this.lapse ?? Infinity) && ((this.lapse = Infinity), this.forceUpdate()));
     loadD3().then((d3) => {
       this.d3 = d3;
       !this.gone && this.forceUpdate();
@@ -107,6 +119,7 @@ export class GraphMap extends Live {
 
   componentWillUnmount() {
     super.componentWillUnmount();
+    this.offLapse?.();
     this.gone = true;
     this.ro?.disconnect();
     this.io?.disconnect();
@@ -138,7 +151,7 @@ export class GraphMap extends Live {
   }
 
   legendItems() {
-    return html`<span class="keys"><span><i class="sw brief" aria-hidden="true"></i>brief</span><span><i class="sw report" aria-hidden="true"></i>report</span><span><i class="sw ring" aria-hidden="true"></i>busy, last hour</span></span>`;
+    return html`<span class="keys"><span><i class="sw brief" aria-hidden="true"></i>brief</span><span><i class="sw report" aria-hidden="true"></i>report</span><span><i class="sw ring" aria-hidden="true"></i>busy, last hour</span><span><i class="sw sub" aria-hidden="true"></i>subagent</span><span><b class="sw-job" aria-hidden="true">◷</b>job</span></span>`;
   }
 
   // Binds d3.zoom to the drawn svg once, and flies to the focus when the layout or the stage size changed.
@@ -190,7 +203,7 @@ export class GraphMap extends Live {
       return;
     }
     this.svg.style.setProperty("--k", String(k));
-    for (const el of this.svg.querySelectorAll(".gm-leaf")) {
+    for (const el of this.svg.querySelectorAll(".gm-leaf, .gm-under")) {
       const px = Number(el.getAttribute("data-r")) * k;
       el.setAttribute("data-z", String(TIERS.filter((t) => px >= t).length));
     }
@@ -349,16 +362,17 @@ export class GraphMap extends Live {
 
   // ---- layout
 
-  layout(rows, team) {
-    const struct = rows.map((r) => `${r.id}|${r.stream ?? ""}`).join("\n");
+  layout(rows, team, under = null) {
+    const struct = `${rows.map((r) => `${r.id}|${r.stream ?? ""}`).join("\n")}\n${under ? [...under].map(([k, list]) => `${k}:${list.map((x) => x.key).join(",")}`).join("\n") : ""}`;
     if (struct === this.struct) {
       return;
     }
     const d3 = this.d3;
     this.struct = struct;
-    const tree = treeOf(team.id ?? "team", teamLabel(team.body), rows);
+    const tree = treeOf(team.id ?? "team", teamLabel(team.body), rows, under);
     // Air scales with the member circles, not with the canvas (graph-world.js airOf), then the whole is fitted to the 1000-unit square.
-    const root = d3.pack().radius(() => 1).padding(airOf)(d3.hierarchy(tree).sum((d) => (d.type === "member" ? 1 : 0)));
+    // A job or subagent packs smaller, beside its owner (graph-world.js treeOf, radiusOf).
+    const root = d3.pack().radius(radiusOf).padding(airOf)(d3.hierarchy(tree).sum((d) => (d.type === "member" ? 1 : 0)));
     fitPack(root, 1000);
     this.root = root;
     this.byId = new Map(root.descendants().map((n) => [n.data.id, n]));
@@ -428,6 +442,10 @@ export class GraphMap extends Live {
 
     const containers = root.descendants().filter((n) => n.children && n.data.type !== "group");
     const leaves = root.leaves().filter((n) => n.data.type === "member");
+    // ah2-225: jobs and subagents, beside their owner (an undrawn group); a subagent dashed, with a dashed line to its owner. Not a target.
+    const unders = root.leaves().filter((n) => n.data.type === "job" || n.data.type === "subagent");
+    const ownerOf = (n) => (n.parent?.data.type === "group" && n.parent.data.id.startsWith("with:") ? byId.get(n.parent.data.id.slice("with:".length)) : null);
+    const nameOf = (o) => (o ? rowsById.get(o.data.id)?.name ?? o.data.name : null);
     const ringOf = (n, share) => this.arc({ innerRadius: n.r * 0.81, outerRadius: n.r * 0.91, startAngle: 0, endAngle: Math.max(0.04, share ?? 0) * 2 * Math.PI });
     const body = html`<g class="gm-body">
             <g class="gm-ctrs">${containers.map((n) => {
@@ -439,6 +457,7 @@ export class GraphMap extends Live {
             })}</g>
             <g class=${`gm-arcs${selected ? " focus" : ""}`}>${arcs}</g>
             <g class="gm-sparks">${sparks}</g>
+            <g class="gm-under-links">${unders.filter((n) => n.data.x.kind === "subagent" && ownerOf(n)).map((n) => html`<line key=${n.data.id} class="gm-under-link" x1=${round(n.x)} y1=${round(n.y)} x2=${round(ownerOf(n).x)} y2=${round(ownerOf(n).y)} />`)}</g>
             <g class="gm-leaves">${leaves.map((n) => {
               const r = rowsById.get(n.data.id) ?? n.data.m;
               const pick = () => this.onMember(n.data.id);
@@ -451,6 +470,17 @@ export class GraphMap extends Live {
                 <text class="lbl sub t3" dy="1.75em">${r.duty ?? r.role}</text>
                 <text class="lbl sub t4" dy="2.95em">${[r.model, r.word].filter(Boolean).join(" · ")}</text>
                 <text class="lbl sub t5" dy="4.6em">${[r.item ?? "no item", lastOf(n.data.id) && `last message ${lastOf(n.data.id)}`].filter(Boolean).join(" · ")}</text>
+              </g>`;
+            })}</g>
+            <g class="gm-unders">${unders.map((n) => {
+              const x = n.data.x;
+              const o = ownerOf(n);
+              const tip = underTip(x, nameOf(o), clock);
+              return html`<g key=${n.data.id} class=${`gm-under k-${x.kind}${x.overdue ? " over" : ""}`} data-r=${round(n.r)} transform=${`translate(${round(n.x)},${round(n.y)})`} role="img" aria-label=${tip}>
+                <title>${tip}</title>
+                <circle class="body" r=${round(n.r)} />
+                <text class="lbl val t1" dy=".1em">${x.overdue ? "⚠" : UNDER_GLYPH[x.kind]}</text>
+                <text class="lbl sub t2" dy="1.6em">${x.kind === "subagent" ? "subagent" : runText(x, clock)}</text>
               </g>`;
             })}</g>
             <g class="gm-clabels">${containers.filter((n) => n.depth > 0).map((n) => html`<text key=${n.data.id} class="lbl ctrl gm-clabel" x=${round(n.x)} y=${round(n.y - n.r)} data-r=${round(n.r)} data-type=${n.data.type}>${n.data.name}</text>`)}</g>
@@ -472,7 +502,8 @@ export class GraphMap extends Live {
     const team = slices.get(teamId);
     const t = team.body;
     const rows = JSON.parse(s.rows);
-    this.layout(rows, { ...team, id: teamId });
+    const under = new Map(JSON.parse(s.under ?? "[]"));
+    this.layout(rows, { ...team, id: teamId }, under.size ? under : null);
     const root = this.root;
     const byId = this.byId;
     const headSlice = slices.get(flowId(t));

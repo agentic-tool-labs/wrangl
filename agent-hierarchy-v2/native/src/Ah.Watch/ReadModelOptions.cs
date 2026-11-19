@@ -96,6 +96,15 @@ public sealed record ReadModelOptions
     public Func<long?>? JobsVersion { get; init; }
 
     /// <summary>
+    /// The subagent runs for the <c>subagents:&lt;dirId&gt;/&lt;team&gt;</c> slices, given the time: the runs the native graph reads (<see cref="IViewSource.SubagentRuns"/>). It is asked
+    /// only while a client holds such a slice, and again on each reconcile tick once <see cref="SubagentsVersion"/> has moved.
+    /// </summary>
+    public Func<double, IReadOnlyList<SubagentRun>>? SubagentsProbe { get; init; }
+
+    /// <summary>The peer records' write counter, or null when it cannot be read: <see cref="SubagentsProbe"/> is asked again only after it moves.</summary>
+    public Func<long?>? SubagentsVersion { get; init; }
+
+    /// <summary>
     /// A token of everything a directory's recorded pids are read from (the session pids, the dir's roster rows and the team records), or null
     /// when it cannot be read: the processes lane reads a directory's pids again only after it moves (b459 step 28).
     /// </summary>

@@ -725,6 +725,8 @@ internal sealed class DaemonServices
                     SitrepProbe = (dir, team, nowMs, work) => SitrepRows.Of(g, dir, team, nowMs, () => Verbs.BacklogVerb.FactsFor(_environment.AhHome, g.Config, dir, (long)nowMs).Items, work),
                     JobsProbe = (dir, team, _) => JobRows.Of(g, dir, team),
                     JobsVersion = () => Ah.StateDb.StateDbModule.DomainSeq(_environment.AhHome, "jobs"),
+                    SubagentsProbe = source.SubagentRuns,
+                    SubagentsVersion = () => Ah.StateDb.StateDbModule.DomainSeq(_environment.AhHome, "peer-records"),
                     // b517; per-dir-files-to-db §6c G5: one read, and a store that cannot be read is told as such (null)
                     ParkedProbe = dir => g.Io.Files.ReadAskLog(ParkedQuestions.PathIn(dir)).TryLines(out var parkedLines) ? ParkedQuestions.Fold(string.Join('\n', parkedLines)) : null,
                     // ah2-180 Amendments 2 and 4: no row yet is no alarm raised; a store that cannot be read is null, so the lane keeps its record

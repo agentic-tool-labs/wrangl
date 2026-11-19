@@ -6,7 +6,8 @@ import { EtaChip } from "./ticker.js";
 import { Live } from "./live-component.js";
 import { firstTeam, laneChildren, memberIds, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamRows, teamSummary } from "./select.js";
 import { FlowStage, graphUi, readPrefs, shortName } from "./graph.js";
-import { flowActive, flowNodes } from "./flow-model.js";
+import { activityIds, flowActive, flowExtras, flowNodes, graphSources, jobsUnder, lapseAt, subagentsUnder, underOf } from "./flow-model.js";
+import { ticker } from "./ticker.js";
 import { MemberSummary, party } from "./member-summary.js";
 import { internalToggle, isInternal, shownOf, showInternal } from "./msg-filter.js";
 import { bindHash } from "./deeplink.js";
@@ -320,7 +321,9 @@ class TeamLease extends Live {
   leaseIds(snap, { teamId, view }) {
     const team = snap.slices.get(teamId);
     const shown = TEAM_VIEW_LEASES[view] ?? {};
-    return [teamId, `processes:${teamId.slice("team:".length).split("/")[0]}`, ...teamLeaseIds(snap.slices, team, shown), ...(shown.timeline && team ? [`timeline:${team.body.dir_id}`] : [])];
+    // ah2-225: the Overview's jobs (it draws no subagents), and the Graph's jobs and subagents with its lanes'
+    const activity = view === "overview" ? activityIds(team, [], ["jobs"]) : view === "graph" ? activityIds(team, laneChildren(snap.slices, team, memberIds(team))) : [];
+    return [teamId, `processes:${teamId.slice("team:".length).split("/")[0]}`, ...teamLeaseIds(snap.slices, team, shown), ...(shown.timeline && team ? [`timeline:${team.body.dir_id}`] : []), ...activity];
   }
 
   draw() {
@@ -346,17 +349,25 @@ export class App extends Live {
     const topo = team ? slices.get(`topology:${team.body.dir_id}/${team.body.name}`) : null;
     const sparksKey = sparksOf(slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${s.review ? 1 : 0}|${s.slug}`).join("\n");
     const selected = snap.ui.selected ?? null;
-    return { large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, rename: snap.ui.rename ?? null, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...flowActive(slices, team, nodes)].join("\n") : "" };
+    // ah2-225: Flow's jobs and subagents, under their owners (flow-model.js); none outside Flow
+    const under = snap.ui.view === "graph" && graphUi(snap.ui).mode === "flow" && team
+      ? underOf(jobsUnder(graphSources(slices, team, ids, children, "jobs")), subagentsUnder(graphSources(slices, team, ids, children, "subagents"), Date.now()))
+      : new Map();
+    const extras = flowExtras(nodes, under);
+    this.lapse = lapseAt(under); // Amendment 3: drawn again on the age tick when a subagent lapses
+    return { extrasKey: extras.length === 0 ? "" : JSON.stringify(extras), large: snap.large === true, loading: !snap.ready || snap.busy > 0, error: snap.error, fault: snap.fault ?? null, ended: snap.ended, endedWhy: snap.endedWhy ?? null, teamId: teamIdOf(slices, snap.ui), nodesKey, sparksKey, edges: topo?.body.edges.parent_child ?? NO_EDGES, selected, selectedGone: snap.ui.view !== "member" && selected !== null && ids.length > 0 && !shownIds.includes(selected), view: snap.ui.view ?? "teams", teamMissing: snap.ready && Boolean(snap.ui.team) && !slices.has(summaryIdOf(snap.ui.team)), diagnostics: snap.ui.diagnostics === true, expand: snap.ui.expand ?? null, help: snap.ui.help === true, rules: snap.ui.rules === true, rename: snap.ui.rename ?? null, pair: snap.ui.pair ?? null, gMode: graphUi(snap.ui).mode, gOrient: graphUi(snap.ui).orient, gLegend: graphUi(snap.ui).legend, fitNonce: snap.ui.fitNonce ?? 0, inboxTab: snap.ui.inboxTab ?? "attention", inboxTeam: snap.ui.view === "inbox" && snap.ui.team ? teamIdOf(slices, snap.ui) : null, notice: snap.ui.notice ?? null, sitrep: sitrepOf(slices, snap.ui), railOpen: snap.ui.railOpen === true, selectedOwn: selected !== null && ids.includes(selected), graphCard: snap.ui.graphCard ?? null, activeKey: snap.ui.view === "graph" && snap.ui.graphMode === "flow" && team ? [...flowActive(slices, team, nodes)].join("\n") : "" };
   }
 
   componentDidMount() {
     super.componentDidMount();
     this.onKey = (e) => helpKey(e, this.props.store) || globalKey(e, this.props.store);
     globalThis.document?.addEventListener?.("keydown", this.onKey);
+    this.offLapse = ticker.subscribe((now) => now >= (this.lapse ?? Infinity) && ((this.lapse = Infinity), this.forceUpdate()));
   }
 
   componentWillUnmount() {
     super.componentWillUnmount();
+    this.offLapse?.();
     globalThis.document?.removeEventListener?.("keydown", this.onKey);
   }
 
@@ -400,6 +411,10 @@ export class App extends Live {
       this.nodesKey = s.nodesKey;
       this.nodes = s.nodesKey === "" ? [] : JSON.parse(s.nodesKey).map(([id, role, name, lane, team, column]) => ({ id, role, name, lane, team, column }));
     }
+    if (s.nodesKey !== this.flowKey?.[0] || s.extrasKey !== this.flowKey?.[1]) {
+      this.flowKey = [s.nodesKey, s.extrasKey];
+      this.flowNodes = s.extrasKey === "" ? this.nodes : [...this.nodes, ...JSON.parse(s.extrasKey)];
+    }
     if (s.sparksKey !== this.sparksKey) {
       this.sparksKey = s.sparksKey;
       this.sparks = s.sparksKey === "" ? [] : s.sparksKey.split("\n").map((line) => {
@@ -432,7 +447,7 @@ export class App extends Live {
             : !s.teamId
             ? html`<p class="dim skeleton">${s.ended ? endedText(s.endedWhy) : s.error === "401" || s.error === "503" ? endedText(s.error) : s.error ? `could not read the data: ${s.error}` : "Loading…"}</p>`
             : s.view === "graph"
-              ? html`<${GraphStage} store=${store} teamId=${s.teamId} nodes=${this.nodes} edges=${s.edges} sparks=${this.sparks} selected=${s.selected} onSelect=${this.onSelect} onPair=${this.onPair} mode=${s.gMode} orient=${s.gOrient} legend=${s.gLegend} activeKey=${s.activeKey} fitNonce=${s.fitNonce} />`
+              ? html`<${GraphStage} store=${store} teamId=${s.teamId} nodes=${this.flowNodes} edges=${s.edges} sparks=${this.sparks} selected=${s.selected} onSelect=${this.onSelect} onPair=${this.onPair} mode=${s.gMode} orient=${s.gOrient} legend=${s.gLegend} activeKey=${s.activeKey} fitNonce=${s.fitNonce} />`
               : s.view === "member"
                 ? html`<${MemberPage} key=${s.selected} store=${store} id=${s.selected} />`
                 : s.view === "overview"

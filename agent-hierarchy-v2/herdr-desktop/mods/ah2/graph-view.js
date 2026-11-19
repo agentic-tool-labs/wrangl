@@ -18,7 +18,7 @@ import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, Sl
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
-  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle, isReviewing, paneOfMember } from "./graph-model.js";
+  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, paneAct, memberPageLink, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
@@ -517,7 +517,10 @@ function map(t, g, zoomTo, v) {
       }));
   });
   for (const a of m.arcs) els.push(layer(stroke(a.cmds, a.width, a.kind === 1), Background.solid(t.accent).opacity(a.fade ?? base), S));
+  // ah2-225: a subagent's dashed line to its owner under the circles, then the jobs and subagents beside their owners
+  for (const u of m.unders ?? []) if (u.link) els.push(layer(stroke([["M", u.x, u.y], ["L", u.link.x, u.link.y]], 1, true), Background.solid(t.muted), S));
   m.leaves.forEach((n, i) => els.push(leaf(t, g, n, i, v, gr)));
+  (m.unders ?? []).forEach((u, i) => els.push(underDot(t, g, u, i)));
   m.flights.forEach((f, i) => els.push(div().id(`gf-${g.id}-${i}`).absolute().left(f.x - 4).top(f.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(f.title).accessibility_label(f.title)));
   // container names sit on the circle's top edge, on a surface chip that stands in for the web's label halo
@@ -560,7 +563,7 @@ function leaf(t, g, n, i, v, gr) {
   const at = opens(Button.new(`gm-${g.id}-${i}`), t, v, n.id, t.border, gr);
   return at.absolute().left(n.x - r).top(n.y - r).size(r * 2).rounded(r)
     .bg(t.surface).border(1).border_color(t.border).when(n.state === "gone", (el) => el.opacity(0.4))
-    .tooltip(`${full}. Click for its details`).accessibility_label(`${full}. Show its details`)
+    .tooltip(`${full} · peer session. Click for its details`).accessibility_label(`${full}, peer session. Show its details`)
     .child(layer(ring(r, r * 0.86, 1, r * 0.1), t.border, r * 2))
     .child(layer(ring(r, r * 0.86, Math.max(0.04, n.share ?? 0), r * 0.1), tone, r * 2))
     .child(v_flex().size_full().items_center().justify_center().gap(1)
@@ -573,6 +576,18 @@ function leaf(t, g, n, i, v, gr) {
       .when(n.tier >= 3 && Boolean(n.role), (el) => el.child(line(n.role, 11, t.muted)))
       .when(n.tier >= 4, (el) => el.child(line([n.model, n.word.toLowerCase()].filter(Boolean).join(" · "), 11, t.muted)))
       .when(n.tier >= 5, (el) => el.child(line(n.item || "no item", 11, t.muted))));
+}
+
+// ah2-225 B1/B3: a job or subagent on the Map, a small circle beside its owner: the job mark ◷ (⚠ when overdue) or a dashed ring for a
+// subagent, and, when the circle has room, "subagent" or the time against its estimate. Not a target: the tooltip has the full text.
+function underDot(t, g, u, i) {
+  const r = u.r;
+  return div().id(`gu-${g.id}-${i}`).absolute().left(u.x - r).top(u.y - r).size(r * 2).rounded(r).bg(t.surface)
+    .border(u.overdue ? 2 : 1).border_color(u.overdue ? t.blocked : t.muted).when(u.kind === "subagent", (el) => el.border_dashed())
+    .tooltip(u.tip).accessibility_label(u.tip)
+    .child(v_flex().size_full().items_center().justify_center()
+      .child(div().text_size(11).text_color(t.foreground).child(u.overdue ? "⚠" : u.kind === "subagent" ? "◇" : "◷"))
+      .when(r >= 24, (el) => el.child(div().max_w(Math.round(r * 1.7)).truncate().text_size(10.5).text_color(t.muted).child(u.kind === "subagent" ? "subagent" : u.run))));
 }
 
 // A link: the busier sender first, → one way or ⇄ both, what is in flight, then the weight bar and the count (mono, right).
@@ -639,6 +654,7 @@ function flowBody(t, m, v, cx) {
     els.push(div().absolute().left(l.x).top(l.y + 16 * k).w(m.lanes?.[i]?.rule ?? 0).h(2).bg(ls.color));
   });
   m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, v, gr, lt, m.dots.length > 0))); // the clock runs while a dot is drawn
+  (m.unders ?? []).forEach((u, i) => els.push(flowUnder(t, u, i, k, lt)));
   m.dots.forEach((d, i) => {
     const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review);
     els.push(div().id(`gfd-${i}`).absolute().left(p.x - 3).top(p.y - 3).size(6).rounded(3) // the web's 6 px (graph.js .dot r=3)
@@ -669,10 +685,12 @@ function flowLegend(t, lt) {
   const review = edgeStyle("review", lt);
   const dashed = window.paint_path(stroke([["M", 0, 1], ["L", 14, 1]], 2, true), review.color).w(14).h(2).flex_none();
   return h_flex().id("gflow-legend").h(LEGEND_H).gap(12).flex_none().items_center().text_size(11).text_color(t.muted)
-    .accessibility_label("Flow legend: solid accent line with a dot, brief in flight; dashed violet, sent for review; thin muted line, reporting line")
+    .accessibility_label("Flow legend: solid accent line with a dot, brief in flight; dashed violet, sent for review; thin muted line, reporting line; dashed muted line and outline, subagent; ◷, job")
     .child(key(div().w(14).h(2).flex_none().bg(brief.color), "brief in flight"))
     .child(key(dashed, "sent for review"))
     .child(key(div().w(14).h(1).flex_none().bg(t.muted), "reporting line"))
+    .child(key(window.paint_path(stroke([["M", 0, 1], ["L", 14, 1]], 1, true), t.muted).w(14).h(2).flex_none(), "subagent"))
+    .child(key(div().flex_none().child("◷"), "job"))
     .child(div().flex_1().min_w(0).truncate().child("Idle members are one line; a time is the last activity"));
 }
 
@@ -709,9 +727,34 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
   return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).when(!c.active, (el) => el.justify_center()).overflow_hidden()
     .rounded(6).border(1).border_color(rest).bg(st.fill ?? t.raised)
     .when(s.state === "gone", (el) => el.opacity(0.4))
-    .tooltip(`${tip}. Click for its details`).accessibility_label(`${said}. Show its details`)
+    .tooltip(`${tip} · peer session. Click for its details`).accessibility_label(`${said}, peer session. Show its details`)
     .child(head)
     .when(stats.length > 0, (el) => el.child(h_flex().px(10 * k).py(6 * k).gap(12 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats)));
+}
+
+// ah2-225: a job or subagent in Flow, as the web's FlowUnder: a row under its owner, or a card in Test (the label, then the owner and the
+// time); a subagent's outline dashed with the "subagent" tag, a job the mark ◷, an overdue one "⚠ overdue". Not a target: no pane.
+function flowUnder(t, u, i, k, lt) {
+  const x = u.item;
+  const r = u.rect;
+  const sub = x.kind === "subagent";
+  const late = x.overdue ? [div().flex_none().text_size(11 * k).font_semibold().text_color(t.blocked).child("⚠ overdue")] : [];
+  // an overdue row's time carries the mark (⚠, the word in the tooltip): a row has no room for both; a card has both
+  const run = div().flex_none().font_family(MONO).text_size(11 * k).when(x.overdue && !u.card, (el) => el.font_semibold().text_color(t.blocked)).when(!(x.overdue && !u.card), (el) => el.text_color(t.muted))
+    .child(x.overdue && !u.card ? `⚠ ${u.run}` : u.run);
+  const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
+    .when(u.card, (el) => el.border_b(1).border_color(t.border))
+    .child(sub ? svg(roleIcon(x.role)).size(12 * k).flex_none().text_color(roleHue(x.role, lt))
+      : div().flex_none().text_size(12 * k).text_color(t.muted).child("◷"))
+    .child(div().flex_1().min_w(0).truncate().text_size(12 * k).text_color(t.muted).child(x.label))
+    .children(sub ? [div().flex_none().text_size(11 * k).text_color(t.muted).child("subagent")] : [])
+    .children(u.card ? late : [run]);
+  return div().id(`gfu-${i}`).absolute().left(r.x).top(r.y).w(r.w).h(r.h).flex().flex_col().when(!u.card, (el) => el.justify_center()).overflow_hidden()
+    .rounded(6).border(1).border_color(sub ? t.muted : t.border).when(sub, (el) => el.border_dashed()).bg(t.raised)
+    .tooltip(u.tip).accessibility_label(u.tip)
+    .child(head)
+    .when(u.card, (el) => el.child(h_flex().px(10 * k).py(6 * k).gap(12 * k).items_center().justify_between().text_size(11 * k).text_color(t.muted)
+      .child(div().min_w(0).truncate().child(x.ownerName || "team")).child(run)));
 }
 
 // ---- the agent's sheet (spec herdr-graph-agent-details): the web's member summary (member-summary.js MemberSummary, ported in

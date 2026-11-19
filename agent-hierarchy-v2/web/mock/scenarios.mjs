@@ -124,6 +124,23 @@ const LANES = {
     ["so-lane-board", "sub-orchestrator", "working", "Task", 0, "ah/lane-board"],
     ["so-lane-delivery", "sub-orchestrator", "working", "Task", 3, "ah/lane-delivery"],
   ],
+  // ah2-225: jobs [lane key | null, owner, kind, label, minutes ago, eta seconds, {slot, slotMin, overdue (minutes), ended}] and running
+  // subagents [lane key | null, owner, owner kind, agent id, agent type, minutes ago]. a-rev1 is in the parent's slice and its lane's, as the
+  // daemon serves a Sub-Orchestrator's run; it is drawn once, in the lane. "ghost" is on no team; the ended job is not drawn.
+  jobs: [
+    [null, "qa", "test", "full QA: dotnet test Ah.sln", 9, 900, { slot: "holding", slotMin: 8 }],
+    [null, "orchestrator", "slot", "full QA at 3f2a1c9", 2, 900, { slot: "queued" }],
+    [null, "ghost", "build", "dotnet build Ah.sln", 1, 300],
+    [null, "reviewer", "build", "dotnet build", 20, 300, { ended: 12 }],
+    ["board", "board-impl", "smoke", "node --test tests/web/board-kanban.test.mjs", 4, 300],
+    ["delivery", "delivery-impl-2", "bg", "npm run bench -- --runs 40 --out /tmp/bench.json", 31, 900, { overdue: 16 }],
+  ],
+  subagents: [
+    [null, "orchestrator", "orchestrator", "a-exp1", "Explore", 3],
+    [null, "architect", "member", "a-tg1", "task-gopher:task-gopher", 1],
+    [null, "so-lane-board", "member", "a-rev1", "wrangl:reviewer", 5],
+    ["board", "orchestrator", "orchestrator", "a-rev1", "wrangl:reviewer", 5],
+  ],
   // Each lane's child team: name, role, state, tool, stream branch. The lane is `lane-<key>`, led by `so-lane-<key>`.
   lanes: {
     board: [["board-ux", "ux-engineer", "working", "Edit", "ah/lane-board"], ["board-impl", "implementor", "working", "Bash", "ah/lane-board"], ["board-rev", "reviewer", "idle", null, "ah/lane-board"]],
