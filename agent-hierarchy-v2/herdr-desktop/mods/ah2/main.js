@@ -696,7 +696,8 @@ export default class Ah2 extends View {
       .flex_1().min_w(0).h(30).pl(4).pr(8).gap(6).flex().items_center().rounded(6).text_size(12.5)
       .tooltip(`${full} · peer session`) // ah2-225 B4: told apart from a subagent row without colour
       .accessibility_label(address ? `${full}, peer session. Focus its terminal` : `${full}, peer session`)
-      .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(laneHue(mb.role, mb.column, lt) ?? t.foreground)
+      .child(svg(roleIcon(mb.role)).size(14).flex_none().text_color(mb.role === "orchestrator" ? (lt ? "#8a6100" : "#e6b84a") // ah2-274: the Orchestrator's crown is gold
+          : laneHue(mb.role, mb.column, lt) ?? t.foreground)
         .when(mb.state === "gone" || mb.state === "unknown", (el) => el.opacity(0.4)))
       .child(div().w(14).flex_none().flex().justify_center().text_size(11).text_color(mk.mark ?? t.blocked).child(mk.glyph))
       // what it is on gives way first, then the name (to 40 px); a bare state word ("idle") never does, so the state is never lost

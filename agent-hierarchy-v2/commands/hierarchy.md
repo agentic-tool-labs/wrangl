@@ -1,6 +1,6 @@
 ---
 description: Enable/disable the hierarchy and its handoff flow, or inspect it. Model/roster assignment lives in /wrangl:agent-roster.
-argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|qa [item|batch]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]"
+argument-hint: "[init|status|on|off|always-on [on|off]|flow [auto|confirm]|qa [item|batch]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|update|uninstall]"
 ---
 
 `<ah>` = the `ah` command in your context's `ah CLI root` line (newest wins).
@@ -476,6 +476,20 @@ write is asked about first and nothing is written until the plan has been shown.
 Exit 1 means a step failed (the output says which); exit 2 means the home guard refused. Do not retry with
 different flags to get around a refusal.
 
+## `update`
+
+Rebuild the native binaries for the installed plugin version, with no questions. For after a plugin update when the
+background rebuild did not start. Run:
+
+```
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/install.sh" --apply --rebuild-only
+```
+
+It builds and places both binaries and updates the install stamp and the `ah` link. It never touches the `ahd` link,
+PATH, shell startup files or the login item, so it asks nothing: do not use AskUserQuestion. Show the result. Exit 1
+means a step failed (the output says which); exit 2 means the home guard refused. With no install stamp
+(`~/.claude/ah2/install.json` missing), say so and point at `install`.
+
 ## `uninstall`
 
 Reverse `install`. Mirrors it: say what will be removed (the binary, its sidecar and the install stamp under
@@ -489,5 +503,5 @@ neither is the default. Nothing else under `~/.claude/ah2` is touched.
 ## anything else
 
 Show the usage line:
-`/hierarchy [init|status|on|off|always-on [on|off]|flow [auto|confirm]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|uninstall]`,
+`/hierarchy [init|status|on|off|always-on [on|off]|flow [auto|confirm]|dispatch [peers|subagents|prefer-peers|prefer-subagents]|usage [day|week|month|all]|msgs [open|closed|all|off|required]|peers|sweep [days]|install|update|uninstall]`,
 then run `status`.
