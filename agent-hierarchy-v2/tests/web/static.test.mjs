@@ -20,9 +20,9 @@ const ownFiles = () => walk(WEB).filter((p) => !p.startsWith(`${VENDOR}/`));
 
 const stylesheetsOf = (page) => [...page.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)].map((m) => m[1]);
 
-test("the seven shared stylesheets load statically in token-first order, the looks last (ah-ui-looks §3)", () => {
+test("the eight shared stylesheets load statically in token-first order, the presets right after the tokens, the looks last (ah-ui-looks §3)", () => {
   assert.deepEqual(stylesheetsOf(readFileSync(join(WEB, "index.html"), "utf8")), [
-    "/ui/ui.css", "/ui/r6.css", "/ui/r6-plans.css", "/ui/r6-shell.css", "/ui/r6-graph.css", "/ui/r6-nav.css", "/ui/looks.css",
+    "/ui/ui.css", "/ui/presets.css", "/ui/r6.css", "/ui/r6-plans.css", "/ui/r6-shell.css", "/ui/r6-graph.css", "/ui/r6-nav.css", "/ui/looks.css",
   ]);
   assert.doesNotMatch(readFileSync(join(WEB, "app.js"), "utf8"), /document\.createElement\(["']link["']\)/);
 });

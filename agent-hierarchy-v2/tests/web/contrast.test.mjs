@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { contrast, deltaE, deltaE2000, luminance, simulate } from "./color.mjs";
-import { deltaMatrix, gate1, gate2, gate3, resolveRgba, rulesOf, stopsOf, surfaceAt, worstBackdrop } from "./glass-gates.mjs";
+import { deltaMatrix, gate1, gate2, gate3, gate3Preset, resolveRgba, rulesOf, stopsOf, surfaceAt, worstBackdrop } from "./glass-gates.mjs";
 
 // The colour tokens as ui.css declares them, resolved to sRGB, and the contrast of every text colour and role hue on every surface and tint.
 
@@ -365,3 +365,46 @@ test("the default light look's muted text reads at 4.5:1 on its bare backdrop; n
   assert.ok(muted.slab >= 4.5, `slab ${muted.slab}`);
   assert.equal(backdropDefaults("dark-emissive").baseFrom, "#070b14");
 });
+
+// The palette presets (ah2-276 R6): each preset block of presets.css over its mode's ui.css tokens. Text at 4.5:1 on every surface and
+// tint, marks at 3:1, the accent fill's label at 4.5:1, the states apart (gate 2, and gate3Preset under deuteranopia), and every role pair at
+// least as far apart as the house has it (or ΔE 20).
+const presetsCss = readFileSync(new URL("../../web/ui/presets.css", import.meta.url), "utf8");
+const { PRESETS } = await import("../../web/ui/presets.js");
+const presetBlocks = Object.fromEntries([...presetsCss.matchAll(/:root\[data-preset="([\w-]+)"\][^{]*\{([^}]*)\}/g)].map((m) => [m[1], declarations(m[2])]));
+
+test("every preset the menu offers has a block in presets.css, and every block is offered", () => {
+  assert.deepEqual(Object.keys(presetBlocks).sort(), PRESETS.filter((p) => p.file).map((p) => p.id).sort());
+});
+
+const rolePairsOk = (vars, base) => {
+  const of = (v) => Object.fromEntries(ROLES.filter((r) => r !== "orchestrator").map((r) => [r, resolve(v, `var(--role-${r})`)]));
+  const now = deltaMatrix(of(vars));
+  const house = deltaMatrix(of(base));
+  return Object.entries(now).filter(([p, d]) => d < Math.min(20, house[p] - 1)).map(([p, d]) => `${p} ΔE ${d} (house ${house[p]})`);
+};
+
+for (const p of PRESETS.filter((x) => x.file)) {
+  const base = p.mode === "dark" ? dark : lightAttr;
+  const vars = { ...base, ...presetBlocks[p.id] };
+  test(`preset ${p.id} (${p.mode}): text 4.5:1 on every surface and tint, marks 3:1, the accent label 4.5:1`, () => {
+    const surfaces = ["--bg", "--bar", "--side", "--control", "--row-hi", "--row-sel", "--kb-card", "--tool-bg", "--brief-bg", ...TINTS.map((t) => `--tint-${t}`)];
+    const texts = ["--ink", "--ink-2", "--muted", "--dim", "--accent", "--working", "--review", "--attn", "--err-ink", "--ok", ...ROLES.map((r) => `--role-${r}`)];
+    const fails = [];
+    for (const s of surfaces) for (const t of texts) {
+      const r = contrast(resolve(vars, `var(${t})`), resolve(vars, `var(${s})`));
+      if (r < 4.5) fails.push(`${t} on ${s} ${r.toFixed(2)}`);
+    }
+    for (const s of ["--bg", "--side"]) for (const t of MARKS) {
+      const r = contrast(resolve(vars, `var(${t})`), resolve(vars, `var(${s})`));
+      if (r < 3) fails.push(`${t} on ${s} ${r.toFixed(2)}`);
+    }
+    const label = contrast(resolve(vars, "var(--on-accent)"), resolve(vars, "var(--accent)"));
+    if (label < 4.5) fails.push(`--on-accent on --accent ${label.toFixed(2)}`);
+    assert.deepEqual(fails, []);
+  });
+  test(`preset ${p.id} (${p.mode}): states and roles stay apart`, () => {
+    const colours = houseStates(vars);
+    assert.deepEqual([...gate2(colours), ...gate3Preset(colours, houseStates(base)), ...rolePairsOk(vars, base)], [], JSON.stringify({ deltaE: deltaMatrix(colours), deuteranopia: deltaMatrix(colours, "deuteranopia") }));
+  });
+}

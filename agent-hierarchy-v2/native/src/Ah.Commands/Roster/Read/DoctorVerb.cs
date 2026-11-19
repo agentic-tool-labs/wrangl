@@ -531,6 +531,21 @@ internal static partial class DoctorVerb
             rows.Add(new JsonObject { ["name"] = "codex-trust", ["status"] = "warn", ["detail"] = $"check failed: {e.Message}" });
         }
 
+        if (fixes is not null)
+        {
+            try
+            {
+                if (c.Services.Doctor?.AhdBuildFix() is { } buildFix)
+                {
+                    fixes.Add(buildFix);
+                }
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                fixes.Add($"ahd-build: fix failed: {(string.IsNullOrEmpty(e.Message) ? e.GetType().Name : e.Message)}");
+            }
+        }
+
         if (c.Opts.IsTrue("brief"))
         {
             foreach (var row in rows)
@@ -1130,7 +1145,7 @@ internal static partial class DoctorVerb
 
     /// <summary>
     /// The rebuild lock the install script keeps at <c>&lt;home&gt;/bin/.rebuild.lock</c>, or null when there is none. A fresh one
-    /// is an install or rebuild at work; a stale one is warned about, because without flock(1) the script never takes one over.
+    /// is an install or rebuild at work; a stale one is warned about, because without flock(1) the script fails while its pid is alive.
     /// </summary>
     private static Check? RebuildLock(RosterContext c)
     {
@@ -1169,7 +1184,7 @@ internal static partial class DoctorVerb
 
         return new Check(
             "warn",
-            $"{path} is stale ({age}, pid {holder}): a crashed install leaves it, and where flock(1) is absent (macOS) automatic rebuilds then wait until it is removed; if no install is running, remove it: rm {path}");
+            $"{path} is stale ({age}, pid {holder}): a crashed install leaves it; the next install takes it over once pid {holder} is gone, and where flock(1) is absent (macOS) fails while that pid is still running; if no install is running, remove it: rm {path}");
     }
 
     private static Check Marketplace(RosterContext c, string root)

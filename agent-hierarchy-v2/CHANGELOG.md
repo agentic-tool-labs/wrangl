@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.25] - 2026-11-19
+
+### Added
+
+- **A simpler theme menu in the web UI.** One light/dark toggle, then a list of looks and colour presets with the
+  active one marked. The presets come from well-known terminal palettes and draw flat; the existing looks keep their
+  names. "Customize…" opens the looks editor. A stored choice from an earlier version shows the same colours.
+- **The web UI has a favicon**, the Wrangl icon.
+- **`ah roster doctor --fix` rebuilds a stale ahd build.** When the `ahd-build` row says the binary is behind, `--fix`
+  starts the same background rebuild session start does, also when `auto_rebuild` is off. Run doctor again to see
+  the result.
+
+### Fixed
+
+- **A stale rebuild lock no longer makes "ahd is being rebuilt" repeat for ever.** Where `flock(1)` is absent, a lock
+  older than 10 minutes whose process is gone is now taken over. When that process is still alive the rebuild fails
+  with a line naming the lock and the pid, and session start shows the failure instead.
+
 ## [2.0.24] - 2026-11-19
 
 ### Added

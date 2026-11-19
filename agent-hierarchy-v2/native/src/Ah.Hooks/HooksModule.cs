@@ -44,6 +44,13 @@ public static class HooksModule
     public static (string Level, string Detail) AhdBuildRow(IAhEnvironment env, IFileReader files, string pluginVersion, DateTimeOffset now) =>
         InstallStampNotice.DoctorRow(env, files, pluginVersion, now);
 
+    /// <summary>
+    /// <c>roster doctor --fix</c> for the <c>ahd-build</c> row: starts the rebuild through <paramref name="host"/> the way SessionStart
+    /// does, overriding its automatic holds. Returns the <c>fix</c> entry, or null when current or not installed.
+    /// </summary>
+    public static string? AhdBuildFix(IInstallStampHost host, IAhEnvironment env, IFileReader files, string pluginVersion, DateTimeOffset now) =>
+        InstallStampNotice.Fix(host, env, files, pluginVersion, now);
+
     /// <summary>The context line SessionStart adds when the herdr desktop mod's marker is older than the plugin (zero or one). Never throws.</summary>
     public static IReadOnlyList<string> HerdrModLines(GateServices services, string pluginVersion) =>
         HerdrModNotice.Lines(services, pluginVersion);

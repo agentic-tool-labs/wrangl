@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render assets/mascot.grid (the Wrangl groundhog, one character per pixel) to assets/wrangl.svg, herdr-desktop/mods/ah2/wrangl-color.svg,
+"""Render assets/mascot.grid (the Wrangl groundhog, one character per pixel) to assets/wrangl.svg, herdr-desktop/mods/ah2/wrangl-color.svg, web/ui/wrangl.svg,
 assets/mascot.ansi (24-bit colour, half-block rows) and assets/mascot.txt (no colour).
 Run from the plugin root: python3 scripts/gen-mascot.py"""
 import pathlib
@@ -15,6 +15,8 @@ rects = "".join(f'<rect x="{x}" y="{y}" width="1" height="1" fill="{COL[c]}"/>'
     f'<title>Wrangl</title>{rects}</svg>\n')
 # The herdr mod's copy: the same colour file, drawn with image(), which keeps a file's own colours (svg() tints to one).
 (root.parent / "herdr-desktop" / "mods" / "ah2" / "wrangl-color.svg").write_text((root / "wrangl.svg").read_text())
+# The web UI's favicon: served from web/ui like its other static files (the page's CSP refuses a data: icon).
+(root.parent / "web" / "ui" / "wrangl.svg").write_text((root / "wrangl.svg").read_text())
 rgb = lambda c: ";".join(str(int(COL[c][i:i + 2], 16)) for i in (1, 3, 5))
 ansi, plain = [], []
 for y in range(0, h, 2):

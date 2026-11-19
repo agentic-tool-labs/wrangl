@@ -29,8 +29,12 @@ internal static class InstallStampNotice
     /// </summary>
     internal sealed record Decision(string Outcome, string? Behind, string Have, string Want, string Link, double? AgeMs, string? Script);
 
-    /// <summary>The one rule: what to do about <paramref name="stamp"/> (null when there is no <c>install.json</c>). Reads only.</summary>
-    internal static Decision Decide(JsonObject? stamp, string pluginVersion, IAhEnvironment env, IFileReader files, DateTimeOffset now)
+    /// <summary>
+    /// The one rule: what to do about <paramref name="stamp"/> (null when there is no <c>install.json</c>). Reads only. A
+    /// <paramref name="requested"/> rebuild (<c>roster doctor --fix</c>) skips the automatic holds: <c>auto-off</c>, <c>failed</c>
+    /// and <c>spawn-depth</c>.
+    /// </summary>
+    internal static Decision Decide(JsonObject? stamp, string pluginVersion, IAhEnvironment env, IFileReader files, DateTimeOffset now, bool requested = false)
     {
         if (stamp is null)
         {
@@ -63,7 +67,7 @@ internal static class InstallStampNotice
             return Of("current");
         }
 
-        if (!(stamp.Get("auto_rebuild") is { IsBool: true } auto && auto.AsBool()))
+        if (!requested && !(stamp.Get("auto_rebuild") is { IsBool: true } auto && auto.AsBool()))
         {
             return Of("auto-off");
         }
@@ -78,7 +82,7 @@ internal static class InstallStampNotice
             {
                 var age = nowMs - atMs;
                 var state = lastObject.Get("state") is { IsText: true } st ? st.AsString() : null;
-                if (state == "failed" && age < DayMs)
+                if (!requested && state == "failed" && age < DayMs)
                 {
                     return Of("failed", age);
                 }
@@ -101,7 +105,7 @@ internal static class InstallStampNotice
             return Of("no-plugin-root", stalledAge);
         }
 
-        if (SpawnDepth(env) > 0)
+        if (!requested && SpawnDepth(env) > 0)
         {
             return Of("spawn-depth", stalledAge);
         }
@@ -134,8 +138,45 @@ internal static class InstallStampNotice
                 return [$"{BehindText(d)}; it was not rebuilt in the background because {Reason(d, s.Environment)}; run /wrangl:hierarchy update"];
         }
 
+        StartRebuild(host, s.Environment, stamp!, file, d.Script!, pluginVersion, s.Clock.UtcNow);
+        return [$"ahd is being rebuilt in the background for {InjectedText.Clean(pluginVersion, 40)}"];
+    }
+
+    /// <summary>
+    /// <c>roster doctor --fix</c> for the <c>ahd-build</c> row: starts the rebuild through <see cref="StartRebuild"/> unless the
+    /// stamp is current, a rebuild is in progress, or it cannot be fixed (no stamp, no plugin root, no installer). The automatic
+    /// holds do not stop it. Returns the <c>fix</c> entry, or null when current or not installed (the row already says so).
+    /// </summary>
+    internal static string? Fix(IInstallStampHost host, IAhEnvironment env, IFileReader files, string pluginVersion, DateTimeOffset now)
+    {
+        var home = env.AhHome;
+        var file = NodePath.Join(home, "install.json");
+        var stamp = ReadStamp(files, file);
+        var shown = Decide(stamp, pluginVersion, env, files, now).Outcome;
+        var d = Decide(stamp, pluginVersion, env, files, now, requested: true);
+        switch (d.Outcome)
+        {
+            case "current" or "no-stamp":
+                return null;
+            case "in-progress":
+                return $"ahd-build {shown}: a rebuild started {Ago(d.AgeMs)} ago is in progress; no rebuild started";
+            case "no-plugin-root" or "no-installer":
+                return $"ahd-build {shown}: cannot fix: {Reason(d, env)}; no rebuild started";
+        }
+
+        StartRebuild(host, env, stamp!, file, d.Script!, pluginVersion, now);
+        return $"ahd-build {shown}: rebuild started; log {InjectedText.Quote(RebuildLog(home))}; run ah roster doctor again to see the result";
+    }
+
+    /// <summary>
+    /// The one way a rebuild starts, for SessionStart and <c>roster doctor --fix</c>: records <c>last_rebuild</c> as started in the
+    /// stamp, then starts the installer detached with <c>AH_SPAWN_DEPTH</c> one deeper.
+    /// </summary>
+    private static void StartRebuild(IInstallStampHost host, IAhEnvironment env, JsonObject stamp, string file, string script, string pluginVersion, DateTimeOffset now)
+    {
+        var home = env.AhHome;
         var updated = new JsonObject();
-        foreach (var key in stamp!.Keys)
+        foreach (var key in stamp.Keys)
         {
             updated[key] = stamp[key];
         }
@@ -143,22 +184,21 @@ internal static class InstallStampNotice
         updated["last_rebuild"] = new JsonObject
         {
             ["version"] = pluginVersion,
-            ["at"] = Timestamps.ToIsoString(s.Clock.UtcNow),
+            ["at"] = Timestamps.ToIsoString(now),
             ["state"] = "started",
         };
         // One line, "key":value: the form install.sh writes and its sed readers (stamp_raw_field, fail_step) match.
         host.WriteStamp(file, JsonText.Stringify(updated, 0) + "\n");
         host.StartRebuild(
-            d.Script!,
+            script,
             home,
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                ["HOME"] = s.Environment.HomeDirectory,
-                ["PATH"] = s.Environment.GetVariable("PATH"),
+                ["HOME"] = env.HomeDirectory,
+                ["PATH"] = env.GetVariable("PATH"),
                 ["AH_HOME"] = home,
-                ["AH_SPAWN_DEPTH"] = (SpawnDepth(s.Environment) + 1).ToString(CultureInfo.InvariantCulture),
+                ["AH_SPAWN_DEPTH"] = (SpawnDepth(env) + 1).ToString(CultureInfo.InvariantCulture),
             });
-        return [$"ahd is being rebuilt in the background for {InjectedText.Clean(pluginVersion, 40)}"];
     }
 
     /// <summary>
@@ -188,8 +228,8 @@ internal static class InstallStampNotice
         {
             "current" => ("ok", versions),
             "in-progress" => ("ok", $"{versions}; a background rebuild started {Ago(d.AgeMs)} ago is in progress"),
-            "failed" => ("warn", $"{versions}; {Reason(d, env)}; see {InjectedText.Quote(RebuildLog(home))}; run /wrangl:hierarchy update"),
-            _ => ("warn", $"{versions}; {Reason(d, env)}; run /wrangl:hierarchy update"),
+            "failed" => ("warn", $"{versions}; {Reason(d, env)}; see {InjectedText.Quote(RebuildLog(home))}; run /wrangl:hierarchy update or ah roster doctor --fix"),
+            _ => ("warn", $"{versions}; {Reason(d, env)}; run /wrangl:hierarchy update or ah roster doctor --fix"),
         };
     }
 

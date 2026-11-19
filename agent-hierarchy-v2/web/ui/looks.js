@@ -1,4 +1,5 @@
 import { contrast, hex, luminance, over } from "./color.js";
+import { applyPreset, DEFAULT as DEFAULT_PRESET, modeOf } from "./presets.js";
 
 // The looks registry (ah-ui-looks §2-§5): the built-ins, the active choice and saved looks in the daemon's looks.json, and the one
 // apply() the app root and the editor preview share. localStorage `ah-optics` is only read: it is what a browser migrates from, and
@@ -533,11 +534,8 @@ export function lookFor(state, theme) {
   return look ?? BUILTINS.find((l) => l.id === DEFAULTS[theme]);
 }
 
-export function themeOf(doc = globalThis.document, win = globalThis) {
-  const set = doc?.documentElement?.getAttribute?.("data-theme");
-  if (set === "light" || set === "dark") return set;
-  return win.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
+// The mode the page shows (presets.js owns it; the name here is what the looks code and the editor import).
+export const themeOf = modeOf;
 
 // The page's choice. A save is held here for the page's life, so a store that is blocked or refuses the write (quota, some private
 // modes) still keeps the click, and later re-applies (theme flips) keep it.
@@ -545,10 +543,11 @@ const held = new WeakMap();
 
 export const stateOf = (win = globalThis) => held.get(win) ?? readOptics(storeOf(win));
 
-// Apply the current choice to the app root now.
+// Apply the current choice to the app root now: the shown mode's preset, and its look, which is House under any preset but Default
+// (a glass look paints panes from its own colour, so a preset could not show under it; the stored look is kept for Default).
 export function applyStored(doc = globalThis.document, win = globalThis) {
   const state = stateOf(win);
-  const look = lookFor(state, themeOf(doc, win));
+  const look = applyPreset(doc, win) === DEFAULT_PRESET ? lookFor(state, themeOf(doc, win)) : HOUSE;
   apply(look, profileOf(look), doc?.documentElement);
   return state;
 }

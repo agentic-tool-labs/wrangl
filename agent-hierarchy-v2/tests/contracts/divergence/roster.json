@@ -148,7 +148,7 @@
       "where": "Ah.Commands DoctorVerb, row `rebuild-lock`, after the trust rows and before `roster-selection`",
       "node": "no such row: the Node build has no rebuild lock",
       "native": "present only when <home>/bin/.rebuild.lock exists: ok while it is under 10 minutes old, warn when it is older (or has no readable age), naming the file and `rm <file>`; never red, never written",
-      "reason": "without flock(1) the install script never takes over a stale lock, and a rebuild started from a hook cannot show its warning",
+      "reason": "without flock(1) the install script fails while a stale lock's pid is alive, and a rebuild started from a hook cannot show its warning",
       "rowsExercisingNode": []
     }
   ]

@@ -1673,6 +1673,8 @@ Read-only JSON, one row per thing that can be wrong; `--check` exits 1 on any re
 
 An `ahd-build` row compares `install.json`'s version and contract with the plugin's and, when ahd is behind, says why it was not rebuilt and the fix (`/wrangl:hierarchy update`, or `/wrangl:hierarchy install` when not installed); `ok` when current or a rebuild is in progress, else `warn`.
 
+`--fix` also starts that rebuild the way session start does, even with `auto_rebuild` off, after a failure or under `AH_SPAWN_DEPTH`; it adds an `ahd-build` entry to `fix` (none when current or not installed), starts nothing when in progress or without a plugin root or installer, and never changes the exit code.
+
 `teams` adds `gate: {mode, members, would_refuse_24h, deny_24h}` per team, `null` without a document. A `progress` row is `ok`, `off`, or `warn` (never red). The rows `version`, `team`, `peers`, `registrations`, `rejected-requests`, `hooks-syntax` and `marketplace` each print what they checked in their detail.
 
 #### Split decision (tests)

@@ -177,8 +177,9 @@ writes no state of any kind outside such a directory (project directories, `sess
 `test mode write outside the sandbox skipped: <dir>` row); CLI writes are unaffected. The repo's
 shell suites run hooks from their own scripts, outside the Bash tool, so the gate never sees them.
 
-On macOS a crashed rebuild leaves `~/.claude/ah2/bin/.rebuild.lock`; `ah roster doctor` names it in a `rebuild-lock` row
-and it is removed by hand once no install is running.
+A crashed rebuild leaves `~/.claude/ah2/bin/.rebuild.lock`; `ah roster doctor` names it in a `rebuild-lock` row. Once it is
+over 10 minutes old the next install takes it over when its pid is gone. On macOS (no flock(1)), when its pid is still running,
+the install fails naming the lock and pid (a background rebuild records `failed`); stop that process or remove the file.
 
 A bug report that can be acted on:
 
