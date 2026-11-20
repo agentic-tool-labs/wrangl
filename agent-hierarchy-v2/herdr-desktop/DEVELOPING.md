@@ -51,8 +51,8 @@ horizontal and vertical; `dock-flow`: Flow docked; `graph-shot`: the team in the
 
 `spinner.svg` and `x.svg` are copied from herdr-app's `defaults/mods/workspace-chrome/`, which redistributes them
 under the Apache License 2.0, copyright the herdr-app authors; the licence text is in
-[LICENSES/herdr-app-Apache-2.0.txt](./LICENSES/herdr-app-Apache-2.0.txt). `x.svg`, `ellipsis.svg`, `panel-right.svg`
-and `app-window.svg` are Lucide icons (`x`, `ellipsis`, `panel-right` and `app-window`, the same path data); `x` and
+[LICENSES/herdr-app-Apache-2.0.txt](./LICENSES/herdr-app-Apache-2.0.txt). `x.svg`, `ellipsis.svg`, `panel-right.svg`,
+`app-window.svg` and `pin.svg` are Lucide icons (`x`, `ellipsis`, `panel-right`, `app-window` and `pin`, the same path data); `x` and
 `ellipsis` (Feather's `more-horizontal`) are on Lucide's list of icons derived from Feather. Lucide's ISC licence,
 with its Feather MIT section, is in [LICENSES/lucide-ISC.txt](./LICENSES/lucide-ISC.txt).
 

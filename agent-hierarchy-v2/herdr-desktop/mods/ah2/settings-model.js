@@ -81,7 +81,45 @@ export function settingsOf(raw) {
     placement: r.placement === "window" ? "window" : "column",
     // where ah runs (target-model.js targetOf): auto, local, machine:<name>, wsl: or wsl:<distro>
     ahOn: typeof r.ahOn === "string" && /^(auto|local|machine:.+|wsl:.*)$/.test(r.ahOn) ? r.ahOn : "auto",
+    // ah2-326: the sidebar's pinned teams and the unpinned teams' chosen order, team ids (displayOrder, teamMove)
+    pinned: ids(r.pinned),
+    order: ids(r.order),
   };
+}
+
+const ids = (v) => (Array.isArray(v) ? [...new Set(v.filter((s) => typeof s === "string"))] : []);
+
+// ah2-326: the top-level teams in the order the sidebar draws them: pinned (in pin order), then unpinned ones placed in `order`, then
+// the rest as served (so a new team goes last). Stored ids of teams not running are skipped; lanes are untouched.
+export function displayOrder(teams, s) {
+  const byId = new Map(teams.map((t) => [t.id, t]));
+  const pin = new Set(s.pinned);
+  const placed = [...s.pinned, ...s.order.filter((id) => !pin.has(id))].filter((id) => byId.has(id));
+  const at = new Set(placed);
+  return [...placed.map((id) => byId.get(id)), ...teams.filter((t) => !at.has(t.id))];
+}
+
+// ah2-326: the {pinned, order} patch a team menu choice writes, or null when it does not apply (the item is not drawn). `teams`: every
+// running top-level team as served, hidden ones too. Up and down swap with the nearest shown neighbour in the same group and write
+// that group's whole running order, then its stored ids of teams not running (kept for when they come back).
+export function teamMove(teams, s, id, action) {
+  const pinned = s.pinned.includes(id);
+  if (action === "pin") return pinned ? null : { pinned: [...s.pinned, id], order: s.order.filter((x) => x !== id) };
+  if (action === "unpin") return pinned ? { pinned: s.pinned.filter((x) => x !== id), order: [id, ...s.order.filter((x) => x !== id)] } : null;
+  if (action !== "up" && action !== "down") return null;
+  const pin = new Set(s.pinned);
+  const group = displayOrder(teams, s).filter((t) => pin.has(t.id) === pinned).map((t) => t.id);
+  const i = group.indexOf(id);
+  if (i < 0) return null;
+  const hide = new Set(s.hidden);
+  const step = action === "up" ? -1 : 1;
+  let j = i + step;
+  while (j >= 0 && j < group.length && hide.has(group[j])) j += step;
+  if (j < 0 || j >= group.length) return null;
+  [group[i], group[j]] = [group[j], group[i]];
+  const running = new Set(teams.map((t) => t.id));
+  const list = pinned ? "pinned" : "order";
+  return { [list]: [...group, ...s[list].filter((x) => !running.has(x))] };
 }
 
 // The sidebar's teams once the settings apply: hidden teams leave the list (their questions still count in Needs you and Q&A),

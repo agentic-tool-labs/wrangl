@@ -1,7 +1,7 @@
 // ah2-207: the Wrangl pane draws each team as a tree (model.js teamTree, treeRows), each row in the Graph's colours (graph-model.js rowMark).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sidebarModel, teamTree, treeRows } from "../../herdr-desktop/mods/ah2/model.js";
+import { sidebarModel, teamTree, treeRows, teamTotals } from "../../herdr-desktop/mods/ah2/model.js";
 import { cardStyle, rowMark } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { isActive } from "../../herdr-desktop/mods/ah2/flow-model.js";
 
@@ -168,4 +168,12 @@ test("an unread report gives its member's row a dot back to its briefer and a re
   // negative: a role not in the table, or no column served (an older ahd), keeps its role hue
   assert.equal(laneHue("custom-role", 2, false), WEB.dark.role.neutral);
   assert.equal(laneHue("reviewer", null, false), WEB.dark.role.reviewer);
+});
+
+// ah2-325 D8: a collapsed team's header counts the team and every lane under it, nested lanes too.
+test("teamTotals sums needs-you, working and blocked over a team and its nested lanes", () => {
+  const tm = (needsYou, working, blocked, lanes = []) => ({ needsYou, working, blocked, lanes });
+  assert.deepEqual(teamTotals(tm(1, 2, 0, [tm(0, 1, 1, [tm(2, 0, 3)]), tm(0, 0, 0)])), { needsYou: 3, working: 3, blocked: 4 });
+  // negative: a team with no lanes counts only itself
+  assert.deepEqual(teamTotals(tm(0, 4, 1)), { needsYou: 0, working: 4, blocked: 1 });
 });

@@ -77,9 +77,16 @@ Each team row shows:
   whole goal, with its "done when" if it has one;
 - the counts: `N needs you`, then `N working · N blocked`;
 - a **Sitrep** pill;
-- on a top-level team, a small **×** to dismiss the team (see [Dismiss a team](#dismiss-a-team)).
+- on a top-level team, a **⋯** menu (below).
 
-Click the row or the **Sitrep** pill, or press Enter on it, to open that team's sitrep in a window.
+Click the **Sitrep** pill, or press Enter on it, to open that team's sitrep in a window.
+
+A top-level team also has a **⋯** button beside the Sitrep pill that opens the team's menu. It can
+**Pin to top** (or **Unpin**) the team, **Move up** or **Move down** it among the pinned or the unpinned teams, and
+**Collapse** it to its header line (or **Expand** it; the `▾`/`▸` at the row's left does the same), and, last,
+**Dismiss** it (see [Dismiss a team](#dismiss-a-team)). A collapsed team
+still shows its alerts, and its counts include its lanes. The order, pins and collapsed teams are kept per machine in
+Herdr; the web UI and the TUI keep their own order.
 
 ### Member rows
 
@@ -117,7 +124,7 @@ link. Close the window with `esc` or **×**.
 
 ## Dismiss a team
 
-Open the dialog from a team row's **×** or the sitrep window's **Dismiss**.
+Open the dialog from **Dismiss** in a team row's **⋯** menu or the sitrep window's **Dismiss**.
 
 - A team with no running session is dismissed at once, and a notice says so.
 - A team that is still working lists its running members, with any uncommitted or unmerged work found, and offers:
