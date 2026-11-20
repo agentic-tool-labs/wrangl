@@ -191,8 +191,10 @@ public sealed record HerdrCore(
 
         // A Claude session's and an ah member's own identity never reach core (a member's own values reach it through --settings).
         // Only an inherited map also drops HERDR_*: that is this process's herdr TUI pane, which belongs to no terminal core opens.
+        // HERDR_APP_HOME stays: it names the herdr desktop that herdr-app talks to.
         var inherited = environment is null;
-        foreach (var key in map.Keys.Where(k => SessionVariables.IsSession(k) || (inherited && k.StartsWith("HERDR_", StringComparison.Ordinal))).ToList())
+        foreach (var key in map.Keys.Where(k => SessionVariables.IsSession(k)
+            || (inherited && k.StartsWith("HERDR_", StringComparison.Ordinal) && k != "HERDR_APP_HOME")).ToList())
         {
             map.Remove(key);
         }
