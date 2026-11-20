@@ -4,6 +4,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.29] - 2026-11-19
+
+### Added
+
+- **Order, pin and collapse teams in herdr desktop's Wrangl pane.** Each team row has a `⋯` menu: Pin to top, Unpin,
+  Move up, Move down, Collapse or Expand, and Dismiss. A ▾/▸ arrow also collapses a team to its row, which still shows
+  its counts and alerts. The order, pins and collapsed state are kept in herdr's settings, per user and per machine.
+
+### Changed
+
+- **Team rows in the Wrangl pane.** A click on a team row no longer opens its sitrep; the Sitrep pill does. Dismiss
+  moved from the row's × into the `⋯` menu. The "Waiting on you" line under a team is gone; the team's count badge
+  already shows it.
+
 ## [2.0.28] - 2026-11-19
 
 ### Fixed

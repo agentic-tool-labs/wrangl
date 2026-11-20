@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { settingsOf, shownTeams, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS, updateDialogOf, outputOf, claimFresh, CLAIM_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
+import { settingsOf, shownTeams, displayOrder, teamMove, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS, updateDialogOf, outputOf, claimFresh, CLAIM_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
 
 // atp-1727: maximize and restore reopen the Desk window on the same tab; the next plain open (the strip toggle, Needs you) reads the
 // size from the key's `max`, as dock.js openDeskWindow does.
@@ -48,7 +48,7 @@ test("Q&A shows in the column or as the open Desk window's tab; a closed window'
 test("stored settings read back whole: odd or missing fields take their defaults", () => {
   const s = settingsOf({ tab: "agents-list", strip: { desk: false, feed: false }, hidden: ["d/x", 3], lanes: "sideways", interval: 7, notify: "yes", docked: ["graph", "files", "qa"] });
   // an old per-view `docked` list is not read: the whole Desk sits in the column until moved (atp-1728)
-  assert.deepEqual(s, { tab: "agents-list", strip: { desk: false }, hidden: ["d/x"], lanes: "nested", interval: 0, notify: false, autoUpdate: false, autoQa: false, placement: "column", ahOn: "auto" });
+  assert.deepEqual(s, { tab: "agents-list", strip: { desk: false }, hidden: ["d/x"], lanes: "nested", interval: 0, notify: false, autoUpdate: false, autoQa: false, placement: "column", ahOn: "auto", pinned: [], order: [] });
   assert.equal(settingsOf({ placement: "window" }).placement, "window");
   assert.equal(settingsOf({ placement: "floating" }).placement, "column", "an odd placement is the column");
   assert.equal(settingsOf({ ahOn: "machine:wsl" }).ahOn, "machine:wsl");
@@ -214,4 +214,48 @@ test("the update dialog's output keeps only its last lines, the build log's firs
   assert.equal(claimFresh({ overlay: "o1", at: 1000 }, 1000 + CLAIM_MS - 1), true);
   assert.equal(claimFresh({ overlay: "o1", at: 1000 }, 1000 + CLAIM_MS), false, "a claim left by a crash goes stale");
   assert.equal(claimFresh(null, 1000), false);
+});
+
+// ah2-326 §4.2: pinned first in pin order, then the ordered unpinned, then the rest as served; stale ids skipped, lanes untouched.
+test("displayOrder puts pinned teams first, then the chosen order, then new teams in served order", () => {
+  const lane = { id: "d/l", lanes: [] };
+  const served = ["d/a", "d/b", "d/c", "d/d", "e/a"].map((id) => ({ id, lanes: id === "d/c" ? [lane] : [] }));
+  const ids = (list) => list.map((t) => t.id);
+  assert.deepEqual(ids(displayOrder(served, settingsOf({}))), ["d/a", "d/b", "d/c", "d/d", "e/a"], "nothing stored: served order exactly");
+  const s = settingsOf({ pinned: ["d/d", "gone/x", "d/b"], order: ["d/c", "d/b", "gone/y"] });
+  const out = displayOrder(served, s);
+  assert.deepEqual(ids(out), ["d/d", "d/b", "d/c", "d/a", "e/a"], "pinned, ordered (a pinned id there skipped), new last; stale skipped");
+  assert.equal(out.find((t) => t.id === "d/c").lanes[0], lane, "lanes untouched");
+  // odd stored values are read safely: non-arrays, numbers and duplicates dropped
+  const odd = settingsOf({ pinned: "d/a", order: ["d/b", 3, null, "d/b", "d/a"] });
+  assert.deepEqual([odd.pinned, odd.order], [[], ["d/b", "d/a"]]);
+  assert.deepEqual(ids(displayOrder(served, odd)), ["d/b", "d/a", "d/c", "d/d", "e/a"]);
+  // negative: the same name in another dir is another team (e/a is not pinned by d/a)
+  assert.deepEqual(ids(displayOrder(served, settingsOf({ pinned: ["e/a"] }))), ["e/a", "d/a", "d/b", "d/c", "d/d"]);
+  // hidden wins over pinned
+  assert.deepEqual(ids(shownTeams(displayOrder(served, settingsOf({ pinned: ["d/d"], hidden: ["d/d"] })), settingsOf({ hidden: ["d/d"] }))), ["d/a", "d/b", "d/c", "e/a"]);
+});
+
+// ah2-326 §4.3: the patch each menu choice writes; null is "item not drawn".
+test("teamMove pins, unpins, moves past hidden neighbours and keeps stale ids at the end", () => {
+  const served = ["d/a", "d/b", "d/c", "d/d"].map((id) => ({ id, lanes: [] }));
+  const s = settingsOf({ pinned: ["d/c", "gone/p"], order: ["gone/o"] });
+  assert.deepEqual(teamMove(served, s, "d/a", "pin"), { pinned: ["d/c", "gone/p", "d/a"], order: ["gone/o"] });
+  assert.equal(teamMove(served, s, "d/c", "pin"), null, "already pinned: no Pin");
+  assert.equal(teamMove(served, s, "d/a", "unpin"), null, "not pinned: no Unpin");
+  assert.deepEqual(teamMove(served, s, "d/c", "unpin"), { pinned: ["gone/p"], order: ["d/c", "gone/o"] }, "unpinned to the start of the unpinned group");
+  // unpinned group in display order: a, b, d
+  assert.deepEqual(teamMove(served, s, "d/b", "up"), { order: ["d/b", "d/a", "d/d", "gone/o"] }, "only the moved group's list; stale kept at the end");
+  assert.deepEqual(teamMove(served, s, "d/b", "down"), { order: ["d/a", "d/d", "d/b", "gone/o"] });
+  assert.equal(teamMove(served, s, "d/a", "up"), null, "first of its group: no Move up");
+  assert.equal(teamMove(served, s, "d/d", "down"), null, "last of its group: no Move down");
+  assert.equal(teamMove(served, s, "d/c", "up"), null, "the only pinned team: no Move up");
+  // a hidden neighbour is skipped and keeps its place
+  const h = settingsOf({ hidden: ["d/b"] });
+  assert.deepEqual(teamMove(served, h, "d/a", "down"), { order: ["d/c", "d/b", "d/a", "d/d"] });
+  assert.equal(teamMove(served, settingsOf({ hidden: ["d/a"] }), "d/b", "up"), null, "only a hidden team above: no Move up");
+  // pinned group moves write `pinned` only
+  const p = settingsOf({ pinned: ["d/d", "d/a"], order: ["d/b"] });
+  assert.deepEqual(teamMove(served, p, "d/a", "up"), { pinned: ["d/a", "d/d"] });
+  assert.equal(teamMove(served, p, "d/a", "sideways"), null);
 });

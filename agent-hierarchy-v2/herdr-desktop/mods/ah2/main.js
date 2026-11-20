@@ -9,10 +9,10 @@
 // Colours are theme() tokens only.
 
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex, Button } from "gpui-base";
+import { v_flex, h_flex, Button, Popover } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree, teamTotals } from "./model.js";
 import { runText, underTip } from "./flow-model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
 import { boardSubs } from "./board-model.js";
@@ -24,8 +24,8 @@ import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
 import { markCell } from "./marks.js";
-import { shownTeams, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
-import { settings, settingsView, checkUpdate, installClick } from "./settings.js";
+import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
+import { settings, setSetting, settingsView, checkUpdate, installClick } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { openRename, renameInit, renameView } from "./rename.js";
 import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
@@ -471,8 +471,8 @@ export default class Ah2 extends View {
     // ah2-252: the model is built once per change of its inputs (model.js paneTree); a dot frame reuses it and computes only dotAt
     // (the kit consumes elements each render, gpui-kit.d.ts Element, so the rows themselves are rebuilt)
     // a node starts open, a lane closed under the Lanes: Collapsed setting, until its disclosure is used (kept per team and node)
-    const { m, teams, trees } = paneTree(this.treeMemo ??= {}, [this.sliceGen, this.ageGen, JSON.stringify(folds), set.lanes, set.hidden.join("\n")], this.st.slices, now, {
-      shown: (list) => shownTeams(list, set),
+    const { m, teams, trees } = paneTree(this.treeMemo ??= {}, [this.sliceGen, this.ageGen, JSON.stringify(folds), set.lanes, set.hidden.join("\n"), set.pinned.join("\n"), set.order.join("\n")], this.st.slices, now, {
+      shown: (list) => shownTeams(displayOrder(list, set), set),
       open: (tm) => (n) => folds[`${tm.id}|${n.key}`] ?? !(n.kind === "lane" && set.lanes === "collapsed"),
       track: (r, back) => trackOf(rowTrack(r, STEP), back),
     });
@@ -489,31 +489,90 @@ export default class Ah2 extends View {
 
     // ah2-207: each team draws its header, then its tree (model.js teamTree, treeRows); a lane's header is a node of its parent's tree.
     const lt = isLight(t.surface);
+    // ah2-326/325: a top-level team's pin, place and collapse (settings-model.js teamMove; the fold under `${id}|@team`, false = collapsed)
+    const collapsedOf = (tm) => folds[`${tm.id}|@team`] === false;
+    const fold = (tm, cx) => {
+      setShared(TREE_KEY, { ...(shared(TREE_KEY) ?? {}), [`${tm.id}|@team`]: collapsedOf(tm) });
+      cx.notify();
+    };
+    const menu = (tm) => {
+      const item = (key, label, a11y, choose) => this.ring(t, Button.new(`team-menu-${key}-${tm.id}`), t.popover)
+        .h(26).px(8).flex().items_center().rounded(6).cursor_pointer().text_size(12).text_color(t.foreground)
+        .hover((s) => s.bg(t.hover))
+        .accessibility_label(a11y)
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_click((_e, cx) => {
+          this.teamMenu = null;
+          choose(cx);
+        })
+        .child(label);
+      const move = (action) => teamMove(m.teams, set, tm.id, action);
+      const items = [
+        ...[["pin", "Pin to top", `Pin ${tm.label} to the top`], ["unpin", "Unpin", `Unpin ${tm.label}`], ["up", "Move up", `Move ${tm.label} up`], ["down", "Move down", `Move ${tm.label} down`]]
+          .map(([a, label, a11y]) => [move(a), a, label, a11y]).filter(([p]) => p)
+          .map(([p, a, label, a11y]) => item(a, label, a11y, (cx) => setSetting(p, cx))),
+        collapsedOf(tm) ? item("expand", "Expand", `Expand ${tm.label}`, (cx) => fold(tm, cx)) : item("collapse", "Collapse", `Collapse ${tm.label}`, (cx) => fold(tm, cx)),
+        // team-order Amendment 4: the header's × moved here; it opens the Dismiss dialog (dismiss.js), the confirm it always had
+        item("dismiss", "Dismiss", `Dismiss team ${tm.label}`, (cx) => {
+          openDismiss(tm.id, tm.label, this.workRootOf(tm.id), tm.parent ? tm.name : null);
+          cx.notify();
+        }),
+      ];
+      return Popover.new(`team-menu-${tm.id}`).open(this.teamMenu === tm.id)
+        .on_open_change((open, cx) => {
+          this.teamMenu = open ? tm.id : null;
+          cx.notify();
+        })
+        .trigger(this.ring(t, Button.new(`team-options-${tm.id}`), t.chrome)
+          .size(18).flex().flex_none().items_center().justify_center().rounded(9).cursor_pointer().text_color(t.muted)
+          .hover((s) => s.bg(t.raised).text_color(t.foreground))
+          .tooltip("Team options")
+          .accessibility_label(`Team options for ${tm.label}`)
+          // no stop_propagation here: the Popover's own press handler sits above the trigger, opens the menu and stops the press itself
+          .child(svg("mods/ah2/ellipsis.svg").size(12)))
+        .content(v_flex().id(`team-menu-list-${tm.id}`).p(4).gap(2).min_w(140).rounded(8).border(1).border_color(t.border).bg(t.popover).shadow_md()
+          .children(items));
+    };
     const header = (tm, lane, lead) => {
+      const collapsed = !lane && collapsedOf(tm);
+      const pinned = !lane && set.pinned.includes(tm.id);
+      // ah2-325 D8: collapsed, the counts are the team's and its lanes', so nothing folded away is lost
+      const c = collapsed ? { ...tm, ...teamTotals(tm) } : tm;
       // ah2-53: a team with a goal of its own shows it as a second muted line under the name, cut by the ellipsis; the row grows to fit it
       const goalTip = tm.goal ? ` · goal: ${tm.goalFull}` : "";
       // ah2-218: shown by its display name; the real name, which commands and addresses use, is in the tooltip
       const realTip = tm.real ? ` · ${tm.real}` : "";
-      const row = this.ring(t, Button.new(`team-${tm.id}`), t.chrome)
+      const pinTip = pinned ? ", pinned" : "";
+      const name = (el) => (pinned ? h_flex().flex_auto().min_w(0).gap(4).items_center().child(svg("mods/ah2/pin.svg").size(11).flex_none().text_color(t.muted)).child(el.flex_1()) : el);
+      // the row itself opens nothing, so it is no button: no pointer, no hover, no focus stop; the Sitrep pill opens the sitrep
+      // (team-order Amendment 2). The ring border stays so its columns line up with the rows that are buttons.
+      const row = this.ring(t, h_flex().id(`team-${tm.id}`), t.chrome)
         .when(!tm.goal, (el) => el.h(30)).when(Boolean(tm.goal), (el) => el.min_h(30).py(4))
-        .when(lane, (el) => el.flex_1().min_w(0).pl(4)).when(!lane, (el) => el.pl(8))
-        .pr(8).gap(4).flex().items_center().rounded(6).cursor_pointer()
+        .when(lane, (el) => el.flex_1().min_w(0).pl(4)).when(!lane, (el) => el.pl(2))
+        .pr(8).gap(4).flex().items_center().rounded(6)
         .text_size(11).font_semibold().text_color(t.muted)
-        .hover((s) => s.bg(t.hover).text_color(t.foreground))
-        .tooltip(`Open the ${tm.label} sitrep${realTip}${counts(tm) ? ` · ${counts(tm)}` : ""}${goalTip}`)
-        .accessibility_label(`${tm.label}${lane ? ", lane" : ""}. ${counts(tm) || "nothing running"}${goalTip}. Open its sitrep`)
-        .on_click(() => openTeam(tm.id))
+        .tooltip(`${tm.label}${pinTip}${realTip}${counts(c) ? ` · ${counts(c)}` : ""}${goalTip}`)
+        .accessibility_label(`${tm.label}${lane ? ", lane" : ""}${pinTip}. ${counts(c) || "nothing running"}${goalTip}`)
+        // the disclosure: collapse the team to this header line, or expand it
+        .when(!lane, (el) => el.child(Button.new(`team-fold-${tm.id}`).w(16).h(24).flex().flex_none().items_center().justify_center().rounded(4).cursor_pointer()
+          .text_size(10).text_color(t.muted).border(1).border_color(t.chrome).focus((s) => s.border_color(t.accent))
+          .hover((s) => s.bg(t.raised).text_color(t.foreground))
+          .tooltip(collapsed ? "Expand" : "Collapse")
+          .accessibility_label(`${collapsed ? "Expand" : "Collapse"} ${tm.label}`)
+          .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+          .on_click((_e, cx) => fold(tm, cx))
+          .child(collapsed ? "▸" : "▾")))
         // the name keeps its width: working/blocked shrinks first (its full text is in the label), needs you never does
-        .child(tm.goal
+        .child(name(tm.goal
           ? v_flex().flex_auto().min_w(0)
             .child(div().min_w(0).truncate().child(tm.label))
             .child(div().min_w(0).truncate().text_size(10.5).font_medium().text_color(t.muted).child(tm.goal))
-          : div().flex_auto().min_w(0).truncate().child(tm.label))
+          : div().flex_auto().min_w(0).truncate().child(tm.label)))
         // needs you as a count pill, so the name keeps its room (the words are in the tooltip and the label)
-        .when(tm.needsYou > 0, (el) => el.child(div().h(16).px(5).flex().flex_none().items_center().rounded(8).border(1).border_color(t.blocked)
-          .font_family(MONO).text_size(10.5).font_medium().text_color(t.foreground).child(String(tm.needsYou))))
-        .when(tm.working > 0 || tm.blocked > 0, (el) => el.child(div().flex_shrink(100).min_w(0).truncate().font_medium().text_color(t.muted)
-          .child(counts({ working: tm.working, blocked: tm.blocked }))))
+        .when(c.needsYou > 0, (el) => el.child(div().h(16).px(5).flex().flex_none().items_center().rounded(8).border(1).border_color(t.blocked)
+          .font_family(MONO).text_size(10.5).font_medium().text_color(t.foreground).child(String(c.needsYou))))
+        .when(c.working > 0 || c.blocked > 0, (el) => el.child(div().flex_shrink(100).min_w(0).truncate().font_medium().text_color(t.muted)
+          .child(counts({ working: c.working, blocked: c.blocked }))))
         // this team's sitrep as a pill on its row (atp-1712; the foot strip's all-teams Sitrep is gone)
         .child(this.ring(t, Button.new(`team-sitrep-${tm.id}`), t.border)
           .h(18).px(6).flex().flex_none().items_center().rounded(9).cursor_pointer()
@@ -524,14 +583,7 @@ export default class Ah2 extends View {
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
           .on_click(() => openTeam(tm.id))
           .child("Sitrep"))
-        .when(!lane, (el) => el.child(this.ring(t, Button.new(`team-dismiss-${tm.id}`), t.chrome)
-          .size(18).flex().flex_none().items_center().justify_center().rounded(9).cursor_pointer().text_color(t.muted)
-          .hover((s) => s.bg(t.raised).text_color(t.foreground))
-          .tooltip(`Dismiss ${tm.label}`)
-          .accessibility_label(`Dismiss team ${tm.label}`)
-          .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openDismiss(tm.id, tm.label, this.workRootOf(tm.id), tm.parent ? tm.name : null))
-          .child(svg("mods/ah2/x.svg").size(11))));
+        .when(!lane, (el) => el.child(menu(tm)));
       return lead ? div().flex().w_full().gap(4).child(lead).child(row) : row;
     };
     // r: the tree row the alert sits under, whose lines run on through it; null under a team's header
@@ -544,14 +596,22 @@ export default class Ah2 extends View {
       return r ? div().flex().w_full().gap(4).child(this.treeLead(t, r, null)).child(el) : div().flex().w_full().child(el);
     };
     // A team's own alerts sit under its header, so they never read as a member's (ah2-133 D4); so does a member alert whose member has no row.
+    // team-order Amendment 3: the served "Waiting on you · N" alert (kind needs_you) is not drawn; the header's count pill says it
+    const drawn = (a) => a.kind !== "needs_you";
     const teamAlerts = (tm, r) => {
       const keys = new Set(tm.members.map((mb) => mb.key));
-      for (const a of tm.alerts) if (!a.member || !keys.has(a.member)) rows.push(alert(tm.id, a, r));
+      for (const a of tm.alerts) if (drawn(a) && (!a.member || !keys.has(a.member))) rows.push(alert(tm.id, a, r));
     };
     // A folded node's hidden members keep their alerts in sight, under it (a collapsed lane always kept them).
-    const hidden = (n) => n.children.flatMap((c) => [...(c.alerts ?? []), ...(c.kind === "lane" ? c.team.alerts.filter((a) => !a.member) : []), ...hidden(c)]);
+    const hidden = (n) => n.children.flatMap((c) => [...(c.alerts ?? []), ...(c.kind === "lane" ? c.team.alerts.filter((a) => !a.member && drawn(a)) : []), ...hidden(c)]);
+    // ah2-325 D8: a collapsed team keeps every alert of its own, its members' and its lanes' under its header
+    const allAlerts = (tm) => [...tm.alerts.filter(drawn), ...tm.lanes.flatMap(allAlerts)];
     const team = (tm) => {
       rows.push(header(tm, false, null));
+      if (collapsedOf(tm)) {
+        for (const a of allAlerts(tm)) rows.push(alert(tm.id, a, null));
+        return;
+      }
       teamAlerts(tm, null);
       for (const { r, d, pts, b, bpts, parent } of treeOf.get(tm)) {
         const n = r.node;

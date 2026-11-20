@@ -10,7 +10,7 @@ import { ah, target } from "./ah.js";
 import { targetLabel } from "./target-model.js";
 import { sidebarModel } from "./model.js";
 import { hasDesk } from "./dock.js";
-import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY, outputOf } from "./settings-model.js";
+import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, displayOrder, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY, outputOf } from "./settings-model.js";
 import { REBUILD_KEY } from "./rebuild-model.js";
 import { openUpdate } from "./update.js";
 
@@ -188,7 +188,7 @@ export function settingsView(self, t, close) {
     ));
     tm.lanes.forEach((l) => teamRow(l, true));
   };
-  m.teams.forEach((tm) => teamRow(tm, false));
+  displayOrder(m.teams, s).forEach((tm) => teamRow(tm, false)); // the sidebar's order (ah2-326)
   const running = new Set();
   const seen = (list) => list.forEach((tm) => { running.add(tm.id); seen(tm.lanes); });
   seen(m.teams);

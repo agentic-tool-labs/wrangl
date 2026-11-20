@@ -275,6 +275,12 @@ export function terminalFinder(terms, target = null) {
 }
 
 // A team header's counts: needs you first, then working and blocked; zeros say nothing.
+// ah2-325 D8: a collapsed team's header counts: the team and all its lanes, so nothing folded away is lost.
+export function teamTotals(t) {
+  return t.lanes.map(teamTotals).reduce((a, b) => ({ needsYou: a.needsYou + b.needsYou, working: a.working + b.working, blocked: a.blocked + b.blocked }),
+    { needsYou: t.needsYou, working: t.working, blocked: t.blocked });
+}
+
 export function counts(t) {
   return [t.needsYou && `${t.needsYou} needs you`, t.working && `${t.working} working`, t.blocked && `${t.blocked} blocked`].filter(Boolean).join(" · ");
 }
