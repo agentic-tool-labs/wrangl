@@ -186,6 +186,8 @@ internal sealed class FakeEnv(string home, string ahHome, Dictionary<string, str
 
     public string? GetTestOnly(string name) => TestMode ? GetVariable(name) : null;
 
+    public bool TestLimiterOff => GetVariable("AH_TEST_SLOTS") == "0" || GetVariable("AH_TEST_TOKENS") == "0";
+
     public string HomeDirectory { get; } = home;
 
     public string AhHome { get; } = ahHome;

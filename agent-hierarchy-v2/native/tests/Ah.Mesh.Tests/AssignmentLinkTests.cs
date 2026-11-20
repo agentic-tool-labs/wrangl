@@ -65,8 +65,9 @@ public sealed class AssignmentLinkTests
             }
         }
 
-        internal MailboxOutcome<JsonObject> Send(string from, string to, string text = "hello", string kind = "note", string fromTeam = Team) =>
-            _fx.Sender.Send(new JsonObject
+        internal MailboxOutcome<JsonObject> Send(string from, string to, string text = "hello", string kind = "note", string fromTeam = Team, string? refFile = null)
+        {
+            var req = new JsonObject
             {
                 ["cwd"] = _dir,
                 ["hierarchy_dir"] = _dir,
@@ -77,8 +78,23 @@ public sealed class AssignmentLinkTests
                 ["session_id"] = $"s-{from}-{fromTeam}",
                 ["id"] = $"20260101-1100{_n++:00}-ab12",
                 ["kind"] = kind,
-                ["text"] = text,
-            });
+            };
+            if (refFile is null)
+            {
+                req["text"] = text;
+            }
+            else
+            {
+                req["ref"] = $"{_dir}/{refFile}";
+            }
+
+            return _fx.Sender.Send(req);
+        }
+
+        internal List<JsonObject> Box(string name) =>
+            [.. _fx.Mailbox.ReadEntries(_fx.Mailbox.BoxDirFor($"{_dir}/teams/{Team}.json", name)).Entries.Select(e => e.AsObject())];
+
+        internal int Requests() => Directory.GetFiles($"{_dir}/msgs", "*--request.md").Length;
 
         internal List<JsonObject> Links() => [.. _fx.Links.Judge(_dir, Team, Now.ToUnixTimeMilliseconds()).Select(l => l.AsObject())];
 
@@ -349,5 +365,64 @@ public sealed class AssignmentLinkTests
         var ended = rig.Fixture.Links.ReadLinks(rig.Dir, Team).Get("links")!.Value.AsArray().Single(l => l.Member("id")!.Value.AsString() == id);
         Assert.Equal("revoked", ended.Member("state")!.Value.AsString());
         Assert.Equal("assignment_ended", ended.Member("end_reason")!.Value.AsString());
+    }
+
+    // ---------------------------------------------------------------- a send opens the link ahd would auto-grant (ah2-343)
+
+    private const string TaskD = "msgs/20260101-000000-dd11--implementor--feat-d--request.md";
+
+    private static (string File, string Text) Message(string id, string slug, string parent) =>
+        ($"h/msgs/{id}--reviewer--{slug}--request.md", $"---\nid: {id}\ntype: request\nto: reviewer\nfrom: implementor\nslug: {slug}\nparent: {parent}\nteam: {Team}\ncreated: 2026-01-01T00:00:00+00:00\n---\n\nbody\n");
+
+    // d (implementor, dispatched dd11 by the Orchestrator) shares nothing with b (reviewer): no assignment link, the auto_grant pair
+    private static Mesh Briefed(params (string File, string Text)[] more)
+    {
+        var mesh = new Mesh(null, [Message("20260101-000000-dd12", "feat-d", "20260101-000000-dd11"), Message("20260101-000000-dd13", "other", "null"), .. more]);
+        Assert.True(mesh.Send("orchestrator", "d@tm", kind: "brief", refFile: TaskD).Ok);
+        return mesh;
+    }
+
+    [Fact]
+    public void ASendOnTheDispatchedTaskOpensTheLinkAutoGrantWouldGrant()
+    {
+        var mesh = Briefed();
+        var requests = mesh.Requests();
+
+        var sent = mesh.Send("d", "b@tm", kind: "note", refFile: "msgs/20260101-000000-dd12--reviewer--feat-d--request.md");
+
+        Assert.True(sent.Ok, sent.Failure?.Message);
+        var link = Assert.Single(mesh.Links());
+        Assert.Equal("ahd-auto", Text(link, "granted_by"));
+        Assert.Equal("20260101-000000-dd11", Text(link, "task"));
+        Assert.Equal(1, link.Get("used")!.Value.AsNumber());
+        Assert.Single(mesh.Box("orchestrator"), e => Text(e, "event") == "link-granted");
+        Assert.Equal(requests, mesh.Requests());
+    }
+
+    [Fact]
+    public void NegativeASendOffTheTaskIsRefusedAsTheLinkWouldAndOpensNothing()
+    {
+        var mesh = Briefed();
+        var requests = mesh.Requests();
+
+        var sent = mesh.Send("d", "b@tm", kind: "note", refFile: "msgs/20260101-000000-dd13--reviewer--other--request.md");
+
+        Assert.Equal("link_off_task", sent.Failure?.Code);
+        Assert.Empty(mesh.Links());
+        Assert.Equal(requests, mesh.Requests());
+    }
+
+    [Fact]
+    public void NegativeAPairOutsideAutoGrantIsRefusedWithTheReason()
+    {
+        // b (reviewer, dispatched bb11) to c (architect): not a default auto_grant pair
+        var mesh = new Mesh(null, Filed("20260101-000000-bb11", "b", "feat-b"));
+        Assert.True(mesh.Send("orchestrator", "b@tm", kind: "brief", refFile: "msgs/20260101-000000-bb11--implementor--feat-b--request.md").Ok);
+
+        var sent = mesh.Send("b", "c@tm");
+
+        Assert.Equal("not_linked", sent.Failure?.Code);
+        Assert.EndsWith("ah: not opened automatically: role pair not listed", sent.Failure!.Message, StringComparison.Ordinal);
+        Assert.Empty(mesh.Links());
     }
 }

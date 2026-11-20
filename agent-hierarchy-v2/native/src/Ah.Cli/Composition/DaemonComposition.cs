@@ -342,6 +342,8 @@ internal static class DaemonComposition
 
         public bool TestModeInRealHome => inner.TestModeInRealHome;
 
+        public bool TestLimiterOff => inner.TestLimiterOff;
+
         public string? GetTestOnly(string name) => inner.GetTestOnly(name);
 
         public string HomeDirectory => inner.HomeDirectory;

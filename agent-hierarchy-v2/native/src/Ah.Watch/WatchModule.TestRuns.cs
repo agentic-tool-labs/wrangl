@@ -24,21 +24,23 @@ public static partial class WatchModule
 
     /// <summary>The refusal for <paramref name="command"/>; see <see cref="TestCaller"/> for who is judged.</summary>
     /// <remarks>
-    /// Refused when the command holds a whole-project test run (including one already under the test bucket) and the caller, asked for
-    /// only then, is a team member of class <c>implement</c> or <see cref="UnknownRoleClass"/> whose role is not <see cref="QaRole"/>.
-    /// A null caller is not a team member.
+    /// Refused when the command holds a whole-project test run (including one already under the test bucket), the caller, asked for
+    /// only then, is a team member of class <c>implement</c> or <see cref="UnknownRoleClass"/> whose role is not <see cref="QaRole"/>,
+    /// and the default test bucket, asked for only then, is not idle (a token held or a ticket waiting). A null caller is not a team
+    /// member; a null bucket is a limiter that is off.
     /// </remarks>
-    public static string? TestScopeRefusal(string? home, string? cwd, string? command, Func<TestCaller?> caller) =>
-        ScopeRefusal(TestRegistry.For(home, cwd).MatchesIncludingBucketed(command), caller);
+    public static string? TestScopeRefusal(string? home, string? cwd, string? command, Func<TestCaller?> caller, Func<BucketStatus?> bucket) =>
+        ScopeRefusal(TestRegistry.For(home, cwd).MatchesIncludingBucketed(command), caller, bucket);
 
     /// <summary>As the overload taking the command text, for a command given as its words.</summary>
-    public static string? TestScopeRefusal(string? home, string? cwd, IReadOnlyList<string> argv, Func<TestCaller?> caller) =>
-        ScopeRefusal(TestRegistry.For(home, cwd).MatchesOfWords(argv), caller);
+    public static string? TestScopeRefusal(string? home, string? cwd, IReadOnlyList<string> argv, Func<TestCaller?> caller, Func<BucketStatus?> bucket) =>
+        ScopeRefusal(TestRegistry.For(home, cwd).MatchesOfWords(argv), caller, bucket);
 
-    internal static string? ScopeRefusal(IReadOnlyList<TestMatch> matches, Func<TestCaller?> caller)
+    internal static string? ScopeRefusal(IReadOnlyList<TestMatch> matches, Func<TestCaller?> caller, Func<BucketStatus?> bucket)
     {
         var full = matches.FirstOrDefault(static m => m.Scope == TestScope.Full);
-        if (full is null || caller() is not { RoleClass: "implement" or UnknownRoleClass, Role: not QaRole })
+        if (full is null || caller() is not { RoleClass: "implement" or UnknownRoleClass, Role: not QaRole }
+            || bucket() is not { } b || (b.HeldTokens == 0 && b.Waiting == 0))
         {
             return null;
         }
@@ -46,7 +48,7 @@ public static partial class WatchModule
         var seg = full.Segment;
         var text = seg.ProgramName + (seg.Rest.Count > 0 ? " " + string.Join(' ', seg.Rest) : string.Empty);
         var noNarrow = full.Row.LightIf is null ? " This command has no narrow form; run the underlying test runner with a filter." : string.Empty;
-        return $"ah: whole-project test runs belong to QA ({text}). Run a narrow form instead: ah test run --tokens 2 -- dotnet test <project> --filter <expr>; use the runner's filter or one test file.{noNarrow}";
+        return FormattableString.Invariant($"ah: a whole-project test run by an implementor needs an idle test bucket ({b.HeldTokens}/{b.Capacity} tokens held, {b.Waiting} waiting) ({text}). Run a narrow form now: ah test run -- dotnet test <project> --filter <expr>; or retry when the bucket is idle; or report NEEDS-QA.{noNarrow}");
     }
 
     /// <summary>What the bucket does to the command <paramref name="argv"/>; see <see cref="TestPlan"/>.</summary>

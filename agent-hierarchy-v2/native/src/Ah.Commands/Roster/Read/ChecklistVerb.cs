@@ -414,7 +414,7 @@ internal static partial class ChecklistVerb
         ChecklistEntry? auto = null;
         if (c.Opts.Text("ref") is { } reference)
         {
-            auto = RefuseSharedRef(entries, reference, null);
+            auto = AutoHoldingRef(entries, reference, null);
             events.Add(new PlanInput(item, "ref", Ref: reference));
         }
 
@@ -440,19 +440,11 @@ internal static partial class ChecklistVerb
     }
 
     /// <summary>
-    /// Refuses a ref another item already lists, unless that item is the one <c>ah msg new</c> added for the request: it is returned, and its ref
-    /// yields to the item being linked. A superseded auto item no longer counts.
+    /// The item <c>ah msg new</c> added for the request that already lists <paramref name="reference"/>, not yet superseded: its ref yields to the
+    /// item being linked. Null when none; any other item may share the ref (ah2-346).
     /// </summary>
-    private static ChecklistEntry? RefuseSharedRef(IReadOnlyList<ChecklistEntry> entries, string reference, ChecklistEntry? self)
-    {
-        var others = entries.Where(e => e != self && !HierarchyModule.ChecklistSuperseded(e) && (e.Item.Refs ?? []).Contains(reference, StringComparer.Ordinal)).ToList();
-        return others.Count switch
-        {
-            0 => null,
-            1 when HierarchyModule.ChecklistIsAuto(others[0].Item) => others[0],
-            _ => throw new RosterFailure($"checklist: ref {reference} is already listed by item {HierarchyModule.ChecklistKey(others[0])}; a request links one item; nothing written"),
-        };
-    }
+    private static ChecklistEntry? AutoHoldingRef(IReadOnlyList<ChecklistEntry> entries, string reference, ChecklistEntry? self) =>
+        entries.FirstOrDefault(e => e != self && HierarchyModule.ChecklistIsAuto(e.Item) && !HierarchyModule.ChecklistSuperseded(e) && (e.Item.Refs ?? []).Contains(reference, StringComparer.Ordinal));
 
     /// <summary>
     /// After the ref has been written to <paramref name="target"/>: the auto item that held it is dropped with the note "superseded by &lt;target&gt;".
@@ -643,7 +635,7 @@ internal static partial class ChecklistVerb
         ChecklistEntry? auto = null;
         if (c.Opts.Text("ref") is { } reference)
         {
-            auto = RefuseSharedRef(entries, reference, entry);
+            auto = AutoHoldingRef(entries, reference, entry);
             events.Add(new PlanInput(id, "ref", Ref: reference));
         }
 

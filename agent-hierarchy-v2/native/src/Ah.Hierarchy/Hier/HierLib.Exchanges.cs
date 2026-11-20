@@ -9,9 +9,6 @@ internal sealed partial class HierLib
 {
     private const string Ws = JsText.SpaceClass;
 
-    [GeneratedRegex("^## \\[[0-9]+\\] ([^" + Ws + "]+)", RegexOptions.CultureInvariant)]
-    private static partial Regex AnchorKeyRegex();
-
     [GeneratedRegex("^- \\[[0-9]+\\] (?<key>goal|acceptance):(?<rest>[^\\n\\r\\u2028\\u2029]*)\\z", RegexOptions.CultureInvariant)]
     private static partial Regex TldrIntentRegex();
 
@@ -498,16 +495,17 @@ internal sealed partial class HierLib
     {
         var text = TextOf(parsed.Member("text")) ?? throw new InvalidOperationException("Cannot read properties of undefined (reading 'split')");
         var lines = text.Split('\n');
+        var markers = MessageText.SectionMarkers(lines);
         bool Filled(string key)
         {
             string? section = null;
             var firstLineSeen = false;
-            foreach (var line in lines)
+            for (var i = 0; i < lines.Length; i++)
             {
-                var a = AnchorKeyRegex().Match(line);
-                if (a.Success)
+                var line = lines[i];
+                if (markers[i] is { Key: { } anchorKey })
                 {
-                    section = JsLower.Lower(a.Groups[1].Value);
+                    section = JsLower.Lower(anchorKey);
                     firstLineSeen = false;
                     continue;
                 }
@@ -598,7 +596,7 @@ internal sealed partial class HierLib
         ReviewIntentReasonFor(MessageText.ParseFilename(NodePath.Basename(JsConvert.ToJsString(path)))?.Id ?? "<id>", missing, again);
 
     private static string ReviewIntentReasonFor(string id, JsonArray missing, JsonValue? again) =>
-        $"ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request {id} with `ah msg fill --id {id} --from <your role> --request --section <1 or 5> --body-file -`, then {JsConvert.ToJsString(again)}. Missing: {string.Join(", ", missing.Select(m => JsConvert.ToJsString(m)))}. Minimal accepted shape (either form):\n  ## [1] goal\n  - <what the change must deliver, and its source>\n  ## [5] acceptance\n  - <how the reviewer decides it is met>\nor, in ## [0] tldr:  - [1] goal: <…>   - [5] acceptance: <…>";
+        $"ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request {id} with `ah msg fill --id {id} --from <your role> --request --section <1 or 5> --body-file -`, then {JsConvert.ToJsString(again)}. Missing: {string.Join(", ", missing.Select(m => JsConvert.ToJsString(m)))}. Minimal accepted shape: a `[1] goal` and a `[5] acceptance` line (a heading of any # level, bare, or **bold**), each with a `- <…>` bullet under it; or, in [0] tldr, `- [1] goal: <…>` and `- [5] acceptance: <…>`.";
 
     private static string BodyAfterFrontmatter(string text)
     {
@@ -642,21 +640,14 @@ internal sealed partial class HierLib
     public string FirstSection(JsonValue? text)
     {
         var lines = (text is { IsTruthy: true } t ? JsConvert.ToJsString(t) : string.Empty).Split('\n');
-        var first = Array.FindIndex(lines, l => l.StartsWith("## [", StringComparison.Ordinal));
+        var markers = MessageText.SectionMarkers(lines);
+        var first = Array.FindIndex(markers, static m => m is not null);
         if (first < 0)
         {
             return string.Empty;
         }
 
-        var next = -1;
-        for (var i = first + 1; i < lines.Length; i++)
-        {
-            if (lines[i].StartsWith("## [", StringComparison.Ordinal))
-            {
-                next = i;
-                break;
-            }
-        }
+        var next = Array.FindIndex(markers, first + 1, static m => m is not null);
 
         return string.Join('\n', next < 0 ? lines.Skip(first) : lines.Skip(first).Take(next - first));
     }

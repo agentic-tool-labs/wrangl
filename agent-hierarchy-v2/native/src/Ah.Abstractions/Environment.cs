@@ -40,6 +40,9 @@ public interface IAhEnvironment
     /// <summary>Whether this is test mode with <c>HOME</c> being the account's real home, which a daemon refuses. False when an implementation cannot judge.</summary>
     bool TestModeInRealHome => false;
 
+    /// <summary>Whether the test limiter is switched off (<c>AH_TEST_SLOTS=0</c> or <c>AH_TEST_TOKENS=0</c>), in and out of test mode. False when an implementation cannot judge.</summary>
+    bool TestLimiterOff => false;
+
     /// <summary>Returns the variable only in <see cref="TestMode"/>; null otherwise.</summary>
     string? GetTestOnly(string name);
 

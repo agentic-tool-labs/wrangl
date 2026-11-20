@@ -558,6 +558,8 @@ internal static class CheckVerb
 
         public bool TestMode => inner.TestMode;
 
+        public bool TestLimiterOff => inner.TestLimiterOff;
+
         public string? GetTestOnly(string name) => inner.GetTestOnly(name);
 
         public string HomeDirectory => homeDirectory;

@@ -203,6 +203,56 @@
       ]
     },
     {
+      "id": "bare-markers-count",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n[1] goal\n- ship it\n\n[5] Acceptance\n- tests pass\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "h3-markers-count",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n### [1] goal\n- ship it\n\n  ### [5] acceptance\n- tests pass\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "unclosed-fence-hides-nothing",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [1] goal\n- ship it\n```\n\n## [5] acceptance\n- tests pass\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": []
+    },
+    {
+      "id": "fenced-or-mid-line-marker-does-not-count",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n## [1] goal\n- ship it\nsee [5] acceptance\n- tests pass\n\n```\n## [5] acceptance\n- tests pass\n```\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
       "id": "no-text-throws",
       "args": [
         {

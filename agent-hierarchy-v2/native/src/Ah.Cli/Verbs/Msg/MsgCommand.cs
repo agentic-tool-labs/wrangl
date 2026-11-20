@@ -953,6 +953,8 @@ internal sealed partial class MsgCommand
         span = Ah.Core.Time.PhaseTrace.Begin();
         bool IsWithdrawn(JsonValue e) => e.Member("open")?.IsTruthy == true && e.Member("request")?.Member("path") is { IsText: true } p && withdrawn.Contains(Path.GetFileName(p.AsString()));
         List<(JsonValue E, string? Tag)> tagged;
+        // the tags of the rows the team filter dropped; null in the bounded --closed/--all paging path, which does not count them
+        List<string?>? hidden = null;
         int more;
         bool moreBounded;
         if (firstPage is not null)
@@ -979,6 +981,7 @@ internal sealed partial class MsgCommand
         // --closed/--all show the newest 200 unless --limit says otherwise (0 = all); request files are read a chunk at a time,
         // so a bounded list never reads the rest of history
         tagged = [];
+        hidden = [];
         var scanned = 0;
         while (scanned < items.Count && (limit == 0 || tagged.Count < limit))
         {
@@ -993,8 +996,18 @@ internal sealed partial class MsgCommand
             string? Tag(string path) => stored.TryGetValue(path, out var team)
                 ? (string.IsNullOrEmpty(team) ? null : team)
                 : TeamTagOf(requestFiles[next++]);
-            tagged.AddRange(paths.Select((p, i) => (E: chunk[i], Tag: Tag(p))).ToList()
-                .Where(t => _everyTeam is { } every ? every.Contains(t.Tag) : t.Tag == _teamArg));
+            foreach (var t in paths.Select((p, i) => (E: chunk[i], Tag: Tag(p))).ToList())
+            {
+                if (_everyTeam is { } every ? every.Contains(t.Tag) : t.Tag == _teamArg)
+                {
+                    tagged.Add(t);
+                }
+                else
+                {
+                    hidden.Add(t.Tag);
+                }
+            }
+
             scanned += chunk.Count;
         }
 
@@ -1063,6 +1076,16 @@ internal sealed partial class MsgCommand
         }
 
         Ah.Core.Time.PhaseTrace.End("list.rows", span);
+        if (rows.Count == 0 && hidden is { Count: > 0 })
+        {
+            // ah2-344 D3 / Amendment 3: an empty listing whose team filter hid exchanges says on stderr which filter, which pools and what it hid
+            var filter = _everyTeam is { } every1 ? string.Join(",", every1.Select(RosterModule.TeamArgName)) : RosterModule.TeamArgName(_teamArg);
+            var byTag = hidden.GroupBy(RosterModule.TeamArgName).Select(static g => $"{g.Key}: {g.Count()}").ToList();
+            var hint = hidden.Select(RosterModule.TeamArgName).Distinct().ToList() is [var only] ? only : "<name>";
+            _out.Note($"ah msg list: no {which} exchanges for team={filter} in {pools.Count} pool{(pools.Count == 1 ? string.Empty : "s")} ({string.Join(", ", pools)}); "
+                + $"{hidden.Count} hidden by the team filter ({string.Join(", ", byTag)}) — pass --team {hint}");
+        }
+
         span = Ah.Core.Time.PhaseTrace.Begin();
         // Orchestrator ruling on ah-msgs-fast-2 §3.4: the live scope by default, the newest --limit requests with --all/--closed
         var downstream = limit == 0 && which != "open" ? Hier.Messages.ListDownstreamDispatches(dir) : Hier.Messages.ListDownstreamDispatches(dir, which == "open" ? 0 : limit);

@@ -427,6 +427,18 @@
             "text": "## [12] files and more"
           },
           {
+            "line": 5,
+            "n": 2,
+            "key": "not",
+            "text": "##  [2] not"
+          },
+          {
+            "line": 8,
+            "n": 4,
+            "key": "indented",
+            "text": " ## [4] indented"
+          },
+          {
             "line": 9,
             "n": 5,
             "key": "k",

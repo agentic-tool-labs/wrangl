@@ -69,7 +69,8 @@ internal sealed class TestMatch
 /// <param name="Tokens">The tokens the row asks for, or 0 when no row matches.</param>
 /// <param name="Env">The variables to export, in order.</param>
 /// <param name="Argv">The words to run instead of the given ones, or null when they stay as they are.</param>
-public sealed record TestPlan(string? Row, int Tokens, IReadOnlyList<KeyValuePair<string, string>> Env, IReadOnlyList<string>? Argv);
+/// <param name="Elastic">Whether an idle bucket may grant the run more than <paramref name="Tokens"/>: every matching row is sized <c>half</c>, targeted or not; a row with a number of tokens is never enlarged.</param>
+public sealed record TestPlan(string? Row, int Tokens, IReadOnlyList<KeyValuePair<string, string>> Env, IReadOnlyList<string>? Argv, bool Elastic = false);
 
 internal sealed record TestAdapterArgs(Regex? Unless, Regex? Requires, IReadOnlyList<string> Add, string At, int Skip);
 
@@ -239,7 +240,7 @@ internal sealed class TestRegistry
 
         var top = matches.FirstOrDefault(m => !m.Segment.Nested && (repoTrusted || m.Row.Layer != "repo"));
         var adapted = top is null ? null : Adapt(argv, top, k);
-        return new TestPlan(matches[0].Id, tokens, vars, adapted);
+        return new TestPlan(matches[0].Id, tokens, vars, adapted, matches.All(static m => m.Row.Tokens == "half"));
     }
 
     private static List<string>? Adapt(IReadOnlyList<string> argv, TestMatch m, string k)

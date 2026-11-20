@@ -274,6 +274,83 @@ public sealed class MsgListParityTests : IDisposable
         Assert.False(candidates["20261016-120000-aa02"].LaneCharter);
     }
 
+    /// <summary>A linked worktree of the project with a confirmed back-pointer and its own empty pool.</summary>
+    private string MakeWorkTree()
+    {
+        var tree = Path.Combine(_proj, ".claude", "worktrees", "wt");
+        var gitdir = Path.Combine(_proj, ".git", "worktrees", "wt");
+        Directory.CreateDirectory(Path.Combine(tree, ".claude", "ah2", "msgs"));
+        Directory.CreateDirectory(gitdir);
+        File.WriteAllText(Path.Combine(tree, ".git"), "gitdir: " + gitdir + "\n");
+        File.WriteAllText(Path.Combine(gitdir, "gitdir"), Path.Combine(tree, ".git") + "\n");
+        return tree;
+    }
+
+    private (string Out, string Err) ListFrom(string cwd)
+    {
+        var (_, context) = Compose();
+        var stdout = new StringWriter();
+        var stderr = new StringWriter();
+        var exit = MsgVerb.Run(context, ["list", "--json", "--orchestrator-pid", System.Environment.ProcessId.ToString(CultureInfo.InvariantCulture), "--cwd", cwd], stdout, stderr);
+        Assert.True(exit == 0, stderr.ToString());
+        return (stdout.ToString().Trim(), stderr.ToString());
+    }
+
+    /// <summary>ah2-344 D1/E1: the owner of a team recorded in the main checkout lists its exchanges with <c>--cwd</c> at a worktree.</summary>
+    [Fact]
+    public void AnOwnerListsItsTeamsExchangesFromAWorktree()
+    {
+        WriteTeam("tm");
+        Message("20261016-120000-ee01", "request", "implementor", "tm", "## [0] tldr\n- x\n");
+        CutOverAnHourAgo();
+
+        var (stdout, stderr) = ListFrom(MakeWorkTree());
+
+        Assert.Contains("\"20261016-120000-ee01\"", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("hidden by the team filter", stderr, StringComparison.Ordinal);
+    }
+
+    /// <summary>ah2-344 D3: a non-owner's empty listing keeps stdout <c>[]</c> and says on stderr what it read and what the team filter hid.</summary>
+    [Fact]
+    public void AnEmptyListingSaysWhichTeamAndPoolsItReadAndWhatItHid()
+    {
+        _sandbox.PlantTeam(TeamFile("tm"), "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":1,\"pid_start\":\"x\",\"session_id\":\"someone-else\"},\"members\":[]}\n");
+        Message("20261016-120000-ee02", "request", "implementor", "tm", "## [0] tldr\n- x\n");
+        CutOverAnHourAgo();
+
+        var (stdout, stderr) = ListFrom(MakeWorkTree());
+
+        Assert.Equal("[]", stdout);
+        Assert.Contains("team=@default", stderr, StringComparison.Ordinal);
+        Assert.Contains(_main, stderr, StringComparison.Ordinal);
+        Assert.Contains("hidden by the team filter", stderr, StringComparison.Ordinal);
+    }
+
+    /// <summary>ah2-344 Amendment 3: an empty listing the team filter hid nothing from writes nothing on stderr.</summary>
+    [Fact]
+    public void AnEmptyListingWithNothingHiddenWritesNothingOnStderr()
+    {
+        CutOverAnHourAgo();
+
+        var (stdout, stderr) = ListFrom(MakeWorkTree());
+
+        Assert.Equal("[]", stdout);
+        Assert.Equal(string.Empty, stderr);
+    }
+
+    /// <summary>ah2-344 Amendment 3: one pool read reads "1 pool", not "1 pools".</summary>
+    [Fact]
+    public void AnEmptyListingFromOnePoolSaysOnePool()
+    {
+        _sandbox.PlantTeam(TeamFile("tm"), "{\"team_id\":\"t-tm\",\"orchestrator\":{\"pid\":1,\"pid_start\":\"x\",\"session_id\":\"someone-else\"},\"members\":[]}\n");
+        Message("20261016-120000-ee03", "request", "implementor", "tm", "## [0] tldr\n- x\n");
+        CutOverAnHourAgo();
+
+        var (_, stderr) = ListFrom(_proj);
+
+        Assert.Contains("in 1 pool (", stderr, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// ah-msgs-fast-2 §4 S3 (review F4): <c>/v1/view</c> and <c>/v1/actions</c> serve stored exchanges, open, answered, charter and sparse-team.
     /// </summary>
