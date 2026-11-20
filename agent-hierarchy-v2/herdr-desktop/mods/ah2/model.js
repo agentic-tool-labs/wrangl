@@ -420,7 +420,8 @@ export function qaRefresh(qa, slices, now, take, ready) {
 
 // One For you card. `key` keeps a card's local state (selection, sending) across polls: team + run + id, or the item key and the
 // time it was asked, so a re-asked item is a new card and not the old one's recorded answer.
-// `recommended` is the default's option index, -1 when it names none or several; `start` is the pick the card opens with.
+// `recommended` is the indexes of the options the daemon marked as recommended; with none marked, the default's option index (none when it
+// names none or several, or on an item); `start` is the pick the card opens with.
 function qaCard(teamId, run, c, now, desc = null) {
   const item = c.kind === "item";
   return {
@@ -428,7 +429,7 @@ function qaCard(teamId, run, c, now, desc = null) {
     teamId, run, q: c, kind: item ? "item" : "decision", cls: c.cls,
     header: c.item, text: c.text, asker: c.asker, age: since(c.at, now),
     options: c.options.map((o) => o.label), multi: c.multi, more: c.more,
-    recommended: item ? -1 : defaultAt(c), start: startPick(c),
+    recommended: c.options.some((o) => o.rec) ? c.options.flatMap((o, i) => (o.rec ? [i] : [])) : item ? [] : defaultAt(c) >= 0 ? [defaultAt(c)] : [], start: startPick(c),
     desc: typeof desc === "string" && desc.trim() !== "" ? desc : null,
   };
 }

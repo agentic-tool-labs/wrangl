@@ -15,7 +15,8 @@ internal static partial class EventRevalidation
     /// <summary>
     /// Whether <paramref name="entry"/> still applies; <paramref name="reached"/> answers, for a request id and a response path, whether the
     /// report reached the Orchestrator. <paramref name="memberGone"/>, <paramref name="itemWaiting"/> and <paramref name="memberBlocked"/> take
-    /// the entry's <c>data.member</c> or <c>data.item</c>, and answer so that a failed read leaves the alarm applying.
+    /// the entry's <c>data.member</c> or <c>data.item</c>, and answer so that a failed read leaves the alarm applying. <paramref name="qaQueued"/>
+    /// takes a QA job id and answers whether that job is still queued; null leaves the alarm applying.
     /// </summary>
     internal static bool Applies(
         JsonValue entry,
@@ -26,7 +27,8 @@ internal static partial class EventRevalidation
         Func<string, bool> memberGone,
         Func<string, bool> itemWaiting,
         Func<string, bool> memberBlocked,
-        Func<string, bool> memberIdle)
+        Func<string, bool> memberIdle,
+        Func<string, bool>? qaQueued = null)
     {
         if (entry.Member("event") is not { IsText: true } name)
         {
@@ -47,6 +49,8 @@ internal static partial class EventRevalidation
             "member-waiting" => Here() && (data?.Member("item") is not { IsText: true } item || itemWaiting(item.AsString())),
             "member-blocked" => Here() && (member is null || memberBlocked(member)),
             // b331: the members an idle-capacity alarm named may have been dismissed or sent work since it fired; ready items alone are no reason to deliver it
+            // ah2-334: the QA form of queue-stall-unstaffed is delivered only while its job is still queued; the checklist form has no check
+            "queue-stall-unstaffed" when data?.Member("qa_entry") is { IsText: true } qaEntry => qaQueued is null || qaQueued(qaEntry.AsString()),
             IdleCapacity => NamedMembers(data) is not { } idleNamed || idleNamed.Any(memberIdle),
             // ponytail: a member-down entry for a member who came back stays until read, next to its member-recovered; check liveness here if that misleads.
             // a cap kill reaches the Orchestrator though its owner is gone; only the owner's own copy is dropped

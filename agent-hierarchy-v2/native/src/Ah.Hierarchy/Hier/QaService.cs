@@ -104,7 +104,7 @@ internal sealed partial class QaService : IHierarchyQa
     [GeneratedRegex("^[0-9a-f]{40}$")]
     private static partial Regex Sha();
 
-    private static QaJob Job(QaEntry e) => new(
+    internal static QaJob Job(QaEntry e) => new(
         e.Id, e.Sha, e.Base, e.Set, e.Repo, e.Fresh, e.Priority, e.Requesters, e.Team, e.Created, e.State, e.ClaimedBy, e.ClaimedAt,
         e.ResultPath, e.Verdict, e.EndedAt, e.Reason);
 

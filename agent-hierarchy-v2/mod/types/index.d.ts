@@ -1,5 +1,5 @@
 /** A severity the drawing layer names; the module turns it into Text props in one table. */
-export type Tone = 'bad' | 'warn' | 'work' | 'idle'
+export type Tone = 'bad' | 'warn' | 'work' | 'ok' | 'idle'
 
 /** One Pane row as data: a heading or line of text, a team member, or a dispatch. Widths are applied when drawing. */
 export type PaneRow =

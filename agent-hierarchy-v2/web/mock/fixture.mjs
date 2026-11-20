@@ -518,7 +518,7 @@ export function buildSlices(now, runStart = now - RUN_MIN * MIN) {
   // the questions put to each team (leased by the Attention tab) and their history (the Q&A list)
   // AH_MOCK_WAITING=1: the default fixture's one waiting checklist item, answerable from its Board card and the Inbox (off by default,
   // so the Inbox's four decisions stay the tests' baseline)
-  const waiting = SCENARIO || globalThis.process?.env?.AH_MOCK_WAITING !== "1" ? [] : [{ key: "ah/ui-r6:guide", item: "guide", stream: "ah/ui-r6", title: "Upgrade guide for 2.5", text: "Which font should the guide's code samples use?", options: ["JetBrains Mono", "System monospace"], since: iso(t(40)), owner: "docs-writer" }];
+  const waiting = SCENARIO || globalThis.process?.env?.AH_MOCK_WAITING !== "1" ? [] : [{ key: "ah/ui-r6:guide", item: "guide", stream: "ah/ui-r6", title: "Upgrade guide for 2.5", text: "Which font should the guide's code samples use?", options: ["JetBrains Mono", "System monospace"], recommended: [0], since: iso(t(40)), owner: "docs-writer" }];
   out.push(slice(`questions:${DIR}/${TEAM}`, questionsBody(now, SCENARIO?.decisions, waiting), t(12)));
   out.push(slice(`list:questions:${DIR}/${TEAM}`, { rows: questionRows(now, SCENARIO?.decisions) }, t(12)));
   // ah2-225: a scenario's jobs and subagents, one jobs: and subagents: slice per team it names (null the ship team, else the lane key),

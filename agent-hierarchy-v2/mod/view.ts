@@ -317,7 +317,8 @@ export const STYLE = {
     working: { glyph: '●', color: 'success', word: 'working', tone: 'work', rank: 4 },
     waitingOrch: { glyph: '◐', color: null, word: 'waiting for the orchestrator', tone: 'idle', rank: 5 },
     idle: { glyph: '○', color: null, word: 'idle', tone: 'idle', rank: 6 },
-    done: { glyph: '✓', color: null, word: 'done', tone: 'idle', rank: 7 },
+    held: { glyph: '‖', color: null, word: 'Held', tone: 'idle', rank: 6 },
+    done: { glyph: '✓', color: 'success', word: 'done', tone: 'ok', rank: 7 },
     ended: { glyph: '×', color: null, word: 'ended', tone: 'idle', rank: 8 },
     unknown: { glyph: '?', color: null, word: 'unknown', tone: 'idle', rank: 9 },
   },
@@ -325,7 +326,7 @@ export const STYLE = {
     working: 'working', idle: 'idle', blocked: 'needsYou', needs_you: 'needsYou', ended: 'ended', waiting_user: 'needsYou', waiting_orch: 'waitingOrch', stalled: 'stuck',
     overdue: 'late', 'due-soon': 'dueSoon', reported: 'done', gone: 'ended', orphaned: 'ended', stale: 'ended', expired: 'ended',
   },
-  tone: { bad: 'error', warn: 'warning' },
+  tone: { bad: 'error', warn: 'warning', ok: 'success' },
   box: { hierarchy: 'claude', team: 'permission', dispatches: null },
   streams: ['suggestion', 'remember', 'ide', 'planMode'],
 } as const
@@ -382,7 +383,7 @@ export function viewModel(doc: Doc | null, nowMs: number, sessionId: string): Vi
     }
   } else {
     const head = str(entry.text)
-    const tone = (['bad', 'warn', 'work', 'idle'] as const).find((t) => t === entry.tone) ?? 'idle'
+    const tone = (['bad', 'warn', 'work', 'ok', 'idle'] as const).find((t) => t === entry.tone) ?? 'idle'
     if (head !== '') band = { tone, head, tail: [] }
   }
 

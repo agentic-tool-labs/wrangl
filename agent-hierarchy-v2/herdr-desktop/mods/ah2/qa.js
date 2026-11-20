@@ -360,7 +360,7 @@ export function card(v, t, tm, c, noDesc = false, extra = null) {
     .child(div().mb(8).text_color(t.foreground).child(sel(`qa-q-${c.key}`, c.text)))
     .when(!noDesc && Boolean(c.desc), (el) => el.child(description(v, t, c)))
     .child(h_flex().flex_wrap().gap(6).items_center()
-      .children(c.options.map((o, i) => chip(i, o, cs.pick.picked.includes(i), i === c.recommended)))
+      .children(c.options.map((o, i) => chip(i, o, cs.pick.picked.includes(i), c.recommended.includes(i))))
       .child(chip("other", "Other…", cs.pick.other, false)))
     .when(Boolean(other), (el) => el.child(other))
     .when(c.more > 0, (el) => el.child(div().mt(6).text_size(11).text_color(t.muted).child(`+ ${c.more} more options · answer in the web Inbox`)))

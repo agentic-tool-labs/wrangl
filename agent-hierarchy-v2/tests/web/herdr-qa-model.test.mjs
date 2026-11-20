@@ -5,7 +5,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { qaModel, qaSubs, canSend, sendAnswer, readThread, NO_REPLY, applyReply, sitrepModel, loadingOf, sidebarModel, terminalFinder, deskModel, needsMark, counts, historyReply, threadStart, retryMs, QUICK_RETRY_MS } from "../../herdr-desktop/mods/ah2/model.js";
-import { answerBody, dismissBody, toggle, NO_PICK, threadOf } from "../../web/ui/questions-model.js";
+import { answerBody, dismissBody, toggle, NO_PICK, threadOf, openRow, itemRow, listRow } from "../../web/ui/questions-model.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const mod = join(root, "herdr-desktop", "mods", "ah2");
@@ -23,10 +23,25 @@ test("the Q&A model groups the fixture's cards oldest first, counts waiting_on_y
   assert.equal(m.count, 3);
   assert.deepEqual(m.teams.map((t) => t.name), ["ah2-tm4"]);
   const cards = m.teams[0].cards;
-  assert.deepEqual(cards.map((c) => [c.kind, c.q.id, c.recommended]), [["item", "core:atp-1140", -1], ["decision", "d8", -1], ["decision", "d7", 0]]);
+  assert.deepEqual(cards.map((c) => [c.kind, c.q.id, c.recommended]), [["item", "core:atp-1140", []], ["decision", "d8", []], ["decision", "d7", [0]]]);
   assert.equal(cards[1].more, 2);
   assert.deepEqual(m.history.map((h) => [h.id, h.header]), [["d6", "atp-1088"], ["d5", "ship-106"], ["d4", "atp-1136"]]);
   assert.ok(qaSubs(slices).includes("questions:a1b2c3d4/ah2-tm4"));
+});
+
+test("the slice's recommended indexes reach the rows and the cards; with none, a card falls back to the default, an item to nothing", () => {
+  assert.deepEqual(openRow({ id: "q", options: [{ label: "A" }, { label: "B" }], recommended: [1] }).options, [{ label: "A", rec: false }, { label: "B", rec: true }]);
+  assert.deepEqual(openRow({ id: "q", options: [{ label: "A" }] }).options, [{ label: "A", rec: false }], "negative: no recommended key, nothing marked");
+  assert.deepEqual(itemRow({ key: "s:i", options: ["A", "B"], recommended: [0] }).options, [{ label: "A", rec: true }, { label: "B", rec: false }]);
+  assert.deepEqual(listRow({ id: "d", options: ["A", "B"], recommended: [0, 1] }).recommended, [0, 1]);
+  assert.deepEqual(listRow({ id: "d", options: ["A"] }).recommended, [], "negative: a row with no marks");
+
+  const id = "questions:a1b2c3d4/ah2-tm4";
+  const q = slices.get(id);
+  const marked = new Map(slices);
+  // d7's default is its option a: the mark on b wins over it; the item's mark is its own
+  marked.set(id, { ...q, body: { ...q.body, open: q.body.open.map((o) => (o.id === "d7" ? { ...o, recommended: [1] } : o)), items: q.body.items.map((i) => ({ ...i, recommended: [0] })) } });
+  assert.deepEqual(qaModel(marked, NOW).teams[0].cards.map((c) => [c.q.id, c.recommended]), [["core:atp-1140", [0]], ["d8", []], ["d7", [1]]]);
 });
 
 test("a blocker card leads its team's cards, and the badge reads n! only while a blocker waits", () => {

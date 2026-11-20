@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Ah.Abstractions;
 using Ah.Cli.Composition;
+using Ah.Commands;
 using Ah.Config;
 using Ah.Core.Json;
 using Ah.Core.Text;
@@ -26,7 +27,7 @@ internal static partial class WorkVerb
         "usage: ah work list [--state open|all|<state>] [--team t] [--holder m] [--under id|none] [--kind k] [--ready] [--blocked] [--limit 50] [--json] | show <id> [--log] [--json] | prefix [<new>] [--json]"
         + " | log <id> [--tail 20] [--since ms] [--body] [--all] [--json] | record [<id>] --type t --title s [--body-file -|--body s] | mine [--json]"
         + " | add <title> [--kind k] [--parent id] [--wave w] [--theme t] [--size s] [--body-file -|--body s] | set <id> [--title s] [--parent id|none] [--ext ref] [--url u] | link <a> (--blocked-by <b> | --blocks <b>) [--remove] | next [--under id] [--json]"
-        + " | attach <id> <path|url> [--title s] [--remove] | export [--since ms] [--json]   (all take [--cwd dir] [--by name])";
+        + " | attach <id> <path|url> [--title s] [--remove] | export [--since ms] [--json] | done <id> [--commit sha]... [--note text] [--json]   (all take [--cwd dir] [--by name])";
 
     private const int ListLimit = 50;
     private const int LineMax = 160;
@@ -43,7 +44,7 @@ internal static partial class WorkVerb
 
     private static readonly HashSet<string> Values = new(StringComparer.Ordinal)
     {
-        "state", "team", "holder", "kind", "limit", "cwd", "by", "tail", "since", "type", "title", "body-file", "under", "parent", "wave", "theme", "size", "blocked-by", "blocks", "ext", "url",
+        "state", "team", "holder", "kind", "limit", "cwd", "by", "tail", "since", "type", "title", "body-file", "under", "parent", "wave", "theme", "size", "blocked-by", "blocks", "ext", "url", "note",
     };
 
     /// <summary>Who is asking: their team, the name entries are written under, the names a holder may hold them by, and their session.</summary>
@@ -387,7 +388,7 @@ internal static partial class WorkVerb
         var dir = BacklogVerb.DirOf(g, cwd);
         var caller = CallerOf(context.Env, g, dir, byAt >= 0 && byAt + 1 < args.Length ? args[byAt + 1] : null);
         Func<Stream> stdin = context.ReadStdin is { } read ? () => new MemoryStream(read().ToArray()) : Console.OpenStandardInput;
-        return new Command(g, context.Env.AhHome, context.Env.HomeDirectory, cwd, dir, caller, stdin, stdout, stderr).Run(args);
+        return new Command(g, context.Env.AhHome, context.Env.HomeDirectory, cwd, dir, caller, stdin, stdout, stderr, context).Run(args);
     }
 
     /// <summary>Logs a commit for the session that made it. A hook has the session in its payload, so it is passed in rather than read from the environment.</summary>
@@ -402,10 +403,11 @@ internal static partial class WorkVerb
         public int Code { get; } = code;
     }
 
-    private sealed class Command(ServiceGraph g, string ahHome, string home, string cwd, string dir, WorkCaller caller, Func<Stream> stdin, TextWriter stdout, TextWriter stderr)
+    private sealed class Command(ServiceGraph g, string ahHome, string home, string cwd, string dir, WorkCaller caller, Func<Stream> stdin, TextWriter stdout, TextWriter stderr, CliContext? context = null)
     {
         private readonly List<string> _words = [];
         private readonly Dictionary<string, string> _flags = new(StringComparer.Ordinal);
+        private readonly List<string> _commits = [];
 
         private string? team => caller.Team;
 
@@ -426,6 +428,12 @@ internal static partial class WorkVerb
                         _flags["body"] = args[++i];
                     }
 
+                    continue;
+                }
+
+                if (args[i] == "--commit" && i + 1 < args.Length)
+                {
+                    _commits.Add(args[++i]);
                     continue;
                 }
 
@@ -451,6 +459,12 @@ internal static partial class WorkVerb
                 }
             }
 
+            if (_commits.Count > 0 && _words.FirstOrDefault() != "done")
+            {
+                stderr.WriteLine($"ah work: unrecognized flag --commit; {Usage}");
+                return 2;
+            }
+
             try
             {
                 return _words.FirstOrDefault() switch
@@ -467,6 +481,7 @@ internal static partial class WorkVerb
                     "next" => Next(),
                     "attach" => Attach(),
                     "export" => Export(),
+                    "done" => Done(),
                     _ => throw new WorkFailure(Usage, 2),
                 };
             }
@@ -607,6 +622,58 @@ internal static partial class WorkVerb
             {
                 throw new WorkFailure(result.Error ?? result.ErrorCode ?? "the write failed", result.ErrorCode == HierarchyModule.BacklogConflictCode ? 3 : 2);
             }
+        }
+
+        /// <summary>
+        /// <c>done</c>, routed by placement (ah2-322 D2): a backlog row through <c>ah backlog done</c>, a stream item through <c>ah roster checklist done</c>.
+        /// Their refusals pass through unchanged; their stdout is shown only with <c>--json</c>, or when they refuse.
+        /// </summary>
+        private int Done()
+        {
+            var text = _words.Count > 1 ? _words[1] : throw new WorkFailure($"done needs an id; {Usage}", 2);
+            WorkRow row;
+            try
+            {
+                row = RowOf(text);
+            }
+            catch (WorkFailure failure) when (failure.Code == 1)
+            {
+                throw new WorkFailure($"no work item {text}; nothing changed", 1);
+            }
+
+            var id = IdOf(row.N);
+            if (ViewOf(row).Plan is null)
+            {
+                throw new WorkFailure($"{id} is gone; nothing changed", 1);
+            }
+
+            string[] note = F("note") is { } n ? ["--note", n] : [];
+            string[] by = F("by") is { } b ? ["--by", b] : [];
+            string[] json = Json ? ["--json"] : [];
+            using var routed = new StringWriter(CultureInfo.InvariantCulture);
+            var code = row.IsBacklog
+                ? BacklogVerb.Run(
+                    context ?? throw new WorkFailure("the services have not been composed", 70),
+                    ["done", row.Item, .. _commits.SelectMany(static c => new[] { "--commit", c }), .. note, "--cwd", cwd, .. by, .. json],
+                    routed,
+                    stderr)
+                : CommandsModule.Registry.Verbs.Single(static v => v.Name == "roster").Run(
+                    ["checklist", "done", row.Stream + "/" + row.Item, .. _commits.Count > 0 ? ["--commit", .. _commits] : Array.Empty<string>(), .. note, "--cwd", cwd, "--team", row.Team == "_default" ? Ah.Roster.RosterModule.DefaultTeamArg : row.Team],
+                    routed,
+                    stderr);
+            if (code != 0)
+            {
+                stdout.Write(routed.ToString());
+                return code;
+            }
+
+            stdout.Write($"{id} done ({(row.IsBacklog ? "backlog" : $"checklist {row.Team}/{row.Stream}")})\n");
+            if (Json)
+            {
+                stdout.Write(routed.ToString());
+            }
+
+            return 0;
         }
 
         private int Attach()

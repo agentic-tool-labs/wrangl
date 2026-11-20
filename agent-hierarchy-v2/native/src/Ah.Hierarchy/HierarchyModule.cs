@@ -788,6 +788,15 @@ public static partial class HierarchyModule
         return services.Peers is HierLib lib ? new QaService(lib, dependencies) : throw new ArgumentException("the peers service is not the library's own", nameof(services));
     }
 
+    /// <summary>Every job of the QA store of <paramref name="services"/>, oldest first, read only: no stale pass, no write.</summary>
+    public static IReadOnlyList<QaJob> QaJobs(HierarchyServices services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        return services.Peers is HierLib lib
+            ? [.. new HierQaStore(lib).Read().Entries.OrderBy(static e => e.Created).Select(QaService.Job)]
+            : throw new ArgumentException("the peers service is not the library's own", nameof(services));
+    }
+
     /// <summary>The peer-log seam answered from this process's own read of the peer log.</summary>
     public static IPeerLatest CreateLocalPeerLatest(IHierarchyPeers peers)
     {

@@ -100,7 +100,8 @@ internal static class QueueEvents
         IDictionary<string, double>? unstaffedAt = null,
         Func<string?, IReadOnlyList<ReadyBacklogItem>>? readyBacklog = null,
         IDictionary<string, (double At, string Signature)>? idleCapacityAt = null,
-        IDictionary<string, double>? remindAt = null)
+        IDictionary<string, double>? remindAt = null,
+        IReadOnlyList<QaJob>? qaJobs = null)
     {
         foreach (var stale in unstaffedAt?.Where(e => now - e.Value >= thresholdMs).Select(static e => e.Key).ToList() ?? [])
         {
@@ -204,6 +205,30 @@ internal static class QueueEvents
                     $"ahd alarm: work-still-waiting — still waiting on you: {string.Join("; ", rows)}",
                     new JsonObject { ["request_id"] = JsonValue.Null, ["rows"] = list })
                 { Name = StillWaitingName, Team = team.Name });
+            }
+
+            // ah2-334: a QA entry this team queued thresholdMs ago, while the team has no live qa member, is told once per entry while that holds
+            if (qaJobs is not null && !members.Any(static m => m.Role == "qa" && m.Live))
+            {
+                foreach (var job in qaJobs.Where(j => j.State == "queued" && j.Team == team.Name && now - j.Created >= thresholdMs))
+                {
+                    var key = $"{session}|{teamName}|{UnstaffedName}|qa:{job.Id}";
+                    _ = active.Add(key);
+                    if (told.Contains(key))
+                    {
+                        continue;
+                    }
+
+                    var qaEvent = new WatchEvent(
+                        null,
+                        "QUEUE-STALL-UNSTAFFED",
+                        $"ahd alarm: queue-stall-unstaffed — QA entry {job.Id} ({job.Set} at {job.Sha[..Math.Min(7, job.Sha.Length)]} in {job.Repo}) queued {Minutes(now - job.Created)}m, no live qa member\n"
+                        + $"Operational call (O2): spawn a QA member: `ah roster spawn-ad-hoc qa --team {teamName} --cwd {job.Repo}`.",
+                        new JsonObject { ["request_id"] = JsonValue.Null, ["qa_entry"] = job.Id, ["repo"] = job.Repo, ["sha"] = job.Sha, ["set"] = job.Set })
+                    { Name = UnstaffedName, Team = team.Name };
+                    events.Add(qaEvent);
+                    keyed[qaEvent] = key;
+                }
             }
 
             if (entries.Count == 0)

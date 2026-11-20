@@ -2,9 +2,9 @@ import type { Register } from 'claude-code'
 import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, HOOKS_OFF_TEXT, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
 
 // A tone to Text props: bad and warn take their status's theme key, the same key their glyph takes, and bad is also bold
-// so it does not rest on color alone; work draws plain and any other tone draws dim.
+// so it does not rest on color alone; work and ok draw plain and any other tone draws dim.
 const toneProps = (tone: string) =>
-  tone === 'bad' ? { color: STYLE.tone.bad, bold: true } : tone === 'warn' ? { color: STYLE.tone.warn } : tone === 'work' ? {} : { dimColor: true }
+  tone === 'bad' ? { color: STYLE.tone.bad, bold: true } : tone === 'warn' ? { color: STYLE.tone.warn } : tone === 'work' || tone === 'ok' ? {} : { dimColor: true }
 
 // A theme key colors; no key draws dim. Every key comes from view.ts's style table.
 const colorProps = (key: string | null) => (key === null ? { dimColor: true } : { color: key })

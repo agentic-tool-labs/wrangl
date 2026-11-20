@@ -158,7 +158,8 @@ const classRank = (r) => CLASSES.findIndex(([k]) => k === classOf(r.cls));
 // `at` is absent when the daemon could not parse the time; such a row sorts last.
 export const openRow = (q) => ({
   id: q.id, at: q.at ?? null, asker: q.asker ?? null, item: q.header ?? null, text: q.text ?? "",
-  options: (q.options ?? []).map((o) => ({ label: typeof o === "string" ? o : o.label })), def: q.default ?? null, multi: q.multi === true,
+  // `rec`: the daemon marked the option as the agent's recommendation (it strips the mark from the label)
+  options: (q.options ?? []).map((o, i) => ({ label: typeof o === "string" ? o : o.label, rec: (q.recommended ?? []).includes(i) })), def: q.default ?? null, multi: q.multi === true,
   // capped rows: the options not sent, and whether the text was cut; both are whole in the Q&A list
   more: Math.max(0, (q.options_total ?? 0) - (q.options ?? []).length), cut: (q.text ?? "").endsWith("…"), cls: classOf(q.class),
 });
@@ -166,14 +167,14 @@ export const openRow = (q) => ({
 // Its asker is who set it waiting on the user, not its owner; `workId` names the registered item, whose description the card reads.
 export const itemRow = (i) => ({
   kind: "item", id: i.key, since: i.since ?? null, at: Date.parse(i.since ?? "") || null, asker: i.asker ?? null, item: i.title ?? null, text: i.text ?? i.title ?? "",
-  options: (i.options ?? []).map((label) => ({ label })), def: null, multi: false, more: 0, cut: false, workId: i.work_id ?? null, cls: classOf(i.class),
+  options: (i.options ?? []).map((label, n) => ({ label, rec: (i.recommended ?? []).includes(n) })), def: null, multi: false, more: 0, cut: false, workId: i.work_id ?? null, cls: classOf(i.class),
 });
 // A question-log row (dir jim or terminal) also carries the question badge and how many replies its thread has.
 export const recentRow = (r) => ({ id: r.id, at: r.at ?? null, text: r.text ?? "", answer: r.answer ?? "", by: r.by ?? null, dir: r.dir ?? null, question: r.question === true, replies: r.replies ?? 0 });
 export const listRow = (raw) => {
   const r = raw.body ?? raw;
   return {
-    id: r.id ?? raw.id, dir: r.dir, at: r.at ?? null, item: r.header ?? null, text: r.text ?? "", options: r.options ?? [],
+    id: r.id ?? raw.id, dir: r.dir, at: r.at ?? null, item: r.header ?? null, text: r.text ?? "", options: r.options ?? [], recommended: r.recommended ?? [],
     answer: r.answer ?? null, by: r.by ?? null, answeredAt: r.answered_at ?? null, run: r.run ?? null, cls: r.class ?? null, rationale: r.rationale ?? null,
     question: r.question === true, reply: r.reply ?? null, replyAt: r.reply_at ?? null, later: (r.later ?? []).map((l) => ({ at: l.at ?? null, text: l.text ?? "" })),
     cut: r.cut === true,

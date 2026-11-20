@@ -103,7 +103,7 @@ const CLOSER: any = {
 }
 
 // The Text props each tone draws with, as the spec's table pins them.
-const TONE: Record<string, Record<string, unknown>> = { bad: { color: 'error', bold: true }, warn: { color: 'warning' }, work: {}, idle: { dimColor: true } }
+const TONE: Record<string, Record<string, unknown>> = { bad: { color: 'error', bold: true }, warn: { color: 'warning' }, work: {}, ok: {}, idle: { dimColor: true } }
 // The mod passes bold. The desktop host (Claude Code 2.1.301) draws a bold Text with no weight as bold plus weight 'semibold'; the terminal surface adds nothing.
 const toneOf = (surface: string, tone: string): Record<string, unknown> => (tone === 'bad' && surface === 'desktop' ? { ...TONE.bad, weight: 'semibold' } : TONE[tone])
 
@@ -703,6 +703,20 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(texts(band)[0]).toEqual({ text: 'odd band', props: { dimColor: true } })
     const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
     expect(paneTexts(pane)).toEqual([{ text: 'odd row', props: { dimColor: true } }])
+  })
+
+  test(`${surface}: the ok tone draws plain; negative: okay draws dim`, async ($, on) => {
+    const view = { band: { tone: 'ok', head: 'ok band', tail: [] }, pane: [{ row: 'text', tone: 'ok', text: 'ok row' }, { row: 'text', tone: 'okay', text: 'okay row' }], toasts: [] }
+    const w = world()
+    w.stateGet = async (_$: any, e: any, next: any) => (e.key === 'view' ? { value: { value: view, version: 1 } } : next(e))
+    stage(on, w)
+    beneath(on)
+    mock.clock(on, { now: NOW })
+    await start($, w, surface)
+    const band = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'AbovePrompt', props: bandProps(), viewport: VIEWPORT })).drawn()
+    expect(texts(band)[0]).toEqual({ text: 'ok band', props: TONE.ok })
+    const pane = await (await $.ui.mount({ plugin: 'wrangl', surface, component: 'Pane', requestId: 'ah-status', props: paneProps(), viewport: VIEWPORT })).drawn()
+    expect(paneTexts(pane)).toEqual([{ text: 'ok row', props: TONE.ok }, { text: 'okay row', props: { dimColor: true } }])
   })
 
   test(`${surface}: another component, and another Pane, pass through`, async ($, on) => {

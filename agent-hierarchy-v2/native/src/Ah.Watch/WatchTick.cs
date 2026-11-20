@@ -73,6 +73,9 @@ public interface IWatchHost : IRecoveryHost
     /// <summary>The ready backlog items in wave <c>now</c> or <c>next</c> of the hierarchy dir the session <paramref name="session"/> sees. Read-only; empty when none is readable.</summary>
     IReadOnlyList<ReadyBacklogItem> ReadyBacklog(string session, string home) => [];
 
+    /// <summary>Every job of the daemon's QA queue, read only. Empty by default and when it is not readable.</summary>
+    IReadOnlyList<QaJob> QaJobs() => [];
+
     /// <summary>The most live members <paramref name="team"/> (null for the default team) may hold; null means no limit. The medium budget when no run anchor applies.</summary>
     int? SessionBudgetOf(string home, string? team) => SessionBudget.Default;
 
@@ -810,7 +813,7 @@ internal sealed class WatchTick
             // TODO: a member whose session has live descendant processes (a running test or build) is also blocked on a job; add it once IProcessTable can list descendants.
             events.AddRange(QueueEvents.Evaluate(
                 sid, now, [.. owned.Where(t => !host.TeamHeld(home, t.Name))], candidates, team => host.Checklist(sid, home, team), m => !string.IsNullOrEmpty(m.SessionId) && host.SlotStateOf(m.SessionId, now) is not null, _queueTold, out queueKeys,
-                budgetOf: team => host.SessionBudgetOf(home, team), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt, remindAt: _remindAt));
+                budgetOf: team => host.SessionBudgetOf(home, team), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt, remindAt: _remindAt, qaJobs: host.QaJobs()));
         }
 
         IReadOnlyDictionary<WatchEvent, IReadOnlyList<string>> unlinkedKeys;

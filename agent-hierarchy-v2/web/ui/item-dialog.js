@@ -16,7 +16,7 @@ export function ItemDialog({ p, store, onClose, onPick = null, returnTo, childre
     <div class="id-body" tabindex="0" role="group" aria-label=${`${p.kind} details`}>
       <p class="pl-where mono">${p.kind}</p>
       ${lead}
-      ${p.ask?.options.length ? html`<h3>Options</h3><ul class="kb-list">${p.ask.options.map((o) => html`<li key=${o.label}>${o.label}${o.label === p.ask.def ? html` <span class="kb-sub">(default)</span>` : null}</li>`)}${p.ask.more > 0 ? html`<li class="kb-sub">${more(p.ask.more)}</li>` : null}</ul>` : null}
+      ${p.ask?.options.length ? html`<h3>Options</h3><ul class="kb-list">${p.ask.options.map((o) => html`<li key=${o.label}>${o.label}${o.rec ? html` <span class="qa-badge">Recommended</span>` : null}${o.label === p.ask.def ? html` <span class="kb-sub">(default)</span>` : null}</li>`)}${p.ask.more > 0 ? html`<li class="kb-sub">${more(p.ask.more)}</li>` : null}</ul>` : null}
       ${p.answer ? html`<a class="kb-answer" href=${p.answer.href}>${p.answer.text}</a>` : null}
       ${p.outcome && !p.outcomeLabel ? html`<p class="kb-outcome">${p.outcome}</p>` : null}
       <dl>

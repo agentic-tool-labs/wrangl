@@ -246,18 +246,28 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
             o["text"] = Cut(LaneParts.Text(p.Row, "question") ?? "", OpenTextBytes);
             var labels = Labels(p.Row).ToList();
             var options = new JsonArray();
+            var recommended = new JsonArray();
             foreach (var label in labels.Take(OptionCap))
             {
-                options.Add(new JsonObject { ["label"] = Cut(label, LabelBytes) });
+                // strip, then cut: the cut would swallow the mark
+                var (shown, marked) = Recommendation(label);
+                if (marked)
+                {
+                    recommended.Add(options.Count);
+                }
+
+                options.Add(new JsonObject { ["label"] = Cut(shown, LabelBytes) });
             }
 
             o["options"] = options;
+            SetRecommended(o, recommended);
             if (labels.Count > OptionCap)
             {
                 o["options_total"] = labels.Count;
             }
 
-            SetCut(o, "default", LaneParts.Text(p.Row, "default"), FieldBytes);
+            // stripped like the labels, so a default naming a marked option still names its label
+            SetCut(o, "default", LaneParts.Text(p.Row, "default") is { } def ? Recommendation(def).Shown : null, FieldBytes);
             SetMulti(o, p.Row);
             // only when the parked row names one; a front end reads none as soon
             SetCut(o, "class", LaneParts.Text(p.Row, "class"), FieldBytes);
@@ -360,7 +370,7 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
                     o["choices"] = choices;
                 }
 
-                SetText(o, "answer", AnswerOf(answer));
+                SetText(o, "answer", AnswerShown(p.Row, AnswerOf(answer)));
                 SetText(o, "by", LaneParts.Text(answer, "answered_by"));
                 SetMs(o, "answered_at", LaneParts.Ms(LaneParts.Text(answer, "time")));
                 if (LaneParts.Text(answer, "answered_by") == "surrogate")
@@ -376,7 +386,7 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
         {
             var at = LaneParts.Ms(LaneParts.Text(row, "time"));
             var o = ListRow(LaneParts.Text(row, "id")!, "decided", at, row, runId);
-            SetText(o, "answer", AnswerOf(row));
+            SetText(o, "answer", AnswerShown(row, AnswerOf(row)));
             SetText(o, "by", DeciderOf(row));
             SetText(o, "rationale", LaneParts.Text(row, "rationale"));
             list.Add((at, pos, o));
@@ -401,12 +411,25 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
     private static JsonValue ItemRow(JsonValue item, Func<string, string, string?>? workId)
     {
         var options = new JsonArray();
+        var recommended = new JsonArray();
         foreach (var option in item.Member("options") is { IsArray: true } listed ? listed.AsArray() : new JsonArray())
         {
-            options.Add(option);
+            if (!option.IsText)
+            {
+                options.Add(option);
+                continue;
+            }
+
+            var (shown, marked) = Recommendation(option.AsString());
+            if (marked)
+            {
+                recommended.Add(options.Count);
+            }
+
+            options.Add(shown);
         }
 
-        return JsonValue.FromObject(new JsonObject
+        var row = new JsonObject
         {
             ["key"] = LaneParts.TextOrNull(item, "key"),
             ["item"] = LaneParts.TextOrNull(item, "item"),
@@ -419,7 +442,9 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
             ["asker"] = LaneParts.TextOrNull(item, "asker"),
             ["class"] = Ah.Hierarchy.HierarchyModule.ChecklistClassOf(LaneParts.Text(item, "class")),
             ["work_id"] = LaneParts.Text(item, "stream") is { } stream && LaneParts.Text(item, "key") is { } key && workId?.Invoke(stream, key) is { } id ? id : JsonValue.Null,
-        });
+        };
+        SetRecommended(row, recommended);
+        return JsonValue.FromObject(row);
     }
 
     /// <summary>
@@ -495,14 +520,61 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
         SetText(o, "header", LaneParts.Text(row, "item") ?? LaneParts.Text(row, "header"));
         o["text"] = LaneParts.Text(row, "question") ?? "";
         var options = new JsonArray();
+        var recommended = new JsonArray();
         foreach (var label in Labels(row))
         {
-            options.Add(label);
+            var (shown, marked) = Recommendation(label);
+            if (marked)
+            {
+                recommended.Add(options.Count);
+            }
+
+            options.Add(shown);
         }
 
         o["options"] = options;
+        SetRecommended(o, recommended);
         SetText(o, "run", runId);
         return o;
+    }
+
+    /// <summary>
+    /// The one recommendation rule (spec rec-badge A1): a label is marked when, trimmed, it ends with "(Recommended)" in any case and has text
+    /// before it; it is shown as that text, trimmed. An unmarked label is shown as it is.
+    /// </summary>
+    private static (string Shown, bool Marked) Recommendation(string label)
+    {
+        const string mark = "(Recommended)";
+        var trimmed = label.Trim();
+        if (trimmed.EndsWith(mark, StringComparison.OrdinalIgnoreCase) && trimmed[..^mark.Length].Trim() is { Length: > 0 } shown)
+        {
+            return (shown, true);
+        }
+
+        return (label, false);
+    }
+
+    /// <summary>The answer as served: a marked option's shown label when it is that option's full stored label, else unchanged.</summary>
+    private static string? AnswerShown(JsonValue row, string? answer)
+    {
+        foreach (var label in Labels(row))
+        {
+            if (string.Equals(label, answer, StringComparison.Ordinal) && Recommendation(label) is (var shown, true))
+            {
+                return shown;
+            }
+        }
+
+        return answer;
+    }
+
+    /// <summary>Sets <c>recommended</c>, the marked options' indexes, only when there is one.</summary>
+    private static void SetRecommended(JsonObject o, JsonArray recommended)
+    {
+        if (recommended.Count > 0)
+        {
+            o["recommended"] = recommended;
+        }
     }
 
     /// <summary>Marks a row <c>multi: true</c> when its parked line is a multi-select question; a single-choice row has no <c>multi</c> key.</summary>

@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.31] - 2026-11-19
+
+### Added
+
+- **`ah work done <id>`** closes a work item wherever it lives: a backlog item through `ah backlog done`, a team's
+  checklist item through `ah roster checklist done`. It takes `--commit` and `--note`.
+- **A Recommended badge in Q&A.** An option whose label ends in "(Recommended)" shows a Recommended badge in the web
+  page's questions, the board's item dialog and herdr desktop's Q&A. More than one option may be marked.
+- **An alarm when a QA entry waits with no QA member.** After 10 minutes, the Orchestrator is told which entry is
+  waiting and how to start a QA member.
+
+### Changed
+
+- **`done` is green everywhere.** The Claude Code mod and the shared status table now give `done` the `ok` tone the
+  terminal view already used, and a test keeps the terminal view and the table in step.
+
+### Fixed
+
+- **Progress records name a report by its message id** (`<id> (ah msg show <id> response)`) instead of a path under
+  `.claude/ah2/msgs/` that never existed, and read reports back from the message store.
+
 ## [2.0.30] - 2026-11-19
 
 ### Changed

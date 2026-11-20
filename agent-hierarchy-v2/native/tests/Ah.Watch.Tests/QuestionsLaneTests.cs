@@ -443,6 +443,45 @@ public sealed class QuestionsLaneTests
         Assert.All(fold.Rows, static r => Assert.Null(r.Row.Member("choices")));
     }
 
+    [Fact]
+    public void AnOptionEndingInRecommendedIsServedStrippedWithItsIndexAndAnUnmarkedTwinIsServedAsToday()
+    {
+        const string marked = "Spawn the architect per stream (Recommended)";
+        const string shown = "Spawn the architect per stream";
+        string Ask(string id, string time, string options, string def) =>
+            $$"""{"id":"{{id}}","time":"{{time}}","run":"run-1","kind":"parked","question":"Q?","options":[{{options}}],"default":"{{def}}"}""";
+        var fold = QuestionsLane.Fold(
+            Run(
+                Ask("d1", "2026-10-30T10:00:00Z", $"\"{marked}\",\"Wait\"", marked),
+                Ask("d2", "2026-10-30T10:01:00Z", $"\"{shown}\",\"Wait\"", shown),
+                Ask("d3", "2026-10-30T10:02:00Z", $"\"{marked}\",\"Wait\"", marked),
+                Answered("a3", "d3", "2026-10-30T10:03:00Z", decision: $"\"{marked}\""),
+                Ask("d4", "2026-10-30T10:04:00Z", $"\"{marked}\",\"Wait\"", marked),
+                Answered("a4", "d4", "2026-10-30T10:05:00Z", decision: "\"Other (Recommended)\"")),
+            Dir,
+            Waiting(
+                WaitingItem("marked", "2026-11-02T11:00:00Z", options: $"\"{marked}\",\"Wait\",\"B  (RECOMMENDED) \",7"),
+                WaitingItem("twin", "2026-11-02T12:00:00Z", options: "\"(Recommended)\",\"A (Recommended) later\",\"A [Recommended]\",\"Recommended: A\"")));
+
+        string Json(JsonValue v) => Encoding.UTF8.GetString(JsonText.ToUtf8(v, 0));
+        var open = fold.Body["open"].AsArray();
+        Assert.Equal("""{"id":"d1","at":1793354400000,"text":"Q?","options":[{"label":"Spawn the architect per …"},{"label":"Wait"}],"recommended":[0],"default":"Spawn the architect per stream"}""", Json(open[0]));
+        Assert.Equal("""{"id":"d2","at":1793354460000,"text":"Q?","options":[{"label":"Spawn the architect per …"},{"label":"Wait"}],"default":"Spawn the architect per stream"}""", Json(open[1]));
+
+        var items = fold.Body["items"].AsArray();
+        Assert.Equal("""["Spawn the architect per stream","Wait","B",7]""", Json(items[0].Member("options")!.Value));
+        Assert.Equal("[0,2]", Json(items[0].Member("recommended")!.Value));
+        Assert.Equal("""["(Recommended)","A (Recommended) later","A [Recommended]","Recommended: A"]""", Json(items[1].Member("options")!.Value));
+        Assert.Null(items[1].Member("recommended"));
+
+        JsonValue Listed(string id) => fold.Rows.Single(r => r.Row.Member("id")!.Value.AsString() == id).Row;
+        Assert.Equal("""{"id":"d3","dir":"to_you","at":1793354520000,"text":"Q?","options":["Spawn the architect per stream","Wait"],"recommended":[0],"run":"run-1","answer":"Spawn the architect per stream","by":"user","answered_at":1793354580000}""", Json(Listed("d3")));
+        // an answer that only ends in the mark is no option's stored label, so it is served as given
+        Assert.Equal("Other (Recommended)", Listed("d4").Member("answer")!.Value.AsString());
+        Assert.Null(Listed("d2").Member("recommended"));
+        Assert.Equal("""["Spawn the architect per stream","Wait"]""", Json(Listed("d2").Member("options")!.Value));
+    }
+
     private static JsonValue Capped(int open, int answered, string text = "Q?", string answer = "\"Yes\"", int options = 2)
     {
         var lines = new List<string>();

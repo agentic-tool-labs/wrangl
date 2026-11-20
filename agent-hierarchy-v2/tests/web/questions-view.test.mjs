@@ -28,7 +28,7 @@ test("the slice folds to open rows oldest first and recent newest first, whateve
   assert.deepEqual(a.open.map((q) => q.id), ["q1", "q2", "q0"], "a row whose time did not parse sorts last");
   assert.deepEqual(a.recent.map((r) => r.id), ["r2", "r1"]);
   assert.equal(a.open[1].def, "Yes", "the default option is kept");
-  assert.deepEqual(a.open[1].options, [{ label: "Yes" }]);
+  assert.deepEqual(a.open[1].options, [{ label: "Yes", rec: false }]);
   assert.equal(a.open[1].item, "item-a", "header is the plan item key");
   assert.equal(a.open[0].asker, null, "asker is optional");
   assert.equal(a.run, "run-1");
@@ -192,7 +192,7 @@ test("attentionOf merges waiting items with the open questions, oldest first, an
   assert.deepEqual(a.open.map((q) => q.id), ["s:ship", "d1", "s:free"]);
   assert.equal(a.open[0].kind, "item");
   assert.equal(a.open[0].text, "Ship now?");
-  assert.deepEqual(a.open[0].options, [{ label: "Now" }, { label: "Later" }]);
+  assert.deepEqual(a.open[0].options, [{ label: "Now", rec: false }, { label: "Later", rec: false }]);
   assert.equal(a.count, 5);
   assert.equal(a.hidden, 2, "Showing 3 of 5");
   assert.deepEqual(a.decisions.map((q) => q.id), ["d1"], "a decision card reads decisions alone");
@@ -232,6 +232,43 @@ test("Attention: an item waiting with no run is listed and answerable: no NO_RUN
   assert.equal(find(root, "label.qa-cmd").length, 0, "no such command for an item");
   assert.equal(find(root, "span.qa-id").length, 0, "an item's raw key leads no row");
   assert.equal(find(root, "input").filter((i) => i.getAttribute("type") === "radio").length, 3, "two options and Other");
+});
+
+test("the open form and the log's Options badge only the options the slice marks Recommended; negative: an unmarked row has no badge", async () => {
+  const badged = (el) => find(el, "label.qa-opt").map((l) => [text(find(l, "span.qa-label")[0]), find(l, "span.qa-badge").map(text)]);
+  const root = installDom();
+  const open = [{ id: "q1", at: 10, text: "Ship?", options: [{ label: "Go" }, { label: "Hold" }], recommended: [0], default: "Hold" }, { id: "q2", at: 20, text: "Plain?", options: [{ label: "Yes" }, { label: "No" }], default: "Yes" }];
+  render(html`<${AttentionView} store=${still([[`questions:${DIR}/ship`, { version: 1, body: { run: "r", open, items: [{ ...SHIP, recommended: [1] }], recent: [], open_total: 2, waiting_total: 3, truncated: false } }]])} teamId=${TEAM} />`, root);
+  await settle();
+  const cards = find(root, "li.qa-card");
+  assert.equal(cards.length, 3);
+  const byLabels = Object.fromEntries(cards.map((c) => [badged(c).map(([l]) => l).join("|"), badged(c)]));
+  assert.deepEqual(byLabels["Go|Hold|Other"], [["Go", ["Recommended"]], ["Hold", []], ["Other", []]]);
+  assert.deepEqual(byLabels["Yes|No|Other"], [["Yes", []], ["No", []], ["Other", []]], "an unmarked question draws no badge");
+  assert.deepEqual(byLabels["Now|Later|Other"], [["Now", []], ["Later", ["Recommended"]], ["Other", []]], "an item's marked option");
+
+  const items = [{ id: "d1", dir: "to_you", at: 2, text: "Ship?", options: ["Now", "Later"], recommended: [1], answer: "Later", run: "r" }, { id: "d2", dir: "to_you", at: 1, text: "Plain?", options: ["Yes", "No"], run: "r" }];
+  const log = installDom();
+  render(html`<${QAView} store=${still([], [[`list:questions:${DIR}/ship`, { windows: [{ items, next: null }], loading: false }]])} teamId=${TEAM} />`, log);
+  await settle();
+  const options = async (id) => {
+    const opener = find(log, "button.qa-open").find((b) => b.getAttribute("data-qa") === id);
+    opener.fire("click", { currentTarget: opener });
+    await until(() => find(log, "section.qa-detail").length === 1 && text(find(find(log, "section.qa-detail")[0], "span.qa-id")[0]) === id, `the ${id} panel`);
+    return find(find(find(log, "section.qa-detail")[0], "ol.qa-options")[0], "li").map((li) => [text(find(li, "span.qa-label")[0]), find(li, "span.qa-badge").map(text), find(li, "span.qa-default").map(text)]);
+  };
+  assert.deepEqual(await options("d1"), [["Now", [], []], ["Later", ["Recommended"], ["answer"]]]);
+  assert.deepEqual(await options("d2"), [["Yes", [], []], ["No", [], []]]);
+});
+
+test("the board item dialog badges the options the slice marks Recommended; negative: an unmarked option has none", async () => {
+  const { ItemDialog } = await import("../../web/ui/item-dialog.js");
+  const root = installDom();
+  const ask = attentionOf({ open: [{ id: "q1", at: 1, text: "Ship?", options: [{ label: "Go" }, { label: "Hold" }], recommended: [1], default: "Go" }], recent: [] }).open[0];
+  render(html`<${ItemDialog} p=${{ kind: "Decision", title: "Ship?", rows: [], ask }} store=${still()} onClose=${() => {}} />`, root);
+  await settle();
+  const lis = find(find(root, "ul.kb-list")[0], "li");
+  assert.deepEqual(lis.map((li) => [text(li).trim(), find(li, "span.qa-badge").map(text)]), [["Go (default)", []], ["Hold Recommended", ["Recommended"]]]);
 });
 
 test("Attention: an item whose question is its title names it once, as words", async () => {

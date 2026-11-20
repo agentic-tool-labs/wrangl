@@ -2057,6 +2057,8 @@ Tracked work with one id per repo (`ah-12`), whichever placement an item has: th
 
 `list` shows open items by default, one line each, 50 rows; `state: gone` means the placement no longer exists. `prefix <new>` is 1 to 8 lower-case letters or digits, starting with a letter; old prefixes keep resolving and output prints the current one. `ah roster checklist show|set|done`, `ah backlog show|set|claim|done|drop` and `ah msg new --item` also take a work id, after their own lookup misses.
 
+`ah work done <id> [--commit sha]... [--note text] [--json]` closes an item by its placement: a backlog row through `ah backlog done`, a stream item through `ah roster checklist done`, whose refusals pass through; it prints `<id> done (backlog|checklist <team>/<stream>)`, and a gone or unknown id is exit 1 with nothing changed.
+
 Exit 0 ok, 1 not found or nothing to show, 2 refused (several matches list their ids; `msg new --item` names the team when the item is another team's).
 
 #### `ah msg history`
