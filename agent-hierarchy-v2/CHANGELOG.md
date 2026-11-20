@@ -4,6 +4,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.30] - 2026-11-19
+
+### Changed
+
+- **The documentation site's landing page reads more plainly.** Same facts and commands, simpler wording.
+
 ## [2.0.29] - 2026-11-19
 
 ### Added

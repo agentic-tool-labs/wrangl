@@ -4,14 +4,15 @@
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero-text">
     <h1 id="hero-title"><span>Wrangl:</span> <span>Agent Hierarchy</span></h1>
-    <p class="lede">A Claude Code plugin that turns one Claude Code session into a small software team, coordinated by a
-      local daemon. Its commands are <code>ah</code> and <code>ahd</code>.</p>
+    <p class="lede">Wrangl is a Claude Code plugin that gives your session a team. Your session takes the lead and
+      hands work to other Claude Code sessions, which design it, build it and review it. A small program on your
+      machine, <code>ahd</code>, carries the messages between them, and <code>ah</code> is the command you and the team
+      use to run it all.</p>
     <div class="callout callout-warn" role="note">
-      <p><strong>Early testing: use with caution.</strong> Wrangl 2.0.0 is an early public release and is still being
-        tested. It starts and controls other agent sessions that edit files and run commands in your repository, so use
-        it only on work you have committed or backed up. Expect bugs, and expect commands, settings and screens to
-        change between releases. Wrangl is provided “as is”, without warranties of any kind; see the
-        <a href="{{repo:LICENSE}}">LICENSE</a>. Report problems at
+      <p><strong>Wrangl is new and still being tested.</strong> It starts other agent sessions that edit files and run
+        commands in your repository, so only point it at work you have committed or backed up. You will hit bugs, and
+        commands, settings and screens may change between releases. It comes with no warranty (see the
+        <a href="{{repo:LICENSE}}">LICENSE</a>). If something breaks, please open an issue at
         <a href="https://github.com/agentic-tool-labs/wrangl/issues">github.com/agentic-tool-labs/wrangl/issues</a>.</p>
     </div>
     <p class="hero-actions">
@@ -42,9 +43,9 @@
   <div class="get">
     <div class="get-team">
       <h3>A team from one session</h3>
-      <p>Your session becomes the <strong>Chief Orchestrator</strong>. It breaks a job into pieces and hands each piece
-        to a specialist. Each specialist runs on the model that suits its job, so design gets a strong model and
-        routine legwork gets a cheap one.</p>
+      <p>Your session becomes the Chief Orchestrator. It splits a job up and passes each piece to the right
+        specialist. Every role can run on its own model, so you can spend a strong model on design and a cheap one on
+        running builds and reading logs.</p>
       <dl class="roster">
         <div><dt>Architect</dt><dd>writes the design (a “spec” file)</dd></div>
         <div><dt>Implementor</dt><dd>builds exactly what the spec says</dd></div>
@@ -52,29 +53,28 @@
         <div><dt>QA</dt><dd>runs the heavy test suites and reports failures</dd></div>
         <div><dt>Ultra-Advisor</dt><dd>settles the hardest calls</dd></div>
         <div><dt>Docs-Writer</dt><dd>writes READMEs, guides and changelogs</dd></div>
-        <div><dt>UX-Engineer</dt><dd>builds web UI and proves it with screenshots</dd></div>
+        <div><dt>UX-Engineer</dt><dd>builds web UI and checks it in screenshots</dd></div>
         <div><dt>Sub-Orchestrator</dt><dd>runs one separate line of work (a “lane”)</dd></div>
-        <div><dt>Task-Runner</dt><dd>cheap legwork: run builds, search, read logs</dd></div>
-        <div><dt>Backlog-Groomer</dt><dd>triage, ranking, dedupe, proven-done items</dd></div>
+        <div><dt>Task-Runner</dt><dd>runs builds, searches the code and reads logs</dd></div>
+        <div><dt>Backlog-Groomer</dt><dd>sorts and ranks the backlog, and closes what is already done</dd></div>
       </dl>
       <p class="more"><a href="{{href:overview#the-team}}">The team, and what each role never does</a></p>
     </div>
     <div class="get-side">
       <h3>A daemon that carries the mail</h3>
-      <p><code>ahd</code> is a small background program that runs on your machine, once per user. Teams, message
-        files and the roster work from plain files without it; timers, wake-ups, the delivery ladder, links between
-        teammates and the terminal view need it.</p>
-      <p>Around the team, Wrangl passes messages between members, keeps them from writing outside their own work
-        area, tells you when someone is stuck, and brings the team back after a crash or reboot.</p>
+      <p><code>ahd</code> runs in the background on your machine, one copy per user. A team can work without it,
+        since teams, messages and the roster are plain files, but you need it for timers, wake-ups, message delivery,
+        links between teammates and the terminal view.</p>
+      <p>Wrangl also keeps each member writing only inside its own work area, tells you when someone is stuck, and
+        brings the team back after a crash or a reboot.</p>
       <p class="more"><a href="{{href:daemon}}">The daemon</a></p>
       <h3>Three ways to watch</h3>
       <ul class="views">
-        <li><a href="{{href:web-ui}}">The web page</a>: your whole team at once, on your machine only.
-          Open it with <code>ahd ui</code>.</li>
-        <li><a href="{{href:tui}}">The terminal view</a>: <code>ahd tui</code>, for a second pane beside Claude Code or
-          over SSH.</li>
-        <li><a href="{{href:herdr-desktop}}">Herdr desktop</a>: the team sitrep in the Herdr desktop app’s
-          sidebar.</li>
+        <li><a href="{{href:web-ui}}">The web page</a> shows the whole team at once, and only your machine
+          can open it. Start it with <code>ahd ui</code>.</li>
+        <li><a href="{{href:tui}}">The terminal view</a>, <code>ahd tui</code>, fits in a pane beside Claude Code
+          and works over SSH.</li>
+        <li><a href="{{href:herdr-desktop}}">Herdr desktop</a> puts the team in the app's sidebar.</li>
       </ul>
     </div>
   </div>
@@ -86,9 +86,9 @@
     macOS or Linux. If you have the older <code>ah</code> plugin (v1), turn it off first: see
     <a href="{{href:overview#ah2-and-ah-v1}}">Wrangl and ah v1</a>. Then, in a terminal:</p>
   <div class="code"><button type="button" class="copy" hidden>Copy</button><pre tabindex="0"><code>curl -fsSL https://raw.githubusercontent.com/agentic-tool-labs/wrangl/main/install.sh | bash</code></pre></div>
-  <p>It shows its plan and asks before it changes anything. Piping a script into <code>bash</code> runs code you have
-    not read; to read it first, see <a href="{{href:overview#install-with-one-command}}">Install with one command</a>.
-    Or do it by hand, inside Claude Code:</p>
+  <p>It shows you its plan and asks before it changes anything. If you would rather read a script before you pipe
+    it into <code>bash</code>, <a href="{{href:overview#install-with-one-command}}">Install with one command</a>
+    shows how. Or do it by hand, inside Claude Code:</p>
   <div class="code"><button type="button" class="copy" hidden>Copy</button><pre tabindex="0"><code>/plugin marketplace add agentic-tool-labs/wrangl
 /plugin install wrangl@wrangl
 /wrangl:hierarchy install</code></pre></div>
@@ -104,11 +104,11 @@
       project, then run <code>/clear</code> or start a new session.</li>
     <li><strong>Pick your team.</strong> With no roster yet, <code>init</code> hands you on to the
       <code>/wrangl:agent-roster</code> wizard, which asks which roles you want and which model each runs.</li>
-    <li><strong>Start the team.</strong> Ask in plain words: “set up my team”.</li>
-    <li><strong>Say what the team is for (optional).</strong> Tell the Orchestrator the goal in one sentence, for
-      example “our goal is a working login page”. Every member sees it.</li>
-    <li><strong>Give the Orchestrator a job.</strong> Describe the change you want. A small one it does itself; a
-      bigger one goes to the Architect, the Implementor and the Reviewer.</li>
+    <li><strong>Start the team.</strong> Just ask: "set up my team".</li>
+    <li><strong>Say what the team is for (optional).</strong> Give the Orchestrator the goal in a sentence, such
+      as "our goal is a working login page". Every member sees it.</li>
+    <li><strong>Give the Orchestrator a job.</strong> Describe the change you want. It does small jobs itself and
+      passes bigger ones to the Architect, the Implementor and the Reviewer.</li>
     <li><strong>Check on the team</strong> at any time with <code>ah roster teams</code> and
       <code>ah roster status --plain</code>.</li>
     <li><strong>Wrap up.</strong> When the work is merged, ask the Orchestrator to wrap up the stream and dismiss
