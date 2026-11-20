@@ -1294,6 +1294,30 @@ public sealed class HerdrCoreEnvironmentTests
     }
 
     [Fact]
+    public void AnInheritedEnvironmentKeepsTheDesktopHomeOnly()
+    {
+        string[] names = ["HERDR_APP_HOME", "HERDR_ENV", "CLAUDECODE"];
+        var saved = names.ToDictionary(n => n, Environment.GetEnvironmentVariable);
+        Environment.SetEnvironmentVariable("HERDR_APP_HOME", "/tmp/second-desktop");
+        Environment.SetEnvironmentVariable("HERDR_ENV", "1");
+        Environment.SetEnvironmentVariable("CLAUDECODE", "1");
+        try
+        {
+            var env = HerdrCore.CoreEnvironment(null);
+
+            Assert.Equal(["HERDR_APP_HOME"], names.Where(env.ContainsKey));
+            Assert.Equal("/tmp/second-desktop", env["HERDR_APP_HOME"]);
+        }
+        finally
+        {
+            foreach (var (k, v) in saved)
+            {
+                Environment.SetEnvironmentVariable(k, v);
+            }
+        }
+    }
+
+    [Fact]
     public void APinnedTuiSocketStillBecomesHcSocket()
     {
         var env = HerdrCore.CoreEnvironment(new Dictionary<string, string?> { ["HERDR_SOCKET_PATH"] = "/s.sock" });

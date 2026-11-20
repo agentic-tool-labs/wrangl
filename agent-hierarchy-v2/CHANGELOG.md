@@ -4,6 +4,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.33] - 2026-11-20
+
+### Fixed
+
+- **A second herdr desktop can spawn members.** In a herdr desktop started with `HERDR_APP_HOME` set, a stream spawn
+  was refused `stream-tab-unavailable`, because ah removed that variable before it ran `herdr-app` and the request
+  went to the default desktop. ah now keeps `HERDR_APP_HOME` on those calls.
+
 ## [2.0.32] - 2026-11-20
 
 ### Added
