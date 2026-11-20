@@ -7,7 +7,8 @@
     "working": { "glyph": "●", "word": "working", "tone": "work", "rank": 4 },
     "waitingOrch": { "glyph": "◐", "word": "waiting for the orchestrator", "tone": "idle", "rank": 5 },
     "idle": { "glyph": "○", "word": "idle", "tone": "idle", "rank": 6 },
-    "done": { "glyph": "✓", "word": "done", "tone": "idle", "rank": 7 },
+    "held": { "glyph": "‖", "word": "Held", "tone": "idle", "rank": 6 },
+    "done": { "glyph": "✓", "word": "done", "tone": "ok", "rank": 7 },
     "ended": { "glyph": "×", "word": "ended", "tone": "idle", "rank": 8 },
     "unknown": { "glyph": "?", "word": "unknown", "tone": "idle", "rank": 9 }
   },

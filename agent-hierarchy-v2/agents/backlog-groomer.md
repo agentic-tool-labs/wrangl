@@ -63,7 +63,7 @@ the user's Needs-you list with an answer form:
 1. `ah roster checklist add "<the decision, in a few words>" --parent b<N>`
    (pass `--parent` when it belongs to a backlog item); it prints the item id.
 2. `ah roster checklist set <id> --state waiting-user --class <blocker|soon|eventually> --note "<the question>" --option "<label>" --option "<label>"...`
-   (at most 4 options).
+   (at most 4 options). End the label of the option you recommend with " (Recommended)" (one or more; none when you have no view). It also works on `ah msg decision park --option`.
 3. `ah work record <stream>/<id> --type description --title Description --body-file -`
    with why it reaches the user, what each option does, and what Not needed
    (Already done, No longer needed) does.

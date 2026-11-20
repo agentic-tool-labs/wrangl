@@ -189,11 +189,50 @@ public sealed class ProgressDomainTests
         var rig = Make(DateTimeOffset.UtcNow);
         AppendReportFrom(rig, "implementor", "DONE", "20261016-120000-abcd", "main", ["x"]);
         var response = Directory.GetFiles(Path.Combine(rig.Pool, "msgs")).Single();
-        File.WriteAllText(response, "## [0] tldr\n- [1] status: DONE\n");
+        TestMsgStore.Plant(response, "## [0] tldr\n- [1] status: DONE\n");
 
         Assert.Empty(rig.Services.Progress.PendingNudges(rig.Pool, "t"));
 
-        File.Delete(response);
+        TestMsgStore.Delete(rig.AhHome, response);
+
+        Assert.Empty(rig.Services.Progress.PendingNudges(rig.Pool, "t"));
+    }
+
+    [Fact]
+    public void AReportFiledInTheStoreIsNamedByIdAndFoundByIdWithNoFileOnDisk()
+    {
+        var rig = Make(DateTimeOffset.UtcNow);
+        const string id = "20261016-120000-abcd";
+        AppendReportFrom(rig, "implementor", "DONE", id, "main", ["x"]);
+        File.Delete(Directory.GetFiles(Path.Combine(rig.Pool, "msgs")).Single());
+
+        Assert.Contains($"- Report: {id} (ah msg show {id} response)\n", Doc(rig, "main.journal.md"), StringComparison.Ordinal);
+        var nudge = Assert.Single(rig.Services.Progress.PendingNudges(rig.Pool, "t"));
+        Assert.Equal(("main", "implementor"), (nudge.Stream, nudge.Role));
+    }
+
+    [Fact]
+    public void AnOldJournalLineHoldingAResponsePathIsReadFromTheStoreByTheFileNamesId()
+    {
+        var rig = Make(DateTimeOffset.UtcNow);
+        const string id = "20261016-120000-abcd";
+        AppendReportFrom(rig, "implementor", "DONE", id, "main", ["x"]);
+        File.Delete(Directory.GetFiles(Path.Combine(rig.Pool, "msgs")).Single());
+        var old = Doc(rig, "main.journal.md").Replace($"- Report: {id} (ah msg show {id} response)", $"- Report: .claude/ah2/msgs/{id}--implementor--slice--response.md", StringComparison.Ordinal);
+        Plant(rig, "main.journal.md", old);
+
+        var nudge = Assert.Single(rig.Services.Progress.PendingNudges(rig.Pool, "t"));
+        Assert.Equal(("main", "implementor"), (nudge.Stream, nudge.Role));
+    }
+
+    [Fact]
+    public void AReportLineNamingAnIdTheStoreDoesNotHoldIsNotNudgedAbout()
+    {
+        var rig = Make(DateTimeOffset.UtcNow);
+        const string id = "20261016-120000-abcd";
+        AppendReportFrom(rig, "implementor", "DONE", id, "main", ["x"]);
+        var other = Doc(rig, "main.journal.md").Replace($"- Report: {id} (ah msg show {id} response)", "- Report: 20261016-120000-zzzz (ah msg show 20261016-120000-zzzz response)", StringComparison.Ordinal);
+        Plant(rig, "main.journal.md", other);
 
         Assert.Empty(rig.Services.Progress.PendingNudges(rig.Pool, "t"));
     }
@@ -502,7 +541,7 @@ public sealed class ProgressDomainTests
     private static JsonObject Upsert(Rig rig, string slug, string status, string from = "tm-implementor", string stream = "main", string time = "2026-10-25T01:00:00Z") =>
         rig.Services.StateCalls.Progress(
             "rollup-block-upsert",
-            new JsonObject { ["dir"] = rig.Pool, ["team"] = "t", ["stream"] = stream, ["slug"] = slug, ["status"] = status, ["from"] = from, ["time"] = time, ["path"] = $".claude/ah2/msgs/x--o--{slug}--response.md" }).AsObject();
+            new JsonObject { ["dir"] = rig.Pool, ["team"] = "t", ["stream"] = stream, ["slug"] = slug, ["status"] = status, ["from"] = from, ["time"] = time, ["path"] = "x (ah msg show x response)" }).AsObject();
 
     private static string RollupPath(Rig rig) => Path.Combine(rig.Folder, "rollup.md");
 
@@ -518,7 +557,7 @@ public sealed class ProgressDomainTests
         Assert.True(Flag(Upsert(rig, "slice-one", "DONE"), "updated"));
 
         Assert.Equal(
-            Begin + "\nmain | slice-one | DONE | tm-implementor | 2026-10-25T01:00:00Z | .claude/ah2/msgs/x--o--slice-one--response.md\n" + End + "\n",
+            Begin + "\nmain | slice-one | DONE | tm-implementor | 2026-10-25T01:00:00Z | x (ah msg show x response)\n" + End + "\n",
             Doc(rig, "rollup.md"));
     }
 
@@ -533,7 +572,7 @@ public sealed class ProgressDomainTests
 
         var lines = Lines(rig, "rollup.md");
         Assert.Equal(4, lines.Length);
-        Assert.Equal("main | slice-one | PASS | tm-implementor | 2026-10-25T02:00:00Z | .claude/ah2/msgs/x--o--slice-one--response.md", lines[1]);
+        Assert.Equal("main | slice-one | PASS | tm-implementor | 2026-10-25T02:00:00Z | x (ah msg show x response)", lines[1]);
         Assert.StartsWith("main | slice-two | BLOCKED | tm-reviewer | ", lines[2], StringComparison.Ordinal);
     }
 
@@ -606,7 +645,7 @@ public sealed class ProgressDomainTests
         Assert.True(Flag(Ack("slice-one"), "updated"));
 
         var row = Lines(rig, "rollup.md").Single(l => l.Contains(" | slice-", StringComparison.Ordinal));
-        Assert.Equal("stream-a | slice-one | acked | tm-reviewer | 2026-10-25T09:00:00Z | .claude/ah2/msgs/x--o--slice-one--response.md", row);
+        Assert.Equal("stream-a | slice-one | acked | tm-reviewer | 2026-10-25T09:00:00Z | x (ah msg show x response)", row);
     }
 
     [Fact]

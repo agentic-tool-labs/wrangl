@@ -338,8 +338,7 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
 
         var requestId = parts[0];
         var kind = parts[^2];
-        var marker = responsePath.IndexOf("/.claude/ah2/", StringComparison.Ordinal);
-        var reportLabel = marker >= 0 ? responsePath[(marker + 1)..] : NodePath.Basename(responsePath);
+        var reportLabel = ReportLabel(requestId);
         var text = ReadMsg(responsePath);
         var extract = ProgressFormat.ExtractReport(text);
         var tagged = new JsonArray();
@@ -374,16 +373,18 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
             throw new InvalidOperationException($"{NodePath.Basename(responsePath)} is not a <id>--<to>--<slug>--response.md file");
         }
 
-        var marker = responsePath.IndexOf("/.claude/ah2/", StringComparison.Ordinal);
         var args = Args(pool, team);
         args["stream"] = stream;
         args["slug"] = parts[^2];
         args["status"] = ProgressFormat.ExtractReport(ReadMsg(responsePath)).Status is { } status ? status : "-";
         args["from"] = from;
         args["time"] = clock.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture);
-        args["path"] = marker >= 0 ? responsePath[(marker + 1)..] : NodePath.Basename(responsePath);
+        args["path"] = ReportLabel(parts[0]);
         return calls.Progress("rollup-block-upsert", args).Member("updated") is { IsTruthy: true };
     }
+
+    /// <summary>How a progress record names report <paramref name="id"/>: the id and the command that reads it, since messages live only in the store (ah2-320).</summary>
+    internal static string ReportLabel(string id) => $"{id} (ah msg show {id} response)";
 
     public bool AcknowledgeRollupLine(string pool, string team, string responsePath)
     {
@@ -496,7 +497,7 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
     /// <summary>
     /// The role of the sender of report <paramref name="reportId"/> when it is an implement-class role whose report is not BLOCKED or NEEDS-…;
     /// null for any other sender, a missing or unreadable report file, or a report whose first status line starts BLOCKED or NEEDS.
-    /// Reads the first 40 lines of the file the journal entry links.
+    /// Reads the first 40 lines of the stored response the journal entry names by id.
     /// </summary>
     private string? ImplementReport(string journal, string reportId, string pool)
     {
@@ -520,11 +521,13 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
             return null;
         }
 
-        var path = link.StartsWith('/') ? link : NodePath.Join(NodePath.Dirname(NodePath.Dirname(pool)), link);
+        // a line written before ah2-320 holds a <id>--<to>--<slug>--response.md path; the id is its file name's first segment
+        var id = link.Contains("--", StringComparison.Ordinal) ? NodePath.Basename(link).Split("--")[0] : link.Split(' ')[0];
         string? text;
         try
         {
-            text = _reader.ReadIfPresent(path);
+            using var db = core.DbMsgs();
+            text = db.Messages(pool, id, "response") is [var row, ..] ? HierarchyCore.ReadMsgText(row.Path, db) : null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

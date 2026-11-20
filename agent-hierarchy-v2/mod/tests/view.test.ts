@@ -194,6 +194,8 @@ test('band, no team: the entry text in its tone, none for an empty one, and an u
   expect(band([], { ...idleEntry, text: '' })).toBe(null)
   expect(band([], { ...idleEntry, tone: 'purple' })?.tone).toBe('idle')
   expect(band([], { ...idleEntry, tone: 'warn' })?.tone).toBe('warn')
+  expect(band([], { ...idleEntry, tone: 'ok' })?.tone).toBe('ok')
+  expect(band([], { ...idleEntry, tone: 'okay' })?.tone).toBe('idle')
 })
 
 test('band: a reported task is not in flight', async () => {
@@ -348,7 +350,7 @@ test('Pane, dispatches: expired rows hidden, reported kept, newest first, state 
   ] })]
   expect(paneRows(viewOf(many), 120).slice(5)).toEqual([
     { text: 'odd → architect | eta 5m | ░░░░░░░░░░ 1% | 0:05 | paused', tone: 'idle' },
-    { text: 'done → architect | eta 5m | ████░░░░░░ 40% | 2:00 | done', tone: 'idle' },
+    { text: 'done → architect | eta 5m | ████░░░░░░ 40% | 2:00 | done', tone: 'ok' },
     { text: 'old-work → architect | eta 5m | ██████░░░░ 66% | 3:20 | working', tone: 'work' },
   ])
 })
@@ -527,7 +529,7 @@ test('I1 icons and icon colors come from the one table; the text tone is unchang
   const ds = [sent('working', 0), sent('blocked', 1), sent('overdue', 2), sent('stalled', 3, { reason: 'no-report' }), sent('reported', 4)]
   const d = secs([team({ members: [], dispatches: ds })])[0].rows
   expect(d.map((r) => [r.text.split(' ')[0], r.icon, r.iconColor, r.tone]).sort()).toEqual([
-    ['s0', '●', 'success', 'work'], ['s1', '■', 'warning', 'warn'], ['s2', '▲', 'error', 'bad'], ['s3', '▲', 'error', 'bad'], ['s4', '✓', null, 'idle'],
+    ['s0', '●', 'success', 'work'], ['s1', '■', 'warning', 'warn'], ['s2', '▲', 'error', 'bad'], ['s3', '▲', 'error', 'bad'], ['s4', '✓', 'success', 'ok'],
   ])
 })
 
@@ -1107,11 +1109,11 @@ test('negative: aMailRecordKeepsNoFiles', () => {
 })
 
 test('S1 the status table is the shared status language: same glyph, word, tone and rank per status, same mapping from raw states', async () => {
-  const color: Record<string, string | null> = { bad: 'error', warn: 'warning', work: 'success', idle: null }
+  const color: Record<string, string | null> = { bad: 'error', warn: 'warning', work: 'success', ok: 'success', idle: null }
   const want = Object.fromEntries(Object.entries(statusLanguage.states).map(([k, v]) => [k, { glyph: v.glyph, color: color[v.tone], word: v.word, tone: v.tone, rank: v.rank }]))
   expect(STYLE.icon).toEqual(want)
   expect(STYLE.from).toEqual(statusLanguage.from)
-  expect(STYLE.tone).toEqual({ bad: color.bad, warn: color.warn })
+  expect(STYLE.tone).toEqual({ bad: color.bad, warn: color.warn, ok: color.ok })
   expect(statusOf('thinking')).toBe('unknown')
 })
 

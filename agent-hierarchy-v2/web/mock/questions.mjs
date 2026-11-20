@@ -4,12 +4,12 @@
 const MIN = 60_000;
 export const RUN = "20261030-233614-ui-w2";
 
-// id, minutes ago, asker, plan item, question, options, default, multi
+// id, minutes ago, asker, plan item, question, options, default, multi, recommended (served: the marked option indexes, labels already stripped)
 const OPEN = [
   ["d7", 95, "sub-orchestrator", "alarms-18", "Item 18(1) says reports wake the device. Should a report raised while the screen is off also wake it, or wait for the next unlock?",
     ["Reports still wake", "Wait for unlock", "Only urgent ones wake"], "Reports still wake"],
   ["d9", 41, "architect", "backlog-waves", "The backlog uses now / next / later. Keep those three names in the new tab, or add a fourth \"someday\" wave for parked ideas?",
-    ["Keep three", "Add someday"], "Keep three"],
+    ["Keep three", "Add someday"], "Keep three", false, [1]],
   ["d12", 12, null, null, "Which suites should the merge train run before it lands a branch on main?", ["Core only", "Core and web", "Core, web and E4", "Core, web, E4 and the shell suites", "Everything QA runs", "Nothing: trust the reviewer"], "Core, web, E4 and the shell suites"],
   ["d14", 6, "orchestrator", "nightly", "Which suites should the nightly run cover? Pick every one that applies.", ["Core", "Web", "E4", "Shell suites"], null, true],
 ];
@@ -50,10 +50,10 @@ export function questionsBody(now, asked = OPEN.length, items = []) {
   return {
     ...(items.length ? { items, waiting_total: open.length + items.length } : null),
     run: RUN,
-    open: [...open].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, ago, asker, key, text, options, def, multi]) => ({
+    open: [...open].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, ago, asker, key, text, options, def, multi, recommended]) => ({
       id, at: now - ago * MIN, ...capped({ asker }, "asker", 40), source: "ah msg decision add", ...capped(item(key) ?? {}, "header", 40), text: cut(text, 200),
       options: options.slice(0, 4).map((label) => ({ label: cut(label, 24) })), ...(options.length > 4 ? { options_total: options.length } : null), ...capped({ default: def }, "default", 40),
-      ...(multi ? { multi: true } : null),
+      ...(multi ? { multi: true } : null), ...(recommended ? { recommended } : null),
     })),
     recent: ANSWERED.slice(0, 10).map(([id, , ago, , text, , answer, by]) => ({ id, text: cut(text, 100), answer: cut(answer, 48), by, at: now - ago * MIN })),
     open_total: open.length,
@@ -64,7 +64,7 @@ export function questionsBody(now, asked = OPEN.length, items = []) {
 // Newest first, over the open run: every question put to the user (open or answered, a surrogate's answer included) and
 // every decision the team took on its own.
 export function questionRows(now, open = OPEN.length) {
-  const asked = OPEN.slice(0, open).map(([id, ago, , key, text, options]) => ({ id, dir: "to_you", at: now - ago * MIN, ...item(key), text, options, run: RUN }));
+  const asked = OPEN.slice(0, open).map(([id, ago, , key, text, options, , , recommended]) => ({ id, dir: "to_you", at: now - ago * MIN, ...item(key), text, options, ...(recommended ? { recommended } : null), run: RUN }));
   const answered = ANSWERED.map(([id, asked, ago, key, text, options, answer, by, cls]) => ({
     id, dir: "to_you", at: now - asked * MIN, ...item(key), text, options, answer, by, answered_at: now - ago * MIN, run: RUN, ...(cls ? { class: cls } : null),
   }));

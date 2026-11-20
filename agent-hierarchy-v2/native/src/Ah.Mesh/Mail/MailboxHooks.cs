@@ -628,7 +628,21 @@ internal sealed partial class MailboxHooks(Mailbox mailbox, RelayObligations rel
             member => home is not null && MemberGone(home, team, member),
             item => home is null || ItemWaiting(home, team, item, entry.Member("data")?.Member("request_id"), Acked),
             member => home is null || !WatcherClearedBlock(sessionId, home, team, member),
-            MemberIdle(sessionId, entry, home, team));
+            MemberIdle(sessionId, entry, home, team),
+            QaQueued);
+    }
+
+    /// <summary>Whether the QA job <paramref name="id"/> is still queued: false once it is claimed, ended or not in the store; a failed read says queued, so the alarm stays.</summary>
+    private bool QaQueued(string id)
+    {
+        try
+        {
+            return HierarchyModule.QaJobs(hierarchy).FirstOrDefault(j => j.Id == id) is { State: "queued" };
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            return true;
+        }
     }
 
     public JsonValue EventShown(string? sessionId, JsonValue entry)

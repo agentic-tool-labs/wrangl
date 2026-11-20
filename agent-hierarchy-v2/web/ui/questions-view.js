@@ -25,9 +25,10 @@ const teamName = (teamId) => teamId.split("/").pop();
 const WHEN = new Intl.DateTimeFormat([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 const when = (ms) => (ms > 0 ? WHEN.format(new Date(ms)) : "—");
 
-// Each option with the letter `--choice` takes for it; the chosen one (the default, or the answer given) is marked in words.
-const Options = ({ options, chosen, mark }) => (options.length === 0 ? null : html`<ol class="qa-options">
-  ${options.map((o, i) => html`<li key=${o.label} class=${i === chosen ? "on" : ""}><span class="qa-letter mono" aria-hidden="true">${letterOf(i)}</span><span class="qa-label">${o.label}</span>${i === chosen ? html`<span class="qa-default">${mark}</span>` : null}</li>`)}
+// Each option with the letter `--choice` takes for it; the chosen one (the default, or the answer given) is marked in words, and each
+// option at an index in `recommended` carries the Recommended badge.
+const Options = ({ options, chosen, mark, recommended = [] }) => (options.length === 0 ? null : html`<ol class="qa-options">
+  ${options.map((o, i) => html`<li key=${o.label} class=${i === chosen ? "on" : ""}><span class="qa-letter mono" aria-hidden="true">${letterOf(i)}</span><span class="qa-label">${o.label}</span>${recommended.includes(i) ? html`<span class="qa-badge">Recommended</span>` : null}${i === chosen ? html`<span class="qa-default">${mark}</span>` : null}</li>`)}
 </ol>`);
 
 // The one answer form (spec ah-ui-answer §5), drawn by the Inbox card, a waiting Board card and the Board panel: radios (checkboxes on
@@ -166,7 +167,7 @@ export class AnswerForm extends Component {
         ${q.multi ? html`<p id=${`qm-${uid}`} class="qa-multi">Pick one or more</p>` : null}
         ${q.options.map((o, i) => (letterOf(i) ? html`<label key=${o.label} class=${pick.picked.includes(i) ? "qa-opt on" : "qa-opt"}>
           <input type=${kind} name=${name} value=${letterOf(i)} checked=${pick.picked.includes(i)} onChange=${() => this.set(i)} onKeyDown=${noEnter} />
-          <span class="qa-letter mono" aria-hidden="true">${letterOf(i)}</span><span class="qa-label">${o.label}</span>${i === def ? html`<span class="qa-default">(default)</span>` : null}
+          <span class="qa-letter mono" aria-hidden="true">${letterOf(i)}</span><span class="qa-label">${o.label}</span>${o.rec ? html`<span class="qa-badge">Recommended</span>` : null}${i === def ? html`<span class="qa-default">(default)</span>` : null}
         </label>` : null))}
         ${q.kind === "item" && q.options.length === 0 ? null : html`<label class=${pick.other ? "qa-opt on" : "qa-opt"}>
           <input type=${kind} name=${name} value="other" checked=${pick.other} onChange=${() => this.set("other")} onKeyDown=${noEnter} />
@@ -316,7 +317,7 @@ const Detail = ({ r, onClose, closeRef }) => html`<section class="qa-detail" ari
   <button class="close" ref=${closeRef} onClick=${onClose} aria-label="Close question">×</button>
   <p class="qa-meta"><span class="qa-id mono">${r.id}</span><span>${DIRECTION[r.dir] ?? r.dir}</span></p>
   <h2 class="qa-full">${r.text}</h2>
-  ${r.options.length > 0 ? html`<h3>Options</h3><${Options} options=${r.options.map((label) => ({ label }))} chosen=${r.options.findIndex((label) => sameText(label, r.answer))} mark="answer" />` : null}
+  ${r.options.length > 0 ? html`<h3>Options</h3><${Options} options=${r.options.map((label) => ({ label }))} chosen=${r.options.findIndex((label) => sameText(label, r.answer))} mark="answer" recommended=${r.recommended} />` : null}
   <dl>
     ${r.item ? html`<dt>item</dt><dd class="mono">${r.item}</dd>` : null}
     <dt>answer</dt><dd>${r.answer ?? "open"}</dd>

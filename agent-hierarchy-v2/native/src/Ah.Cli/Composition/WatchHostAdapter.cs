@@ -1251,6 +1251,19 @@ internal class WatchHostAdapter(
         }
     }
 
+    public IReadOnlyList<QaJob> QaJobs()
+    {
+        try
+        {
+            return HierarchyModule.QaJobs(graph.Hierarchy);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            log?.Invoke($"qa jobs not read ({e.Message})");
+            return [];
+        }
+    }
+
     public IReadOnlyList<ReadyBacklogItem> ReadyBacklog(string session, string home)
     {
         try

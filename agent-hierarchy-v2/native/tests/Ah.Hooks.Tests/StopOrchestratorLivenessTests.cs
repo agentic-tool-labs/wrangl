@@ -1607,9 +1607,9 @@ public sealed class StopOrchestratorLivenessTests
         _ = Directory.CreateDirectory(folder);
         File.WriteAllText(folder + "/main.md", Checklist(updated));
         File.SetLastWriteTimeUtc(folder + "/main.md", new DateTime(2026, 10, 16, 10, 0, 0, DateTimeKind.Utc));
-        var report = folder + "/report.md";
-        File.WriteAllText(report, "---\nid: " + ReportId + "\ntype: response\nfrom: " + from + "\n---\n\n## [0] tldr\n- [1] status: DONE\n");
-        File.WriteAllText(folder + "/main.journal.md", Journal("2026-10-16T12:00:00+00:00", report));
+        var pool = Path.GetDirectoryName(Path.GetDirectoryName(folder))!;
+        TestMsgStore.Plant(pool + "/msgs/" + ReportId + "--orchestrator--slice--response.md", "---\nid: " + ReportId + "\ntype: response\nfrom: " + from + "\n---\n\n## [0] tldr\n- [1] status: DONE\n");
+        File.WriteAllText(folder + "/main.journal.md", Journal("2026-10-16T12:00:00+00:00", ReportId + " (ah msg show " + ReportId + " response)"));
         File.WriteAllText(folder + "/main.plan.jsonl", plan);
     }
 

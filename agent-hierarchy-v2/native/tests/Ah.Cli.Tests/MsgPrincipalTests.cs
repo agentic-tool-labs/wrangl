@@ -579,19 +579,19 @@ public sealed class MsgPrincipalTests : IDisposable
         OpenExchange();
         FileResponse("DONE s\n- built");
         SeedRollup(
-            "main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | .claude/ah2/msgs/a--o--other--response.md",
-            "stream-a | s | DONE | tm-implementor | 2026-01-01T00:00:00Z | .claude/ah2/msgs/b--o--s--response.md");
+            "main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | a (ah msg show a response)",
+            "stream-a | s | DONE | tm-implementor | 2026-01-01T00:00:00Z | b (ah msg show b response)");
 
         var (code, err) = Run("ack", ExchangeId, "--session", "o");
 
         Assert.True(code == 0, err);
         var rows = RollupText().Split('\n').Where(l => l.Contains(" | ", StringComparison.Ordinal)).ToList();
-        Assert.Equal("main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | .claude/ah2/msgs/a--o--other--response.md", rows[0]);
+        Assert.Equal("main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | a (ah msg show a response)", rows[0]);
         var cells = rows[1].Split(" | ");
         Assert.Equal(["stream-a", "s", "acked", "tm-implementor"], cells[..4]);
         Assert.NotEqual("2026-01-01T00:00:00Z", cells[4]);
         Assert.EndsWith("Z", cells[4], StringComparison.Ordinal);
-        Assert.Equal(".claude/ah2/msgs/b--o--s--response.md", cells[5]);
+        Assert.Equal("b (ah msg show b response)", cells[5]);
         Assert.StartsWith("# mine\n", RollupText(), StringComparison.Ordinal);
     }
 
@@ -612,7 +612,7 @@ public sealed class MsgPrincipalTests : IDisposable
     {
         OpenExchange();
         FileResponse("DONE s\n- built");
-        SeedRollup("main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | .claude/ah2/msgs/a--o--other--response.md");
+        SeedRollup("main | other | DONE | tm-reviewer | 2026-01-01T00:00:00Z | a (ah msg show a response)");
         var before = RollupText();
 
         var (code, err) = Run("ack", ExchangeId, "--session", "o");
@@ -626,7 +626,7 @@ public sealed class MsgPrincipalTests : IDisposable
     {
         OpenExchange();
         FileResponse("DONE s\n- built");
-        SeedRollup("main | s | DONE | tm-implementor | 2026-01-01T00:00:00Z | .claude/ah2/msgs/b--o--s--response.md");
+        SeedRollup("main | s | DONE | tm-implementor | 2026-01-01T00:00:00Z | b (ah msg show b response)");
         var before = RollupText();
 
         var (member, _) = Run("ack", ExchangeId, "--session", "s-impl");
