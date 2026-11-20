@@ -156,6 +156,61 @@ public sealed class MsgNoteResponseTests : IDisposable
         Assert.EndsWith("filled\n", File.ReadAllText(Respond()), StringComparison.Ordinal);
     }
 
+    /// <summary>ah2-317 E1: a note's --ref may be a stored request's id, with --text beside it; a missing file is still refused.</summary>
+    [Fact]
+    public void ANoteReferencesAStoredRequestByIdButNotAMissingFile()
+    {
+        var made = Run("new", "--to", "reviewer", "--from", "implementor", "--slug", "asked", "--title", "Check the change");
+        Assert.True(made.Exit == 0, made.Err);
+        var requestId = JsonText.Parse(made.Out).AsObject()["id"].AsString();
+
+        var sent = Run("send", "orchestrator@tm", "--kind", "note", "--ref", requestId, "--text", "see the request");
+        var missing = Run("send", "orchestrator@tm", "--kind", "note", "--ref", Path.Combine(_sandbox.Root, "nope.md"));
+
+        Assert.True(sent.Exit == 0, sent.Err);
+        Assert.Contains(BoxOf("orchestrator"), static e => e.Member("text")?.AsString() == "see the request" && e.Member("ref") is { IsText: true });
+        Assert.NotEqual(0, missing.Exit);
+        Assert.Contains("is not an existing file", missing.Err, StringComparison.Ordinal);
+    }
+
+    /// <summary>ah2-317 E3: a title over the limit is refused before --body-file is read; one at the limit goes on to read it (here: a missing file).</summary>
+    [Theory]
+    [InlineData(61, "title-too-long")]
+    [InlineData(60, "--body-file: cannot read")]
+    public void ATitleIsCheckedBeforeTheBodyIsRead(int length, string error)
+    {
+        var title = "Check " + new string('x', length - 6);
+
+        var made = Run("new", "--to", "reviewer", "--from", "implementor", "--slug", "long", "--title", title, "--body-file", Path.Combine(_sandbox.Root, "absent.md"));
+
+        Assert.NotEqual(0, made.Exit);
+        Assert.Contains(error, made.Err, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// ah2-317 E3: an empty --ref (an id a failed pipeline did not capture) says so where the send would fail with the three-way error; a non-empty
+    /// one does not, and a note with an empty --ref and --text still sends its text.
+    /// </summary>
+    /// A null <paramref name="reference"/> is a bare --ref (an unquoted empty $ID); "" is a quoted one.
+    [Theory]
+    [InlineData("report", null, null, 1, true)]
+    [InlineData("brief", "", "x", 1, true)]
+    [InlineData("report", "20260601-000099-zzzz", null, 1, false)]
+    [InlineData("note", "", "just the text", 0, false)]
+    public void AnEmptyRefSaysTheIdIsEmpty(string kind, string? reference, string? text, int exit, bool empty)
+    {
+        string[] args = ["send", "orchestrator@tm", "--ref", .. reference is null ? Array.Empty<string>() : [reference], "--kind", kind, .. text is null ? Array.Empty<string>() : ["--text", text]];
+
+        var sent = Run(args);
+
+        Assert.Equal(exit == 0, sent.Exit == 0);
+        Assert.Equal(empty, (sent.Out + sent.Err).Contains("the id is empty", StringComparison.Ordinal));
+        if (exit == 0)
+        {
+            Assert.Contains(BoxOf("orchestrator"), e => e.Member("text")?.AsString() == text && e.Member("ref") is null);
+        }
+    }
+
     [Theory]
     [InlineData("--id", "20260601-000003-cccc")]
     [InlineData("--req", "/tmp/x--request.md")]

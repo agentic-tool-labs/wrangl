@@ -425,11 +425,6 @@ internal static class CreateVerb
             ChildTeam.AddRecords(c, team, child);
         }
 
-        if (members.Count > 0)
-        {
-            MemberTmp.Preflight(c);
-        }
-
         services.Hierarchy.StateCalls.UpdateTeam(
             dir,
             c.TeamFile,

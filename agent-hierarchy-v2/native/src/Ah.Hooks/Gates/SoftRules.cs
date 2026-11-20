@@ -148,14 +148,21 @@ internal static partial class SoftRules
             return SoftGate.Once(c, "self-care", ArchitectNudge);
         }
 
+        // ah2-310 A1'': a lone `git clone` is lifted by the member's `worktree` approval; nothing else under self-care is.
+        var clone = commands is [var only] && PlainGitClone(only);
+        var member = clone ? MemberOfSession(c) : null;
         return SoftGate.Bounce(
             c,
             "self-care",
             $"the {role} runs only ah self-care in the shell (`ah roster checkin|whoami|status`, `ah msg new|list|index|show|send|fill|status|link-request`, `ah work list|show|log|mine|record|attach|add`, `ah adr list|show`, read-only `git diff|status|show|log|grep`), one call at a time.",
-            commands.Any(static command => BriefRead(command.Argv))
+            clone
+                ? $"delegate this to `task-gopher:task-gopher` (or `wrangl:task-runner`) with WHERE / HOW / BACK, or once your Orchestrator runs `ah roster approve {member ?? "<your member name>"} worktree --cwd <cwd>`, re-run this call."
+                : commands.Any(static command => BriefRead(command.Argv))
                 ? "run `ah msg index` or `ah msg show` as a call of its own, with nothing chained to it."
                 : "delegate this to `task-gopher:task-gopher` (or `wrangl:task-runner`) with WHERE / HOW / BACK.",
-            retryPasses: false);
+            retryPasses: false,
+            member: member,
+            approvedBy: "worktree");
     }
 
     private static bool BriefRead(IReadOnlyList<string> argv) => IsAh(argv, "msg") && argv[2] is "index" or "show" && !ShowWrites(argv);
@@ -284,8 +291,7 @@ internal static partial class SoftRules
             return null;
         }
 
-        // The member is the roster's `up` record of this session; without one no approval matches and the loop breaker still applies.
-        var member = c.Services.Hierarchy.Roster.UpRecordFor(c.Services.Config.HierarchyDir(c.Cwd()), c.SessionKey()).Member("name") is { IsText: true } name ? name.AsString() : null;
+        var member = MemberOfSession(c);
         return SoftGate.Bounce(
             c,
             "worktree",
@@ -294,6 +300,64 @@ internal static partial class SoftRules
             retryPasses: false,
             SoftScope.Input,
             member);
+    }
+
+    /// <summary>
+    /// ah2-310: this session's member name, from the roster's <c>up</c> record of the session: its <c>name</c>, else the row of its
+    /// <c>team</c> that SessionStart stamped with this session id (the up row SessionStart writes has no <c>name</c>). Null when neither
+    /// holds, so no approval matches and the loop breaker still applies. The team is read at the up row's <c>team_home</c> (the home
+    /// SessionStart attributed, A4) when it has one. It never throws (A6): an error is logged and means no member, so the call still bounces.
+    /// </summary>
+    internal static string? MemberOfSession(GateContext c)
+    {
+        try
+        {
+            var dir = c.Services.Config.HierarchyDir(c.Cwd());
+            var session = c.SessionKey();
+            var up = c.Services.Hierarchy.Roster.UpRecordFor(dir, session);
+            if (up.Member("name") is { IsText: true } name)
+            {
+                return name.AsString();
+            }
+
+            var home = up.Member("team_home") is { IsText: true } h && h.AsString().Length > 0 ? h.AsString() : dir;
+            return up.Member("team") is { IsText: true } team
+                && c.Services.Roster.ReadTeamRecord(home, team.AsString()).Member("members") is { IsArray: true } members
+                ? members.AsArray()
+                    .Where(m => m.Member("session_id") is { IsText: true } s && s.AsString() == session)
+                    .Select(m => m.Member("name") is { IsText: true } n ? n.AsString() : null)
+                    .FirstOrDefault(n => n is not null)
+                : null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            c.LogError(e);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// A5: a <c>git clone</c> with no option that can run code: no env wrapper or assignment, no git <c>-c</c>/<c>--config-env</c> before
+    /// the subcommand, and no clone <c>-u</c>/<c>--upload-pack</c>, <c>--template</c>, <c>-c</c>/<c>--config</c> (a short option cluster
+    /// holding <c>u</c> or <c>c</c> counts).
+    /// </summary>
+    internal static bool PlainGitClone(ShellCommand cmd)
+    {
+        var argv = cmd.Argv;
+        if (cmd.Assignments.Count > 0 || argv.Count < 2 || Path.GetFileName(argv[0]) != "git" || GitSubcommand(argv) != "clone")
+        {
+            return false;
+        }
+
+        var sub = argv.ToList().IndexOf("clone", 1);
+        if (argv.Take(sub).Skip(1).Any(static a => a is "-c" || a.StartsWith("--config-env", StringComparison.Ordinal)))
+        {
+            return false;
+        }
+
+        return !argv.Skip(sub + 1).TakeWhile(static a => a != "--").Any(static a =>
+            a.StartsWith("--upload-pack", StringComparison.Ordinal) || a.StartsWith("--template", StringComparison.Ordinal) || a.StartsWith("--config", StringComparison.Ordinal)
+            || (a.Length > 1 && a[0] == '-' && a[1] != '-' && (a.Contains('u') || a.Contains('c'))));
     }
 
     /// <summary>

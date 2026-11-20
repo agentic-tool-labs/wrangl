@@ -86,6 +86,12 @@ public sealed record DispatchCandidate(
     /// <summary>When the brief was first sent (its earliest dispatch row), in epoch milliseconds: the clock never starts earlier than this (b475). Null when no dispatch row records it.</summary>
     public double? SentMs { get; init; }
 
+    /// <summary>When the member last filed a part (<c>msg fill --part</c>) on this request, in epoch milliseconds: a sign of life, so the clock never starts earlier than this (ah2-296 L1).</summary>
+    public double? PartMs { get; init; }
+
+    /// <summary>Whether an open request to a reviewer names this request's checklist item or has this request as its parent: an idle member waiting on its review is not idle without a report (ah2-296 L3).</summary>
+    public bool ReviewOpen { get; init; }
+
     /// <summary>The predecessor's eta, which bounds how long its silence can hold this request's clock.</summary>
     public string? AfterEta { get; init; }
 
@@ -238,6 +244,7 @@ internal static class DispatchClock
         ["MEMBER-WAITING"] = "member-waiting",
         ["UNLINKED-DISPATCH"] = "unlinked-dispatch",
         ["JOB-OVERDUE"] = "job-overdue",
+        ["NOT-SENT"] = NotSentRow,
         ["LANE-ESCALATED"] = "lane-escalated",
         ["LANE-RECOVERED"] = "lane-recovered",
         [UnreviewedDone.Kind] = UnreviewedDone.RowType,
@@ -384,12 +391,6 @@ internal static class DispatchClock
         {
             busyNote = string.Empty;
             if (c.PausedLane || c.ActiveLane)
-            {
-                return true;
-            }
-
-            // A brief nobody was sent: a member who could get it earns one check-in saying to send it, and nobody has gone silent about it.
-            if (c.Undelivered && (!checkIn || targetOf?.Invoke(c) is not { Session.Length: > 0 }))
             {
                 return true;
             }
@@ -580,7 +581,7 @@ internal static class DispatchClock
             var eventsBefore = events.Count;
             void IdleWithoutReport()
             {
-                if (events.Count != eventsBefore || c.BriefUnread || c.LaneDelegating
+                if (events.Count != eventsBefore || c.BriefUnread || c.LaneDelegating || c.ReviewOpen
                     || targetOf?.Invoke(c) is not { Known: true, Idle: true, Busy: false, Working: false, StateSinceMs: { } idleStart })
                 {
                     return;
@@ -619,13 +620,16 @@ internal static class DispatchClock
                 ? 0
                 : Math.Max(created, Math.Min(c.AfterClosedMs ?? double.PositiveInfinity, created + 2 * thresholdSeconds(c.AfterEta ?? c.Eta) * 1000));
             // b475: a request made early and sent later is waited on from the send, as the Stop hook's clock does
-            var floorMs = Math.Max(Math.Max(Math.Max(Math.Max(Math.Max(double.IsNaN(created) ? 0 : created, c.SentMs ?? 0), c.StreamActiveMs ?? 0), startMs), armedAt ?? 0), c.MemberResumedMs ?? 0);
+            // ah2-296 L1: a part filed on this request restarts its clock, as a word from the peer does
+            var floorMs = Math.Max(Math.Max(Math.Max(Math.Max(Math.Max(Math.Max(double.IsNaN(created) ? 0 : created, c.SentMs ?? 0), c.StreamActiveMs ?? 0), startMs), armedAt ?? 0), c.MemberResumedMs ?? 0), c.PartMs ?? 0);
             var eta = EtaState.Compute(
                 c.RequestId, c.Eta, thresholdSeconds(c.Eta), c.Created, c.ToAddr,
                 floorMs,
                 sessionId, mine, rows, false, null, now, pollMs);
             var baseMs = Math.Max(floorMs, Liveness.Heard(mine, sessionId, c.ToAddr));
             var ageSec = Math.Max(0, (double.IsNaN(created) ? 0 : AwakeSince(created)) / 1000);
+            // ah2-296 L2: the check-in counts the request's age from its send
+            var sentAgeSec = Math.Max(0, (c.SentMs is { } sentMs ? AwakeSince(Math.Max(sentMs, double.IsNaN(created) ? 0 : created)) : ageSec * 1000) / 1000);
             var state = eta.Checkins == 0 ? "CHECK-IN" : eta.Checkins == 1 ? "SILENT" : null;
             report.Add(new DispatchReport(
                 c.RequestId,
@@ -643,6 +647,32 @@ internal static class DispatchClock
                 continue;
             }
 
+            // ah2-296 L2: a brief nobody sent has no check-in clock; its author gets one note, when the check-in would have come, to send it
+            if (c.Undelivered)
+            {
+                bool Noted(JsonObject r) => r.Str("type") == NotSentRow && r.Str("session_id") == sessionId && r.Str("request_id") == c.RequestId;
+                if (eta.Checkins == 0 && awakeNow >= Awake(eta.DueMs - t) + t && !mine.Any(Noted) && !peerRows.Any(p => Noted(p.Row)))
+                {
+                    peerRows.Add(new PeerAppend(new JsonObject
+                    {
+                        ["type"] = NotSentRow,
+                        ["session_id"] = sessionId,
+                        ["request_id"] = c.RequestId,
+                        ["ts"] = Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)now)),
+                    }));
+                    events.Add(new WatchEvent(
+                        c.RequestId,
+                        "NOT-SENT",
+                        $"ah: request {c.RequestId} ({c.Slug}) for {NameOf(c.ToName, c.ToAddr)} was filed {FmtAge(ageSec)} ago and was not sent. Send it with ah msg send {c.ToName ?? c.To}{(c.Team is null ? string.Empty : "@" + c.Team)} --ref {c.RequestPath ?? Path.Combine(Path.GetDirectoryName(c.ResponsePath) ?? string.Empty, $"{c.RequestId}--{c.To}--{c.Slug}--request.md")}, or withdraw it.",
+                        Data("not-sent"))
+                    {
+                        Team = c.Team,
+                    });
+                }
+
+                continue;
+            }
+
             if (eta.Checkins == 0 && awakeNow >= Awake(eta.DueMs - t) + t)
             {
                 if (HeldBack(c, t, eta.DueMs, baseMs, true, out var checkInNote))
@@ -654,7 +684,7 @@ internal static class DispatchClock
                 events.Add(new WatchEvent(
                     c.RequestId,
                     "CHECK-IN",
-                    $"ah: {who}, request {c.RequestId}, {FmtAge(ageSec)} old (eta {c.Eta}), no report{checkInNote}.{UndeliveredClause(c)} Call ListAgents. If it shows the peer busy, send nothing: it is working. If it is idle, SendMessage it once, with notify_when_idle:true and the message \"Status of request {c.RequestId}? If finished, SendMessage me [hierarchy-msg {c.RequestId} response]; if not, one line on where you are.\" If it is gone, tell the user.",
+                    $"ah: {who}, request {c.RequestId}, {FmtAge(sentAgeSec)} old (eta {c.Eta}), no report{checkInNote}. Call ListAgents. If it shows the peer busy, send nothing: it is working. If it is idle, SendMessage it once, with notify_when_idle:true and the message \"Status of request {c.RequestId}? If finished, SendMessage me [hierarchy-msg {c.RequestId} response]; if not, one line on where you are.\" If it is gone, tell the user.",
                     WithDueSlot(Data("check-in"), eta.DueMs, t))
                 {
                     Team = c.Team,
@@ -712,10 +742,8 @@ internal static class DispatchClock
         return slotted;
     }
 
-    private static string UndeliveredClause(DispatchCandidate c) =>
-        c.Undelivered
-            ? $" No delivery recorded for {c.RequestId}; send it with ah msg send {c.ToName ?? c.To}{(c.Team is null ? string.Empty : "@" + c.Team)} --ref {c.RequestPath ?? Path.Combine(Path.GetDirectoryName(c.ResponsePath) ?? string.Empty, $"{c.RequestId}--{c.To}--{c.Slug}--request.md")}."
-            : string.Empty;
+    /// <summary>The event, and the peer row that keeps it to once per request, telling the author a filed request was never sent (ah2-296 L2).</summary>
+    internal const string NotSentRow = "request-not-sent";
 
     /// <summary>How many resume entries one overdue brief gets in all.</summary>
     internal const int MaxOverdueResumes = 2;

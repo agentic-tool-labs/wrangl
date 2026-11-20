@@ -162,6 +162,7 @@ internal sealed class DoneReportScan(double startedMs)
         var family = new HashSet<string>(StringComparer.Ordinal) { id };
         var parents = new Dictionary<string, string>(StringComparer.Ordinal);
         var reviews = new List<string>();
+        var itemOf = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var e in exchanges)
         {
             if (Str(e, "id") is not { } eid || eid == id || requestFm(e) is not { } fm)
@@ -170,6 +171,11 @@ internal sealed class DoneReportScan(double startedMs)
             }
 
             var review = Str(e, "to") is { } role && classOf(role) == "review";
+            if (Str(fm, "item") is { } onItem)
+            {
+                itemOf[eid] = onItem;
+            }
+
             if (Str(fm, "parent") is { } parent)
             {
                 parents[eid] = parent;
@@ -216,7 +222,19 @@ internal sealed class DoneReportScan(double startedMs)
                 on.AddRange(peers.AsArray().Where(static p => p.IsText).Select(static p => p.AsString()));
             }
 
-            if (Str(link, "task") is { } task && family.Contains(task) && on.Contains(member) && on.Any(a => a != member && memberClass(a) == "review"))
+            if (Str(link, "task") is not { } task || !on.Contains(member) || !on.Any(a => a != member && memberClass(a) == "review"))
+            {
+                continue;
+            }
+
+            if (family.Contains(task))
+            {
+                return true;
+            }
+
+            // ah2-312 M2': a later round of a link on the same item, ended at or after the report; a row without the field never counts here
+            if (scope is { Item: { } linkItem } && itemOf.TryGetValue(task, out var taskItem) && taskItem == linkItem
+                && Ah.Core.Time.Timestamps.TryParseMs(Str(link, "round_ended_at"), out var endedMs) && endedMs >= scope.ReportedMs)
             {
                 return true;
             }

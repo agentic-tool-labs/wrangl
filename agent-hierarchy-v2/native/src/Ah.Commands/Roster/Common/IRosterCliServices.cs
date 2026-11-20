@@ -138,20 +138,14 @@ public sealed record BriefSent(string? EntryId, string? DeliveryLine);
 /// <summary>The scratch-directory operations plus the one git question a member tmp needs.</summary>
 public interface IRosterScratch : IScratchDirectories
 {
-    /// <summary>What <see cref="EnsureIgnored"/> answers, as the start of its reason, when the directory is in no git repository.</summary>
+    /// <summary>The reason a member gets no tmp when its team home is in no git repository.</summary>
     public const string NotGitRepository = "not a git repository";
 
     /// <summary>Whether git, run in <paramref name="repoDir"/>, ignores <paramref name="path"/>; null when git could not answer.</summary>
     bool? IsIgnored(string repoDir, string path);
 
-    /// <summary>
-    /// Makes git, run in <paramref name="repoDir"/>, ignore <paramref name="dir"/> by appending one line to the repository's own
-    /// <c>info/exclude</c> when nothing ignores it already; <c>.gitignore</c> is never written. Null on success, else why not.
-    /// </summary>
-    string? EnsureIgnored(string repoDir, string dir);
-
-    /// <summary>Makes <paramref name="dir"/> if it is missing and proves a file can be written in it. Null on success, else why not.</summary>
-    string? EnsureWritable(string dir);
+    /// <summary>Whether <paramref name="repoDir"/> is in a git repository (<c>git rev-parse --git-dir</c> exits 0); nothing is written.</summary>
+    bool InGitRepository(string repoDir);
 }
 
 /// <summary>The caller of an owner-only verb as the audit row records it: its pid and start time, the ancestor chain, and the command line.</summary>

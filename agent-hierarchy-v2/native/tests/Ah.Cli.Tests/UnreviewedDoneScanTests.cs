@@ -208,6 +208,35 @@ public sealed class UnreviewedDoneScanTests
     }
 
     [Fact]
+    public void ALaterRoundOfAnEarlierLinkOnTheItemCountsOnlyWhenItEndedAtOrAfterTheReport()
+    {
+        const string first = "20261118-140000-impl";
+        const string rework = "20261118-145000-impl";
+        List<JsonObject> exchanges = [Req(first, "implementor", "2026-11-18T14:00:00Z"), Req(rework, "implementor", "2026-11-18T14:50:00Z")];
+        static string? Member(string a) => a.StartsWith("rev", StringComparison.Ordinal) ? "review" : "implement";
+        static JsonObject Link(string? endedAt, string task = first)
+        {
+            var link = new JsonObject { ["task"] = task, ["requester"] = "impl-1@t", ["peers"] = new JsonArray { JsonValue.FromString("rev-1@t") } };
+            if (endedAt is not null)
+            {
+                link["round_ended_at"] = endedAt;
+            }
+
+            return link;
+        }
+
+        bool Covered(JsonObject link) =>
+            DoneReportScan.HasReview(rework, "impl-1@t", exchanges, FmOf, ClassOf, [link], Member, new ReviewScope("t", Pool, Item, ReportedMs));
+
+        Assert.True(Covered(Link("2026-11-18T15:20:00.000Z")));
+        Assert.True(Covered(Link(ReportAt))); // at the report counts
+        Assert.False(Covered(Link("2026-11-18T14:59:59.000Z"))); // a verdict before the DONE does not cover it
+        Assert.False(Covered(Link(null))); // an older row without the field: today's rule only
+        exchanges.Add(Req("20261118-130000-othr", "implementor", "2026-11-18T13:00:00Z", item: "s/other"));
+        Assert.False(Covered(Link("2026-11-18T15:20:00.000Z", task: "20261118-130000-othr"))); // a link on another item
+    }
+
+    [Fact]
     public void ClosedItemNeverAlarmsAndAnOpenOneStillDoes()
     {
         const string done = "20261118-145000-impl";

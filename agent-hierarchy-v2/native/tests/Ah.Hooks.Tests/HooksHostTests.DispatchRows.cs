@@ -60,6 +60,22 @@ public sealed partial class HooksHostTests
         Assert.Equal("sess-1", row.Member("session_id")!.Value.AsString());
     }
 
+    /// <summary>ah2-296: a bare id resolves as the send resolves it; negative: an id no request has records no row and is still allowed.</summary>
+    [Theory]
+    [InlineData(BriefId, true)]
+    [InlineData("20261016-120000-zz99", false)]
+    public void ABareIdRefRecordsTheRequestsRowAndNegativeAnUnknownIdRecordsNone(string reference, bool recorded)
+    {
+        var root = MakePluginRoot();
+        var rig = new Rig(null, root);
+        var path = Brief(rig);
+
+        var outcome = rig.Run("pretooluse-ah-cli", BashAs(string.Empty, $"node {root}/hooks/msg.mjs send m@team --ref {reference} --cwd {rig.Sandbox.Root}/wt"));
+
+        Assert.Equal("allow", DecisionOf(outcome));
+        Assert.Equal(recorded ? [path] : [], DispatchRowsWritten(rig).Select(static r => r.Member("path")!.Value.AsString()).ToArray());
+    }
+
     [Fact]
     public void ARelativeRefIsMadeAbsoluteAgainstTheCommandsCwd()
     {

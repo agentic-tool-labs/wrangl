@@ -153,9 +153,13 @@ internal static partial class AhCliGate
         }
 
         var sessionId = c.Input.Text("session_id") ?? string.Empty;
-        var path = ResolvedPath(c, parsed, reference);
-        var meta = s.Hierarchy.Core.ParseMsgFilename(path);
-        if (sessionId.Length > 0 && meta is { Type: "request" } && s.Hierarchy.Core.MsgExists(path))
+
+        // ah2-296: a bare id resolves as `msg send` resolves it (MsgCommand.Mail), so `--ref <id>` records its dispatch too
+        var path = !reference.Contains('/') && s.Hierarchy.Messages.IsMessageId(reference)
+            ? s.Hierarchy.Core.ResolveMsgToken($"[hierarchy-msg {reference} request]", s.Config.HierarchyDir(parsed.FlagText("cwd") ?? c.Cwd()))?.Key
+            : ResolvedPath(c, parsed, reference);
+        var meta = path is null ? null : s.Hierarchy.Core.ParseMsgFilename(path);
+        if (sessionId.Length > 0 && path is not null && meta is { Type: "request" } && s.Hierarchy.Core.MsgExists(path))
         {
             s.Hierarchy.Peers.AppendDispatchRecord(sessionId, meta.Id, meta.To, path, s.Hierarchy.Peers.StripRef(recipient));
         }

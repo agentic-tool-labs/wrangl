@@ -15,7 +15,7 @@
           "adapter": "pull-adapter"
         }
       ],
-      "expect": "entry e1 → a@tm\ndelivery: pull (pull-adapter) — the pull-adapter pull delivers it; do not SendMessage it"
+      "expect": "entry e1 → a@tm\ndelivery: pull (pull-adapter) — the pull-adapter pull delivers it; nothing more to do"
     },
     {
       "id": "pull-without-adapter",
@@ -28,7 +28,7 @@
           "delivery": "pull"
         }
       ],
-      "expect": "entry e1 → a@tm\ndelivery: pull — the pull delivers it; do not SendMessage it"
+      "expect": "entry e1 → a@tm\ndelivery: pull — the pull delivers it; nothing more to do"
     },
     {
       "id": "deliver",
@@ -75,7 +75,7 @@
           "delivery": "fallback"
         }
       ],
-      "expect": "entry e1 → cz@tm\ndelivery: fallback — no carrier; a custom harness takes the entry when it next pulls"
+      "expect": "entry e1 → cz@tm\ndelivery: fallback — no carrier; a custom harness takes the entry when it next pulls; nothing more to do"
     },
     {
       "id": "broadcast",
@@ -95,6 +95,33 @@
         }
       ],
       "expect": "broadcast e1 → *@tm: 2 members (a@tm, b@tm)"
+    },
+    {
+      "id": "unchanged",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "unchanged": true
+        }
+      ],
+      "expect": "entry e1 → a@tm (already delivered; unchanged; nothing more to do)"
+    },
+    {
+      "id": "prompt-receiver-unregistered",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "carrier": "prompt",
+          "receiver_unregistered": true
+        }
+      ],
+      "expect": "entry e1 → a@tm\ndelivery: plugin prompt — nothing more to do\nno single registered receiver for a@tm; the ladder delivers it; nothing more to do"
     }
   ]
 }

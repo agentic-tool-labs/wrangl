@@ -357,7 +357,8 @@ internal sealed partial class RosterContext
             kept.Add(Argv[i]);
         }
 
-        return $"{SelfCommand} {string.Join(' ', kept.Select(ArgWord))} {tail}";
+        var self = Command == "new" ? Services.Config.CliCommand(CliTool.AhdCtl) : SelfCommand;
+        return $"{self} {string.Join(' ', kept.Select(ArgWord))} {tail}";
     }
 
     /// <summary>Every value of a repeatable <c>--flag value</c>, in order; the flag with no value is refused.</summary>

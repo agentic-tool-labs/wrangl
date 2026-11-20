@@ -115,7 +115,10 @@ public sealed class MsgSendRelayRecordTests : IDisposable
         var exit = MsgVerb.Run(rig.Context, ["send", "tm-implementor@tm", "--text", "hello", "--id", "e-relay", "--session", "s-orch", "--cwd", _sandbox.Root], stdout, new StringWriter());
 
         Assert.Equal(0, exit);
-        Assert.Contains("delivery: relay — make this one SendMessage now: SendMessage \"ah mail from orchestrator@tm to tm-implementor@tm (note): hello [ah-entry e-relay to tm-implementor@tm]\" to tm-implementor.", stdout.ToString(), StringComparison.Ordinal);
+        // ah2-317 E4: the relay line ends with the action to take, never "nothing more to do"
+        var line = Assert.Single(stdout.ToString().Split('\n'), static l => l.StartsWith("delivery:", StringComparison.Ordinal));
+        Assert.Equal("delivery: relay — ah delivers it another way if you do not; make this one SendMessage now: SendMessage \"ah mail from orchestrator@tm to tm-implementor@tm (note): hello [ah-entry e-relay to tm-implementor@tm]\" to tm-implementor", line);
+        Assert.DoesNotContain("nothing more to do", line, StringComparison.Ordinal);
         _ = Assert.Single(Rows(rig, "e-relay"));
     }
 
@@ -128,7 +131,8 @@ public sealed class MsgSendRelayRecordTests : IDisposable
         var exit = MsgVerb.Run(rig.Context, ["send", "tm-implementor@tm", "--text", "hello", "--id", "e-relay", "--session", "s-orch", "--cwd", _sandbox.Root], stdout, new StringWriter());
 
         Assert.Equal(0, exit);
-        Assert.Contains("delivery: plugin prompt — do not send a SendMessage for this entry", stdout.ToString(), StringComparison.Ordinal);
+        // ah2-317 E4: a delivery with nothing for the sender to do ends in the same words
+        Assert.Contains("delivery: plugin prompt — nothing more to do\n", stdout.ToString(), StringComparison.Ordinal);
         Assert.Empty(Rows(rig, "e-relay"));
     }
 

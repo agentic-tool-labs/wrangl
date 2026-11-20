@@ -232,7 +232,8 @@ internal sealed partial class Mailbox
             // A note may point at a file (an addendum, a long list) instead of, or as well as, carrying text.
             if (req.Get("ref") is { IsText: true } noteRef && noteRef.AsString().Length > 0)
             {
-                if (!NodePath.IsAbsolute(noteRef.AsString()) || files.Stat(noteRef.AsString()) is not { Kind: FileKind.File })
+                // a bare id the CLI resolved is a stored message's key, with no file on disk
+                if (!NodePath.IsAbsolute(noteRef.AsString()) || (files.Stat(noteRef.AsString()) is not { Kind: FileKind.File } && !hierarchy.Core.MsgExists(noteRef.AsString())))
                 {
                     throw new MailboxError("bad_request", $"--ref {noteRef.AsString()} is not an existing file");
                 }
@@ -1010,16 +1011,16 @@ internal sealed partial class Mailbox
         var lines = new List<string> { $"entry {Js(result.Get("entry")!.Value.AsObject().Get("id"))} → {Js(result.Get("address"))}" };
         if (result.Get("unchanged") is { IsTruthy: true })
         {
-            return lines[0] + " (already delivered; unchanged)";
+            return lines[0] + $" (already delivered; unchanged; {NothingToDo})";
         }
 
         if (Js(result.Get("delivery")) == DrainedState.State)
         {
-            lines.Add($"delivery: drained — {Js(result.Get("message"))}");
+            lines.Add($"delivery: drained — {Js(result.Get("message"))}; {NothingToDo}");
         }
         else if (result.Get("claim_state") is { IsText: true } past)
         {
-            lines.Add($"delivery: already {past.AsString()} — do not send a SendMessage for this entry");
+            lines.Add($"delivery: already {past.AsString()} — {NothingToDo}");
         }
         else if (result.Get("queued") is { IsTruthy: true })
         {
@@ -1027,20 +1028,20 @@ internal sealed partial class Mailbox
         }
         else if (Js(result.Get("carrier")) == "relay" && result.Get("sendmessage") is { IsTruthy: true } relay)
         {
-            lines.Add($"delivery: relay — make this one SendMessage now: SendMessage \"{Js(relay.Member("text"))}\" to {Js(relay.Member("to"))}. ah delivers it another way if you do not.");
+            lines.Add($"delivery: relay — ah delivers it another way if you do not; make this one SendMessage now: SendMessage \"{Js(relay.Member("text"))}\" to {Js(relay.Member("to"))}");
         }
         else if (Js(result.Get("carrier")) == "prompt")
         {
-            lines.Add("delivery: plugin prompt — do not send a SendMessage for this entry");
+            lines.Add($"delivery: plugin prompt — {NothingToDo}");
             if (result.Get("receiver_unregistered") is { IsTruthy: true })
             {
-                lines.Add($"no single registered receiver for {Js(result.Get("address"))}; the ladder delivers it");
+                lines.Add($"no single registered receiver for {Js(result.Get("address"))}; the ladder delivers it; {NothingToDo}");
             }
         }
         else if (Js(result.Get("delivery")) == "pull")
         {
             var adapter = result.Get("adapter") is { IsTruthy: true } ad ? Js(ad) : null;
-            lines.Add($"delivery: pull{(adapter is null ? string.Empty : $" ({adapter})")} — {PullCarrierName(adapter)} delivers it; do not SendMessage it");
+            lines.Add($"delivery: pull{(adapter is null ? string.Empty : $" ({adapter})")} — {PullCarrierName(adapter)} delivers it; {NothingToDo}");
         }
         else if (result.Get("deliver") is { IsTruthy: true } deliver)
         {
@@ -1052,11 +1053,14 @@ internal sealed partial class Mailbox
         }
         else
         {
-            lines.Add("delivery: fallback — no carrier; a custom harness takes the entry when it next pulls");
+            lines.Add($"delivery: fallback — no carrier; a custom harness takes the entry when it next pulls; {NothingToDo}");
         }
 
         return string.Join("\n", lines);
     }
+
+    /// <summary>The words every delivery line ends with when the sender has no action to take (ah2-317 E4).</summary>
+    internal const string NothingToDo = "nothing more to do";
 
     public string SendMessageLine(JsonValue sendmessage) => $"delivery: fallback — SendMessage \"{Js(sendmessage.Member("text"))}\" to {Js(sendmessage.Member("to"))}";
 

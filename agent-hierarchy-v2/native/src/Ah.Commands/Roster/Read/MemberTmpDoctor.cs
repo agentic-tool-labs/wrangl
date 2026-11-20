@@ -47,7 +47,7 @@ internal static class MemberTmpDoctor
             {
                 problems.Add($"{name}: tmp {path} is missing");
             }
-            else if (c.Services.Scratch?.IsIgnored(c.TeamHome, NodePath.Join(path, ".probe")) != true)
+            else if (Path.GetDirectoryName(path) != MemberTmp.AliasRoot(c).TrimEnd('/') && c.Services.Scratch?.IsIgnored(c.TeamHome, NodePath.Join(path, ".probe")) != true)
             {
                 problems.Add($"{name}: tmp {path} is not ignored by git");
             }

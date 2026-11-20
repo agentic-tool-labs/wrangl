@@ -463,20 +463,34 @@ internal static partial class StopPeerNudge
             rows.Add(new JsonObject { ["type"] = QaNudgeType, ["session_id"] = sessionId, ["task"] = QaTask(q), ["ts"] = now });
         }
 
+        // ah2-312 M4: the cadence question is asked on the session's first DONE only
+        var askCadence = qaDue.Any(static q => q.AskOnce) && !CadenceAsked(c, sessionId);
+        if (askCadence)
+        {
+            rows.Add(new JsonObject { ["type"] = QaNudgeType, ["session_id"] = sessionId, ["task"] = QaCadenceTask, ["ts"] = now });
+        }
+
         if (rows.Count > 0)
         {
             c.Services.Hierarchy.Peers.RecordPeerRow(rows);
         }
 
-        return QaLines(c, qaDue);
+        return QaLines(c, qaDue, askCadence);
     }
 
-    private static List<string> QaLines(GateContext c, List<QaOwedItem> qaDue)
+    /// <summary>The <c>qa-nudge</c> task that records this session was asked when QA runs.</summary>
+    private const string QaCadenceTask = "qa-cadence";
+
+    private static bool CadenceAsked(GateContext c, string sessionId) =>
+        c.Services.Hierarchy.Core.SessionRows(sessionId, QaNudgeType).Any(r => r.IsTruthy && r.Member("session_id") is { IsText: true } sid && sid.AsString() == sessionId
+            && r.Member("task") is { IsText: true } task && task.AsString() == QaCadenceTask);
+
+    private static List<string> QaLines(GateContext c, List<QaOwedItem> qaDue, bool askCadence)
     {
         var msg = c.Services.Config.CliCommand(CliTool.Msg, alwaysQuote: true);
         List<string> lines = [.. qaDue.Select(q =>
             $"ah: {q.Member} reported DONE on {q.Slug} ({q.ResponsePath}) and no QA request for {q.Slug} exists. Dispatch QA: {ConfigModule.QaDispatchStep(q.Member, q.Slug, msg, c.Cwd())} A docs-only item opts out with `qa: none` in its original request's frontmatter.")];
-        if (qaDue.Any(static q => q.AskOnce))
+        if (askCadence)
         {
             lines.Add(QaChooseLine);
         }
@@ -622,16 +636,18 @@ internal static partial class StopPeerNudge
 
             var self = AutoTrack.SelfOf(c, role);
             var exchanges = s.Hierarchy.Core.ListExchanges(s.Config.HierarchyDir(c.Cwd())).Cast<JsonValue>().ToList();
-            var qaRequests = new List<(string Slug, string Text, double? Ms)>();
+            static string? ItemOf(JsonValue fm) => fm.Text("item") is { Length: > 0 } i && i != "null" ? i : null;
+            var qaRequests = new List<(string Slug, string? Item, string Text, double? Ms)>();
             foreach (var e in exchanges)
             {
                 if (e.Member("request")?.Member("path") is { IsText: true } rp && e.Member("to") is { IsText: true } to && IsQaRole(to.AsString())
                     && s.Hierarchy.Core.ReadMsgFile(rp.AsString()) is { IsMap: true } file && file.Member("text") is { IsText: true } text)
                 {
-                    qaRequests.Add((e.Member("slug") is { IsText: true } sl ? sl.AsString() : string.Empty, text.AsString(), CreatedMs(file)));
+                    qaRequests.Add((e.Member("slug") is { IsText: true } sl ? sl.AsString() : string.Empty, file.Member("fm") is { IsMap: true } qfm ? ItemOf(qfm) : null, text.AsString(), CreatedMs(file)));
                 }
             }
 
+            var atBaseByTeam = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
             foreach (var e in exchanges)
             {
                 if (e.Member("request")?.Member("path") is not { IsText: true } requestPath
@@ -649,8 +665,23 @@ internal static partial class StopPeerNudge
                     continue;
                 }
 
+                // ah2-312 M3'': the checklist's report row says the DONE's sha is the item's base: nothing committed, nothing to QA
+                var team = HierarchyModule.ProgressTeamOf(rfm.Text("team"));
+                if (!atBaseByTeam.TryGetValue(team, out var atBase))
+                {
+                    atBase = atBaseByTeam[team] = HierarchyModule.ChecklistEntries(s.Hierarchy.Progress, ProgressPool.Of(s, c.Cwd()), team)
+                        .SelectMany(static e => e.Item.AtBaseRefs ?? []).ToHashSet(StringComparer.Ordinal);
+                }
+
+                if (atBase.Contains(id.AsString()))
+                {
+                    continue;
+                }
+
                 var slug = slugText.AsString();
-                var filed = qaRequests.Any(q => (q.Slug == slug || q.Text.Contains("ah/ship/" + slug, StringComparison.Ordinal)) && (q.Ms is null || q.Ms >= responseMs));
+                var item = ItemOf(rfm);
+                // ah2-312 M1: the same checklist item counts whatever the QA request's slug; slug and ship branch stay as fallbacks
+                var filed = qaRequests.Any(q => ((item is not null && q.Item == item) || q.Slug == slug || q.Text.Contains("ah/ship/" + slug, StringComparison.Ordinal)) && (q.Ms is null || q.Ms >= responseMs));
                 if (!filed)
                 {
                     found.Add(new QaOwedItem(id.AsString(), slug, rfm.Member("to_name") is { IsText: true } name && name.AsString() != "null" ? name.AsString() : to.AsString(), responsePath.AsString(), qa is null));

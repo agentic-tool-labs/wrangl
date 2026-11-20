@@ -406,13 +406,13 @@ public sealed partial class RosterTeamVerbTests
     {
         ArrangeCheckpoint();
         Activity("sess-impl.json", "working", DateTimeOffset.UtcNow);
-        _deliveryLine = "delivery: relay — make this one SendMessage now: SendMessage \"hi\" to proj-implementor.";
+        _deliveryLine = "delivery: relay — ah delivers it another way if you do not; make this one SendMessage now: SendMessage \"hi\" to proj-implementor";
 
         var relayed = Take();
 
         Assert.Equal([_deliveryLine], relayed.Member("relay")!.Value.AsArray().Select(v => v.AsString()));
 
-        _deliveryLine = "delivery: plugin prompt — do not send a SendMessage for this entry";
+        _deliveryLine = "delivery: plugin prompt — nothing more to do";
         Assert.Empty(Take().Member("relay")!.Value.AsArray());
     }
 

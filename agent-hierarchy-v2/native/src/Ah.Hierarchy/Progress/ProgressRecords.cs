@@ -222,6 +222,9 @@ public sealed record PlanInput(
 
     /// <summary>The checklist item (<c>stream/id</c>) an <c>after</c> event names; empty clears it.</summary>
     public string? After { get; init; }
+
+    /// <summary>On a <c>report</c> row: the DONE's sha was dropped because it equals the item's base, so nothing was committed (ah2-312 M3'').</summary>
+    public bool AtBase { get; init; }
 }
 
 /// <summary>What recording plan events did: nothing (progress is off), a refusal with nothing written, or the count appended and, in <c>Warning</c>, why the Checklist block could not be rewritten afterwards (null when it was).</summary>
@@ -803,7 +806,7 @@ internal sealed class ProgressRecords(IFileReader files, IClock clock, IHierarch
         var rows = new JsonArray();
         foreach (var e in events)
         {
-            rows.Add(ProgressFormat.PlanRow(e.At ?? now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer, e.AskedFor, e.Class, e.After));
+            rows.Add(ProgressFormat.PlanRow(e.At ?? now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer, e.AskedFor, e.Class, e.After, e.AtBase));
         }
 
         var append = Args(pool, team);

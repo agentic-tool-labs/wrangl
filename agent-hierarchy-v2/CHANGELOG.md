@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.28] - 2026-11-19
+
+### Fixed
+
+- **`ah roster approve <member> worktree` now lifts the gate it approved.** The gate finds the member through the
+  team's home, and a plain `git clone` the approval covers is let through.
+- **Check-in alarms count from delivery.** A request's age runs from when it was sent, `ah msg send --ref <bare id>`
+  records the send, a response holding only parts counts as filed, and an open review quiets the request it reviews.
+  A request that was never sent gets one "was not sent" note.
+- **A test run started after `cd` or a variable is joined to its test slot.**
+- **QA and review prompts match by item**, the latest report decides whether QA is owed, and the QA cadence question
+  is asked once.
+- **Dismissed members leave the roster and the alarms.** A dismiss whose close is not confirmed no longer reports
+  success.
+- **The rerun line a refusal prints runs as printed.**
+- **A member's TMPDIR is a real directory outside any checkout**, removed when the member is dismissed.
+- **QA has a fallback when a repo has no `run-set.sh`.**
+- **Three `ah msg` rough edges:** clearer send lines, and a text-only note with an empty `--ref` is sent.
+- **A test killed at the time cap mails the Orchestrator.**
+- **The Architect's shell nudge is checked** and stays a nudge, never a refusal.
+
 ## [2.0.27] - 2026-11-19
 
 ### Added

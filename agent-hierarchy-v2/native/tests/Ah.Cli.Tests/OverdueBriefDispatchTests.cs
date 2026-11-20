@@ -11,7 +11,10 @@ namespace Ah.Cli.Tests;
 public sealed class OverdueBriefDispatchTests : IDisposable
 {
     private const string Team = "tm";
-    private const string RequestId = "20261016-140001-abcd";
+    /// <summary>A request id of today: the watch and the failsafe count a brief as sent only inside the horizon (ah2-296).</summary>
+    private static readonly string RequestId = Fresh("abcd");
+
+    private static string Fresh(string tail) => DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + "-" + tail;
     private readonly Sandbox _sandbox = Sandbox.PlantedFiles();
     private readonly ServiceGraph _graph;
     private readonly FakeEnv _env;
@@ -53,8 +56,9 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         return stdout.ToString();
     }
 
-    private string NewRequest(string from, string id = RequestId)
+    private string NewRequest(string from, string? id = null)
     {
+        id ??= RequestId;
         var made = Run("new", "--type", "request", "--to", "implementor", "--from", "orchestrator", "--slug", "t1", "--title", "A task", "--id", id, "--team", Team);
         var path = _sandbox.MsgFile(made);
         var edited = File.ReadAllText(path).Replace("from: orchestrator", "from: " + from, StringComparison.Ordinal);
@@ -74,20 +78,24 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         _ = Ah.TestKit.TestMsgStore.Plant(_sandbox.AhHome, request, edited);
     }
 
+    /// <summary>ah2-296 L2: a request nobody sent raises no check-in, whether or not its member has a session, so the failsafe watches none.</summary>
     [Theory]
-    [InlineData("not-spawned", false)]
-    [InlineData("impl-1", true)]
-    public void AnUnsentRequestIsWatchedOnlyWhenItsNamedMemberHasASession(string name, bool watched)
+    [InlineData("not-spawned")]
+    [InlineData("impl-1")]
+    public void AnUnsentRequestIsNotWatched(string name)
     {
         NameAddressee(NewRequest("orchestrator"), name);
 
-        Assert.Equal(watched, Open().Any(d => d.RequestId == RequestId));
+        Assert.DoesNotContain(Open(), static d => d.RequestId == RequestId);
     }
 
     [Fact]
     public void APausedMembersBriefIsNotWatchedAndAResumedOneIsWatchedFromTheResume()
     {
-        NameAddressee(NewRequest("orchestrator"), "impl-1");
+        var request = NewRequest("orchestrator");
+        NameAddressee(request, "impl-1");
+        AsAdmin();
+        _ = Run("send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
         using (Ah.StateDb.StateDbModule.Open(_sandbox.AhHome, mayCreate: true))
         {
         }
@@ -107,6 +115,7 @@ public sealed class OverdueBriefDispatchTests : IDisposable
     {
         var request = NewRequest(from);
         Assert.Empty(Open());
+        AsAdmin();
 
         _ = Run("send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
 
@@ -133,9 +142,10 @@ public sealed class OverdueBriefDispatchTests : IDisposable
     public void NegativeABriefOfAnotherRequestGivesThisOneNoAddressee()
     {
         _ = NewRequest("orchestrator");
-        const string OtherId = "20261016-140002-abce";
+        var OtherId = Fresh("abce");
         var made = Run("new", "--type", "request", "--to", "implementor", "--from", "orchestrator", "--slug", "t2", "--title", "Other task", "--id", OtherId, "--team", Team);
         var other = _sandbox.MsgFile(made);
+        AsAdmin();
 
         _ = Run("send", "impl-1@" + Team, "--ref", other, "--kind", "brief");
 
@@ -159,6 +169,65 @@ public sealed class OverdueBriefDispatchTests : IDisposable
         var now = (double)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         Assert.False(Assert.Single(_sandbox.Mirrored(() => host.Dispatches("o", now))!, c => c.RequestId == fresh).Undelivered);
+    }
+
+    /// <summary>ah2-296 L2: a brief sent with no dispatch row (the CLI send by itself, as `msg send --ref &lt;id&gt;` is) is timed from its entry; negative: unsent, it has no send time.</summary>
+    [Fact]
+    public void ABriefSentWithoutADispatchRowIsTimedFromItsEntryAndNegativeAnUnsentOneHasNoSendTime()
+    {
+        var fresh = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + "-abce";
+        var request = NewRequest("orchestrator", fresh);
+        NameAddressee(request, "impl-1");
+        AsAdmin();
+        var host = new WatchHostAdapter(_graph, Ah.Roster.RosterModule.CreateScreenRules(), _graph.Io.Clock, WatchHostSeams.Unavailable);
+        Ah.Watch.DispatchCandidate Candidate() =>
+            Assert.Single(_sandbox.Mirrored(() => host.Dispatches("o", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))!, c => c.RequestId == fresh);
+
+        Assert.Null(Candidate().SentMs);
+
+        _ = Run("send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
+
+        var box = Assert.Single(_graph.Mailbox.ListBoxes(), static b => b.Address == "impl-1@" + Team);
+        var entryCreated = Assert.Single(_graph.Mailbox.ReadEntries(box.Dir).Entries).Member("created")!.Value.AsString();
+        Assert.True(Ah.Core.Time.Timestamps.TryParseMs(entryCreated, out var sentMs));
+        Assert.Equal(sentMs, Candidate().SentMs);
+    }
+
+    /// <summary>ah2-296 L3: an open request to a reviewer quiets only the request it reviews.</summary>
+    [Theory]
+    [InlineData("implementor", "a1", "reviewer", "R", null, true)] // its parent is the request
+    [InlineData("implementor", "a1", "reviewer", null, "a1", true)] // no parent, same item, the request is not to a reviewer
+    [InlineData("reviewer", "a1", "reviewer", null, "a1", false)] // an idle reviewer that has not reported is not quieted by another review on its item
+    [InlineData("docs-writer", "a1", "reviewer", "OTHER", "a1", false)] // another role on the item: that review is of another request
+    [InlineData("implementor", "a1", "qa", "R", "a1", false)] // not to a reviewer
+    public void AReviewQuietsOnlyTheRequestItReviews(string requestTo, string item, string reviewTo, string? parent, string? reviewItem, bool quiets)
+    {
+        Assert.Equal(quiets, WatchHostAdapter.IsReviewOf("R", requestTo, item, "V", reviewTo, parent, reviewItem));
+        Assert.False(WatchHostAdapter.IsReviewOf("R", "reviewer", item, "R", "reviewer", null, item));
+    }
+
+    /// <summary>ah2-296 L1: a part is read from the message store, with no message file on disk; negative: before it, no part time.</summary>
+    [Fact]
+    public void APartIsReadFromTheStoreWithNoFileOnDiskAndNegativeNoPartNoTime()
+    {
+        var fresh = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + "-abcd";
+        var request = NewRequest("orchestrator", fresh);
+        NameAddressee(request, "impl-1");
+        AsAdmin();
+        _ = Run("send", "impl-1@" + Team, "--ref", request, "--kind", "brief");
+        var host = new WatchHostAdapter(_graph, Ah.Roster.RosterModule.CreateScreenRules(), _graph.Io.Clock, WatchHostSeams.Unavailable);
+        Ah.Watch.DispatchCandidate Candidate() =>
+            Assert.Single(_sandbox.Mirrored(() => host.Dispatches("o", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))!, c => c.RequestId == fresh);
+
+        Assert.Null(Candidate().PartMs);
+
+        var response = Ah.TestKit.TestMsgStore.Plant(
+            _sandbox.AhHome, request.Replace("--request.md", "--response.md", StringComparison.Ordinal), $"---\nid: {fresh}\ntype: response\npartial: true\n---\n\n## part 1\n- first deliverable\n");
+        File.Delete(response);
+
+        Assert.False(File.Exists(response));
+        Assert.Equal(_graph.Hierarchy.Core.MsgTimeMs(response), Candidate().PartMs);
+        Assert.NotNull(Candidate().PartMs);
     }
 
     /// <summary>ah2-32: this test process is the Claude harness and the user granted it admin rights; it is the user holding session "o".</summary>

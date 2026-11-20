@@ -556,6 +556,7 @@ public sealed class PlanTransitionTests
         var row = HierarchyModule.ChecklistTransitions(reply, Board(BaseAt("abc1234"))).Single().Rows[0];
 
         Assert.Equal(recorded, row.Commits is { Count: 1 });
+        Assert.Equal(!recorded, row.AtBase); // ah2-312 M3'': a dropped sha is flagged
     }
 
     [Fact]
@@ -563,7 +564,17 @@ public sealed class PlanTransitionTests
     {
         var reply = Reply(Req, "DONE x", "implementor") with { Sha = "def5678", Role = "my-custom-builder" };
 
-        Assert.Equal(["def5678"], HierarchyModule.ChecklistTransitions(reply, Board(BaseAt("abc1234"))).Single().Rows[0].Commits);
+        var row = HierarchyModule.ChecklistTransitions(reply, Board(BaseAt("abc1234"))).Single().Rows[0];
+        Assert.Equal(["def5678"], row.Commits);
+        Assert.False(row.AtBase);
+    }
+
+    [Fact]
+    public void NegativeADoneWithNoShaIsNotFlaggedAtTheBase()
+    {
+        var reply = Reply(Req, "DONE x", "implementor") with { Sha = null };
+
+        Assert.False(HierarchyModule.ChecklistTransitions(reply, Board(BaseAt("abc1234"))).Single().Rows[0].AtBase);
     }
 
     private static string WaitingUser => Row("2026-11-01T10:40:00Z", "a", "wait-user", ",\"note\":\"Which?\"");

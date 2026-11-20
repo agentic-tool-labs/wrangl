@@ -196,14 +196,33 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
     /// For each request a brief entry points at, the name of the member the brief was sent to (the address before its <c>@</c>): the
     /// addressee of a request whose <c>to_name</c> was never written. Read lazily, once per scan, and only when a request lacks the name.
     /// </summary>
-    private Dictionary<string, string> BriefAddressees()
+    /// <summary>
+    /// ah2-296 L1: when a part was last filed on each open request, from its response in the message store (the seal time of a response that
+    /// holds only parts), or null; one store read for all of them.
+    /// </summary>
+    internal static IReadOnlyList<double?> PartFiledMs(Ah.Hierarchy.IHierarchyCore core, IReadOnlyList<string> responsePaths) =>
+        responsePaths.Count == 0 ? [] : [.. core.ReadMsgTextsAndTimes(responsePaths).Select(static r => r.Text is { } text && MsgRows.IsPartial(text) ? r.TimeMs : null)];
+
+    /// <summary>
+    /// Each briefed request's addressee (the latest brief's), whether a brief sent it as the watch reads a send (<see cref="WatchHostAdapter.IsSentBrief"/>, from
+    /// <paramref name="team"/>'s Orchestrator), and when the earliest such brief was sent, by request path key.
+    /// </summary>
+    private Dictionary<string, (string Name, bool Sent, double? SentMs)> BriefAddressees(string team)
     {
-        var byRef = new Dictionary<string, string>(StringComparer.Ordinal);
+        var byRef = new Dictionary<string, (string Name, bool Sent, double? SentMs)>(StringComparer.Ordinal);
+        var nowMs = g.Io.Clock.UtcNow.ToUnixTimeMilliseconds();
+        var orchestrator = Ah.Hierarchy.HierarchyModule.OrchestratorAddress(team);
         foreach (var box in g.Mailbox.ListBoxes())
         {
-            foreach (var (key, name) in g.BriefAddressees.Of(box.Dir, box.Address, g.Mailbox.ReadEntries(box.Dir).Entries))
+            foreach (var (key, name, sentMs, from, reference) in g.BriefAddressees.Of(box.Dir, box.Address, g.Mailbox.ReadEntries(box.Dir).Entries))
             {
-                byRef[key] = name;
+                var held = byRef.TryGetValue(key, out var h) ? h : (Name: name, Sent: false, SentMs: (double?)null);
+                if (WatchHostAdapter.IsSentBrief(reference, from, f => f == orchestrator, nowMs))
+                {
+                    held = (name, true, held.SentMs is { } before && (sentMs is not { } at || before < at) ? before : sentMs ?? held.SentMs);
+                }
+
+                byRef[key] = (name, held.Sent, held.SentMs);
             }
         }
 
@@ -221,7 +240,8 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
         }
 
         var found = new List<OverdueDispatch>();
-        Dictionary<string, string>? briefed = null;
+        Dictionary<string, (string Name, bool Sent, double? SentMs)>? briefed = null;
+        var partOf = new List<(int Index, string Path)>();
         var lanes = new Dictionary<string, (double? UpdatedMs, string? State)>(StringComparer.Ordinal);
         var gates = scan.Gates;
         var peers = scan.Peers;
@@ -242,14 +262,17 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
                 continue;
             }
 
-            if ((Text(fm, "to_name") is { Length: > 0 } named && named != "null" ? named : (briefed ??= BriefAddressees()).GetValueOrDefault(Ah.Core.Json.MsgRows.PathKey(path.AsString()))) is not { Length: > 0 } toName)
+            if ((Text(fm, "to_name") is { Length: > 0 } named && named != "null" ? named : (briefed ??= BriefAddressees(team)).GetValueOrDefault(Ah.Core.Json.MsgRows.PathKey(path.AsString())).Name) is not { Length: > 0 } toName)
             {
                 continue;
             }
 
-            // A brief nobody sent to a member with no session raises no check-in (DispatchClock.HeldBack), so there is no alarm here to miss.
+            // A brief nobody sent raises no check-in (DispatchClock.HeldBack, ah2-296 L2), so there is no alarm here to miss.
             var addressee = described.FirstOrDefault(m => Text(m, "name") == toName);
-            if ((addressee is null || Text(addressee, "session_id") is not { Length: > 0 }) && !(briefed ??= BriefAddressees()).ContainsKey(Ah.Core.Json.MsgRows.PathKey(path.AsString())))
+            var entrySent = (briefed ??= BriefAddressees(team)).TryGetValue(Ah.Core.Json.MsgRows.PathKey(path.AsString()), out var brief) && brief.Sent ? brief.SentMs ?? 0 : (double?)null;
+            var rowSent = peers.Where(r => Text(r, "type") == "dispatch" && Text(r, "request_id") == id && Text(r, "session_id") == sessionId)
+                .Select(r => Text(r, "created") is { } c && Ah.Core.Time.Timestamps.TryParseMs(c, out var at) ? at : 0).DefaultIfEmpty(double.NaN).Min();
+            if (((addressee is null || Text(addressee, "session_id") is not { Length: > 0 }) && entrySent is null) || (entrySent is null && double.IsNaN(rowSent)))
             {
                 continue;
             }
@@ -265,7 +288,9 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
                 held = since + (3 * threshold * 1000);
             }
 
-            var floorMs = createdMs;
+            // the dispatch clock's floors: the send (b475, ah2-296 L2) here, the latest part (ah2-296 L1) after the loop in one store read
+            var responsePath = exchange.Member("response")?.Member("path") is { IsText: true } response ? response.AsString() : null;
+            var floorMs = Math.Max(createdMs, double.IsNaN(rowSent) ? entrySent ?? 0 : rowSent);
             if (!lanes.TryGetValue(toName, out var lane))
             {
                 lane = StreamOf(hierarchyDir, team, toName, (_, name) => scan.TeamRecord(name));
@@ -300,6 +325,19 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
             {
                 PlainSend = Text(fm, "reason") == Ah.Hierarchy.HierarchyModule.PlainSendReason,
             });
+            if (responsePath is not null)
+            {
+                partOf.Add((found.Count - 1, responsePath));
+            }
+        }
+
+        var parts = PartFiledMs(g.Hierarchy.Core, [.. partOf.Select(static p => p.Path)]);
+        for (var i = 0; i < partOf.Count; i++)
+        {
+            if (parts[i] is { } partMs && partMs > found[partOf[i].Index].FloorMs)
+            {
+                found[partOf[i].Index] = found[partOf[i].Index] with { FloorMs = partMs };
+            }
         }
 
         return found;

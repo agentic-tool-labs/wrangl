@@ -267,7 +267,7 @@ EOF
   grep -F "relay:$E" "$REPO/.claude/ah2/peers.jsonl" | scrub | ev M13 peers.txt
   sqlite3 -readonly "$AH_HOME/state/ah.db" "select id,rung,state,ladder,at_ms from mail_attempts where id='$E'" | ev M13 attempts.txt
   find "$AH_HOME" -name attempts.jsonl -exec grep -lF "$E" {} + 2>/dev/null | scrub | ev M13 attempts-files.txt
-  Q=$(out_of m13 | grep -c 'do not SendMessage')
+  Q=$(out_of m13 | grep -c 'nothing more to do')
   chk "receiver got it" "m04_check '$E' '$ORCH_TX'"
   chk "sender given one consistent instruction, not both do-not-send ($Q) and you-owe (rc $OWE)" "! { [ '$Q' -gt 0 ] && [ $OWE = 0 ]; }"
   chk "not contradicted by released-do-not-resend" "! grep -q 'released to the delivery ladder' '$T/evidence/M13/tx-sender.txt'"

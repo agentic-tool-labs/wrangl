@@ -604,7 +604,7 @@ internal sealed class HierarchyCore(IFileReader files, IAhEnvironment environmen
     }
 
     /// <summary>Each message's stored text and <see cref="MsgTimeMs"/> from one read, over one connection: read apart, the time was 2.5 s of a 5.7 s status rebuild (2850 responses).</summary>
-    internal IReadOnlyList<(string? Text, double? TimeMs)> ReadMsgTextsAndTimes(IReadOnlyList<string> paths)
+    public IReadOnlyList<(string? Text, double? TimeMs)> ReadMsgTextsAndTimes(IReadOnlyList<string> paths)
     {
         using var db = DbMsgs();
         return [.. paths.Select(path => ReadMsgTextAndTime(path, db))];

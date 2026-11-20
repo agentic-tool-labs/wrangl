@@ -10,14 +10,14 @@ namespace Ah.Cli.Composition;
 internal sealed class BriefAddresseeMemo
 {
     private readonly object _gate = new();
-    private readonly Dictionary<string, (int Count, string? Last, IReadOnlyList<(string Key, string Name)> Briefs)> _held = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (int Count, string? Last, IReadOnlyList<(string Key, string Name, double? SentMs, string? From, string Ref)> Briefs)> _held = new(StringComparer.Ordinal);
     private long _builds;
 
     /// <summary>How many boxes were read afresh rather than answered from the hold, for the tests.</summary>
     internal long Builds => Interlocked.Read(ref _builds);
 
-    /// <summary>The (request path key, addressee name) of each brief in the box, in entry order: a later brief of the same request wins.</summary>
-    internal IReadOnlyList<(string Key, string Name)> Of(string dir, string address, IReadOnlyList<JsonValue> entries)
+    /// <summary>The (request path key, addressee name, when it was sent, sender, ref) of each brief in the box, in entry order: a later brief of the same request wins.</summary>
+    internal IReadOnlyList<(string Key, string Name, double? SentMs, string? From, string Ref)> Of(string dir, string address, IReadOnlyList<JsonValue> entries)
     {
         var last = entries.Count > 0 && entries[^1].Member("id") is { IsText: true } id ? id.AsString() : null;
         lock (_gate)
@@ -29,14 +29,16 @@ internal sealed class BriefAddresseeMemo
         }
 
         _ = Interlocked.Increment(ref _builds);
-        var briefs = new List<(string, string)>();
+        var briefs = new List<(string, string, double?, string?, string)>();
         foreach (var entry in entries)
         {
             if (entry.IsMap && entry.Member("kind") is { IsText: true } kind && kind.AsString() == "brief"
                 && entry.Member("ref") is { IsText: true } reference && reference.AsString().Length > 0
                 && address.Split('@')[0] is { Length: > 0 } name)
             {
-                briefs.Add((MsgRows.PathKey(reference.AsString()), name)); // keyed as the store keys a message: by its real path
+                var sent = entry.Member("created") is { IsText: true } created && Ah.Core.Time.Timestamps.TryParseMs(created.AsString(), out var sentMs) ? sentMs : (double?)null;
+                var from = entry.Member("from") is { IsText: true } sender ? sender.AsString() : null;
+                briefs.Add((MsgRows.PathKey(reference.AsString()), name, sent, from, reference.AsString())); // keyed as the store keys a message: by its real path
             }
         }
 

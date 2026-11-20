@@ -56,7 +56,7 @@ internal static class NewVerb
             return 2;
         }
 
-        var c = new RosterContext(services, RosterArgs.Parse(request.Team is null ? [] : ["--team", request.Team]), "new", services.CurrentDirectory, stdout, stderr, rest);
+        var c = new RosterContext(services, RosterArgs.Parse(request.Team is null ? [] : ["--team", request.Team]), "new", services.CurrentDirectory, stdout, stderr, ["new", .. rest.Select(a => a == "-t" ? "--team" : a)]);
         try
         {
             if (request.Interactive)

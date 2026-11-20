@@ -14,6 +14,9 @@ internal static class PermissionDiagnose
 
     private sealed record Denial(string At, string Label, string Command);
 
+    /// <summary>ah2-310 A3': a soft-gate bounce of the member; the command is not stored.</summary>
+    private sealed record GateDenial(string At, string Rule, string Tool, string Reason, string? ApprovableBy);
+
     /// <summary>A member name is a plain file-name word: no path separator, never <c>.</c> or <c>..</c>.</summary>
     internal static bool IsMemberName(string name) =>
         name.Length is > 0 and <= 64 && name is not ("." or "..") && name.All(static ch => ch is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '.' or '_' or '-');
@@ -47,7 +50,12 @@ internal static class PermissionDiagnose
             return 0;
         }
 
-        var denial = LastDenial(c, member);
+        var denial = LastDenial(c, member, out var deniedMs);
+        if (LastGateDenial(c, member, deniedMs) is { } gate)
+        {
+            return GateReport(c, member, root, session, gate);
+        }
+
         var facts = RosterModule.ReadPermissionFacts(c.Services.Files, c.Services.Environment.Plugin?.Root, c.TeamHome, member, denial?.Command);
         var cause = denial is null
             ? null
@@ -91,7 +99,64 @@ internal static class PermissionDiagnose
         RosterModule.MemberAllowEnabled(c.Services.Files, [c.MemberAllowProjectConfig,c.Services.Config.UserConfigPath()]);
 
     /// <summary>The member's latest <c>CLASSIFIER-DENIED</c> watch-event row in the last 24 hours.</summary>
-    private static Denial? LastDenial(RosterContext c, string member)
+    /// <summary>The member's latest soft-gate <c>bounce</c> row in the last 24 hours that is newer than <paramref name="afterMs"/>.</summary>
+    private static GateDenial? LastGateDenial(RosterContext c, string member, double afterMs)
+    {
+        var now = c.Services.Clock.UtcNow.ToUnixTimeMilliseconds();
+        GateDenial? best = null;
+        var bestMs = afterMs;
+        foreach (var row in c.Services.Hierarchy.Roster.ReadGates(c.Dir))
+        {
+            string? Text(string key) => row.Member(key)?.NonEmptyText;
+            if (Text("type") != "soft-gate" || Text("outcome") != "bounce" || Text("member") != member
+                || Text("ts") is not { } ts || Text("rule") is not { } rule
+                || !DateTimeOffset.TryParse(ts, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var when))
+            {
+                continue;
+            }
+
+            var ms = when.ToUnixTimeMilliseconds();
+            if (now - ms > DayMs || ms <= bestMs)
+            {
+                continue;
+            }
+
+            bestMs = ms;
+            best = new GateDenial(ts, rule, Text("tool") ?? "unknown", Text("reason") ?? string.Empty, Text("approvable_by"));
+        }
+
+        return best;
+    }
+
+    private static int GateReport(RosterContext c, string member, string? root, string? session, GateDenial gate)
+    {
+        // A7: the row names the rule whose approval lifts its call; a call no approval lifts has no fix.
+        var fix = gate.ApprovableBy is { } by ? $"ah roster approve {member} {by}" : null;
+        if (c.Opts.IsTrue("json"))
+        {
+            var cause = new JsonObject { ["name"] = gate.Rule, ["reason"] = gate.Reason, ["fix"] = fix is null ? JsonValue.Null : JsonValue.FromString(fix) };
+            c.Out(new JsonObject
+            {
+                ["member"] = member,
+                ["team"] = c.TeamFile is null ? JsonValue.Null : JsonValue.FromString(c.TeamFile),
+                ["root"] = root is null ? JsonValue.Null : JsonValue.FromString(root),
+                ["session"] = session is null ? JsonValue.Null : JsonValue.FromString(session),
+                ["last_denial"] = JsonValue.FromObject(new JsonObject { ["at"] = gate.At, ["label"] = "gate:" + gate.Rule, ["tool"] = gate.Tool }),
+                ["cause"] = JsonValue.FromObject(cause),
+            });
+            return 0;
+        }
+
+        var teamText = c.TeamFile is { } t ? $" (team {t})" : string.Empty;
+        var o = c.Stdout;
+        o.WriteLine($"member:      {member}{teamText}  root: {root ?? "unknown"}  session: {session ?? "unknown"}");
+        o.WriteLine($"last denial: {gate.At} [gate:{gate.Rule}] ({gate.Tool})");
+        o.WriteLine($"cause:       {gate.Rule}: {gate.Reason}{(fix is null ? string.Empty : "; fix: " + fix)}");
+        return 0;
+    }
+
+    /// <summary>The member's latest <c>CLASSIFIER-DENIED</c> watch-event row in the last 24 hours; <paramref name="deniedMs"/> is its time, or -∞.</summary>
+    private static Denial? LastDenial(RosterContext c, string member, out double deniedMs)
     {
         var now = c.Services.Clock.UtcNow.ToUnixTimeMilliseconds();
         Denial? best = null;
@@ -125,6 +190,7 @@ internal static class PermissionDiagnose
                 row.Member("command") is { IsText: true } command ? command.AsString() : "(unknown)");
         }
 
+        deniedMs = bestMs;
         return best;
     }
 }

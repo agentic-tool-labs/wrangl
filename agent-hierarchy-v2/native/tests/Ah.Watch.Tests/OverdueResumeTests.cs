@@ -218,16 +218,64 @@ public sealed class OverdueResumeTests
         Assert.Equal(told, rig.Host.Mails.Any(static m => m.Event == "idle-without-report"));
     }
 
-    [Fact]
-    public async Task AnUnsentBriefToAMemberGetsACheckInSayingToSendItAndNoSilentAlarm()
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task AnIdleMemberWaitingOnItsReviewIsNotIdleWithoutReport(bool reviewOpen, bool told)
     {
         var rig = WithBrief();
-        rig.Host.Candidates["s1"] = [Brief() with { Undelivered = true }];
+        rig.Host.Candidates["s1"] = [Brief() with { ReviewOpen = reviewOpen }];
+
+        await rig.PassAsync(rig.Tick(), polls: 3, stepMs: 40_000);
+
+        Assert.Equal(told, rig.Host.Mails.Any(static m => m.Event == "idle-without-report"));
+    }
+
+    [Fact]
+    public async Task APartQuietsTheCheckInOfItsOwnRequestAndNegativeNotAnother()
+    {
+        const string Other = "20260301-114100-cd34";
+        var rig = WithBrief();
+        rig.Host.Candidates["s1"] = [Brief() with { PartMs = Start.ToUnixTimeMilliseconds() }, Brief() with { RequestId = Other }];
+
+        await rig.PassAsync(rig.Tick());
+
+        var checkIns = rig.Host.Mails.Where(static m => m.Event == "check-in-due").ToList();
+        Assert.Contains(checkIns, static m => m.Text.Contains(Other, StringComparison.Ordinal));
+        Assert.DoesNotContain(checkIns, static m => m.Text.Contains(RequestId, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(2.0, false)]
+    [InlineData(null, true)]
+    public async Task ACheckInCountsFromTheSendAndNegativeFromTheFilingWithoutOne(double? sentMinutesAgo, bool told)
+    {
+        var rig = WithBrief();
+        rig.Host.Candidates["s1"] = [Brief() with { SentMs = sentMinutesAgo is { } ago ? Start.AddMinutes(-ago).ToUnixTimeMilliseconds() : null }];
+
+        await rig.PassAsync(rig.Tick());
+
+        Assert.Equal(told, Told(rig, "check-in-due"));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AnUnsentBriefGetsOneNotSentNoteAndNoCheckInAndNegativeASentOneGetsNoNote(bool unsent)
+    {
+        var rig = WithBrief();
+        rig.Host.Candidates["s1"] = [Brief() with { Undelivered = unsent }];
 
         await rig.PassUntilAsync(rig.Tick(), "peer-silent");
 
-        Assert.Contains("No delivery recorded", rig.Host.Mails.First(static m => m.Event == "check-in-due").Text, StringComparison.Ordinal);
-        Assert.False(Told(rig, "peer-silent"));
+        var notes = rig.Host.Mails.Where(static m => m.Event == "request-not-sent").ToList();
+        Assert.Equal(unsent ? 1 : 0, notes.Count);
+        Assert.Equal(!unsent, Told(rig, "check-in-due"));
+        Assert.Equal(!unsent, Told(rig, "peer-silent"));
+        if (unsent)
+        {
+            Assert.Contains("was not sent. Send it with ah msg send impl@beta --ref ", notes[0].Text, StringComparison.Ordinal);
+        }
     }
 
     [Theory]

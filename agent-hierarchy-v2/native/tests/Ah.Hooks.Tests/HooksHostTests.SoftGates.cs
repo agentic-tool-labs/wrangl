@@ -477,6 +477,135 @@ public sealed partial class HooksHostTests
         Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
     }
 
+    /// <summary>
+    /// ah2-310: the up row SessionStart writes carries <c>team</c> and never <c>name</c>; the member's name is on its team row, stamped
+    /// with the session id. The session is sess-1; <paramref name="sessionOfImpl1"/> other than sess-1 makes it impl-2's.
+    /// </summary>
+    private static Rig StartedMemberRig(string sessionOfImpl1 = "sess-1")
+    {
+        var rig = SoftRig(new() { ["WRANGL_TEAM_FILE"] = "/x/team.json" });
+        AutoTrackTests.WriteTeam(rig, new JsonObject
+        {
+            ["members"] = new JsonArray
+            {
+                new JsonObject { ["name"] = "impl-1", ["role"] = "implementor", ["session_id"] = sessionOfImpl1 },
+                new JsonObject { ["name"] = "impl-2", ["role"] = "implementor", ["session_id"] = sessionOfImpl1 == "sess-1" ? "sess-2" : "sess-1" },
+            },
+        });
+        rig.PutPeers(HierDir(rig), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"role\":\"implementor\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
+        return rig;
+    }
+
+    private static void Approve(Rig rig, string member) =>
+        rig.Services.Hierarchy.Roster.AppendGateRouted(HierDir(rig), new JsonObject { ["type"] = "soft-gate", ["rule"] = "worktree", ["outcome"] = "approve", ["member"] = member });
+
+    [Fact]
+    public void AnApprovalLiftsTheSwitchOfAMemberWhoseUpRowHasNoName()
+    {
+        var rig = StartedMemberRig();
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Approve(rig, "impl-1");
+
+        Assert.Equal(string.Empty, Chain(rig, sw));
+        Assert.Equal("impl-1", Assert.Single(SoftRows(rig, "approved")).Member("member")!.Value.AsString());
+    }
+
+    [Fact]
+    public void NegativeWithNoApprovalTheSwitchIsStillRefused()
+    {
+        var rig = StartedMemberRig();
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    [Fact]
+    public void NegativeAnotherMembersApprovalDoesNotLiftThisOne()
+    {
+        // this session (sess-1) is impl-2; only impl-1 was approved
+        var rig = StartedMemberRig(sessionOfImpl1: "sess-2");
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Approve(rig, "impl-1");
+
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    private static Rig StartedReviewerRig()
+    {
+        var rig = StartedMemberRig();
+        Ah.TestKit.TestHomeDocs.Put(rig.Sandbox.Root + "/ah", Ah.TestKit.TestHomeDocs.SessionRoles, "{\"version\":1,\"sessions\":{\"sess-1\":{\"role\":\"reviewer\"}}}");
+        return rig;
+    }
+
+    [Fact]
+    public void AWorktreeApprovalLiftsTheReviewersCloneAndTheBounceRowNamesTheMember()
+    {
+        var rig = StartedReviewerRig();
+        var clone = BashAs(string.Empty, "git clone /w/repo /tmp/rv");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", clone)));
+        Assert.Equal("impl-1", Assert.Single(SoftRows(rig, "bounce")).Member("member")!.Value.AsString());
+        Approve(rig, "impl-1");
+
+        Assert.Equal(string.Empty, Chain(rig, clone));
+        Assert.Equal("worktree", Assert.Single(SoftRows(rig, "approved")).Member("rule")!.Value.AsString());
+    }
+
+    /// <summary>A4: the team file sits in another tree's hierarchy dir, named by the up row's <c>team_home</c>.</summary>
+    [Fact]
+    public void AnApprovalLiftsAMemberWhoseTeamHomeIsAnotherTree()
+    {
+        var rig = SoftRig(new() { ["WRANGL_TEAM_FILE"] = "/x/team.json" });
+        var other = rig.Sandbox.Root + "/main";
+        Directory.CreateDirectory(other + "/.git");
+        Directory.CreateDirectory(other + "/.claude/ah2");
+        File.WriteAllText(other + "/.claude/ah2/agent-hierarchy.json", """{"version":1}""");
+        var home = rig.Services.Config.HierarchyDir(other);
+        Assert.NotEqual(HierDir(rig), home);
+        Directory.CreateDirectory(Path.GetDirectoryName(rig.Services.Roster.TeamPath(home, "tm"))!);
+        File.WriteAllBytes(rig.Services.Roster.TeamPath(home, "tm"), JsonText.ToUtf8(new JsonObject
+        {
+            ["members"] = new JsonArray { new JsonObject { ["name"] = "impl-1", ["role"] = "implementor", ["session_id"] = "sess-1" } },
+        }, 0));
+        Directory.CreateDirectory(HierDir(rig));
+        rig.PutPeers(HierDir(rig), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"team_home\":\"" + home + "\",\"role\":\"implementor\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Approve(rig, "impl-1");
+
+        Assert.Equal(string.Empty, Chain(rig, sw));
+    }
+
+    [Theory]
+    [InlineData("git clone -u /tmp/x /w/repo /tmp/rv")]
+    [InlineData("git clone --upload-pack=/tmp/x /w/repo /tmp/rv")]
+    [InlineData("git clone --template=/tmp/t /w/repo /tmp/rv")]
+    [InlineData("git clone -c core.hooksPath=/tmp/h /w/repo /tmp/rv")]
+    [InlineData("git clone --config core.hooksPath=/tmp/h /w/repo /tmp/rv")]
+    [InlineData("git -c core.hooksPath=/tmp/h clone /w/repo /tmp/rv")]
+    public void NegativeAWorktreeApprovalDoesNotLiftACloneWithAnOptionThatRunsCode(string line)
+    {
+        var rig = StartedReviewerRig();
+        Approve(rig, "impl-1");
+
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", BashAs(string.Empty, line))));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    [Fact]
+    public void NegativeAWorktreeApprovalLiftsNoOtherSelfCareCall()
+    {
+        var rig = StartedReviewerRig();
+        Approve(rig, "impl-1");
+
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", BashAs(string.Empty, "grep -n x f"))));
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", BashAs(string.Empty, "git clone /w/repo /tmp/rv && grep x f"))));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
     [Fact]
     public void WorktreePassesAPathRestoreAndTheOrchestrator()
     {

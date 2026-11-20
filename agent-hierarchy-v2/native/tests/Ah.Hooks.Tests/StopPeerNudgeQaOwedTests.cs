@@ -49,8 +49,68 @@ public sealed class StopPeerNudgeQaOwedTests
         return Encoding.UTF8.GetString(outcome.Stdout.Span);
     }
 
-    private static void FileQa(string dir, string slug, string created) =>
-        File.WriteAllText($"{dir}/20261011-120000-bb02--qa--{slug}--request.md", Msg("20261011-120000-bb02", "request", "qa", "orchestrator", slug, created, string.Empty, "## [0] tldr\n- set full"));
+    private static void FileQa(string dir, string slug, string created, string extra = "") =>
+        File.WriteAllText($"{dir}/20261011-120000-bb02--qa--{slug}--request.md", Msg("20261011-120000-bb02", "request", "qa", "orchestrator", slug, created, extra, "## [0] tldr\n- set full"));
+
+    [Fact]
+    public void AQaRequestOnTheSameItemUnderAnotherSlugSilencesTheStop()
+    {
+        var (rig, dir) = Arrange(requestExtra: "item: s/lock\n");
+        FileQa(dir, "qa-lock", "2026-10-11T12:00:00+00:00", "item: s/lock\n");
+
+        Assert.Equal(string.Empty, Stop(rig));
+    }
+
+    /// <summary>Plants the item's plan log: added, started, and one DONE <c>report</c> row for <see cref="Id"/> per flag, oldest first, each with or without <c>at_base</c>.</summary>
+    private static void PlantReport(HooksHostTests.Rig rig, params bool[] atBase)
+    {
+        var progress = rig.Services.Config.HierarchyDir(rig.Sandbox.Root + "/proj") + "/progress/tm";
+        Directory.CreateDirectory(progress);
+        string Row(string ev, string extra) => $"{{\"v\":1,\"ts\":\"2026-10-11T11:30:00Z\",\"team\":\"tm\",\"stream\":\"_run\",\"item\":\"lock\",\"event\":\"{ev}\"{extra},\"by\":\"o\",\"session\":null}}";
+        var cause = $",\"cause\":{{\"event\":\"reply\",\"ref\":\"{Id}\",\"at\":\"2026-10-11T11:30:00Z\"}}";
+        File.WriteAllText(
+            progress + "/_run.plan.jsonl",
+            string.Join('\n', [Row("add", ",\"title\":\"Lock\""), Row("start", string.Empty), .. atBase.Select(b => Row("report", cause + (b ? ",\"at_base\":true" : string.Empty)))]) + "\n");
+        Ah.TestKit.TestImport.Planted(rig.Services.Environment.AhHome, [progress + "/_run.plan.jsonl"]);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("item")] // Amendment 3: the one exception to "item behaves as today"
+    public void ADoneWhoseReportRowIsAtTheBaseOwesNoQa(string? qa)
+    {
+        var (rig, _) = Arrange(requestExtra: "item: _run/lock\n", qa: qa);
+        PlantReport(rig, true);
+
+        Assert.Equal(string.Empty, Stop(rig));
+    }
+
+    [Fact]
+    public void NegativeAReReportAfterCommitsOnTheSameRequestOwesQaAgain()
+    {
+        var (rig, _) = Arrange(requestExtra: "item: _run/lock\n");
+        PlantReport(rig, true, false);
+
+        Assert.Contains("reported DONE on lock", Stop(rig), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeAReportRowWithoutTheFlagStillOwesQa()
+    {
+        var (rig, _) = Arrange(requestExtra: "item: _run/lock\n");
+        PlantReport(rig, false);
+
+        Assert.Contains("reported DONE on lock", Stop(rig), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeAQaRequestOnAnotherItemUnderAnotherSlugDoesNotSatisfyIt()
+    {
+        var (rig, dir) = Arrange(requestExtra: "item: s/lock\n");
+        FileQa(dir, "qa-lock", "2026-10-11T12:00:00+00:00", "item: s/other\n");
+
+        Assert.Contains("reported DONE on lock", Stop(rig), StringComparison.Ordinal);
+    }
 
     [Fact]
     public void AnImplementorDoneWithNoQaRequestBlocksTheStopWithTheMergeAndRequestCommands()
@@ -229,6 +289,40 @@ public sealed class StopPeerNudgeQaOwedTests
         Spend(rig);
 
         Assert.Equal(string.Empty, Stop(rig));
+    }
+
+    private const string Id2 = "20261011-113000-aa02";
+
+    /// <summary>A second implementor DONE in the same session, on slug <c>gate</c>.</summary>
+    private static void SecondDone(string dir)
+    {
+        File.WriteAllText($"{dir}/{Id2}--implementor--gate--request.md", Msg(Id2, "request", "implementor", "orchestrator", "gate", "2026-10-11T11:30:00+00:00", string.Empty, "## [0] tldr\n- x"));
+        File.WriteAllText($"{dir}/{Id2}--orchestrator--gate--response.md", Msg(Id2, "response", "orchestrator", "implementor", "gate", "2026-10-11T11:45:00+00:00", string.Empty, "## [0] tldr\n- [1] status: DONE, commit def\n"));
+    }
+
+    [Fact]
+    public void UnconfiguredAsksTheCadenceOnlyOnTheSessionsFirstDone()
+    {
+        var (rig, dir) = Arrange();
+        Assert.Contains("/wrangl:hierarchy qa item", Stop(rig), StringComparison.Ordinal);
+        Assert.Contains(rig.Writer.Arguments, static a => a.Contains("qa-cadence", StringComparison.Ordinal));
+        Spend(rig); // the rig's writer does not land rows in the journal: seed what the first stop wrote
+        Seed(rig, new JsonObject { ["type"] = "qa-nudge", ["session_id"] = Session, ["task"] = "qa-cadence", ["ts"] = "2026-10-24T00:00:00.000Z" });
+        SecondDone(dir);
+
+        var output = Stop(rig);
+
+        Assert.Contains("reported DONE on gate", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("/wrangl:hierarchy qa", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeACadenceAskedInAnotherSessionIsAskedAgainInThisOne()
+    {
+        var (rig, _) = Arrange();
+        Seed(rig, new JsonObject { ["type"] = "qa-nudge", ["session_id"] = "sess-other", ["task"] = "qa-cadence", ["ts"] = "2026-10-24T00:00:00.000Z" });
+
+        Assert.Contains("/wrangl:hierarchy qa item", Stop(rig), StringComparison.Ordinal);
     }
 
     [Fact]

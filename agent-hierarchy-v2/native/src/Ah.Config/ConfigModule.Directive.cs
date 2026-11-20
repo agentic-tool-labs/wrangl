@@ -25,6 +25,9 @@ public static partial class ConfigModule
     /// </summary>
     public const string TeamCommandsRule = "team-commands";
 
+    /// <summary>ah2-310: the soft-gate rules a gate consults for <c>ah roster approve</c> rows; approving any other rule lifts nothing.</summary>
+    public static IReadOnlyList<string> ApprovableRules { get; } = ["worktree"];
+
     /// <summary>The resolved <c>dispatch</c> setting; absent or unknown is <c>peers</c>.</summary>
     public static string DispatchMode(Ah.Core.Json.JsonObject resolved) => DirectiveText.DispatchMode(resolved);
 

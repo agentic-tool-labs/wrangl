@@ -31,7 +31,7 @@ public interface IDirectiveText
     // The words of the digest (fewer-turns S7): the delivery line of a queued note and the block read at the Orchestrator's next turn.
 
     /// <summary>What <c>ah msg send --kind note</c> prints instead of a relay or SendMessage line: the note waits in the recipient's box.</summary>
-    const string DigestQueuedDelivery = "delivery: queued — read at the recipient's next turn; do not SendMessage";
+    const string DigestQueuedDelivery = "delivery: queued — read at the recipient's next turn; nothing more to do";
 
     /// <summary>The header of the digest block, <paramref name="lines"/> being the number of lines under it.</summary>
     static string DigestHeader(int lines) => string.Create(CultureInfo.InvariantCulture, $"ah digest ({lines}):");

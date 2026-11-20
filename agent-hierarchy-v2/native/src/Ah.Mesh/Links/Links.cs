@@ -851,6 +851,18 @@ public sealed record Links(
         if (roundCap is not null && args.Member("round_end") is { IsTruthy: true })
         {
             l["rounds"] = RoundsDone(l) + 1;
+
+            // the stamp this round replaces, so Release can put it back when the send fails
+            if (l.Get("round_ended_at") is { } earlier)
+            {
+                l["round_ended_prev"] = earlier;
+            }
+            else
+            {
+                _ = l.Remove("round_ended_prev");
+            }
+
+            l["round_ended_at"] = l["last_used_at"];
             if (RoundsDone(l) >= roundCap && IsText(l.Get("state"), "active"))
             {
                 l["state"] = "expired";
@@ -926,6 +938,8 @@ public sealed record Links(
         }
 
         l["rounds"] = RoundsDone(l) + 1;
+        l["round_ended_at"] = Iso(nowMs);
+        _ = l.Remove("round_ended_prev"); // no send to roll back here: an older prev must not come back on a later release
         if (RoundsDone(l) >= cap)
         {
             l["state"] = "expired";
@@ -958,6 +972,16 @@ public sealed record Links(
             if (RoundCap(l) is not null && args.Member("round_end") is { IsTruthy: true } && RoundsDone(l) > 0)
             {
                 l["rounds"] = RoundsDone(l) - 1;
+                if (l.Get("round_ended_prev") is { } earlier)
+                {
+                    l["round_ended_at"] = earlier;
+                }
+                else
+                {
+                    _ = l.Remove("round_ended_at");
+                }
+
+                _ = l.Remove("round_ended_prev");
             }
 
             var underRounds = RoundCap(l) is not { } cap || RoundsDone(l) < cap;

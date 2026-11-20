@@ -169,12 +169,12 @@ msgd fill --id "$DID" --from orchestrator --body '"## [0] tldr\n- [1] status: do
 msgd send orchestrator@dd --ref "$DID" --kind report --id dd-1 --json
 check "report send: first send delivers" '[ $RC -eq 0 ] && [ "$(node -e "process.stdout.write(JSON.parse(process.argv[1]).entry.id)" "$OUT")" = dd-1 ]'
 msgd send orchestrator@dd --ref "$DID" --kind report --id dd-2
-check "report send: the unchanged report is not sent again" '[ $RC -eq 0 ] && [ "$OUT" = "entry dd-1 → orchestrator@dd (already delivered; unchanged)" ]'
+check "report send: the unchanged report is not sent again" '[ $RC -eq 0 ] && [ "$OUT" = "entry dd-1 → orchestrator@dd (already delivered; unchanged; nothing more to do)" ]'
 msgd fill --id "$DID" --from orchestrator --body '"## [0] tldr\n- [1] status: amended\n\n## [1] findings\n- none\n"'
 msgd send orchestrator@dd --ref "$DID" --kind report --id dd-3 --json
 check "report send: an amended report is delivered as a new entry" '[ $RC -eq 0 ] && [ "$(node -e "process.stdout.write(JSON.parse(process.argv[1]).entry.id)" "$OUT")" = dd-3 ]'
 msgd send orchestrator@dd --ref "$DID" --kind report --id dd-4
-check "report send by id: --ref <id> --kind report names the same response (unchanged, not sent again)" '[ $RC -eq 0 ] && [ "$OUT" = "entry dd-3 → orchestrator@dd (already delivered; unchanged)" ]'
+check "report send by id: --ref <id> --kind report names the same response (unchanged, not sent again)" '[ $RC -eq 0 ] && [ "$OUT" = "entry dd-3 → orchestrator@dd (already delivered; unchanged; nothing more to do)" ]'
 msgd send orchestrator@dd --ref 20990101-000000-zzzz --kind report --id dd-5
 check "report send by an unknown id: exit 1, no response <id>" '[ $RC -eq 1 ] && echo "$OUT" | grep -q "no response 20990101-000000-zzzz"'
 

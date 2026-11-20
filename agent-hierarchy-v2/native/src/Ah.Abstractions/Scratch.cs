@@ -8,23 +8,29 @@ namespace Ah.Abstractions;
 public sealed record DismissedScratch(string Path, string Member, DateTimeOffset At, long Size);
 
 /// <summary>
-/// The narrow set of scratch-directory operations a member tmp needs: create it, give it a short alias, rename it away on
-/// dismissal, measure it and delete what was dismissed long ago. A tmp root is the team home's <c>tmp</c> directory or one
-/// directory below it and is checked by real path against the team home it is given; a target is checked to lie under the
-/// alias root it was given, a link is never followed when deleting, and only <c>_dismissed/</c> is ever deleted from.
+/// The narrow set of scratch-directory operations a member tmp needs: create it under the alias root (outside every checkout),
+/// remove it on dismissal, measure it and sweep what is long idle. A legacy tmp root is the team home's <c>tmp</c> directory or one
+/// directory below it and is checked by real path against the team home it is given; a member directory is checked to lie
+/// directly under the alias root it was given, and a link is never followed when deleting.
 /// A refused or failed operation throws <see cref="InvalidOperationException"/> or <see cref="IOException"/>.
 /// </summary>
 public interface IScratchDirectories
 {
-    /// <summary>Creates <c>&lt;tmpRoot&gt;/&lt;member&gt;</c> with mode 0700 (and <paramref name="tmpRoot"/> itself); returns its real path.</summary>
-    string CreateMemberDirectory(string teamHome, string tmpRoot, string member);
+    /// <summary>
+    /// Makes a member's tmp as a real directory, mode 0700, at the first of <paramref name="keys"/> under <paramref name="aliasRoot"/>
+    /// that is free, already a directory (kept), or a link (an alias an older version made: the link is removed, never its target).
+    /// Returns its path.
+    /// </summary>
+    string MakeMemberDirectory(string aliasRoot, IReadOnlyList<string> keys);
+
+    /// <summary>Removes <paramref name="path"/> when it is a real directory directly under the alias root (never following a link); returns whether it was removed.</summary>
+    bool RemoveMemberDirectory(string aliasRoot, string path);
 
     /// <summary>
-    /// Points an alias under <paramref name="aliasRoot"/> at <paramref name="target"/>: the first of <paramref name="keys"/> that is free,
-    /// already points at the target, or is dangling. An alias that points at another existing directory is never re-pointed.
-    /// Returns the alias path.
+    /// Finds, and with <paramref name="commit"/> deletes, each of <paramref name="paths"/> that is a real directory directly under the alias
+    /// root and more than <paramref name="olderThan"/> old by its newest modification time anywhere in its tree; any other path is skipped.
     /// </summary>
-    string LinkAlias(string aliasRoot, IReadOnlyList<string> keys, string target);
+    ScratchSweepReport SweepMemberDirectories(IReadOnlyCollection<string> paths, DateTimeOffset now, TimeSpan olderThan, bool commit);
 
     /// <summary>Where <paramref name="link"/> points, or null when it is not a link or does not exist.</summary>
     string? AliasTarget(string link);

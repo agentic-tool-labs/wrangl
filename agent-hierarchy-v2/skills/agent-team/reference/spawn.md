@@ -82,7 +82,7 @@ gap; it is not a lighter-weight alternative to Create for a full team.
     Add `--allow-main` to put a code-writing role in the main checkout.
     A spawn into a work root whose recorded member is live (or whose liveness cannot be checked) is refused; add `--replace-live` to spawn there anyway.
   - Each Claude and Codex member gets its own tmp directory, reached as
-    `$TMPDIR` (the team home's `tmp/<team>/<member>`; `--dry-run` only names it). A
+    `$TMPDIR` (a Claude member's is `<ah home>/t/<key>`, outside every checkout; `--dry-run` only names it). A
     member launched with a custom `--command` harness gets no tmp and keeps
     the machine's own `TMPDIR`.
 

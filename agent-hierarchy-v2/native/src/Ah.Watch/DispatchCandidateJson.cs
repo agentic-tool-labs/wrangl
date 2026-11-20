@@ -43,6 +43,8 @@ internal static class DispatchCandidateJson
             ["brief_unread"] = JsonValue.FromBool(candidate.BriefUnread),
             ["request_path"] = Opt(candidate.RequestPath),
             ["plain_send"] = JsonValue.FromBool(candidate.PlainSend),
+            ["part_ms"] = candidate.PartMs is { } part ? JsonValue.FromNumber(part) : JsonValue.Null,
+            ["review_open"] = JsonValue.FromBool(candidate.ReviewOpen),
         };
     }
 
@@ -84,5 +86,7 @@ internal static class DispatchCandidateJson
             BriefUnread = json.Member("brief_unread") is { IsBool: true } unread && unread.AsBool(),
             RequestPath = Text(json, "request_path"),
             PlainSend = json.Member("plain_send") is { IsBool: true } plain && plain.AsBool(),
+            PartMs = json.Member("part_ms") is { IsNumber: true } part ? part.AsNumber() : null,
+            ReviewOpen = json.Member("review_open") is { IsBool: true } review && review.AsBool(),
         };
 }

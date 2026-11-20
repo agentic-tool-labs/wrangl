@@ -184,6 +184,11 @@ internal static class SessionStart
                 if (attributed.IsTruthy)
                 {
                     record["team"] = attributed.Member("teamName") ?? JsonValue.Null;
+                    // ah2-310 A4: where the team file lives, so a gate can find this session's member row from another tree.
+                    if (attributed.Member("home") is { IsText: true } teamHome)
+                    {
+                        record["team_home"] = teamHome;
+                    }
                 }
 
                 if (expectedRoot is not null)

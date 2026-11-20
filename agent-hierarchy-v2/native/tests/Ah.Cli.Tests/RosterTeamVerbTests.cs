@@ -3841,7 +3841,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         TestGrants.Plant(_sandbox.AhHome, _sandbox.Home, home, "proj", $$"""{"version":1,"team":"proj","mode":"enforce","audit_hash":null,"members":{{members}}}""");
 
     [Fact]
-    public void ASpawnMakesThePrivateTmpUnderTheTeamHomeAliasesItRecordsItAndExportsTmpdir()
+    public void ASpawnMakesThePrivateTmpAsARealDirectoryUnderTheAhHomeRecordsItAndExportsTmpdir()
     {
         var home = SpawnTeamHome();
         WriteHomeDocument(home);
@@ -3853,14 +3853,13 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         var name = spawned["member"].AsObject()["name"].AsString();
         var tmp = RecordedTmp(home, name);
         var dir = tmp["root"].AsString();
-        Assert.Equal(Path.Combine(Project, ".claude", "ah2", "tmp", "proj", name), dir.Replace("/private/tmp", "/tmp", StringComparison.Ordinal).Replace(Path.GetFullPath(Project), Project, StringComparison.Ordinal));
+        Assert.Equal(Path.Combine(_sandbox.AhHome, "t", AliasKey("t-1", name)[..8]), dir);
+        Assert.Equal(dir, tmp["alias"].AsString());
         Assert.True(Directory.Exists(dir));
-        Assert.False(Directory.Exists(Path.Combine(worktree, ".claude", "ah2", "tmp")));
+        Assert.Null(new DirectoryInfo(dir).LinkTarget);
+        Assert.False(Directory.Exists(Path.Combine(home, "tmp")));
         Assert.Equal("claude", tmp["kind"].AsString());
-        var alias = tmp["alias"].AsString();
-        Assert.Equal(Path.Combine(_sandbox.AhHome, "t", AliasKey("t-1", name)[..8]), alias);
-        Assert.Equal(dir, new FileInfo(alias).LinkTarget);
-        Assert.Contains(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal) && a.Contains(alias, StringComparison.Ordinal)));
+        Assert.Contains(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal) && a.Contains(dir, StringComparison.Ordinal)));
     }
 
     [Fact]
@@ -3868,7 +3867,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     {
         var home = SpawnTeamHome();
         WriteHomeDocument(home);
-        _runner.Exit = argv => argv.Contains("check-ignore") ? 1 : 0;
+        _runner.Exit = argv => argv.Contains("--git-dir") ? 128 : 0;
 
         var (code, spawned, err) = SpawnInWorkTree(MakeWorkTree("t1"));
 
@@ -3879,6 +3878,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         Assert.Equal("none (not a git repository)", row.Member("tmp")!.Value.AsString());
         Assert.Contains(spawned["warnings"].AsArray().Select(w => w.AsString()), w => w.Contains("not a git repository", StringComparison.Ordinal));
         Assert.False(Directory.Exists(Path.Combine(home, "tmp")));
+        Assert.False(Directory.Exists(Path.Combine(_sandbox.AhHome, "t", AliasKey("t-1", name)[..8])));
         Assert.DoesNotContain(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal)));
         Assert.DoesNotContain("\"tmp\"", GrantsText(home)!, StringComparison.Ordinal);
     }
@@ -3899,49 +3899,21 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     private string Exclude() => File.ReadAllText(Path.Combine(Project, ".git", "info", "exclude"));
 
     [Fact]
-    public void ASpawnWhereNothingIgnoresTheTmpRootAppendsOneExcludeLineSetsTmpdirAndNeverWritesGitignore()
+    public void ASpawnInARealRepositorySetsTmpdirAndWritesNoExcludeLineGitignoreOrTmpInTheRepository()
     {
         var home = SpawnTeamHome();
         WriteHomeDocument(home);
         var tree = RealRepoWithWorkTree();
+        var before = Exclude();
 
         var (code, spawned, err) = SpawnInWorkTree(tree);
 
         Assert.True(code == 0, err);
-        Assert.Single(Exclude().Split('\n'), l => l == "/.claude/ah2/tmp/");
+        Assert.Equal(before, Exclude());
         Assert.False(File.Exists(Path.Combine(Project, ".gitignore")));
+        Assert.False(Directory.Exists(Path.Combine(home, "tmp")));
         Assert.True(Directory.Exists(RecordedTmp(home, spawned["member"].AsObject()["name"].AsString())["root"].AsString()));
         Assert.Contains(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal)));
-    }
-
-    [Fact]
-    public void ASecondSpawnAddsNoSecondExcludeLine()
-    {
-        var home = SpawnTeamHome();
-        WriteHomeDocument(home);
-        var tree = RealRepoWithWorkTree();
-
-        var firstSpawn = SpawnInWorkTree(tree);
-        Assert.True(firstSpawn.Code == 0, firstSpawn.Err);
-        var secondSpawn = SpawnInWorkTree(tree);
-        Assert.True(secondSpawn.Code == 0, secondSpawn.Err);
-
-        Assert.Single(Exclude().Split('\n'), l => l == "/.claude/ah2/tmp/");
-    }
-
-    [Fact]
-    public void ATmpRootAGitignoreAlreadyIgnoresGetsNoExcludeLine()
-    {
-        var home = SpawnTeamHome();
-        WriteHomeDocument(home);
-        var tree = RealRepoWithWorkTree();
-        File.WriteAllText(Path.Combine(Project, ".gitignore"), ".claude/\n");
-        var before = Exclude();
-
-        var (code, _, err) = SpawnInWorkTree(tree);
-
-        Assert.True(code == 0, err);
-        Assert.Equal(before, Exclude());
     }
 
     [Fact]
@@ -3949,12 +3921,12 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     {
         var home = SpawnTeamHome();
         WriteHomeDocument(home);
-        File.WriteAllText(Path.Combine(home, "tmp"), "in the way");
+        File.WriteAllText(Path.Combine(_sandbox.AhHome, "t"), "in the way");
 
         var (code, _, err) = SpawnInWorkTree(MakeWorkTree("t1"));
 
         Assert.NotEqual(0, code);
-        Assert.Contains("cannot create member tmp " + Path.Combine(home, "tmp", "proj"), err, StringComparison.Ordinal);
+        Assert.Contains("cannot create member tmp " + Path.Combine(_sandbox.AhHome, "t"), err, StringComparison.Ordinal);
         Assert.DoesNotContain(_runner.Calls, argv => argv.Any(a => a.Contains("new-window", StringComparison.Ordinal)));
     }
 
@@ -3982,28 +3954,31 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
         Assert.True(code == 0, err);
         var name = spawned["member"].AsObject()["name"].AsString();
-        Assert.True(Directory.Exists(Path.Combine(home, "tmp", "proj", name)));
+        Assert.True(Directory.Exists(Path.Combine(_sandbox.AhHome, "t", AliasKey("t-1", name)[..8])));
         Assert.Contains(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal)));
         Assert.False(HasGrants(home));
     }
 
     [Fact]
-    public void AnAliasHeldByAnotherMembersDirectoryIsNotRepointedAndTheKeyIsLengthened()
+    public void AnOldAliasLinkAtTheKeyIsReplacedByARealDirectoryAndItsTargetIsLeftAlone()
     {
         var home = SpawnTeamHome();
         WriteHomeDocument(home);
-        var other = Path.Combine(_sandbox.Root, "someone-elses-tmp");
-        Directory.CreateDirectory(other);
+        var old = Path.Combine(home, "tmp", "proj", "proj-implementor");
+        Directory.CreateDirectory(old);
+        File.WriteAllText(Path.Combine(old, "kept"), "x");
         Directory.CreateDirectory(Path.Combine(_sandbox.AhHome, "t"));
-        var key = AliasKey("t-1", "proj-implementor");
-        File.CreateSymbolicLink(Path.Combine(_sandbox.AhHome, "t", key[..8]), other);
+        var alias = Path.Combine(_sandbox.AhHome, "t", AliasKey("t-1", "proj-implementor")[..8]);
+        File.CreateSymbolicLink(alias, old);
 
         var (code, spawned, err) = SpawnInWorkTree(MakeWorkTree("t1"));
 
         Assert.True(code == 0, err);
         Assert.Equal("proj-implementor", spawned["member"].AsObject()["name"].AsString());
-        Assert.Equal(Path.Combine(_sandbox.AhHome, "t", key[..12]), RecordedTmp(home, "proj-implementor")["alias"].AsString());
-        Assert.Equal(other, new FileInfo(Path.Combine(_sandbox.AhHome, "t", key[..8])).LinkTarget);
+        Assert.Equal(alias, RecordedTmp(home, "proj-implementor")["root"].AsString());
+        Assert.Null(new DirectoryInfo(alias).LinkTarget);
+        Assert.False(File.Exists(Path.Combine(alias, "kept")));
+        Assert.True(File.Exists(Path.Combine(old, "kept")));
     }
 
     [Fact]
@@ -4167,6 +4142,25 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     }
 
     [Fact]
+    public void ADismissalRemovesAMembersTmpUnderTheAhHomeAndLeavesAnotherThere()
+    {
+        WriteTeam("proj", LiveTeamJson("tmux", TwoPeers));
+        var dir = Directory.CreateDirectory(Path.Combine(_sandbox.AhHome, "t", "aaaa0001")).FullName;
+        var other = Directory.CreateDirectory(Path.Combine(_sandbox.AhHome, "t", "aaaa0002")).FullName;
+        File.WriteAllText(Path.Combine(dir, "f"), "x");
+        WriteGrants(
+            "enforce",
+            $$$$"""{"proj-implementor":{"work_root":"{{{{Project}}}}","stream":null,"role":"implementor","extra":[],"tmp":{"root":"{{{{dir}}}}","alias":"{{{{dir}}}}","kind":"claude"}}}""");
+        var token = TokenOf(Roster("dismiss", "proj-implementor", "--plan", "--team", "proj").Stdout);
+
+        var (code, _, err) = Roster("dismiss", "proj-implementor", "--close", "--confirm", "--plan-token", token, "--team", "proj");
+
+        Assert.True(code == 0, err);
+        Assert.False(Directory.Exists(dir));
+        Assert.True(Directory.Exists(other));
+    }
+
+    [Fact]
     public void ADismissalWithNoGrantsRowRemovesTheMembersTmpAtItsSpawnPathAndLeavesAnotherMembersTmp()
     {
         WriteTeam("proj", LiveTeamJson("tmux", TwoPeers));
@@ -4231,33 +4225,6 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         Assert.True(code == 0, err);
         Assert.False(Directory.Exists(stale));
         Assert.True(File.Exists(Path.Combine(fresh, "f")));
-    }
-
-    [Fact]
-    public void WhenAllThreeAliasNamesAreHeldByOtherMembersTheRealTmpIsExportedWithNoAliasAndNoAliasIsRepointed()
-    {
-        var home = SpawnTeamHome();
-        WriteHomeDocument(home);
-        Directory.CreateDirectory(Path.Combine(_sandbox.AhHome, "t"));
-        var keys = AliasKey("t-1", "proj-implementor");
-        var held = new List<(string Alias, string Target)>();
-        foreach (var key in new[] { keys[..8], keys[..12], keys[..16] })
-        {
-            var target = Directory.CreateDirectory(Path.Combine(_sandbox.Root, "held-" + key)).FullName;
-            var alias = Path.Combine(_sandbox.AhHome, "t", key);
-            File.CreateSymbolicLink(alias, target);
-            held.Add((alias, target));
-        }
-
-        var (code, spawned, err) = SpawnInWorkTree(MakeWorkTree("t1"));
-
-        Assert.True(code == 0, err);
-        var name = spawned["member"].AsObject()["name"].AsString();
-        var recorded = RecordedTmp(home, name);
-        Assert.Equal(string.Empty, recorded["alias"].AsString());
-        Assert.Contains(spawned["warnings"].AsArray().Select(w => w.AsString()), w => w.Contains("no alias could be made", StringComparison.Ordinal));
-        Assert.Contains(_runner.Calls, argv => argv.Any(a => a.Contains("TMPDIR", StringComparison.Ordinal) && a.Contains(recorded["root"].AsString(), StringComparison.Ordinal)));
-        Assert.All(held, h => Assert.Equal(h.Target, new FileInfo(h.Alias).LinkTarget));
     }
 
     private string StreamTeamJson(string members, string? worktree) =>

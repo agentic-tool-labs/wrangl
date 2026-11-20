@@ -613,9 +613,10 @@ public sealed class WatchJobReconcileTests : IDisposable
     [Theory]
     [InlineData("cd /w/native; MSBUILDDISABLENODEREUSE=1 ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
     [InlineData("cd /w/native && ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
-    [InlineData("make x && ah test run --eta large -- node tests/perf/ui-e4.mjs", null)]
-    [InlineData("cd /w extra; ah test run --eta large -- node tests/perf/ui-e4.mjs", null)]
-    public void OneLeadingCdDoesNotHideATestRunButAnyOtherLeadingCommandStillDoes(string label, int? expected)
+    [InlineData("make x && ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
+    [InlineData("cd /w extra; ah test run --eta large -- node tests/perf/ui-e4.mjs", 89)]
+    [InlineData("echo 'ah test run --eta large -- node tests/perf/ui-e4.mjs'", null)]
+    public void NoLeadingCommandHidesATestRunAndNegativeAQuotedMentionIsNotOne(string label, int? expected)
     {
         var started = new DateTimeOffset(2026, 10, 21, 8, 0, 3, TimeSpan.Zero);
         var (host, graph) = Make(Wrapper(89, started));

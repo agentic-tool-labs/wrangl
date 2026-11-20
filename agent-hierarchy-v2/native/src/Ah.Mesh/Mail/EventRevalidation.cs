@@ -49,6 +49,8 @@ internal static partial class EventRevalidation
             // b331: the members an idle-capacity alarm named may have been dismissed or sent work since it fired; ready items alone are no reason to deliver it
             IdleCapacity => NamedMembers(data) is not { } idleNamed || idleNamed.Any(memberIdle),
             // ponytail: a member-down entry for a member who came back stays until read, next to its member-recovered; check liveness here if that misleads.
+            // a cap kill reaches the Orchestrator though its owner is gone; only the owner's own copy is dropped
+            "job-overdue" when data?.Member("step") is { IsText: true } step && step.AsString() == "capped" => data.Value.Member("owner_copy") is not { IsBool: true } copy || !copy.AsBool() || Here(),
             "job-overdue" or "queue-stall" or "stalled-after-compact" or "member-down" or "member-stuck" or "step-needs-user" => Here(),
             _ => true,
         };
