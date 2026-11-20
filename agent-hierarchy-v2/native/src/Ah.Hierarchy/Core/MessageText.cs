@@ -46,6 +46,51 @@ internal static partial class MessageText
     [GeneratedRegex("^#{1,6}[" + Ws + "]+([^" + Ws + "].*)\\z", RegexOptions.CultureInvariant)]
     private static partial Regex HeadingLineRegex();
 
+    // A heading of any level (its key optional, as `msg fill --section` appends a bare `## [n]`), or a bare or bold line whose key is a whole word.
+    [GeneratedRegex("^[" + Ws + "]*(?:#{1,6}[" + Ws + "]+(?:\\*\\*)?\\[(?<n>[0-9]+)\\](?:[" + Ws + "]+(?<key>[^*" + Ws + "]+))?|(?:\\*\\*)?\\[(?<n>[0-9]+)\\][" + Ws + "]+(?<key>[A-Za-z0-9_-]+)(?:\\*\\*)?(?=[" + Ws + "]|\\z))", RegexOptions.CultureInvariant)]
+    private static partial Regex SectionMarkerRegex();
+
+    /// <summary>
+    /// The one recogniser of request sections: per line, the <c>[N] key</c> marker it opens as <c>(N, key)</c> (key null for a
+    /// keyless heading), else null. A marker is a Markdown heading of any level, a bare line or a bold line, after any leading
+    /// white space; a line inside a <c>```</c> or <c>~~~</c> fence is never a marker.
+    /// </summary>
+    internal static (string N, string? Key)?[] SectionMarkers(IReadOnlyList<string> lines)
+    {
+        var markers = new (string N, string? Key)?[lines.Count];
+        static string? Fence(string line)
+        {
+            var trimmed = line.TrimStart();
+            return trimmed.StartsWith("```", StringComparison.Ordinal) || trimmed.StartsWith("~~~", StringComparison.Ordinal) ? trimmed[..3] : null;
+        }
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            // Only a closed fence hides markers: an opener with no matching fence line later hides nothing.
+            if (Fence(lines[i]) is { } fence)
+            {
+                var close = -1;
+                for (var j = i + 1; j < lines.Count && close < 0; j++)
+                {
+                    close = Fence(lines[j]) == fence ? j : -1;
+                }
+
+                if (close >= 0)
+                {
+                    i = close;
+                    continue;
+                }
+            }
+
+            if (SectionMarkerRegex().Match(lines[i]) is { Success: true } m)
+            {
+                markers[i] = (m.Groups["n"].Value, m.Groups["key"].Success ? m.Groups["key"].Value : null);
+            }
+        }
+
+        return markers;
+    }
+
     [GeneratedRegex("[" + Ws + "]#", RegexOptions.CultureInvariant)]
     private static partial Regex SpaceHashRegex();
 
@@ -162,9 +207,10 @@ internal static partial class MessageText
             }
         }
 
-        foreach (var line in lines)
+        var markers = SectionMarkers(lines);
+        for (var i = 0; i < lines.Length; i++)
         {
-            if (!line.StartsWith("## [", StringComparison.Ordinal) && HeadingLineRegex().Match(line) is { Success: true } heading)
+            if (markers[i] is null && HeadingLineRegex().Match(lines[i]) is { Success: true } heading)
             {
                 return (Derived(heading.Groups[1].Value), "heading");
             }
@@ -206,38 +252,15 @@ internal static partial class MessageText
     /// </summary>
     internal static (JsonObject Fields, int End)? ParseFrontmatter(string text) => MessageFront.ParseFrontmatter(text);
 
-    /// <summary>The <c>## [N] key</c> anchors at column 0 as <c>{line, n, key, text}</c>, line numbers 1-based.</summary>
+    /// <summary>The <c>[N] key</c> section markers (<see cref="SectionMarkers"/>) that carry a key, as <c>{line, n, key, text}</c>, line numbers 1-based.</summary>
     internal static JsonArray IndexAnchors(string text)
     {
         var anchors = new JsonArray();
         var lines = text.Split('\n');
+        var markers = SectionMarkers(lines);
         for (var i = 0; i < lines.Length; i++)
         {
-            var line = lines[i];
-            if (!line.StartsWith("## [", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var p = 4;
-            while (p < line.Length && line[p] is >= '0' and <= '9')
-            {
-                p++;
-            }
-
-            if (p == 4 || p + 1 >= line.Length || line[p] != ']' || line[p + 1] != ' ')
-            {
-                continue;
-            }
-
-            var keyStart = p + 2;
-            var keyEnd = keyStart;
-            while (keyEnd < line.Length && !JsText.IsSpace(line[keyEnd]))
-            {
-                keyEnd++;
-            }
-
-            if (keyEnd == keyStart)
+            if (markers[i] is not { Key: { } key } marker)
             {
                 continue;
             }
@@ -245,9 +268,9 @@ internal static partial class MessageText
             anchors.Add(new JsonObject
             {
                 ["line"] = i + 1,
-                ["n"] = double.Parse(line.AsSpan(4, p - 4), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture),
-                ["key"] = line[keyStart..keyEnd],
-                ["text"] = line,
+                ["n"] = double.Parse(marker.N, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture),
+                ["key"] = key,
+                ["text"] = lines[i],
             });
         }
 

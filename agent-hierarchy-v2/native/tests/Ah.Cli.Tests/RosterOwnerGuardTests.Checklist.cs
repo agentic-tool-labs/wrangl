@@ -405,19 +405,21 @@ public sealed partial class RosterOwnerGuardTests
     }
 
     [Fact]
-    public void ARefAlreadyListedByAnotherItemIsRefusedAtAddAndSetAndTheSameItemMayRepeatItsOwn()
+    public void ARefAnotherItemListsIsAddedAndSetAgainAndEveryItemCarryingItIsShown()
     {
         TwoStreamsWithItemA();
         Assert.Equal(0, Run("checklist", "set", "s1/a", "--ref", "20261016-140001-abcd", "--team", "tm").Code);
-        var before = ReadLog(LogOf("s1")) + ReadLog(LogOf("s2"));
 
         var set = Run("checklist", "set", "s2/a", "--ref", "20261016-140001-abcd", "--team", "tm");
         var add = Run("checklist", "add", "Another", "--ref", "20261016-140001-abcd", "--stream", "s2", "--team", "tm");
 
-        Assert.NotEqual(0, set.Code);
-        Assert.Contains("s1/a", set.Stderr, StringComparison.Ordinal);
-        Assert.NotEqual(0, add.Code);
-        Assert.Equal(before, ReadLog(LogOf("s1")) + ReadLog(LogOf("s2")));
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.True(add.Code == 0, add.Stderr);
+        Assert.Contains("20261016-140001-abcd", ReadLog(LogOf("s1")), StringComparison.Ordinal);
+        Assert.Contains("\"another\"", ReadLog(LogOf("s2")), StringComparison.Ordinal);
+        var show = Run("checklist", "show", "--team", "tm", "--plain");
+        Assert.True(show.Code == 0, show.Stderr);
+        Assert.Contains("Another", show.Stdout, StringComparison.Ordinal);
         Assert.Equal(0, Run("checklist", "set", "s1/a", "--ref", "20261016-140001-abcd", "--team", "tm").Code);
     }
 
@@ -450,10 +452,10 @@ public sealed partial class RosterOwnerGuardTests
         Assert.Contains("superseded by s2/a", s1, StringComparison.Ordinal);
         Assert.Contains("20261016-140001-abcd", ReadLog(LogOf("s2")), StringComparison.Ordinal);
 
-        // the ref now sits on a real item: every other claim on it is refused again
+        // the ref now sits on a real item: another item may share it, and the real item keeps it
         var again = Run("checklist", "set", "s1/b", "--ref", "20261016-140001-abcd", "--team", "tm");
-        Assert.NotEqual(0, again.Code);
-        Assert.Contains("s2/a", again.Stderr, StringComparison.Ordinal);
+        Assert.True(again.Code == 0, again.Stderr);
+        Assert.DoesNotContain("superseded by s1/b", ReadLog(LogOf("s2")), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -485,13 +487,14 @@ public sealed partial class RosterOwnerGuardTests
             Assert.Contains("auto-deploy-fix", ReadLog(LogOf("s1")), StringComparison.Ordinal);
         }
 
-        var before = ReadLog(LogOf("s1")) + ReadLog(LogOf("s2"));
+        var before = ReadLog(LogOf("s1"));
 
         var set = Run("checklist", "set", "s2/a", "--ref", "20261016-140001-abcd", "--team", "tm");
 
-        Assert.NotEqual(0, set.Code);
-        Assert.Contains("already listed by item s1/auto-", set.Stderr, StringComparison.Ordinal);
-        Assert.Equal(before, ReadLog(LogOf("s1")) + ReadLog(LogOf("s2")));
+        // both items keep the ref: the ordinary item is not dropped as superseded
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.Equal(before, ReadLog(LogOf("s1")));
+        Assert.Contains("20261016-140001-abcd", ReadLog(LogOf("s2")), StringComparison.Ordinal);
     }
 
     [Fact]

@@ -114,7 +114,7 @@ internal sealed partial class LinkCommands(
         return line.Length > n ? line[..n] : line;
     }
 
-    private static double Num(JsonValue? v, double d)
+    internal static double Num(JsonValue? v, double d)
     {
         if (v is null)
         {
@@ -159,25 +159,11 @@ internal sealed partial class LinkCommands(
 
     internal string Iso(double now) => messages.LocalIso(DateTimeOffset.FromUnixTimeMilliseconds((long)now));
 
-    private double Limit(string name, double fallback = 0) => Num(links.Limits().Get(name), fallback);
-
-    /// <summary>The minutes a review loop's link may run, and the review rounds it allows.</summary>
-    internal const double LoopMinutes = 120;
-
-    internal const double LoopRounds = 3;
+    private double Limit(string name, double fallback = 0) => AutoGrant.Limit(links, name, fallback);
 
     /// <summary>Whether the requester and its one peer are an implementer and the reviewer: the pair a review loop runs between.</summary>
-    private bool IsLoopPair(Func<string, MeshTeam?> lookup, string requester, List<string> peers)
-    {
-        if (peers.Count != 1)
-        {
-            return false;
-        }
-
-        var roles = new[] { rule.Classify(requester, lookup).Role, rule.Classify(peers[0], lookup).Role };
-        var implementers = Ah.Config.ConfigModule.PeerEligibleBuiltinRolesOfClass("implement").Where(r => r != "qa").ToList();
-        return roles.Count(r => r == "reviewer") == 1 && roles.Count(r => r is not null && implementers.Contains(r)) == 1;
-    }
+    private bool IsLoopPair(Func<string, MeshTeam?> lookup, string requester, List<string> peers) =>
+        peers.Count == 1 && AutoGrant.IsLoopPair(rule.Classify(requester, lookup).Role, rule.Classify(peers[0], lookup).Role);
 
     private static MeshTeam TeamOf(Func<string, MeshTeam?> lookup, string team) =>
         lookup(team) ?? throw new MailboxError("unknown_address", $"no team {team}");
@@ -216,7 +202,7 @@ internal sealed partial class LinkCommands(
     // ---------------------------------------------------------------- finding things
 
     private static List<string> Pools(LinkContext ctx, Func<string, MeshTeam?> lookup, string team) =>
-        new[] { lookup(team)?.Dir, ctx.HierarchyDir, ctx.MainHierarchyDir }.Where(d => !string.IsNullOrEmpty(d)).Select(d => d!).Distinct(StringComparer.Ordinal).ToList();
+        AutoGrant.Pools(lookup(team)?.Dir, ctx.HierarchyDir, ctx.MainHierarchyDir);
 
     /// <summary>The exchanges of every pool of <paramref name="team"/> recorded in <paramref name="dir"/> (just that pool for no team).</summary>
     internal JsonArray ExchangesAcross(string dir, string? team) =>
@@ -227,20 +213,8 @@ internal sealed partial class LinkCommands(
 
     private static bool HasRequest(JsonValue exchange) => exchange.Member("request") is { IsTruthy: true };
 
-    private FoundTask? FindTask(LinkContext ctx, Func<string, MeshTeam?> lookup, string team, string taskId)
-    {
-        foreach (var dir in Pools(ctx, lookup, team))
-        {
-            if (ExchangeOf(dir, team, taskId) is { } ex && HasRequest(ex)
-                && core.ReadMsgFile(Text(ex.Member("request")!.Value.Member("path"))) is { IsNull: false } m
-                && m.Member("fm") is { IsMap: true } fm && OfTeam(fm.AsObject(), team))
-            {
-                return new FoundTask(HierarchyModule.HomeOf(ex, dir), ex);
-            }
-        }
-
-        return null;
-    }
+    private FoundTask? FindTask(LinkContext ctx, Func<string, MeshTeam?> lookup, string team, string taskId) =>
+        AutoGrant.FindTask(messages, core, Pools(ctx, lookup, team), team, taskId) is { } t ? new FoundTask(t.Dir, t.Exchange) : null;
 
     internal FoundRequest? FindRequest(LinkContext ctx, Func<string, MeshTeam?> lookup, string team, string id)
     {
@@ -265,7 +239,7 @@ internal sealed partial class LinkCommands(
     }
 
     /// <summary>Whether a request belongs to <paramref name="team"/>: it names that team, or names none. Every team's search also covers the context's own pool, so the team has to be checked on the request.</summary>
-    private static bool OfTeam(JsonObject fm, string team) =>
+    internal static bool OfTeam(JsonObject fm, string team) =>
         NamesTeam(fm) && fm.Get("team")!.Value.AsString() == team;
 
     private static bool NamesTeam(JsonObject fm) => fm.Get("team") is { IsText: true } named && named.AsString() is not ("" or "null");
@@ -480,7 +454,7 @@ internal sealed partial class LinkCommands(
         }
 
         var askedMessages = Num(messagesOpt, Limit("messages"));
-        var askedMinutes = Num(minutesOpt, IsLoopPair(lookup, caller.Address, peers) ? Math.Max(LoopMinutes, Limit("minutes")) : Limit("minutes"));
+        var askedMinutes = Num(minutesOpt, AutoGrant.Minutes(links.Limits(), IsLoopPair(lookup, caller.Address, peers)));
         var req = await OpenRequestAsync(
             "link", team, home, task, caller.Address, caller.Role, caller.Name, why,
             [new("peers", string.Join(',', peers)), new("direction", dir), new("messages", askedMessages), new("minutes", askedMinutes)], now, ct).ConfigureAwait(false);
@@ -543,7 +517,7 @@ internal sealed partial class LinkCommands(
         var peers = Split(req.Fm.Get("peers"));
         var loop = IsLoopPair(lookup, FmText(req.Fm, "requester"), peers);
         var askedMessages = Num(messagesOpt, Num(req.Fm.Get("messages"), Limit("messages")));
-        var askedMinutes = Num(minutesOpt, Num(req.Fm.Get("minutes"), loop ? Math.Max(LoopMinutes, Limit("minutes")) : Limit("minutes")));
+        var askedMinutes = Num(minutesOpt, Num(req.Fm.Get("minutes"), AutoGrant.Minutes(links.Limits(), loop)));
         var linkId = IdOfLink(reqId);
         await RespondAsync(
             req, "granted", by, string.Empty,
@@ -564,7 +538,7 @@ internal sealed partial class LinkCommands(
         };
         if (loop)
         {
-            link["rounds"] = LoopRounds;
+            link["rounds"] = AutoGrant.LoopRounds;
         }
 
         if (anchor is not null)
@@ -757,75 +731,18 @@ internal sealed partial class LinkCommands(
         }
 
         var requester = Text(req.Fm.Get("requester"));
-        var peers = Split(req.Fm.Get("peers"));
-        var people = new[] { requester }.Concat(peers).Select(a => rule.Classify(a, lookup)).ToList();
-        if (people.Any(p => p.Kind != "member" || p.Team != team))
-        {
-            return (false, "not all members of the team");
-        }
-
-        if (peers.Count > Limit("peersPerLink"))
-        {
-            return (false, "more than the peer cap");
-        }
-
-        if (people.Any(p => p.Role == "ultra-advisor"))
-        {
-            return (false, "ultra-advisor involved");
-        }
-
+        var people = new[] { requester }.Concat(Split(req.Fm.Get("peers"))).Select(a => rule.Classify(a, lookup)).ToList();
         var task = req.Fm.Get("parent") is { IsText: true } parent ? FindTask(ctx, lookup, team, parent.AsString()) : null;
-        if (task is null || Links.ExchangeClosedOnPurpose(core, task.Exchange))
-        {
-            return (false, "task closed or unknown");
-        }
-
-        var tm = core.ReadMsgFile(Text(task.Exchange.Member("request")!.Value.Member("path")));
-        var tfm = !tm.IsNull && tm.Member("fm") is { IsMap: true } f ? f.AsObject() : new JsonObject();
-        if (!(tfm.Get("from") is { IsText: true } from && from.AsString() == "orchestrator"))
-        {
-            return (false, "task not dispatched by the Orchestrator");
-        }
-
-        var toName = tfm.Get("to_name");
-        var to = tfm.Get("to");
-        bool Dispatched(MeshParty p) =>
-            StrictEquals(toName, p.Name) || (!(toName is { IsTruthy: true }) && StrictEquals(to, p.Role));
-        if (!people.Any(Dispatched))
-        {
-            return (false, "task not dispatched to the requester or a peer");
-        }
-
-        var pairs = rule.SettingsOf(t.Data).AutoGrant;
-        var who = people[0];
-        bool Listed(string? a, string? b) => pairs.Any(pair =>
-        {
-            var x = Text(pair.AsArray()[0]);
-            var y = Text(pair.AsArray()[1]);
-            return (x == a && y == b) || (x == b && y == a);
-        });
-        if (!people.Skip(1).All(p => Listed(who.Role, p.Role)))
-        {
-            return (false, "role pair not listed");
-        }
-
-        var minuteCap = IsLoopPair(lookup, requester, peers) ? Math.Max(LoopMinutes, Limit("minutes")) : Limit("minutes");
-        if (Num(req.Fm.Get("messages"), 0) > Limit("messages") || Num(req.Fm.Get("minutes"), 0) > minuteCap)
-        {
-            return (false, "limits above the defaults");
-        }
-
-        if (t.Dir is { } dir && links.ActiveCount(dir, team, requester, now) >= Limit("activePerMember"))
-        {
-            return (false, "requester at its active-link cap");
-        }
-
-        return (true, null);
+        var facts = new AutoGrantFacts(
+            people,
+            team,
+            AutoGrant.OpenTaskFm(core, task is null ? null : (task.Dir, task.Exchange)),
+            rule.SettingsOf(t.Data).AutoGrant,
+            Num(req.Fm.Get("messages"), 0),
+            Num(req.Fm.Get("minutes"), 0),
+            t.Dir is { } dir ? links.ActiveCount(dir, team, requester, now) : null);
+        return AutoGrant.Judge(facts, links.Limits());
     }
-
-    /// <summary><c>a === b</c> where <paramref name="a"/> null is an absent field and <paramref name="b"/> null an undefined value.</summary>
-    private static bool StrictEquals(JsonValue? a, string? b) =>
-        a is null ? b is null : a.Value.IsText && b is not null && a.Value.AsString() == b;
 
     /// <summary>
     /// The review-loop or ruling link inside a pipeline run: the reviewer or architect asked the implementer for a link on its request, the

@@ -102,6 +102,9 @@ public interface IMeshRule
     /// <summary>The refusal text for a peer send with no link.</summary>
     string NotLinkedText(string team, string? recipient, MeshTask? task);
 
+    /// <summary>The refusal text of a send a link on <paramref name="task"/> would not carry: <c>link_off_task</c> or <c>link_needs_ref</c>.</summary>
+    string LinkRefusalText(string code, string team, string task);
+
     /// <summary>Decides one send.</summary>
     MeshVerdict Decide(MeshDecideRequest request);
 }
@@ -340,6 +343,12 @@ internal sealed partial class MeshRule(ILinks links, IAhEnvironment environment)
             $"Or send through orchestrator@{team}.");
     }
 
+    public string LinkRefusalText(string code, string team, string task) =>
+        code == "link_off_task" ? OffTaskText(task, HierarchyModule.OrchestratorAddress(team)) : NeedsRefText(HierarchyModule.OrchestratorAddress(team));
+
+    /// <summary>Whether a send is a short <c>msg send --text</c> note, which rides a link with no --ref.</summary>
+    internal static bool IsLinkNote(string? msgKind, string? text) => msgKind == "note" && text is { Length: > 0 and <= LinkNoteMaxChars };
+
     private string NeedsRefText(string orchestrator) =>
         $"ah: a message over a link must carry --ref <message file> that belongs to the linked task: send it with `{MsgCommand()} send --to <peer> --ref <id>` or a msg send --text note of at most {LinkNoteMaxChars} characters, never a bare SendMessage, or send through {orchestrator}.";
 
@@ -544,7 +553,7 @@ internal sealed partial class MeshRule(ILinks links, IAhEnvironment environment)
                 if (string.IsNullOrEmpty(p.Ref))
                 {
                     // A short `msg send --text` note (kind "note"; a bare SendMessage is "sendmessage"), at most LinkNoteMaxChars UTF-16 units, rides the link on its first task.
-                    if (requested.Count > 0 && p.MsgKind == "note" && p.Text is { Length: > 0 and <= LinkNoteMaxChars })
+                    if (requested.Count > 0 && IsLinkNote(p.MsgKind, p.Text))
                     {
                         var linkedTo = requested[0].AsObject();
                         return new MeshVerdict(true, "9", Count: true, Mirror: true, Link: linkedTo.Get("id"), Task: linkedTo.Get("task"), Team: sender.Team, Dir: dir);

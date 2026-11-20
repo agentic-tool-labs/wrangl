@@ -4,6 +4,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.32] - 2026-11-20
+
+### Added
+
+- **A lone test run gets more of the machine.** When nothing else is testing, `ah test run` without `--tokens` gives a
+  run sized `half` up to three quarters of the test allowance (at most 12) instead of 2, and re-plans its parallel
+  settings to match.
+- **QA launches without a model set.** `spawn-one qa` uses `sonnet` when the roster names no model, as docs-writer and
+  ux-engineer already use their defaults.
+
+### Changed
+
+- **An Implementor may run its project's whole test suite when nothing else is testing.** When something is, the
+  refusal no longer suggests `--tokens 2`.
+- **A member's send to a teammate opens its own link** when the team's auto-grant setting covers the pair on the
+  current task, so an Implementor's handoff to its Reviewer needs no `ah msg link-request` first. Other pairs get the
+  refusal with the reason and the command to request a link.
+- **A brief's section markers are accepted in any heading form:** `[1] goal` as a heading of any level, a bare line or
+  bold. A marker inside a closed code fence does not count.
+- **Several checklist items may carry the same `--ref`.** A lookup by ref alone takes the newest open item.
+
+### Fixed
+
+- **An empty `ah msg list` says why:** one line on standard error with the team it filtered on, the pools it read, and
+  how many exchanges the team filter hid.
+
 ## [2.0.31] - 2026-11-19
 
 ### Added

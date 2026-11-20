@@ -118,22 +118,63 @@ case "$SLOTS_DIR" in */../*|*/..) echo "with-slot: refusing a slot directory wit
 # its parallelism from, and the arguments added where they are absent. Inside a grant already held, the grant is the size; with the
 # limiter off, or AH_TEST_ADAPT=0, nothing is added. Without the binary or perl, when the plan takes longer than 10 s, or for a command no row names, the
 # command runs as it is.
+#
+# An elastic run (the plan says `elastic 1`: its row is sized `half`) given no --tokens that finds the bucket idle when it
+# is admitted (no live lease, no other live ticket) is granted ah_bucket_heavy of the pool's capacity instead; its command is then
+# planned again, from the original words, for that grant.
 NEWARGV=()
 PLAN_TOKENS=0
+PLAN_ELASTIC=0
+PLANNED=0
+EXPLICIT="$TOKENS"
+ORIGARGV=("$@")
+# the variables the first plan set, with what they were before it (SAVED_SET 0: unset), so a second plan starts from the same
+# environment and appends nothing twice
+SAVED_N=(); SAVED_SET=(); SAVED_V=(); SAVED_DONE=0
+restore_env() {
+  local i
+  for i in "${!SAVED_N[@]}"; do
+    if [ "${SAVED_SET[$i]}" = 1 ]; then export "${SAVED_N[$i]}=${SAVED_V[$i]}"; else unset "${SAVED_N[$i]}"; fi
+  done
+}
+plan_run() { # <size or empty> <command...>: the plan's row, tokens, elasticity, environment (ENV_N/ENV_V) and changed arguments
+  local size="$1" kind a b; shift
+  NEWARGV=(); ENV_N=(); ENV_V=(); PLAN_ROW=""
+  while IFS=$'\t' read -r kind a b; do
+    case "$kind" in
+      row) PLAN_ROW="$a" ;;
+      tokens) PLAN_TOKENS="$a" ;;
+      elastic) PLAN_ELASTIC="$a" ;;
+      env) ENV_N+=("$a"); ENV_V+=("$b") ;;
+      arg) NEWARGV+=("$a") ;;
+    esac
+  done < <(restore_env; perl -e 'alarm 10; exec @ARGV' "$AH_BIN" test plan --capacity "$K" ${size:+--tokens "$size"} --cwd "$PWD" -- "$@" 2>/dev/null </dev/null)
+}
+plan_env() { # exports the plan's environment; the first time, keeps what each variable was
+  local i n
+  for i in "${!ENV_N[@]}"; do
+    n=${ENV_N[$i]}
+    [[ $n =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    if [ "$SAVED_DONE" = 0 ]; then
+      SAVED_N+=("$n")
+      if [ -n "${!n+x}" ]; then SAVED_SET+=(1); SAVED_V+=("${!n}"); else SAVED_SET+=(0); SAVED_V+=(""); fi
+    fi
+    export "$n=${ENV_V[$i]}"
+  done
+  SAVED_DONE=1
+}
 if [ -z "$POOL" ] && [ "$K" != 0 ] && [ "${AH_TEST_ADAPT:-1}" != 0 ] && [ -n "$AH_BIN" ] && command -v perl >/dev/null 2>&1; then
   PLAN_SIZE="$TOKENS"
   [ "${!HELD_VAR:-}" = 1 ] && PLAN_SIZE="${AH_TEST_TOKENS_GRANTED:-$TOKENS}"
-  while IFS=$'\t' read -r kind a b; do
-    case "$kind" in
-      tokens) PLAN_TOKENS="$a" ;;
-      env) export "$a=$b" 2>/dev/null || true ;;
-      arg) NEWARGV+=("$a") ;;
-    esac
-  done < <(perl -e 'alarm 10; exec @ARGV' "$AH_BIN" test plan --capacity "$K" ${PLAN_SIZE:+--tokens "$PLAN_SIZE"} --cwd "$PWD" -- "$@" 2>/dev/null </dev/null)
+  plan_run "$PLAN_SIZE" "$@"
+  plan_env
+  PLANNED=1
   [ "${#NEWARGV[@]}" -gt 0 ] && set -- "${NEWARGV[@]}"
 fi
 # a command that opens with VAR=value is run through env, which sets it
 if [[ ${1:-} =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then set -- env "$@"; fi
+ELASTIC=0
+[ -z "$EXPLICIT" ] && [ -z "$POOL" ] && [ "$PLAN_ELASTIC" = 1 ] && ELASTIC=1
 
 # a limiter that is off, or tokens this process tree already holds
 if [ "$K" = 0 ] || [ "${!HELD_VAR:-}" = 1 ]; then exec "$@"; fi
@@ -285,11 +326,21 @@ try_tokens() {
   elif [ "$recorded" != "$K" ]; then
     echo "$K" >"$POOLDIR/capacity"
   fi
-  if [ $((K - used)) -ge "$TOKENS" ]; then
+  # idle: no tokens held and this run's ticket the only live one
+  local want="$TOKENS" asked="$TOKENS" ceiling
+  if [ "$ELASTIC" = 1 ] && [ "$used" = 0 ] && [ "$(live_tickets | grep -c .)" = 1 ]; then
+    ceiling=$(ah_bucket_heavy "$K")
+    [ "$ceiling" -gt "$want" ] && want="$ceiling"
+    [ "$want" -gt "$K" ] && want="$K"
+  fi
+  if [ $((K - used)) -ge "$want" ]; then
     tmp="$POOLDIR/held/.new.$$"
     rm -rf "$tmp"
     WAITED=$((SECONDS - start))
+    # record() writes TOKENS: the grant while the lease is taken, the request again if it could not be
+    TOKENS="$want"
     mkdir "$tmp" && record "$tmp/holder" "$WAITED" && mv "$tmp" "$POOLDIR/held/${TICKET##*/}" && MYSLOT="${TICKET##*/}"
+    [ -n "$MYSLOT" ] || TOKENS="$asked"
   fi
   lock_drop
   [ -n "$MYSLOT" ]
@@ -334,6 +385,16 @@ while :; do
   sleep 1
 done
 rm -rf "$TICKET"
+# an idle grant larger than the plan's size: the original words planned again for it, so the runner's own setting follows the grant
+if [ "$PLANNED" = 1 ] && [ "$TOKENS" != "$PLAN_TOKENS" ] && [ "$ELASTIC" = 1 ]; then
+  plan_run "$TOKENS" "${ORIGARGV[@]}"
+  # a plan that printed no row (it timed out or failed) leaves the first plan's environment and arguments in place
+  if [ -n "$PLAN_ROW" ]; then
+    plan_env
+    if [ "${#NEWARGV[@]}" -gt 0 ]; then set -- "${NEWARGV[@]}"; else set -- "${ORIGARGV[@]}"; fi
+    if [[ ${1:-} =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then set -- env "$@"; fi
+  fi
+fi
 
 export "$HELD_VAR=1" AH_TEST_SLOT_N="$MYSLOT" AH_TEST_TOKENS_GRANTED="$TOKENS"
 CAP=$((ETA * 3))

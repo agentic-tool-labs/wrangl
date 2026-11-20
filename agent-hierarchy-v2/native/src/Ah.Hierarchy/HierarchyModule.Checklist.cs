@@ -120,9 +120,20 @@ public static partial class HierarchyModule
         return ChecklistIsAuto(entry.Item) && entry.Item.State == PlanStates.Dropped;
     }
 
-    /// <summary>The entry that lists <paramref name="requestId"/> among its refs, one not superseded first, or null.</summary>
-    public static ChecklistEntry? ChecklistItemOfRequest(IReadOnlyList<ChecklistEntry> entries, string requestId) =>
-        entries.Where(e => (e.Item.Refs ?? []).Contains(requestId, StringComparer.Ordinal)).OrderBy(ChecklistSuperseded).FirstOrDefault();
+    /// <summary>The entry that lists <paramref name="requestId"/> among its refs, one not superseded first (<see cref="NewestOfRef"/> among several), or null.</summary>
+    public static ChecklistEntry? ChecklistItemOfRequest(IReadOnlyList<ChecklistEntry> entries, string requestId)
+    {
+        var linked = entries.Where(e => (e.Item.Refs ?? []).Contains(requestId, StringComparer.Ordinal)).ToList();
+        return NewestOfRef(linked.Where(static e => !ChecklistSuperseded(e))) ?? NewestOfRef(linked);
+    }
+
+    /// <summary>The one of <paramref name="linked"/> (items sharing a ref) a lookup by ref alone picks: the newest open item, failing that the newest item; null when there is none.</summary>
+    private static ChecklistEntry? NewestOfRef(IEnumerable<ChecklistEntry> linked) =>
+        linked.Select(static (e, i) => (Entry: e, Index: i))
+            .OrderBy(static x => ChecklistRules.IsOpen(x.Entry.Item))
+            .ThenBy(static x => ParseAt(x.Entry.Item.AddedAt) ?? DateTimeOffset.MinValue)
+            .ThenBy(static x => x.Index)
+            .LastOrDefault().Entry;
 
     /// <summary>
     /// The item <paramref name="id"/> names among <paramref name="entries"/>: a bare item id, or <c>stream/id</c> when the same id lives in more
@@ -1119,7 +1130,7 @@ public static partial class HierarchyModule
     private static DateTimeOffset? ParseAt(string text) =>
         DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null;
 
-    /// <summary>The item a request is about for the transition table: its <c>item:</c> field, else the one item (not superseded) that lists it.</summary>
+    /// <summary>The item a request is about for the transition table: its <c>item:</c> field, else the item (not superseded) that lists it, <see cref="NewestOfRef"/> among several.</summary>
     private static ChecklistEntry? OwnItem(IReadOnlyList<ChecklistEntry> entries, string requestId, string? itemId)
     {
         if (itemId is { Length: > 0 })
@@ -1127,11 +1138,10 @@ public static partial class HierarchyModule
             return ChecklistResolve(entries, itemId, out var named) is null ? named : null;
         }
 
-        var linked = entries.Where(e => (e.Item.Refs ?? []).Contains(requestId, StringComparer.Ordinal) && !ChecklistSuperseded(e)).ToList();
-        return linked.Count == 1 ? linked[0] : null;
+        return NewestOfRef(entries.Where(e => (e.Item.Refs ?? []).Contains(requestId, StringComparer.Ordinal) && !ChecklistSuperseded(e)));
     }
 
-    /// <summary>The item a request is about: the one its <c>item:</c> field names, else the one item that lists the request among its refs. The error text, or null with <paramref name="entry"/> (null when there is none).</summary>
+    /// <summary>The item a request is about: the one its <c>item:</c> field names, else the item that lists the request among its refs (<see cref="ChecklistItemOfRequest"/>). The error text, or null with <paramref name="entry"/> (null when there is none).</summary>
     private static string? LinkedItem(IHierarchyProgress progress, string pool, string team, string requestId, string? itemId, out ChecklistEntry? entry)
     {
         var entries = ChecklistEntries(progress, pool, team);
@@ -1140,19 +1150,7 @@ public static partial class HierarchyModule
             return ChecklistResolve(entries, itemId, out entry);
         }
 
-        var linked = entries.Where(e => (e.Item.Refs ?? []).Contains(requestId, StringComparer.Ordinal)).ToList();
-        if (linked.Count > 1)
-        {
-            linked = [.. linked.Where(static e => !ChecklistSuperseded(e))];
-        }
-
-        if (linked.Count > 1)
-        {
-            entry = null;
-            return $"request {requestId} is listed by several items ({string.Join(", ", linked.Select(ChecklistKey))}); nothing written";
-        }
-
-        entry = linked.FirstOrDefault();
+        entry = ChecklistItemOfRequest(entries, requestId);
         return null;
     }
 }

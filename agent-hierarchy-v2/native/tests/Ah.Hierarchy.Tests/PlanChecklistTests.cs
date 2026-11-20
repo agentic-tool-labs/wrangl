@@ -313,6 +313,19 @@ public sealed class PlanTransitionTests
     }
 
     [Fact]
+    public void AReplyWithItsItemMovesThatItemAmongItemsSharingTheRefAndWithoutItTheNewestOpenOne()
+    {
+        string[] b = [Row("2026-11-01T10:10:00Z", "b", "add", ",\"title\":\"Fix a\""), Row("2026-11-01T10:10:00Z", "b", "start"), Row("2026-11-01T10:10:00Z", "b", "ref", $",\"ref\":\"{Req}\"")];
+        var done = Reply(Req, "DONE sitrep\n- built", "implementor");
+
+        Assert.Equal(["a"], Moves(HierarchyModule.ChecklistTransitions(done with { ItemId = "a" }, Board(b))).Keys);
+        Assert.Equal(["b"], Moves(HierarchyModule.ChecklistTransitions(done, Board(b))).Keys);
+
+        // negative: the newer item is done, so the ref alone picks the open one
+        Assert.Equal(["a"], Moves(HierarchyModule.ChecklistTransitions(done, Board([.. b, Row("2026-11-01T10:20:00Z", "b", "done")]))).Keys);
+    }
+
+    [Fact]
     public void NegativeABlockedReplyIsNotATableEventAndMovesNothing()
     {
         Assert.False(HierarchyModule.ChecklistReplyIsEvent("BLOCKED on the spec", "implementor"));

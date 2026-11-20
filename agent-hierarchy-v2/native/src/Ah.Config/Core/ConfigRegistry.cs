@@ -64,7 +64,7 @@ internal static partial class ConfigRegistry
         ("reviewer", "review", "Reviewer", "opus", null, null, null, null, false),
         ("implementor", "implement", "Implementor", "inherit", null, null, null, null, false),
         ("docs-writer", "implement", "Docs-Writer", "sonnet", null, "Standalone documentation outside of code: READMEs, docs/, guides, changelogs", "sonnet", "2.3.0", false),
-        ("qa", "implement", "QA", "sonnet", null, null, null, "2.5.0", false),
+        ("qa", "implement", "QA", "sonnet", null, null, "sonnet", "2.5.0", false),
         ("ux-engineer", "implement", "UX-Engineer", "opus", null, "Web UI work: CSS, markup, visual tokens, layout, interaction and accessibility under web/ (not daemon, data or protocol work)", "opus", "2.5.0", false),
         ("task-runner", "legwork", "Task-Runner", "haiku", "task-gopher", null, null, null, false),
         ("backlog-groomer", "legwork", "Backlog-Groomer", "sonnet", null, "Grooming the project backlog through ah backlog: triage, ranking, dedupe, proven-done items and the groom record", null, "2.5.0", true),

@@ -129,6 +129,8 @@ internal sealed class SystemEnvironment : IAhEnvironment, IPinnedAhHome
 
     public string? GetTestOnly(string name) => TestMode ? _getVariable(name) : null;
 
+    public bool TestLimiterOff => _getVariable("AH_TEST_SLOTS") == "0" || _getVariable("AH_TEST_TOKENS") == "0";
+
     private static string JoinUnderHome(string home) =>
         home.Length == 0 ? DefaultHomeUnderUser : home.TrimEnd('/') + "/" + DefaultHomeUnderUser;
 }

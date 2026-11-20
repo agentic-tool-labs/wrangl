@@ -317,23 +317,20 @@ internal sealed partial class MsgCommand
         return 0;
     }
 
-    private static bool IsSectionHeading(string line) => line.StartsWith("## [", StringComparison.Ordinal);
-
-    private static bool IsSection(string line, string n) => line.StartsWith($"## [{n}]", StringComparison.Ordinal);
-
-    /// <summary>The frontmatter plus the <c>## [n]</c> sections named, each heading through to the next <c>## [</c> heading, in document order.</summary>
+    /// <summary>The frontmatter plus the <c>[n]</c> sections named, each marker through to the next section marker, in document order.</summary>
     private string OnlySections(string text, IReadOnlyList<string> wanted, string id)
     {
         var lines = text.Split('\n');
         var start = BodyStart(lines);
+        var markers = HierarchyModule.SectionMarkers(lines);
         var kept = lines.Take(start).ToList();
         var keep = false;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         for (var i = start; i < lines.Length; i++)
         {
-            if (IsSectionHeading(lines[i]))
+            if (markers[i] is { } marker)
             {
-                var n = wanted.FirstOrDefault(w => IsSection(lines[i], w));
+                var n = wanted.FirstOrDefault(w => w == marker.N);
                 keep = n is not null;
                 if (n is not null)
                 {
@@ -362,14 +359,15 @@ internal sealed partial class MsgCommand
         var lines = text.Split('\n');
         var body = lines.Skip(BodyStart(lines)).ToList();
         var section = replacement.EndsWith('\n') ? replacement : replacement + "\n";
-        var at = body.FindIndex(l => IsSection(l, n));
+        var markers = HierarchyModule.SectionMarkers(body);
+        var at = Array.FindIndex(markers, m => m?.N == n);
         if (at < 0)
         {
             var tail = string.Join('\n', body).TrimEnd('\n');
             return (tail.Length == 0 ? string.Empty : tail + "\n") + $"## [{n}]\n" + section;
         }
 
-        var end = body.FindIndex(at + 1, IsSectionHeading);
+        var end = Array.FindIndex(markers, at + 1, static m => m is not null);
         var before = string.Join('\n', body.Take(at + 1)) + "\n";
         var after = end < 0 ? string.Empty : string.Join('\n', body.Skip(end));
         return before + section + after;

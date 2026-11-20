@@ -38,11 +38,18 @@
       ]
     },
     {
-      "id": "indented-heading-ignored",
+      "id": "indented-heading-counts",
       "args": [
         "  ## [1] goal\n"
       ],
-      "expect": []
+      "expect": [
+        {
+          "line": 1,
+          "n": 1,
+          "key": "goal",
+          "text": "  ## [1] goal"
+        }
+      ]
     },
     {
       "id": "needs-index",

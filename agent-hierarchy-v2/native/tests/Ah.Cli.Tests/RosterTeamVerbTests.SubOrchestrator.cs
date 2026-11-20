@@ -66,18 +66,19 @@ public sealed partial class RosterTeamVerbTests
     private const string ReviewerRosterRow = "{\"role\":\"reviewer\",\"model\":\"sonnet\"}";
 
     [Fact]
-    public void SpawnOneOfABuiltInRoleTheRosterLacksLaunchesItThroughSpawnAdHocAndNeedsAModel()
+    public void SpawnOneOfABuiltInRoleTheRosterLacksLaunchesItThroughSpawnAdHocAndQaNeedsNoModel()
     {
         WriteTeam("proj", SoTeam(OpenStreamJson("s1")));
         WriteProjectRoster(ReviewerRosterRow);
 
         var (code, stdout, stderr) = Roster(["spawn-one", "qa", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--dry-run"]);
-        var (noModelCode, noModelOut, _) = Roster(["spawn-one", "qa", "--team", "proj", "--orchestrator-pid", Self, "--dry-run"]);
+        var (noModelCode, noModelOut, noModelErr) = Roster(["spawn-one", "qa", "--team", "proj", "--orchestrator-pid", Self, "--dry-run"]);
 
         Assert.True(code == 0, stderr);
         Assert.Contains("--agent wrangl:qa", stdout, StringComparison.Ordinal);
-        Assert.NotEqual(0, noModelCode);
-        Assert.Contains("member-model-undefined", noModelOut, StringComparison.Ordinal);
+        Assert.Equal("sonnet", Ah.Config.ConfigModule.MemberDefaultModel("qa"));
+        Assert.True(noModelCode == 0, noModelErr);
+        Assert.DoesNotContain("member-model-undefined", noModelOut, StringComparison.Ordinal);
     }
 
     [Fact]

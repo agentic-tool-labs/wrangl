@@ -13,7 +13,7 @@
         ],
         "re-run the dispatch"
       ],
-      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then re-run the dispatch. Missing: goal, acceptance. Minimal accepted shape (either form):\n  ## [1] goal\n  - <what the change must deliver, and its source>\n  ## [5] acceptance\n  - <how the reviewer decides it is met>\nor, in ## [0] tldr:  - [1] goal: <…>   - [5] acceptance: <…>"
+      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then re-run the dispatch. Missing: goal, acceptance. Minimal accepted shape: a `[1] goal` and a `[5] acceptance` line (a heading of any # level, bare, or **bold**), each with a `- <…>` bullet under it; or, in [0] tldr, `- [1] goal: <…>` and `- [5] acceptance: <…>`."
     },
     {
       "id": "one",
@@ -24,7 +24,7 @@
         ],
         "send it again"
       ],
-      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then send it again. Missing: acceptance. Minimal accepted shape (either form):\n  ## [1] goal\n  - <what the change must deliver, and its source>\n  ## [5] acceptance\n  - <how the reviewer decides it is met>\nor, in ## [0] tldr:  - [1] goal: <…>   - [5] acceptance: <…>"
+      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then send it again. Missing: acceptance. Minimal accepted shape: a `[1] goal` and a `[5] acceptance` line (a heading of any # level, bare, or **bold**), each with a `- <…>` bullet under it; or, in [0] tldr, `- [1] goal: <…>` and `- [5] acceptance: <…>`."
     },
     {
       "id": "named-request",
@@ -35,7 +35,7 @@
         ],
         "send it"
       ],
-      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request 20260101-000000-abcd with `msg.mjs fill --id 20260101-000000-abcd --from <your role> --request --section <1 or 5> --body-file -`, then send it. Missing: goal. Minimal accepted shape (either form):\n  ## [1] goal\n  - <what the change must deliver, and its source>\n  ## [5] acceptance\n  - <how the reviewer decides it is met>\nor, in ## [0] tldr:  - [1] goal: <…>   - [5] acceptance: <…>"
+      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request 20260101-000000-abcd with `msg.mjs fill --id 20260101-000000-abcd --from <your role> --request --section <1 or 5> --body-file -`, then send it. Missing: goal. Minimal accepted shape: a `[1] goal` and a `[5] acceptance` line (a heading of any # level, bare, or **bold**), each with a `- <…>` bullet under it; or, in [0] tldr, `- [1] goal: <…>` and `- [5] acceptance: <…>`."
     },
     {
       "id": "none-listed",
@@ -44,7 +44,7 @@
         [],
         "again"
       ],
-      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then again. Missing: . Minimal accepted shape (either form):\n  ## [1] goal\n  - <what the change must deliver, and its source>\n  ## [5] acceptance\n  - <how the reviewer decides it is met>\nor, in ## [0] tldr:  - [1] goal: <…>   - [5] acceptance: <…>"
+      "expect": "ah: a Reviewer brief needs its intent. Fill [1] goal (what the change must deliver, and its source: spec path, ticket or PR text) and [5] acceptance of request <id> with `msg.mjs fill --id <id> --from <your role> --request --section <1 or 5> --body-file -`, then again. Missing: . Minimal accepted shape: a `[1] goal` and a `[5] acceptance` line (a heading of any # level, bare, or **bold**), each with a `- <…>` bullet under it; or, in [0] tldr, `- [1] goal: <…>` and `- [5] acceptance: <…>`."
     }
   ]
 }

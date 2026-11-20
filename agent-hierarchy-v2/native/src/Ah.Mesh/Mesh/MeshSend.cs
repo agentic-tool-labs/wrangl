@@ -928,23 +928,107 @@ internal sealed partial class MeshSend(
         var id = granted.Member("id");
         if (granted.Member("existed") is not { IsTruthy: true })
         {
-            try
-            {
-                var req = RequestObject(context);
-                req["to"] = HierarchyModule.OrchestratorAddress(verdict.Team);
-                req["from"] = "ahd";
-                req["kind"] = "event";
-                req["event"] = "link-granted";
-                req["text"] = $"{Js(id)} {sender.Address} -> {recipient.Address} task {task} (assigned together: {key})";
-                mailbox.SendCore(req, at);
-            }
-            catch (Exception e) when (e is MailboxError or IOException or InvalidOperationException or ArgumentOutOfRangeException)
-            {
-                // the event is a courtesy; the link record holds the fact
-            }
+            AnnounceGranted(context, verdict.Team, $"{Js(id)} {sender.Address} -> {recipient.Address} task {task} (assigned together: {key})", at);
         }
 
         return verdict with { Link = id, Task = task };
+    }
+
+    /// <summary>One <c>link-granted</c> event from ahd to the team's Orchestrator.</summary>
+    private void AnnounceGranted(RequestContext context, string? team, string text, DateTimeOffset at)
+    {
+        try
+        {
+            var req = RequestObject(context);
+            req["to"] = HierarchyModule.OrchestratorAddress(team);
+            req["from"] = "ahd";
+            req["kind"] = "event";
+            req["event"] = "link-granted";
+            req["text"] = text;
+            mailbox.SendCore(req, at);
+        }
+        catch (Exception e) when (e is MailboxError or IOException or InvalidOperationException or ArgumentOutOfRangeException)
+        {
+            // the event is a courtesy; the link record holds the fact
+        }
+    }
+
+    /// <summary>
+    /// The verdict with the link a send opens itself (ah2-343, adr-28): a rule 10 refusal of a member's non-bare send on its current task,
+    /// when the pair passes the daemon's auto-grant judgment and the send would ride the link, is decided again over the link this
+    /// grants (<c>ahd-auto</c>, no request file). A pair that does not qualify keeps the refusal with the reason added; one that
+    /// qualifies but would not ride gets the refusal the link would give, and no link. Any other verdict comes back as it is.
+    /// </summary>
+    internal MeshVerdict WithSendLink(MeshVerdict verdict, MeshDecideRequest decided, RequestContext context, Func<string> entryId)
+    {
+        var (sender, recipient) = (decided.Sender, decided.Recipient);
+        if (verdict.Rule != "10" || (verdict.Code != "not_linked" && verdict.Would != "not_linked")
+            || sender.Kind != "member" || recipient.Kind != "member" || decided.MsgKind is "sendmessage" or "deliver"
+            || decided.Task is not { Id.Length: > 0 } current || decided.LookupTeam(sender.Team ?? string.Empty) is not { Dir: { } dir } t)
+        {
+            return verdict;
+        }
+
+        var team = sender.Team!;
+        var taskId = current.Id!;
+        var limits = links.Limits();
+        var loop = AutoGrant.IsLoopPair(sender.Role, recipient.Role);
+        var messages = AutoGrant.Limit(links, "messages");
+        var minutes = AutoGrant.Minutes(limits, loop);
+        var task = AutoGrant.FindTask(hierarchy.Messages, hierarchy.Core, AutoGrant.Pools(dir, context.HierarchyDirectory, context.MainHierarchyDirectory), team, taskId);
+        var revoked = links.Judge(dir, team, decided.Now).Any(l =>
+            l.Member("state") is { IsText: true } s && s.AsString() == "revoked" && l.Member("end_reason") is { IsText: true } r && r.AsString() == "revoked"
+            && l.Member("assigned") is not { IsText: true } && l.Member("task") is { IsText: true } lt && lt.AsString() == taskId
+            && (links.Covers(l, V(sender.Address), V(recipient.Address)) || links.Covers(l, V(recipient.Address), V(sender.Address))));
+        var (ok, why) = revoked
+            ? (false, "the Orchestrator revoked this pair's link for this task")
+            : AutoGrant.Judge(
+                new AutoGrantFacts([sender, recipient], team, AutoGrant.OpenTaskFm(hierarchy.Core, task), rule.SettingsOf(t.Data).AutoGrant, messages, minutes, links.ActiveCount(dir, team, sender.Address!, decided.Now)),
+                limits);
+        if (!ok)
+        {
+            return verdict with { Message = $"{verdict.Message}\nah: not opened automatically: {why}" };
+        }
+
+        // Decision 1: open the link only when the send rides it (rule 9)
+        var off = decided.Ref is { Length: > 0 } reference
+            ? (decided.Facts.ChainReachesTask(reference, taskId, dir, team) ? null : "link_off_task")
+            : MeshRule.IsLinkNote(decided.MsgKind, decided.Text) ? null : "link_needs_ref";
+        if (off is not null)
+        {
+            return verdict.Warn ? verdict : new MeshVerdict(false, "9", Code: off, Status: 403, Message: rule.LinkRefusalText(off, team, taskId));
+        }
+
+        var link = new JsonObject
+        {
+            ["task"] = taskId,
+            ["task_home"] = task is { } found ? found.Dir : dir,
+            ["peers"] = new JsonArray { recipient.Address! },
+            ["direction"] = "both",
+            ["requester"] = sender.Address!,
+            ["granted_by"] = "ahd-auto",
+            ["messages"] = messages,
+            ["minutes"] = minutes,
+        };
+        if (loop)
+        {
+            link["rounds"] = AutoGrant.LoopRounds;
+        }
+
+        var granted = State("links", "grant", new JsonObject { ["dir"] = dir, ["team"] = team, ["link"] = link, ["now"] = decided.Now }, context, $"sendlink-{entryId()}");
+        var at = DateTimeOffset.FromUnixTimeMilliseconds((long)decided.Now);
+        AnnounceEnded(context, team, granted.Member("ended"), at);
+        if (granted.Member("revoked") is { IsTruthy: true })
+        {
+            return verdict with { Message = $"{verdict.Message}\nah: not opened automatically: the Orchestrator revoked this pair's link for this task" };
+        }
+
+        if (granted.Member("existed") is not { IsTruthy: true })
+        {
+            AnnounceGranted(context, team, $"{Js(granted.Member("id"))} {sender.Address} -> {recipient.Address} task {taskId} (auto: opened by send)", at);
+        }
+
+        return rule.Decide(decided);
     }
 
     /// <summary>A task name for a link whose assignment has no request: the key, in the characters a message slug takes.</summary>
@@ -1015,7 +1099,9 @@ internal sealed partial class MeshSend(
 
         var (recipient, resolved) = RecipientOf(req.Get("to"), context, lookup);
         var kind = req.Get("kind") is { IsTruthy: true } k ? Js(k) : Mailbox.KindFromPayload(req);
-        var verdict = rule.Decide(new MeshDecideRequest(nowMs, sender, recipient, lookup, Falsy(req.Get("text")), kind, FactsFor(context, nowMs), CurrentTask(sender, context), Falsy(req.Get("ref")) is { Length: > 0 } reference ? reference : null, req.Get("hold_exempt") is { IsBool: true } exempt && exempt.AsBool()));
+        var decide = new MeshDecideRequest(nowMs, sender, recipient, lookup, Falsy(req.Get("text")), kind, FactsFor(context, nowMs), CurrentTask(sender, context), Falsy(req.Get("ref")) is { Length: > 0 } reference ? reference : null, req.Get("hold_exempt") is { IsBool: true } exempt && exempt.AsBool());
+        JsonValue? earlyId = null;
+        var verdict = WithSendLink(rule.Decide(decide), decide, context, () => Js(earlyId ??= req.Get("id") is { IsTruthy: true } given0 ? given0 : mailbox.NewIdAt(now)));
         if (!verdict.Allow)
         {
             throw new MailboxError(verdict.Code ?? "refused", verdict.Message ?? string.Empty);
@@ -1028,7 +1114,7 @@ internal sealed partial class MeshSend(
             return FanOut(fan, context, lookup, sender, recipient, now, lockWait);
         }
 
-        JsonValue entryId = req.Get("id") is { IsTruthy: true } given ? given : mailbox.NewIdAt(now);
+        JsonValue entryId = earlyId ?? (req.Get("id") is { IsTruthy: true } given ? given : mailbox.NewIdAt(now));
         JsonValue? countedId = null;
         string? countedDir = null;
         string? countedTeam = null;

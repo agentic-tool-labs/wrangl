@@ -14,11 +14,29 @@ public sealed class TestVerbTests : IDisposable
         return (r.Code, r.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries), r.Stderr);
     }
 
-    private static (int Code, string Out, string Err) Check(bool member, params string[] command)
+    private static (int Code, string Out, string Err) Check(bool member, params string[] command) => Check(member, true, command);
+
+    private static (int Code, string Out, string Err) Check(bool member, bool busy, params string[] command)
     {
         using var h = new Harness(extra: member ? new() { [Ah.Mesh.MeshModule.MemberMarkerEnv] = "m1" } : null);
+        BucketOf(h, busy);
         var r = h.Run(["ah", "test", "plan", "--check", "--cwd", h.Sandbox.Root, "--", .. command]);
         return (r.Code, r.Stdout, r.Stderr);
+    }
+
+    /// <summary>Points the harness at a bucket of its own, of 8 tokens: busy is a live lease of 2 held by this test process.</summary>
+    private static void BucketOf(Harness h, bool busy)
+    {
+        var slots = Path.Join(h.Sandbox.Root, "slots");
+        h.Variables["AH_SLOTS_DIR"] = slots;
+        h.Runner.Ps = FakeRunner.SelfOnly;
+        Directory.CreateDirectory(Path.Join(slots, "held"));
+        File.WriteAllText(Path.Join(slots, "capacity"), "8\n");
+        if (busy)
+        {
+            Directory.CreateDirectory(Path.Join(slots, "held", "1-busy"));
+            File.WriteAllText(Path.Join(slots, "held", "1-busy", "holder"), $"{{\"label\": \"other\", \"pid\": {Environment.ProcessId}, \"pid_start\": \"{FakeRunner.SelfStart}\", \"tokens\": 2, \"since\": 1}}\n");
+        }
     }
 
     [Fact]
@@ -29,9 +47,23 @@ public sealed class TestVerbTests : IDisposable
         Assert.Equal(64, code);
         Assert.Equal(string.Empty, stdout);
         Assert.Equal(
-            "ah: whole-project test runs belong to QA (dotnet test X.csproj). Run a narrow form instead: ah test run --tokens 2 -- dotnet test <project> --filter <expr>; use the runner's filter or one test file.",
+            "ah: a whole-project test run by an implementor needs an idle test bucket (2/8 tokens held, 0 waiting) (dotnet test X.csproj). Run a narrow form now: ah test run -- dotnet test <project> --filter <expr>; or retry when the bucket is idle; or report NEEDS-QA.",
             stderr.Trim());
-        Assert.Equal(stderr.Trim(), Ah.Watch.WatchModule.TestScopeRefusal(null, null, "dotnet test X.csproj", () => Ah.Watch.WatchModule.TestCallerOf(null)));
+        Assert.Equal(stderr.Trim(), Ah.Watch.WatchModule.TestScopeRefusal(null, null, "dotnet test X.csproj", () => Ah.Watch.WatchModule.TestCallerOf(null), () => new Ah.Watch.BucketStatus(8, 2, 1, 0, 0, false)));
+    }
+
+    [Fact]
+    public void AnImplementorsWholeProjectRunIsAllowedOnAnIdleBucketAndRefusedWithoutATokensHintOnABusyOne()
+    {
+        var implementor = () => new Ah.Watch.TestCaller("implementor", "implement");
+
+        var idle = Ah.Watch.WatchModule.TestScopeRefusal(null, null, "dotnet test X.csproj", implementor, () => new Ah.Watch.BucketStatus(8, 0, 0, 0, 0, false));
+        var waiting = Ah.Watch.WatchModule.TestScopeRefusal(null, null, "dotnet test X.csproj", implementor, () => new Ah.Watch.BucketStatus(8, 0, 0, 1, 0, false));
+
+        Assert.Null(idle);
+        Assert.Contains("idle test bucket", waiting, StringComparison.Ordinal);
+        Assert.DoesNotContain("--tokens 2", waiting, StringComparison.Ordinal);
+        Assert.Equal(0, Check(true, false, "dotnet", "test", "X.csproj").Code);
     }
 
     [Theory]
@@ -40,6 +72,7 @@ public sealed class TestVerbTests : IDisposable
     public void AMembersRoleComesFromItsTeamRowWhenTheTeamIsOnlyInTheStore(string role, int expected)
     {
         using var h = new Harness(extra: new() { [Ah.Mesh.MeshModule.MemberMarkerEnv] = "t-m1" });
+        BucketOf(h, true);
         var hier = Path.Join(h.Sandbox.Root, "repo", ".claude", "ah2");
         Directory.CreateDirectory(Path.Join(hier, "teams"));
         Assert.Null(Ah.StateDb.StateDbModule.EnsureDatabase(h.Sandbox.AhHome));
@@ -82,7 +115,15 @@ public sealed class TestVerbTests : IDisposable
         var (code, lines, _) = Plan("--capacity", "16", "--cwd", _h.Sandbox.Root, "--", "pytest", "tests");
 
         Assert.Equal(0, code);
-        Assert.Equal(["row\tpytest", "tokens\t8", "env\tPYTEST_XDIST_AUTO_NUM_WORKERS\t8"], lines);
+        Assert.Equal(["row\tpytest", "tokens\t8", "elastic\t1", "env\tPYTEST_XDIST_AUTO_NUM_WORKERS\t8"], lines);
+    }
+
+    [Fact]
+    public void ARowSizedInTokensIsNotElastic()
+    {
+        var (_, lines, _) = Plan("--capacity", "16", "--cwd", _h.Sandbox.Root, "--", "godot", "--headless", "-s", "x.gd");
+
+        Assert.Equal(["row\tgodot-headless", "tokens\t2"], lines);
     }
 
     [Fact]
@@ -90,7 +131,7 @@ public sealed class TestVerbTests : IDisposable
     {
         var (_, lines, _) = Plan("--capacity", "16", "--tokens", "3", "--cwd", _h.Sandbox.Root, "--", "go", "test", "./...");
 
-        Assert.Equal(["row\tgo-test", "tokens\t8", "arg\tgo", "arg\ttest", "arg\t-p", "arg\t3", "arg\t./..."], lines);
+        Assert.Equal(["row\tgo-test", "tokens\t8", "elastic\t1", "arg\tgo", "arg\ttest", "arg\t-p", "arg\t3", "arg\t./..."], lines);
     }
 
     [Fact]

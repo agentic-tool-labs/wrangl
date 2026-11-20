@@ -17,7 +17,7 @@ public interface ITestingOrders
 
     private static readonly (string Key, string Text)[] Defaults =
     [
-        ("implementor", "touched: only the test classes or files for the code you changed; never a whole project or the full set"),
+        ("implementor", "touched: only the test classes or files for the code you changed; your own project's whole suite only when the test bucket is idle; never the full set"),
         ("ux-engineer", "touched: only the test classes or files for the code you changed, plus your own visual and contrast checks; E4 only when the brief asks"),
         ("reviewer", "none: delegate any run you need, unless a rule of engagement says reviewers run nothing; then ask for no run"),
         ("qa", "full: the full set once per ship batch"),

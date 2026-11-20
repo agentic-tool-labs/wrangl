@@ -20,9 +20,9 @@ ah_bucket_capacity() {
   echo "$n"
 }
 
-ah_bucket_heavy() {
+ah_bucket_heavy() { # [B]: the bucket to size for (default ah_bucket_capacity)
   local b k
-  b=$(ah_bucket_capacity)
+  b=${1:-$(ah_bucket_capacity)}
   case "$b" in ''|*[!0-9]*) b=2 ;; esac
   if [ "${AH_TEST_HEAVY_SPLIT:-}" = 1 ]; then
     k=$(( (b + 1) / 2 )); [ "$k" -gt 8 ] && k=8

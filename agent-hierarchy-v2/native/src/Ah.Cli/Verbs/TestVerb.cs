@@ -7,7 +7,7 @@ namespace Ah.Cli.Verbs;
 /// <summary>
 /// <c>ah test run [--tokens k] [--eta e] [--label t] -- &lt;command…&gt;</c>: runs a command holding CPU tokens of the machine-wide test bucket (the plugin's
 /// <c>bin/ah-test-run</c>, one implementation). <c>ah test plan --capacity B [--tokens k] [--cwd d] -- &lt;command…&gt;</c>: what the bucket does to a command,
-/// one tab-separated line per fact, for that script: <c>row</c>, <c>tokens</c>, <c>env NAME VALUE</c> and, when the arguments change, <c>arg WORD</c> for every word.
+/// one tab-separated line per fact, for that script: <c>row</c>, <c>tokens</c>, <c>elastic 1</c> when an idle bucket may grant more, <c>env NAME VALUE</c> and, when the arguments change, <c>arg WORD</c> for every word.
 /// </summary>
 internal static class TestVerb
 {
@@ -91,6 +91,11 @@ internal static class TestVerb
         var plan = WatchModule.PlanTestRun(context.Env.HomeDirectory, cwd, argv, cap, tokens is { } t ? Math.Min(t, cap) : null, context.Env.GetVariable, dir => context.Services?.Value.Trust.IsTrusted(Ah.Abstractions.TrustFile.HierarchyDirs, dir) == true);
         stdout.Write($"row\t{plan.Row ?? "-"}\n");
         stdout.Write(string.Create(CultureInfo.InvariantCulture, $"tokens\t{plan.Tokens}\n"));
+        if (plan.Elastic)
+        {
+            stdout.Write("elastic\t1\n");
+        }
+
         foreach (var (name, value) in plan.Env.Where(static e => !HasBreak(e.Value)))
         {
             stdout.Write($"env\t{name}\t{value}\n");
@@ -113,7 +118,7 @@ internal static class TestVerb
     /// <summary>Runs only the test-scope check: 0 when the command may run, <see cref="WrongForm"/> with the refusal on stderr when not.</summary>
     private static int Check(CliContext context, string cwd, string[] argv, TextWriter stderr)
     {
-        var refusal = WatchModule.TestScopeRefusal(context.Env.HomeDirectory, cwd, argv, () => CallerRoleClass(context, cwd));
+        var refusal = WatchModule.TestScopeRefusal(context.Env.HomeDirectory, cwd, argv, () => CallerRoleClass(context, cwd), () => Bucket(context));
         if (refusal is null)
         {
             return 0;
@@ -121,6 +126,18 @@ internal static class TestVerb
 
         stderr.WriteLine(refusal);
         return WrongForm;
+    }
+
+    /// <summary>The default test bucket now; null when the limiter is off (<c>AH_TEST_SLOTS=0</c> or <c>AH_TEST_TOKENS=0</c>).</summary>
+    private static BucketStatus? Bucket(CliContext context)
+    {
+        if (context.Env.TestLimiterOff)
+        {
+            return null;
+        }
+
+        var io = context.Services?.Value.Io ?? Ah.Platform.PlatformModule.CreateIo(null);
+        return WatchModule.BucketStatusOf(io.Files, context.Env, Ah.Platform.PlatformModule.CreateProcessTable(context.Runner), io.Clock.UtcNow.ToUnixTimeMilliseconds(), 3600 * 1000);
     }
 
     /// <summary>

@@ -368,10 +368,17 @@ PLANLOG="$SB/plan.log"; : >"$PLANLOG"
 cat >"$RT/bin/ah" <<'EOF'
 #!/bin/sh
 echo "$*" >>"$PLANLOG"
-while [ "$1" != -- ]; do shift; done; shift
+size=2; while [ "$1" != -- ]; do [ "$1" = --tokens ] && size=$2; shift; done; shift
 if [ "$1" = fakecheck ]; then
   printf 'row\tfake\ntokens\t3\nenv\tFAKE_WORKERS\t3\narg\tfakecheck\narg\t-j3\n'
   shift; for a in "$@"; do printf 'arg\t%s\n' "$a"; done
+elif [ "$1" = fakedotnet ]; then
+  # a light run of a `half` row: like the dotnet adapter, it adds -m only where there is none
+  printf 'row\tfakedotnet\ntokens\t2\nelastic\t1\n'
+  case "$*" in *-m:*) ;; *) printf 'arg\t%s\n' "$1" "-m:$size"; shift; for a in "$@"; do printf 'arg\t%s\n' "$a"; done ;; esac
+elif [ "$1" = fakemake ]; then
+  # a `half` row whose adapter appends to the variable as it finds it, like make-check's env_append
+  printf 'row\tfakemake\ntokens\t2\nelastic\t1\nenv\tMAKEFLAGS\t%s\n' "${MAKEFLAGS:+$MAKEFLAGS }-j$size"
 else
   printf 'row\t-\ntokens\t0\n'
 fi
@@ -380,7 +387,9 @@ cat >"$RT/fakecheck" <<'EOF'
 #!/bin/sh
 echo "workers=${FAKE_WORKERS:-none} grant=$AH_TEST_TOKENS_GRANTED args=$*"
 EOF
-chmod +x "$RT/bin/ah" "$RT/fakecheck" "$RT/bin/ah-test-run"
+printf '#!/bin/sh\necho "grant=$AH_TEST_TOKENS_GRANTED args=$*"\n' >"$RT/fakedotnet"
+printf '#!/bin/sh\necho "grant=$AH_TEST_TOKENS_GRANTED MAKEFLAGS=$MAKEFLAGS"\n' >"$RT/fakemake"
+chmod +x "$RT/bin/ah" "$RT/fakecheck" "$RT/fakedotnet" "$RT/fakemake" "$RT/bin/ah-test-run"
 RUN="$RT/bin/ah-test-run"
 export PLANLOG
 OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt1" AH_TEST_TOKENS=8 bash "$RUN" fakecheck x 2>&1); RC=$?
@@ -402,6 +411,18 @@ OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt6" AH_TEST_SLOTS=0 ba
 check "...with the limiter off the command runs as it is: no plan, no tokens, no adapter" '[ "$OUT" = "workers=none grant= args=w" ]'
 OUT=$(AH_TEST_ADAPT=0 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt6b" AH_TEST_TOKENS=8 bash "$RUN" fakecheck u 2>&1)
 check "...AH_TEST_ADAPT=0 skips the registry step: half the bucket, no environment, no added arguments (nearest non-match of the first case)" '[ "$OUT" = "workers=none grant=4 args=u" ]'
+OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt10" AH_TEST_TOKENS=8 bash "$RUN" fakedotnet --filter X 2>&1)
+check "idle grant: an elastic run with no --tokens alone in the bucket gets heavy(K) = 6 of 8, and is planned again from its original words for it" \
+  '[ "$OUT" = "grant=6 args=-m:6 --filter X" ]'
+OUT=$(env -u MAKEFLAGS AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt11" AH_TEST_TOKENS=8 bash "$RUN" fakemake 2>&1)
+check "...a variable the adapter appends to is planned again from its value before the first plan: one -j, the grant's" \
+  '[ "$OUT" = "grant=6 MAKEFLAGS=-j6" ]'
+AH_SLOTS_DIR="$SB/rt10" AH_TEST_TOKENS=8 bash "$RUN" --tokens 2 sleep 30 >/dev/null 2>&1 & IH=$!
+# the busy case needs the holder's lease in place: wait for it, as long as the holder lives
+while kill -0 "$IH" 2>/dev/null && ! ls "$SB"/rt10/held/*/holder >/dev/null 2>&1; do sleep 0.2; done
+OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt10" AH_TEST_TOKENS=8 bash "$RUN" fakedotnet --filter X 2>&1)
+check "...with another run holding 2 tokens it gets the planned 2 (nearest non-match)" '[ "$OUT" = "grant=2 args=-m:2 --filter X" ]'
+ah_signal_child TERM "$IH"; wait "$IH" 2>/dev/null
 mv "$RT/bin/ah" "$RT/bin/ah.off"
 OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt7" AH_TEST_TOKENS=8 bash "$RUN" fakecheck v 2>&1)
 check "...without the ah binary the command still runs, with half the bucket and no adapter" '[ "$OUT" = "workers=none grant=4 args=v" ]'

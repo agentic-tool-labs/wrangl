@@ -366,6 +366,9 @@ public static partial class HierarchyModule
         return problems;
     }
 
+    /// <summary>Per line, the <c>[N] key</c> request-section marker it opens (key null for a keyless heading), else null; the one recogniser every section reader uses.</summary>
+    public static (string N, string? Key)?[] SectionMarkers(IReadOnlyList<string> lines) => MessageText.SectionMarkers(lines);
+
     /// <summary>Whether a member of <paramref name="role"/> writes to its tree: every role but reviewer, architect, ultra-advisor and qa, and a member with no role.</summary>
     public static bool IsWriterRole(string? role) => TreeOwnership.IsWriter(role);
 

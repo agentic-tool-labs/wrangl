@@ -177,7 +177,8 @@ changed by a roster edit — use `spawn-one` or `spawn-ad-hoc` to add a member.
 `--model` and you are asked at spawn; answer with `--model <M>` on `spawn-one`,
 or `--member-model <name>=<M>` on `create`, for that spawn only. Without one,
 the spawn is refused with `member-model-undefined` and lists the models the
-class allows. `edit
+class allows. The built-in docs-writer, qa and ux-engineer roles launch on
+their default model when none is set. `edit
 --model ""` clears a stored one. An `advise` role always needs an explicit
 `fable` or `opus`.
 

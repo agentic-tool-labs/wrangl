@@ -2593,7 +2593,8 @@ and written nothing: `ok: false`, `refused: "team-name-unusable"`, `needs_user_c
 `needs_user_choice` is false) and `message`. The name is the user's choice: ask, then re-run with
 `<TEAM>` replaced by their answer.
 
-**`member-model-undefined`.** When a claude-kind member that `create --spawn`, `spawn-one` or
+**`member-model-undefined`.** The built-in docs-writer, qa and ux-engineer roles launch on their default
+model when none is set, so they never get this refusal. When any other claude-kind member that `create --spawn`, `spawn-one` or
 `spawn-ad-hoc` would launch (`--dry-run` included) has no model — none stored, none given with
 `--member-model` / `--model` — the verb exits 2 the same way, after the team-name check and before
 anything is launched or written: `ok: false`, `refused: "member-model-undefined"`, `verb`, `members`
