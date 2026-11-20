@@ -266,6 +266,11 @@ public interface IHierarchyCore
     /// <returns>Unix milliseconds, or null.</returns>
     double? MsgTimeMs(string path);
 
+    /// <summary>Each message's stored text and <see cref="MsgTimeMs"/>, from one read over one connection; (null, null) for a message that is not there.</summary>
+    /// <param name="paths">The messages' paths.</param>
+    /// <returns>One pair per path, in order.</returns>
+    IReadOnlyList<(string? Text, double? TimeMs)> ReadMsgTextsAndTimes(IReadOnlyList<string> paths);
+
     /// <summary>Every request in <c>&lt;dir&gt;/msgs</c> with its response and open flag, newest id first.</summary>
     JsonArray ListExchanges(string dir);
 

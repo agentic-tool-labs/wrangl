@@ -12,7 +12,7 @@ public static partial class WatchModule
     /// <summary>The types of peer record the tick's consumers read: the outage state, the dispatch clock's own rows, and the rows the liveness clock reads. A consumer that reads another type must add it here.</summary>
     public static IReadOnlySet<string> PeerSnapshotTypes { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
-        "outage", "outage-ack", "outage-probe-failed", "overdue-resume", "stalled-after-compact", "idle-without-report", "report-acked", "heard", "unreviewed-done",
+        "outage", "outage-ack", "outage-probe-failed", "overdue-resume", "stalled-after-compact", "idle-without-report", "report-acked", "heard", "unreviewed-done", DispatchClock.NotSentRow,
     };
 
     /// <summary>What recovery does when no switch row exists. This is the one place to change the default.</summary>

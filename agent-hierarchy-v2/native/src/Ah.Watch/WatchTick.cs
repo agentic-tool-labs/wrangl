@@ -85,6 +85,17 @@ public interface IWatchHost : IRecoveryHost
     /// </summary>
     IReadOnlyList<JobFact> ReconcileJobs(string session, string home, string? team, IReadOnlyList<JobFact> jobs) => jobs;
 
+    /// <summary>The cap kills the with-slot journal records since ahd's first start on this build; empty when it cannot be read.</summary>
+    IReadOnlyList<JobCap> CapKills() => [];
+
+    /// <summary>Writes the journal's <c>cap-watch</c> mark when it has none (ahd's first start on this build); true once the mark is there.</summary>
+    bool EnsureCapWatchMark() => true;
+
+    /// <summary>Marks job <paramref name="jobId"/> of <paramref name="team"/> as having had its cap kill told, on the job's own record, so it is never told again.</summary>
+    void MarkCapTold(string session, string home, string? team, string jobId)
+    {
+    }
+
     /// <summary>What the files show of each child lane of the teams <paramref name="session"/> orchestrates: a team whose file names one of them as its parent.</summary>
     IReadOnlyList<LaneFact> Lanes(string session, string home, IReadOnlyList<OwnedTeam> owned) => [];
 
@@ -814,7 +825,10 @@ internal sealed class WatchTick
         JobOutcome jobs;
         lock (_jobTold)
         {
-            jobs = JobEvents.Evaluate(sid, now, _pollMs, [.. owned.Select(static t => t.Name)], team => host.ReconcileJobs(sid, home, team, host.Jobs(sid, home, team)), host.ThresholdSeconds, _jobTold, out jobKeys);
+            _capMarked = _capMarked || host.EnsureCapWatchMark();
+            // the journal is read and parsed once per tick, for every team
+            var caps = new Lazy<IReadOnlyList<JobCap>>(host.CapKills);
+            jobs = JobEvents.Evaluate(sid, now, _pollMs, [.. owned.Select(static t => t.Name)], team => WatchModule.JobsCapped(host.ReconcileJobs(sid, home, team, host.Jobs(sid, home, team)), () => caps.Value), host.ThresholdSeconds, _jobTold, out jobKeys);
         }
 
         events.AddRange(jobs.Events);
@@ -1006,6 +1020,18 @@ internal sealed class WatchTick
                     _ = _jobTold.Add(step);
                 }
 
+                if (ev.Data.Str("step") == JobEvents.CappedStep && ev.RequestId is { } capped)
+                {
+                    try
+                    {
+                        host.MarkCapTold(sid, home, ev.Team, capped);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        _d.Log?.Invoke($"cap kill of job {capped} not marked told ({e.Message})");
+                    }
+                }
+
                 MailOwners(sid, cwd, home, jobs.OwnerMails.Where(m => m.Data.Str("job") == ev.RequestId && m.Data.Str("step") == ev.Data.Str("step")));
             }
 
@@ -1088,6 +1114,8 @@ internal sealed class WatchTick
 
     /// <summary>The (job, step) overrun alarms already told.</summary>
     private readonly HashSet<string> _jobTold = new(StringComparer.Ordinal);
+
+    private bool _capMarked;
     private readonly LaneEscalation.State _laneState = new();
     private readonly double _downMs;
 

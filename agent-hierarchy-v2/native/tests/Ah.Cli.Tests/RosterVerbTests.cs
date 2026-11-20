@@ -1237,8 +1237,40 @@ public sealed class RosterVerbTests : IDisposable
         public JsonObject MemberLiveness(string dir, JsonValue member, string? team = null)
         {
             var (live, indeterminate) = Liveness(member.Member("name")!.Value.AsString());
-            return new() { ["live"] = live, ["indeterminate"] = indeterminate };
+            return new() { ["live"] = live, ["indeterminate"] = indeterminate, ["liveness"] = live || indeterminate ? "live" : "proven_dead" };
         }
+    }
+
+    [Fact]
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
+    public void TheScratchSweepTakesAnIdleTmpUnderTheAhHomeOnlyWhenADeadMembersRecordNamesIt()
+    {
+        string Idle(string key)
+        {
+            var dir = Directory.CreateDirectory(Path.Combine(_sandbox.AhHome, "t", key)).FullName;
+            File.WriteAllText(Path.Combine(dir, "f"), "x");
+            var old = DateTime.UtcNow.AddDays(-10);
+            File.SetLastWriteTimeUtc(Path.Combine(dir, "f"), old);
+            Directory.SetLastWriteTimeUtc(dir, old);
+            return dir;
+        }
+
+        var dead = Idle("aaaa0001");
+        var live = Idle("aaaa0002");
+        var unnamed = Idle("aaaa0003");
+        WriteTeam("tm", $$"""{"team_id":"t-tm","members":[{"name":"tm-dead","role":"dev","tmp":"{{dead}}"},{"name":"tm-live","role":"dev","tmp":"{{live}}"}]}""");
+        var io = PlatformModule.CreateIo(null);
+        var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, new Dictionary<string, string?> { ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home });
+        var graph = ServiceGraph.Build(io, env, new FakeRunner(), _daemon);
+        var teardown = new FakeTeardown { Liveness = name => (name == "tm-live", false) };
+
+        var report = LaunchModule.SweepScratch(
+            PlatformModule.CreateScratch(io.Files, _sandbox.AhHome), teardown, graph.Roster, io.Files, (_, _) => JsonValue.Null, Hierarchy, Hierarchy, DateTimeOffset.UtcNow, commit: true);
+
+        Assert.Equal([dead], report.Entries.Select(e => e.Path));
+        Assert.False(Directory.Exists(dead));
+        Assert.True(Directory.Exists(live));
+        Assert.True(Directory.Exists(unnamed));
     }
 
     [Fact]

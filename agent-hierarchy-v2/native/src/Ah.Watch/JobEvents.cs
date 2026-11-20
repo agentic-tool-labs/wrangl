@@ -23,6 +23,8 @@ namespace Ah.Watch;
 /// <param name="EndedAtMs">When the job ended, in epoch milliseconds, or null while it is open.</param>
 /// <param name="Pgid">The process group of <paramref name="Pid"/>, which a child that outlives it stays in, or null.</param>
 /// <param name="Slot">Where the job stands in the test-slot queue, or null when it has no slot record.</param>
+/// <param name="Capped">The cap kill <c>with-slot.sh</c>'s journal records for this ended job, or null when it ended by itself.</param>
+/// <param name="CapTold">Whether ahd has told the cap kill already (the record's <c>cap_told</c>), which outlives an ahd restart.</param>
 public sealed record JobFact(
     string Id,
     string Team,
@@ -41,7 +43,16 @@ public sealed record JobFact(
     string? PidStart = null,
     double? EndedAtMs = null,
     int? Pgid = null,
-    JobSlot? Slot = null);
+    JobSlot? Slot = null,
+    JobCap? Capped = null,
+    bool CapTold = false);
+
+/// <summary>A cap kill as a <c>capped</c> line of the with-slot journal records it.</summary>
+/// <param name="AtMs">When the kill was journaled, in epoch milliseconds.</param>
+/// <param name="CapSeconds">The cap the run hit, in seconds.</param>
+/// <param name="Killed">The pids the cap killed.</param>
+/// <param name="Slot">The lease the run held, <c>&lt;microseconds&gt;-&lt;wrapper pid&gt;</c>.</param>
+public sealed record JobCap(double AtMs, int CapSeconds, IReadOnlyList<int> Killed, string Slot = "");
 
 /// <summary>Where a test-slot job stands in the machine-wide slot queue, read from the records <c>with-slot.sh</c> keeps.</summary>
 /// <param name="Phase"><c>queued</c> while it waits for the slot, <c>running</c> once it holds it.</param>
@@ -79,6 +90,7 @@ internal static class JobEvents
     internal const string OverdueName = "job-overdue";
     internal const string OverdueStep = "overdue";
     internal const string CapNearStep = "cap-near";
+    internal const string CappedStep = "capped";
 
     /// <summary>How far past its due time a job must run before the alarm, in milliseconds.</summary>
     internal const double MarginMs = 2 * 60 * 1000;
@@ -113,10 +125,12 @@ internal static class JobEvents
         var active = new HashSet<string>(StringComparer.Ordinal);
         foreach (var team in teams)
         {
-            foreach (var job in jobsOf(team).Where(static j => !j.Ended))
+            // an ended job is listed until it is pruned, so its capped key stays active and the kill is told once
+            foreach (var job in jobsOf(team).Where(static j => !j.Ended || (j.Capped is not null && !j.CapTold)))
             {
                 var due = DueMs(job, thresholdSeconds, now, pollMs);
-                foreach (var (step, atMs) in StepsOf(job, thresholdSeconds, now, pollMs).Where(s => now >= s.AtMs))
+                IEnumerable<(string Step, double AtMs)> owed = job.Ended ? [(CappedStep, 0)] : StepsOf(job, thresholdSeconds, now, pollMs).Where(s => now >= s.AtMs);
+                foreach (var (step, _) in owed)
                 {
                     var key = $"{session}|{job.Team}|{OverdueName}|{job.Id}|{step}";
                     if (!active.Add(key) || told.Contains(key))
@@ -138,16 +152,24 @@ internal static class JobEvents
                     var overdue = new WatchEvent(job.Id, "JOB-OVERDUE", text, data) { Name = OverdueName, Team = team };
                     events.Add(overdue);
                     keyed[overdue] = key;
-                    if (job.Background && job.Owner != HierarchyModule.OrchestratorRole)
+                    if ((job.Background || step == CappedStep) && job.Owner != HierarchyModule.OrchestratorRole)
                     {
-                        mails.Add(new JobOwnerMail(job.Owner, job.Team, job.Session, OwnerText(job, step, now, due), data, OverdueName));
+                        // the owner's copy of a cap kill is marked, so delivery drops it when the owner is gone and keeps the Orchestrator's
+                        var ownerData = step == CappedStep ? data.Clone() : data;
+                        if (step == CappedStep)
+                        {
+                            ownerData["owner_copy"] = true;
+                        }
+
+                        mails.Add(new JobOwnerMail(job.Owner, job.Team, job.Session, OwnerText(job, step, now, due), ownerData, OverdueName));
                     }
                 }
             }
         }
 
         var prefix = session + "|";
-        foreach (var gone in told.Where(k => k.StartsWith(prefix, StringComparison.Ordinal) && k.Contains("|" + OverdueName + "|", StringComparison.Ordinal) && !active.Contains(k)).ToList())
+        // a told cap kill is kept: a tick whose journal read failed lists the job without it, and must not make it tellable again
+        foreach (var gone in told.Where(k => k.StartsWith(prefix, StringComparison.Ordinal) && k.Contains("|" + OverdueName + "|", StringComparison.Ordinal) && !k.EndsWith("|" + CappedStep, StringComparison.Ordinal) && !active.Contains(k)).ToList())
         {
             _ = told.Remove(gone);
         }
@@ -220,6 +242,11 @@ internal static class JobEvents
     private static string OwnerText(JobFact job, string step, double now, double due)
     {
         var what = $"job {job.Id} ({job.Kind} {job.Label})";
+        if (step == CappedStep && job.Capped is { } capped)
+        {
+            return $"{what} {CappedText(job, capped)}.";
+        }
+
         if (step == CapNearStep && job.CapAtMs is { } cap)
         {
             var left = (int)Math.Max(0, Math.Round((cap - now) / 60000));
@@ -231,8 +258,79 @@ internal static class JobEvents
         return $"{what} is {late.ToString(CultureInfo.InvariantCulture)}m past its ETA {job.Eta}{pid}. Check it. Hung: kill the processes you started and report BLOCKED. Progressing: ah roster job extend {job.Id} --eta {job.Eta}.";
     }
 
+    /// <summary>What a cap kill did: how long the job ran, the cap and the pids killed.</summary>
+    private static string CappedText(JobFact job, JobCap capped) =>
+        $"was killed at its hard cap after running {DispatchClock.FmtAge(Math.Max(0, capped.AtMs - ClockStartMs(job)) / 1000)} (cap {DispatchClock.FmtAge(capped.CapSeconds)}); killed pids {string.Join(" ", capped.Killed.Select(static p => p.ToString(CultureInfo.InvariantCulture)))}";
+
+    /// <summary>The journal line ahd writes once, on its first start on this build: a cap kill journaled before it is never told.</summary>
+    internal const string WatchMarkKind = "cap-watch";
+
+    /// <summary>
+    /// The cap kills of the with-slot journal's <paramref name="lines"/>, parsed once: the <c>capped</c> lines at or after the first
+    /// <see cref="WatchMarkKind"/> line. With no mark among them, a whole journal (<paramref name="wholeFile"/>) holds only kills from before
+    /// this build, so none is answered and <paramref name="markMissing"/> asks for the mark; a tail without one began after the mark, so all count.
+    /// </summary>
+    internal static IReadOnlyList<JobCap> CapKills(IReadOnlyList<string> lines, bool wholeFile, out bool markMissing)
+    {
+        double? markMs = null;
+        var caps = new List<JobCap>();
+        foreach (var line in lines)
+        {
+            if (!JsonText.TryParse(System.Text.Encoding.UTF8.GetBytes(line), out var v) || !v.IsMap)
+            {
+                continue;
+            }
+
+            var o = v.AsObject();
+            if (o.Get("kind") is not { IsText: true } kind || o.Get("at") is not { IsNumber: true } at)
+            {
+                continue;
+            }
+
+            var atMs = at.AsNumber() * 1000;
+            if (kind.AsString() == WatchMarkKind)
+            {
+                markMs ??= atMs;
+            }
+            else if (kind.AsString() == "capped")
+            {
+                var killed = o.Get("killed") is { IsArray: true } list ? list.AsArray().Where(static k => k.IsNumber).Select(static k => (int)k.AsNumber()).ToList() : [];
+                caps.Add(new JobCap(atMs, o.Get("cap") is { IsNumber: true } cap ? (int)cap.AsNumber() : 0, killed, o.Get("slot") is { IsText: true } s ? s.AsString() : string.Empty));
+            }
+        }
+
+        markMissing = wholeFile && markMs is null;
+        return markMs is { } mark ? caps.Where(c => c.AtMs >= mark).ToList() : markMissing ? [] : caps;
+    }
+
+    /// <summary>The <see cref="WatchMarkKind"/> journal line for <paramref name="nowMs"/>.</summary>
+    internal static string WatchMark(double nowMs) =>
+        $"{{\"kind\": \"{WatchMarkKind}\", \"at\": {Math.Floor(nowMs / 1000).ToString(CultureInfo.InvariantCulture)}}}\n";
+
+    /// <summary>
+    /// The cap kill among <paramref name="caps"/> for an ended job: one journaled between the job's start and its end whose slot is the job's
+    /// wrapper pid (a lease is named <c>&lt;microseconds&gt;-&lt;pid&gt;</c>) or whose killed pids include the job's; null when none is.
+    /// </summary>
+    internal static JobCap? CapOf(JobFact job, IReadOnlyList<JobCap> caps)
+    {
+        if (!job.Ended || job.Pid is not { } pid || job.EndedAtMs is not { } endedMs)
+        {
+            return null;
+        }
+
+        var suffix = "-" + pid.ToString(CultureInfo.InvariantCulture);
+        // the journal and ended_at are whole seconds, hence a second's slack each way
+        return caps.FirstOrDefault(c => c.AtMs + 1000 >= job.SentAtMs && c.AtMs <= endedMs + 1000
+            && (c.Slot.EndsWith(suffix, StringComparison.Ordinal) || c.Killed.Contains(pid)));
+    }
+
     private static string Text(JobFact job, string step, double now)
     {
+        if (step == CappedStep && job.Capped is { } capped)
+        {
+            return $"ahd alarm: job-overdue — {job.Owner}'s {job.Kind} job {job.Id} {CappedText(job, capped)} ({job.Label})";
+        }
+
         var pids = job.Pid is { } pid ? $"pid {pid.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
         if (job.Descendants.Count > 0)
         {

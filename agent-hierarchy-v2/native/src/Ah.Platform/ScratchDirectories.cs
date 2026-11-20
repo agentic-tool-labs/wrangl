@@ -6,7 +6,8 @@ namespace Ah.Platform;
 /// <summary>
 /// The member tmp operations over the real file system. It holds no policy beyond containment: a tmp root is
 /// <c>&lt;team home&gt;/tmp</c> or one directory name below it, checked by real path, and the alias root is always
-/// <c>&lt;ah home&gt;/t</c>. Deletion walks only <c>_dismissed/</c>, never follows a link, and checks each entry with lstat
+/// <c>&lt;ah home&gt;/t</c>, where a member's tmp is a real directory (older versions left links there into the team home's tmp).
+/// Deletion never follows a link, and checks each entry with lstat
 /// before listing it; a racer who swaps a directory for a link between those two steps, inside <c>_dismissed/</c> and 72
 /// hours after the dismissal, is a ceiling this helper accepts rather than a handle-based walk.
 /// </summary>
@@ -20,33 +21,9 @@ internal sealed class ScratchDirectories(IFileReader files, string ahHome) : ISc
 
     private string AliasRoot => Path.Combine(ahHome, "t");
 
-    public string CreateMemberDirectory(string teamHome, string tmpRoot, string member)
-    {
-        var real = TmpRootReal(teamHome, tmpRoot, create: true)!;
-        var path = Path.Combine(real, CheckedName(member));
-        switch (files.Stat(path, followSymlinks: false))
-        {
-            case null:
-                Directory.CreateDirectory(path, Private);
-                break;
-            case { Kind: FileKind.Directory }:
-                break;
-            default:
-                throw new InvalidOperationException($"{path} is not a directory; the member tmp was not created");
-        }
-
-        return path;
-    }
-
-    public string LinkAlias(string aliasRoot, IReadOnlyList<string> keys, string target)
+    public string MakeMemberDirectory(string aliasRoot, IReadOnlyList<string> keys)
     {
         CheckAliasRoot(aliasRoot);
-        if (files.Stat(target) is not { Kind: FileKind.Directory })
-        {
-            throw new InvalidOperationException($"{target} is not a directory; no alias was made for it");
-        }
-
-        var real = files.RealPath(target);
         Directory.CreateDirectory(aliasRoot, Private);
         foreach (var key in keys)
         {
@@ -54,27 +31,52 @@ internal sealed class ScratchDirectories(IFileReader files, string ahHome) : ISc
             switch (files.Stat(path, followSymlinks: false))
             {
                 case null:
-                    File.CreateSymbolicLink(path, real);
+                    Directory.CreateDirectory(path, Private);
+                    return path;
+                case { Kind: FileKind.Directory }:
                     return path;
                 case { Kind: FileKind.Symlink }:
-                    if (files.ReadLink(path) == real)
-                    {
-                        return path;
-                    }
-
-                    if (files.Stat(path) is null)
-                    {
-                        File.Delete(path);
-                        File.CreateSymbolicLink(path, real);
-                        return path;
-                    }
-
-                    break;
+                    // spec member-tmpdir T5: an old alias in the way loses its link, never its target
+                    File.Delete(path);
+                    Directory.CreateDirectory(path, Private);
+                    return path;
             }
         }
 
-        throw new InvalidOperationException($"every alias name under {aliasRoot} is taken by another member's tmp");
+        throw new InvalidOperationException($"every member tmp name under {aliasRoot} is taken by something that is not a directory");
     }
+
+    public bool RemoveMemberDirectory(string aliasRoot, string path)
+    {
+        CheckAliasRoot(aliasRoot);
+        if (!DirectlyUnderAliasRoot(path) || files.Stat(path, followSymlinks: false) is not { Kind: FileKind.Directory })
+        {
+            return false;
+        }
+
+        DeleteTree(path);
+        return true;
+    }
+
+    public ScratchSweepReport SweepMemberDirectories(IReadOnlyCollection<string> paths, DateTimeOffset now, TimeSpan olderThan, bool commit)
+    {
+        var found = paths.Distinct(StringComparer.Ordinal)
+            .Where(p => DirectlyUnderAliasRoot(p) && files.Stat(p, followSymlinks: false) is { Kind: FileKind.Directory } && now - NewestModification(p) > olderThan)
+            .Select(p => new ScratchSweepEntry(p, Size(p)))
+            .ToList();
+        if (commit)
+        {
+            foreach (var entry in found)
+            {
+                DeleteTree(entry.Path);
+            }
+        }
+
+        return new ScratchSweepReport(found, commit);
+    }
+
+    private bool DirectlyUnderAliasRoot(string path) =>
+        Path.GetDirectoryName(path.TrimEnd('/')) == AliasRoot.TrimEnd('/') && Path.GetFileName(path.TrimEnd('/')) is { Length: > 0 } name && name is not ("." or "..");
 
     public string? AliasTarget(string link) =>
         files.Stat(link, followSymlinks: false) is { Kind: FileKind.Symlink } ? files.ReadLink(link) : null;

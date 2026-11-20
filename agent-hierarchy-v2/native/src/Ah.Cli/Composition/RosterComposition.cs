@@ -160,9 +160,12 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
 
     private sealed class GitScratch(IScratchDirectories inner, IProcessRunner runner) : IRosterScratch
     {
-        public string CreateMemberDirectory(string teamHome, string tmpRoot, string member) => inner.CreateMemberDirectory(teamHome, tmpRoot, member);
+        public string MakeMemberDirectory(string aliasRoot, IReadOnlyList<string> keys) => inner.MakeMemberDirectory(aliasRoot, keys);
 
-        public string LinkAlias(string aliasRoot, IReadOnlyList<string> keys, string target) => inner.LinkAlias(aliasRoot, keys, target);
+        public bool RemoveMemberDirectory(string aliasRoot, string path) => inner.RemoveMemberDirectory(aliasRoot, path);
+
+        public ScratchSweepReport SweepMemberDirectories(IReadOnlyCollection<string> paths, DateTimeOffset now, TimeSpan olderThan, bool commit) =>
+            inner.SweepMemberDirectories(paths, now, olderThan, commit);
 
         public string? AliasTarget(string link) => inner.AliasTarget(link);
 
@@ -192,68 +195,8 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
             return result.ExitCode switch { 0 => true, 1 => false, _ => null };
         }
 
-        public string? EnsureWritable(string dir)
-        {
-            try
-            {
-                Directory.CreateDirectory(dir);
-                var probe = Path.Combine(dir, ".write-probe-" + System.Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                File.WriteAllText(probe, string.Empty);
-                File.Delete(probe);
-                return null;
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return e.Message;
-            }
-        }
-
-        public string? EnsureIgnored(string repoDir, string dir)
-        {
-            var probe = Path.Combine(dir, ".probe");
-            if (IsIgnored(repoDir, probe) == true)
-            {
-                return null;
-            }
-
-            var why = string.Empty;
-            string? Git(params string[] args)
-            {
-                var r = runner.Run(new ProcessRequest(["git", "-C", repoDir, .. args], Timeout: TimeSpan.FromSeconds(5)));
-                var text = System.Text.Encoding.UTF8.GetString(r.Stdout.Span).Trim();
-                if (r is { ExitCode: 0, TimedOut: false })
-                {
-                    return text;
-                }
-
-                why = $"git {string.Join(' ', args)} exited {r.ExitCode?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "without a status"}: {System.Text.Encoding.UTF8.GetString(r.Stderr.Span).Trim()}";
-                return null;
-            }
-
-            if (Git("rev-parse", "--git-common-dir") is not { Length: > 0 } common || Git("rev-parse", "--show-prefix") is not { } prefix)
-            {
-                return $"{IRosterScratch.NotGitRepository} ({repoDir}, so {dir} cannot be ignored: {why})";
-            }
-
-            try
-            {
-                var commonDir = Path.GetFullPath(common, repoDir);
-                var line = "/" + prefix.Replace('\\', '/').TrimEnd('/') + "/" + Path.GetRelativePath(repoDir, dir).Replace('\\', '/').TrimEnd('/') + "/";
-                var exclude = Path.Combine(commonDir, "info", "exclude");
-                var current = File.Exists(exclude) ? File.ReadAllText(exclude) : string.Empty;
-                if (!current.Split('\n').Select(l => l.TrimEnd('\r')).Contains(line, StringComparer.Ordinal))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(exclude)!);
-                    File.AppendAllText(exclude, (current.Length == 0 || current.EndsWith('\n') ? string.Empty : "\n") + line + "\n");
-                }
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return $"{e.Message}";
-            }
-
-            return IsIgnored(repoDir, probe) == true ? null : $"git still does not ignore {dir} after adding it to info/exclude";
-        }
+        public bool InGitRepository(string repoDir) =>
+            runner.Run(new ProcessRequest(["git", "-C", repoDir, "rev-parse", "--git-dir"], Timeout: TimeSpan.FromSeconds(5))) is { ExitCode: 0, TimedOut: false };
     }
 
     /// <summary>The owner proof for the roster's owner-only verbs, over the live registrations and the team files.</summary>

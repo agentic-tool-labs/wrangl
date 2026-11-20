@@ -413,6 +413,12 @@ internal sealed partial class MsgCommand
             throw _out.Fail("members cannot edit msgs files; write the body to a file and pass --body-file <path>");
         }
 
+        // Checked before the body is read, and again where the request is stored, so a bad title is refused before a piped body is consumed.
+        if (type == "request" && _opts.Has("title") && Hier.Messages.TitleRefusal(_opts.Text("title") ?? string.Empty) is { } titleRefusal)
+        {
+            throw _out.Fail(titleRefusal);
+        }
+
         var linkedItem = ChecklistItemForRequest(type);
         var bodyText = _opts.Has("body-file") ? ReadBodyFile() : null;
         var dir = _graph.Bootstrap.EnsureHierarchyDir(HierarchyDir);
@@ -465,12 +471,6 @@ internal sealed partial class MsgCommand
         if (type == "request" && !_opts.Has("title") && _opts.Text("from") is "orchestrator" or "sub-orchestrator" or "deputy-chief")
         {
             throw _out.Fail($"--title is required for a request from {_opts.Text("from")}; give the dispatch a few plain words, verb first, e.g. --title \"Make UI slick\"");
-        }
-
-        // Checked here as well as where the request is stored, so a bad title is refused before anything is stored.
-        if (_opts.Has("title") && Hier.Messages.TitleRefusal(_opts.Text("title") ?? string.Empty) is { } titleRefusal)
-        {
-            throw _out.Fail(titleRefusal);
         }
 
         var options = new JsonObject();

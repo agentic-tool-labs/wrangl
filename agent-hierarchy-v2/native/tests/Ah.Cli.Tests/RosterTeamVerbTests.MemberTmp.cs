@@ -1,5 +1,7 @@
 using System.Text;
+using Ah.Abstractions;
 using Ah.Core.Json;
+using Ah.Platform;
 
 namespace Ah.Cli.Tests;
 
@@ -71,6 +73,34 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal(RecordedTmp(home, name)["root"].AsString(), row.Member("tmp")!.Value.AsString());
     }
 
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
+    private static bool InsideGitWorkTree(string dir) =>
+        PlatformModule.CreateProcessRunner().Run(new ProcessRequest(
+            ["git", "-C", dir, "rev-parse", "--show-toplevel"],
+            Environment: Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()
+                .Where(entry => !((string)entry.Key).StartsWith("GIT_", StringComparison.Ordinal))
+                .ToDictionary(entry => (string)entry.Key, entry => (string?)entry.Value, StringComparer.Ordinal),
+            Timeout: TimeSpan.FromSeconds(10))).ExitCode == 0;
+
+    [Fact]
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
+    public void TheTmpdirAMemberIsGivenIsNotInsideAGitWorkTreeNorALinkIntoOne()
+    {
+        var home = SpawnTeamHome();
+        WriteHomeDocument(home);
+        MessagePoolResolutionTests.Git(Project, "init", "-q");
+        Assert.True(InsideGitWorkTree(Project)); // negative: the check does see a work tree
+
+        var (code, spawned, err) = SpawnInWorkTree(MakeWorkTree("t1"));
+
+        Assert.True(code == 0, err);
+        var tmp = RecordedTmp(home, spawned["member"].AsObject()["name"].AsString());
+        var exported = tmp["alias"].AsString() is { Length: > 0 } alias ? alias : tmp["root"].AsString();
+        Assert.True(Directory.Exists(exported));
+        Assert.Null(new DirectoryInfo(exported).LinkTarget);
+        Assert.False(InsideGitWorkTree(exported), exported);
+    }
+
     [Fact]
     public void AResumeGivesTheRelaunchedMemberItsOwnTmpAndExportsTmpdir()
     {
@@ -118,25 +148,9 @@ public sealed partial class RosterTeamVerbTests
             "--transport", "terminal", "--roster-level", "repo", "--orchestrator-pid", Self);
 
     [Fact]
-    public void ACreateWhoseTmpRootCannotBeWrittenIsRefusedBeforeAnyTeamFileOrGrantsDocumentIsWritten()
+    public void ACreateWhoseOneMembersTmpFailsKeepsTheCompleteTeamAndRecordsThatMemberAtNone()
     {
-        File.WriteAllText(Path.Combine(Hierarchy, "tmp"), "in the way");
-
-        var (code, stdout, stderr) = CommitOnePeer();
-
-        Assert.NotEqual(0, code);
-        Assert.Contains("cannot create member tmp", stdout + stderr, StringComparison.Ordinal);
-        Assert.Contains("— no team file or grants document was written", stdout + stderr, StringComparison.Ordinal);
-        Assert.False(_sandbox.TeamExists(TeamPath("proj")));
-        Assert.False(HasGrants(Hierarchy));
-        Assert.DoesNotContain(_runner.Calls, argv => argv.Any(a => a.Contains("new-window", StringComparison.Ordinal)));
-    }
-
-    [Fact]
-    public void ACreateWhoseOneMembersTmpFailsAfterThePreflightKeepsTheCompleteTeamAndRecordsThatMemberAtNone()
-    {
-        Directory.CreateDirectory(Path.Combine(Hierarchy, "tmp", "proj"));
-        File.WriteAllText(Path.Combine(Hierarchy, "tmp", "proj", "proj-implementor"), "in the way");
+        File.WriteAllText(Path.Combine(_sandbox.AhHome, "t"), "in the way");
 
         var (code, stdout, stderr) = CommitOnePeer();
 

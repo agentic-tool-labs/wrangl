@@ -27,4 +27,16 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal(2, code);
         Assert.DoesNotContain("approve", Ah.TestKit.TestGates.Text(_sandbox.AhHome, Hierarchy), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void NegativeApproveRefusesARuleNoGateConsultsAndWritesNothing()
+    {
+        WriteTeam("proj", LiveTeamJson("tmux", OneImplementor));
+
+        var (code, _, stderr) = Roster("approve", Impl, "self-care");
+
+        Assert.Equal(1, code);
+        Assert.Contains("worktree", stderr, StringComparison.Ordinal);
+        Assert.DoesNotContain("approve", Ah.TestKit.TestGates.Text(_sandbox.AhHome, Hierarchy), StringComparison.Ordinal);
+    }
 }

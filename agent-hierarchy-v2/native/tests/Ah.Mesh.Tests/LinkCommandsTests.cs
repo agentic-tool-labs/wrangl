@@ -667,4 +667,46 @@ public sealed class LinkCommandsTests
         Assert.Equal("not_a_peer", orchestrator.Failure!.Code);
         Assert.DoesNotContain(rig.Requests(), f => f.Contains("--lext-", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void AReviewRoundsEndStampsRoundEndedAtAndAPlainUseDoesNot()
+    {
+        var rig = new Rig();
+        var loop = new JsonObject { ["task"] = "20260101-110000-t001", ["peers"] = new JsonArray { "rev@tm" }, ["requester"] = "imp@tm", ["granted_by"] = "orchestrator", ["rounds"] = 5 };
+        var id = rig.Effects.LinksSync("grant", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["link"] = loop, ["now"] = Start.ToUnixTimeMilliseconds() }, "g1").Get("id")!.Value.AsString();
+        JsonValue? Stamp() => rig.Fixture.Links.ReadLinks(rig.Dir, Team)["links"].AsArray().Single(l => l.Member("id") is { IsText: true } lid && lid.AsString() == id).Member("round_ended_at");
+        JsonObject Use(string from, bool roundEnd, long at) =>
+            new() { ["dir"] = rig.Dir, ["team"] = Team, ["from"] = from, ["to"] = from == "rev@tm" ? "imp@tm" : "rev@tm", ["now"] = at, ["round_end"] = roundEnd, ["id"] = id };
+
+        _ = rig.Effects.LinksSync("use", Use("imp@tm", false, Start.ToUnixTimeMilliseconds() + 1000), "u1");
+        Assert.Null(Stamp()); // a message that ends no round stamps nothing
+
+        _ = rig.Effects.LinksSync("use", Use("rev@tm", true, Start.ToUnixTimeMilliseconds() + 2000), "u2");
+        Assert.Equal("2026-01-01T12:00:02.000Z", Stamp()?.AsString());
+
+        _ = rig.Effects.LinksSync("use", Use("rev@tm", true, Start.ToUnixTimeMilliseconds() + 2500), "u2b"); // leaves a prev of :02
+        _ = rig.Effects.LinksSync("round", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["id"] = id, ["now"] = Start.ToUnixTimeMilliseconds() + 3000 }, "r1");
+        Assert.Equal("2026-01-01T12:00:03.000Z", Stamp()?.AsString());
+        Assert.Null(rig.Fixture.Links.ReadLinks(rig.Dir, Team)["links"].AsArray().Single(l => l.Member("id") is { IsText: true } lid && lid.AsString() == id).Member("round_ended_prev"));
+
+        // a failed send rolls its round back, and the stamp with it
+        JsonObject Release() => new() { ["dir"] = rig.Dir, ["team"] = Team, ["id"] = id, ["round_end"] = true };
+        _ = rig.Effects.LinksSync("use", Use("rev@tm", true, Start.ToUnixTimeMilliseconds() + 4000), "u3");
+        _ = rig.Effects.LinksSync("release", Release(), "x1");
+        Assert.Equal("2026-01-01T12:00:03.000Z", Stamp()?.AsString());
+    }
+
+    [Fact]
+    public void ARolledBackFirstRoundLeavesNoRoundEndedAt()
+    {
+        var rig = new Rig();
+        var loop = new JsonObject { ["task"] = "20260101-110000-t001", ["peers"] = new JsonArray { "rev@tm" }, ["requester"] = "imp@tm", ["granted_by"] = "orchestrator", ["rounds"] = 3 };
+        var id = rig.Effects.LinksSync("grant", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["link"] = loop, ["now"] = Start.ToUnixTimeMilliseconds() }, "g1").Get("id")!.Value.AsString();
+        _ = rig.Effects.LinksSync("use", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["from"] = "rev@tm", ["to"] = "imp@tm", ["now"] = Start.ToUnixTimeMilliseconds() + 1000, ["round_end"] = true, ["id"] = id }, "u1");
+        _ = rig.Effects.LinksSync("release", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["id"] = id, ["round_end"] = true }, "x1");
+
+        var link = rig.Fixture.Links.ReadLinks(rig.Dir, Team)["links"].AsArray().Single(l => l.Member("id") is { IsText: true } lid && lid.AsString() == id);
+        Assert.Null(link.Member("round_ended_at"));
+        Assert.Null(link.Member("round_ended_prev"));
+    }
 }

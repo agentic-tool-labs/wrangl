@@ -24,9 +24,9 @@ internal sealed record PreparedTmp(string Root, string Alias, string Kind, strin
 /// The per-member tmp directory: made at spawn when the team's grants are in force, recorded in the grants document, and removed
 /// when a close of the member verifies (a <c>_dismissed/</c> entry an older version left is deleted 72 hours on by the next spawn,
 /// dismissal or scratch sweep). A Claude
-/// member's tmp is <c>&lt;team home&gt;/tmp/&lt;team&gt;/&lt;member&gt;</c> with a short alias under the ah home; a Codex
-/// member's is the adapter's own directory. A record made before the team component was added names
-/// <c>&lt;team home&gt;/tmp/&lt;member&gt;</c>; it keeps working and is removed the same way.
+/// member's tmp is the real directory <c>&lt;ah home&gt;/t/&lt;key&gt;</c>, outside every checkout; a Codex
+/// member's is the adapter's own directory. A record an older version made names
+/// <c>&lt;team home&gt;/tmp/&lt;team&gt;/&lt;member&gt;</c> (or <c>&lt;team home&gt;/tmp/&lt;member&gt;</c>) with a link under the ah home; it keeps working and is removed the same way.
 /// </summary>
 internal static class MemberTmp
 {
@@ -71,9 +71,9 @@ internal static class MemberTmp
     private static int Bytes(string text) => Encoding.UTF8.GetByteCount(text);
 
     /// <summary>
-    /// The tmp a member about to launch gets, made now (<paramref name="create"/>) or only named. Every Claude member gets one: git is made
-    /// to ignore the tmp root through the repository's own <c>info/exclude</c> when nothing ignores it, and the member's grants need no
-    /// document. When it cannot be made a new spawn is refused; a <paramref name="resume"/> (or a create, once its preflight passed) goes on without it and the result says why
+    /// The tmp a member about to launch gets, made now (<paramref name="create"/>) or only named. Every Claude member whose team home is in a
+    /// git repository gets one, a real directory under the alias root (outside every checkout, so nothing is made in the repository), and
+    /// the member's grants need no document. When it cannot be made a new spawn is refused; a <paramref name="resume"/> (or a create, once its preflight passed) goes on without it and the result says why
     /// (<see cref="PreparedTmp.Reason"/>). Null for a Codex member whose team has no grants in force, and for a dry run with no scratch operations.
     /// </summary>
     internal static PreparedTmp? Prepare(RosterContext c, string member, bool codex, bool create, List<string> warnings, bool resume = false, bool onCreate = false)
@@ -86,93 +86,39 @@ internal static class MemberTmp
                 : null;
         }
 
-        var root = TeamRoot(c);
-        var path = NodePath.Join(root, member);
+        var aliasRoot = AliasRoot(c);
+        var keys = Keys(TeamId(c), member);
+        var path = NodePath.Join(aliasRoot, keys[0]);
         if (services.Scratch is not { } scratch)
         {
             return create ? Fail(c, member, path, "scratch operations are not available", resume, onCreate, warnings) : null;
         }
 
-        var keys = Keys(TeamId(c), member);
-        var aliasRoot = AliasRoot(c);
         if (!create)
         {
-            return new PreparedTmp(path, Bytes(NodePath.Join(aliasRoot, keys[0])) <= AliasBudget ? NodePath.Join(aliasRoot, keys[0]) : string.Empty, "claude");
+            return new PreparedTmp(path, path, "claude");
         }
 
         try
         {
             SweepAll(c, scratch);
-            if (scratch.EnsureIgnored(c.TeamHome, TmpRoot(c)) is { } notIgnored)
+            if (!scratch.InGitRepository(c.TeamHome))
             {
-                if (notIgnored.StartsWith(IRosterScratch.NotGitRepository, StringComparison.Ordinal))
-                {
-                    warnings.Add($"{member}: no member tmp and TMPDIR is not set: {IRosterScratch.NotGitRepository}");
-                    return new PreparedTmp(string.Empty, string.Empty, "none", IRosterScratch.NotGitRepository);
-                }
-
-                return Fail(c, member, path, notIgnored, resume, onCreate, warnings);
+                warnings.Add($"{member}: no member tmp and TMPDIR is not set: {IRosterScratch.NotGitRepository}");
+                return new PreparedTmp(string.Empty, string.Empty, "none", IRosterScratch.NotGitRepository);
             }
 
-            var real = scratch.CreateMemberDirectory(c.TeamHome, root, member);
-            if (Bytes(NodePath.Join(aliasRoot, keys[0])) > AliasBudget)
+            var made = scratch.MakeMemberDirectory(aliasRoot, keys);
+            if (Bytes(made) > AliasBudget)
             {
-                warnings.Add($"{member}: the alias under {aliasRoot} would be longer than {AliasBudget} bytes, so TMPDIR is the real path {real}");
-                return new PreparedTmp(real, string.Empty, "claude");
+                warnings.Add($"{member}: TMPDIR {made} is longer than {AliasBudget} bytes, so a socket made in it may not fit");
             }
 
-            string alias;
-            try
-            {
-                alias = scratch.LinkAlias(aliasRoot, keys, real);
-            }
-            catch (InvalidOperationException e)
-            {
-                warnings.Add($"{member}: no alias could be made ({e.Message}), so TMPDIR is the real path {real}");
-                return new PreparedTmp(real, string.Empty, "claude");
-            }
-
-            if (Bytes(alias) > AliasBudget)
-            {
-                scratch.RemoveAlias(aliasRoot, alias);
-                warnings.Add($"{member}: the alias {alias} is longer than {AliasBudget} bytes, so TMPDIR is the real path {real}");
-                return new PreparedTmp(real, string.Empty, "claude");
-            }
-
-            return new PreparedTmp(real, alias, "claude");
+            return new PreparedTmp(made, made, "claude");
         }
         catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException)
         {
             return Fail(c, member, path, e.Message, resume, onCreate, warnings);
-        }
-    }
-
-    /// <summary>
-    /// What <c>create</c> proves once, before it writes the team file or a grants document: the tmp root can be ignored by git (or there
-    /// is no git repository, which later records <c>none</c> per member) and a file can be written under the team's tmp directory.
-    /// Refuses, with nothing written, when it cannot.
-    /// </summary>
-    internal static void Preflight(RosterContext c)
-    {
-        var root = TeamRoot(c);
-        string? reason = null;
-        if (c.Services.Scratch is not { } scratch)
-        {
-            reason = "scratch operations are not available";
-        }
-        else if (scratch.EnsureIgnored(c.TeamHome, TmpRoot(c)) is { } notIgnored && !notIgnored.StartsWith(IRosterScratch.NotGitRepository, StringComparison.Ordinal))
-        {
-            reason = notIgnored;
-        }
-        else if (scratch.EnsureWritable(root) is { } unwritable)
-        {
-            reason = unwritable;
-        }
-
-        if (reason is not null)
-        {
-            var message = $"cannot create member tmp {root}: {reason} — no team file or grants document was written";
-            throw c.Refuse(new JsonObject { ["refused"] = "member-tmp", ["path"] = root, ["detail"] = reason, ["message"] = message }, message);
         }
     }
 
@@ -189,6 +135,13 @@ internal static class MemberTmp
             new JsonObject { ["refused"] = "member-tmp", ["member"] = member, ["path"] = path, ["detail"] = reason, ["message"] = message },
             message);
     }
+
+    /// <summary>The tmp path <paramref name="member"/>'s team-file row records, or null.</summary>
+    private static string? RowTmp(RosterContext c, string member) =>
+        c.Services.Roster.ReadTeamRecord(c.Dir, c.TeamFile).Member("members") is { IsArray: true } list
+            ? list.AsArray().Where(m => m.Member("name") is { IsText: true } n && n.AsString() == member)
+                .Select(m => m.Member("tmp") is { IsText: true } t ? t.AsString() : null).FirstOrDefault()
+            : null;
 
     private static void SweepAll(RosterContext c, IScratchDirectories scratch)
     {
@@ -231,7 +184,7 @@ internal static class MemberTmp
     }
 
     /// <summary>
-    /// Dismisses <paramref name="member"/>'s tmp: removes a team-home tmp (never one outside the team's tmp root), removes its alias while it still
+    /// Dismisses <paramref name="member"/>'s tmp: removes its directory under the alias root, or for an older record a team-home tmp (never one outside the team's tmp root) and its alias while it still
     /// points there, and sweeps what was dismissed more than 72 hours ago. A Codex tmp is the adapter's and is left alone.
     /// Returns a warning when something could not be done, else null.
     /// </summary>
@@ -249,12 +202,20 @@ internal static class MemberTmp
             var realTop = services.Files.Exists(top) ? services.Files.RealPath(top) : top;
             // a team with no grants row records no tmp: the member's directory at its spawn path is still its own (b435)
             var spawned = NodePath.Join(realTop, TeamName(c), member);
+            var keyed = NodePath.Join(AliasRoot(c), Keys(TeamId(c), member)[0]);
             var tmp = WorkTreeAssignment.RecordedTmp(c, member)
                 ?? (services.Files.Exists(NodePath.Join(TeamRoot(c), member))
                     ? new Ah.Config.GrantTmp(spawned, Keys(TeamId(c), member).Select(k => NodePath.Join(AliasRoot(c), k)).FirstOrDefault(a => scratch.AliasTarget(a) == spawned) ?? string.Empty, "claude")
-                    : null);
+                    : RowTmp(c, member) == keyed ? new Ah.Config.GrantTmp(keyed, keyed, "claude") : null);
             if (tmp is not { Kind: "claude" })
             {
+                return null;
+            }
+
+            if (Path.GetDirectoryName(tmp.Root) == AliasRoot(c).TrimEnd('/'))
+            {
+                scratch.RemoveMemberDirectory(AliasRoot(c), tmp.Root);
+                SweepAll(c, scratch);
                 return null;
             }
 

@@ -24,23 +24,28 @@ internal static class SoftGate
 
     private const int ReasonLimit = 200;
 
-    public static HookOutcome Bounce(GateContext c, string rule, string reason, string? fix, bool retryPasses, SoftScope scope = SoftScope.Input, string? member = null, bool noGiveup = false)
+    // approvedBy: the rule whose `approve` row for member lifts this call; rule itself when null.
+    public static HookOutcome Bounce(GateContext c, string rule, string reason, string? fix, bool retryPasses, SoftScope scope = SoftScope.Input, string? member = null, bool noGiveup = false, string? approvedBy = null)
     {
+        // ah2-310 A6: outside the try, and it never throws, so a failed lookup is no member, never a silent pass.
+        var who = member ?? SoftRules.MemberOfSession(c);
         try
         {
             var dir = c.Services.Config.HierarchyDir(c.Cwd());
             var all = Rows(c, dir);
             var key = Key(c, rule, scope);
 
-            if (member is not null && Unconsumed(all, member, rule))
+            if (member is not null && Unconsumed(all, member, approvedBy ?? rule))
             {
-                Record(c, dir, rule, "approved", key, 0, reason, member);
+                Record(c, dir, approvedBy ?? rule, "approved", key, 0, reason, member);
                 return HookEmit.Silent;
             }
 
             var n = SinceReset(c, all).Count(r => r.Text("key") == key && r.Text("outcome") == "bounce");
             var outcome = n == 0 || noGiveup || (n == 1 && !retryPasses) ? "bounce" : n == 1 ? "retry-pass" : "giveup";
-            Record(c, dir, rule, outcome, key, n, reason, null);
+            // ah2-310 A3'/A7: the member is on every row, so `permissions diagnose` finds its denials; only a call that passes a member
+            // is liftable, and its row names the rule an approval of it takes.
+            Record(c, dir, rule, outcome, key, n, reason, who, member is null ? null : approvedBy ?? rule);
             if (outcome != "bounce")
             {
                 return HookEmit.Silent;
@@ -127,7 +132,7 @@ internal static class SoftGate
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)))[..16];
     }
 
-    private static void Record(GateContext c, string dir, string rule, string outcome, string key, int n, string reason, string? member)
+    private static void Record(GateContext c, string dir, string rule, string outcome, string key, int n, string reason, string? member, string? approvableBy = null)
     {
         var row = new JsonObject
         {
@@ -156,6 +161,11 @@ internal static class SoftGate
         if (member is not null)
         {
             row["member"] = member;
+        }
+
+        if (approvableBy is not null)
+        {
+            row["approvable_by"] = approvableBy;
         }
 
         Note(c, dir, row);

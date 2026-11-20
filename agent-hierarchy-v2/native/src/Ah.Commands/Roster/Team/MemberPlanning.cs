@@ -505,11 +505,13 @@ internal static class MemberPlanning
     /// <summary>
     /// The refusal for members about to launch with no model. A member's model is the user's to choose, so the CLI never applies the
     /// fallback itself: it names the members and hands back two reruns, one with a literal &lt;MODEL&gt; per member and one with each
-    /// fallback filled in, for a caller that cannot ask.
+    /// fallback filled in, for a caller that cannot ask. <paramref name="adHoc"/>: the member is launched as spawn-ad-hoc launches one
+    /// (a spawn-one of a role the roster lacks hands over to it), so the reruns carry only the flags spawn-ad-hoc takes.
     /// </summary>
-    internal static RosterFailure RefuseMemberModels(RosterContext c, JsonArray needing)
+    internal static RosterFailure RefuseMemberModels(RosterContext c, JsonArray needing, bool adHoc = false)
     {
         var cmd = c.Command;
+        var shape = adHoc ? "spawn-ad-hoc" : cmd;
         var listed = new HashSet<string>(StringComparer.Ordinal);
         foreach (var n in needing)
         {
@@ -519,7 +521,7 @@ internal static class MemberPlanning
             }
         }
 
-        bool Drop(string flag, string? value) => cmd switch
+        bool Drop(string flag, string? value) => shape switch
         {
             "create" => flag == "member-model" && value is not null
                 && listed.Contains(value.Contains('=', StringComparison.Ordinal) ? value[..value.IndexOf('=', StringComparison.Ordinal)] : value[..^1]),
@@ -527,7 +529,7 @@ internal static class MemberPlanning
             _ => flag == "model",
         };
 
-        string Tail(Func<JsonValue, string> modelOf) => cmd switch
+        string Tail(Func<JsonValue, string> modelOf) => shape switch
         {
             "create" => string.Join(' ', needing.Select(m => $"--member-model {RosterContext.ArgWord(JsConvertText(m.Member("name")))}={modelOf(m)}")),
             "spawn-one" => $"--member {RosterContext.ArgWord(JsConvertText(needing[0].Member("name")))} --model {modelOf(needing[0])}",

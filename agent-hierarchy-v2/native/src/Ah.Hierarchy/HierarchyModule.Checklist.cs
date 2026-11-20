@@ -841,7 +841,8 @@ public static partial class HierarchyModule
                 break;
             // a late DONE leaves a newer dispatch alone, and its sha is not the work now under way
             case ChecklistEventReply when own is not null && ChecklistReplyIsDone(ev.Text) && !DispatchedSince(own.Item, ev.Ref):
-                var review = new PlanInput(own.Item.Item, "report", Commits: ev.Sha is { Length: > 0 } reported && RecordsSha(own.Item, reported, ev.Role) ? [reported] : null);
+                var records = ev.Sha is { Length: > 0 } reported && RecordsSha(own.Item, reported, ev.Role);
+                var review = new PlanInput(own.Item.Item, "report", Commits: records ? [ev.Sha!] : null) { AtBase = ev.Sha is { Length: > 0 } && !records };
                 Move(own, OwesUser(own.Item) ? [review] : [review, new PlanInput(own.Item.Item, "todo", Todo: $"answer {ev.Actor}: report")]);
                 break;
             // a withdrawn review leaves the work it reviewed reported; any other withdrawn brief drops its item

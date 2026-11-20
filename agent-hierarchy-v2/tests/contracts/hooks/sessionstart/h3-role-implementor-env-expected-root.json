@@ -42,7 +42,7 @@
         {
           "path": "ah/state/ah.db.roster_records.jsonl",
           "mode": "0644",
-          "content": "{\"type\":\"peer\",\"status\":\"up\",\"role\":\"implementor\",\"session_id\":\"sess-contract\",\"pid\":\"<PID>\",\"ppid\":\"<PID>\",\"cwd\":\"<ROOT:proj>\",\"pane_id\":\"p-unknown\",\"tab_id\":null,\"workspace_id\":null,\"pid_start\":\"<PIDSTART>\",\"team\":\"tm\",\"expected_root\":\"<ROOT:ah>/launched-elsewhere\",\"misplaced\":true,\"op_id\":\"<OPID:2>\",\"ts\":\"<ISO:4>\"}\n"
+          "content": "{\"type\":\"peer\",\"status\":\"up\",\"role\":\"implementor\",\"session_id\":\"sess-contract\",\"pid\":\"<PID>\",\"ppid\":\"<PID>\",\"cwd\":\"<ROOT:proj>\",\"pane_id\":\"p-unknown\",\"tab_id\":null,\"workspace_id\":null,\"pid_start\":\"<PIDSTART>\",\"team\":\"tm\",\"team_home\":\"<ROOT:proj>/.claude/ah2\",\"expected_root\":\"<ROOT:ah>/launched-elsewhere\",\"misplaced\":true,\"op_id\":\"<OPID:2>\",\"ts\":\"<ISO:4>\"}\n"
         },
         {
           "path": "proj/.claude/ah2/.gitignore",

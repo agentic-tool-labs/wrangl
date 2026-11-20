@@ -84,12 +84,40 @@ public sealed partial class RosterDoctorVerbTests
         Assert.Contains("root: /wt/impl  session: sess-impl", stdout, StringComparison.Ordinal);
     }
 
+    /// <summary>ah2-310 A3': a soft-gate bounce newer than the classifier denial is the last denial; another member's is not.</summary>
+    [Fact]
+    public void ANewerGateBounceIsTheLastDenialWithItsRuleReasonAndApproveFix()
+    {
+        SeedDiagnoseTeam();
+        SeedDenial("git cherry-pick abc", age: TimeSpan.FromHours(1));
+        var calls = PlantGraph().Hierarchy.StateCalls;
+        calls.AppendGate(Hierarchy, new JsonObject { ["type"] = "soft-gate", ["rule"] = "worktree", ["outcome"] = "bounce", ["member"] = "other", ["tool"] = "Bash", ["reason"] = "not impl's" });
+        // A7: a self-care clone bounce names the rule whose approval lifts it
+        calls.AppendGate(Hierarchy, new JsonObject { ["type"] = "soft-gate", ["rule"] = "self-care", ["outcome"] = "bounce", ["member"] = "impl", ["tool"] = "Bash", ["reason"] = "self-care only.", ["approvable_by"] = "worktree" });
+
+        var stdout = Diagnose();
+
+        Assert.Matches(@"last denial: \S+ \[gate:self-care\] \(Bash\)", stdout);
+        Assert.Equal("cause:       self-care: self-care only.; fix: ah roster approve impl worktree", CauseLine(stdout));
+    }
+
+    [Fact]
+    public void NegativeAGateBounceNoApprovalLiftsGivesNoFix()
+    {
+        SeedDiagnoseTeam();
+        PlantGraph().Hierarchy.StateCalls.AppendGate(Hierarchy, new JsonObject { ["type"] = "soft-gate", ["rule"] = "self-care", ["outcome"] = "bounce", ["member"] = "impl", ["tool"] = "Bash", ["reason"] = "self-care only." });
+
+        Assert.Equal("cause:       self-care: self-care only.", CauseLine(Diagnose()));
+    }
+
     [Fact]
     public void ADenialOlderThanADayOrOfAnotherMemberIsNotTheLastDenial()
     {
         SeedDiagnoseTeam();
         SeedDenial("git cherry-pick abc", age: TimeSpan.FromHours(25));
         SeedDenial("git cherry-pick abc", member: "other");
+        PlantGraph().Hierarchy.StateCalls.AppendGate(Hierarchy, new JsonObject { ["type"] = "soft-gate", ["rule"] = "worktree", ["outcome"] = "bounce", ["member"] = "other", ["tool"] = "Bash", ["reason"] = "r" });
+        PlantGraph().Hierarchy.StateCalls.AppendGate(Hierarchy, new JsonObject { ["type"] = "soft-gate", ["rule"] = "worktree", ["outcome"] = "retry-pass", ["member"] = "impl", ["tool"] = "Bash", ["reason"] = "r" });
 
         Assert.Equal("cause:       none", CauseLine(Diagnose()));
     }

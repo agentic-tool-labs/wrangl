@@ -270,8 +270,8 @@ With the `ahd` daemon up (with it down, entries wait where they are), on each ti
 An entry reaches a Claude session's conversation by exactly one carrier, fixed when `send` creates it and held in a claim record
 (`<box>/claims/<entry id>.json`, changed only through the mailbox `claim` op under the box's append lock):
 
-- `relay`: the receiver has a live Claude registration. `send` prints `delivery: relay — make this one SendMessage now: SendMessage "<text>" to <to>. ah delivers it another way if you do not.` and the sender makes that one SendMessage. A repeated `send` for an entry past `pending` prints `delivery: already <state> — do not send a SendMessage for this entry`.
-- `prompt`: no live Claude receiver session. `send` prints `delivery: plugin prompt — do not send a SendMessage for this entry`; the daemon delivers the entry as a plugin prompt and the sender sends nothing.
+- `relay`: the receiver has a live Claude registration. `send` prints `delivery: relay — ah delivers it another way if you do not; make this one SendMessage now: SendMessage "<text>" to <to>` and the sender makes that one SendMessage. A repeated `send` for an entry past `pending` prints `delivery: already <state> — nothing more to do`.
+- `prompt`: no live Claude receiver session. `send` prints `delivery: plugin prompt — nothing more to do`; the daemon delivers the entry as a plugin prompt and the sender sends nothing.
 
 The states are `pending`, `relay-claimed`, `relay-sent`, `relay-unconfirmed`, `relay-failed`, `fallback-claimed` and `delivered`.
 

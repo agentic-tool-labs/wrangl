@@ -306,6 +306,19 @@ public sealed class AhdNewVerbTests : IDisposable
         AssertRefused("team-name-unusable", AhdNew("jim", "-t", "bad name!", "--dry-run"));
     }
 
+    [Fact]
+    public void TheTeamRerunOfAnUnusableTeamNameRunsAsPrinted()
+    {
+        var rerun = Parse(AhdNew("jim", "-t", "bad name!", "--dry-run").Stdout)["rerun"].AsString();
+        Assert.DoesNotContain(" roster ", rerun, StringComparison.Ordinal);
+        Assert.Contains(" new ", rerun, StringComparison.Ordinal);
+        string[] words = [.. rerun.Split(' ', StringSplitOptions.RemoveEmptyEntries).SkipWhile(w => w != "new").Skip(1).Select(w => w == "<TEAM>" ? "rc4" : w)];
+
+        var (code, stdout, stderr) = AhdNew(words);
+
+        Assert.True(code == 0, rerun + "\n" + stdout + stderr);
+    }
+
     // ---------------------------------------------------------------- foreground launch
 
     [Fact]

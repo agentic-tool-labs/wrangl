@@ -55,6 +55,8 @@ check "qa: pinned to model sonnet" 'fm qa.md | grep -qE "^model: sonnet$"'
 check "qa: keeps Write, Bash and Agent (not denied, no tools allowlist)" '! fm qa.md | grep -E "^disallowedTools:" | grep -qwE "Write|Bash|Agent" && ! fm qa.md | grep -qE "^tools:"'
 check "qa: body carries the no-advisor rule" 'grep -q "generic \`advisor\` tool" "$A/qa.md"'
 check "qa: body routes every run through tests/run-set.sh and never edits or commits" 'grep -q "tests/run-set.sh" "$A/qa.md" && grep -q "never edit or commit" "$A/qa.md"'
+check "qa: a repo without tests/run-set.sh runs the brief's command through ah test run, else BLOCKED" 'grep -q "^## Without tests/run-set.sh" "$A/qa.md" && grep -q "ah test run --eta large -- <command>" "$A/qa.md" && grep -q "report BLOCKED asking for the" "$A/qa.md"'
+check "qa: the fallback runs nothing and reports BLOCKED when repo HEAD is not the brief's SHA" 'grep -q "compare \`git rev-parse HEAD\` in \`repo\`" "$A/qa.md" && grep -q "report BLOCKED naming both and run nothing" "$A/qa.md"'
 check "qa: body carries no spec number or section sign" '! grep -qE "[Ss]pec [0-9]|§" "$A/qa.md"'
 # ---- sub-orchestrator: the lane runner under the top Orchestrator; sonnet, no user-facing tools, no surrogate authority
 check "sub-orchestrator: the agent file exists with name sub-orchestrator" '[ -f "$A/sub-orchestrator.md" ] && fm sub-orchestrator.md | grep -qE "^name: sub-orchestrator$"'

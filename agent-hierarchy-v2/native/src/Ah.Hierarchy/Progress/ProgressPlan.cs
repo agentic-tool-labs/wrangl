@@ -78,6 +78,9 @@ public sealed record PlanItem(
     /// <summary>Whether the item is in review because a reviewer's request opened on it (a <c>review</c> row with role <c>reviewer</c>), not because an older DONE report put it there.</summary>
     public bool Reviewing { get; init; }
 
+    /// <summary>The requests whose DONE <c>report</c> row carried <c>at_base</c> (nothing committed); null when none (ah2-312 M3'').</summary>
+    public IReadOnlyList<string>? AtBaseRefs { get; init; }
+
     /// <summary>The checklist item (<c>stream/id</c>) this item comes after, from its latest <c>after</c> row; null when none (an empty row clears it).</summary>
     public string? After { get; init; }
 
@@ -251,7 +254,7 @@ internal static partial class ProgressFormat
         string ts, string team, string stream, string item, string eventName, string by,
         string? title = null, IReadOnlyList<string>? commits = null, string? branch = null, int? issue = null, string? note = null, string? session = null,
         int? rank = null, string? area = null, string? holder = null, string? role = null, string? todo = null, string? reference = null, string? source = null, string? parent = null,
-        PlanCause? cause = null, string? baseSha = null, IReadOnlyList<string>? options = null, string? answer = null, string? askedFor = null, string? cls = null, string? after = null)
+        PlanCause? cause = null, string? baseSha = null, IReadOnlyList<string>? options = null, string? answer = null, string? askedFor = null, string? cls = null, string? after = null, bool atBase = false)
     {
         var row = new JsonObject { ["v"] = PlanVersion, ["ts"] = ts, ["team"] = team, ["stream"] = stream, ["item"] = item, ["event"] = eventName };
         if (title is not null)
@@ -364,6 +367,11 @@ internal static partial class ProgressFormat
         if (after is not null)
         {
             row["after"] = after;
+        }
+
+        if (atBase)
+        {
+            row["at_base"] = true;
         }
 
         row["by"] = by;

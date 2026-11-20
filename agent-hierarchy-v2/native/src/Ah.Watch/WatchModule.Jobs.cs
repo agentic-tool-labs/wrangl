@@ -10,6 +10,37 @@ public static partial class WatchModule
     public static string JobsDir(string hierarchyDir, string? team) =>
         Path.Combine(hierarchyDir, "jobs", string.IsNullOrEmpty(team) ? "_default" : team);
 
+    /// <summary>The with-slot journal, where a cap kill is recorded: <c>journal.jsonl</c> in <see cref="SlotsRoot"/>.</summary>
+    public static string SlotsJournal(IAhEnvironment environment) => Path.Combine(SlotsRoot(environment), "journal.jsonl");
+
+    /// <summary>The cap kills of the journal's lines, parsed once; see <c>JobEvents.CapKills</c> for the <c>cap-watch</c> mark and <paramref name="markMissing"/>.</summary>
+    public static IReadOnlyList<JobCap> CapKills(IReadOnlyList<string> lines, bool wholeFile, out bool markMissing)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        return JobEvents.CapKills(lines, wholeFile, out markMissing);
+    }
+
+    /// <summary>The <c>cap-watch</c> journal line ahd appends on its first start on this build.</summary>
+    public static string CapWatchMark(double nowMs) => JobEvents.WatchMark(nowMs);
+
+    /// <summary>
+    /// The jobs, each ended one not yet told with the cap kill <paramref name="caps"/> holds for it as <see cref="JobFact.Capped"/>;
+    /// <paramref name="caps"/> is asked only when such a job is listed.
+    /// </summary>
+    public static IReadOnlyList<JobFact> JobsCapped(IReadOnlyList<JobFact> jobs, Func<IReadOnlyList<JobCap>> caps)
+    {
+        ArgumentNullException.ThrowIfNull(jobs);
+        ArgumentNullException.ThrowIfNull(caps);
+        static bool Open(JobFact j) => j.Ended && !j.CapTold && j.Pid is not null && j.Capped is null;
+        if (!jobs.Any(Open))
+        {
+            return jobs;
+        }
+
+        var kills = caps();
+        return [.. jobs.Select(j => Open(j) && JobEvents.CapOf(j, kills) is { } cap ? j with { Capped = cap } : j)];
+    }
+
     /// <summary>
     /// The job records of <paramref name="team"/> (per-dir-files-to-db S8: its <c>jobs</c> rows). A record that cannot be read or lacks an
     /// id, an owner or a start is skipped and named to <paramref name="log"/>, so one bad record never hides the others.
@@ -248,7 +279,8 @@ public static partial class WatchModule
             Text(o, "pid_start"),
             Ms("ended_at"),
             o.Get("pgid") is { IsNumber: true } pgid ? (int)pgid.AsNumber() : null,
-            SlotOf(o.Get("slot")));
+            SlotOf(o.Get("slot")),
+            CapTold: Text(o, "cap_told") is { Length: > 0 });
     }
 
     private static JobSlot? SlotOf(JsonValue? value)

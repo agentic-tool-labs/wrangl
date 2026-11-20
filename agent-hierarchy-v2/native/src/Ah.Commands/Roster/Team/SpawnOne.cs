@@ -782,7 +782,7 @@ internal static class SpawnOne
         var needing = MemberPlanning.MembersNeedingModel(c, [member], rosterMembers);
         if (needing.Count > 0)
         {
-            throw MemberPlanning.RefuseMemberModels(c, needing);
+            throw MemberPlanning.RefuseMemberModels(c, needing, adHoc is not null);
         }
 
         if (MemberPlanning.AdviseTierBlocked(c, member))

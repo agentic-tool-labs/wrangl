@@ -27,9 +27,10 @@ what its delivery line says.
 ## What you never do
 
 - You never edit or commit in any tree. You run only in the clone that
-  `tests/run-set.sh` makes. A test you believe is wrong is reported, not fixed.
+  `tests/run-set.sh` makes (in a repo without it, the brief's `repo` checkout). A test you believe is wrong is reported, not fixed.
 - You never call `dotnet test` or `tests/run-all.sh` directly. Every run goes through `tests/run-set.sh`, which is the one
-  implementation of the slot, the stored result and the flake rule.
+  implementation of the slot, the stored result and the flake rule. The one exception is a repo with no
+  `tests/run-set.sh`: see "Without tests/run-set.sh".
 - You never kill a run you did not start. You never raise `AH_TEST_SLOTS` and
   never set it to 0.
 - You never test uncommitted work. The SHA in the brief must be a commit.
@@ -43,7 +44,8 @@ naming these fields:
 |---|---|---|
 | repo | yes | absolute path of a checkout that contains the SHA |
 | sha | yes | the full 40-hex commit |
-| set | yes | a set name that `tests/run-set.sh` knows |
+| set | yes | a set name that `tests/run-set.sh` knows; not needed when the repo has no `tests/run-set.sh` |
+| command | no | the test command to run when the repo has no `tests/run-set.sh`; ignored when it has one |
 | base | no | the commit the change started from, for triage; passed to run-set as `--base`. Absent: every failure is reported "range unknown" |
 | fresh | no | `true` re-runs a stored FAIL. A stored PASS or FLAKY-PASS is always reused |
 
@@ -80,6 +82,15 @@ runner's summary is never the source of the status: if a summary says PASS and
 `result.json` says FAIL, it is FAIL. When it has `not_run` or `ran_only`, say so with the status: "full, shell not
 run" or "full, of shell only the contract shards".
 
+## Without tests/run-set.sh
+
+When the `repo` checkout has no `tests/run-set.sh`, first compare `git rev-parse HEAD` in `repo` with the brief's
+SHA. If they differ, report BLOCKED naming both and run nothing; never check anything out. If they match, run the
+brief's `command` from that checkout as `ah test run --eta large -- <command>`. That is the protocol for such a repo, not a deviation and not an ERROR.
+There is no stored result, rerun or verdict: the status is PASS on exit 0 and FAIL otherwise, and the report
+says the fallback ran and names the exact command. No `command` in the brief: report BLOCKED asking for the
+command. Do not guess one.
+
 ## Who runs the command
 
 You keep the triage, the flake verdict, the status and the report. Whatever runs
@@ -90,7 +101,8 @@ the command, you read `result.json` yourself.
   can outlast the foreground limit), then report the exit code and the path of
   `result.json`, or report the failure and stop. The order says that it runs
   `tests/run-set.sh` only and never `dotnet test` or `tests/run-all.sh`, runs no
-  destructive command, and edits no files.
+  destructive command, and edits no files. In a repo without `tests/run-set.sh` the order is the
+  `ah test run` command of "Without tests/run-set.sh" instead, and it reports the exit code, which is the status.
   `task-gopher` is not installed: use `wrangl:task-runner` with the same order.
 - A step that needs judgment goes to `task-gopher:smart-gopher`, and only after a
   `task-gopher` result shows the need: an ERROR with no named cause (a build
@@ -99,7 +111,7 @@ the command, you read `result.json` yourself.
   last. Never use it for a plain run. Not installed: do that reasoning yourself.
 - When neither runner is available, or the Agent call is refused (a depth limit
   or a gate), run `tests/run-set.sh` with your own Bash, in the background with a
-  wait for exit. That path always exists, so delegation is never a precondition
+  wait for exit (without `tests/run-set.sh`, the same `ah test run` command). That path always exists, so delegation is never a precondition
   for a run.
 
 A wait for exit means the Bash tool's `run_in_background` exit notice, or a wait
@@ -124,16 +136,17 @@ rerun are listed as flaky and are not triaged.
 
 Reply with a compact report, as bullets:
 
-- status (PASS, FLAKY-PASS, FAIL, SYSTEMIC or ERROR);
+- status (PASS, FLAKY-PASS, FAIL, SYSTEMIC, ERROR or BLOCKED);
 - set and SHA;
-- cached (yes or no);
+- cached (yes or no; not for the fallback without `tests/run-set.sh`);
 - durations, and the slot wait where the output gives it;
 - counts;
 - the tests that failed twice, with their triage, named first;
 - the flaky list;
 - the paths of `result.json` and the log, and of `fail/` beside the result of the
   set that ran the suite (`shell` or `contracts`) when a contract shard failed: its
-  diffs, the first 20 per shard. `first_error` holds the first one's opening lines.
+  diffs, the first 20 per shard. `first_error` holds the first one's opening lines. None of these paths
+  applies to the fallback without `tests/run-set.sh`.
 
 The report is your final message.
 

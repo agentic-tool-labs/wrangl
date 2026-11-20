@@ -352,6 +352,21 @@ internal class WatchHostAdapter(
             return false;
         }
 
+        // ah2-296 L3: whether an open request to a reviewer is a review of this request
+        var partOf = new List<(int Index, string Path)>();
+        var reviewsOf = new Dictionary<(string, string?), List<(string Id, JsonObject Fm)>>();
+        bool ReviewOpen(string hdir, string? team, string requestId, string? requestTo, string? item)
+        {
+            if (!reviewsOf.TryGetValue((hdir, team), out var reviews))
+            {
+                reviews = [.. exchangeSource.OpenExchanges(hdir, team, allTeams: false)
+                    .Select(e => (e.Id, Fm: exchangeSource.FrontMatter(e.RequestPath))).Where(static r => r.Fm is not null).Select(static r => (r.Id, r.Fm!))];
+                reviewsOf[(hdir, team)] = reviews;
+            }
+
+            return reviews.Any(r => IsReviewOf(requestId, requestTo, item, r.Id, Str(r.Fm, "to"), Str(r.Fm, "parent"), Str(r.Fm, "item")));
+        }
+
         // read once, before the rows: a response written during the loop moves it, so the next tick derives again
         var msgsVersion = Hs.Core.MsgsVersion();
         long tLandedOnly = 0, tDelivered = 0, tPath = 0, tShown = 0, tExchange = 0, tFront = 0, tFollow = 0, tStream = 0, tManager = 0;
@@ -499,11 +514,26 @@ internal class WatchHostAdapter(
                 AfterSlug = afterSlug,
                 AfterEta = afterEta,
                 AfterClosedMs = afterClosed,
-                SentMs = sentAt.TryGetValue(requestId, out var sentFirst) ? sentFirst : null,
+                SentMs = sentAt.TryGetValue(requestId, out var sentFirst) ? sentFirst : derived.EntrySentMs.TryGetValue(requestId, out var entrySent) ? entrySent : null,
+                ReviewOpen = open && ReviewOpen(hdir, Str(fm, "team"), requestId, Str(exchange, "to") ?? Str(fm, "to"), Str(fm, "item")),
                 Undelivered = isDerived && !viaEntry,
                 BriefUnread = derived.UnreadBriefs.Contains(requestId),
                 RequestPath = path,
             });
+            if (open && responsePath is not null)
+            {
+                partOf.Add((candidates.Count - 1, responsePath));
+            }
+        }
+
+        // ah2-296 L1: the open requests' part times, from the message store in one read
+        var parts = WakeComposition.PartFiledMs(Hs.Core, [.. partOf.Select(static p => p.Path)]);
+        for (var i = 0; i < partOf.Count; i++)
+        {
+            if (parts[i] is { } partMs)
+            {
+                candidates[partOf[i].Index] = candidates[partOf[i].Index] with { PartMs = partMs };
+            }
         }
 
         Lap($"loop({candidates.Count})");
@@ -621,6 +651,24 @@ internal class WatchHostAdapter(
     /// Whether an exchange id's stamp puts it past the horizon, so its front matter need not be read. No file is consulted: a message kept only in the database has none.
     /// The id does not say its zone, so a day of margin; <see cref="WithinHorizon"/> then decides exactly. An id with no stamp is not older.
     /// </summary>
+    /// <summary>
+    /// ah2-296 L3: whether the open request <paramref name="reviewId"/> is a review of request <paramref name="requestId"/>: it is to a reviewer, is
+    /// not the request itself, and either names the request as its parent, or has no parent, is on the same checklist item, and the request is
+    /// not itself to a reviewer. A review parented on another request is that request's.
+    /// </summary>
+    internal static bool IsReviewOf(string requestId, string? requestTo, string? item, string reviewId, string? reviewTo, string? reviewParent, string? reviewItem) =>
+        reviewTo == "reviewer" && reviewId != requestId
+        && (reviewParent == requestId
+            || (reviewParent is null or "" or "null" && item is { Length: > 0 } && reviewItem == item && requestTo != "reviewer"));
+
+    /// <summary>
+    /// ah2-296: the one reading of "this brief entry sent its request", shared by the watch and the failsafe: a brief of a request file, from a sender
+    /// <paramref name="senderOk"/> accepts (an owned team's Orchestrator), whose request is inside the horizon.
+    /// </summary>
+    internal static bool IsSentBrief(string? reference, string? from, Func<string, bool> senderOk, double nowMs) =>
+        reference is not null && reference.EndsWith("--request.md", StringComparison.Ordinal) && from is not null && senderOk(from)
+        && !IdOlderThanHorizon(NodePath.Basename(reference).Split("--")[0], nowMs);
+
     internal static bool IdOlderThanHorizon(string id, double nowMs) =>
         id.Length >= 15
         && DateTimeOffset.TryParseExact(id[..15], "yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at)
@@ -667,6 +715,8 @@ internal class WatchHostAdapter(
                 {
                     ["ref"] = reference,
                     ["to"] = Field(entry, "to") ?? string.Empty,
+                    ["from"] = from,
+                    ["created"] = Field(entry, "created") ?? string.Empty,
                     ["unread"] = Field(entry, "id") is { } id && !acked.Value(id),
                 });
             }
@@ -681,7 +731,11 @@ internal class WatchHostAdapter(
 
     private volatile BriefMemo? _briefMemo;
 
-    private sealed record DerivedSet(List<JsonObject> Rows, HashSet<string> Owned, HashSet<string> EntryIds, HashSet<string> UnreadBriefs);
+    private sealed record DerivedSet(List<JsonObject> Rows, HashSet<string> Owned, HashSet<string> EntryIds, HashSet<string> UnreadBriefs)
+    {
+        /// <summary>ah2-296 L2: when each request's earliest brief entry was sent, for a send that wrote no dispatch row (a <c>msg send --ref &lt;id&gt;</c>).</summary>
+        public Dictionary<string, double> EntrySentMs { get; } = new(StringComparer.Ordinal);
+    }
 
     /// <summary>
     /// The requests of the teams this session owns that no dispatch row names, as rows marked <c>derived</c> so the dispatch loop
@@ -775,7 +829,7 @@ internal class WatchHostAdapter(
                 _ = set.UnreadBriefs.Add(meta.Id);
             }
 
-            if (IdOlderThanHorizon(meta.Id, nowMs))
+            if (!IsSentBrief(reference, Str(entry, "from"), from => ownedNamed.Any(team => from == HierarchyModule.OrchestratorAddress(team)), nowMs))
             {
                 continue;
             }
@@ -784,6 +838,12 @@ internal class WatchHostAdapter(
             if (Str(entry, "to") is { Length: > 0 } to)
             {
                 row["to_addr"] = to;
+            }
+
+            if (Str(entry, "created") is { Length: > 0 } sentText && Timestamps.TryParseMs(sentText, out var sentMs)
+                && (!set.EntrySentMs.TryGetValue(meta.Id, out var earliest) || sentMs < earliest))
+            {
+                set.EntrySentMs[meta.Id] = sentMs;
             }
 
             _ = set.EntryIds.Add(meta.Id);
@@ -1423,6 +1483,65 @@ internal class WatchHostAdapter(
             log?.Invoke($"jobs of {team ?? "_default"} for {session} not reconciled ({e.Message})");
             return jobs;
         }
+    }
+
+    // ponytail: the journal's last 64 KiB, read once a tick that lists an untold ended job; a cursor if caps ever outgrow that
+    public IReadOnlyList<JobCap> CapKills()
+    {
+        var path = WatchModule.SlotsJournal(graph.Environment);
+        try
+        {
+            var lines = new List<string>();
+            var whole = true;
+            if (graph.Io.Files.Exists(path))
+            {
+                var tail = graph.Io.Files.ReadTail(path, 64 * 1024);
+                whole = !tail.StartsMidFile;
+                lines.AddRange(System.Text.Encoding.UTF8.GetString(tail.Bytes).Split('\n', StringSplitOptions.RemoveEmptyEntries).Skip(whole ? 0 : 1));
+            }
+
+            return WatchModule.CapKills(lines, whole, out _);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            log?.Invoke($"slot journal {path} not read ({e.Message})");
+            return [];
+        }
+    }
+
+    private double? _capMarkAtMs;
+
+    public bool EnsureCapWatchMark()
+    {
+        var path = WatchModule.SlotsJournal(graph.Environment);
+        // stamped with this ahd's first try, so a kill journaled while the mark could not yet be written still counts
+        _capMarkAtMs ??= clock.UtcNow.ToUnixTimeMilliseconds();
+        try
+        {
+            var tail = graph.Io.Files.Exists(path) ? graph.Io.Files.ReadTail(path, 64 * 1024) : default;
+            var whole = tail.Bytes is null || !tail.StartsMidFile;
+            var lines = tail.Bytes is null ? [] : System.Text.Encoding.UTF8.GetString(tail.Bytes).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            _ = WatchModule.CapKills(lines, whole, out var markMissing);
+            if (markMissing)
+            {
+                // ahd's first start on this build: what the journal holds so far is from before it and is never told
+                graph.Io.Writer.Mkdir(Path.GetDirectoryName(path)!);
+                graph.Io.Appender.Append(path, System.Text.Encoding.UTF8.GetBytes(WatchModule.CapWatchMark(_capMarkAtMs.Value)));
+            }
+
+            return true;
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            log?.Invoke($"cap-watch mark in {path} not written ({e.Message})");
+            return false;
+        }
+    }
+
+    public void MarkCapTold(string session, string home, string? team, string jobId)
+    {
+        var hier = SessionCwd(session) is { } cwd ? graph.Config.MainHierarchyDir(cwd) ?? home : home;
+        Hs.StateCalls.PutJob(hier, Path.GetFileName(WatchModule.JobsDir(hier, team)), jobId, new JsonObject { ["cap_told"] = Hs.Messages.LocalIso() }, merge: true);
     }
 
     private static readonly TimeSpan PruneEvery = TimeSpan.FromMinutes(10);

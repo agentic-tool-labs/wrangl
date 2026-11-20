@@ -464,7 +464,7 @@ One durable entry per call. `from` is your own address (`user` if you have none)
 
 A relative `--ref` is resolved against `--cwd` (else the current directory) and is then held to the same rule as an absolute one: the file must exist and sit in a hierarchy `msgs/` directory.
 
-A report whose file is unchanged since the same sender delivered it to the same recipient (acked or not) is not sent again: exit 0, `entry <id> → <address> (already delivered; unchanged)` with the existing id, and no new entry; an amended file is a new entry.
+A report whose file is unchanged since the same sender delivered it to the same recipient (acked or not) is not sent again: exit 0, `entry <id> → <address> (already delivered; unchanged; nothing more to do)` with the existing id, and no new entry; an amended file is a new entry.
 
 `delivery: pull (<adapter>)` → send nothing else; `delivery: fallback — SendMessage "…" to <name>` → do exactly that (the text ends `[ah-entry <id> to <address>]`; keep it, it is how the mailbox learns the entry was carried); `delivery: fallback — ah roster deliver <name>` → run it. Never both. Errors: `error: <code>: <message>` (`unknown_address`, `ambiguous_address`, `bad_address`, `bad_request`), nothing written.
 
@@ -1068,9 +1068,9 @@ When the team holds a grants document (`<hierarchy dir>/grants/<team>.json`), `s
 
 While the document is in mode `log` or `enforce`, an `implementor` whose work tree would be the repository's main checkout is refused with `main-checkout` before anything launches; `--allow-main` (on `spawn-one`, `spawn-ad-hoc`, `create --spawn` and `resume`) lifts that.
 
-- Each member also gets a private tmp, `<team home>/tmp/<team>/<member>/` (mode 0700; a record made before the team component keeps `<team home>/tmp/<member>/` until the member is dismissed).
-- It is made with or without a grants document, and when git does not already ignore the path, ah appends it to the repository's local `info/exclude` (never your `.gitignore`).
-- Its short alias `<ah home>/t/<key>` is exported as `TMPDIR` for Claude members (a Codex member's tmp is the adapter's own directory).
+- Each Claude member whose team home is in a git repository also gets a private tmp, the real directory `<ah home>/t/<key>/` (mode 0700), outside every checkout; nothing is made in the repository. It is exported as `TMPDIR` (a Codex member's tmp is the adapter's own directory).
+- It is made with or without a grants document. An older version's link at that path is replaced by the directory; the link's target is left alone. A record an older version made keeps its `<team home>/tmp/<team>/<member>/` (or `<team home>/tmp/<member>/`) until the member is dismissed.
+- A verified dismissal removes it, and `scratch-sweep` takes one that a team record names when no live member's record does and nothing in it changed for 72 hours.
 
 The record keeps `tmp: {root, alias, kind}`.
 
@@ -1265,6 +1265,8 @@ Plans and close results carry the same `sources` block as `disband`, and a plan 
 With no team file (for instance right after `disband --close` removed it): exit 0 with `dismissed: false, reason: "no active team and no live peers"` when the peer registry offers no closable session; exit 2, listing the live untracked sessions and the name / pane_id / session_id values `dismiss` accepts, when it does.
 
 Closing the team's last member keeps the team with no members when the record names an Orchestrator, so the Orchestrator keeps its team and address; `disband` or `untrack --all` removes it. Only a record that names no Orchestrator is removed: its plan adds `team_will_be_removed: true` and the close adds `team_removed: true`. It resolves the member through the same sources as `disband` and returns the same verified-close keys (`closed` means verified gone; `still_live`, `strays`, `warnings`); see [Team home and teardown](#team-home-and-teardown).
+
+A close that is not verified (the pane is still listed, the transport cannot be queried, or a recorded appserver pid is not verified) keeps the member's row, says on stderr which pane or session it left, and exits 1. Only a verified close removes the row, so a dismissed member is gone from `teams` and from the queue alarms. Its name can come back: a later `spawn-one` or `spawn-ad-hoc` may reuse it for a new session.
 
 A **plan** for a member with no pane (a `terminal`-transport team member, a null `transport_id`, or a live peer record with no `pane_id`) exits 0 with `expected: 0`, no `next`, `not_closable: [{name, reason: "no pane"}]` and a W8 warning; a member with a pane gets `not_closable: []` and no W8. `dismiss --close` on such a member is unchanged: exit 2, "no addressable pane", no JSON.
 

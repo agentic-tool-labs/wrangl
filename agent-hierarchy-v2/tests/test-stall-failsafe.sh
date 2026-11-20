@@ -69,7 +69,8 @@ dispatch() {
   # The brief was sent: one nobody sent to a member with no session owes no alarm, from ahd or from the timer.
   printf '{"v":1,"id":"brief-%s","from":"orchestrator@tm","to":"cd@tm","kind":"brief","route":"pull","created":"%s","ref":"%s"}\n' "$id" "$(ago "$age")" "$HIER/msgs/$id--implementor--$slug--request.md" | AH_DAEMON=off seed_mail "$CDIR"
 }
-A=20261021-100000-aaaa; B=20261021-100000-bbbb
+# ids carry the time they were made, as `ah msg new` writes them: a brief of a request older than the watch's horizon is not a send
+STAMP=$(date +%Y%m%d-%H%M%S); A=$STAMP-aaaa; B=$STAMP-bbbb
 
 start_timer() {
   : > "$T/timer.out"

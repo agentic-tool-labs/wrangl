@@ -16,7 +16,8 @@ internal static class ScratchSweep
     internal static readonly TimeSpan Retention = TimeSpan.FromHours(72);
 
     /// <summary>
-    /// Finds the sweepable scratch under <paramref name="teamHome"/>, and deletes it when <paramref name="commit"/> is true.
+    /// Finds the sweepable scratch under <paramref name="teamHome"/>, and the member tmps under the alias root that its team records name,
+    /// and deletes them when <paramref name="commit"/> is true.
     /// <paramref name="grants"/> is the grants state call (<c>status</c> by team and member), which names a legacy member's tmp.
     /// </summary>
     internal static ScratchSweepReport Run(
@@ -108,6 +109,28 @@ internal static class ScratchSweep
             return Row(record, member) is { } row ? Judge(team, row) : ScratchOwner.Unowned;
         }
 
-        return scratch.Sweep(teamHome, now, Retention, IsMemberName, OwnerOf, commit);
+        var legacy = scratch.Sweep(teamHome, now, Retention, IsMemberName, OwnerOf, commit);
+
+        // spec member-tmpdir T4: a tmp under the alias root is swept only when a team record names it and no live member's record does
+        var named = new List<(string Path, ScratchOwner Owner)>();
+        foreach (var team in teams)
+        {
+            if (Record(team).Member("members") is not { IsArray: true } list)
+            {
+                continue;
+            }
+
+            foreach (var row in list.AsArray())
+            {
+                if (row.Member("tmp") is { IsText: true } tmp && !tmp.AsString().StartsWith("none (", StringComparison.Ordinal))
+                {
+                    named.Add((tmp.AsString(), Judge(team, row)));
+                }
+            }
+        }
+
+        var live = named.Where(n => n.Owner == ScratchOwner.Live).Select(n => n.Path).ToHashSet(StringComparer.Ordinal);
+        var members = scratch.SweepMemberDirectories([.. named.Select(n => n.Path).Where(p => !live.Contains(p))], now, Retention, commit);
+        return new ScratchSweepReport([.. legacy.Entries, .. members.Entries], commit);
     }
 }

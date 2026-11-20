@@ -154,6 +154,12 @@ internal sealed class PlanFold : IPlanFold
                 Commits = row.Member("commits") is { IsArray: true } done ? [.. done.AsArray().Where(static c => c.IsText).Select(static c => c.AsString())] : [],
                 Branch = ProgressFormat.PlanText(row, "branch"),
                 ReportedDone = true,
+                // the latest report on a request decides: one without the flag (a re-report after commits) takes the request out
+                AtBaseRefs = row.Member("cause")?.Member("ref") is not { IsText: true } reportRef
+                    ? current.AtBaseRefs
+                    : row.Member("at_base") is { IsBool: true } atBase && atBase.AsBool()
+                        ? [.. (current.AtBaseRefs ?? []).Where(r => r != reportRef.AsString()), reportRef.AsString()]
+                        : current.AtBaseRefs?.Where(r => r != reportRef.AsString()).ToList() is { Count: > 0 } kept ? kept : null,
             },
             "approve" => Move(current, PlanStates.Approved),
             "testing" => Move(current, PlanStates.Testing) with { Note = ProgressFormat.PlanText(row, "note") ?? current.Note },

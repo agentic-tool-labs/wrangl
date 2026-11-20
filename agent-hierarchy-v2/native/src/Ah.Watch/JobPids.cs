@@ -123,6 +123,13 @@ internal static partial class JobPids
     /// </summary>
     internal static string? ProgramOf(string label)
     {
+        // ah2-296 L4': a line that reaches the test bucket after assignments, a cd or earlier commands is the bucket's job; the shell parser
+        // keeps quoted text in one word, so a line that only mentions `ah test run` in a string is not
+        if (Ah.Core.CoreModule.ShellCommands(label).Any(static s => !s.Derived && s.Wrappers.Contains("bucket")))
+        {
+            return TestRunScript;
+        }
+
         if (LeadingCd().Match(label) is { Success: true } cd)
         {
             label = cd.Groups[1].Value;

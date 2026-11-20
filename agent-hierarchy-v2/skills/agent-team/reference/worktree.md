@@ -38,7 +38,8 @@ member, whose writable directories are fixed at launch: have the work done in it
 
 ## Scratch directories
 
-Scratch and verification output go in `$TMPDIR` (the member's own tmp, `<team home>/tmp/<team>/<member>`). Probes use
+Scratch and verification output go in `$TMPDIR` (the member's own tmp, the real directory `<ah home>/t/<key>`, outside
+every checkout). Probes use
 `mktemp -d /tmp/ahprobe.XXXXXX` (see Probes below). A verified `dismiss` close removes the member's tmp and drops its
 work-tree record; `disband` does that for every member it closes.
 

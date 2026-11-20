@@ -20,6 +20,12 @@ internal static class ApproveVerb
             throw new RosterFailure("approve: usage: approve <member> <rule> [--cwd <path>]");
         }
 
+        // ah2-310 A2': an approval no gate consults would print "approved" and change nothing.
+        if (!Ah.Config.ConfigModule.ApprovableRules.Contains(rule))
+        {
+            throw new RosterFailure($"approve: no gate consults approvals for \"{rule}\"; rules that can be approved: {string.Join(", ", Ah.Config.ConfigModule.ApprovableRules)}", exitCode: 1);
+        }
+
         if (!c.Services.Roster.ResolveMemberTeam(c.Dir, member).Found)
         {
             throw new RosterFailure($"approve: no member \"{member}\" in a team of this hierarchy");

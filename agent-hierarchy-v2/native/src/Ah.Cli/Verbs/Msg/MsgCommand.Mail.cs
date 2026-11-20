@@ -290,6 +290,17 @@ internal sealed partial class MsgCommand
             throw new MailFailure("bad_request", "send needs a recipient: ah msg send <name@team> ...");
         }
 
+        // an id captured by a pipeline that failed arrives empty: say so where SendCore would give the three-way error (same test as there)
+        if (_opts.Has("ref") && string.IsNullOrEmpty(Str("ref")))
+        {
+            var refGiven = Str("ref") is not null;
+            var threeWay = Str("event") is not null ? refGiven : refGiven == (Str("text") is not null) && Str("kind") != "note";
+            if (threeWay)
+            {
+                throw new MailFailure("bad_request", "--ref: the id is empty");
+            }
+        }
+
         var ctx = _graph.Callers.RequestContext(Where);
         var mailbox = _graph.Mailbox;
         string team;

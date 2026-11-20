@@ -270,7 +270,7 @@ internal sealed class ChecklistDryRun(IReadOnlyList<JsonValue> ledger) : IHierar
     {
         foreach (var e in events)
         {
-            Append(stream, ProgressFormat.PlanRow(e.At ?? Now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer));
+            Append(stream, ProgressFormat.PlanRow(e.At ?? Now, team, stream, e.Item, e.Event, by, e.Title, e.Commits, e.Branch, e.Issue, e.Note, session, e.Rank, e.Area, e.Holder, e.Role, e.Todo, e.Ref, e.Source, e.Parent, e.Cause, e.Base, e.Options, e.Answer, atBase: e.AtBase));
         }
 
         return new PlanWriteResult(false, events.Count, null, null);

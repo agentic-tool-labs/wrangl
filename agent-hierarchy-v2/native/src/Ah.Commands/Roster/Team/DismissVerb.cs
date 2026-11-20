@@ -258,14 +258,16 @@ internal static class DismissVerb
             summary["source"] = "peers";
             summary["results"] = DisbandVerb.ResultsOf(verified);
             summary["sources"] = sources();
-            if (verified.Results.All(r => r.Get("closed") is { IsTruthy: true } && r.Get("appserver_unverified") is not { IsTruthy: true }))
+            var peerClosed = verified.Results.All(r => r.Get("closed") is { IsTruthy: true } && r.Get("appserver_unverified") is not { IsTruthy: true });
+            if (peerClosed)
             {
                 // A peer has no team row, so it is the role's only member when no row of the team holds that role.
                 var role = MemberPlanning.Text(peer.Member("role"));
                 AbandonOpenBriefs(c, dir, MemberPlanning.Text(peer.Member("name")) ?? name, peer, warnings, summary, soleOfRole: role is { Length: > 0 } && !Members(team).Any(m => MemberPlanning.Text(m.Member("role")) == role));
             }
 
-            return ReleaseGate.Finish(c, summary, release);
+            var finished = ReleaseGate.Finish(c, summary, release);
+            return peerClosed ? finished : NotClosed(c, name, peer, verified);
         }
 
         var peerRelease = ReleaseGate.Apply(c, dir, closable, ReleaseGate.NoTeamRows);
@@ -381,7 +383,25 @@ internal static class DismissVerb
             }
         }
 
-        return ReleaseGate.Finish(c, summary, release);
+        var code = ReleaseGate.Finish(c, summary, release);
+        return allClosed ? code : NotClosed(c, name, healedTarget, verified);
+    }
+
+    /// <summary>ah2-313 D2: a close that left the session says which pane or session it left, and exits 1; the member's row stays.</summary>
+    private static int NotClosed(RosterContext c, string name, JsonValue target, Ah.Launch.CloseVerification verified)
+    {
+        var left = verified.Results
+            .Where(static r => r.Get("closed") is not { IsTruthy: true } || r.Get("appserver_unverified") is { IsTruthy: true })
+            .Select(r =>
+            {
+                var pane = r.Get("transport_id") is { IsTruthy: true } t ? $"pane {MemberPlanning.JsConvertText(t)}" : null;
+                var session = MemberPlanning.Text(target.Member("session_id")) is { Length: > 0 } s ? $"session {s}" : null;
+                var what = string.Join(", ", new[] { pane, session }.Where(static x => x is not null));
+                var why = r.Get("error") is { IsText: true } e ? e.AsString() : r.Get("appserver_unverified") is { IsTruthy: true } ? "appserver pid not verified" : "not verified closed";
+                return $"{(what.Length > 0 ? what : "its session")} ({why})";
+            });
+        c.Stderr.WriteLine($"dismiss: {name} was not closed — it left {string.Join("; ", left)}; its record stays");
+        return 1;
     }
 
     /// <summary>What follows a verified close: the member's row leaves the team file, its work tree is released and, with <c>--also-config</c>, its config entry goes.</summary>
