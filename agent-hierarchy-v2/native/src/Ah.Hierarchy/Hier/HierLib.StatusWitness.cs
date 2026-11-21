@@ -132,6 +132,8 @@ internal sealed partial class HierLib
 
         public JsonValue Activity(string dir, string file) => inner.Activity(dir, file);
 
+        public JsonArray Subagents(string sessionId) => inner.Subagents(sessionId);
+
         public JsonArray RunExchanges(string dir, string? team, long sinceMs) => inner.RunExchanges(dir, team, sinceMs);
 
         public IReadOnlyList<JsonValue> TeamTags(IReadOnlyList<JsonValue> exchanges) => inner.TeamTags(exchanges);

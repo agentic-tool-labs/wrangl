@@ -7,7 +7,7 @@ import { laneChildren, memberIds, memberOf, sparksOf, teamLabel } from "./select
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
+import { COLUMNS, FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, onDuty, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -484,9 +484,11 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const Y = (y) => (y - (box?.y ?? 0)) * k;
   const rect = (r) => ({ x: X(r.x), y: Y(r.y), w: r.w * k, h: r.h * k });
   const scaled = (cmds) => cmds.map((c) => [c[0], ...c.slice(1).map((n, i) => (i % 2 === 0 ? X(n) : Y(n)))]);
-  const sparks = sparksOf(slices, tm);
-  const edges = slices.get(`topology:${id}`)?.body.edges?.parent_child ?? [];
-  const fl = flowLinks(edges, sparks, layout.pos, o);
+  // ah2-373 R10: while a deputy is on duty, the ends at the Orchestrator are drawn at the deputy (drawing only), and a card's "out"
+  // counts the briefs drawn leaving it
+  const duty = onDuty(nodes, slices.get(`topology:${id}`)?.body.edges?.parent_child ?? [], sparksOf(slices, tm));
+  const sparks = duty.sparks;
+  const fl = flowLinks(duty.edges, sparks, layout.pos, o);
   // a lane's member reads its pane from its lane's summary, as the sidebar's row does (memberPane)
   const paneAt = (n) => memberPane(n.id, slices.get((n.team || teamId).replace(/^team:/, "team-summary:"))?.body.member_states?.[n.id]);
   const cards = members.filter((n) => layout.pos.has(n.id)).map((n) => ({ id: n.id, rect: rect(layout.pos.get(n.id)), card: flowCardOf(slices, n.team || teamId, n.id),
@@ -507,9 +509,10 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   const said = `${at.t.name} Flow: ${cards.length} members, ${lines} reporting lines, ${dots.length} briefs in flight${fl.rest > 0 ? `, ${fl.rest} more not drawn` : ""}`;
   return { ...base, closed: false, name: at.t.name, pending: false, orient: o, picked, stage, fit, k, box,
     size: box ? { w: box.w * k, h: box.h * k } : { w: 0, h: 0 },
-    cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y) })),
+    // a label's `i` is its column (flow-model.js COLUMNS), so a lane keeps its colour when an empty column before it is not drawn
+    cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y), i: COLUMNS.indexOf(l.text) })),
     // V10: each lane's column from its header to the stage's foot (vertical: its row, across the laid-out width; the content is centred), and its cards' width for the header's rule
-    lanes: layout.labels.map((l, i) => (o === "vertical"
+    lanes: layout.labels.map((l) => ({ i: COLUMNS.indexOf(l.text), l })).map(({ i, l }) => (o === "vertical"
       ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h) * k, rule: FLOW.card.w * k }
       : { i, x: X(l.x), y: Y(l.y), w: FLOW.card.w * k, h: Math.max(box ? box.h * k : 0, stage.h) - Y(l.y), rule: FLOW.card.w * k })), bands: layout.bands.map((b) => ({ id: b.id, name: b.name, ...rect(b) })),
     links, dots, rest: fl.rest, said };
@@ -656,7 +659,70 @@ export function travelsOf(v, dots, now) {
   return v.graphTravels.size > 0;
 }
 
-// The one script clock for every dot, the zoom ease's kind (graph-view.js easeTo: cx.spawn, a FRAME_MS sleep, a redraw; the layout
+// ---- a layout change settles (ah2-373 Amendment 8, the web's R8): cards, rows, lane bands and column labels ease to their new place,
+// arrive fading in from a small drop and leave fading out, over SETTLE_MS on the web's spring curve. Positions are in layout units
+// (independent of zoom and pan), so zooming starts nothing. It runs on the dots' clock (travelClock) only while settling.
+export const SETTLE_MS = 400; // the web's --spring-ms
+const DROP = 4; // --sp-4
+// cubic-bezier(.2, 0, 0, 1), the web's --spring: y at the curve's x = t
+export function springAt(t) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  const bx = (u) => 3 * (1 - u) * (1 - u) * u * 0.2 + 3 * (1 - u) * u * u * 0 + u * u * u;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 24; i++) (bx((lo + hi) / 2) < t ? (lo = (lo + hi) / 2) : (hi = (lo + hi) / 2));
+  const u = (lo + hi) / 2;
+  return 3 * (1 - u) * u * u * 1 + u * u * u;
+}
+// What Flow draws, keyed, in layout units: {x, y, w, h, o, kind, text}.
+export function settleTargets(m) {
+  const out = new Map();
+  if (!m.box || !(m.k > 0)) return out;
+  const L = (r, kind, text) => ({ x: r.x / m.k + m.box.x, y: r.y / m.k + m.box.y, w: (r.w ?? 0) / m.k, h: (r.h ?? 0) / m.k, o: 1, kind, text });
+  for (const c of m.cards) out.set(`c:${c.id}`, L(c.rect, "card", c.card?.name));
+  for (const u of m.unders ?? []) out.set(`u:${u.key}`, L(u.rect, "card", u.item?.label));
+  for (const b of m.bands) out.set(`b:${b.id}`, L(b, "band", b.name));
+  for (const l of m.labels) out.set(`l:${l.text}`, L(l, "label", l.text));
+  return out;
+}
+const lerp = (a, b, e) => ({ ...b, x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e, w: a.w + (b.w - a.w) * e, h: a.h + (b.h - a.h) * e, o: a.o + (b.o - a.o) * e });
+const same = (a, b) => a.size === b.size && [...a].every(([k, r]) => {
+  const q = b.get(k);
+  return q && Math.abs(q.x - r.x) < 0.5 && Math.abs(q.y - r.y) < 0.5 && Math.abs(q.w - r.w) < 0.5 && Math.abs(q.h - r.h) < 0.5;
+});
+// Called by each Flow render with its model: when the layout changed since the last one, a settle starts from where everything is
+// drawn now (so a change mid-way retargets; nothing queues). Returns {at(key): the drawn rect and opacity, gone: the leaving ones,
+// active}. The first draw, and every draw when `reduced`, places everything at once.
+export function settle(v, m, now, reduced = false) {
+  if (v.graphSettleM !== m) {
+    v.graphSettleM = m;
+    const to = settleTargets(m);
+    const s = v.graphSettle;
+    if (!s || reduced) {
+      v.graphSettle = { to, from: to, gone: [], t0: -Infinity };
+    } else if (!same(to, s.to)) {
+      const e = springAt(Math.min(1, (now - s.t0) / SETTLE_MS));
+      const cur = new Map([...s.to].map(([k, r]) => [k, lerp(s.from.get(k) ?? r, r, e)]));
+      const gone = [...s.gone.map((g) => ({ ...g, from: lerp(g.from, g.to, e) })), ...[...cur].filter(([k]) => !to.has(k)).map(([key, r]) => ({ key, from: r, to: { ...r, y: r.y + DROP, o: 0 } }))]
+        .filter((g) => g.from.o > 0.01 && !to.has(g.key));
+      const from = new Map([...to].map(([k, r]) => [k, cur.get(k) ?? { ...r, y: r.y + DROP, o: 0 }]));
+      v.graphSettle = { to, from, gone, t0: now };
+    } else {
+      v.graphSettle = { ...s, to, from: new Map([...to].map(([k, r]) => [k, s.from.get(k) ?? r])) };
+    }
+  }
+  const s = v.graphSettle;
+  const p = reduced ? 1 : Math.min(1, Math.max(0, (now - s.t0) / SETTLE_MS));
+  const e = springAt(p);
+  return {
+    active: p < 1,
+    at: (key) => (s.to.has(key) ? lerp(s.from.get(key) ?? s.to.get(key), s.to.get(key), e) : null),
+    gone: p < 1 ? s.gone.map((g) => ({ key: g.key, ...lerp(g.from, g.to, e) })) : [],
+  };
+}
+
+// The one script clock for every dot and for a settling layout (`inFlight`: a dot is drawn or a settle runs), the zoom ease's kind (graph-view.js easeTo: cx.spawn, a FRAME_MS sleep, a redraw; the layout
 // is memoized, so a frame relays nothing out). It runs only while a dot is drawn and the Graph is drawn (a Flow render within
 // SHOWN_GAP_MS): with nothing in flight, after the last brief lands, with the tab hidden, in Map, or with the pane closed it ends
 // (the view's close() also cancels it). True when it started one.
@@ -665,7 +731,8 @@ export function travelClock(v, cx, inFlight, frame = 16) {
   v.graphTravel = cx.spawn(async (cx) => {
     for (;;) {
       await cx.sleep(frame);
-      if (Date.now() - (v.graphSeen ?? 0) > SHOWN_GAP_MS || !(v.graphTravels?.size > 0)) break;
+      const settling = Date.now() - (v.graphSettle?.t0 ?? -Infinity) < SETTLE_MS;
+      if (Date.now() - (v.graphSeen ?? 0) > SHOWN_GAP_MS || (!(v.graphTravels?.size > 0) && !settling)) break;
       cx.notify();
     }
   });
@@ -726,7 +793,8 @@ export const memberPageLink = (port, id) => (port ? { url: `http://127.0.0.1:${p
 // tokens: Lead the sub-orchestrator's (the orchestrator's own token is the ink, no hue), Advise · design the architect's, Implement the
 // implementor's, Review the review violet, Test (ah2-225 B2) the QA's. A lane past these is neutral. `band`: the colour at LANE_ALPHA, behind the lane's cards,
 // which keep their own opaque fill, so a card's state still reads first.
-export const LANE_CLASS = ["sub-orchestrator", "architect", "implementor", "review", "qa"];
+// by flow-model.js COLUMNS: Lead, Advise · design, Implement, Review, Test, Sub-orchestrators (ah2-373)
+export const LANE_CLASS = ["sub-orchestrator", "architect", "implementor", "review", "qa", "sub-orchestrator"];
 export const LANE_ALPHA = 0.05;
 export function laneStyle(i, light) {
   const w = light ? WEB.light : WEB.dark;

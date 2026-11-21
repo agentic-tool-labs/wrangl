@@ -246,7 +246,8 @@ test("a tombstoned selected member closes its panel back to the feed, with a toa
   assert.equal(store.state.ui.selected, null);
   await until(() => find(root, ".toast").length === 1, "the toast");
   assert.equal(text(find(root, ".toast")[0]), "reviewer left the team");
-  assert.equal(find(root, "div.fcard").length, 7, "the card left the graph");
+  // ah2-373 R8: its fading copy (.fleave) stays for the leave transition; the card itself is gone
+  assert.equal(find(root, "div.fcard").filter((g) => !(g.attrs.get("class") ?? "").includes("fleave")).length, 7, "the card left the graph");
 });
 
 // ---- the layout and the spark cap

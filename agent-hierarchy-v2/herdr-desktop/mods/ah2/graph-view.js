@@ -18,7 +18,7 @@ import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, Sl
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
-  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
+  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
@@ -638,13 +638,28 @@ function flowBody(t, m, v, cx) {
   const w = lt ? WEB.light : WEB.dark;
   const gr = grip(v, "flow");
   const now = Date.now();
-  if (cx) travelClock(v, cx, travelsOf(v, m.dots, now));
+  // ah2-373 Amendment 8: a layout change settles (graph-model.js settle) on the dots' clock, which runs only while a dot is drawn or
+  // a settle is under way. No motion signal reaches the mod yet: v.reducedMotion, when something sets it, places everything at once.
+  const S = settle(v, m, now, v.reducedMotion === true);
+  const travel = travelsOf(v, m.dots, now);
+  if (cx) travelClock(v, cx, travel || S.active);
+  const P = (r) => ({ x: (r.x - m.box.x) * k, y: (r.y - m.box.y) * k, w: r.w * k, h: r.h * k, o: r.o });
+  const placed = (key, r) => (S.at(key) ? P(S.at(key)) : { ...r, o: 1 });
+  const faded = (el, o) => (o < 0.999 ? el.opacity(Math.max(0, o)) : el);
   const sized = (el) => el.absolute().top(0).left(0).w(m.size.w).h(m.size.h);
   const els = [];
-  // V10: each lane's faint band first, behind everything (laid out with the model, so a frame adds nothing)
-  (m.lanes ?? []).forEach((l) => els.push(div().absolute().left(l.x - 8 * k).top(l.y - 4 * k).w(Math.max(0, l.w + 16 * k)).h(Math.max(0, l.h)).rounded(6).bg(laneStyle(l.i, lt).band)));
-  m.bands.forEach((b, i) => els.push(div().id(`gfb-${i}`).absolute().left(b.x).top(b.y).w(b.w).h(b.h).rounded(6).bg(t.hover)
-    .child(div().absolute().left(8).top(2).max_w(Math.max(0, b.w - 16)).truncate().text_size(11 * k).text_color(t.muted).child(b.name))));
+  // V10: each lane's faint band first, behind everything (laid out with the model, so a frame adds nothing); it moves with its label
+  (m.lanes ?? []).forEach((l, i) => {
+    const h = m.labels[i];
+    const a = h ? placed(`l:${h.text}`, h) : { x: h?.x ?? 0, y: h?.y ?? 0, o: 1 };
+    const [dx, dy] = h ? [a.x - h.x, a.y - h.y] : [0, 0];
+    els.push(faded(div().absolute().left(l.x - 8 * k + dx).top(l.y - 4 * k + dy).w(Math.max(0, l.w + 16 * k)).h(Math.max(0, l.h)).rounded(6).bg(laneStyle(l.i, lt).band), a.o));
+  });
+  m.bands.forEach((b, i) => {
+    const a = placed(`b:${b.id}`, b);
+    els.push(faded(div().id(`gfb-${i}`).absolute().left(a.x).top(a.y).w(a.w).h(a.h).rounded(6).bg(t.hover)
+      .child(div().absolute().left(8).top(2).max_w(Math.max(0, a.w - 16)).truncate().text_size(11 * k).text_color(t.muted).child(b.name)), a.o));
+  });
   for (const l of m.links) {
     const st = edgeStyle(l.kind, lt);
     els.push(sized(window.paint_path(stroke(l.cmds, Math.max(1, st.width * k), st.dash), st.color ?? t.muted)));
@@ -652,12 +667,27 @@ function flowBody(t, m, v, cx) {
   // column headers as the web's .flabel: small, uppercase, muted (no tracking: the kit has none)
   // V10: the header in its lane's colour, a 2 px rule of that colour under it, as wide as the lane's cards
   m.labels.forEach((l, i) => {
-    const ls = laneStyle(i, lt);
-    els.push(div().absolute().left(l.x).top(l.y).whitespace_nowrap().text_size(11 * k).text_color(ls.color).child(l.text.toUpperCase()));
-    els.push(div().absolute().left(l.x).top(l.y + 16 * k).w(m.lanes?.[i]?.rule ?? 0).h(2).bg(ls.color));
+    const ls = laneStyle(l.i, lt);
+    const a = placed(`l:${l.text}`, l);
+    els.push(faded(div().absolute().left(a.x).top(a.y).whitespace_nowrap().text_size(11 * k).text_color(ls.color).child(l.text.toUpperCase()), a.o));
+    els.push(faded(div().absolute().left(a.x).top(a.y + 16 * k).w(m.lanes?.[i]?.rule ?? 0).h(2).bg(ls.color), a.o));
   });
-  m.cards.forEach((c, i) => els.push(flowCard(t, c, i, k, v, gr, lt, m.dots.length > 0))); // the clock runs while a dot is drawn
-  (m.unders ?? []).forEach((u, i) => els.push(flowUnder(t, u, i, k, lt)));
+  m.cards.forEach((c, i) => {
+    const a = placed(`c:${c.id}`, c.rect);
+    els.push(faded(flowCard(t, { ...c, rect: a }, i, k, v, gr, lt, m.dots.length > 0), a.o * (c.card.state === "gone" ? 0.4 : 1))); // the clock runs while a dot is drawn
+  });
+  (m.unders ?? []).forEach((u, i) => {
+    const a = placed(`u:${u.key}`, u.rect);
+    els.push(faded(flowUnder(t, { ...u, rect: a }, i, k, lt), a.o));
+  });
+  // what the change dropped, fading out where it was (no hit target)
+  S.gone.forEach((g, i) => {
+    const a = P(g);
+    const el = g.kind === "label" ? div().absolute().left(a.x).top(a.y).whitespace_nowrap().text_size(11 * k).text_color(t.muted).child(String(g.text ?? "").toUpperCase())
+      : g.kind === "band" ? div().absolute().left(a.x).top(a.y).w(a.w).h(a.h).rounded(6).bg(t.hover)
+        : div().absolute().left(a.x).top(a.y).w(a.w).h(a.h).rounded(6).border(1).border_color(t.border).bg(t.raised).px(10 * k).py(8 * k).truncate().text_size(12.5 * k).text_color(t.foreground).child(String(g.text ?? ""));
+    els.push(el.id(`gfg-${i}`).opacity(Math.max(0, a.o)));
+  });
   m.dots.forEach((d, i) => {
     const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review);
     els.push(div().id(`gfd-${i}`).absolute().left(p.x - 3).top(p.y - 3).size(6).rounded(3) // the web's 6 px (graph.js .dot r=3)
@@ -703,13 +733,15 @@ function flowLegend(t, lt) {
 function flowCard(t, c, i, k, v, gr, lt, live) {
   const s = c.card;
   const r = c.rect;
-  const st = cardStyle(s, c.active, lt, t.surface);
+  // ah2-373 R9: the deputy on duty is drawn as a lead, in the Orchestrator's colours, named for its part rather than its tool
+  const deputy = s.duty === "on";
+  const st = cardStyle(deputy ? { ...s, role: "orchestrator" } : s, c.active, lt, t.surface);
   const reviewing = isReviewing(s, c.active);
   const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
   const duty = DUTY[s.duty] ?? null;
   const ago = s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "";
-  const tag = c.active ? (reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
-    : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
+  const tag = c.active ? (deputy ? "deputy chief" : reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
+    : deputy ? "deputy chief" : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
   const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
     .when(c.active, (el) => el.border_b(1).border_color(t.border))
     .child(div().flex_none().text_size(12 * k).text_color(st.mark ?? t.blocked).child(st.glyph))
@@ -718,7 +750,7 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
     .children(tag ? [div().flex_none().text_size(11 * k).text_color(st.tag ?? t.muted).child(tag)] : []);
   const cell = (value, unit) => h_flex().gap(4 * k).flex_none().child(div().font_semibold().text_color(t.foreground).child(String(value))).children(unit ? [unit] : []);
   const stats = c.active ? [
-    s.orchestrator ? cell(c.out, "out") : null,
+    s.orchestrator || deputy ? cell(c.out, "out") : null,
     s.orchestrator && s.decisions !== null ? cell(s.decisions, "dec") : null,
     s.role === "implementor" && s.round ? cell(s.round) : null,
     ago ? h_flex().gap(4 * k).flex_none().child("active").child(div().font_semibold().text_color(t.foreground).child(ago)) : null,

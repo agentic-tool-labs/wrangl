@@ -26,7 +26,9 @@ public sealed class StatusComputeScanTests
     /// feed the horizon (or be a stamp <c>HierarchyModule.StatusClockStamps</c> rewrites) and gain a parity fixture in
     /// <c>StatusWitnessTests</c>; then move this number.
     /// </summary>
-    private const int NowUses = 26;
+    // 26, then 30 with pane-subagents D3: the subagent TTL rule in SubagentsOf (its parameter, its comparison, its two callers), feeding the horizon at
+    // started + TTL + 1 and witnessed by StatusWitnessTests' subagent rows
+    private const int NowUses = 30;
 
     private static IEnumerable<string> Code(string text) => text.Split('\n').Where(static l => !l.TrimStart().StartsWith("//", StringComparison.Ordinal));
 

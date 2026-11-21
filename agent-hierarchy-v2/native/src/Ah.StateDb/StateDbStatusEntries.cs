@@ -8,14 +8,15 @@ internal sealed class StateDbStatusEntries(string ahHome, StateDbReadPool? pool 
 {
     private const string Columns = "pool_dir, kind, key, json";
 
-    // own rows of S, every row of the dirs S's view rows key, and the global rows S reads: origins of their exchanges, registrations
+    // own rows of S, every row of the dirs S's view rows key, and the global rows S reads: origins of their exchanges, registrations,
+    // the sessions' open subagent runs (pane-subagents D1)
     private static string ReadOf(string columns) => ViewKeys + RowsOf(columns);
 
     private const string ViewKeys = "WITH v AS (SELECT key FROM status_entries WHERE pool_dir = ?1 AND kind = 'view') ";
 
     private static string RowsOf(string columns) =>
         "SELECT " + columns + " FROM status_entries WHERE pool_dir = ?1 OR pool_dir IN (SELECT key FROM v) "
-        + "UNION ALL SELECT " + columns + " FROM status_entries WHERE pool_dir = '' AND kind = 'registration' "
+        + "UNION ALL SELECT " + columns + " FROM status_entries WHERE pool_dir = '' AND kind IN ('registration', 'subagents') "
         + "UNION ALL SELECT " + columns + " FROM status_entries WHERE pool_dir = '' AND kind = 'origin' "
         + "AND key IN (SELECT key FROM status_entries WHERE kind = 'exchange' AND pool_dir IN (SELECT key FROM v))";
 

@@ -73,7 +73,7 @@ export class OverviewView extends Live {
       .map((x) => {
         const to = byId.get(x.body.to_member ?? "");
         const branch = to ? snap.slices.get(`worktree:${t.dir_id}/${t.name}/${to.name}`)?.body.stream ?? null : null;
-        return { id: x.id, slug: x.body.title || x.body.slug, from: partyName(x.body, "from", snap.slices), to: partyName(x.body, "to", snap.slices), fromId: partyIdOf(x.body, "from"), toId: partyIdOf(x.body, "to"), state: to?.state ?? "idle", branch, at: Date.parse(x.body.created ?? "") || 0 };
+        return { id: x.id, slug: x.body.title || x.body.slug, from: partyName(x.body, "from", snap.slices), to: partyName(x.body, "to", snap.slices), fromId: partyIdOf(x.body, "from", snap.slices), toId: partyIdOf(x.body, "to", snap.slices), state: to?.state ?? "idle", branch, at: Date.parse(x.body.created ?? "") || 0 };
       })
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const decisions = (sum?.items ?? []).filter((i) => i.kind === "Decision");

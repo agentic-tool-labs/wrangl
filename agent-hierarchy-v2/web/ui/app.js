@@ -344,7 +344,7 @@ export class App extends Live {
     const ids = memberIds(team);
     const children = snap.ui.view === "graph" ? laneChildren(slices, team, ids) : [];
     const nodes = flowNodes(slices, team, ids, children);
-    const nodesKey = ids.length === 0 ? "" : JSON.stringify(nodes.map((n) => [n.id, n.role, n.name, n.lane, n.team, n.column]));
+    const nodesKey = ids.length === 0 ? "" : JSON.stringify(nodes.map((n) => [n.id, n.role, n.name, n.lane, n.team, n.column, n.duty === true]));
     const shownIds = [...ids, ...children.map((c) => c.id)];
     const topo = team ? slices.get(`topology:${team.body.dir_id}/${team.body.name}`) : null;
     const sparksKey = sparksOf(slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${s.review ? 1 : 0}|${s.slug}`).join("\n");
@@ -409,7 +409,7 @@ export class App extends Live {
   draw({ store, mock }, s) {
     if (s.nodesKey !== this.nodesKey) {
       this.nodesKey = s.nodesKey;
-      this.nodes = s.nodesKey === "" ? [] : JSON.parse(s.nodesKey).map(([id, role, name, lane, team, column]) => ({ id, role, name, lane, team, column }));
+      this.nodes = s.nodesKey === "" ? [] : JSON.parse(s.nodesKey).map(([id, role, name, lane, team, column, duty]) => (duty ? { id, role, name, lane, team, column, duty } : { id, role, name, lane, team, column }));
     }
     if (s.nodesKey !== this.flowKey?.[0] || s.extrasKey !== this.flowKey?.[1]) {
       this.flowKey = [s.nodesKey, s.extrasKey];

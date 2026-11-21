@@ -1,5 +1,5 @@
 import type { Register } from 'claude-code'
-import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, HOOKS_OFF_TEXT, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
+import { anywayQuestion, bandButtons, bandLine, closeToast, closedTeam, dirIdOf, withoutTeams, DISMISS_BUTTON, dismissQuestion, failReason, heldText, HOOKS_OFF_TEXT, inFlight, keepSeen, mailRecord, mailRecords, mailRefusedToast, mailSection, mailToast, mailUnsavedToast, mainCheckoutRoot, memberOnly, NO_OWNED_TEAM, noViewLine, nullCause, ownedTeamNames, ownedTeams, PANE_BUTTON, paneSections, paneTab, parseDoc, readDue, readPlan, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildGaveUp, rebuildOf, rebuildStep, rebuildToast, registeredStatusFiles, scope, sitrepSections, SIZE_CAP, statusText, STYLE, teamLabels, toastMs, VIEW_BUTTON, type DueAnswer, type Doc, viewModel } from './view.ts'
 
 // A tone to Text props: bad and warn take their status's theme key, the same key their glyph takes, and bad is also bold
 // so it does not rest on color alone; work and ok draw plain and any other tone draws dim.
@@ -942,8 +942,8 @@ export const register: Register = (on, options) => {
         doc = null
         lost = 'unreadable'
       }
-      // Expiry and visibility do not matter here, only that a shape-valid doc lists this session.
-      member = doc !== null && doc.memberSessions.includes(id)
+      // Expiry and visibility do not matter here, only that a shape-valid doc lists this session as a member leading no team.
+      member = memberOnly(doc, id)
       // Written only on change, since every write redraws the band and the Pane. Compared with the held value,
       // not a closure copy, because the state outlives a reload of this module.
       const view = viewModel(doc, now, id)

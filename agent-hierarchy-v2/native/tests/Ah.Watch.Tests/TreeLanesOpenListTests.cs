@@ -150,6 +150,37 @@ public sealed partial class TreeLanesTests
         Assert.DoesNotContain(ids, static i => i.EndsWith("/000501", StringComparison.Ordinal) || i.EndsWith("/000502", StringComparison.Ordinal));
     }
 
+    // ah2-367 L1; the negative: in a team that is no lane, the sub-orchestrator is the member its name names
+    [Theory]
+    [InlineData(",\"parent\":{\"team\":\"mgr\",\"stream\":\"s1\"}", TreeIds.Orchestrator)]
+    [InlineData("", "so-s1")]
+    public void ALaneTeamsSubOrchestratorIsItsOrchestrator(string parent, string expected)
+    {
+        var doc = "{\"orchestrator\":{\"session_id\":\"so\"},\"members\":[{\"name\":\"so-s1\",\"role\":\"sub-orchestrator\"},{\"name\":\"dev\",\"role\":\"implementor\"}]" + parent + "}";
+        var team = new TeamEntry(Canon, "teams/lane.json", "lane", JsonText.Parse(doc), 1);
+        var record = new LaneRecord(JsonText.Parse("{\"to\":\"implementor\",\"from\":\"sub-orchestrator\",\"to_name\":\"dev\",\"from_name\":\"so-s1\",\"open\":true}"), 1);
+        var back = new LaneRecord(JsonText.Parse("{\"to\":\"sub-orchestrator\",\"from\":\"implementor\",\"to_name\":\"so-s1\",\"from_name\":\"dev\",\"open\":true}"), 1);
+
+        Assert.Equal(("dev", expected), ExchangeFiling.Resolve(record, team));
+        Assert.Equal((expected, "dev"), ExchangeFiling.Resolve(back, team));
+    }
+
+    // ah2-367 L4 (Amendment 4); the negatives: no name, or a name that is no member of the team, is the orchestrator, as before
+    [Theory]
+    [InlineData("\"dep\"", "dep")]
+    [InlineData("\"ghost\"", TreeIds.Orchestrator)]
+    [InlineData("null", TreeIds.Orchestrator)]
+    public void AnOrchestratorEndNamingAMemberIsThatMember(string name, string expected)
+    {
+        var doc = "{\"orchestrator\":{\"session_id\":\"chief\"},\"members\":[{\"name\":\"dep\",\"role\":\"deputy-chief\"},{\"name\":\"dev\",\"role\":\"implementor\"}],\"duty\":{\"deputy\":\"dep\"}}";
+        var team = new TeamEntry(Canon, "teams/top.json", "top", JsonText.Parse(doc), 1);
+        var sent = new LaneRecord(JsonText.Parse("{\"to\":\"implementor\",\"from\":\"orchestrator\",\"to_name\":\"dev\",\"from_name\":" + name + ",\"open\":true}"), 1);
+        var back = new LaneRecord(JsonText.Parse("{\"to\":\"orchestrator\",\"from\":\"implementor\",\"to_name\":" + name + ",\"from_name\":\"dev\",\"open\":true}"), 1);
+
+        Assert.Equal(("dev", expected), ExchangeFiling.Resolve(sent, team));
+        Assert.Equal((expected, "dev"), ExchangeFiling.Resolve(back, team));
+    }
+
     [Fact]
     public void AnEndThatResolvesToNobodyIsNull()
     {

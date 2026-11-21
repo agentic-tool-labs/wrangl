@@ -24,7 +24,7 @@ export function exchangeRows(slices, ids, n = 12, ui = null) {
     const from = partyName(b, "from", slices) ?? "";
     const to = partyName(b, "to", slices) ?? "";
     const item = b.title || b.item || b.slug || ""; // the title as people read it, never the raw _run/<slug>
-    const pair = [partyIdOf(b, "from"), partyIdOf(b, "to")];
+    const pair = [partyIdOf(b, "from", slices), partyIdOf(b, "to", slices)];
     b.created && rows.push({ at: Date.parse(b.created), kind: "brief", from, to, item, pair });
     b.response_created && rows.push({ at: Date.parse(b.response_created), kind: "report", from: to, to: from, item, pair });
   }

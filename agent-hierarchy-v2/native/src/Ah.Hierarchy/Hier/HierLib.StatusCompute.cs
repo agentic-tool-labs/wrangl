@@ -77,6 +77,11 @@ internal sealed partial class HierLib
                 row["branch"] = StrOrNull(src.Branch(workTree) is { } headBranch ? ProducerText(headBranch, NameCap) : null);
             }
 
+            if (route == "peer" && sessionId is not null && SubagentsOf(src, [sessionId], now, horizon) is { } subagents)
+            {
+                row["subagents"] = subagents;
+            }
+
             members.Add(row);
         }
 
@@ -93,6 +98,41 @@ internal sealed partial class HierLib
         }
 
         return result;
+    }
+
+    // ponytail: at most 8 rows per agent, the oldest; raise it if an agent routinely runs more
+    private const int SubagentRowsCap = 8;
+
+    /// <summary>
+    /// The running subagents of <paramref name="sessions"/> as the pane lists them (pane-subagents D3): <c>[{agent_type, started_at}]</c>,
+    /// oldest first, at most <see cref="SubagentRowsCap"/>, a run past the in-flight TTL dropped; null when none is kept, so the field is absent.
+    /// </summary>
+    private static JsonArray? SubagentsOf(IStatusSource src, IEnumerable<string> sessions, double now, StatusHorizon? horizon)
+    {
+        var kept = new List<(double At, JsonValue Type, string Started)>();
+        foreach (var r in sessions.Distinct(StringComparer.Ordinal).SelectMany(s => src.Subagents(s)))
+        {
+            if (TextOf(Member(r, "started_at")) is not { } started || !Timestamps.TryParseMs(started, out var at) || now - at > HierarchyModule.SubagentInflightTtlMs)
+            {
+                continue;
+            }
+
+            horizon?.At(at + HierarchyModule.SubagentInflightTtlMs + 1);  // the row is dropped once its age exceeds the TTL: 1 ms past it
+            kept.Add((at, Member(r, "agent_type"), started));
+        }
+
+        if (kept.Count == 0)
+        {
+            return null;
+        }
+
+        var rows = new JsonArray();
+        foreach (var (_, type, started) in kept.OrderBy(static k => k.At).Take(SubagentRowsCap))
+        {
+            rows.Add(new JsonObject { ["agent_type"] = CleanOrNull(type, NameCap), ["started_at"] = StrOrNull(CleanTo((JsonValue)started, int.MaxValue)) });
+        }
+
+        return rows;
     }
 
     private static readonly Dictionary<string, int> Severity = new()
@@ -155,9 +195,11 @@ internal sealed partial class HierLib
     private static List<(JsonValue E, JsonValue Fm, double? ReportedMs)> DispatchCandidates(JsonArray exchanges, IStatusSource src, double nowMs, StatusHorizon? horizon)
     {
         var found = new List<(JsonValue, JsonValue, double?)>();
+        // ah2-367 Amendment 5: a request sent up to the orchestrator is listed too
         foreach (var e in exchanges)
         {
-            if (Member(e, "to") is { IsText: true } to && to.AsString() == "orchestrator")
+            // Amendment 7: the pipeline run anchor is a run marker, not a dispatch
+            if (Member(e, "slug") is { IsText: true } slug && slug.AsString() == HierarchyModule.PipelineAnchorSlug)
             {
                 continue;
             }
@@ -262,7 +304,7 @@ internal sealed partial class HierLib
             }
 
             var id = Member(e, "id").AsString();
-            JsonValue sentAt = origins.TryGetValue(id, out var o) ? o : JsonValue.Null;
+            JsonValue sentAt = origins.TryGetValue(id, out var o) && !o.IsNull ? o : Or(fm.Member("created"), JsonValue.Null);
             var sentMs = double.NaN;
             if (!(sentAt is { IsText: true } sa && Timestamps.TryParseMs(sa.AsString(), out sentMs)))
             {
@@ -490,6 +532,8 @@ internal sealed partial class HierLib
         var allMembers = new List<JsonValue>();
         var allDispatches = new List<JsonValue>();
         var owners = new List<(JsonValue Pid, List<string> Sessions, JsonArray Teams, List<JsonValue> Members, List<JsonValue> Dispatches, bool AnyPipeline)>();
+        var kept = new List<(string? Key, JsonValue Record, int Owner, JsonArray Members, JsonArray Dispatches)>();
+        var deputies = new HashSet<string>(StringComparer.Ordinal);
         if (!string.IsNullOrEmpty(dir) && src.HasDir(dir))
         {
             var rosterStart = Ah.Core.Time.PhaseTrace.Begin();
@@ -582,6 +626,15 @@ internal sealed partial class HierLib
                     g.Sessions.Add(sid.AsString());
                 }
 
+                // ah2-367 L7: the deputy on duty is acting lead, so its session is an owner session of the team
+                if (Ah.Roster.RosterModule.DutyOf(t) is { } duty
+                    && members.FirstOrDefault(m => TextOf(Member(m, "name")) == duty["deputy"].AsString()) is { } deputy
+                    && TextOf(Member(deputy, "session_id")) is { Length: > 0 } deputySession && !g.Sessions.Contains(deputySession))
+                {
+                    g.Sessions.Add(deputySession);
+                    deputies.Add(deputySession);
+                }
+
                 g.Teams.Add(keyValue);
                 g.Members.AddRange(members);
                 g.Dispatches.AddRange(dispatches);
@@ -591,6 +644,29 @@ internal sealed partial class HierLib
                 }
 
                 owners[idx] = g;
+                kept.Add((key, t, idx, members, dispatches));
+            }
+
+            // ah2-367 L3: an open lane is listed with its parent team's owner too, so the parent's Orchestrator sees its dispatches.
+            // One level: a lane of a lane is listed with its own parent only.
+            foreach (var (key, t, _, members, dispatches) in kept)
+            {
+                var parent = Member(t, "parent");
+                var parentTeam = TextOf(Member(parent, "team"));
+                var stream = TextOf(Member(parent, "stream"));
+                var host = kept.FindIndex(k => k.Key is not null && k.Key == parentTeam);
+                if (key is null || stream is null || host < 0 || TextOf(Member(Member(Member(kept[host].Record, "streams"), stream), "state")) != "open")
+                {
+                    continue;
+                }
+
+                var g = owners[kept[host].Owner];
+                if (!g.Teams.Any(x => x.IsText && x.AsString() == key))
+                {
+                    g.Teams.Add(key);
+                    g.Members.AddRange(members);
+                    g.Dispatches.AddRange(dispatches);
+                }
             }
         }
 
@@ -608,12 +684,20 @@ internal sealed partial class HierLib
         var ownerArray = new JsonArray();
         foreach (var g in owners)
         {
-            ownerArray.Add(new JsonObject
+            var owner = new JsonObject
             {
                 ["sessions"] = ToArray(g.Sessions.Take(OwnerSessionsCap)),
                 ["teams"] = g.Teams,
                 ["timeline"] = BuildTimeline(now, g.Members, g.Dispatches, enabled, g.AnyPipeline),
-            });
+            };
+
+            // pane-subagents Amendment 1 (Q1): the lead's own running subagents; a deputy's are on its member row already
+            if (SubagentsOf(src, g.Sessions.Where(s => !deputies.Contains(s)), now, horizon) is { } subagents)
+            {
+                owner["subagents"] = subagents;
+            }
+
+            ownerArray.Add(owner);
         }
 
         var document = new JsonObject

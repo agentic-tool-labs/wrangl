@@ -4,6 +4,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.34] - 2026-11-21
+
+### Added
+
+- **The Wrangl pane lists running subagents.** Each agent's running subagents appear under its row as
+  `└─ <type> · <age>`, the lead's own at the top. A row goes when the subagent stops.
+- **The Graph's Flow view draws leads in their own places.** Sub-orchestrators share a Sub-orchestrators column, a
+  deputy chief sits under the Orchestrator, and a column is drawn only while an agent is in it. Cards, bands and
+  columns ease in, move and ease out over 400 ms, in the web UI and in herdr desktop.
+- **Dispatch lines follow the deputy on duty.** While a Deputy Chief is on duty the team's lines attach to its card,
+  styled as a lead, and return to the Orchestrator when duty ends.
+
+### Fixed
+
+- **Flow lines are routed, not curved, in a team with lanes.** Lines run at right angles through the gaps between
+  columns, do not pass behind cards, and are offset where they share a path.
+- **A one-line code fence no longer hides a brief's sections.** A line such as three backticks, a command and three
+  backticks is not a fence, so the brief check sees the section headings after it.
+- **A lane's dispatches show in the Graph and the Wrangl pane.** Requests a Sub-Orchestrator sent to its lane team
+  were stored but not drawn. The Graph (Flow view) now draws them from the Sub-Orchestrator's node, and the top
+  Orchestrator's pane lists them.
+- **Every open exchange is shown.** Member-to-member requests, requests sent up to a lead, and exchanges with an end
+  that cannot be resolved are drawn or listed; an unresolved end lands on the team's lead.
+- **A Sub-Orchestrator's pane shows its lane team**, and an on-duty Deputy Chief's pane shows the team it leads.
+  A session that leads a team gets that team's view even when it is also a member of another.
+- **A Deputy Chief's dispatches are drawn from the deputy's node** in the Graph.
+
 ## [2.0.33] - 2026-11-20
 
 ### Fixed

@@ -52,6 +52,12 @@ internal static class StatusKind
     /// <summary>Pool "", key = session id: a mailbox registration record as the mailbox wrote it.</summary>
     internal const string Registration = "registration";
 
+    /// <summary>
+    /// Pool "", key = session id: <c>{rows: [{agent_id, agent_type, started_at}]}</c>, the session's open subagent runs from the per-home peer
+    /// store (pane-subagents D1). A session with no open run has no entry.
+    /// </summary>
+    internal const string Subagents = "subagents";
+
     /// <summary>Pool <c>P</c>, key team + "\n" + member name: the queue's newest dispatch to that member from P (§3.8 item 7).</summary>
     internal const string LastDispatch = "last-dispatch";
 
@@ -62,7 +68,7 @@ internal static class StatusKind
 internal sealed partial class HierLib
 {
     /// <summary>The shape version of the entries; a status dir whose <c>meta</c> row holds another is rebuilt. Bump on any shape or meaning change.</summary>
-    internal const int StatusEntriesVersion = 5;
+    internal const int StatusEntriesVersion = 6;
 
     /// <summary>
     /// The status entries of status dir <paramref name="dir"/>, read from the stores: its pool list, teams, roster, sessions, nudges,
@@ -100,8 +106,41 @@ internal sealed partial class HierLib
         }
 
         entries.AddRange(RegistrationEntries());
+        entries.AddRange(SubagentSessions().Select(SubagentEntryOf).OfType<StatusEntry>());
         return entries;
     }
+
+    /// <summary>
+    /// The open subagent runs of <paramref name="session"/> (pane-subagents D1): of the newest record per agent, those whose status is
+    /// <c>started</c> and whose kind is <c>subagent</c>. Background tasks are never listed; the TTL is the compute's, against now.
+    /// </summary>
+    internal JsonArray OpenSubagentRows(string session)
+    {
+        var rows = new JsonArray();
+        foreach (var r in LatestSubagentRecords(JsonValue.FromString(session)))
+        {
+            if (TextOf(Member(r, "status")) == "started" && TextOf(Member(r, "kind")) == "subagent")
+            {
+                rows.Add(new JsonObject
+                {
+                    ["agent_id"] = Member(r, "agent_id"),
+                    ["agent_type"] = Member(r, "agent_type") is { IsText: true } type ? type : JsonValue.Null,
+                    ["started_at"] = Member(r, "ts"),
+                });
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>The <c>subagents</c> entry of <paramref name="session"/>, or null when it has no open run.</summary>
+    private StatusEntry? SubagentEntryOf(string session) =>
+        OpenSubagentRows(session) is { Count: > 0 } rows ? new StatusEntry(string.Empty, StatusKind.Subagents, session, new JsonObject { ["rows"] = rows }) : null;
+
+    /// <summary>Every session the peer store holds a subagent record of.</summary>
+    private List<string> SubagentSessions() =>
+        [.. _core.PeerRecordsWhere(new PeerQuery(Types: new HashSet<string>(StringComparer.Ordinal) { "subagent" }))
+            .Select(static r => TextOf(Member(r, "session_id"))).OfType<string>().Where(static s => s.Length > 0).Distinct(StringComparer.Ordinal)];
 
     /// <summary>One global row per mailbox registration record, keyed by its session id (H3).</summary>
     private List<StatusEntry> RegistrationEntries() =>
@@ -275,7 +314,7 @@ internal sealed partial class HierLib
             var entries = RebuildStatusEntries(dir);
             entries.Add(new(dir, StatusKind.Meta, "version", new JsonObject { ["version"] = StatusEntriesVersion }));
             var pools = entries.Where(e => e.Pool == dir && e.Kind == StatusKind.View).Select(static e => e.Key).ToList();
-            var scopes = OwnKinds.Select(k => (dir, k)).Append((string.Empty, StatusKind.Registration)).Concat(pools.SelectMany(p => PoolKinds.Select(k => (p, k)))).ToList();
+            var scopes = OwnKinds.Select(k => (dir, k)).Append((string.Empty, StatusKind.Registration)).Append((string.Empty, StatusKind.Subagents)).Concat(pools.SelectMany(p => PoolKinds.Select(k => (p, k)))).ToList();
 
             // a crash between the commit and the replay leaves this mark: the graced heal rebuilds the dir
             var mark = StatusDirty.Prefix + "rebuild:" + dir;
@@ -1293,6 +1332,9 @@ internal sealed partial class HierLib
         public JsonValue Activity(string dir, string file) => ActivitySubjectOf(file) is { } subject ? Get(MsgRows.PoolKey(dir), StatusKind.Activity, subject) : JsonValue.Null;
 
         public MemberRegistrationLiveness? Registration(string name, string team) => _lib._core.Liveness?.ForMember(name, team, Registrations);
+
+        public JsonArray Subagents(string sessionId) =>
+            Get(string.Empty, StatusKind.Subagents, sessionId).Member("rows") is { IsArray: true } rows ? rows.AsArray() : [];
 
         public JsonArray RunExchanges(string dir, string? team, long sinceMs) => Exchanges(dir);
 

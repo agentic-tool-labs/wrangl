@@ -287,6 +287,7 @@ internal sealed partial class HierLib
                     break;
                 case "peer-records":
                     OriginsDelta(op, args);
+                    SubagentsDelta(op, args);
                     break;
                 case "team-state":
                     TeamDelta(DirArg(args, "dir"));
@@ -582,6 +583,32 @@ internal sealed partial class HierLib
         var record = op == "register" ? _core.Liveness?.RegistrationOf(session) : null;
         ApplyStatusDelta(
             [], [(string.Empty, StatusKind.Registration, session)], record is null ? [] : [new StatusEntry(string.Empty, StatusKind.Registration, session, record)], dirs);
+    }
+
+    /// <summary>
+    /// A peer-records write (pane-subagents D2): an append re-derives the <c>subagents</c> entry of each session a subagent-kind record names;
+    /// a compact re-derives every stored one and every session with a subagent record. Any other row writes nothing here.
+    /// </summary>
+    private void SubagentsDelta(string op, JsonValue args)
+    {
+        if (_statusEntries is not { } store)
+        {
+            return;
+        }
+
+        var sessions = op == "compact"
+            ? [.. store.ReadKind(string.Empty, StatusKind.Subagents).Select(static r => r.Key).Concat(SubagentSessions()).Distinct(StringComparer.Ordinal)]
+            : (args.Member("rec") is { IsArray: true } many ? many.AsArray() : new JsonArray { args.Member("rec") ?? JsonValue.Null })
+                .Where(static r => TextOf(Member(r, "type")) == "subagent" && TextOf(Member(r, "kind")) == "subagent")
+                .Select(static r => TextOf(Member(r, "session_id"))).OfType<string>().Where(static s => s.Length > 0).Distinct(StringComparer.Ordinal).ToList();
+        var dirs = store.StatusDirs();
+        if (sessions.Count == 0 || dirs.Count == 0)
+        {
+            return;
+        }
+
+        // ponytail: every status dir is refreshed per subagent start or stop; publish only the dirs whose teams list the session if that costs
+        ApplyStatusDelta([], [.. sessions.Select(static s => (string.Empty, StatusKind.Subagents, s))], [.. sessions.Select(SubagentEntryOf).OfType<StatusEntry>()], dirs);
     }
 
     private void BacklogDelta()

@@ -722,6 +722,18 @@ a.pill {
 @media (prefers-reduced-motion: reduce) {
   .r6 .world, .r6 .world .node, .r6 .world .edge, .r6 .world .spark, .r6 .world .edge-hit { transition: none; }
 }
+/* ah2-373 R8: Flow's cards, lane bands and column labels are placed by transform. One that moves eases to its new place; one that
+   arrives fades in from a small drop; one that goes (the .fleave copy graph.js keeps for --spring-ms) fades out. Instant without motion. */
+.r6 .flow-world :is(.fcard, .flane, .flabel) { left: 0; top: 0; transition: transform var(--spring-ms) var(--spring), translate var(--spring-ms) var(--spring), opacity var(--spring-ms) var(--spring); }
+@starting-style { .r6 .flow-world :is(.fcard, .flane, .flabel) { opacity: 0; translate: 0 var(--sp-4); } }
+.r6 .flow-world .fleave { opacity: 0; translate: 0 var(--sp-4); pointer-events: none; }
+@starting-style { .r6 .flow-world .fleave { opacity: 1; translate: 0 0; } }
+.r6.motion-off .flow-world :is(.fcard, .flane, .flabel) { transition: none; }
+.r6.motion-off .flow-world .fleave { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .r6 .flow-world :is(.fcard, .flane, .flabel) { transition: none; }
+  .r6 .flow-world .fleave { display: none; }
+}
 .r6 .graph-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 2px; padding: 1px; border: 1px solid var(--line-control); border-radius: var(--radius-pane); background: var(--surface-1); box-shadow: var(--shadow-control); }
 .r6 .graph-controls button { min-width: 24px; height: 24px; padding: 0 8px; border: 0; border-radius: var(--radius); background: transparent; color: var(--ink); font: inherit; font-size: var(--text-14); cursor: pointer; }
 .r6 .graph-controls button:hover { background: var(--surface-hover); }

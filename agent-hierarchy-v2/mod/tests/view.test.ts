@@ -692,10 +692,15 @@ test('a viewer that owns two teams sees both, with the team headings', async () 
   expect(statusText(doc, ms(T0), 'sess-orch', true)).toBe('2 live · 3 out')
 })
 
-test('a member session listed in an owner\'s sessions gets no view', async () => {
+test('a member session that leads no team gets no view', async () => {
+  const doc = parseDoc(ownedDoc(OWNERS, { member_sessions: ['sess-m'] }))
+  expect(viewModel(doc, ms(T0), 'sess-m')).toBe(null)
+  expect(nullCause(doc, ms(T0), 'sess-m')).toBe('member session')
+})
+
+test('ah2-367: a member session an owner entry lists (a Sub-Orchestrator) gets the view of the team it leads', async () => {
   const doc = parseDoc(ownedDoc(OWNERS, { member_sessions: ['sess-orch'] }))
-  expect(viewModel(doc, ms(T0), 'sess-orch')).toBe(null)
-  expect(nullCause(doc, ms(T0), 'sess-orch')).toBe('member session')
+  expect(paneSections(viewModel(doc, ms(T0), 'sess-orch'), 120).filter((s) => s.section === 'team').map((s) => s.title)).toEqual(['TEAM mine'])
 })
 
 test('owners that is not an array, or holds only unusable entries, gives no view; a document without owners is pool-wide', async () => {
@@ -729,7 +734,7 @@ test('the view is marked owned for a document with owners that lists the viewer,
   expect(dview(wdoc())!.owned).toBe(true)
   expect(dview(wdoc((d) => { delete d.owners }))!.owned).toBe(false)
   expect(dview(wdoc(), 'someone-else')).toBe(null)
-  expect(dview(wdoc((d) => { d.member_sessions = ['sess-orch'] }))).toBe(null)
+  expect(dview(wdoc((d) => { d.member_sessions = ['sess-m'] }), 'sess-m')).toBe(null)
 })
 
 test('a team carries whether it is the default team, from its key and not its shown name', async () => {
@@ -1246,4 +1251,25 @@ test('negative sitrepSections: nothing waiting says so, and a body with no quest
 test('sitrepSections: the empty state says what was looked at', () => {
   const [sec] = sitrepSections({ why: 'no team', detail: '(socket none; registrations not read)', answered: false, teams: [] }, NOW_SR, 200)
   expect(sec.rows.map((r) => r.text).join(' ')).toContain('No open team of yours here, so no sitrep. (socket none; registrations not read)')
+})
+
+// pane-subagents D4 and Amendment 1: a member's running subagents sit under its row, the viewer's own at the top
+test('subagent rows follow their member at indent 2, and negative: a member without the field gets none', () => {
+  const at = (s: number) => new Date(ms(T0) - s * 1000).toISOString()
+  const member = (name: string, session: string, subagents?: unknown) => ({ name, role: name, label: name, kind: 'claude', route: 'peer', session_id: session, live: true, activity: 'working', ...(subagents ? { subagents } : {}) })
+  const doc = parseDoc(docText({
+    teams: [{ team: 't', members: [member('impl', 's-impl', [{ agent_type: 'Explore', started_at: at(90) }, { agent_type: null, started_at: at(30) }]), member('rev', 's-rev')], dispatches: [] }],
+    owners: [{ sessions: ['sess-orch'], teams: ['t'], timeline: [{ at: T0, live: 1, blocked: 0, out: 0, overdue: 0, stalled: 0, text: '1 live · 0 out', short: '1/0', tone: 'work', visible: true }], subagents: [{ agent_type: 'wrangl:qa', started_at: at(5) }] }],
+  }))
+  const view = viewModel(doc, ms(T0), 'sess-orch')
+  const rows = paneSections(view, 80).flatMap((s) => s.rows.map((r) => `${r.indent}|${r.text.trim()}`))
+  expect(rows.slice(0, 1)).toEqual(['0|└─ wrangl:qa · 5s'])
+  const i = rows.findIndex((r) => r.includes('impl'))
+  expect(rows.slice(i + 1, i + 3)).toEqual(['2|├─ Explore · 1m', '2|└─ subagent · 30s'])
+  expect(rows[i + 3]).toContain('rev')
+  expect(paneRows(view, 80).map((r) => r.text)).toContain('├─ Explore · 1m')
+  // a held view from an older module: members carry no subagent array
+  const held = { ...view!, lead: undefined, teams: view!.teams.map((t) => ({ ...t, members: t.members.map((m) => ({ stream: m.stream, row: m.row })) })) }
+  expect(paneSections(held, 80).flatMap((s) => s.rows).some((r) => r.text.includes('─'))).toBe(false)
+  expect(ownedTeams({ ...held, owned: true }).length).toBe(1)
 })
