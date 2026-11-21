@@ -253,6 +253,20 @@
       ]
     },
     {
+      "id": "one-line-fences-hide-nothing-real-fence-hides",
+      "args": [
+        {
+          "path": "p",
+          "text": "\n```npm test```\n## [1] goal\n- ship it\n  ```dotnet test```\n\n```bash\n## [5] acceptance\n- tests pass\n```\n",
+          "fm": {},
+          "anchors": []
+        }
+      ],
+      "expect": [
+        "acceptance"
+      ]
+    },
+    {
       "id": "no-text-throws",
       "args": [
         {

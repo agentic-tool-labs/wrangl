@@ -81,14 +81,15 @@ request 20260301-110000-s0g1 architect unsent "$(at -3600000)" small demo-archit
 status "$REF"
 check "AC3: a member request with a skeleton stub is still out" '[ "$(state_of 20260301-110000-s0a1)" = working ]'
 check "AC3: a filled response is reported, reported_at = its mtime" '[ "$(state_of 20260301-110000-s0c1)" = reported ] && [ "$(jq_doc "o.teams[0].dispatches.find(d => d.id === \"20260301-110000-s0c1\").reported_at")" = "$(at -60000)" ]'
-check "AC3: out counts the two stubs only" '[ "$(jq_doc "o.timeline[0].out")" = 2 ]'
-check "AC3: an orchestrator-addressed record is not a dispatch" '! listed 20260301-110000-s0e1'
+# ah2-367 Amendment 2 (L5) lists every open exchange, a request with no dispatch row included; Amendment 5 lists one sent to the orchestrator
+check "AC3: out counts the two stubs, the request to the orchestrator and the unsent request" '[ "$(jq_doc "o.timeline[0].out")" = 4 ]'
+check "AC3: a request addressed to the orchestrator is listed" 'listed 20260301-110000-s0e1'
 check "AC3: a request whose team is not live is not a dispatch" '! listed 20260301-110000-s0f1'
-check "AC3: a request with no dispatch row is not a dispatch" '! listed 20260301-110000-s0g1'
+check "AC3: a request with no dispatch row is listed" 'listed 20260301-110000-s0g1'
 status "$(at 539000)"
-check "AC3: a reported dispatch stays listed until 10 min after its report" 'listed 20260301-110000-s0c1 && [ "$(jq_doc "o.timeline[0].out")" = 2 ]'
+check "AC3: a reported dispatch stays listed until 10 min after its report" 'listed 20260301-110000-s0c1 && [ "$(jq_doc "o.timeline[0].out")" = 4 ]'
 status "$(at 540000)"
-check "AC3: 10 min after its report it is gone from the list and from out" '! listed 20260301-110000-s0c1 && [ "$(jq_doc "o.timeline[0].out")" = 2 ]'
+check "AC3: 10 min after its report it is gone from the list and from out" '! listed 20260301-110000-s0c1 && [ "$(jq_doc "o.timeline[0].out")" = 4 ]'
 
 # ---------------------------------------------------------------- AC 4: member-driven rules
 pool "$SANDBOX/gone"

@@ -690,6 +690,7 @@ export function createMock({ now = Date.now } = {}) {
 
     // A member joins or leaves (the served mock's --churn): up to CHURN_MAX workers join one at a time, then leave one at a
     // time. The team, its topology and the joined or departed member's slices are republished; nothing else changes.
+    // AH_MOCK_CHURN_ROLE gives the workers another role, e.g. qa, whose Flow column then comes and goes with them (ah2-373 R8).
     churn() {
       if (joined.length === CHURN_MAX) {
         leaving = true;
@@ -701,7 +702,7 @@ export function createMock({ now = Date.now } = {}) {
       } else {
         const name = `worker-${String(++joinedCount).padStart(2, "0")}`;
         joined.push(name);
-        addMember(name);
+        addMember(name, globalThis.process?.env?.AH_MOCK_CHURN_ROLE || undefined);
       }
       const built = buildSlices(now(), runStart);
       const ids = new Set(built.map((s) => s.id));

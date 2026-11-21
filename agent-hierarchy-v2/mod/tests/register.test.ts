@@ -1420,9 +1420,14 @@ test('D2b negative: a bare viewer in a repo with a live team draws no band and n
   expect(keysOf(await a.ui.drawn())).toEqual([])
 })
 
-test('D2c a member session draws the Pane button and no Dismiss', async ($, on) => {
-  const { ui } = await dismissRig($, on, doc((d) => { d.member_sessions = [DID] }), [], [])
+test('D2c a member session that leads no team draws the Pane button and no Dismiss', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc((d) => { d.member_sessions = [DID]; for (const o of d.owners) o.sessions = o.sessions.filter((s: string) => s !== DID) }), [], [])
   expect(keysOf(await ui.drawn())).toEqual(['ah-pane'])
+})
+
+test('D2c ah2-367: a member session an owner entry lists (a Sub-Orchestrator) draws what the owner draws', async ($, on) => {
+  const { ui } = await dismissRig($, on, doc((d) => { d.member_sessions = [DID] }), [], [], { columns: 125 })
+  expect(keysOf(await ui.drawn())).toEqual(['ah-view', 'ah-dismiss'])
 })
 
 test('D2d an owned view with no team (pipeline only) draws no Dismiss', async ($, on) => {

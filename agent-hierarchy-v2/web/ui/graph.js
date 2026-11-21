@@ -5,7 +5,7 @@ import { ageOf, ageText } from "./store.js";
 import { hoverProps } from "./hover.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { MAX_SPARKS, MODES, glyphOf, modeOf, shortName } from "./graph-world.js";
-import { COLUMNS, FLOW, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, pairKey, pathText, runText, sparkKinds, underLinks, underTip } from "./flow-model.js";
+import { COLUMNS, FLOW, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, onDuty, pairKey, pathText, runText, sparkKinds, underLinks, underTip } from "./flow-model.js";
 
 export { shortName, COLUMNS, FLOW, ZOOM, fitView, flowLayout, flowPath, isActive, pairKey, sparkKinds };
 
@@ -79,23 +79,25 @@ export class FlowCard extends Live {
   draw({ store, id, rect, selected, onSelect, out }, s) {
     const reviewing = s.role === "reviewer" && s.state === "working";
     const active = isActive(s);
+    // ah2-373 R9: the deputy on duty is drawn as a lead, in the Orchestrator's hue, named for its part rather than its tool
+    const deputy = s.duty === "on";
     const cls = `fcard${active ? " active" : " idle"}${reviewing ? " reviewing" : ""}${selected ? " selected" : ""}`;
-    const place = { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px` };
+    const place = { transform: `translate(${rect.x}px, ${rect.y}px)`, width: `${rect.w}px` };
     const open = (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onSelect(id));
     const cell = (value, unit) => html`<span><b>${value}</b>${unit ? ` ${unit}` : ""}</span>`;
     const stats = [
-      s.orchestrator ? cell(out, "out") : null,
+      s.orchestrator || deputy ? cell(out, "out") : null,
       s.orchestrator && s.decisions !== null ? cell(s.decisions, "dec") : null,
       s.role === "implementor" && s.round ? cell(s.round) : null,
       s.lastAt > 0 ? html`<span title="Last activity">active <b>${ageFrom(s.lastAt)}</b></span>` : null,
     ].filter(Boolean);
-    const tag = reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model;
+    const tag = deputy ? "deputy chief" : reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model;
     const duty = DUTY[s.duty] ?? null;
     const badge = duty ? html`<span class="duty-badge" title=${DUTY_TITLE[s.duty]}>${duty}</span>` : null;
-    return html`<div class=${cls} data-role=${s.role || undefined} data-state=${s.state} data-id=${id} style=${place} tabindex="0" role="button" ...${hoverProps(store, id, "card")} aria-label=${`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${reviewing ? "reviewing" : stateWord(s.state, s.running)}`} onClick=${() => onSelect(id)} onKeyDown=${open}>
+    return html`<div class=${cls} data-role=${deputy ? "orchestrator" : s.role || undefined} data-state=${s.state} data-id=${id} style=${place} tabindex="0" role="button" ...${hoverProps(store, id, "card")} aria-label=${`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${reviewing ? "reviewing" : stateWord(s.state, s.running)}`} onClick=${() => onSelect(id)} onKeyDown=${open}>
       ${active
         ? html`<div class="fhead"><span class="glyph" aria-hidden="true">${reviewing ? "◆" : "◐"}</span><b title=${s.full}>${s.name}</b>${badge}${tag ? html`<span class="tag">${tag}</span>` : null}</div>${stats.length > 0 ? html`<div class="fstats">${stats}</div>` : null}`
-        : html`<div class="fhead"><span class="glyph" aria-hidden="true">${glyphOf(s.state)}</span><span class="fname" title=${s.full}>${s.name}</span>${badge}${s.state !== "idle" ? html`<span class="tag">${stateWord(s.state).toLowerCase()}</span>` : !badge && s.lastAt > 0 ? html`<span class="tag" title="Last activity">${ageFrom(s.lastAt)}</span>` : null}</div>`}
+        : html`<div class="fhead"><span class="glyph" aria-hidden="true">${glyphOf(s.state)}</span><span class="fname" title=${s.full}>${s.name}</span>${badge}${deputy ? html`<span class="tag">deputy chief</span>` : s.state !== "idle" ? html`<span class="tag">${stateWord(s.state).toLowerCase()}</span>` : !badge && s.lastAt > 0 ? html`<span class="tag" title="Last activity">${ageFrom(s.lastAt)}</span>` : null}</div>`}
     </div>`;
   }
 }
@@ -107,7 +109,7 @@ export const UNDER_GLYPH = { job: "◷", subagent: "◇" };
 export function FlowUnder({ n, rect, owner }) {
   const x = n.item;
   const card = rect.h > FLOW.row.h;
-  const place = { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` };
+  const place = { transform: `translate(${rect.x}px, ${rect.y}px)`, width: `${rect.w}px`, height: `${rect.h}px` };
   // a row has no room for both: an overdue row's time is its overdue chip (⚠, the word in its title); a card has both
   const late = x.overdue ? html`<span class="eta overdue"><span class="eta-glyph" aria-hidden="true">⚠</span>overdue</span>` : null;
   const run = x.overdue && !card
@@ -123,10 +125,14 @@ export function FlowUnder({ n, rect, owner }) {
 // ---- Flow's stage: pan and zoom over the cards, the links between them
 
 export const VIEW = { w: 1000, h: 700 };
+// ah2-373 R8: how long a card, lane band or column label that left stays, fading out: r6.css --spring-ms.
+const LEAVE_MS = 400;
+const at = (x, y) => `translate(${x}px, ${y}px)`;
 
 // Flow's links: reporting lines from card to card, a brief in flight accent with a dot, a brief sent for review dashed.
 const FlowLinks = memo(function FlowLinks({ edges, sparks, rects, orient, nodes }) {
-  const { links, dots } = flowLinks(edges, sparks, rects, orient);
+  const duty = onDuty(nodes, edges, sparks);
+  const { links, dots } = flowLinks(duty.edges, duty.sparks, rects, orient);
   return html`<g class="links">
     <g class="edges">${links.map((l) => html`<path key=${l.key} class=${`edge${l.kind === "review" ? " edge-review" : l.kind === "brief" ? " edge-live" : ""}`} d=${pathText(l.cmds)} />`)}${underLinks(nodes, rects, orient).map((l) => html`<path key=${l.key} class="edge edge-sub" d=${pathText(l.cmds)} />`)}</g>
     <g class="dots">${dots.map((d) => html`<circle key=${d.key} class=${`dot${d.review ? " dot-review" : ""}`} r="3" style=${{ offsetPath: `path("${pathText(d.cmds)}")` }} />`)}</g>
@@ -178,6 +184,7 @@ export class FlowStage extends Component {
     this.io?.disconnect();
     this.ro?.disconnect();
     clearTimeout(this.settle);
+    clearTimeout(this.leave);
   }
 
   // The layout is computed again only when the set of members, the edges, the orientation or which members are working change.
@@ -185,12 +192,27 @@ export class FlowStage extends Component {
     const c = this.cached;
     if (c?.nodes !== nodes || c.edges !== edges || c.orient !== orient || c.activeKey !== activeKey) {
       const f = flowLayout(nodes, new Set(activeKey === "" ? [] : activeKey.split("\n")), orient);
+      // R8: what this layout dropped is kept as a fading copy at its old place (componentDidUpdate clears it)
+      if (c) {
+        const name = new Map(c.nodes.map((n) => [n.id, n.item ? n.item.label : shortName(n.id, n.name)]));
+        this.gone = [
+          ...[...c.pos].filter(([id]) => !f.pos.has(id)).map(([id, r]) => ({ key: `gone:${id}`, cls: "fcard fleave", r, text: name.get(id) })),
+          ...c.bands.filter((b) => !f.bands.some((x) => x.id === b.id)).map((b) => ({ key: `gone-lane:${b.id}`, cls: "flane fleave", r: b })),
+          ...c.labels.filter((l) => !f.labels.some((x) => x.text === l.text)).map((l) => ({ key: `gone-label:${l.text}`, cls: "flabel fleave", r: l, label: l.text })),
+        ];
+        this.leaveDue = this.gone.length > 0;
+      }
       this.cached = { nodes, edges, orient, activeKey, pos: f.pos, labels: f.labels, bands: f.bands, box: f.box };
     }
     return this.cached;
   }
 
   componentDidUpdate(prev) {
+    if (this.leaveDue) {
+      this.leaveDue = false;
+      clearTimeout(this.leave);
+      this.leave = setTimeout(() => ((this.gone = []), this.forceUpdate()), LEAVE_MS);
+    }
     const p = this.props;
     if (prev.fitNonce !== p.fitNonce || prev.orient !== p.orient) {
       this.fit();
@@ -322,6 +344,8 @@ export class FlowStage extends Component {
     const { w, h: ht } = this.size();
     const v = this.current();
     const rest = sparks.length - Math.min(sparks.length, MAX_SPARKS);
+    // a card's "out" counts the briefs drawn leaving it: the deputy's while it is on duty (R10)
+    const drawn = onDuty(nodes, edges, sparks).sparks;
     const world = { transform: `translate(${v.x}px, ${v.y}px) scale(${v.k})` };
     const instant = this.state.instant ? " instant" : "";
     return html`<div class="graph gflow">
@@ -333,9 +357,10 @@ export class FlowStage extends Component {
         ${rest > 0 ? html`<text class="more" x=${w - 20} y="30" text-anchor="end">+${rest} more briefs</text>` : null}
       </svg>
       <div class="flow-layer"><div class=${`world flow-world${instant}`} style=${world}>
-        ${bands.map((b) => html`<div key=${`lane:${b.id}`} class="flane" style=${{ left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px` }}><span class="flane-label">${b.name}</span></div>`)}
-        ${labels.map((l) => html`<span key=${l.text} class="flabel" style=${{ left: `${l.x}px`, top: `${l.y}px` }}>${l.text}</span>`)}
-        ${nodes.map((n) => (!pos.has(n.id) ? null : n.item ? h(FlowUnder, { key: n.id, n, rect: pos.get(n.id), owner: n.after ? shortName(n.after, byId.get(n.after)?.name) : null }) : h(FlowCard, { key: n.id, store, teamId: n.team || teamId, id: n.id, rect: pos.get(n.id), selected: selected === n.id, onSelect, out: sparks.filter((s) => s.from === n.id).length })))}
+        ${bands.map((b) => html`<div key=${`lane:${b.id}`} class="flane" style=${{ transform: at(b.x, b.y), width: `${b.w}px`, height: `${b.h}px` }}><span class="flane-label">${b.name}</span></div>`)}
+        ${labels.map((l) => html`<span key=${l.text} class="flabel" style=${{ transform: at(l.x, l.y) }}>${l.text}</span>`)}
+        ${(this.gone ?? []).map((g) => html`<div key=${g.key} class=${g.cls} aria-hidden="true" style=${{ transform: at(g.r.x, g.r.y), width: g.label ? undefined : `${g.r.w}px`, height: g.cls === "flane fleave" ? `${g.r.h}px` : undefined }}>${g.label ?? (g.text ? html`<div class="fhead"><span class="fname">${g.text}</span></div>` : null)}</div>`)}
+        ${nodes.map((n) => (!pos.has(n.id) ? null : n.item ? h(FlowUnder, { key: n.id, n, rect: pos.get(n.id), owner: n.after ? shortName(n.after, byId.get(n.after)?.name) : null }) : h(FlowCard, { key: n.id, store, teamId: n.team || teamId, id: n.id, rect: pos.get(n.id), selected: selected === n.id, onSelect, out: drawn.filter((s) => s.from === n.id).length })))}
       </div></div>
       <div class="flow-legend" role="group" aria-label="Flow legend"><span><i class="k-brief"></i>brief in flight</span><span><i class="k-review"></i>sent for review</span><span><i class="k-edge"></i>reporting line</span><span><i class="k-sub"></i>subagent</span><span><b class="k-job" aria-hidden="true">◷</b>job</span><span class="dim">Idle members collapse to one line; a time is the member's last activity</span></div>
       <div class="graph-controls" role="group" aria-label="Graph toolbar">

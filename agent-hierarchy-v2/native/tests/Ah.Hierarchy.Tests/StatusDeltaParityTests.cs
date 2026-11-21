@@ -19,11 +19,43 @@ public sealed class StatusDeltaParityTests
     private static readonly string[] Kinds =
         ["request", "response", "fill", "retire", "archive", "settle", "peer", "nudge", "dispatch", "decision", "activity", "session", "team", "backlog", "register", "unregister"];
 
+    /// <summary>
+    /// pane-subagents acceptance 1: through the delta path, a member session's started subagent run shows on its member row with its type,
+    /// and is gone once it stops; a background task (the negative) adds no field.
+    /// </summary>
+    [Fact]
+    public void AMembersRunningSubagentIsOnItsMemberRowUntilItStops()
+    {
+        var rig = new Rig();
+        var dir = StatusEntriesFixture.Pool(rig.Fixture.R);
+        var now = StatusEntriesFixture.Nows[0];
+        JsonValue? Subagents()
+        {
+            using var held = TestMsgStore.HoldSync(rig.Fixture.Home, rig.Fixture.Root);
+            var status = rig.Lib.AssembleStatus(dir, rig.Lib.StoredStatusEntries(dir)!, now, true);
+            var row = status["teams"].AsArray().SelectMany(static t => t.Member("members")!.Value.AsArray()).Single(static m => m.Member("session_id") is { IsText: true } s && s.AsString() == "s-impl");
+            return row.Member("subagents");
+        }
+
+        Assert.True(rig.Subagent("s-impl", "b1", "started", "background", null, now - 60_000));
+        Assert.Null(Subagents());
+
+        Assert.True(rig.Subagent("s-impl", "a1", "started", "subagent", "Explore", now - 60_000));
+        Assert.Equal(["Explore"], Subagents()!.Value.AsArray().Select(static r => r.Member("agent_type")!.Value.AsString()));
+
+        Assert.True(rig.Subagent("s-impl", "a1", "stopped", "subagent", null, now - 30_000));
+        Assert.Null(Subagents());
+    }
+
     [Fact]
     public void EveryDeltaLeavesEveryStatusDirEqualToARebuildAtEveryTime()
     {
         var rig = new Rig();
         var done = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // pane-subagents acceptance 2: subagent records between the writes, from their own generator so the writes above stay the same sequence
+        var runs = new Random(369);
+        string Of(params string[] options) => options[runs.Next(options.Length)];
         for (var step = 0; step < Writes; step++)
         {
             var kind = Kinds[rig.Rng.Next(Kinds.Length)];
@@ -33,6 +65,14 @@ public sealed class StatusDeltaParityTests
             }
 
             rig.AssertParity(step, kind);
+            if (step % 4 == 0)
+            {
+                // a background task id is never an agent id: the two kinds keep their own ids, as the hooks write them
+                var background = runs.Next(3) == 0;
+                var at = StatusEntriesFixture.T0 + runs.Next(-3 * 3_600_000, 2 * 3_600_000);
+                Assert.True(rig.Subagent(Of("s-impl", "s-rev", "o-t"), background ? Of("b1", "b2") : Of("a1", "a2"), Of("started", "stopped"), background ? "background" : "subagent", background ? null : Of("Explore", "wrangl:qa"), at));
+                rig.AssertParity(step, "subagent");
+            }
         }
 
         Assert.False(File.Exists(Path.Combine(StatusEntriesFixture.Pool(rig.Fixture.W), "status.json")), "a linked tree's H got a status.json");
@@ -1117,6 +1157,17 @@ public sealed class StatusDeltaParityTests
         // the mailbox domain lives in Ah.Mesh: its register/unregister land here as the AfterWrite it publishes ("mailbox" delta)
         private bool Register(int step) => RegisterSession(Pick("s-impl", "s-rev", "s-u0", "s-u1"), step);
 
+        /// <summary>Appends a subagent record of <paramref name="session"/> through the state writer, as the SubagentStart and SubagentStop hooks do.</summary>
+        internal bool Subagent(string session, string agent, string status, string kind, string? type, long at) =>
+            Call("peer-records", "append", new JsonObject
+            {
+                ["rec"] = new JsonObject
+                {
+                    ["type"] = "subagent", ["session_id"] = session, ["agent_id"] = agent, ["status"] = status, ["ts"] = StatusEntriesFixture.Iso(at), ["kind"] = kind,
+                    ["agent_type"] = type is null ? JsonValue.Null : type,
+                },
+            }, StatusEntriesFixture.Pool(_fixture.R));
+
         /// <summary>Registers <paramref name="session"/> as live and runs its registration delta.</summary>
         internal bool RegisterSession(string session, int step)
         {
@@ -1155,6 +1206,11 @@ public sealed class StatusDeltaParityTests
                     .Select(static x => x.Pool + "|" + x.Key + "|" + JsonText.Stringify(x.Json, 0)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
                 Assert.True(Dispatches(stored!) == Dispatches(rebuilt), $"step {step} ({kind}) {Path.GetRelativePath(_fixture.Root, dir)}: last-dispatch delta\n{Dispatches(stored!)}\nrebuild\n{Dispatches(rebuilt)}");
                 _dispatchRows += rebuilt.Count(static x => x.Kind == StatusKind.LastDispatch);
+
+                // pane-subagents acceptance 2: the subagents rows a run of deltas keeps are the ones a rebuild derives
+                static string Subagents(IEnumerable<StatusEntry> e) => string.Join("\n", e.Where(static x => x.Kind == StatusKind.Subagents)
+                    .Select(static x => x.Key + "|" + JsonText.Stringify(x.Json, 0)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
+                Assert.True(Subagents(stored!) == Subagents(rebuilt), $"step {step} ({kind}) {Path.GetRelativePath(_fixture.Root, dir)}: subagents delta\n{Subagents(stored!)}\nrebuild\n{Subagents(rebuilt)}");
                 foreach (var now in StatusEntriesFixture.Nows)
                 {
                     var delta = Text(_lib.AssembleStatus(dir, stored!, now, true));

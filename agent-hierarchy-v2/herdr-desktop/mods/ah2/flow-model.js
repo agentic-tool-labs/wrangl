@@ -7,19 +7,26 @@ import { MAX_SPARKS, shortName } from "./graph-world.js";
 
 // ---- the columns by role, and where each card goes
 
-export const COLUMNS = ["Lead", "Advise · design", "Implement", "Review", "Test"];
+export const COLUMNS = ["Lead", "Advise · design", "Implement", "Review", "Test", "Sub-orchestrators"];
 // ah2-225 B2: QA members and full test runs. The daemon serves a QA member Review's column; Flow moves it here.
 export const TEST_COLUMN = 4;
 export const columnOf = (role, served) => (role === "qa" ? TEST_COLUMN : served);
+// ah2-373: the sub-orchestrators have a column of their own; a deputy chief, on duty or not, sits in Lead under the Orchestrator (and
+// so does a member of another role while it is the deputy on duty). Columns are drawn in chain-of-command order, only while a card is in them.
+export const SUB_COLUMN = 5;
+export const COLUMN_ORDER = [0, SUB_COLUMN, 1, 2, 3, TEST_COLUMN];
+export const flowColumn = (role, served, deputy = false) => (role === "sub-orchestrator" ? SUB_COLUMN : deputy || role === "deputy-chief" ? 0 : columnOf(role, served));
 // A job or subagent drawn under its owner sits this far in from the owner's edge, across the column.
 export const UNDER_INDENT = 20;
 
 export const FLOW = { card: { w: 220, h: 64 }, row: { w: 200, h: 36 }, gap: 16, band: 64, lane: 100, top: 90, left: 40 };
 
 // Cards positioned by column: {pos: id -> {x, y, w, h}, labels: [{text, x, y}], box}. Horizontal has the columns left to right; vertical has them
-// top to bottom. A column's members keep name order; the lead column is centred on the tallest one. With lanes (a node's `lane` is its
-// leader's id) the cards form bands across the columns: first the members in no lane, then one band per leader in name order, holding the
-// leader and its lane's members.
+// top to bottom, in COLUMN_ORDER, a column with no card left out (ah2-373 R6). A column's members keep name order, an orchestrator first;
+// the lead column is centred on the tallest one. With lanes (a node's `lane` is its leader's id) the cards form bands across the columns:
+// first the members in no lane, then one band per leader in name order, holding the leader and its lane's members; each card of a lane
+// carries `band`, its band's extent across the columns. With lanes or a deputy every card carries `routed`, which has flowLinks route
+// round them (laneRoutes).
 export function flowLayout(nodes, active, orient) {
   const horizontal = orient !== "vertical";
   const byName = [...nodes].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
@@ -32,42 +39,52 @@ export function flowLayout(nodes, active, orient) {
   const along = (n) => (horizontal ? size(n).h : size(n).w);
   const step = horizontal ? FLOW.card.w + FLOW.lane : FLOW.card.h + FLOW.lane;
   const pos = new Map();
-  const labels = COLUMNS.map((text, ci) => (horizontal ? { text, x: FLOW.left + ci * step, y: FLOW.top - 32 } : { text, x: FLOW.left, y: FLOW.top + ci * step - 24 }));
+  const colOf = (n) => (COLUMNS[n.column] !== undefined ? n.column : 2);
+  const shown = COLUMN_ORDER.filter((ci) => nodes.some((n) => !n.after && colOf(n) === ci));
+  const slot = new Map(shown.map((ci, i) => [ci, i]));
+  const labels = shown.map((ci, i) => (horizontal ? { text: COLUMNS[ci], x: FLOW.left + i * step, y: FLOW.top - 32 } : { text: COLUMNS[ci], x: FLOW.left, y: FLOW.top + i * step - 24 }));
   const backdrops = [];
-  const reach = (COLUMNS.length - 1) * step + (horizontal ? FLOW.card.w : FLOW.card.h);
+  const reach = (Math.max(1, shown.length) - 1) * step + (horizontal ? FLOW.card.w : FLOW.card.h);
+  // a deputy (a card other than an orchestrator in Lead) or a lane: the links route round the cards
+  const routed = leaders.length > 0 || nodes.some((n) => !n.after && colOf(n) === 0 && n.role !== "orchestrator");
   let offset = 0;
   for (const [bi, band] of bands.entries()) {
     if (band.length === 0) {
       continue;
     }
     const cols = COLUMNS.map(() => []);
-    band.forEach((n) => !n.after && (cols[n.column] ?? cols[2]).push(n));
+    band.forEach((n) => !n.after && cols[colOf(n)].push(n));
+    cols[0].sort((a, b) => (b.role === "orchestrator") - (a.role === "orchestrator"));
     // a job or subagent under its owner goes right after the owner and the owner's earlier ones
     band.forEach((n) => {
       if (!n.after) return;
-      const col = cols.find((c) => c.some((m) => m.id === n.after)) ?? cols[n.column] ?? cols[2];
+      const col = cols.find((c) => c.some((m) => m.id === n.after)) ?? cols[colOf(n)];
       const at = col.reduce((last, m, i) => (m.id === n.after || m.after === n.after ? i : last), -1);
       at < 0 ? col.push(n) : col.splice(at + 1, 0, n);
     });
     const spans = cols.map((c) => c.reduce((sum, n) => sum + along(n) + FLOW.gap, -FLOW.gap));
     const tallest = Math.max(0, ...spans);
+    const leader = bi > 0 ? leaders[bi - 1] : null;
     cols.forEach((c, ci) => {
       let at = (ci === 0 ? (tallest - Math.max(0, spans[ci])) / 2 : 0) + FLOW.top + offset;
-      const base = FLOW.left + ci * step;
+      const base = FLOW.left + slot.get(ci) * step;
       c.forEach((n) => {
         const { w, h } = size(n);
         const inset = n.after ? UNDER_INDENT : 0;
-        pos.set(n.id, horizontal ? { x: base + inset, y: at, w, h } : { x: FLOW.left + (at - FLOW.top), y: FLOW.top + ci * step + inset, w, h });
+        const r = horizontal ? { x: base + inset, y: at, w, h } : { x: FLOW.left + (at - FLOW.top), y: FLOW.top + slot.get(ci) * step + inset, w, h };
+        pos.set(n.id, routed ? { ...r, routed } : r);
         at += along(n) + FLOW.gap;
       });
     });
-    if (bi > 0) {
-      const leader = leaders[bi - 1];
+    if (leader) {
       const start = FLOW.top + offset;
       const pad = FLOW.gap;
-      backdrops.push(horizontal
+      const b = horizontal
         ? { id: leader.id, name: shortName(leader.id, leader.name), x: FLOW.left - pad / 2, y: start - pad - FLOW.gap, w: reach + pad, h: tallest + 2 * pad + FLOW.gap }
-        : { id: leader.id, name: shortName(leader.id, leader.name), x: FLOW.left + offset - pad / 2, y: FLOW.top - pad - FLOW.gap, w: tallest + pad, h: reach + 2 * pad + FLOW.gap });
+        : { id: leader.id, name: shortName(leader.id, leader.name), x: FLOW.left + offset - pad / 2, y: FLOW.top - pad - FLOW.gap, w: tallest + pad, h: reach + 2 * pad + FLOW.gap };
+      backdrops.push(b);
+      const extent = horizontal ? [b.y, b.y + b.h] : [b.x, b.x + b.w];
+      band.forEach((n) => (pos.get(n.id).band = extent));
     }
     offset += tallest + FLOW.band;
   }
@@ -75,7 +92,10 @@ export function flowLayout(nodes, active, orient) {
   let y0 = Infinity;
   let x1 = -Infinity;
   let y1 = -Infinity;
-  for (const p of [...pos.values(), ...backdrops, ...labels.map((l) => ({ x: l.x, y: l.y, w: 120, h: 14 }))]) {
+  // routed, room before the Lead column for the trunk from the Orchestrator to the deputy under it (laneRoutes)
+  const room = (start) => Math.min(start, bandStart(!horizontal)) - ROUTE.trunk - ROUTE.step;
+  const trunks = !routed ? [] : [horizontal ? { x: room(FLOW.left), y: FLOW.top, w: 1, h: 1 } : { x: FLOW.left, y: room(FLOW.top), w: 1, h: 1 }];
+  for (const p of [...pos.values(), ...backdrops, ...trunks, ...labels.map((l) => ({ x: l.x, y: l.y, w: 120, h: 14 }))]) {
     x0 = Math.min(x0, p.x);
     y0 = Math.min(y0, p.y);
     x1 = Math.max(x1, p.x + p.w);
@@ -153,6 +173,175 @@ export const pathText = (cmds) => cmds.map((c) => c.join(" ")).join(" ");
 
 export const flowPath = (a, b, orient, cards = []) => pathText(flowCmds(a, b, orient, cards));
 
+// ---- links in a team with lanes (ah2-373 R2-R5)
+
+// How links route when the team has lanes: a trunk's distance before the Lead column and the step between trunks; the step between ports
+// on one card edge and between risers sharing a gutter; how far a port keeps from a card's corner; how many steps a port may move to clear.
+const ROUTE = { trunk: 12, step: 8, inset: 8, reach: 4 };
+
+// Where a lane's block starts along the columns (flowLayout's backdrops): a trunk runs before it, clear of its label.
+const bandStart = (vertical) => (vertical ? FLOW.top - 2 * FLOW.gap : FLOW.left - FLOW.gap / 2);
+// The middle of the gap between the i-th drawn column and the next, along the columns: clear of every card.
+const gutterOf = (i, vertical) => (vertical ? FLOW.top : FLOW.left) + i * ((vertical ? FLOW.card.h : FLOW.card.w) + FLOW.lane) + (vertical ? FLOW.card.h : FLOW.card.w) + FLOW.lane / 2;
+
+// An orthogonal polyline [[u, w], …] as path commands with rounded corners (AROUND.r, less where a leg is short); `at` maps (u, w) to (x, y).
+function roundedCmds(pts, at) {
+  const p = pts.filter((q, i) => i === 0 || q[0] !== pts[i - 1][0] || q[1] !== pts[i - 1][1])
+    .filter((q, i, all) => i === 0 || i === all.length - 1 || !((all[i - 1][0] === q[0] && q[0] === all[i + 1][0]) || (all[i - 1][1] === q[1] && q[1] === all[i + 1][1])));
+  const len = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+  const toward = (from, to, d) => [from[0] + Math.sign(to[0] - from[0]) * d, from[1] + Math.sign(to[1] - from[1]) * d];
+  const cmds = [["M", ...at(...p[0])]];
+  for (let i = 1; i < p.length - 1; i++) {
+    const r = Math.min(AROUND.r, len(p[i - 1], p[i]) / 2, len(p[i], p[i + 1]) / 2);
+    cmds.push(["L", ...at(...toward(p[i], p[i - 1], r))], ["Q", ...at(...p[i]), ...at(...toward(p[i], p[i + 1], r))]);
+  }
+  cmds.push(["L", ...at(...p[p.length - 1])]);
+  return cmds;
+}
+
+// Every link of a team with lanes, Map(pairKey -> commands), so that a line is traceable around the lanes:
+// - two cards in one column join by an elbow: in Lead (the Orchestrator and the deputy under it) on a trunk before the column, a nearer
+//   card's trunk inside a farther one's, so they nest and never cross; in any later column in the gutter just before it;
+// - otherwise straight when its ports can line up clear of the cards, else two right-angle bends through the gap between two columns,
+//   the nearest gap to the earlier card that is clear, the ports moved along the card edges if that is what clears it; only when no
+//   such route exists, the rail round the cards in the way (four bends);
+// - the links on one card edge leave from ports spread along it, and risers sharing a gutter are stepped apart, so no two lines lie on one run.
+// A link between two cards of one lane runs at their own ports' heights and in a gap between them, so it stays inside the lane's block.
+function laneRoutes(pairs, rects, orient) {
+  const vertical = orient === "vertical";
+  const ax = (r) => (vertical ? { u: r.y, len: r.h, w: r.x, size: r.w, r } : { u: r.x, len: r.w, w: r.y, size: r.h, r });
+  const at = (u, w) => (vertical ? [w, u] : [u, w]);
+  const mid = (c) => c.w + c.size / 2;
+  const all = [...rects.values()].map(ax);
+  const links = [];
+  for (const [from, to] of pairs) {
+    const [p, q] = [rects.get(from), rects.get(to)];
+    if (!p || !q) continue;
+    const [A, B] = (vertical ? p.y <= q.y : p.x <= q.x) ? [ax(p), ax(q)] : [ax(q), ax(p)];
+    links.push({ key: pairKey(from, to), A, B, same: B.u < A.u + A.len });
+  }
+  // ports: the ends on one side of one card, ordered so the lines leave without crossing, spread ROUTE.step apart about the middle
+  const sides = new Map();
+  const side = (c, k) => (sides.has(`${k}`) ? sides.get(`${k}`) : sides.set(`${k}`, { c, ends: [] }).get(`${k}`));
+  const keyOf = new Map(all.map((c, i) => [c.r, i]));
+  for (const l of links) {
+    const d = mid(l.B) - mid(l.A);
+    // a trunk's farther card takes the port farther from it, so its elbow runs outside the nearer one's
+    side(l.A, `${keyOf.get(l.A.r)}${l.same ? "<" : ">"}`).ends.push({ l, end: "w1", by: l.same ? Math.sign(d) * (1e6 - Math.abs(d)) : mid(l.B) });
+    side(l.B, `${keyOf.get(l.B.r)}<`).ends.push({ l, end: "w2", by: mid(l.A) });
+  }
+  for (const side of sides.values()) {
+    const { c, ends } = side;
+    // ROUTE.step apart, closer where the edge is crowded
+    side.gap = Math.min(ROUTE.step, (c.size - 2 * ROUTE.inset) / Math.max(1, ends.length - 1));
+    ends.sort((x, y) => x.by - y.by);
+    ends.forEach((e, i) => {
+      e.l[`${e.end}Side`] = side;
+      e.l[e.end] = Math.round(mid(c) + (i - (ends.length - 1) / 2) * side.gap);
+    });
+  }
+  const clear = (u0, u1, w, c) => !(c.w - AROUND.clear < w && w < c.w + c.size + AROUND.clear && Math.min(u0, u1) < c.u + c.len + AROUND.clear && Math.max(u0, u1) > c.u - AROUND.clear);
+  const across = (u, w0, w1, c) => !(c.u - AROUND.clear < u && u < c.u + c.len + AROUND.clear && Math.min(w0, w1) < c.w + c.size + AROUND.clear && Math.max(w0, w1) > c.w - AROUND.clear);
+  const portsOf = (c, pref) => {
+    const out = [pref];
+    for (let d = ROUTE.step; d <= ROUTE.reach * ROUTE.step; d += ROUTE.step) out.push(pref - d, pref + d);
+    return out.filter((w) => w >= c.w + ROUTE.inset && w <= c.w + c.size - ROUTE.inset);
+  };
+  const gutters = COLUMNS.slice(1).map((_, i) => gutterOf(i, vertical));
+  // trunks: per lead, its same-column links nearest first, each a step further out
+  const trunkRank = new Map();
+  for (const l of links.filter((x) => x.same).sort((x, y) => Math.abs(mid(x.B) - mid(x.A)) - Math.abs(mid(y.B) - mid(y.A)))) {
+    const u = Math.min(l.A.u, l.B.u);
+    // a column after the first turns in the gutter just before it, spread with that gutter's risers; the first, on trunks before it
+    const before = gutters.filter((g) => g < u).pop();
+    if (before !== undefined) {
+      [l.pts, l.risers] = [[[l.A.u, l.w1], [before, l.w1], [before, l.w2], [l.B.u, l.w2]], [1]];
+      continue;
+    }
+    const n = trunkRank.get(l.A.r) ?? 0;
+    trunkRank.set(l.A.r, n + 1);
+    const t = Math.min(u, bandStart(vertical)) - ROUTE.trunk - ROUTE.step * n;
+    l.pts = [[l.A.u, l.w1], [t, l.w1], [t, l.w2], [l.B.u, l.w2]];
+    l.trunk = true;
+  }
+  // a port another link on the same card edge already holds is not free
+  const free = (l, end, w) => l[`${end}Side`].ends.every((o) => o.l === l || Math.abs(o.l[o.end] - w) >= Math.floor(l[`${end}Side`].gap));
+  const within = (c, w) => w >= c.w + ROUTE.inset && w <= c.w + c.size - ROUTE.inset;
+  // a jog shorter than two corners reads as a kink: the ports line up instead, or the line turns properly
+  const cost = (l, [w1, w2]) => Math.abs(w1 - l.w1) + Math.abs(w2 - l.w2) + (w1 === w2 ? -1 : Math.abs(w1 - w2) < 2 * AROUND.r ? 1e3 : 0);
+  for (const l of links.filter((x) => !x.same)) {
+    const { A, B } = l;
+    const others = all.filter((c) => c.r !== A.r && c.r !== B.r);
+    const [u1, u2] = [A.u + A.len, B.u];
+    const combos = [];
+    for (const w1 of portsOf(A, l.w1).filter((w) => free(l, "w1", w))) {
+      for (const w2 of [w1, ...portsOf(B, l.w2)].filter((w) => within(B, w) && free(l, "w2", w))) combos.push([w1, w2]);
+    }
+    combos.sort((x, y) => cost(l, x) - cost(l, y));
+    const inGap = gutters.filter((g) => g > u1 + AROUND.r && g < u2 - AROUND.r);
+    found: for (const [w1, w2] of combos) {
+      if (w1 === w2) {
+        if (others.every((c) => clear(u1, u2, w1, c))) {
+          [l.pts, l.w1, l.w2] = [[[u1, w1], [u2, w2]], w1, w2];
+          break;
+        }
+        continue;
+      }
+      for (const g of inGap) {
+        if (others.every((c) => clear(u1, g, w1, c) && across(g, w1, w2, c) && clear(g, u2, w2, c))) {
+          [l.pts, l.w1, l.w2, l.risers] = [[[u1, w1], [g, w1], [g, w2], [u2, w2]], w1, w2, [1]];
+          break found;
+        }
+      }
+    }
+    // no two-bend route: the rail round the cards in the way, from the link's own ports and turning in the gutters where there are some
+    const rail = l.pts ? null : railOf(u1, l.w1, u2, l.w2, others);
+    if (rail !== null) {
+      const [g1, g2] = [inGap[0] ?? u1 + AROUND.gap, inGap[inGap.length - 1] ?? u2 - AROUND.gap];
+      [l.pts, l.risers] = [[[u1, l.w1], [g1, l.w1], [g1, rail], [g2, rail], [g2, l.w2], [u2, l.w2]], inGap.length > 0 ? [1, 3] : []];
+    } else if (!l.pts) {
+      l.cmds = flowCmds(A.r, B.r, orient, [...rects.values()]);
+    }
+  }
+  // a riser: the leg of link l from pts[i] to pts[i + 1], across the columns
+  const span = ({ l, i }) => [Math.min(l.pts[i][1], l.pts[i + 1][1]), Math.max(l.pts[i][1], l.pts[i + 1][1])];
+  const move = ({ l, i }, u) => (l.pts[i][0] = l.pts[i + 1][0] = u);
+  // trunks that share a run step outwards
+  const trunks = links.filter((l) => l.trunk).map((l) => ({ l, i: 1 }));
+  trunks.forEach((r, k) => {
+    const [lo, hi] = span(r);
+    const taken = (u) => trunks.slice(0, k).some((o) => Math.abs(o.l.pts[1][0] - u) < 1 && Math.min(hi, span(o)[1]) - Math.max(lo, span(o)[0]) > 1);
+    while (taken(r.l.pts[1][0])) move(r, r.l.pts[1][0] - ROUTE.step);
+  });
+  // risers in one gutter whose spans overlap spread across it, ordered so they nest rather than cross: of those heading to larger w,
+  // the one from the larger w turns first; of those heading back, the one from the smaller
+  const byGutter = new Map();
+  for (const l of links) for (const i of l.risers ?? []) push(byGutter, l.pts[i][0], { l, i });
+  const key = ({ l, i }) => (l.pts[i + 1][1] > l.pts[i][1] ? -l.pts[i][1] : l.pts[i][1] + 1e6);
+  for (const list of byGutter.values()) {
+    list.sort((x, y) => span(x)[0] - span(y)[0]);
+    for (let a = 0; a < list.length;) {
+      let b = a + 1;
+      for (let hi = span(list[a])[1]; b < list.length && span(list[b])[0] < hi; b++) hi = Math.max(hi, span(list[b])[1]);
+      const group = list.slice(a, b).sort((x, y) => key(x) - key(y));
+      group.forEach((r, k) => move(r, r.l.pts[r.i][0] + (k - (group.length - 1) / 2) * ROUTE.step));
+      a = b;
+    }
+  }
+  return new Map(links.map((l) => [l.key, l.cmds ?? roundedCmds(l.pts, at)]));
+}
+
+// ah2-373 R10: while a deputy is on duty (the node flowNodes marks `duty`) it is the team's acting lead, so every link end at
+// the Orchestrator is drawn at the deputy; the link between the two stays, the Chief's one connection. Drawing only: the ids the
+// server resolved are not changed anywhere else. With no deputy on duty, `edges` and `sparks` as given.
+export function onDuty(nodes, edges, sparks) {
+  const chief = nodes.find((n) => !n.item && !n.lane && n.role === "orchestrator")?.id;
+  const deputy = nodes.find((n) => n.duty === true)?.id;
+  if (!chief || !deputy) return { edges, sparks };
+  const move = (x) => (x.from === deputy || x.to === deputy ? x : { ...x, from: x.from === chief ? deputy : x.from, to: x.to === chief ? deputy : x.to });
+  return { edges: edges.map(move), sparks: sparks.map(move) };
+}
+
 // How each pair of members with a brief in flight between them is drawn: "review" when the daemon says one of its briefs is sent for review.
 export function sparkKinds(sparks) {
   const out = new Map();
@@ -170,13 +359,16 @@ export const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 export function flowLinks(edges, sparks, rects, orient) {
   const kinds = sparkKinds(sparks);
   const cards = [...rects.values()];
+  const shown = sparks.slice(0, MAX_SPARKS);
+  const pairs = [...new Map([...edges.map((e) => [pairKey(e.from, e.to), [e.from, e.to]]), ...shown.map((s) => [pairKey(s.from, s.to), [s.from, s.to]])]).values()];
+  // with lanes or a deputy (the cards carry `routed`) every link is routed together, so they can share out ports and gutters; else as before
+  const routed = cards.some((c) => c.routed) ? laneRoutes(pairs, rects, orient) : null;
   const cmdsOf = (from, to) => {
+    if (routed) return routed.get(pairKey(from, to)) ?? null;
     const a = rects.get(from);
     const b = rects.get(to);
     return a && b ? ((orient === "vertical" ? a.y <= b.y : a.x <= b.x) ? flowCmds(a, b, orient, cards) : flowCmds(b, a, orient, cards)) : null;
   };
-  const shown = sparks.slice(0, MAX_SPARKS);
-  const pairs = [...new Map([...edges.map((e) => [pairKey(e.from, e.to), [e.from, e.to]]), ...shown.map((s) => [pairKey(s.from, s.to), [s.from, s.to]])]).values()];
   const links = [];
   for (const [from, to] of pairs) {
     const cmds = cmdsOf(from, to);
@@ -201,10 +393,16 @@ export const isActive = (m) => m.running === true || m.state === "working" || m.
 
 export const modelTag = (model) => (typeof model === "string" ? (/opus|sonnet|haiku|fable/i.exec(model)?.[0]?.toLowerCase() ?? model) : null);
 
-// The shown team's nodes: its members (`ids`), then its lanes' members (`children`, laneChildren's), each {id, role, name, lane, team, column}.
+// The shown team's nodes: its members (`ids`), then its lanes' members (`children`, laneChildren's), each {id, role, name, lane, team, column}:
+// a sub-orchestrator in SUB_COLUMN, a deputy chief and the deputy on duty in Lead, anyone else by columnOf; the deputy on duty carries `duty`.
 export function flowNodes(slices, team, ids, children) {
   const lane = laneOf(slices, team, ids);
-  const node = (id, laneId, teamOf) => ({ id, role: slices.get(id)?.body.role ?? "", name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: columnOf(slices.get(id)?.body.role, slices.get(id)?.body.column) });
+  const deputy = team?.body.duty?.member;
+  const node = (id, laneId, teamOf) => {
+    const role = slices.get(id)?.body.role ?? "";
+    const out = { id, role, name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: flowColumn(role, slices.get(id)?.body.column, id === deputy) };
+    return id === deputy ? { ...out, duty: true } : out;
+  };
   return [...ids.map((id) => node(id, lane(id), "")), ...children.map((c) => node(c.id, c.lane, c.team))];
 }
 

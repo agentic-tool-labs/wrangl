@@ -77,6 +77,10 @@ public sealed class StatusWitnessTests
         var fixture = StatusEntriesFixture.Create();
         // a member idle with background work open: it reads as working until an hour after it went idle
         fixture.Activity(fixture.StatusDirs[0], "s-impl", $$"""{"activity":"idle","bg_open":1,"at":"{{StatusEntriesFixture.Iso(T0 - 50_000)}}","state_since":"{{StatusEntriesFixture.Iso(T0 - 1_800_000)}}"}""");
+        // pane-subagents D3: a member's and the lead's running subagent each leave the pane at its in-flight TTL
+        File.AppendAllLines(Path.Combine(fixture.Home, ".claude", "ah2", "agent-hierarchy.peer-pending.jsonl"), [
+            $$"""{"type":"subagent","session_id":"s-impl","agent_id":"a1","status":"started","kind":"subagent","agent_type":"Explore","ts":"{{StatusEntriesFixture.Iso(T0 - 1_800_000)}}"}""",
+            $$"""{"type":"subagent","session_id":"o-t","agent_id":"a2","status":"started","kind":"subagent","agent_type":"wrangl:qa","ts":"{{StatusEntriesFixture.Iso(T0 - 600_000)}}"}"""]);
         var db = Ah.StateDb.StateDbModule.Open(fixture.Home, mayCreate: true);
         var clock = new FakeClock(DateTimeOffset.FromUnixTimeMilliseconds(T0 + 60_000));
         var services = fixture.Services(entries: entries ? Ah.StateDb.StateDbModule.CreateStatusEntries(fixture.Home) : null, backlogFacts: backlog?.Invoke(fixture), clock: clock);
@@ -105,6 +109,11 @@ public sealed class StatusWitnessTests
     public void ARestampEqualsAFreshComputeOnBothSidesOfEveryHorizon()
     {
         using var rig = Create(Groomed);
+        // the subagent rows the loop below crosses: shown before their TTL, gone after it (the member's at T0+30m, the lead's at T0+50m)
+        Assert.Contains("\"Explore\"", rig.Fresh(rig.Main, T0 + 60_000), StringComparison.Ordinal);
+        Assert.Contains("\"wrangl:qa\"", rig.Fresh(rig.Main, T0 + 60_000), StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Explore\"", rig.Fresh(rig.Main, T0 + 1_800_001), StringComparison.Ordinal);
+        Assert.DoesNotContain("\"wrangl:qa\"", rig.Fresh(rig.Main, T0 + 3_000_001), StringComparison.Ordinal);
         foreach (var dir in rig.Fixture.StatusDirs)
         {
             var t = T0 + 60_000;

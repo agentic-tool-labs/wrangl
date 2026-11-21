@@ -51,6 +51,9 @@ internal interface IStatusSource
     /// <summary>The member's registration liveness, null when it has none; probes the process now.</summary>
     MemberRegistrationLiveness? Registration(string name, string team);
 
+    /// <summary>The open subagent runs of session <paramref name="sessionId"/>, <c>[{agent_id, agent_type, started_at}]</c> (pane-subagents D1); empty when none.</summary>
+    JsonArray Subagents(string sessionId);
+
     /// <summary>The exchanges a run of <paramref name="team"/> counts rounds over (<c>ListRunExchanges</c> of every pool of every team).</summary>
     JsonArray RunExchanges(string dir, string? team, long sinceMs);
 
@@ -131,6 +134,8 @@ internal sealed partial class HierLib
         public JsonValue Activity(string dir, string file) => lib.ReadActivity(dir, file);
 
         public MemberRegistrationLiveness? Registration(string name, string team) => lib._core.Liveness?.ForMember(name, team);
+
+        public JsonArray Subagents(string sessionId) => lib.OpenSubagentRows(sessionId);
 
         public JsonArray RunExchanges(string dir, string? team, long sinceMs) =>
             lib._core.ListRunExchanges(lib.PoolDirs(dir, lib._roster.ListTeamNames(dir), null), team, sinceMs);

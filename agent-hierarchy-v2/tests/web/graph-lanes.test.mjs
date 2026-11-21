@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const { laneOf } = await import("../../web/ui/select.js");
 const { flowLayout } = await import("../../web/ui/graph.js");
 const { FLOW_COLUMN } = await import("../../web/mock/model.mjs");
+const { flowColumn, flowLinks, onDuty } = await import("../../web/ui/flow-model.js");
 
 const D = "member:d/top";
 const id = (name) => `${D}/${name}`;
@@ -29,7 +30,7 @@ const nodesOf = (rows, streams = STREAMS) => {
   const slices = slicesOf(rows);
   const ids = rows.map(([name]) => id(name));
   const lane = laneOf(slices, teamWith(streams), ids);
-  return ids.map((i) => ({ id: i, role: slices.get(i).body.role, name: slices.get(i).body.name, lane: lane(i), column: FLOW_COLUMN[slices.get(i).body.role] ?? 2 }));
+  return ids.map((i) => ({ id: i, role: slices.get(i).body.role, name: slices.get(i).body.name, lane: lane(i), column: flowColumn(slices.get(i).body.role, FLOW_COLUMN[slices.get(i).body.role] ?? 2) }));
 };
 const EDGES = ROWS.slice(1).map(([name]) => ({ from: id("@orchestrator"), to: id(name) }));
 
@@ -86,12 +87,68 @@ test("Flow with lanes: one band per leader holding its lane's members, after the
       assert.ok(bands[i][0] > bands[i - 1][1], `${orient}: band ${i} lies past band ${i - 1}`);
     }
     const along = (name) => (orient === "horizontal" ? pos.get(id(name)).x : pos.get(id(name)).y);
-    assert.equal(along("so-a"), along("@orchestrator"), `${orient}: a leader stays in the Lead column`);
+    // ah2-373 R1/R7: the sub-orchestrators have their own column, drawn right after Lead
+    assert.equal(along("so-a"), along("so-c"), `${orient}: the leaders share a column`);
+    assert.ok(along("@orchestrator") < along("so-a") && along("so-a") < along("arch"), `${orient}: Lead, Sub-orchestrators, then the rest`);
     assert.equal(along("dev-1"), along("dev-3"), `${orient}: implementors share their column across lanes`);
   }
 });
 
-test("a team with no lanes lays out exactly as the graph did before lanes, Flow both ways (golden from c3291604; ah2-225 adds the Test label)", () => {
+// ah2-373 R2-R4: with lanes every link runs clear of every other card, a lane's own links inside its block, a link with a lane end in at
+// most two bends, and no two links share a run.
+test("Flow with lanes routes each link clear of the cards, inside its lane, a lane's in at most two bends, no two on one run", () => {
+  const sparks = [["so-a", "dev-1"], ["so-a", "dev-2"], ["so-b", "dev-3"], ["so-c", "rev"], ["dev-1", "rev"], ["dev-1", "dev-2"]].map(([f, t], i) => ({ id: `s${i}`, from: id(f), to: id(t) }));
+  for (const orient of ["horizontal", "vertical"]) {
+    const { pos } = flowLayout(nodesOf(ROWS), new Set([id("@orchestrator"), id("dev-1")]), orient);
+    const { links } = flowLinks(EDGES, sparks, pos, orient);
+    // dev-1 and dev-2 share a column outside Lead: their link turns beside that column, clear of the lane's cards
+    assert.equal(links.length, EDGES.length + 6, orient);
+    const runs = [];
+    for (const l of links) {
+      const ends = l.key.split("|").map((k) => pos.get(k));
+      const pts = l.cmds.map((c) => c.slice(-2));
+      // a link with a lane end bends at most twice; one in the top team alone may need the rail round a column it skips (four)
+      assert.ok(l.cmds.filter((c) => c[0] === "Q").length <= (ends.some((r) => r.band) ? 2 : 4), `${orient} ${l.key}: bends`);
+      for (let i = 1; i < pts.length; i++) {
+        const [[x0, y0], [x1, y1]] = [pts[i - 1], pts[i]];
+        for (const r of pos.values()) {
+          if (ends.includes(r)) continue;
+          const inside = Math.max(x0, x1) > r.x && Math.min(x0, x1) < r.x + r.w && Math.max(y0, y1) > r.y && Math.min(y0, y1) < r.y + r.h;
+          assert.ok(!inside, `${orient} ${l.key}: clear of the card at ${r.x},${r.y}`);
+        }
+        if (l.cmds[i][0] === "L" && (x0 === x1 || y0 === y1)) runs.push({ key: l.key, x0, y0, x1, y1 });
+      }
+      if (ends[0].band && ends[0].band === ends[1].band) {
+        const [lo, hi] = ends[0].band;
+        pts.forEach(([x, y]) => assert.ok((orient === "horizontal" ? y : x) >= lo && (orient === "horizontal" ? y : x) <= hi, `${orient} ${l.key}: inside its lane`));
+      }
+    }
+    for (const [i, a] of runs.entries()) {
+      for (const b of runs.slice(i + 1).filter((r) => r.key !== a.key)) {
+        const shared = a.x0 === a.x1 && b.x0 === b.x1 && a.x0 === b.x0 ? Math.min(Math.max(a.y0, a.y1), Math.max(b.y0, b.y1)) - Math.max(Math.min(a.y0, a.y1), Math.min(b.y0, b.y1))
+          : a.y0 === a.y1 && b.y0 === b.y1 && a.y0 === b.y0 ? Math.min(Math.max(a.x0, a.x1), Math.max(b.x0, b.x1)) - Math.max(Math.min(a.x0, a.x1), Math.min(b.x0, b.x1)) : 0;
+        assert.ok(shared <= 0, `${orient}: ${a.key} and ${b.key} share a run`);
+      }
+    }
+  }
+});
+
+// ah2-373 R10: on duty, a member's open exchange with the Orchestrator is drawn at the deputy, and the Chief keeps its line to the deputy;
+// off duty, everything stays at the Orchestrator.
+test("an exchange with the Orchestrator is drawn at the deputy while it is on duty, and back at the Orchestrator after", () => {
+  const node = (name, role, deputy = false) => ({ id: id(name), role, name, lane: "", column: flowColumn(role, FLOW_COLUMN[role] ?? 2, deputy), ...(deputy ? { duty: true } : {}) });
+  const edges = [{ from: id("@orchestrator"), to: id("dep") }, { from: id("@orchestrator"), to: id("dev") }];
+  const sparks = [{ id: "x1", from: id("dev"), to: id("@orchestrator") }];
+  const on = onDuty([node("@orchestrator", "orchestrator"), node("dep", "deputy-chief", true), node("dev", "implementor")], edges, sparks);
+  assert.deepEqual(on.sparks.map((s) => [s.from, s.to]), [[id("dev"), id("dep")]], "the report goes to the deputy");
+  assert.deepEqual(on.edges.map((e) => [e.from, e.to]), [[id("@orchestrator"), id("dep")], [id("dep"), id("dev")]], "the Chief keeps one line, to the deputy");
+  const idle = node("dep", "deputy-chief");
+  assert.equal(idle.column, 0, "Amendment 8: a deputy chief sits in Lead off duty too");
+  const off = onDuty([node("@orchestrator", "orchestrator"), idle, node("dev", "implementor")], edges, sparks);
+  assert.deepEqual(off, { edges, sparks }, "off duty nothing moves");
+});
+
+test("a team with no lanes lays out exactly as the graph did before lanes, Flow both ways (golden from c3291604); its empty Test column is not drawn (ah2-373 R6)", () => {
   const g = JSON.parse(readFileSync(new URL("./fixtures/graph-plain-layout.json", import.meta.url), "utf8"));
   const rows = g.nodes.map((n) => [n.name, n.role]);
   const nodes = nodesOf(rows, []);
@@ -99,13 +156,12 @@ test("a team with no lanes lays out exactly as the graph did before lanes, Flow 
   const obj = (m) => Object.fromEntries(m);
   for (const [orient, want] of [["horizontal", g.flowHorizontal], ["vertical", g.flowVertical]]) {
     const f = flowLayout(nodes, new Set(g.active), orient);
-    // the cards are where they were; the fifth column's label (B2) is the one addition, and the box grows to hold it
-    assert.deepEqual({ pos: obj(f.pos), labels: f.labels.slice(0, 4) }, { pos: want.pos, labels: want.labels }, orient);
-    assert.equal(f.labels[4].text, "Test", orient);
+    // the cards and the populated columns' labels are where they were; no card is in Test or Sub-orchestrators, so neither is drawn
+    assert.deepEqual({ pos: obj(f.pos), labels: f.labels }, { pos: want.pos, labels: want.labels }, orient);
   }
 });
 
-const { laneChildren, teamLeaseIds } = await import("../../web/ui/select.js");
+const { laneChildren, partyIdOf, sparksOf, teamLeaseIds } = await import("../../web/ui/select.js");
 const CHILD = "member:d/top-lane-a";
 const managerWith = (streams) => ({ id: "team:d/top", body: { name: "top", dir_id: "d", orchestrator: id("@orchestrator"), members: ROWS.slice(1).map(([n]) => id(n)), streams } });
 const childSlices = () => {
@@ -140,6 +196,33 @@ test("the graph leases only the child teams, and their members, of confirmed, op
   const without = new Set(teamLeaseIds(slices, team, { members: true }));
   const extra = teamLeaseIds(slices, team, { members: true, lanes: true }).filter((x) => !without.has(x));
   assert.deepEqual(extra.sort(), ["team:d/top-lane-a", `${CHILD}/a-impl`, "activity:d/s1", "exchange:d/x1", `${CHILD}/a-rev`].sort());
+});
+
+test("ah2-367 L2: an open lane's open exchange sparks from its sub-orchestrator's node to the lane member; a done lane's adds none", () => {
+  const slices = childSlices();
+  slices.set("list:open:team:d/top-lane-a", { body: { open: [{ id: "exchange:d/l1", to_member: `${CHILD}/a-impl`, from_member: `${CHILD}/@orchestrator` }] } });
+  slices.set("list:open:team:d/top-lane-b", { body: { open: [{ id: "exchange:d/l2", to_member: "member:d/top-lane-b/b-impl", from_member: "member:d/top-lane-b/@orchestrator" }] } });
+  const team = managerWith(LANE_STREAMS);
+  assert.deepEqual(sparksOf(slices, team), [{ id: "exchange:d/l1", from: id("so-a"), to: `${CHILD}/a-impl`, slug: "exchange:d/l1" }]);
+  assert.ok(teamLeaseIds(slices, team, { open: true, lanes: true }).includes("exchange:d/l1"));
+  assert.ok(!teamLeaseIds(slices, team, { open: true }).includes("list:open:team:d/top-lane-a"), "without lanes, no lane's list");
+});
+
+test("ah2-367 L4: with slices, an orchestrator end naming a member of its team (the deputy) is that member; no name, a stranger or `orchestrator` is @orchestrator", () => {
+  const slices = new Map([["team:d/top", { body: { members: [id("dep")] } }]]);
+  const body = (from_name) => ({ dir_id: "d", team: "top", from: "orchestrator", from_name, to: "implementor", to_name: "dev-1" });
+  assert.equal(partyIdOf(body("dep"), "from", slices), id("dep"));
+  for (const n of [null, "ghost", "orchestrator"]) assert.equal(partyIdOf(body(n), "from", slices), id("@orchestrator"), String(n));
+  assert.equal(partyIdOf(body("ghost"), "from"), id("ghost"), "without slices, as before");
+});
+
+test("ah2-367 L5/L6: a member-to-member exchange sparks between the two members; an end the server left null lands on the team's orchestrator", () => {
+  const slices = childSlices();
+  slices.set("list:open:team:d/top", { body: { open: [{ id: "exchange:d/m1", to_member: id("rev"), from_member: id("dev-1") }, { id: "exchange:d/m2", to_member: null, from_member: id("arch") }] } });
+  assert.deepEqual(sparksOf(slices, managerWith([])), [
+    { id: "exchange:d/m1", from: id("dev-1"), to: id("rev"), slug: "exchange:d/m1" },
+    { id: "exchange:d/m2", from: id("arch"), to: id("@orchestrator"), slug: "exchange:d/m2" },
+  ]);
 });
 
 test("child-team members sit in their lane's band in Flow", () => {

@@ -4,7 +4,7 @@ namespace Ah.Watch.Model;
 
 /// <summary>
 /// Reads the parties and the team of an exchange from its messages-lane record, and files exchanges under the teams of the teams lane.
-/// A party is the member the exchange names: a party whose role is <c>orchestrator</c> is the orchestrator pseudo-member whatever its name;
+/// A party is the member the exchange names: a party whose role is <c>orchestrator</c> is the orchestrator pseudo-member unless its name is another member of the team (the deputy on duty);
 /// any other party is the member whose name equals the front-matter name (<c>to_name</c> or <c>from_name</c>), the same string the team document
 /// carries for that member. An exchange with no team, or a team the exchange's directory does not have, belongs to no team.
 /// This is the one place that resolves a party, for the member's last exchanges and for the open list alike.
@@ -22,7 +22,8 @@ internal static class ExchangeFiling
 
     /// <summary>
     /// The member of <paramref name="team"/> (as the Tree's member ids spell it) each end of the exchange names. A party with the
-    /// orchestrator role is the orchestrator pseudo-member whatever its name. Any other party is the member of its name when the team
+    /// orchestrator role is the orchestrator pseudo-member unless it names another member of the team; in a lane team, so is one with the
+    /// sub-orchestrator role. Any other party is the member of its name when the team
     /// has one; a party with no name is the member that is the single current holder of its role in the team. A party that resolves to
     /// nobody is null: an unknown name, or a role with no holder or more than one. A name always beats a role.
     /// </summary>
@@ -36,12 +37,22 @@ internal static class ExchangeFiling
         return [.. new[] { to, from }.Where(static p => p is not null).Distinct(StringComparer.Ordinal).Select(static p => p!)];
     }
 
+    private const string SubOrchestratorRole = "sub-orchestrator";
+
     private static string? Party(LaneRecord record, string roleField, string nameField, TeamEntry team)
     {
         var role = LaneParts.Text(record.Value, roleField);
-        var party = role == TreeIds.ReservedName
+        var name = LaneParts.Text(record.Value, nameField);
+
+        // ah2-367 L4: an orchestrator end that names a member of the team (the deputy on duty holds the orchestrator's address) is that member
+        var named = role == TreeIds.ReservedName && name is not null && name != TreeIds.Orchestrator && name != TreeIds.ReservedName && team.MemberNames.Contains(name);
+
+        // ah2-367 L1: in a lane team its sub-orchestrator is that team's orchestrator, not one of its members
+        var party = named
+            ? name
+            : role == TreeIds.ReservedName || (role == SubOrchestratorRole && team.Value.Member("parent") is { IsMap: true })
             ? TreeIds.Orchestrator
-            : LaneParts.Text(record.Value, nameField) ?? (role is null ? null : SoleHolder(team, role));
+            : name ?? (role is null ? null : SoleHolder(team, role));
         return party is not null && team.MemberNames.Contains(party) ? party : null;
     }
 

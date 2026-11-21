@@ -14,7 +14,8 @@ export type TeamModel = {
   isDefault: boolean
   summary: TeamSummary
   pipeline: PaneRow[] | null
-  members: { stream: string; row: PaneRow }[]
+  /** `subagents`: the member's running subagents as text rows (pane-subagents D4); absent in a view held from an older module. */
+  members: { stream: string; row: PaneRow; subagents?: PaneRow[] }[]
   dispatches: { member: string; row: PaneRow }[]
 }
 
@@ -32,6 +33,8 @@ export type View = {
   toasts: { key: string; text: string }[]
   /** True when `teams` are the viewer's own, proven by the document's `owners`; false for a pool-wide (older) document. */
   owned: boolean
+  /** The viewer's own running subagents as text rows, drawn at the top of the Pane (pane-subagents Amendment 1); absent in an older held view. */
+  lead?: PaneRow[]
 }
 
 declare module 'claude-code' {

@@ -548,17 +548,39 @@ test("a click on a node opens its sheet, again closes it, another swaps it, a dr
   assert.equal(FM.memberPageLink(null, "member:x/y/z").url, null);
 });
 
-test("V10: each Flow lane takes its role class's web colour (Lead sub-orchestrator, Advise architect, Implement implementor, Review violet, Test QA); others neutral", () => {
+test("V10: each Flow lane takes its role class's web colour (Lead and Sub-orchestrators sub-orchestrator, Advise architect, Implement implementor, Review violet, Test QA); others neutral", () => {
   for (const lt of [false, true]) {
     const w = lt ? FM.WEB.light : FM.WEB.dark;
     assert.deepEqual([0, 1, 2, 3, 4].map((i) => FM.laneStyle(i, lt).color), [w.role["sub-orchestrator"], w.role.architect, w.role.implementor, w.review, w.role.qa]);
-    assert.equal(FM.laneStyle(5, lt).color, w.role.neutral, "a lane with no known class is neutral");
+    assert.equal(FM.laneStyle(5, lt).color, w.role["sub-orchestrator"], "ah2-373: the Sub-orchestrators column");
+    assert.equal(FM.laneStyle(6, lt).color, w.role.neutral, "a lane with no known class is neutral");
     assert.equal(FM.laneStyle(-1, lt).color, w.role.neutral);
     assert.equal(FM.laneStyle(2, lt).band, `${w.role.implementor}0d`, "the band is the colour at 5 %");
   }
   for (const o of ["horizontal", "vertical"]) {
     const m = FM.flowModel(slices, TM4, o, 1, WIDE);
     assert.equal(m.lanes.length, m.labels.length, o);
+    // ah2-373 R6: only populated columns are drawn, each keeping its own column's colour
+    assert.deepEqual(m.lanes.map((l) => l.i), m.labels.map((l) => l.i), o);
     assert.ok(m.lanes.every((l) => l.w > 0 && l.h > 0 && l.rule > 0), o);
   }
+});
+
+// ah2-373 Amendment 8: a layout change settles over SETTLE_MS on the dots' clock and then stops; the first draw and reduced motion are instant.
+test("after a layout change Flow settles for SETTLE_MS, then is at rest; reduced motion never animates", () => {
+  const card = (id, x) => ({ id, rect: { x, y: 10, w: 220, h: 64 }, card: { name: id } });
+  const model = (cards) => ({ box: { x: 0, y: 0 }, k: 1, cards, unders: [], bands: [], labels: [] });
+  const v = {};
+  assert.equal(FM.settle(v, model([card("a", 0)]), 1000).active, false, "the first draw is placed at once");
+  const moved = model([card("a", 100), card("b", 400)]);
+  const s = FM.settle(v, moved, 2000);
+  assert.equal(s.active, true, "a moved and an arriving card start a settle");
+  assert.equal(s.at("c:a").x, 0, "it starts where the card was drawn");
+  assert.ok(FM.settle(v, moved, 2200).at("c:a").x > 0 && FM.settle(v, moved, 2200).at("c:b").o < 1, "mid-way: moving, fading in");
+  assert.equal(FM.settle(v, moved, 2000 + FM.SETTLE_MS).active, false, "at rest once SETTLE_MS has passed");
+  assert.equal(FM.settle(v, moved, 2000 + FM.SETTLE_MS).at("c:a").x, 100);
+  assert.equal(FM.settle({}, moved, 0, true).active, false);
+  const r = {};
+  FM.settle(r, moved, 0, true);
+  assert.equal(FM.settle(r, model([card("a", 300)]), 10, true).active, false, "reduced motion: placed at once");
 });

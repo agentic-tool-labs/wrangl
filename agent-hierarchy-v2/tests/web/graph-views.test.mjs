@@ -79,8 +79,8 @@ test("Flow places each column right of the last, idle members as short rows, and
   const column = ["i1", "i2", "i3"].map((id) => f.pos.get(id));
   const middle = (column[0].y + column[2].y + column[2].h) / 2;
   assert.ok(Math.abs(f.pos.get("o").y + f.pos.get("o").h / 2 - middle) <= 1, "the lead is centred on the tallest column");
-  assert.deepEqual(f.labels.map((l) => l.text), G.COLUMNS);
-  assert.equal(G.flowLayout([], new Set(), "horizontal").box?.w ?? null, 120 * 0 + (G.flowLayout([], new Set(), "horizontal").box?.w ?? null));
+  assert.deepEqual(f.labels.map((l) => l.text), ["Lead", "Advise · design", "Implement", "Review"], "ah2-373 R6: a column with no card is not drawn");
+  assert.equal(G.flowLayout([], new Set(), "horizontal").box, null, "ah2-373 R6: no card, no column, nothing to fit");
   assert.equal(G.flowLayout([], new Set(), "horizontal").pos.size, 0);
 });
 
@@ -205,7 +205,7 @@ test("Flow draws a card for each working member and a row for each idle one, wit
   assert.doesNotMatch(text(find(m.root, ".gflow")[0]), /—|turns/, "no card shows an empty field");
   const idle = idleCards[0];
   assert.equal(find(idle, ".fstats").length, 0, "an idle member is one row");
-  assert.deepEqual(find(m.root, ".flabel").map((l) => text(l)), G.COLUMNS);
+  assert.deepEqual(find(m.root, ".flabel").map((l) => text(l)), ["Lead", "Advise · design", "Implement", "Review"], "ah2-373 R6: no Test or Sub-orchestrators column with no card");
   assert.equal(button(m.root, "Flow").getAttribute("aria-pressed"), "true");
 });
 
@@ -239,7 +239,8 @@ test("Horizontal ⇄ Vertical turns Flow's columns into rows and is remembered",
   const m = await mountGraph();
   const pos = (name) => {
     const { style } = find(m.root, ".fcard").find((c) => c.getAttribute("data-id") === member(name));
-    return { left: parseFloat(style.left), top: parseFloat(style.top) };
+    const [, left, top] = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(style.transform).map(Number);
+    return { left, top };
   };
   assert.ok(pos("@orchestrator").left < pos("reviewer").left);
   click(button(m.root, "Switch between horizontal and vertical"));
@@ -272,6 +273,10 @@ test("the dots and the labels stop with reduced motion, Pause motion and an off-
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.r6 \.graph \.dot \{ animation: none; \} \}/);
   assert.match(css, /\.r6\.motion-off \.graph \.dot, \.r6 \.graph\.offscreen \.dot \{ animation: none; \}/);
   assert.doesNotMatch(css, /transition:/, "no transition of its own that would outlive a paused page");
+  // ah2-373 R8: Flow's enter, move and leave transitions (r6.css, with the other springs) are instant without motion
+  const r6 = readFileSync(new URL("../../web/ui/r6.css", import.meta.url), "utf8");
+  assert.match(r6, /\.r6\.motion-off \.flow-world :is\(\.fcard, \.flane, \.flabel\) \{ transition: none; \}/);
+  assert.match(r6, /@media \(prefers-reduced-motion: reduce\) \{\n  \.r6 \.flow-world :is\(\.fcard, \.flane, \.flabel\) \{ transition: none; \}/);
 });
 
 test("the Graph's own sheet uses tokens and no literal colour", () => {

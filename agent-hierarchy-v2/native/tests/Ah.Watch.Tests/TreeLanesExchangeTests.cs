@@ -121,7 +121,7 @@ public sealed partial class TreeLanesTests
     }
 
     [Fact]
-    public void AnOrchestratorRoleIsTheOrchestratorWhateverItsNameAndARealMemberNamedOrchestratorIsItsOwnMember()
+    public void AnOrchestratorRoleNamedOrchestratorIsTheOrchestratorOneNamingAMemberIsThatMemberAndARealMemberNamedOrchestratorIsItsOwnMember()
     {
         var reader = Truth();
         reader.Teams[TeamPath] = Doc("so", "dev", "orchestrator");
@@ -131,9 +131,10 @@ public sealed partial class TreeLanesTests
         var (model, _) = Seeded(reader);
         using var owner = model;
 
-        Assert.Contains(Last("r", "p"), Body(model, MemberId(TreeIds.Orchestrator)), StringComparison.Ordinal);
+        // ah2-367 Amendment 4: r's orchestrator end names the member dev, so it is dev's (was the orchestrator's whatever its name)
+        Assert.Contains(Last("p"), Body(model, MemberId(TreeIds.Orchestrator)), StringComparison.Ordinal);
         Assert.Contains(Last("q"), Body(model, MemberId(TreeIds.ReservedName)), StringComparison.Ordinal);
-        Assert.Contains(Last("q", "p"), Body(model, MemberId("dev")), StringComparison.Ordinal);
+        Assert.Contains(Last("r", "q", "p"), Body(model, MemberId("dev")), StringComparison.Ordinal);
     }
 
     [Fact]

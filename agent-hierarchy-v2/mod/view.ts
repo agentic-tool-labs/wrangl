@@ -16,7 +16,8 @@ export type Doc = {
   owners: readonly Owner[] | null
 }
 type Timeline = readonly { atMs: number; entry: Record<string, unknown> }[]
-type Owner = { sessions: readonly string[]; teams: readonly (string | null)[]; timeline: Timeline }
+/** `subagents`: the owner's own running subagents as the document lists them, unread; [] when it lists none. */
+type Owner = { sessions: readonly string[]; teams: readonly (string | null)[]; timeline: Timeline; subagents: readonly unknown[] }
 
 const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})/
 const CONTROL = /[\x00-\x1f\x7f-\x9f]/g
@@ -65,11 +66,11 @@ export function parseDoc(text: string | null | undefined): Doc | null {
     if (Array.isArray(d.owners)) {
       for (const o of d.owners) {
         if (typeof o !== 'object' || o === null || Array.isArray(o)) continue
-        const { sessions, teams, timeline: tl } = o as Record<string, unknown>
+        const { sessions, teams, timeline: tl, subagents } = o as Record<string, unknown>
         const own = parseTimeline(tl)
         if (!Array.isArray(sessions) || !sessions.every((x) => typeof x === 'string')) continue
         if (!Array.isArray(teams) || !teams.every((x) => x === null || typeof x === 'string') || own === null) continue
-        owners.push({ sessions, teams, timeline: own })
+        owners.push({ sessions, teams, timeline: own, subagents: Array.isArray(subagents) ? subagents : [] })
       }
     }
   }
@@ -102,11 +103,19 @@ export function scope(doc: Doc | null, sessionId: string): Doc | null {
 }
 
 /**
+ * Whether `sessionId` is only a member session: listed as a member and leading no team. A session an owner entry lists
+ * (a lane's Sub-Orchestrator) leads a team, and leading wins over being a member (ah2-367 Amendment 4).
+ */
+export function memberOnly(doc: Doc | null, sessionId: string): boolean {
+  return doc !== null && doc.memberSessions.includes(sessionId) && !(doc.owners ?? []).some((o) => o.sessions.includes(sessionId))
+}
+
+/**
  * The timeline entry current at `nowMs` (the last with `at` ≤ now, else the first), or null when nothing
- * shows: no document, expired, the entry malformed or not visible, or `sessionId` a member session.
+ * shows: no document, expired, the entry malformed or not visible, or `sessionId` only a member session.
  */
 function current(doc: Doc | null, nowMs: number, sessionId: string): Record<string, unknown> | null {
-  if (doc === null || nowMs >= doc.expiresMs || doc.memberSessions.includes(sessionId)) return null
+  if (doc === null || nowMs >= doc.expiresMs || memberOnly(doc, sessionId)) return null
   const mine = scope(doc, sessionId)
   if (mine === null) return null
   let picked = mine.timeline[0]
@@ -124,7 +133,7 @@ function current(doc: Doc | null, nowMs: number, sessionId: string): Record<stri
 export function nullCause(doc: Doc | null, nowMs: number, sessionId: string): string {
   if (doc === null) return 'unreadable'
   if (nowMs >= doc.expiresMs) return doc.memberSessions.includes(sessionId) || scope(doc, sessionId) !== null ? 'expired' : NO_OWNED_TEAM
-  if (doc.memberSessions.includes(sessionId)) return 'member session'
+  if (memberOnly(doc, sessionId)) return 'member session'
   if (doc.enabled === false) return 'hierarchy off'
   if (scope(doc, sessionId) === null) return NO_OWNED_TEAM
   return 'not visible'
@@ -249,7 +258,14 @@ type Member = {
   lastTool: string; lastToolMs: number; stream: string; sessionId: string; focusable: boolean; contextPct: number
   /** Optional, '' from a producer that predates them; read but not rendered yet. */
   workTree: string; branch: string; lastReportLine: string; lastReportAt: string
+  /** The member's running subagents, oldest first (pane-subagents D4); [] when the document lists none. */
+  subagents: Subagent[]
 }
+type Subagent = { type: string; startedMs: number }
+
+/** A document's `subagents` list read field by field: a row needs a `started_at` instant; an empty type reads `subagent`. */
+const subagentsOf = (v: unknown): Subagent[] =>
+  records(v).map((s) => ({ type: str(s.agent_type) || 'subagent', startedMs: instantMs(s.started_at) })).filter((s) => Number.isFinite(s.startedMs))
 type Team = { name: string; isDefault: boolean; pipeline: Record<string, unknown> | null; members: Member[]; dispatches: Dispatch[] }
 
 function readTeams(doc: Doc, nowMs: number): Team[] {
@@ -264,6 +280,7 @@ function readTeams(doc: Doc, nowMs: number): Team[] {
       lastTool: str(m.last_tool), lastToolMs: instantMs(m.last_tool_at), stream: str(m.stream), sessionId: str(m.session_id), focusable: m.focusable === true,
       contextPct: typeof m.context_pct === 'number' && Number.isFinite(m.context_pct) ? Math.round(m.context_pct) : NaN,
       workTree: str(m.work_tree), branch: str(m.branch), lastReportLine: str(m.last_report_line), lastReportAt: str(m.last_report_at),
+      subagents: subagentsOf(m.subagents),
     })),
     dispatches: records(t.dispatches).map((d) => {
       let state = '', reason = ''
@@ -408,6 +425,11 @@ export function viewModel(doc: Doc | null, nowMs: number, sessionId: string): Vi
     const focus = m.focusable && m.live !== false && (m.sessionId === '' || m.sessionId !== sessionId)
     return { row: 'member', tone: memberTone(m), name: m.name, kind: m.kind, route: m.route, state, base, focus, ...iconOf(memberIconKey(m)) }
   }
+  // pane-subagents D4: one static text row per running subagent, the last one closing the branch
+  const subRows = (list: readonly Subagent[]): PaneRow[] =>
+    list.map((s, i) => ({ row: 'text', tone: 'idle', text: `${i === list.length - 1 ? '└─' : '├─'} ${s.type} · ${age(nowMs - s.startedMs)}` }))
+  // Amendment 1 (Q1): the viewer's own runs, at the top of the Pane, as it has no member row
+  const lead = subRows(subagentsOf(doc?.owners?.find((o) => o.sessions.includes(sessionId))?.subagents))
   const shownOf = (t: Team): Dispatch[] => t.dispatches.filter((d) => d.state !== '' && d.state !== 'expired').sort((a, b) => oldestFirst(b.sentMs, a.sentMs))
   const dispatchRow = (d: Dispatch): PaneRow => {
     const eta = etaText(d)
@@ -415,14 +437,14 @@ export function viewModel(doc: Doc | null, nowMs: number, sessionId: string): Vi
     const tone = dispatchTone(d.state)
     return { row: 'dispatch', tone, slug: d.slug, label: d.label, eta, pct, elapsed: clock(nowMs - d.sentMs), state: wordOf(d.state), ...iconOf(statusOf(d.state)) }
   }
-  const pane: PaneRow[] = []
+  const pane: PaneRow[] = [...lead]
   for (const t of teams) {
     pane.push(heading('Hierarchy', t))
     pane.push(...pipelineRows(t))
   }
   for (const t of teams) {
     pane.push(heading('Team', t))
-    for (const m of t.members) pane.push(memberRow(m))
+    for (const m of t.members) pane.push(memberRow(m), ...subRows(m.subagents))
   }
   for (const t of teams) {
     pane.push(heading('Dispatches', t))
@@ -435,7 +457,7 @@ export function viewModel(doc: Doc | null, nowMs: number, sessionId: string): Vi
     isDefault: t.isDefault,
     summary: summaryOf(t),
     pipeline: t.pipeline === null ? null : pipelineRows(t, 'Pipeline idle.'),
-    members: t.members.map((m) => ({ stream: m.stream, row: memberRow(m) })),
+    members: t.members.map((m) => ({ stream: m.stream, row: memberRow(m), ...(m.subagents.length ? { subagents: subRows(m.subagents) } : {}) })),
     dispatches: shownOf(t).map((d) => ({ member: d.member, row: dispatchRow(d) })),
   }))
 
@@ -455,7 +477,7 @@ export function viewModel(doc: Doc | null, nowMs: number, sessionId: string): Vi
     if (d.state === 'stalled') toasts.push({ key: `stalled:${d.id}`, text: `${d.label} stalled · ${d.slug} · ${stalledWhy(d, nowMs)}` })
     if (d.state === 'overdue') toasts.push({ key: `overdue:${d.id}`, text: overdueText(d, nowMs) })
   }
-  return { band, pane, teams: teamModels, toasts, owned: mine.owners !== null }
+  return { band, pane, teams: teamModels, toasts, owned: mine.owners !== null, ...(lead.length ? { lead } : {}) }
 }
 
 /**
@@ -632,17 +654,21 @@ export function paneSections(view: View | null, columns: number, why: string | n
     const out: Section[] = []
     const multi = teams.length > 1
     const add = (section: Section['section'], key: string, title: string, color: string | null, rows: SectionRow[]) => out.push({ section, key, title: cut(title, inner), color, bordered, rows })
+    const lead = (view as { lead?: unknown }).lead
+    if (Array.isArray(lead) && lead.length) add('none', 'lead', '', null, (lead as PaneRow[]).map((r) => row(r, 0)))
+    // a held member from an older module has no subagent rows
+    const withSubs = (m: TeamModel['members'][number]): SectionRow[] => [row(m.row, 0), ...(Array.isArray(m.subagents) ? m.subagents : []).map((r) => row(r, 2))]
     for (const [ti, t] of (teams as TeamModel[]).entries()) {
       const suffix = multi ? ` ${t.name}` : ''
       if (t.pipeline !== null) add('hierarchy', `hierarchy:${ti}`, `HIERARCHY${suffix}`, STYLE.box.hierarchy, t.pipeline.map((r) => row(r, 0)))
       const streams = [...new Set(t.members.map((m) => m.stream).filter((n) => typeof n === 'string' && n !== ''))].sort()
-      if (t.members.length) add('team', `team:${ti}`, `TEAM ${t.name}`, STYLE.box.team, t.members.filter((m) => !streams.includes(m.stream)).map((m) => row(m.row, 0)))
+      if (t.members.length) add('team', `team:${ti}`, `TEAM ${t.name}`, STYLE.box.team, t.members.filter((m) => !streams.includes(m.stream)).flatMap(withSubs))
       const claimed = new Set<number>()
       for (const [si, stream] of streams.entries()) {
         const names = new Set(t.members.filter((m) => m.stream === stream).map((m) => (m.row.row === 'member' ? m.row.name : '')))
         const mine = t.dispatches.flatMap((d, i) => (names.has(d.member) ? (claimed.add(i), [row(d.row, 2)]) : []))
         add('stream', `stream:${ti}:${stream}`, `STREAM ${stream}`, STYLE.streams[si % STYLE.streams.length],
-          [...t.members.filter((m) => m.stream === stream).map((m) => row(m.row, 0)), ...mine])
+          [...t.members.filter((m) => m.stream === stream).flatMap(withSubs), ...mine])
       }
       const rest = t.dispatches.filter((_, i) => !claimed.has(i))
       if (rest.length) add('dispatches', `dispatches:${ti}`, `DISPATCHES${suffix}`, STYLE.box.dispatches, rest.map((d) => row(d.row, 0)))

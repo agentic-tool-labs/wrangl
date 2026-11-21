@@ -32,6 +32,10 @@ const MEMBERS = SCENARIO?.members.map((m) => [...m]) ?? [
   ["ultra-advisor", "ultra-advisor", "failed", "WebFetch", 3, null],
 ];
 
+// AH_MOCK_DUTY=<name> naming no member adds one: a working deputy chief, the on-duty deputy a live team has (ah2-373 R9).
+const DUTY_NAME = globalThis.process?.env?.AH_MOCK_DUTY;
+if (DUTY_NAME && !MEMBERS.some(([n]) => n === DUTY_NAME)) MEMBERS.push([DUTY_NAME, "deputy-chief", "working", "Task", 0, null]);
+
 // model and context tokens per member, as the daemon publishes them: tokens, never a fraction. No entry: no model, 40k tokens.
 const CONTEXT = SCENARIO?.context ?? {
   architect: ["claude-opus-4-1-20250805", 84_000],

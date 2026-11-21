@@ -261,7 +261,10 @@ export function teamLeaseIds(slices, team, { members = false, open = false, pair
     }
   }
   if (open) {
-    ids.push(`list:open:team:${key}`, ...(slices.get(`list:open:team:${key}`)?.body.open ?? []).map((o) => o.id));
+    // ah2-367 L2: with its lanes, each open lane's open list too
+    for (const k of [key, ...(lanes ? openLaneLeads(slices, team).map((l) => `${team.body.dir_id}/${l.name}`) : [])]) {
+      ids.push(`list:open:team:${k}`, ...(slices.get(`list:open:team:${k}`)?.body.open ?? []).map((o) => o.id));
+    }
   }
   return [...new Set(ids)];
 }
@@ -310,10 +313,16 @@ export const memberIds = (team) => {
 // The confirmed, open lanes of a manager team: its streams that are open and name a child team (served only for a confirmed lane) and a
 // sub-orchestrator. These, and only these, have their child team's members drawn with the manager's.
 const openLanes = (t) => (Array.isArray(t?.streams) ? t.streams : []).filter((s) => s?.state === "open" && typeof s.child_team === "string" && typeof s.sub_orchestrator === "string");
-const openLaneTeams = (slices, team) => {
-  const names = new Set(memberIds(team).map((id) => slices.get(id)?.body.name ?? id.split("/").pop()));
-  return openLanes(team?.body).filter((s) => names.has(s.sub_orchestrator)).map((s) => `team:${team.body.dir_id}/${s.child_team}`);
+// Each such lane whose sub-orchestrator is a member of the manager: its child team's name and id, and the sub-orchestrator's member id.
+const openLaneLeads = (slices, team) => {
+  const open = openLanes(team?.body);
+  if (open.length === 0) {
+    return [];
+  }
+  const byName = new Map(memberIds(team).map((id) => [slices.get(id)?.body.name ?? id.split("/").pop(), id]));
+  return open.filter((s) => byName.has(s.sub_orchestrator)).map((s) => ({ name: s.child_team, id: `team:${team.body.dir_id}/${s.child_team}`, lead: byName.get(s.sub_orchestrator) }));
 };
+const openLaneTeams = (slices, team) => openLaneLeads(slices, team).map((l) => l.id);
 
 // The members of each confirmed, open lane's child team, as [{id, team, lane}]: lane is the id of the lane's sub-orchestrator among the
 // manager's members. A lane whose sub-orchestrator is no member of the manager draws no child members; a member already listed is skipped.
@@ -469,32 +478,44 @@ export const membersOf = (slices, team) => memberIds(team).map((id) => memberOf(
 
 // The rows of the team's open list that are neither served as stale (stale_ids) nor unattended: the sparks and the open briefs.
 export function briefsInFlight(slices, team) {
-  const key = `${team.body.dir_id}/${team.body.name}`;
-  const stale = new Set(slices.get(`team-summary:${key}`)?.body.stale_ids ?? []);
-  return (slices.get(`list:open:team:${key}`)?.body.open ?? []).filter((o) => o.to_member && !stale.has(o.id));
+  return inFlight(slices, `${team.body.dir_id}/${team.body.name}`).filter((o) => o.to_member);
 }
 
-// One spark per open exchange in the team's open list whose two parties the server resolved to members; an end it could not resolve
-// (null) draws no spark. The client never matches roles or names itself.
+// The rows of a team's open list not served as stale (stale_ids), unattended ones included.
+const inFlight = (slices, key) => {
+  const stale = new Set(slices.get(`team-summary:${key}`)?.body.stale_ids ?? []);
+  return (slices.get(`list:open:team:${key}`)?.body.open ?? []).filter((o) => !stale.has(o.id));
+};
+
+// One spark per open exchange in the team's open list and in each of its open lanes' (ah2-367 L2, L5), on the ends the server resolved.
+// An end it could not resolve (null) lands on its team's lead (L6): the team's orchestrator node, for a lane its sub-orchestrator's node,
+// as does a lane's own @orchestrator end. The client never matches roles or names itself.
 export function sparksOf(slices, team) {
   if (!team) {
     return [];
   }
   const reviews = new Set((slices.get(`topology:${team.body.dir_id}/${team.body.name}`)?.body.edges?.brief ?? []).filter((b) => b.brief === "review").map((b) => b.id));
-  return briefsInFlight(slices, team)
-    .filter((o) => o.from_member)
+  const lanes = openLaneLeads(slices, team).map((l) => ({ key: `${team.body.dir_id}/${l.name}`, own: `member:${team.body.dir_id}/${l.name}/@orchestrator`, lead: l.lead }));
+  const end = (id, own, lead) => (id === null || id === undefined || id === own ? lead : id);
+  return [{ key: `${team.body.dir_id}/${team.body.name}`, own: null, lead: team.body.orchestrator ?? null }, ...lanes]
+    .flatMap(({ key, own, lead }) => inFlight(slices, key).map((o) => ({ ...o, from_member: end(o.from_member, own, lead), to_member: end(o.to_member, own, lead) })))
+    // an exchange both of whose ends land on one node has no line to draw (the Map drew none either)
+    .filter((o) => o.from_member && o.to_member && o.from_member !== o.to_member)
     .map((o) => ({ id: o.id, from: o.from_member, to: o.to_member, slug: slices.get(o.id)?.body.slug ?? o.id, ...(reviews.has(o.id) ? { review: true } : {}) }))
     .sort((a, b) => (a.id < b.id ? -1 : 1));
 }
 
 // ah2-265 D1/D2: one dot per report waiting to be read (the topology's edges.report: the brief's sender and receiver), run the other way,
-// from the member who reported (the brief's receiver) back to the one who briefed it. A party the server could not resolve draws none.
+// from the member who reported (the brief's receiver) back to the one who briefed it. A party the server could not resolve lands on the
+// team's orchestrator node (ah2-367 L6).
 export function reportsBack(slices, team) {
   if (!team) {
     return [];
   }
+  const lead = team.body.orchestrator ?? null;
   return (slices.get(`topology:${team.body.dir_id}/${team.body.name}`)?.body.edges?.report ?? [])
-    .filter((o) => o.from_member && o.to_member)
+    .map((o) => ({ ...o, from_member: o.from_member ?? lead, to_member: o.to_member ?? lead }))
+    .filter((o) => o.from_member && o.to_member && o.from_member !== o.to_member)
     .map((o) => ({ id: o.id, from: o.to_member, to: o.from_member, slug: slices.get(o.id)?.body.slug ?? o.id, back: true }))
     .sort((a, b) => (a.id < b.id ? -1 : 1));
 }
@@ -512,8 +533,14 @@ export const partyName = (body, side, slices = null) => {
 };
 
 // The member id an exchange party resolves to, as the server's pair filter resolves it: the party's name in the exchange's
-// directory and team (a team-less exchange belongs to the team named default), the orchestrator by its role; else null.
-export const partyIdOf = (body, side) => {
-  const name = body[`${side}_name`] ?? (body[side] === "orchestrator" ? "@orchestrator" : null);
-  return name === null ? null : `member:${body.dir_id}/${body.team ?? "default"}/${name}`;
+// directory and team (a team-less exchange belongs to the team named default), the orchestrator by its role; else null. With `slices`,
+// a sub-orchestrator in a team they say is a lane is that lane's orchestrator (ah2-367 L1), as the server resolves it.
+export const partyIdOf = (body, side, slices = null) => {
+  const team = body.team ?? "default";
+  const lead = body[side] === "sub-orchestrator" && laneName(slices, body.dir_id, team) !== null;
+  // ah2-367 L4: with `slices`, an orchestrator end names its member only when the team slice lists that member (the deputy on duty)
+  const named = body[`${side}_name`];
+  const stray = slices && body[side] === "orchestrator" && typeof named === "string" && (named === "orchestrator" || !(slices.get(`team:${body.dir_id}/${team}`)?.body.members ?? []).includes(`member:${body.dir_id}/${team}/${named}`));
+  const name = lead || stray ? "@orchestrator" : named ?? (body[side] === "orchestrator" ? "@orchestrator" : null);
+  return name === null ? null : `member:${body.dir_id}/${team}/${name}`;
 };

@@ -61,7 +61,9 @@ internal static partial class MessageText
         static string? Fence(string line)
         {
             var trimmed = line.TrimStart();
-            return trimmed.StartsWith("```", StringComparison.Ordinal) || trimmed.StartsWith("~~~", StringComparison.Ordinal) ? trimmed[..3] : null;
+            // A backtick line with another backtick after its opening run (```npm test```) is inline code, not a fence.
+            return trimmed.StartsWith("```", StringComparison.Ordinal) && !trimmed.TrimStart('`').Contains('`')
+                || trimmed.StartsWith("~~~", StringComparison.Ordinal) ? trimmed[..3] : null;
         }
 
         for (var i = 0; i < lines.Count; i++)
