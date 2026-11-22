@@ -323,6 +323,58 @@ code, kbd, pre { font-family: var(--font-mono); }
 :root[data-theme="dark"] .btn-primary:hover { color: var(--bg); }
 .hero-art { display: flex; flex-direction: column; align-items: center; color: var(--hat); }
 .hero-art img { width: min(240px, 60vw); height: auto; image-rendering: pixelated; position: relative; z-index: 1; margin-bottom: -10px; }
+/* The mascot easter egg (site.js). The button keeps the image's box. The overlay is fixed to the viewport and never
+   scrolls; the page behind is locked. Its canvas area (.egg-view) fills it above the docked settings panel, and the
+   image sits centred in it with a 16px gutter, clear of the buttons. */
+.mascot-btn { display: block; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; position: relative; z-index: 1; margin-bottom: -10px; }
+.mascot-btn img { display: block; margin: 0; }
+html:has(dialog.egg[open]) { overflow: hidden; scrollbar-gutter: stable; }
+dialog.egg { position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: none; color: var(--ink); overflow: hidden; }
+dialog.egg[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+dialog.egg::backdrop { background: none; }
+.egg-veil { position: absolute; inset: 0; background: var(--bg); }
+.egg-view { grid-row: 1; position: relative; min-height: 0; display: grid; place-items: center; container-type: size; }
+.egg-view img {
+  display: block; width: min(100cqw - 2 * var(--s4), 100cqh - 2 * (var(--s4) + var(--s7) + var(--s2))); height: auto; aspect-ratio: 1;
+  image-rendering: pixelated; transform-origin: 0 0;
+}
+.egg-ascii { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; touch-action: none; }
+.egg-tools { position: absolute; top: var(--s4); inset-inline-end: var(--s4); display: flex; gap: var(--s3); }
+.egg-settings { min-width: 48px; justify-content: center; padding: 0; }
+.egg-settings[hidden] { display: none; }
+.egg-settings svg { width: 18px; height: 18px; fill: currentColor; }
+/* The render settings panel (built by the lazy module): a bar docked under the canvas, compact one-line rows. */
+.egg-panel {
+  grid-row: 2; position: relative; display: flex; flex-direction: column; max-height: 55dvh; background: var(--surface);
+  border-top: 2px solid var(--ink); font: 400 var(--text-xs)/1.3 var(--font-ui);
+}
+.egg-panel[hidden] { display: none; }
+.egg-panel-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s5); border-bottom: 1px solid var(--rule); }
+.egg-panel h2 { margin: 0 auto 0 0; font: 700 var(--text-sm)/1.3 var(--font-mono); }
+.egg-panel .btn { min-height: 36px; padding: var(--s2) var(--s3); }
+.egg-groups {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--s3) var(--s5);
+  padding: var(--s3) var(--s5) var(--s4); overflow-y: auto; overscroll-behavior: contain;
+}
+.egg-group { min-width: 0; }
+.egg-group h3 { margin: 0 0 var(--s1); font: 700 var(--text-xs)/1.3 var(--font-mono); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.egg-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr) 5ch; align-items: center; gap: var(--s2); min-height: 28px; }
+.egg-row[hidden] { display: none; }
+.egg-row > label, .egg-row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.egg-row output { font: 400 var(--text-xs)/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-muted); text-align: end; }
+.egg-row input[type="range"] { width: 100%; min-height: 24px; margin: 0; accent-color: var(--link); }
+.egg-panel input:focus-visible { outline-offset: 1px; }
+.egg-check { grid-template-columns: 16px minmax(0, 1fr); }
+.egg-check input, .egg-radio input { width: 16px; height: 16px; margin: 0; accent-color: var(--link); }
+.egg-check label, .egg-radio label { cursor: pointer; }
+.egg-colour input { width: 48px; height: 24px; padding: 0; border: 2px solid var(--rule-strong); background: none; cursor: pointer; }
+.egg-radio { grid-template-columns: 6rem minmax(0, 1fr); }
+.egg-radios { display: flex; flex-wrap: wrap; gap: 0 var(--s3); }
+.egg-radios label { display: inline-flex; align-items: center; gap: var(--s1); min-height: 28px; }
+@media (max-width: 56rem) { .egg-panel-head { padding: var(--s2) var(--s4); } .egg-groups { padding: var(--s3) var(--s4); } }
+:root[data-theme="dark"] .egg-panel { color-scheme: dark; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .egg-panel { color-scheme: dark; } }
+:root[data-theme="light"] .egg-panel { color-scheme: light; }
 .fence { display: block; width: 100%; height: 40px; fill: currentColor; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-art { color: var(--accent); } }
 :root[data-theme="dark"] .hero-art { color: var(--accent); }

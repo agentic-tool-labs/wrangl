@@ -10,7 +10,7 @@ a Reviewer. A small background program on your machine carries the messages betw
 [![Watch the 43-second tour of Wrangl](site/assets/wrangl-reel.jpg)](https://agentic-tool-labs.github.io/wrangl/#reel-title)
 
 > [!WARNING]
-> **Early testing: use with caution.** Wrangl 2.0.35 is an early public release and is still being tested. It starts
+> **Early testing: use with caution.** Wrangl 2.0.36 is an early public release and is still being tested. It starts
 > and controls other agent sessions that edit files and run commands in your repository, so use it only on work you
 > have committed or backed up. Expect bugs, and expect commands, settings and screens to change between releases.
 > Wrangl is provided "as is", without warranties of any kind; see the [LICENSE](LICENSE). Report problems at

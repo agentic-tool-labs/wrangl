@@ -6,3 +6,7 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 The tour video on the documentation site (site/assets/wrangl-reel.mp4) uses the track
 "Happy Beats / Business Moves Vol. 1" by Sascha Ende (ende.app), licensed under CC BY 4.0
 (https://ende.app/en/standard-license), and sound effects released under CC0.
+
+The mascot easter egg on the documentation site uses Canvas UI's ASCII Object by David Haz
+(github.com/DavidHDev/canvas-ui, commit d5a6778) under its own licence, MIT plus Commons Clause
+(site/egg/canvas-ui-LICENSE.md), bundled with three.js (MIT) into site/egg/ascii-object.js.

@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Builds the Wrangl documentation site from the Markdown docs. See build.mjs.",
   "engines": { "node": ">=20" },
-  "scripts": { "build": "node build.mjs", "test": "node --test" },
-  "dependencies": { "marked": "18.1.2" }
+  "scripts": { "build": "node build.mjs", "build:egg": "node egg/build-egg.mjs", "test": "node --test" },
+  "dependencies": { "marked": "18.1.2" },
+  "devDependencies": { "esbuild": "0.28.2", "three": "0.185.1" }
 }

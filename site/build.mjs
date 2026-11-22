@@ -265,6 +265,10 @@ function main() {
   for (const [file, text] of files) writeFileSync(path.join(DIST, file), text);
   cpSync(path.join(SITE, 'assets'), path.join(DIST, 'assets'), { recursive: true });
   cpSync(path.join(ROOT, manifest.mascot), path.join(DIST, 'assets', 'wrangl.svg'));
+  // The mascot easter egg's renderer, which site.js fetches by a dynamic import on the first click: the committed,
+  // prebuilt bundle of Canvas UI's ASCII Object, the settings panel and three (egg/build-egg.mjs makes it from the
+  // private source), with the component's licence beside it.
+  for (const f of ['ascii-object.js', 'canvas-ui-LICENSE.md']) cpSync(path.join(SITE, 'egg', f), path.join(DIST, 'assets', f));
   for (const m of ctx.media) { mkdirSync(path.dirname(path.join(DIST, 'media', m)), { recursive: true }); cpSync(path.join(ROOT, m), path.join(DIST, 'media', m)); }
 
   let failed = false;
