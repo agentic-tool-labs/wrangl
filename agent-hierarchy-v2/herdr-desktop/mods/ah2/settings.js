@@ -10,8 +10,8 @@ import { ah, target } from "./ah.js";
 import { targetLabel } from "./target-model.js";
 import { sidebarModel } from "./model.js";
 import { hasDesk } from "./dock.js";
-import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, displayOrder, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY, outputOf } from "./settings-model.js";
-import { REBUILD_KEY } from "./rebuild-model.js";
+import { SETTINGS_KEY, UPDATE_KEY, BUSY_MS, STRIP, INTERVALS, settingsOf, displayOrder, updateStep, versionNewer, markerVersion, changelogEntry, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_CLICK_KEY, outputOf, buildHolds } from "./settings-model.js";
+import { REBUILD_KEY, rebuildRead } from "./rebuild-model.js";
 import { openUpdate } from "./update.js";
 
 export const openSettings = () => openOverlay({ mod: "ah2", props: { view: "settings" }, kind: "dialog", key: "ah2-settings", width: 480, height: 640 });
@@ -49,6 +49,18 @@ async function probe() {
   return { installed: markerVersion(marker), bundled, notes: changelogEntry(md, notesFor) };
 }
 
+// The stamp where ah runs (rebuild-model.js rebuildRead), the one reader the sidebar (main.js) and the update check share.
+// cache: ah's home held per caller ({ key, home }).
+const ahHome = { key: null, home: null };
+export const readRebuild = (cache = ahHome) => rebuildRead(cache, JSON.stringify(target()), async () => {
+  const r = await ah().exec("ah", ["where"], { timeout: 10000 }).catch(() => null);
+  return r?.code === 0 ? r.stdout : null;
+}, (path) => ah().read(path));
+
+// The rebuild the "available" notice is held against: the sidebar's kept one, else (a check before its first read, ah2-401 I2)
+// the stamp read now. Not written to REBUILD_KEY: the sidebar's own read still posts its "building" notice.
+const rebuildNow = async () => shared(REBUILD_KEY) ?? (await readRebuild().catch(() => null))?.now ?? null;
+
 function tell(n) {
   const spec = updateNotify(n);
   if (spec) notify(spec);
@@ -76,7 +88,7 @@ export async function replaceLayout() {
 
 async function step(o) {
   const p = await probe();
-  const s = step0(p);
+  const s = step0(p, await rebuildNow());
   const stuck = s.next.failed?.stuck && s.next.failed.version === p.bundled;
   if (!(s.install || (o.install && !stuck && p.installed && p.bundled && (s.newer || o.reinstall)))) return s;
   setShared(UPDATE_KEY, { ...s.next, installing: Date.now(), failed: null, output: null });
@@ -87,7 +99,7 @@ async function step(o) {
   if (r.code === 0) {
     const kept = (r.stderr.match(/was kept/g) ?? []).length;
     if (kept) notify({ title: "Wrangl: edited files kept", body: `${kept} ${kept === 1 ? "file" : "files"} in mods/ah2 you edited stayed as they are.`, level: "warning" });
-    return step0(await probe(), true, output);
+    return step0(await probe(), await rebuildNow(), true, output);
   }
   const failed = { version: p.bundled, text: (r.stderr || r.stdout || "the install failed").trim().split("\n").pop(), at: Date.now() };
   setShared(UPDATE_KEY, { ...shared(UPDATE_KEY), installing: 0, failed, output });
@@ -95,9 +107,9 @@ async function step(o) {
   return s;
 }
 
-function step0(p, landed = false, output = undefined) {
+function step0(p, rebuild, landed = false, output = undefined) {
   const prev = shared(UPDATE_KEY);
-  const s = updateStep(output === undefined ? prev : { ...prev, output }, p, Date.now(), settings().autoUpdate, landed, shared(REBUILD_KEY)?.state === "started");
+  const s = updateStep(output === undefined ? prev : { ...prev, output }, p, Date.now(), settings().autoUpdate, landed, buildHolds(rebuild, p.bundled));
   setShared(UPDATE_KEY, s.next);
   tell(s.notice);
   return s;

@@ -559,7 +559,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     /// <summary>The command that lists only <paramref name="home"/>'s daemons: <see cref="SpawnCommand"/> makes <c>--ah-home</c> the last argument. Not escaped: a hint the user runs by hand.</summary>
     internal static string LifeHint(string home) => $"pgrep -fl 'ahd.* serve .*--ah-home {home}$'";
 
-    private async Task<Discovered?> StartLockedAsync(long deadline, bool hook, string? drainReason, Action<string> busy, CancellationToken ct)
+    private async Task<Discovered?> StartLockedAsync(long deadline, bool hook, string? drainReason, Action<string> busy, Action<int> pending, CancellationToken ct)
     {
         long Remaining() => Math.Max(0, deadline - Now());
         if (Remaining() <= 0)
@@ -641,7 +641,8 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         {
             if (Now() >= lifeEnd)
             {
-                busy($"a previous ahd for {_paths.Home} is still alive (it holds run/ahd.life.lock) but does not answer; not starting another until it exits; `ahd heal` replaces it only while it is recorded, otherwise end it ({LifeHint(_paths.Home)})");
+                // ah2-404 R2: a hook's reason ends in the replace-failed line; the advice is for a person, who reads the CLI's.
+                busy(hook ? "life lock held" : $"a previous ahd for {_paths.Home} is still alive (it holds run/ahd.life.lock) but does not answer; not starting another until it exits; `ahd heal` replaces it only while it is recorded, otherwise end it ({LifeHint(_paths.Home)})");
 
                 // Every implicit start backs off while it lives, instead of each CLI call waiting the window again. A hook's budget
                 // is no verdict: a daemon exiting cleanly would otherwise suppress starts.
@@ -707,9 +708,16 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
 
         // The next spawns back off when the daemon exited, or did not become healthy in its whole window. A caller whose own
         // budget ran out sooner has no verdict to record: a daemon that is merely slow is found by discovery.
-        if (exited is not null || Now() - started >= StartWaitMs)
+        var fullWindow = Now() - started >= StartWaitMs;
+        if (exited is not null || fullWindow)
         {
             MarkSpawnFailed(childPid, exited ?? $"no healthy daemon within {StartWaitMs} ms");
+        }
+
+        // ah2-404 Amendment 1: pending only when the caller's deadline cut the window short, so the log and the marker agree.
+        if (exited is null && !fullWindow && deps.Inspector.PidAlive(childPid))
+        {
+            pending(childPid);
         }
 
         return null;
@@ -723,17 +731,25 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     {
         string? last = null;
         var drained = false;
-        var found = await EnsureCoreAsync(options with { Warn = (text, reason) => { last = text; options.Warn?.Invoke(text, reason); } }, () => drained = true, ct).ConfigureAwait(false);
+        int? pending = null;
+        var found = await EnsureCoreAsync(options with { Warn = (text, reason) => { last = text; options.Warn?.Invoke(text, reason); } }, () => drained = true, pid => pending = pid, ct).ConfigureAwait(false);
         if (found is null && drained)
         {
-            // ah2-100 D5: a replace that ends with no daemon says so in one line.
-            LogAction("replace-failed", $"reason={last ?? "unknown"}");
+            // ah2-100 D5: a replace that ends with no daemon says so in one line; ah2-404 R1: a spawned child still alive did not fail.
+            if (pending is { } pid)
+            {
+                LogAction("start", $"pending pid {pid}");
+            }
+            else
+            {
+                LogAction("replace-failed", $"reason={last ?? "unknown"}");
+            }
         }
 
         return found;
     }
 
-    private async Task<Discovered?> EnsureCoreAsync(EnsureOptions options, Action onDrained, CancellationToken ct)
+    private async Task<Discovered?> EnsureCoreAsync(EnsureOptions options, Action onDrained, Action<int> onPending, CancellationToken ct)
     {
         void Warn(string text) => options.Warn?.Invoke(text, "down");
         if (DaemonOff)
@@ -807,7 +823,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 {
                     try
                     {
-                        info = await StartLockedAsync(options.Hook ? deadline : Now() + (StartWaitMs * 2L), options.Hook, round == 1 ? "version-drain" : null, text => { startWhy = text; if (!options.Hook) { Warn(text); } }, ct).ConfigureAwait(false);
+                        info = await StartLockedAsync(options.Hook ? deadline : Now() + (StartWaitMs * 2L), options.Hook, round == 1 ? "version-drain" : null, text => { startWhy = text; if (!options.Hook) { Warn(text); } }, onPending, ct).ConfigureAwait(false);
                     }
                     finally
                     {

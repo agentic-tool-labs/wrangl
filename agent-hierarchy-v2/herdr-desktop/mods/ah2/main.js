@@ -11,7 +11,7 @@
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button, Popover } from "gpui-base";
 import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
-import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, homeFor, rebuildOf, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
+import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
 import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree, teamTotals } from "./model.js";
 import { runText, underTip } from "./flow-model.js";
 import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
@@ -24,12 +24,12 @@ import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
 import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
 import { markCell } from "./marks.js";
-import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, INSTALL_COMMAND } from "./settings-model.js";
-import { settings, setSetting, settingsView, checkUpdate, installClick } from "./settings.js";
+import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, isInstallCommand, listen } from "./settings-model.js";
+import { settings, setSetting, settingsView, checkUpdate, installClick, readRebuild } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { openRename, renameInit, renameView } from "./rename.js";
 import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
-import { ah, target } from "./ah.js";
+import { target } from "./ah.js";
 import { UNRESOLVED, targetKey } from "./target-model.js";
 import { Link } from "./link-model.js";
 
@@ -48,9 +48,9 @@ export default class Ah2 extends View {
   init(_props, cx) {
     // A click on the "available" notice (settings-model.js updateNotify) arrives as a command. Which copy herdr hands it to is
     // not documented, so every copy listens; installClick installs once however many receive it.
-    if (!checking()) cx.spawn(async () => {
-      for (;;) if ((await nextCommand()) === INSTALL_COMMAND) installClick();
-    });
+    // ah2-401 I1: a failed nextCommand() or click does not end the listener (settings-model.js listen).
+    // The mod has nowhere to log, so a failure is swallowed (no console, no new notice) and the listener keeps listening.
+    if (!checking()) cx.spawn((cx) => listen(nextCommand, (c) => (isInstallCommand(c) ? installClick() : null), (ms) => cx.sleep(ms), () => {}));
     this.team = props()?.team ?? null;
     this.view = props()?.view ?? "sitrep";
     // The Desk window: one copy for all four tabs; `view` is the tab shown (tabs.js draws its header, select switches it).
@@ -306,12 +306,7 @@ export default class Ah2 extends View {
   // asks again); the stamp is then read as a file, no process. No home or no read (a WSL target: target-model.js read) says nothing.
   async rebuildRead() {
     this.ahHome ??= { key: null, home: null };
-    const home = await homeFor(this.ahHome, JSON.stringify(target()), async () => {
-      const r = await ah().exec("ah", ["where"], { timeout: 10000 }).catch(() => null);
-      return r?.code === 0 ? r.stdout : null;
-    });
-    const text = home === null ? null : await ah().read(`${home}/install.json`).catch(() => null);
-    const now = text == null ? null : rebuildOf(text);
+    const { home, now } = await readRebuild(this.ahHome);
     const held = shared(REBUILD_KEY) ?? null;
     const step = rebuildStep(held, now);
     if (step.keep !== held) setShared(REBUILD_KEY, step.keep);

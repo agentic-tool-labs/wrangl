@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.39] - 2026-11-22
+
+### Fixed
+
+- **The install click in herdr desktop keeps working after an error.** The mod's command listener survives a
+  failure and listens again after a second. The update check reads the build state itself when the sidebar has not
+  yet, and a build of an older version no longer holds the "available" notice.
+- **A daemon replace that is only slow is not logged as failed.** When a hook's deadline comes before the new
+  daemon is healthy and the daemon is still starting, the log says `start pending pid <N>`. A hook's life-lock
+  reason is `life lock held`, without the long advice.
+
 ## [2.0.38] - 2026-11-21
 
 ### Changed

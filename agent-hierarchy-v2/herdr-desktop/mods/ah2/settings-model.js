@@ -187,7 +187,7 @@ export const BUSY_MS = 120e3;
 // most one notice: "updated" once an install landed (even when Herdr's reload ended the run that started it), else
 // "available" once per version. landed: this check follows an install that exited 0; if the mod still reads older (the two
 // versions disagree, e.g. a binary built from another plugin), that version is recorded stuck: no auto-install, no Update offer.
-// building: an ahd build is running (rebuild-model.js); the "available" notice waits for it to end (ah2-111 G2).
+// building: an ahd build holds the offer (buildHolds); the "available" notice waits for it to end (ah2-111 G2).
 export function updateStep(prev, p, now, auto, landed = false, building = false) {
   const was = prev && typeof prev === "object" ? prev : {};
   const next = { ...was, installed: p.installed, bundled: p.bundled, notes: p.notes, checked: now };
@@ -214,8 +214,28 @@ export function updateStep(prev, p, now, auto, landed = false, building = false)
   return { next, newer, install, notice };
 }
 
+// ah2-401 I3: whether the rebuild record (rebuild-model.js rebuildOf; null: none) holds the "available" notice for `offered`: a
+// build running for that version, a newer one, or one of unknown version holds it; one for an older version does not.
+export const buildHolds = (rebuild, offered) => rebuild?.state === "started" && !versionNewer(offered, rebuild.version);
+
 // The command a click on the "available" notice sends this mod (herdr delivers "<mod>.<command>" to nextCommand()).
 export const INSTALL_COMMAND = "install";
+// ah2-401 I4: until a live click shows which spelling nextCommand() hands over, both are the install click.
+export const isInstallCommand = (c) => c === INSTALL_COMMAND || c === `ah2.${INSTALL_COMMAND}`;
+export const LISTEN_RETRY_MS = 1000;
+// ah2-401 I1: the command listener. A rejection from `next` or a throw from `handle` is logged and the loop goes on after
+// LISTEN_RETRY_MS (no spin); a rejection of what `handle` returns is logged. `handle` is not awaited, so a click arriving while
+// an install runs still meets that install's claim (clickFree).
+export async function listen(next, handle, sleep, log) {
+  for (;;) {
+    try {
+      Promise.resolve(handle(await next())).catch(log);
+    } catch (e) {
+      log(e);
+      await sleep(LISTEN_RETRY_MS);
+    }
+  }
+}
 // When a click last started an install (shared, so two copies that both receive the click install once).
 export const INSTALL_CLICK_KEY = "ah2.install-click";
 // Whether a click may start an install: not while one a click started is still within BUSY_MS.

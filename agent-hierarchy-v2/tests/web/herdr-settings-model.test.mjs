@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { settingsOf, shownTeams, displayOrder, teamMove, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS, updateDialogOf, outputOf, claimFresh, CLAIM_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
+import { settingsOf, shownTeams, displayOrder, teamMove, versionNewer, changelogEntry, updateStep, peekDismissed, peekClosed, peekPressOutside, deskRoute, unionSubs, qaShowing, deskWindowOpen, deskWindowSpec, DESK_WINDOW_SIZE, DESK_WINDOW_MAX, ABOUT, aboutVersions, updateNotify, clickFree, INSTALL_COMMAND, BUSY_MS, buildHolds, listen, isInstallCommand, updateDialogOf, outputOf, claimFresh, CLAIM_MS } from "../../herdr-desktop/mods/ah2/settings-model.js";
+import { rebuildRead } from "../../herdr-desktop/mods/ah2/rebuild-model.js";
 
 // atp-1727: maximize and restore reopen the Desk window on the same tab; the next plain open (the strip toggle, Needs you) reads the
 // size from the key's `max`, as dock.js openDeskWindow does.
@@ -97,6 +98,34 @@ test("the update offer carries the install click, once per version, held while a
   assert.equal(held.notice, null, "a build still running: held");
   assert.equal(updateStep(held.next, p, 2000, false).notice?.kind, "available", "offered once the build ends");
   assert.equal(updateStep({}, { ...p, installed: "2.0.3" }, 1000, false).notice, null, "marker current: nothing");
+});
+
+// ah2-401 I1, I4: one failed nextCommand() does not end the listener; it waits before asking again; both spellings install.
+test("the command listener keeps listening after a rejection", async () => {
+  const logged = [], slept = [];
+  const replies = [() => Promise.reject(new Error("gone")), () => Promise.resolve("ah2.install")];
+  let got;
+  const clicked = new Promise((r) => { got = r; });
+  listen(() => ((replies.shift() ?? (() => new Promise(() => {})))()), (c) => isInstallCommand(c) && got(c), async (ms) => { slept.push(ms); }, (e) => logged.push(e.message));
+  assert.equal(await clicked, "ah2.install");
+  assert.deepEqual([logged, slept], [["gone"], [1000]], "logged once, one wait, then listening again");
+  assert.equal(isInstallCommand("install"), true);
+  assert.equal(isInstallCommand("ah2.other"), false, "no new command");
+});
+
+// ah2-401 I2, I3: a check before the sidebar's first read takes the stamp through the sidebar's reader, and the hold knows the version.
+test("a check before the sidebar's first read during a build holds the notice", async () => {
+  const p = { installed: "2.0.2", bundled: "2.0.3", notes: "" };
+  const stamp = JSON.stringify({ version: "2.0.2", last_rebuild: { version: "2.0.3", at: "2026-11-21T00:00:00Z", state: "started" } });
+  const { now } = await rebuildRead({ key: null, home: null }, "local", async () => JSON.stringify({ home: "/h" }), async (f) => (f === "/h/install.json" ? stamp : null));
+  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(now, p.bundled)).notice, null);
+  assert.equal(buildHolds({ ...now, version: "2.0.4" }, p.bundled), true, "a newer build holds too");
+});
+
+test("a build for an older version does not hold the notice", () => {
+  const p = { installed: "2.0.2", bundled: "2.0.3", notes: "" };
+  const older = { version: "2.0.2", at: "2026-11-21T00:00:00Z", state: "started", stamp: null };
+  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(older, p.bundled)).notice?.kind, "available");
 });
 
 test("a second click while a clicked install runs does nothing", () => {

@@ -25,6 +25,14 @@ export async function homeFor(cache, key, lookup) {
   return cache.home;
 }
 
+// The stamp where ah runs, as the sidebar and the update check both read it (ah2-401 I2): ah's home (homeFor), then
+// <home>/install.json through `read`. { home, now }: now is rebuildOf's record, null when there is no home, read or stamp.
+export async function rebuildRead(cache, key, lookup, read) {
+  const home = await homeFor(cache, key, lookup);
+  const text = home === null ? null : await read(`${home}/install.json`).catch(() => null);
+  return { home, now: text == null ? null : rebuildOf(text) };
+}
+
 // The stamp's text -> its last_rebuild, with the stamp's own version; null when the text is not a stamp with one.
 export function rebuildOf(text) {
   let j;

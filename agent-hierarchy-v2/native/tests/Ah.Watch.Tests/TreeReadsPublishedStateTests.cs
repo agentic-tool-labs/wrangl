@@ -119,6 +119,37 @@ public sealed class TreeReadsPublishedStateTests
         Assert.Equal("notlive", ViewBuilder.MemberGraphState(member));
     }
 
+    /// <summary>ah2-397 A1: a status row blocked by a permission that the sidebar's rule calls working (a screen-clear mark) is neither counted nor drawn blocked.</summary>
+    [Fact]
+    public void AStatusRowBlockedByThatTheSidebarCallsWorkingIsNotBlocked()
+    {
+        var src = Source();
+        src.Status["impl"]["activity"] = "blocked";
+        src.Status["impl"]["blocked_by"] = "permission";
+        Publish(src, ("impl", State("working", "live")));
+        var member = new JsonObject { ["name"] = "impl", ["live"] = true, ["activity"] = "blocked", ["blocked_by"] = "permission" };
+
+        ViewBuilder.ApplyPublishedState(member, new JsonObject { [TreeIds.Member(ModelSource.Dir, "alpha", "impl")] = State("working", "live") }, ModelSource.Dir, "alpha");
+
+        Assert.Equal(0, RootSummary(src).Int("blocked"));
+        Assert.Equal("busy", ViewBuilder.MemberGraphState(member));
+    }
+
+    [Fact]
+    public void NegativeAStatusRowBlockedByThatTheSidebarCallsBlockedIsBlocked()
+    {
+        var src = Source();
+        src.Status["impl"]["activity"] = "blocked";
+        src.Status["impl"]["blocked_by"] = "permission";
+        Publish(src, ("impl", State("blocked", "live")));
+        var member = new JsonObject { ["name"] = "impl", ["live"] = true, ["activity"] = "blocked", ["blocked_by"] = "permission" };
+
+        ViewBuilder.ApplyPublishedState(member, new JsonObject { [TreeIds.Member(ModelSource.Dir, "alpha", "impl")] = State("blocked", "live") }, ModelSource.Dir, "alpha");
+
+        Assert.Equal(1, RootSummary(src).Int("blocked"));
+        Assert.Equal("blocked", ViewBuilder.MemberGraphState(member));
+    }
+
     [Fact]
     public void AnEndedTeamHasNoStuckStreams() => Assert.Equal(0, ViewBuilder.StreamsStuck(2, new JsonObject { ["state"] = "ended" }));
 
