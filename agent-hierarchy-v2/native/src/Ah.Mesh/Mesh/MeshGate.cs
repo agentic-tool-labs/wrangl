@@ -306,7 +306,7 @@ internal sealed partial class MeshGate(
         {
             try
             {
-                mailbox.LogWouldRefuse(mailbox.ResolveCore(recipient.Address, context).Dir, $"sm-{entryId}", verdict.Would);
+                mailbox.LogWouldRefuse(mailbox.ResolveCore(recipient.Address, context).Dir, $"sm-{entryId}", verdict.Would, verdict.Message);
             }
             catch (MailboxError)
             {

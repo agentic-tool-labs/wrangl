@@ -120,7 +120,7 @@ case "$SLOTS_DIR" in */../*|*/..) echo "with-slot: refusing a slot directory wit
 # command runs as it is.
 #
 # An elastic run (the plan says `elastic 1`: its row is sized `half`) given no --tokens that finds the bucket idle when it
-# is admitted (no live lease, no other live ticket) is granted ah_bucket_heavy of the pool's capacity instead; its command is then
+# is admitted (no live lease, no other live ticket) is granted the pool's whole capacity instead; its command is then
 # planned again, from the original words, for that grant.
 NEWARGV=()
 PLAN_TOKENS=0
@@ -327,11 +327,9 @@ try_tokens() {
     echo "$K" >"$POOLDIR/capacity"
   fi
   # idle: no tokens held and this run's ticket the only live one
-  local want="$TOKENS" asked="$TOKENS" ceiling
+  local want="$TOKENS" asked="$TOKENS"
   if [ "$ELASTIC" = 1 ] && [ "$used" = 0 ] && [ "$(live_tickets | grep -c .)" = 1 ]; then
-    ceiling=$(ah_bucket_heavy "$K")
-    [ "$ceiling" -gt "$want" ] && want="$ceiling"
-    [ "$want" -gt "$K" ] && want="$K"
+    want="$K"
   fi
   if [ $((K - used)) -ge "$want" ]; then
     tmp="$POOLDIR/held/.new.$$"

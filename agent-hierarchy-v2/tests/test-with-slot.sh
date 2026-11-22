@@ -412,11 +412,11 @@ check "...with the limiter off the command runs as it is: no plan, no tokens, no
 OUT=$(AH_TEST_ADAPT=0 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt6b" AH_TEST_TOKENS=8 bash "$RUN" fakecheck u 2>&1)
 check "...AH_TEST_ADAPT=0 skips the registry step: half the bucket, no environment, no added arguments (nearest non-match of the first case)" '[ "$OUT" = "workers=none grant=4 args=u" ]'
 OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt10" AH_TEST_TOKENS=8 bash "$RUN" fakedotnet --filter X 2>&1)
-check "idle grant: an elastic run with no --tokens alone in the bucket gets heavy(K) = 6 of 8, and is planned again from its original words for it" \
-  '[ "$OUT" = "grant=6 args=-m:6 --filter X" ]'
+check "idle grant: an elastic run with no --tokens alone in the bucket gets the whole bucket, 8 of 8, and is planned again from its original words for it" \
+  '[ "$OUT" = "grant=8 args=-m:8 --filter X" ]'
 OUT=$(env -u MAKEFLAGS AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt11" AH_TEST_TOKENS=8 bash "$RUN" fakemake 2>&1)
 check "...a variable the adapter appends to is planned again from its value before the first plan: one -j, the grant's" \
-  '[ "$OUT" = "grant=6 MAKEFLAGS=-j6" ]'
+  '[ "$OUT" = "grant=8 MAKEFLAGS=-j8" ]'
 AH_SLOTS_DIR="$SB/rt10" AH_TEST_TOKENS=8 bash "$RUN" --tokens 2 sleep 30 >/dev/null 2>&1 & IH=$!
 # the busy case needs the holder's lease in place: wait for it, as long as the holder lives
 while kill -0 "$IH" 2>/dev/null && ! ls "$SB"/rt10/held/*/holder >/dev/null 2>&1; do sleep 0.2; done

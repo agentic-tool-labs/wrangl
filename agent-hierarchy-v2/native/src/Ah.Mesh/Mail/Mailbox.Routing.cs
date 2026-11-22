@@ -665,7 +665,7 @@ internal sealed partial class Mailbox
     }
 
     /// <summary>Record that a <c>star-warn</c> send would have been refused. The row is evidence only; a failed write does not stop the send.</summary>
-    public void LogWouldRefuse(string dir, string id, string? would)
+    public void LogWouldRefuse(string dir, string id, string? would, string? reason)
     {
         try
         {
@@ -673,6 +673,11 @@ internal sealed partial class Mailbox
             if (would is not null)
             {
                 row["would"] = would;
+            }
+
+            if (!string.IsNullOrEmpty(reason))
+            {
+                row["reason"] = reason;
             }
 
             AppendAttempt(dir, row);
