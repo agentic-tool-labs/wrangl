@@ -107,6 +107,66 @@ public sealed class MsgQuestionAnswerTests : IDisposable
         Assert.False(Assert.Single(ParkedQuestions.Fold(Log(StorePath))).Open);
     }
 
+    /// <summary><c>ah msg decision ui-answer</c>, the request table <c>POST /ui/v1/answer</c> shares, with a body of <paramref name="json"/>.</summary>
+    private (int Exit, string Out, string Err) UiAnswer(string json)
+    {
+        var stdout = new StringWriter();
+        var stderr = new StringWriter();
+        var exit = MsgVerb.Run(Context(_graph) with { UiAnswerCaller = () => true }, ["decision", "ui-answer", "--json", json, "--cwd", _sandbox.Root], stdout, stderr);
+        return (exit, stdout.ToString(), stderr.ToString());
+    }
+
+    private string HierId() => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(_hierarchy)))[..8].ToLowerInvariant();
+
+    [Fact]
+    public void ANoRunUiBodyForAnOpenParkedQuestionIsAcceptedAndTheQuestionReadsAsAnswered()
+    {
+        AsOrchestrator();
+        Assert.Equal(0, Run("decision", "park", "--header", "Scope", "--question", "Ship it?", "--option", "Yes", "--option", "No", "--default", "d").Exit);
+
+        var (exit, stdout, stderr) = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","choice":"b"}""");
+
+        Assert.True(exit == 0, stderr + stdout);
+        var reply = JsonText.Parse(stdout).AsObject();
+        Assert.True(reply["ok"].AsBool());
+        Assert.Equal("q1", reply["id"].AsString());
+        Assert.Equal(["No"], reply["answers"].AsArray().Select(static a => a.AsString()));
+        var q1 = Assert.Single(ParkedQuestions.Fold(Log(StorePath)));
+        Assert.False(q1.Open);
+        Assert.Equal(["No"], q1.AnsweredLabels);
+
+        // the negative: the same body again is the core's already_answered, a 409, and writes nothing more
+        var again = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","choice":"a"}""");
+        Assert.Equal(2, again.Exit);
+        Assert.Equal("already_answered", JsonText.Parse(again.Out).Member("reason")!.Value.AsString());
+        Assert.Equal(["No"], Assert.Single(ParkedQuestions.Fold(Log(StorePath))).AnsweredLabels);
+    }
+
+    [Fact]
+    public void ANoRunUiBodyForATerminalOnlyQuestionIsRefusedAndTheQuestionStaysOpen()
+    {
+        Park("q1");
+        Assert.True(ParkedQuestions.IsTerminalOnly(Assert.Single(ParkedQuestions.Fold(Log(StorePath)))));
+
+        var answer = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","choice":"a"}""");
+        var dismiss = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","dismiss":"Already done"}""");
+
+        Assert.Equal((2, 2), (answer.Exit, dismiss.Exit));
+        Assert.Equal("answer_relay_reserved", JsonText.Parse(answer.Out).Member("reason")!.Value.AsString());
+        Assert.Equal("answer_relay_reserved", JsonText.Parse(dismiss.Out).Member("reason")!.Value.AsString());
+        Assert.True(Assert.Single(ParkedQuestions.Fold(Log(StorePath))).Open);
+        Assert.Empty(Asks());
+    }
+
+    [Fact]
+    public void NegativeANoRunUiBodyForADecisionIdIsStillABadRequest()
+    {
+        var (exit, stdout, _) = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"d1","choice":"a"}""");
+
+        Assert.Equal(2, exit);
+        Assert.Equal("run must be a non-empty string", JsonText.Parse(stdout).Member("detail")!.Value.AsString());
+    }
+
     [Fact]
     public void AChoiceAnswersAParkedQuestionAsTheWaitingListPrintsIt()
     {

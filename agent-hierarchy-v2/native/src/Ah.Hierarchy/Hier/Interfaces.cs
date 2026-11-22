@@ -636,6 +636,32 @@ public interface IHierarchyDecisions
         IHierarchyProgress? progress,
         out string? eventError);
 
+    /// <summary>
+    /// The one answer path for a question parked for the user (<c>q&lt;k&gt;</c>, in <c>parked-questions.jsonl</c> of <paramref name="dir"/>), shared by
+    /// the terminal verb and the UI route; it needs no run. Finds the open question <paramref name="id"/> (of <paramref name="team"/> when given),
+    /// asks <paramref name="prove"/> for the caller's <c>{writer, by_user, relayed_prompt?}</c>, takes the answer from <paramref name="given"/>
+    /// (labels or option text, and whether it is a free-text answer), writes the asks row and the answered line, refreshes the status, appends
+    /// the ruling to the ledger of <paramref name="pool"/>, and tells the Orchestrator (when the user answered) and the member it was parked for
+    /// through <paramref name="notify"/> (to, event, text; returns an error or null). Returns <c>{refused: {reason, detail}}</c> (reasons
+    /// <c>store_unreadable</c>, <c>unknown_question</c>, <c>already_answered</c>, <c>unmatched_label</c>), null when <paramref name="prove"/> refused,
+    /// or <c>{id, team, header, labels, relayed_prompt?, event_error?}</c>; a skipped or failed event to the asker is in <paramref name="notes"/>.
+    /// </summary>
+    JsonObject? AnswerQuestion(
+        IFileReader files,
+        StateCalls.IHierarchyStateCalls calls,
+        IHierarchyProgress progress,
+        string pool,
+        string dir,
+        string? team,
+        string id,
+        Func<ParkedQuestion, JsonObject?> prove,
+        Func<ParkedQuestion, (IReadOnlyList<string> Given, bool FreeText)> given,
+        string? note,
+        DateTimeOffset now,
+        Func<string, string, string, string?> notify,
+        Func<string?, JsonValue> readTeam,
+        out IReadOnlyList<string> notes);
+
     JsonObject ConstraintLines(JsonValue? text);
 
     JsonValue LiveRun(string? cwd);

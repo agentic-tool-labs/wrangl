@@ -4,6 +4,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.35] - 2026-11-21
+
+### Fixed
+
+- **A question parked with no open run can be answered from the UI.** Its card's Send and Not needed buttons were
+  always disabled in the web UI and in herdr desktop; they now work, and the answer reaches the asker as it does from
+  `ah msg decision answer`. A terminal-only question (an authority grant, a member launch consent) is still answered
+  only in a terminal.
+
 ## [2.0.34] - 2026-11-21
 
 ### Added

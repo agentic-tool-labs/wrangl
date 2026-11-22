@@ -77,26 +77,26 @@ export function answerBody(teamId, run, q, pick) {
   const entries = entriesOf(q, pick);
   const otherBlank = pick.other && entries.every((e) => !e.startsWith("other: "));
   const isItem = q.kind === "item";
-  if (entries.length === 0 || otherBlank || (!run && !isItem)) {
+  if (entries.length === 0 || otherBlank) {
     return null;
   }
   const [dir, team] = teamId.slice("team:".length).split(/\/(?=[^/]*$)/);
   if (isItem) {
     return { dir, team, item: q.id, since: q.since, choice: entries[0] };
   }
-  return { dir, team, run, id: q.id, ...(q.multi ? { choices: entries } : { choice: entries[0] }) };
+  return { dir, team, ...(run ? { run } : {}), id: q.id, ...(q.multi ? { choices: entries } : { choice: entries[0] }) };
 }
 
 // The two ways to dismiss a waiting row (spec ah-ui-answer §6): one click each, no confirm; the label is the reason sent.
 export const DISMISS = ["Already done", "No longer needed"];
 
-// The POST /ui/v1/answer body that dismisses a row with `reason` in place of a choice, or null when a decision has no open run.
+// The POST /ui/v1/answer body that dismisses a row with `reason` in place of a choice; a decision with no open run carries no `run`.
 export function dismissBody(teamId, run, q, reason) {
   const [dir, team] = teamId.slice("team:".length).split(/\/(?=[^/]*$)/);
   if (q.kind === "item") {
     return { dir, team, item: q.id, since: q.since, dismiss: reason };
   }
-  return run ? { dir, team, run, id: q.id, dismiss: reason } : null;
+  return { dir, team, ...(run ? { run } : {}), id: q.id, dismiss: reason };
 }
 
 // The pick a card starts with: its default option, or for an item with no options Other, the only way to answer it.
