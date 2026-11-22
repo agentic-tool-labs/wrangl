@@ -118,14 +118,23 @@ test("a check before the sidebar's first read during a build holds the notice", 
   const p = { installed: "2.0.2", bundled: "2.0.3", notes: "" };
   const stamp = JSON.stringify({ version: "2.0.2", last_rebuild: { version: "2.0.3", at: "2026-11-21T00:00:00Z", state: "started" } });
   const { now } = await rebuildRead({ key: null, home: null }, "local", async () => JSON.stringify({ home: "/h" }), async (f) => (f === "/h/install.json" ? stamp : null));
-  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(now, p.bundled)).notice, null);
-  assert.equal(buildHolds({ ...now, version: "2.0.4" }, p.bundled), true, "a newer build holds too");
+  const t = Date.parse("2026-11-21T00:01:00Z");
+  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(now, p.bundled, t)).notice, null);
+  assert.equal(buildHolds({ ...now, version: "2.0.4" }, p.bundled, t), true, "a newer build holds too");
 });
 
 test("a build for an older version does not hold the notice", () => {
   const p = { installed: "2.0.2", bundled: "2.0.3", notes: "" };
   const older = { version: "2.0.2", at: "2026-11-21T00:00:00Z", state: "started", stamp: null };
-  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(older, p.bundled)).notice?.kind, "available");
+  assert.equal(updateStep({}, p, 1000, false, false, buildHolds(older, p.bundled, Date.parse("2026-11-21T00:01:00Z"))).notice?.kind, "available");
+});
+
+// ah2-402 b224: a "started" stamp older than REBUILD_WATCH_MS is a crashed build, not one running.
+test("an old started stamp does not hold the notice and a young one does", () => {
+  const b = { version: "2.0.3", at: "2026-11-21T00:00:00Z", state: "started", stamp: null };
+  const at = Date.parse(b.at);
+  assert.equal(buildHolds(b, "2.0.3", at + 10 * 60e3), false, "10 minutes on: not running");
+  assert.equal(buildHolds(b, "2.0.3", at + 10 * 60e3 - 1), true, "negative: just under 10 minutes still holds");
 });
 
 test("a second click while a clicked install runs does nothing", () => {

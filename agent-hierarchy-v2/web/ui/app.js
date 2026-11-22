@@ -6,7 +6,7 @@ import { EtaChip } from "./ticker.js";
 import { Live } from "./live-component.js";
 import { firstTeam, laneChildren, memberIds, sparksOf, partyName, partyIdOf, summaryIdOf, teamIdOf, teamLeaseIds, teamRows, teamSummary } from "./select.js";
 import { FlowStage, graphUi, readPrefs, shortName } from "./graph.js";
-import { activityIds, flowActive, flowExtras, flowNodes, graphSources, jobsUnder, lapseAt, subagentsUnder, underOf } from "./flow-model.js";
+import { activityIds, flowActive, flowExtras, flowNodes, graphSources, jobsUnder, lapseAt, subagentsUnder, underOf, workLeaseIds } from "./flow-model.js";
 import { ticker } from "./ticker.js";
 import { MemberSummary, party } from "./member-summary.js";
 import { internalToggle, isInternal, shownOf, showInternal } from "./msg-filter.js";
@@ -323,7 +323,9 @@ class TeamLease extends Live {
     const shown = TEAM_VIEW_LEASES[view] ?? {};
     // ah2-225: the Overview's jobs (it draws no subagents), and the Graph's jobs and subagents with its lanes'
     const activity = view === "overview" ? activityIds(team, [], ["jobs"]) : view === "graph" ? activityIds(team, laneChildren(snap.slices, team, memberIds(team))) : [];
-    return [teamId, `processes:${teamId.slice("team:".length).split("/")[0]}`, ...teamLeaseIds(snap.slices, team, shown), ...(shown.timeline && team ? [`timeline:${team.body.dir_id}`] : []), ...activity];
+    // ah2-450: the Graph's cards name the item a member holds, so the plans of the team and its lanes
+    const work = view === "graph" && team ? workLeaseIds(snap.slices, [teamId, ...laneChildren(snap.slices, team, memberIds(team)).map((c) => c.team)]) : [];
+    return [teamId, `processes:${teamId.slice("team:".length).split("/")[0]}`, ...teamLeaseIds(snap.slices, team, shown), ...(shown.timeline && team ? [`timeline:${team.body.dir_id}`] : []), ...activity, ...work];
   }
 
   draw() {
@@ -344,7 +346,7 @@ export class App extends Live {
     const ids = memberIds(team);
     const children = snap.ui.view === "graph" ? laneChildren(slices, team, ids) : [];
     const nodes = flowNodes(slices, team, ids, children);
-    const nodesKey = ids.length === 0 ? "" : JSON.stringify(nodes.map((n) => [n.id, n.role, n.name, n.lane, n.team, n.column, n.duty === true]));
+    const nodesKey = ids.length === 0 ? "" : JSON.stringify(nodes.map((n) => [n.id, n.role, n.name, n.lane, n.team, n.column, n.duty === true, n.work === true]));
     const shownIds = [...ids, ...children.map((c) => c.id)];
     const topo = team ? slices.get(`topology:${team.body.dir_id}/${team.body.name}`) : null;
     const sparksKey = sparksOf(slices, team).map((s) => `${s.id}|${s.from}|${s.to}|${s.review ? 1 : 0}|${s.slug}`).join("\n");
@@ -409,7 +411,7 @@ export class App extends Live {
   draw({ store, mock }, s) {
     if (s.nodesKey !== this.nodesKey) {
       this.nodesKey = s.nodesKey;
-      this.nodes = s.nodesKey === "" ? [] : JSON.parse(s.nodesKey).map(([id, role, name, lane, team, column, duty]) => (duty ? { id, role, name, lane, team, column, duty } : { id, role, name, lane, team, column }));
+      this.nodes = s.nodesKey === "" ? [] : JSON.parse(s.nodesKey).map(([id, role, name, lane, team, column, duty, work]) => ({ id, role, name, lane, team, column, ...(duty ? { duty } : {}), ...(work ? { work } : {}) }));
     }
     if (s.nodesKey !== this.flowKey?.[0] || s.extrasKey !== this.flowKey?.[1]) {
       this.flowKey = [s.nodesKey, s.extrasKey];

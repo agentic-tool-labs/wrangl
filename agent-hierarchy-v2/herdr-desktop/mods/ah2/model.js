@@ -1,7 +1,7 @@
 // The ah2 mod's data side: no herdr or gpui imports, so the fixture render (herdr-desktop/preview/render.mjs) runs the same code.
 // Input: the slices `ah view events` serves (spec-herdr-desktop.md §4). Output: plain rows the views draw.
 // The Q&A fields are read only by the web's own questions-model.js (shipped beside this file as a byte-identical copy of web/ui's, kept honest by a test), spec P3.1.
-import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf } from "./questions-model.js";
+import { questionsId, attentionOf, defaultAt, startPick, answerBody, dismissBody, replyState, threadOf, DISMISS } from "./questions-model.js";
 import { itemDescId, roleOf } from "./plans-model.js";
 import { paneOf } from "./target-model.js";
 import { askerLabel, goalOf, ownGoal, memberLabel, teamLabel, realNameNote, displayNameOf, sparksOf, reportsBack } from "./select.js";
@@ -459,6 +459,9 @@ export function descFold(blocks, lines = 4, cols = 80) {
 
 // Whether Send can go for this pick (a multi with nothing on, or an item with no pick, cannot).
 export const canSend = (card, pick) => answerBody(card.teamId, card.run, card.q, pick) !== null;
+
+// Whether Not needed can go for this card (a terminal-only question cannot), the web's canDismiss rule (questions-view.js).
+export const canDismiss = (card) => dismissBody(card.teamId, card.run, card.q, DISMISS[0]) !== null;
 
 // How an open History thread starts (ah2-58 S2 ruling): a thread with no reply in its own turn says what it has instead, and when
 // it was answered in a later turn its Later replies start open; every other fold starts closed.

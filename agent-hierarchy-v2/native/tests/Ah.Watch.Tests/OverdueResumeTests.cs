@@ -278,6 +278,27 @@ public sealed class OverdueResumeTests
         }
     }
 
+    [Fact]
+    public async Task AnUnsentPipelineRunAnchorGetsNoNotSentNoteAndNegativeAnOrdinaryUnsentRequestBesideItDoes()
+    {
+        const string Other = "20260301-114100-cd34";
+        var rig = WithBrief();
+        rig.Host.Candidates["s1"] =
+        [
+            Brief() with { Slug = HierarchyModule.PipelineAnchorSlug, Undelivered = true },
+            Brief() with { RequestId = Other, Undelivered = true },
+        ];
+
+        var tick = rig.Tick();
+        await rig.PassUntilAsync(tick, "request-not-sent");
+        await rig.PassAsync(tick, polls: 5, stepMs: 120_000);
+
+        var notes = rig.Host.Mails.Where(static m => m.Event == "request-not-sent").ToList();
+        Assert.Single(notes);
+        Assert.Contains($"request {Other} (the-slug)", notes[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain(rig.Host.Mails, m => m.Text.Contains(RequestId, StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { qaModel, qaSubs, canSend, sendAnswer, readThread, NO_REPLY, applyReply, sitrepModel, loadingOf, sidebarModel, terminalFinder, deskModel, needsMark, counts, historyReply, threadStart, retryMs, QUICK_RETRY_MS } from "../../herdr-desktop/mods/ah2/model.js";
+import { qaModel, qaSubs, canSend, canDismiss, sendAnswer, readThread, NO_REPLY, applyReply, sitrepModel, loadingOf, sidebarModel, terminalFinder, deskModel, needsMark, counts, historyReply, threadStart, retryMs, QUICK_RETRY_MS } from "../../herdr-desktop/mods/ah2/model.js";
 import { answerBody, dismissBody, toggle, NO_PICK, threadOf, openRow, itemRow, listRow } from "../../web/ui/questions-model.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -171,6 +171,13 @@ test("the verb's exit maps to the card states, and a 30 s cap is No reply", asyn
   assert.equal((await as({ code: 1, stdout: "", stderr: "ui-answer: internal error\n" })).text, "Could not send: ui-answer: internal error");
   const late = await sendAnswer(async () => { throw new Error("ah took longer than 30 s and was stopped"); }, single, { pick: single.start });
   assert.deepEqual(late, NO_REPLY);
+});
+
+// ah2-391 b219: Not needed follows the web's canDismiss (dismissBody null for a terminal-only question).
+test("a terminal-only card cannot be dismissed", () => {
+  const card = qaModel(slices, NOW).teams[0].cards[0];
+  assert.equal(canDismiss({ ...card, q: { ...card.q, terminal_only: true } }), false);
+  assert.equal(canDismiss(card), true, "negative: the same card, not terminal-only, still can");
 });
 
 test("negative: a multi with nothing on and an item with no pick cannot send, and nothing is executed", async () => {

@@ -109,7 +109,7 @@ async function step(o) {
 
 function step0(p, rebuild, landed = false, output = undefined) {
   const prev = shared(UPDATE_KEY);
-  const s = updateStep(output === undefined ? prev : { ...prev, output }, p, Date.now(), settings().autoUpdate, landed, buildHolds(rebuild, p.bundled));
+  const s = updateStep(output === undefined ? prev : { ...prev, output }, p, Date.now(), settings().autoUpdate, landed, buildHolds(rebuild, p.bundled, Date.now()));
   setShared(UPDATE_KEY, s.next);
   tell(s.notice);
   return s;

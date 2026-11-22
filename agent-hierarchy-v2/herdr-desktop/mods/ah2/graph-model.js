@@ -7,7 +7,7 @@ import { DUTY, DUTY_TITLE, laneChildren, memberIds, memberOf, sparksOf, stateWor
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { COLUMNS, FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, onDuty, runText, subagentsUnder, underLinks, underOf, underTip } from "./flow-model.js";
+import { COLUMNS, FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, onDuty, runText, subagentsUnder, underLinks, underOf, underTip, workLeaseIds, workTitle } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -169,7 +169,7 @@ export function graphSubs(slices, ui = {}, clock = Date.now()) {
     const mids = memberIds(teamSlice(slices, k));
     // the plan names the streams (the Map's circles); a member's activity slice holds its busy share (the ring)
     const acts = mids.map((id) => slices.get(id)?.body.activity).filter(Boolean);
-    ids.push(`team:${k}`, `flow:${k}`, `topology:${k}`, `plan:${k}`, `list:open:team:${k}`, ...mids, ...acts, ...openIds(slices, k), activityId("jobs", k), activityId("subagents", k));
+    ids.push(`team:${k}`, `flow:${k}`, `topology:${k}`, `plan:${k}`, `list:open:team:${k}`, ...mids, ...acts, ...openIds(slices, k), activityId("jobs", k), activityId("subagents", k), ...workLeaseIds(slices, [`team:${k}`]));
     const head = slices.get(`flow:${k}`)?.body;
     const tb = teamSlice(slices, k)?.body;
     if (head?.run && tb) {
@@ -200,7 +200,7 @@ function group(slices, t, depth, size, o = {}) {
     const stream = streamOf(slices, team.body, slices.get(id)?.body.placement?.stream ?? null);
     const ctx = m.state === "gone" ? null : m.ctx?.text ?? null;
     // a role that only repeats the name says nothing; a lane orchestrator's "sub-orchestrator" does
-    return { id, name, title: m.title ?? name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", stream, share: m.share, ctx, model: m.model ?? "", pane: memberPane(id, served[id]) };
+    return { id, name, title: m.title ?? name, role: m.role === name ? "" : m.role, state, ...STATES[state], item: served[id]?.item ?? "", work: workTitle(slices, team, id), stream, share: m.share, ctx, model: m.model ?? "", pane: memberPane(id, served[id]) };
   });
 
   const head = slices.get(flowId(team.body))?.body ?? null;
@@ -317,7 +317,7 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
       const m = n.data.m;
       // the ring's share in words too, so it never rests on the drawing alone
       const busy = typeof m.share === "number" ? `busy ${Math.round(m.share * 100)}% of the last hour` : "";
-      return { ...m, full: [m.title ?? m.name, m.role, m.word, m.item, busy].filter(Boolean).join(" · "), x: n.x, y: n.y, r: n.r, tier: TIERS.filter((v) => n.r >= v).length };
+      return { ...m, full: [m.title ?? m.name, m.role, m.word, m.work || m.item, busy].filter(Boolean).join(" · "), x: n.x, y: n.y, r: n.r, tier: TIERS.filter((v) => n.r >= v).length };
     });
   // ah2-225: jobs and subagents beside their owner (an undrawn group, graph-world.js treeOf); `link` the owner's centre for a subagent
   const now = o.clock ?? Date.now();
@@ -520,7 +520,7 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
     cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y), i: COLUMNS.indexOf(l.text) })),
     // V10: each lane's column from its header to the stage's foot (vertical: its row, across the laid-out width; the content is centred), and its cards' width for the header's rule
     lanes: layout.labels.map((l) => ({ i: COLUMNS.indexOf(l.text), l })).map(({ i, l }) => (o === "vertical"
-      ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h) * k, rule: FLOW.card.w * k }
+      ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h + (members.some((n) => n.work) ? FLOW.work : 0)) * k, rule: FLOW.card.w * k }
       : { i, x: X(l.x), y: Y(l.y), w: FLOW.card.w * k, h: Math.max(box ? box.h * k : 0, stage.h) - Y(l.y), rule: FLOW.card.w * k })), bands: layout.bands.map((b) => ({ id: b.id, name: b.name, ...rect(b) })),
     links, dots, rest: fl.rest, said };
 }
@@ -571,8 +571,8 @@ export function flowCardText(s, active, out, ago) {
     s.role === "implementor" && s.round ? { value: s.round } : null,
     ago ? { lead: "active", value: ago } : null,
   ].filter(Boolean) : [];
-  const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
-  const tip = [s.full, s.role, word, ago ? `active ${ago}` : null].filter(Boolean).join(" · ");
+  const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}${s.work ? `, on ${s.work}` : ""}`;
+  const tip = [s.full, s.role, word, s.work, ago ? `active ${ago}` : null].filter(Boolean).join(" · ");
   return { deputy, word, duty, tag, stats, said, tip };
 }
 // A role's colour: the web's role table; an unknown or custom role is neutral; null is the theme's foreground (the orchestrator).

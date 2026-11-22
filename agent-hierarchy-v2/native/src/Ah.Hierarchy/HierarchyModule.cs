@@ -698,6 +698,9 @@ public static partial class HierarchyModule
     public const double SubagentInflightTtlMs = 60 * 60 * 1000;
     public const string PipelineAnchorSlug = "pipeline-run-anchor";
 
+    /// <summary>A pipeline run anchor: a run marker, not a dispatch. The one test the dispatch list and the not-sent alarm share.</summary>
+    public static bool IsPipelineAnchor(string? slug) => slug == PipelineAnchorSlug;
+
     /// <summary>
     /// The name a dispatch is listed under: the request's <c>to_name</c>, else the member part of the address it was sent to (a request made
     /// for a role and then sent to one member has no <c>to_name</c>), else <c>(unnamed)</c>. The queue and its last-dispatch entries share it.

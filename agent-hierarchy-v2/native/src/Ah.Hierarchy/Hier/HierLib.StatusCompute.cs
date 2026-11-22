@@ -199,7 +199,7 @@ internal sealed partial class HierLib
         foreach (var e in exchanges)
         {
             // Amendment 7: the pipeline run anchor is a run marker, not a dispatch
-            if (Member(e, "slug") is { IsText: true } slug && slug.AsString() == HierarchyModule.PipelineAnchorSlug)
+            if (Member(e, "slug") is { IsText: true } slug && HierarchyModule.IsPipelineAnchor(slug.AsString()))
             {
                 continue;
             }

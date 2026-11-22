@@ -648,10 +648,11 @@ internal static class DispatchClock
             }
 
             // ah2-296 L2: a brief nobody sent has no check-in clock; its author gets one note, when the check-in would have come, to send it
+            // ah2-392: a pipeline run anchor is never sent by design, so it gets no note
             if (c.Undelivered)
             {
                 bool Noted(JsonObject r) => r.Str("type") == NotSentRow && r.Str("session_id") == sessionId && r.Str("request_id") == c.RequestId;
-                if (eta.Checkins == 0 && awakeNow >= Awake(eta.DueMs - t) + t && !mine.Any(Noted) && !peerRows.Any(p => Noted(p.Row)))
+                if (!HierarchyModule.IsPipelineAnchor(c.Slug) && eta.Checkins == 0 && awakeNow >= Awake(eta.DueMs - t) + t && !mine.Any(Noted) && !peerRows.Any(p => Noted(p.Row)))
                 {
                     peerRows.Add(new PeerAppend(new JsonObject
                     {
