@@ -645,6 +645,8 @@ public interface IHierarchyDecisions
     /// through <paramref name="notify"/> (to, event, text; returns an error or null). Returns <c>{refused: {reason, detail}}</c> (reasons
     /// <c>store_unreadable</c>, <c>unknown_question</c>, <c>already_answered</c>, <c>unmatched_label</c>), null when <paramref name="prove"/> refused,
     /// or <c>{id, team, header, labels, relayed_prompt?, event_error?}</c>; a skipped or failed event to the asker is in <paramref name="notes"/>.
+    /// <paramref name="answered"/>, when given, runs once the answer is written and before any event (question, chosen labels, free text); the text it
+    /// returns is appended to the events' text (b195: the ADR settle).
     /// </summary>
     JsonObject? AnswerQuestion(
         IFileReader files,
@@ -660,6 +662,7 @@ public interface IHierarchyDecisions
         DateTimeOffset now,
         Func<string, string, string, string?> notify,
         Func<string?, JsonValue> readTeam,
+        Func<ParkedQuestion, IReadOnlyList<string>, bool, string?>? answered,
         out IReadOnlyList<string> notes);
 
     JsonObject ConstraintLines(JsonValue? text);

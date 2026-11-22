@@ -247,6 +247,20 @@ internal static class DaemonComposition
             return freeText && badPick is not null ? ([badPick], false) : (given, freeText);
         }
 
+        // b195 (adr-4 posture): an option answer here to a question ah adr ask parked settles that ADR as the user's; anything else settles nothing
+        string? Answered(Ah.Hierarchy.ParkedQuestion question, IReadOnlyList<string> chosen, bool freeText)
+        {
+            if (question.Adr is not { } n)
+            {
+                return null;
+            }
+
+            var index = !freeText && chosen.Count == 1 ? question.Labels.ToList().IndexOf(chosen[0]) : -1;
+            return index is 0 or 1
+                ? Verbs.AdrVerb.SettleFromAnswer(g, dir, n, index == 0 ? "accepted" : "rejected", id)
+                : $"; {Verbs.AdrVerb.Id(n)} not settled: the answer is not the Accept or Reject option";
+        }
+
         var res = g.Hierarchy.Decisions.AnswerQuestion(
             g.Io.Files,
             g.Hierarchy.StateCalls,
@@ -261,6 +275,7 @@ internal static class DaemonComposition
             g.Io.Clock.UtcNow,
             notify,
             t => g.Roster.ReadTeamRecord(home, t),
+            Answered,
             out _) ?? terminalOnly!;
         if (res.ContainsKey("refused"))
         {

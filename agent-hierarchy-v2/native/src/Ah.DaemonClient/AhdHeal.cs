@@ -1,4 +1,5 @@
 using Ah.Core.Json;
+using Ah.Core.Time;
 
 namespace Ah.DaemonClient;
 
@@ -79,7 +80,27 @@ internal interface IHealEnvironment
     void Journal(JsonObject row);
 
     void Progress(string line);
+
+    /// <summary><c>run/ahd.life.json</c>, written by the daemon that won <c>run/ahd.life.lock</c>; null when absent or not of that shape.</summary>
+    LifeRecord? ReadLife();
+
+    /// <summary>The process table's UTC start time of <paramref name="pid"/>; null when it gives none.</summary>
+    string? StartOf(int pid);
+
+    /// <summary>Whether <paramref name="pid"/>'s command line is this state home's daemon; a <c>ps</c> that cannot answer is false.</summary>
+    bool IsOurDaemon(int pid);
+
+    /// <summary>Whether the user ran this heal, by the same test <c>--force</c> uses; an asker that cannot be told is not the user.</summary>
+    bool AskerIsUser();
+
+    int OwnPid { get; }
+
+    /// <summary>The <c>ahd.log</c> line written before TERM goes to a daemon found by the life lock alone.</summary>
+    void LogLifeKill(HealTarget target, string reason);
 }
+
+/// <summary>What <c>run/ahd.life.json</c> names: the lock winner's pid, its process-table start, and the state home it serves.</summary>
+internal sealed record LifeRecord(int Pid, string Start, string Home);
 
 /// <summary>The restart history the backoff and the cap are judged from, and what the last run concluded (the doctor row reads it).</summary>
 internal sealed record HealState(IReadOnlyList<DateTimeOffset> Restarts, DateTimeOffset? LastCappedRow, HealLast? Last = null)
@@ -100,15 +121,48 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
     internal async Task<HealOutcome> RunAsync(HealTrigger trigger, bool force)
     {
         var target = env.ReadTarget();
+        Func<string?> lost;
+        Func<string, HealOutcome> refuse;
+        var life = false;
         if (target is null || !env.Alive(target.Pid))
         {
-            // Report only: every identity heal signals by is keyed on ahd.json, so an unrecorded daemon is the user's to end.
-            return env.LifeHeld()
-                ? NotHung("life-lock-held", trigger, 0, $"no record; an ahd for {env.Home} still holds run/ahd.life.lock (shutting down or stuck); heal cannot signal an unrecorded daemon; end it by hand: {AhdClient.LifeHint(env.Home)}")
-                : NotHung("exited", trigger, 0);
+            life = true;
+            if (!env.LifeHeld())
+            {
+                return NotHung("exited", trigger, 0);
+            }
+
+            // No record names the holder, so run/ahd.life.json nominates it and the live process must prove it (spec
+            // heal-recordless-holder): only a heal the user ran, and only a holder old enough to be past its first start.
+            if (trigger != HealTrigger.Manual || !env.AskerIsUser())
+            {
+                return LifeRefused("not-user", trigger);
+            }
+
+            var record = env.ReadLife();
+            var holder = record is null ? null : new HealTarget(record.Pid, record.Start, ProcessStart.TryParseUtc(record.Start, out var at) ? at : DateTimeOffset.MaxValue, record.Start);
+            if (LifeWhy(record) is { } why)
+            {
+                return LifeRefused(why, trigger);
+            }
+
+            if (env.Now - holder!.StartedUtc < timing.RecordlessGrace)
+            {
+                return LifeRefused("young", trigger);
+            }
+
+            target = holder;
+            lost = () => env.LifeHeld() ? LifeWhy(env.ReadLife(), target) : "exited";
+            refuse = why => why == "exited" ? NotHung("exited", trigger, 0) : LifeRefused(why, trigger);
+        }
+        else
+        {
+            var recorded = target;
+            lost = () => env.IdentityHolds(recorded) ? null : env.Alive(recorded.Pid) ? "identity-changed" : "exited";
+            refuse = reason => NotHung(reason, trigger, 0);
         }
 
-        var verdict = await JudgeAsync(target, trigger).ConfigureAwait(false);
+        var verdict = await JudgeAsync(target, trigger, life, lost, refuse).ConfigureAwait(false);
         if (verdict.Outcome is not null)
         {
             return verdict.Outcome;
@@ -131,7 +185,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             return refused;
         }
 
-        if (await FinalAsync(target, trigger).ConfigureAwait(false) is { } last)
+        if (await FinalAsync(target, trigger, life, lost, refuse).ConfigureAwait(false) is { } last)
         {
             return last;
         }
@@ -140,10 +194,15 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
 
         env.WriteState(state with { Restarts = [.. state.Restarts, now] });
         env.Progress("sending TERM to ahd pid " + target.Pid);
-        if (!env.IdentityHolds(target))
+        if (lost() is { } gone)
         {
             env.WriteState(state);
-            return NotHung(env.Alive(target.Pid) ? "identity-changed" : "exited", trigger, 0);
+            return refuse(gone);
+        }
+
+        if (life)
+        {
+            env.LogLifeKill(target, Name(trigger));
         }
 
         env.Signal(target.Pid, kill: false);
@@ -157,7 +216,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             if (!env.SameProcess(target))
             {
                 var notKilled = new JsonObject { ["kind"] = "ahd-heal-failed", ["stage"] = "not-killed", ["pid"] = target.Pid, ["trigger"] = Name(trigger) };
-                env.Journal(notKilled);
+                env.Journal(Tag(notKilled, life, target, signal));
                 return Remember(new HealOutcome("failed-not-killed", "ahd pid " + target.Pid + " did not exit on TERM and could not be confirmed as the same process, so KILL was not sent and no new ahd was started", notKilled), log);
             }
 
@@ -167,7 +226,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             if (!await WaitGoneAsync(target, timing.KillWait).ConfigureAwait(false))
             {
                 var failed = new JsonObject { ["kind"] = "ahd-heal-failed", ["stage"] = "unkillable", ["pid"] = target.Pid, ["trigger"] = Name(trigger) };
-                env.Journal(failed);
+                env.Journal(Tag(failed, life, target, signal));
                 return Remember(new HealOutcome("failed-unkillable", "ahd pid " + target.Pid + " is still alive after KILL", failed), log);
             }
         }
@@ -177,7 +236,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
         if (!answered)
         {
             var failed = new JsonObject { ["kind"] = "ahd-heal-failed", ["stage"] = "restart", ["pid"] = target.Pid, ["trigger"] = Name(trigger) };
-            env.Journal(failed);
+            env.Journal(Tag(failed, life, target, signal));
             return Remember(new HealOutcome("failed-restart", "the restarted ahd did not answer", failed), log);
         }
 
@@ -195,7 +254,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             ["new_pid"] = started!.Value,
             ["trigger"] = Name(trigger),
         };
-        env.Journal(row);
+        env.Journal(Tag(row, life, target, signal));
         return Remember(new HealOutcome("restarted", "ahd pid " + target.Pid + " replaced by " + started.Value + " (" + verdict.Verdict + ", " + signal + ")", row), log);
     }
 
@@ -208,7 +267,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
 
     private sealed record Judged(HealOutcome? Outcome, string Verdict, TimeSpan Window, int Probes, int Misses);
 
-    private async Task<Judged> JudgeAsync(HealTarget target, HealTrigger trigger)
+    private async Task<Judged> JudgeAsync(HealTarget target, HealTrigger trigger, bool life, Func<string?> lost, Func<string, HealOutcome> refuse)
     {
         var probes = 0;
         var misses = 0;
@@ -217,9 +276,9 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
         var graceWaited = false;
         while (true)
         {
-            if (!env.IdentityHolds(target))
+            if (lost() is { } gone)
             {
-                return Done(NotHung(env.Alive(target.Pid) ? "identity-changed" : "exited", trigger, slowest));
+                return Done(refuse(gone));
             }
 
             // One wait, to the end of the grace. A start recorded in the future (the clock stepped back since) gives no uptime to
@@ -240,7 +299,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             {
                 slowest = Math.Max(slowest, probe.LatencyMs);
                 env.Progress($"probe {probes}: reply in {probe.LatencyMs} ms");
-                return Done(NotHung("replied", trigger, slowest));
+                return Done(life ? LifeRefused("answering", trigger, slowest) : NotHung("replied", trigger, slowest));
             }
 
             misses++;
@@ -265,20 +324,71 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
     private static Judged Done(HealOutcome outcome) => new(outcome, string.Empty, TimeSpan.Zero, 0, 0);
 
     /// <summary>The last look before a signal: the same identity and one more probe. Null means the verdict still holds.</summary>
-    private async Task<HealOutcome?> FinalAsync(HealTarget target, HealTrigger trigger)
+    private async Task<HealOutcome?> FinalAsync(HealTarget target, HealTrigger trigger, bool life, Func<string?> lost, Func<string, HealOutcome> refuse)
     {
-        if (!env.IdentityHolds(target))
+        if (lost() is { } gone)
         {
-            return NotHung(env.Alive(target.Pid) ? "identity-changed" : "exited", trigger, 0);
+            return refuse(gone);
         }
 
         var probe = await env.ProbeAsync(timing.ProbeDeadline).ConfigureAwait(false);
         if (!probe.Replied)
         {
+            if (life)
+            {
+                return lost() is { } after ? refuse(after) : null;
+            }
+
             return env.IdentityHolds(target) ? null : NotHung("identity-changed", trigger, 0);
         }
 
-        return NotHung("replied", trigger, probe.LatencyMs);
+        return life ? LifeRefused("answering", trigger, probe.LatencyMs) : NotHung("replied", trigger, probe.LatencyMs);
+    }
+
+    /// <summary>
+    /// Rules 3 to 5 of the recordless identification: the sidecar names this home and a plausible pid, that pid is alive with the
+    /// recorded process-table start, and its command line is this home's daemon. During a run the sidecar must still name the same
+    /// holder. Null when all hold; otherwise the rule that failed, for the journal's <c>why</c>.
+    /// </summary>
+    private string? LifeWhy(LifeRecord? record, HealTarget? holder = null)
+    {
+        if (record is null || record.Pid <= 1 || record.Pid == env.OwnPid || record.Start.Length == 0)
+        {
+            return "no-sidecar";
+        }
+
+        if (!string.Equals(record.Home, env.Home, StringComparison.Ordinal))
+        {
+            return "home-mismatch";
+        }
+
+        if ((holder is not null && (record.Pid != holder.Pid || record.Start != holder.StartedAt))
+            || !env.Alive(record.Pid)
+            || ProcessStart.Compare(env.StartOf(record.Pid), static () => null, record.Start) != StartMatch.Same)
+        {
+            return "start-mismatch";
+        }
+
+        return env.IsOurDaemon(record.Pid) ? null : "not-our-daemon";
+    }
+
+    /// <summary>A recordless holder heal did not signal: journalled as <c>life-lock-held</c> with the rule that stopped it, and the by-hand hint printed.</summary>
+    private HealOutcome LifeRefused(string why, HealTrigger trigger, long slowest = 0)
+    {
+        return NotHung("life-lock-held", trigger, slowest, $"no record; an ahd for {env.Home} still holds run/ahd.life.lock (shutting down or stuck); heal did not signal it ({why}); end it by hand: {AhdClient.LifeHint(env.Home)}", why);
+    }
+
+    /// <summary>The recordless path's rows carry how the target was identified, its process-table start and the last signal sent.</summary>
+    private static JsonObject Tag(JsonObject row, bool life, HealTarget target, string signal)
+    {
+        if (life)
+        {
+            row["identity"] = "life-lock";
+            row["start"] = target.StartedAt;
+            row["signal"] = signal;
+        }
+
+        return row;
     }
 
     private async Task<bool> WaitGoneAsync(HealTarget target, TimeSpan wait)
@@ -341,9 +451,14 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
         return new HealOutcome("capped", detail, row);
     }
 
-    private HealOutcome NotHung(string reason, HealTrigger trigger, long slowest, string? detail = null)
+    private HealOutcome NotHung(string reason, HealTrigger trigger, long slowest, string? detail = null, string? why = null)
     {
         var row = new JsonObject { ["kind"] = "ahd-heal-not-hung", ["reason"] = reason, ["slowest_reply_ms"] = slowest, ["trigger"] = Name(trigger) };
+        if (why is not null)
+        {
+            row["why"] = why;
+        }
+
         env.Journal(row);
         // an ahd that answers is no longer the one an earlier run failed on or was capped for: the doctor row stops saying so
         if (reason == "replied" && env.ReadState() is { Last.Kind: not "restarted" } state)
@@ -378,6 +493,9 @@ internal sealed record HealTiming(
     TimeSpan StateKeep,
     TimeSpan CappedRowEvery)
 {
+    /// <summary>How old, from its process-table start, a daemon found by the life lock alone must be before heal judges it: a healthy one may still be migrating before its first <c>ahd.json</c>.</summary>
+    internal TimeSpan RecordlessGrace { get; init; } = TimeSpan.FromMinutes(5);
+
     internal static HealTiming Production { get; } = new(
         Grace: TimeSpan.FromSeconds(30),
         ProbeDeadline: TimeSpan.FromSeconds(10),

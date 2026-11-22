@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { ownPrompt, waitBound } from '../register.ts'
+import { ownPrompt, register, waitBound } from '../register.ts'
 
 // A registry of the rows these tests need, in hooks/registry.json's shape.
 const cmd = (name: string) => ({ type: 'command', command: `sh "\${CLAUDE_PLUGIN_ROOT}/bin/ah-hook" ${name}` })
@@ -171,6 +171,37 @@ test('prompt.submit: a SessionStart row that never returns holds the prompt for 
   expect(first.text).toBe('brief')
   expect(waited).toBeGreaterThanOrEqual(900)
   expect(waited).toBeLessThan(5000)
+})
+
+// The bridge's hooks called directly, so the `next` they get is a bare function: no signal, no budget.
+test('prompt.submit: a next with no signal does not throw, and the start text lands', async () => {
+  const hooks: Record<string, any> = {} // the bridge's own hooks: the ones registered with a matcher
+  register((event: string, matcher: any, fn: any) => { if (fn) hooks[event] = fn }, {} as any)
+  const pass = async (e: any) => e
+  const out = JSON.stringify({ hookSpecificOutput: { additionalContext: 'AH DIRECTIVE' } })
+  const $p = {
+    plugin: { root: '/p' },
+    env: { get: async () => undefined },
+    fs: { read: async () => REGISTRY },
+    session: { id: async () => 'sess-1', cwd: async () => '/work/repo', messages: async () => [] },
+    process: { run: async (argv: string[]) => ({ exitCode: 0, stdout: argv[2] === 'sessionstart' ? out : '', stderr: '' }) },
+    clock: { every: () => ({ cancel: () => {} }) },
+    state: { set: async () => {} },
+    ui: { log: () => {} },
+  }
+  await hooks['session.start']($p, { cwd: '/work/repo', surface: null, isInteractive: false }, pass)
+  const first: any = await hooks['prompt.submit']($p, { text: 'hello' }, pass)
+  expect(first.text).toBe('AH DIRECTIVE\n\nhello')
+})
+
+test('prompt.submit: two session.start runs before the first prompt both land on it, first run\'s first', async ($, on) => {
+  let n = 0
+  stage(on, name => (name === 'sessionstart' ? { hookSpecificOutput: { additionalContext: `RUN ${++n}` } } : undefined))
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  const first: any = await $.prompt.submit({ text: 'brief' })
+  expect(first.text).toBe('RUN 1\n\nRUN 2\n\nbrief')
+  expect(((await $.prompt.submit({ text: 'again' })) as any).text).toBe('again')
 })
 
 // The notice bin/ah-hook gives a non-member SessionStart with no binary.

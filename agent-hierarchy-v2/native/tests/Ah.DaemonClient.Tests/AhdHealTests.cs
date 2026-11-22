@@ -68,7 +68,37 @@ public sealed class AhdHealTests
 
         public string Home => "/fake/home";
 
-        public bool LifeHeld() => false;
+        public bool LifeHeld() => LifeHeldAt(_now);
+
+        internal Func<DateTimeOffset, bool> LifeHeldAt { get; set; } = _ => false;
+
+        /// <summary>The pid that lives without a record: the life lock's holder.</summary>
+        internal int? HolderPid { get; set; }
+
+        internal LifeRecord? Life { get; set; }
+
+        /// <summary>What the process table says the holder's start is; after TERM a replaced pid shows another.</summary>
+        internal string? HolderStart { get; set; }
+
+        internal bool User { get; set; } = true;
+
+        internal List<string> KillLogs { get; } = [];
+
+        public LifeRecord? ReadLife() => Life;
+
+        public string? StartOf(int pid) => !Alive(pid) ? null : TermSent && ReplacedAfterTerm ? "Tue Jan 1 00:00:00 2030" : HolderStart;
+
+        public bool IsOurDaemon(int pid)
+        {
+            IdentityCalls++;
+            return Alive(pid) && OursAt(_now) && (IdentityLostFromCall is not { } from || IdentityCalls < from);
+        }
+
+        public bool AskerIsUser() => User;
+
+        public int OwnPid => 777;
+
+        public void LogLifeKill(HealTarget target, string reason) => KillLogs.Add($"target={target.Pid} start={target.StartedAt} reason={reason} signals={Signals.Count}");
 
         public bool SameProcess(HealTarget target) => Alive(target.Pid) && !(TermSent && (ProcessTableFailsAfterTerm || ReplacedAfterTerm));
 
@@ -93,7 +123,7 @@ public sealed class AhdHealTests
                 && !(TermSent && (RecordGoneAfterTerm || ProcessTableFailsAfterTerm || ReplacedAfterTerm));
         }
 
-        public bool Alive(int pid) => pid == Target?.Pid && Died is null && AliveAt(_now);
+        public bool Alive(int pid) => (pid == Target?.Pid || pid == HolderPid) && Died is null && AliveAt(_now);
 
         public Task<HealProbe> ProbeAsync(TimeSpan deadline)
         {
@@ -515,5 +545,156 @@ public sealed class AhdHealTests
         _ = await new AhdHeal(fake, Production).RunAsync(HealTrigger.Manual, force: false);
 
         Assert.Null(fake.State.Last);
+    }
+
+    // ---------------------------------------------------------------- a holder of run/ahd.life.lock with no record (spec heal-recordless-holder)
+
+    private static string Ps(DateTimeOffset at) => at.UtcDateTime.ToString("ddd MMM d HH:mm:ss yyyy", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>No ahd.json; pid 4242 holds the life lock, named by its sidecar, ten minutes old, ours, silent: every rule holds.</summary>
+    private static Fake Recordless()
+    {
+        var start = Ps(T0 - TimeSpan.FromMinutes(10));
+        return new Fake { LifeHeldAt = _ => true, HolderPid = 4242, HolderStart = start, Life = new LifeRecord(4242, start, "/fake/home") };
+    }
+
+    [Fact]
+    public async Task ASilentRecordlessHolderThatPassesEveryRuleGetsTermThenAStartAndTheRowSaysLifeLock()
+    {
+        var fake = Recordless();
+
+        var outcome = await new AhdHeal(fake, Production).RunAsync(HealTrigger.Manual, force: false);
+
+        Assert.Equal("restarted", outcome.Kind);
+        Assert.Equal([(4242, false)], fake.Signals);
+        Assert.Equal(1, fake.Starts);
+        var row = fake.Rows[^1];
+        Assert.Equal("ahd-hung-restart", row["kind"].AsString());
+        Assert.Equal("life-lock", row["identity"].AsString());
+        Assert.Equal(fake.HolderStart, row["start"].AsString());
+        Assert.Equal("TERM", row["signal"].AsString());
+        Assert.Equal([$"target=4242 start={fake.HolderStart} reason=manual signals=0"], fake.KillLogs);
+        Assert.Single(fake.State.Restarts);
+    }
+
+    public static TheoryData<string, string?, string> RefusedBeforeAnySignal() => new()
+    {
+        { "no sidecar (pre-upgrade daemon, or a winner with no start time)", "no-sidecar", "life-lock-held" },
+        { "sidecar pid dead", "start-mismatch", "life-lock-held" },
+        { "sidecar pid alive with another start (recycled pid)", "start-mismatch", "life-lock-held" },
+        { "command line is not this home's daemon", "not-our-daemon", "life-lock-held" },
+        { "sidecar home differs", "home-mismatch", "life-lock-held" },
+        { "process table gives no start time", "start-mismatch", "life-lock-held" },
+        { "ps cannot answer", "not-our-daemon", "life-lock-held" },
+        { "lock held by a client probe or an unwritten winner: stale sidecar", "start-mismatch", "life-lock-held" },
+        { "lock free", null, "exited" },
+        { "holder younger than the grace", "young", "life-lock-held" },
+        { "holder answers a health probe", "answering", "life-lock-held" },
+        { "asker is not the user", "not-user", "life-lock-held" },
+        { "trigger is direct-write", "not-user", "life-lock-held" },
+        { "trigger is failsafe", "not-user", "life-lock-held" },
+        { "pid 1", "no-sidecar", "life-lock-held" },
+        { "heal's own pid", "no-sidecar", "life-lock-held" },
+    };
+
+    [Theory]
+    [MemberData(nameof(RefusedBeforeAnySignal))]
+    public async Task ARecordlessHolderThatFailsARuleIsNeverSignalledAndNothingIsStarted(string scenario, string? why, string reason)
+    {
+        var fake = Recordless();
+        var trigger = HealTrigger.Manual;
+        var life = fake.Life!;
+        switch (scenario)
+        {
+            case "no sidecar (pre-upgrade daemon, or a winner with no start time)": fake.Life = null; break;
+            case "sidecar pid dead": fake.AliveAt = _ => false; break;
+            case "sidecar pid alive with another start (recycled pid)": fake.HolderStart = Ps(T0 - TimeSpan.FromMinutes(2)); break;
+            case "command line is not this home's daemon": fake.OursAt = _ => false; break;
+            case "sidecar home differs": fake.Life = life with { Home = "/fake/home-copy" }; break;
+            case "process table gives no start time": fake.HolderStart = null; break;
+            case "ps cannot answer": fake.OursAt = _ => false; break; // the real IsOurDaemon is false when ps is null, empty or failed
+            case "lock held by a client probe or an unwritten winner: stale sidecar": fake.Life = life with { Pid = 4100 }; break;
+            case "lock free": fake.LifeHeldAt = _ => false; break;
+            case "holder younger than the grace":
+                fake.HolderStart = Ps(T0 - TimeSpan.FromMinutes(4));
+                fake.Life = life with { Start = fake.HolderStart };
+                break;
+            case "holder answers a health probe": fake.Script = _ => new HealProbe(true, 9000); break;
+            case "asker is not the user": fake.User = false; break;
+            case "trigger is direct-write": trigger = HealTrigger.DirectWrite; break;
+            case "trigger is failsafe": trigger = HealTrigger.Failsafe; break;
+            case "pid 1": fake.Life = life with { Pid = 1 }; fake.HolderPid = 1; break;
+            case "heal's own pid": fake.Life = life with { Pid = 777 }; fake.HolderPid = 777; break;
+            default: throw new ArgumentException(scenario);
+        }
+
+        var outcome = await new AhdHeal(fake, Production).RunAsync(trigger, force: true);
+
+        Assert.Equal("not-hung", outcome.Kind);
+        Assert.Empty(fake.Signals);
+        Assert.Empty(fake.KillLogs);
+        Assert.Equal(0, fake.Starts);
+        Assert.Equal(reason, fake.Rows[^1]["reason"].AsString());
+        if (why is null)
+        {
+            Assert.False(fake.Rows[^1].ContainsKey("why"));
+        }
+        else
+        {
+            Assert.Equal(why, fake.Rows[^1]["why"].AsString());
+            Assert.Contains(AhdClient.LifeHint("/fake/home"), outcome.Detail, StringComparison.Ordinal);
+            Assert.Contains("(" + why + ")", outcome.Detail, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public async Task ARecordlessHolderWhoseIdentityIsLostInTheGapBeforeTermIsNeverSignalled()
+    {
+        var baseline = Recordless();
+        _ = await new AhdHeal(baseline, Production).RunAsync(HealTrigger.Manual, force: false);
+
+        var fake = Recordless();
+        fake.IdentityLostFromCall = baseline.IdentityCallsAtSignal[0];
+
+        var outcome = await new AhdHeal(fake, Production).RunAsync(HealTrigger.Manual, force: false);
+
+        Assert.Equal("not-our-daemon", fake.Rows[^1]["why"].AsString());
+        Assert.Equal("not-hung", outcome.Kind);
+        Assert.Empty(fake.Signals);
+        Assert.Equal(0, fake.Starts);
+        Assert.Empty(fake.State.Restarts);
+    }
+
+    [Fact]
+    public async Task ARecordlessHolderWhosePidBecameAnotherProcessAfterTermGetsNoKillAndNothingIsStarted()
+    {
+        var fake = Recordless();
+        fake.IgnoreTerm = true;
+        fake.ReplacedAfterTerm = true;
+
+        var outcome = await new AhdHeal(fake, Production).RunAsync(HealTrigger.Manual, force: false);
+
+        Assert.Equal([(4242, false)], fake.Signals);
+        Assert.Equal("failed-not-killed", outcome.Kind);
+        Assert.Equal("life-lock", fake.Rows[^1]["identity"].AsString());
+        Assert.Equal(0, fake.Starts);
+    }
+
+    [Fact]
+    public async Task ALiveRecordedDaemonGoesTheRecordedPathAndTheSidecarsPidIsNeverSignalled()
+    {
+        var fake = Fake.HungSince(TimeSpan.FromMinutes(10));
+        var start = Ps(T0 - TimeSpan.FromMinutes(10));
+        fake.LifeHeldAt = _ => true;
+        fake.HolderPid = 5000;
+        fake.HolderStart = start;
+        fake.Life = new LifeRecord(5000, start, "/fake/home");
+
+        var outcome = await new AhdHeal(fake, Production).RunAsync(HealTrigger.Manual, force: false);
+
+        Assert.Equal("restarted", outcome.Kind);
+        Assert.Equal([(4242, false)], fake.Signals);
+        Assert.Empty(fake.KillLogs);
+        Assert.False(fake.Rows[^1].ContainsKey("identity"));
     }
 }

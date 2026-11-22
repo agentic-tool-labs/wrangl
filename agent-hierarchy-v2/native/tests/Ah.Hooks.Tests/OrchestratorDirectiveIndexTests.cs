@@ -219,13 +219,17 @@ public sealed class OrchestratorDirectiveIndexTests
         var index = Output(f, "session-index", source);
         var rules = Output(f, "session-rules", source);
 
+        // measured as if the checkout were at a root of fixed length: the texts embed the plugin root, so a deep work tree would otherwise cross the cap
+        int Measured(string text) => text.Replace(f.PluginRoot, "/ahroot", StringComparison.Ordinal).Length;
+
         foreach (var (name, text) in new[] { ("sessionstart", start), ("session-directive", directive), ("session-index", index), ("session-rules", rules) })
         {
-            Assert.True(text.Length is > 0 and <= SessionStart.OutputCap, $"{name}: {text.Length}");
+            Assert.True(Measured(text) is > 0 and <= SessionStart.OutputCap, $"{name}: {Measured(text)} ({text.Length} at {f.PluginRoot})");
             Assert.DoesNotContain(LeadLine, text, StringComparison.Ordinal);
         }
 
-        Assert.True(start.Length + directive.Length + index.Length + rules.Length <= 28_799 * 60 / 100, $"total {start.Length + directive.Length + index.Length + rules.Length}");
+        var total = Measured(start) + Measured(directive) + Measured(index) + Measured(rules);
+        Assert.True(total <= 28_799 * 60 / 100, $"total {total} ({start.Length + directive.Length + index.Length + rules.Length} at {f.PluginRoot})");
         Assert.Contains("HIERARCHY STATE", start, StringComparison.Ordinal);
         Assert.Contains("ah CLI root", start, StringComparison.Ordinal);
         Assert.DoesNotContain("Agent hierarchy ACTIVE", start, StringComparison.Ordinal);

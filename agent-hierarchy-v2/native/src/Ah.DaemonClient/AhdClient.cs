@@ -389,6 +389,10 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         }
     }
 
+    /// <summary>The <c>ahd.log</c> line heal writes before TERM goes to a daemon found by <c>run/ahd.life.lock</c> alone.</summary>
+    internal void LogLifeKill(int pid, string start, string reason) =>
+        LogAction("kill", $"target={pid} start={start} identity=life-lock reason={reason}");
+
     /// <summary>A daemon that does not answer is told to stop, but only if the pid is this state home's daemon. <paramref name="reason"/> and <paramref name="probes"/> go to the log line written first.</summary>
     internal bool StopHung(JsonObject? info, string reason, string probes = "")
     {

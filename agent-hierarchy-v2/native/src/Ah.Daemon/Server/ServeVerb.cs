@@ -90,6 +90,15 @@ internal static class ServeVerb
             log.Write($"{Timestamps.ToIsoString(deps.Clock.UtcNow)} ahd run/ahd.life.lock could not be taken ({e.GetType().Name}); starting without it\n");
         }
 
+        // Only the lock winner names itself, so heal can find the holder once ahd.json and ahd.pid are gone. Never removed: a stale
+        // one fails heal's pid and start check, and the next winner overwrites it. No start time, no file: heal then only reports.
+        if (life is not null && deps.UiStart?.StartTime(deps.ProcessId) is { } lifeStart)
+        {
+            var lifeFile = Path.Combine(deps.AhEnvironment.AhHome, "run", "ahd.life.json");
+            var record = new JsonObject { ["v"] = 1, ["pid"] = deps.ProcessId, ["start"] = lifeStart, ["home"] = deps.AhEnvironment.AhHome };
+            deps.Writer.WriteAtomic(lifeFile, $"{lifeFile}.{deps.ProcessId}.tmp", Utf8Text.Encode(JsonText.Stringify(record, 0) + "\n"));
+        }
+
         // The bound socket is what makes this process the one daemon, and collecting the jobs and routes opens and migrates the state
         // database: a process that loses the bind has to leave before that, or it migrates the database under the daemon that holds it.
         var sock = DaemonServer.SocketPathIn(deps.AhEnvironment.AhHome);
