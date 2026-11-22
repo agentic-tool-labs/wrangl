@@ -17,10 +17,9 @@ import { shared, setShared, run, terminals } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
-  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, clampScale, wheelAct, easedScale, dragAct, wasDrag,
-  cardStyle, edgeStyle, dotColor, ageText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, isReviewing, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
+  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, flowClamp, wheelAct, easedScale, dragAct, wasDrag, dragDrawn,
+  cardStyle, edgeStyle, dotColor, ageText, flowCardText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
-import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { STEP_MS } from "./graph-world.js";
 import { loadingOf, terminalFinder, memberName } from "./model.js";
 import { target } from "./ah.js";
@@ -44,15 +43,17 @@ const FRAME_MS = 16; // an eased zoom's frame
 // its own rule. A frame waits for the redraw at the drawn scale (graphMemo's key[5]); the loop ends on the target, when fitView
 // clears graphEase, or a second after a frame nobody drew (a closed pane), and the view's close() cancels it.
 export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
-  const target = clampScale(to ?? (v.graphEase?.to ?? v.graphScale) * by);
-  if (target === (v.graphEase?.to ?? v.graphScale)) {
+  const clamp = (x) => flowClamp(x, v.graphMode === "flow" ? v.graphMemo?.m : null); // Flow stops where its drawing does
+  const from = clamp(v.graphEase?.to ?? v.graphScale);
+  const target = clamp(to ?? from * by);
+  if (target === from) {
     if (to !== null && !v.graphEase) { // Fit at scale 1 still recentres (fitView's pan reset)
       v.graphPan = {};
       cx.notify();
     }
     return;
   }
-  v.graphEase = { from: v.graphScale, to: target, t0: Date.now(), at, fit: to !== null, wheel };
+  v.graphEase = { from: clamp(v.graphScale), to: target, t0: Date.now(), at, fit: to !== null, wheel };
   if (v.graphAnim && !v.graphAnim.is_done()) return; // the running loop takes the new target
   v.graphAnim = cx.spawn(async (cx) => {
     let drawn = Date.now();
@@ -109,17 +110,21 @@ function syncKnob(v, sc) {
 
 const stop = (_e, cx) => cx.stop_propagation(); // a press on a control must not drag the window
 
-// Drag to pan (spec herdr-graph-gestures), one drag at a time in v.graphDrag {key, x0, y0, x, y, dragged, live, end}, `key` the
+// Drag to pan (spec herdr-graph-gestures), one drag at a time in v.graphDrag {key, x0, y0, x, y, dragged, live, end, seen}, `key` the
 // stage (a map's group id, or "flow"). A left press on the stage, or on a member or stream circle on it, starts it and stops the press
 // (the window must not drag); the stage's move pans once it passes DRAG_PX (dragAct). It ends on the release, when the pointer leaves
 // the stage (on_hover: a release outside is never delivered here, and on_mouse_move carries no button), when it enters it again,
-// on a press outside it (on_mouse_down_out), and when the view resets (fitView); an ended drag never pans again. A button's click
-// after a drag is dropped (clicks, wasDrag).
+// on a press outside it (on_mouse_down_out), when its stage missed a render (`seen`, dragDrawn; b93), and when the view resets
+// (fitView); an ended drag never pans again. A button's click after a drag is dropped (clicks, wasDrag).
 function grip(v, key) {
+  const now = v.renders ?? 0; // grip runs once per drawn stage per render (main.js render counts them)
+  const held0 = v.graphDrag?.live && v.graphDrag.key === key ? v.graphDrag : null;
+  if (held0 && !dragDrawn(held0.seen, now)) Object.assign(held0, { live: false, end: Date.now() }); // missed a render: ends (b93)
+  else if (held0) held0.seen = now;
   const down = (e, cx) => {
     cx.stop_propagation();
     const { x, y } = e.position;
-    v.graphDrag = { key, x0: x, y0: y, x, y, dragged: false, live: true, end: 0 };
+    v.graphDrag = { key, x0: x, y0: y, x, y, dragged: false, live: true, end: 0, seen: v.renders ?? 0 };
   };
   const end = (_e, cx) => {
     const d = v.graphDrag;
@@ -292,7 +297,7 @@ export function graphView(v, t, close, cx) {
         .children(loading || v.status === "down" ? [] : m.tabs.map(tab)))
       .child(modeTabs(v, t))
       .children(flow ? [orientButton(v, t)] : [])
-      .children(scaleBar(v, t, loading || v.status === "down" ? null : m.id)))
+      .children(scaleBar(v, t, loading || v.status === "down" ? null : m.id, m)))
     .when(Boolean(m.crumb), (el) => el.child(crumb(t, m.crumb, (_e, cx) => {
       zoom(null);
       cx.notify();
@@ -349,8 +354,8 @@ function crumb(t, names, out) {
 }
 
 // The scale controls: −, the scale, +, Fit. A step is ×SCALE_STEP about each map's centre; Fit is scale 1, centred. Both ease (easeTo).
-function scaleBar(v, t, team) {
-  const s = v.graphScale;
+function scaleBar(v, t, team, m) {
+  const s = v.graphMode === "flow" ? (m?.scale ?? v.graphScale) : v.graphScale; // Flow: the scale drawn (flowClamp)
   const btn = (id, text, tip, said, act) => Button.new(id).h(24).min_w(24).px(6).flex().flex_none().items_center().justify_center().rounded(6)
     .cursor_pointer().text_size(11.5).text_color(t.foreground).border(1).border_color(t.input)
     .focus((el) => el.border_color(t.accent)).hover((el) => el.bg(t.hover))
@@ -734,30 +739,18 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
   const s = c.card;
   const r = c.rect;
   // ah2-373 R9: the deputy on duty is drawn as a lead, in the Orchestrator's colours, named for its part rather than its tool
-  const deputy = s.duty === "on";
+  const { deputy, duty, tag, stats: cells, said, tip } = flowCardText(s, c.active, c.out, s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "");
   const st = cardStyle(deputy ? { ...s, role: "orchestrator" } : s, c.active, lt, t.surface);
-  const reviewing = isReviewing(s, c.active);
-  const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
-  const duty = DUTY[s.duty] ?? null;
-  const ago = s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "";
-  const tag = c.active ? (deputy ? "deputy chief" : reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
-    : deputy ? "deputy chief" : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
   const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
     .when(c.active, (el) => el.border_b(1).border_color(t.border))
     .child(div().flex_none().text_size(12 * k).text_color(st.mark ?? t.blocked).child(st.glyph))
     .child(div().flex_1().min_w(0).truncate().text_size(12.5 * k).text_color(st.name ?? t.foreground).when(st.bold, (el) => el.font_semibold()).child(s.name))
     .children(duty ? [div().flex_none().text_size(11 * k).text_color(t.muted).child(duty)] : [])
     .children(tag ? [div().flex_none().text_size(11 * k).text_color(st.tag ?? t.muted).child(tag)] : []);
-  const cell = (value, unit) => h_flex().gap(4 * k).flex_none().child(div().font_semibold().text_color(t.foreground).child(String(value))).children(unit ? [unit] : []);
-  const stats = c.active ? [
-    s.orchestrator || deputy ? cell(c.out, "out") : null,
-    s.orchestrator && s.decisions !== null ? cell(s.decisions, "dec") : null,
-    s.role === "implementor" && s.round ? cell(s.round) : null,
-    ago ? h_flex().gap(4 * k).flex_none().child("active").child(div().font_semibold().text_color(t.foreground).child(ago)) : null,
-  ].filter(Boolean) : [];
-  const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
+  const bold = (value) => div().font_semibold().text_color(t.foreground).child(String(value));
+  const stats = cells.map((x) => (x.lead ? h_flex().gap(4 * k).flex_none().child(x.lead).child(bold(x.value))
+    : h_flex().gap(4 * k).flex_none().child(bold(x.value)).children(x.unit ? [x.unit] : [])));
   const rest = st.line ?? t.border;
-  const tip = [s.full, s.role, word, ago ? `active ${ago}` : null].filter(Boolean).join(" · ");
   const at = opens(Button.new(`gfc-${i}`), t, v, c.id, rest, gr).flex().flex_col();
   return at.absolute().left(r.x).top(r.y).w(r.w).h(r.h).when(!c.active, (el) => el.justify_center()).overflow_hidden()
     .rounded(6).border(1).border_color(rest).bg(st.fill ?? t.raised)

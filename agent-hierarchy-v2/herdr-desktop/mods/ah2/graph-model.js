@@ -3,7 +3,7 @@
 // are the web's own: select.js (members, briefs in flight) and graph-world.js (the tree, the flow head's whole-run totals, short
 // names, arc widths), both byte-identical copies of web/ui's, kept honest by a test; graph-layout.js is d3's pack and curveBundle.
 import "./intl-shim.js"; // before graph-world.js, which needs Intl when it loads
-import { laneChildren, memberIds, memberOf, sparksOf, teamLabel } from "./select.js";
+import { DUTY, DUTY_TITLE, laneChildren, memberIds, memberOf, sparksOf, stateWord, teamLabel } from "./select.js";
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
@@ -22,6 +22,10 @@ export const SCALE_MIN = 0.25;
 export const SCALE_MAX = 4;
 export const SCALE_STEP = 1.25;
 export const clampScale = (s) => Math.min(SCALE_MAX, Math.max(SCALE_MIN, s));
+// ah2-398 F2: Flow draws at fit × scale clamped to SCALE_MIN (flowModel's k), so its scale stops where the drawing stops: never under
+// SCALE_MIN / fit. − then ends with the drawing, the readout shows the scale drawn, and + from the stop moves it on its first step.
+// m: flowModel's frame; without one, or without a layout box, the plain clamp.
+export const flowClamp = (s, m) => (m?.box ? Math.max(SCALE_MIN / m.fit, clampScale(s)) : clampScale(s));
 // The box a map is drawn in: its frame (the square at scale 1), and zoomed in (s > 1) the room the view has for it (ui.graphRoom,
 // {w, h} px, measured by the view; less `pad`, its lane's indent) when that is larger, so a zoomed map fills the view, not the square.
 export function frameOf(frame, s, room, pad = 0) {
@@ -80,6 +84,9 @@ export function dragAct(d, at, pan, clamp) {
 // ponytail: a time window, not an ordering; a keyboard click within CLICK_MS of a drag's end is dropped.
 export const CLICK_MS = 250;
 export const wasDrag = (d, now) => Boolean(d?.dragged && (d.live || now - d.end < CLICK_MS));
+// Whether a held drag's stage is still on screen (b93): `seen` is the render count it was last drawn in, `now` this render's. A stage
+// missed for a render (its group left the map, the column showed another view) may take one stale move before its hover edge.
+export const dragDrawn = (seen, now) => seen >= now - 1;
 
 // The eased zoom: the web's own stage transition, --spring-ms and --spring (web/ui/r6.css:713, on .world at :718).
 export const EASE_MS = 400;
@@ -436,11 +443,11 @@ export function flowPanAround(pan, size, stage, k, k2, px, py) {
   return flowPan({ x: px - (px - p.x) * f, y: py - (py - p.y) * f }, { w: size.w * f, h: size.h * f }, stage);
 }
 
-// Flow's − / + / wheel: the scale to s2 (clamped) about the stage point (px, py), else its centre. m: flowModel's frame at the old
+// Flow's − / + / wheel: the scale to s2 (flowClamp) about the stage point (px, py), else its centre. m: flowModel's frame at the old
 // scale. False when the clamp leaves the scale where it was.
 export function flowRescale(ui, m, s2, px = null, py = null) {
   const s = ui.graphScale ?? 1;
-  const to = clampScale(s2);
+  const to = flowClamp(s2, m);
   if (to === s || !m?.stage) return false;
   const k2 = m.box ? clampScale(m.fit * to) : 1;
   ui.graphScale = to;
@@ -507,7 +514,7 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
   });
   const lines = links.filter((l) => l.kind === "edge").length;
   const said = `${at.t.name} Flow: ${cards.length} members, ${lines} reporting lines, ${dots.length} briefs in flight${fl.rest > 0 ? `, ${fl.rest} more not drawn` : ""}`;
-  return { ...base, closed: false, name: at.t.name, pending: false, orient: o, picked, stage, fit, k, box,
+  return { ...base, closed: false, name: at.t.name, pending: false, orient: o, picked, stage, fit, k, box, scale: flowClamp(scale, { box, fit }),
     size: box ? { w: box.w * k, h: box.h * k } : { w: 0, h: 0 },
     // a label's `i` is its column (flow-model.js COLUMNS), so a lane keeps its colour when an empty column before it is not drawn
     cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y), i: COLUMNS.indexOf(l.text) })),
@@ -548,6 +555,26 @@ export function mix(c, base, p) {
 // reviewing border is the full review colour (the web's 60% mix is 2.61:1 on white).
 // A reviewer at work on an active card reads "reviewing" (◆, the review tint); off the active set it is an idle-style row.
 export const isReviewing = (s, active) => Boolean(active) && s.role === "reviewer" && s.state === "working";
+// A Flow card's words, the one rule graph-view.js flowCard and preview/render.mjs flowStage draw: the state word, the duty mark,
+// the tag on the right, the stat cells ({value, unit} or {lead, value}), the spoken label and the tooltip. out: the briefs drawn
+// leaving it; ago: ageText of its last activity, "" with none. ah2-373 R9: the deputy on duty is named for its part, not its tool.
+export function flowCardText(s, active, out, ago) {
+  const deputy = s.duty === "on";
+  const reviewing = isReviewing(s, active);
+  const word = reviewing ? "reviewing" : stateWord(s.state, s.running);
+  const duty = DUTY[s.duty] ?? null;
+  const tag = active ? (deputy ? "deputy chief" : reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model)
+    : deputy ? "deputy chief" : s.state !== "idle" ? stateWord(s.state).toLowerCase() : !duty && ago ? ago : null;
+  const stats = active ? [
+    s.orchestrator || deputy ? { value: out, unit: "out" } : null,
+    s.orchestrator && s.decisions !== null ? { value: s.decisions, unit: "dec" } : null,
+    s.role === "implementor" && s.round ? { value: s.round } : null,
+    ago ? { lead: "active", value: ago } : null,
+  ].filter(Boolean) : [];
+  const said = `${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${word}`;
+  const tip = [s.full, s.role, word, ago ? `active ${ago}` : null].filter(Boolean).join(" · ");
+  return { deputy, word, duty, tag, stats, said, tip };
+}
 // A role's colour: the web's role table; an unknown or custom role is neutral; null is the theme's foreground (the orchestrator).
 export const roleHue = (role, light) => {
   const w = light ? WEB.light : WEB.dark;
