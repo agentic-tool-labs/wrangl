@@ -4,6 +4,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.36] - 2026-11-21
+
+### Added
+
+- **The docs landing page has an easter egg.** Click the mascot: it opens full screen and turns into a spinning ASCII
+  version in its own colours, with a settings bar to change how it is drawn. The renderer loads only after the first
+  click. It uses the ASCII Object component from Canvas UI and three.js; see `NOTICE`.
+
 ## [2.0.35] - 2026-11-21
 
 ### Fixed

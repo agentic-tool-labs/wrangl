@@ -1,7 +1,11 @@
 // node --test site/  — the generator's link rewriting and its privacy check.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { rewriteHref, privacyHits, slugify } from './build.mjs';
+import { VENDOR, HASH, inputsHash } from './egg/build-egg.mjs';
 
 const files = new Set(['LICENSE', 'agent-hierarchy-v2/docs/architecture.md', 'agent-hierarchy-v2/skills']);
 const ctx = {
@@ -43,4 +47,23 @@ test('the privacy check catches home paths and email addresses', () => {
   assert.deepEqual(names('see /Users/someone/git/x'), ['home path']);
   assert.deepEqual(names('mail someone@example.com'), ['email address']);
   assert.deepEqual(names('/plugin install wrangl@wrangl and ah@agent-tools, ~/.claude/ah2'), []);
+});
+
+test('the built landing page reaches the easter egg module only through the dynamic import in site.js', () => {
+  const site = path => fileURLToPath(new URL(path, import.meta.url));
+  execFileSync(process.execPath, [site('build.mjs')], { stdio: 'pipe' });
+  const read = path => readFileSync(site(path), 'utf8');
+  assert.ok(existsSync(site('dist/assets/ascii-object.js')), 'the build writes the module');
+  for (const file of ['dist/index.html', 'dist/assets/site.css']) {
+    assert.doesNotMatch(read(file), /ascii-object|modulepreload|type="module"/, `${file} must not load the module`);
+  }
+  const js = read('dist/assets/site.js').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(js, /^\s*import\s/m, 'site.js has no static import');
+  assert.equal(js.match(/ascii-object/g).length, 1, 'site.js code names the module once');
+  assert.match(js, /const asciiUrl = new URL\('ascii-object\.js'/);
+  assert.match(js, /import\(asciiUrl\)/);
+});
+
+test('the committed egg bundle is built from the current private source', { skip: !existsSync(VENDOR) && 'no vendor source (public tree)' }, () => {
+  assert.equal(readFileSync(HASH, 'utf8').trim(), inputsHash(), 'vendor/canvas-ui or egg/ascii-egg.mjs changed: run npm run build:egg');
 });
