@@ -324,11 +324,51 @@ public sealed class AhdHealWiringTests : IDisposable
 
             // the last warning is the one a caller like `ahd start` keeps
             Assert.Contains("holds run/ahd.life.lock", warnings[^1], StringComparison.Ordinal);
+
+            // the timed-out CLI wait left the backoff marker: the next implicit ensure does not wait the window again
+            Assert.Null(await new AhdClient(Deps()).EnsureAsync(options, TestContext.Current.CancellationToken));
+            Assert.Contains("not trying again before", warnings[^1], StringComparison.Ordinal);
+            Assert.Empty(_rig.Spawns);
         }
 
-        // the kernel drops it when the old daemon exits: the next ensure starts one
-        _ = await new AhdClient(Deps()).EnsureAsync(options, TestContext.Current.CancellationToken);
+        // the kernel drops it when the old daemon exits: `ahd start` ignores the backoff and starts one
+        _ = await new AhdClient(Deps()).EnsureAsync(options with { Explicit = true }, TestContext.Current.CancellationToken);
         Assert.Single(_rig.Spawns);
+    }
+
+    [Fact]
+    public async Task ADaemonThatComesUpWhileTheLifeLockIsHeldIsUsedAndNoneIsStarted()
+    {
+        _rig.Answer = static () => Reply(200, $"{{\"pid\":{DaemonPid.ToString(CultureInfo.InvariantCulture)},\"protocol\":1}}");
+        var warnings = new List<string>();
+        using var life = _io.Locks.TryHold(Path.Combine(_home, "run", "ahd.life.lock"));
+        Assert.NotNull(life);
+
+        // no record yet, so the ensure is in the life wait when the daemon writes its record
+        var ensure = new AhdClient(Deps() with { DrainWaitMs = 5000 }).EnsureAsync(
+            new EnsureOptions(Warn: (text, _) => warnings.Add(text)), TestContext.Current.CancellationToken);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        RecordDaemon();
+
+        var found = await ensure;
+        Assert.Equal(DaemonPid, found?.Pid);
+        Assert.Empty(_rig.Spawns);
+        Assert.DoesNotContain(warnings, static w => w.Contains("holds run/ahd.life.lock", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task HealWithNoRecordWhileTheLifeLockIsHeldSaysSoAndSignalsNothing()
+    {
+        using var life = _io.Locks.TryHold(Path.Combine(_home, "run", "ahd.life.lock"));
+        Assert.NotNull(life);
+        var stdout = new StringWriter();
+
+        var code = await new AhdLifecycle(new AhdClient(Deps())).HealAsync(force: false, "manual", stdout, new StringWriter(), Fast);
+
+        Assert.Equal(0, code);
+        Assert.Contains("run/ahd.life.lock", stdout.ToString(), StringComparison.Ordinal);
+        Assert.Contains("--ah-home", stdout.ToString(), StringComparison.Ordinal);
+        Assert.Empty(_rig.Signals);
     }
 
     [Fact]

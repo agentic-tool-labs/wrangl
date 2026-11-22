@@ -231,6 +231,13 @@ public interface IHierarchyCore
     /// </summary>
     MsgTokenHit? ResolveMsgToken(string? text, string? contextDir = null, string? expectedTo = null);
 
+    /// <summary>
+    /// Message <paramref name="id"/> of <paramref name="type"/> as <c>msg send</c>/<c>msg show</c> resolve it: narrowed to
+    /// <paramref name="pool"/> (already absolute) or else <paramref name="contextDir"/>, then to <paramref name="expectedTo"/>; with no pool, a
+    /// keyless hit with more than one candidate is tried again with no context.
+    /// </summary>
+    MsgTokenHit ResolveMsgId(string id, string type, string? contextDir, string? pool, string? expectedTo);
+
     /// <summary>A fresh message id in the writer's local time (<c>YYYYMMDD-HHMMSS-xxxx</c>).</summary>
     string NewId();
 

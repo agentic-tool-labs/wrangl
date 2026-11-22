@@ -203,6 +203,15 @@ test("negative: a slice with no waiting_total counts its open questions, as an o
   assert.equal(attentionOf({ run: "r", open: [{ id: "d1", at: 1, text: "q", options: [] }], recent: [], open_total: 1, truncated: false }).count, 1);
 });
 
+test("a terminal_only card has no answer or dismiss body; negative: the same card unmarked sends as before (ah2-387 T2)", () => {
+  const [q] = attentionOf({ run: "r", open: [{ id: "q4", options: [{ label: "Yes" }], terminal_only: true }], recent: [] }).open;
+  const pick = toggle(q, NO_PICK, 0);
+  assert.equal(answerBody(TEAM, "r", q, pick), null);
+  assert.equal(model.dismissBody(TEAM, "r", q, "Already done"), null);
+  const { terminal_only: _, ...plain } = q;
+  assert.deepEqual(answerBody(TEAM, "r", plain, pick), { dir: DIR, team: "ship", run: "r", id: "q4", choice: "a" });
+});
+
 test("an item's answer body names the item and its since, needs no run, and refuses nothing picked", () => {
   const [q] = attentionOf({ open: [], items: [SHIP], recent: [] }).open;
   assert.deepEqual(answerBody(TEAM, null, q, toggle(q, NO_PICK, 1)), { dir: DIR, team: "ship", item: "s:ship", since: SHIP.since, choice: "b" });

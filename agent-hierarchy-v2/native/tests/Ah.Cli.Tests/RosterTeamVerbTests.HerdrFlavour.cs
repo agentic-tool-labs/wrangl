@@ -72,6 +72,37 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void DisbandCloseClosesTheMembersOfAnImplicitTeamThatNamesNoTransport()
+    {
+        // ah2-75: an implicit team keeps "transport": null; each row carries its own herdr_flavour and transport_id
+        var members = "{\"role\":\"implementor\",\"name\":\"proj-implementor\",\"route\":\"peer\",\"transport_id\":\"w1:pA\",\"herdr_flavour\":\"tui\",\"model\":\"sonnet\"},"
+            + "{\"role\":\"reviewer\",\"name\":\"proj-reviewer\",\"route\":\"peer\",\"transport_id\":\"w1:pB\",\"herdr_flavour\":\"tui\",\"model\":\"sonnet\"}";
+        var herdr = new HerdrFake();
+        PutHerdrOnPath();
+        _extraEnv["HERDR_ENV"] = "1";
+        _extraEnv["HERDR_PANE_ID"] = "pOrch";
+        _extraEnv["HERDR_TAB_ID"] = "tCaller";
+        _runner.Output = herdr.Answer;
+        _runner.Exit = herdr.Exit;
+        WriteTeam("proj", LiveTeamJson("x", members).Replace("\"transport\":\"x\"", "\"transport\":null,\"implicit\":true", StringComparison.Ordinal));
+        herdr.Tabs.Add(("tS", "s"));
+        herdr.Panes.Add(("w1:pA", "tS"));
+        herdr.Panes.Add(("w1:pB", "tS"));
+        herdr.Agents["w1:pA"] = "proj-implementor";
+        herdr.Agents["w1:pB"] = "proj-reviewer";
+        Watch(herdr);
+
+        var result = DisbandClosing();
+
+        var text = JsonText.Stringify(result, 0);
+        var rows = result.Get("results")!.Value.AsArray();
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, r => Assert.True(r.Member("closed") is { IsTruthy: true }, text));
+        Assert.DoesNotContain("has no addressable pane", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(herdr.Panes, p => p.Pane is "w1:pA" or "w1:pB");
+    }
+
+    [Fact]
     public void ANonHerdrTeamStoresNoFlavourEvenInACoreTerminal()
     {
         _extraEnv["HC_TERMINAL_ID"] = "t7";

@@ -40,7 +40,7 @@ cleanup() {
 }
 hermetic_on_exit cleanup
 PASS=0; FAIL=0
-check() { local n=$1; shift; if eval "$@"; then PASS=$((PASS+1)); echo "PASS: $n"; else FAIL=$((FAIL+1)); echo "FAIL: $n (OUT=${OUT:0:600})"; fi; }
+check() { local n=$1; shift; if eval "$@"; then PASS=$((PASS+1)); echo "PASS: $n"; else FAIL=$((FAIL+1)); echo "FAIL: $n"; printf -- '--- OUT:\n%s\n--- ahd log tail:\n' "$OUT"; tail -n 20 "$AH_HOME"/logs/ahd.log* 2>/dev/null; fi; }
 put() { node -e 'const fs=require("fs"),path=require("path");fs.mkdirSync(path.dirname(process.argv[1]),{recursive:true});fs.writeFileSync(process.argv[1],process.argv[2]+"\n")' "$1" "$2"; }
 NOW() { node -e 'process.stdout.write(new Date().toISOString())'; }
 # the team's hold document as `roster quit --status` reads it (the holds table; S11a-holds), pretty-printed
@@ -279,6 +279,9 @@ T0=$(node -e 'process.stdout.write(String(Date.now()))')
 ah_run roster stop --now --team tm9 --confirm --grace 0 --cwd "$PROJ"
 ELAPSED=$(( $(node -e 'process.stdout.write(String(Date.now()))') - T0 ))
 SIG=$(member_signalled "$OUT" q4)
+# evidence for a failure: the time from the Esc to the last herdr call, apart from the CLI's own start
+SPAN=$(node -e 'const fs=require("fs"),d=process.argv[1]+"/calls";try{const r=fs.readdirSync(d).map(f=>JSON.parse(fs.readFileSync(d+"/"+f,"utf8")));const k=r.filter(c=>c.argv[0]==="agent"&&c.argv[1]==="send-keys");if(k.length)process.stdout.write(String(Math.max(...r.map(c=>c.end_ms))-Math.min(...k.map(c=>c.start_ms))))}catch{}' "$FAKE_STATE_DIR")
+OUT="rc=$RC span_ms=$SPAN elapsed_ms=$ELAPSED prompts=$(herdr_prompts) sig=$SIG out=$OUT err=$(cat "$T/err") calls=$(ah_test_fake_herdr_calls "$FAKE_STATE_DIR")"
 check "(T1.4) a member showing a harness prompt after the Esc is mailed at once: no settle loop, nothing typed" 'printf %s "$SIG" | grep -q "\"via\": *\"mail\"" && printf %s "$SIG" | grep -q "pane_error\": *\"blocked" && [ "$ELAPSED" -lt 6000 ] && [ "$(herdr_prompts)" = 0 ] && stored_emergency_stop "team tm9"'
 
 # unconfirmed (typed, no activity): mail, and no second paste.

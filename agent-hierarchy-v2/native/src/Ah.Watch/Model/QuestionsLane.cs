@@ -271,6 +271,12 @@ internal sealed class QuestionsLane(IViewStateReader reader, Func<IReadOnlyList<
             SetMulti(o, p.Row);
             // only when the parked row names one; a front end reads none as soon
             SetCut(o, "class", LaneParts.Text(p.Row, "class"), FieldBytes);
+            // ah2-387 T1: answered only in a terminal; absent on every other card
+            if (p.Row.Member("terminal_only") is { IsBool: true } terminalOnly && terminalOnly.AsBool())
+            {
+                o["terminal_only"] = true;
+            }
+
             openRows.Add(o);
         }
 

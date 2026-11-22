@@ -59,6 +59,10 @@ internal sealed class AhdHealEnvironment(AhdClient client, DaemonClientDependenc
 
     public bool Alive(int pid) => deps.Inspector.PidAlive(pid);
 
+    public string Home => paths.Home;
+
+    public bool LifeHeld() => client.LifeHeld();
+
     public bool Gone(HealTarget target) => !deps.Inspector.PidAlive(target.Pid);
 
     public bool SameProcess(HealTarget target) =>

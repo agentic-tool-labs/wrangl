@@ -80,6 +80,12 @@ internal sealed class ReadModelWriteRelay : IStateWriteObserver
             return;
         }
 
+        // the watcher sends its mark every tick a member stays blocked; only one that changed a row is told, to any lane
+        if (domain == "activity" && op is "mark" or "unmark" && !(JsonText.TryParse(resultJson.Span, out var marked) && marked.Member("written") is { IsBool: true } w && w.AsBool()))
+        {
+            return;
+        }
+
         if (RefreshesStatus(domain, op, argsJson.Span) && JsonText.TryParse(argsJson.Span, out var written) && written.Member("dir") is { IsText: true } statusDir && statusDir.AsString().Length > 0)
         {
             model.Emit("status", statusDir.AsString());
@@ -160,12 +166,6 @@ internal sealed class ReadModelWriteRelay : IStateWriteObserver
                 model.EmitKeySet("activity");
                 return;
             case "record" or "clear" or "mark" or "unmark":
-                // the watcher sends its mark every tick a member stays blocked; only one that changed a row is told
-                if (op is "mark" or "unmark" && !(JsonText.TryParse(resultJson.Span, out var marked) && marked.Member("written") is { IsBool: true } w && w.AsBool()))
-                {
-                    return;
-                }
-
                 if (JsonText.TryParse(argsJson.Span, out var args)
                     && Canonical(args) is { } dir
                     && args.Member("subject") is { IsText: true } subject && subject.AsString().Length > 0)

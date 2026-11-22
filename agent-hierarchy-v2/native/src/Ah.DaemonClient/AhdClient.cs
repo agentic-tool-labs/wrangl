@@ -543,7 +543,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     }
 
     /// <summary>Whether a live daemon holds <see cref="RunPaths.Life"/>; a lock that cannot be tried proves nothing and counts as free.</summary>
-    private bool LifeHeld()
+    internal bool LifeHeld()
     {
         try
         {
@@ -555,6 +555,9 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             return false;
         }
     }
+
+    /// <summary>The command that lists only <paramref name="home"/>'s daemons: <see cref="SpawnCommand"/> makes <c>--ah-home</c> the last argument. Not escaped: a hint the user runs by hand.</summary>
+    internal static string LifeHint(string home) => $"pgrep -fl 'ahd.* serve .*--ah-home {home}$'";
 
     private async Task<Discovered?> StartLockedAsync(long deadline, bool hook, string? drainReason, Action<string> busy, CancellationToken ct)
     {
@@ -638,11 +641,32 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         {
             if (Now() >= lifeEnd)
             {
-                busy($"a previous ahd for {_paths.Home} is still alive (it holds run/ahd.life.lock) but does not answer; not starting another until it exits; `ahd heal` replaces it only while it is recorded, otherwise end it (pgrep -fl 'ahd.* serve')");
+                busy($"a previous ahd for {_paths.Home} is still alive (it holds run/ahd.life.lock) but does not answer; not starting another until it exits; `ahd heal` replaces it only while it is recorded, otherwise end it ({LifeHint(_paths.Home)})");
+
+                // Every implicit start backs off while it lives, instead of each CLI call waiting the window again. A hook's budget
+                // is no verdict: a daemon exiting cleanly would otherwise suppress starts.
+                if (!hook)
+                {
+                    MarkSpawnFailed(null, "a previous ahd still holds run/ahd.life.lock");
+                }
+
                 return null;
             }
 
-            await Task.Delay(100, ct).ConfigureAwait(false);
+            // A daemon that came up while this client waited (a hand-run serve, or one an earlier client gave up on) is used.
+            var up = await DiscoverCoreAsync((int)Math.Max(0, lifeEnd - Now()), ct).ConfigureAwait(false);
+            if (up is { Draining: false })
+            {
+                return up;
+            }
+
+            await Task.Delay((int)Math.Max(1, Math.Min(100, lifeEnd - Now())), ct).ConfigureAwait(false);
+        }
+
+        // The lock may have been freed late in the wait: the spawn still gets its own window, as after a slow daemon.
+        if (!hook)
+        {
+            deadline = Math.Max(deadline, Now() + StartWaitMs);
         }
 
         _ = deps.Writer.Unlink(_paths.Sock);
@@ -730,6 +754,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         int? drainedPid = null;
         for (var round = 0; round < 2; round++)
         {
+            startWhy = null;
             if (options.Hook && Remaining() <= 0)
             {
                 Warn("out of time");

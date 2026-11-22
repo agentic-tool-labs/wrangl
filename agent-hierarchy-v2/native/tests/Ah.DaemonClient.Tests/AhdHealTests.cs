@@ -66,6 +66,10 @@ public sealed class AhdHealTests
 
         public bool Gone(HealTarget target) => !Alive(target.Pid);
 
+        public string Home => "/fake/home";
+
+        public bool LifeHeld() => false;
+
         public bool SameProcess(HealTarget target) => Alive(target.Pid) && !(TermSent && (ProcessTableFailsAfterTerm || ReplacedAfterTerm));
 
         public Task DelayAsync(TimeSpan span)

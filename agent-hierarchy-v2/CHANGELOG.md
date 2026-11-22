@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.38] - 2026-11-21
+
+### Changed
+
+- **A terminal-only question card cannot be sent from the UI.** A card for an authority grant or a member launch
+  consent is marked in the questions slice, and the web UI and herdr desktop no longer offer Send or Not needed on
+  it; it is answered in a terminal, as before.
+- **The stale-screen mail says what is known.** When a member's screen shows no prompt `ah` recognises and has not
+  changed for five minutes, the mail now says the member may be blocked and that this is unconfirmed.
+- **Waiting on a held daemon life lock is shorter and clearer.** A command stops waiting as soon as a healthy daemon
+  answers, later commands back off for a minute after one gives up, the hint names this home's daemon only, and
+  `ahd heal` reports `life-lock-held` for a live daemon that has no record.
+
+### Fixed
+
+- **A peer's report no longer writes a dispatch row for its own brief.** Since 2.0.28 every
+  `ah msg send --kind report --ref <id>` did; the hook now resolves a bare id as `ah msg send` does.
+- **A UI answer with a letter that is not an option, beside an "other" entry, is refused** and nothing is stored.
+- **A no-op screen-clear mark emits no status refresh.**
+- **The team hold shell test prints its whole output when it fails.**
+
 ## [2.0.37] - 2026-11-21
 
 ### Changed

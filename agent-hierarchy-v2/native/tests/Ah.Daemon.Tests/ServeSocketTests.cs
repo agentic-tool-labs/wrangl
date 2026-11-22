@@ -9,7 +9,7 @@ namespace Ah.Daemon.Tests;
 /// <summary><c>serve</c> binds before it collects its jobs and routes, and a client may take the socket path away while it collects.</summary>
 public sealed class ServeSocketTests
 {
-    private static async Task<(int Code, string Log)> ServeAsync(Sandbox box, Action<IJobRegistry>? whileCollecting, Func<int, string?>? startTime = null)
+    private static async Task<(int Code, string Log)> ServeAsync(Sandbox box, Action<IJobRegistry>? whileCollecting, Func<int, string?>? startTime = null, ILockProvider? locks = null)
     {
         var o = new HarnessOptions();
         if (startTime is not null)
@@ -19,7 +19,7 @@ public sealed class ServeSocketTests
 
         var io = PlatformModule.CreateIo(null);
         var env = new TestEnv(box.AhHome, o.Vars, new PluginInfo(o.PluginRoot, "wrangl", o.Version, "1"));
-        var deps = new DaemonDependencies(io.Files, io.Writer, io.Clock, env, null, 424242, o.State, o.Peers, o.Rejections, o.Principal, null, o.ParentOf, o.UiStart);
+        var deps = new DaemonDependencies(io.Files, io.Writer, io.Clock, env, null, 424242, o.State, o.Peers, o.Rejections, o.Principal, null, o.ParentOf, o.UiStart) { Locks = locks };
         var settings = new DaemonSettings(DaemonTimings.Default with { FenceInterval = TimeSpan.FromMilliseconds(100) }, HandleSignals: false, IdleExitMs: 300);
         var log = new StringWriter();
         var code = await Task.Run(() => ServeVerb.RunToExit(deps, [], settings, log, whileCollecting)).WaitAsync(TimeSpan.FromSeconds(30));
@@ -137,6 +137,25 @@ public sealed class ServeSocketTests
         Assert.Contains("another daemon (pid 777) is live; exiting without migrating", log, StringComparison.Ordinal);
         Assert.False(collected);
         Assert.False(File.Exists(box.Sock));
+    }
+
+    [Fact]
+    public async Task AServeThatFindsTheLifeLockHeldLeavesBeforeBindingOrCollecting()
+    {
+        var box = Sandbox.Create();
+        var locks = PlatformModule.CreateIo(null).Locks;
+        Directory.CreateDirectory(Path.Combine(box.AhHome, "run"));
+        using var life = locks.TryHold(Path.Combine(box.AhHome, "run", "ahd.life.lock"));
+        Assert.NotNull(life);
+        var collected = false;
+
+        var (code, log) = await ServeAsync(box, _ => collected = true, locks: locks);
+
+        Assert.Equal(ServeVerb.StartFailed, code);
+        Assert.Contains("holds run/ahd.life.lock; exiting without migrating", log, StringComparison.Ordinal);
+        Assert.False(collected);
+        Assert.False(File.Exists(box.Sock));
+        Assert.False(File.Exists(PidFile(box)));
     }
 
     [Fact]
