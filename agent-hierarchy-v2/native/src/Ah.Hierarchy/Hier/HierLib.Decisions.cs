@@ -1136,6 +1136,7 @@ internal sealed partial class HierLib : IHierarchyDecisions
         DateTimeOffset now,
         Func<string, string, string, string?> notify,
         Func<string?, JsonValue> readTeam,
+        Func<ParkedQuestion, IReadOnlyList<string>, bool, string?>? answered,
         out IReadOnlyList<string> notes)
     {
         ArgumentNullException.ThrowIfNull(files);
@@ -1205,7 +1206,7 @@ internal sealed partial class HierLib : IHierarchyDecisions
         // b517: as park does, so the answered question leaves the watch model's waiting list
         RefreshStatus(dir);
         _ = progress.AppendLedger(pool, question.Team, AskRecord.Ruling(questions, response, null));
-        var text = $"{id} answered: {question.Header} = {string.Join(", ", chosen)}";
+        var text = $"{id} answered: {question.Header} = {string.Join(", ", chosen)}{answered?.Invoke(question, chosen, freeText)}";
         string? eventError = null;
         if (byUser)
         {

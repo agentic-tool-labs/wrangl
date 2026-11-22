@@ -85,6 +85,36 @@ internal sealed partial class MsgCommand
             return Refuse("not_a_member", notMember, "park");
         }
 
+        return Park(dir, caller, team, header, text, labels, assumed, askedFor, cls, null);
+    }
+
+    /// <summary>
+    /// <c>ah adr ask &lt;id&gt;</c> (b195): parks a q&lt;k&gt; asking the user to settle proposed ADR <paramref name="n"/>, options Accept and Reject, stamped
+    /// <see cref="ParkedQuestions.AdrAskSource"/> with the ADR number. The caller rule is park's. Refused when an open question already asks it.
+    /// </summary>
+    internal static int AdrAsk(CliContext context, ServiceGraph graph, string cwd, long n, string title, TextWriter stdout, TextWriter stderr)
+    {
+        var command = new MsgCommand(context, graph, MsgOptions.Parse(["--cwd", cwd]), "adr-ask", new MsgOutput(stdout, stderr), stdout, stderr);
+        try
+        {
+            command._teamArg = command.ResolveTeamArg();
+            var caller = command.ResolveDecisionCaller();
+            if (caller.Class.Kind is not (CutoverCallerKind.TopOrchestrator or CutoverCallerKind.User))
+            {
+                return command.Refuse("park_not_orchestrator", "Only a team's Orchestrator parks a question. A member sends its question to its parent.", "park");
+            }
+
+            var id = AdrVerb.Id(n);
+            return command.Park(command.HierarchyDir, caller, DecisionProof.TeamOf(caller.Class.Detail) ?? string.Empty, id, $"Settle {id}: {title}?", ["Accept", "Reject"], $"{id} stays proposed.", null, HierarchyModule.ChecklistClassOf((string?)null), n);
+        }
+        catch (MsgExit exit)
+        {
+            return exit.Code;
+        }
+    }
+
+    private int Park(string dir, DecisionCaller caller, string team, string header, string text, IReadOnlyList<string> labels, string assumed, string? askedFor, string cls, long? adr)
+    {
         var home = Hier.Messages.TeamHome(dir, null, team) is { Length: > 0 } teamHome ? teamHome : dir;
         var path = ParkedQuestions.PathIn(home);
         var files = _graph.Io.Files;
@@ -96,7 +126,13 @@ internal sealed partial class MsgCommand
             return Refuse("store_unreadable", "the asks store could not be read; no question was parked", "park");
         }
 
-        var id = ParkedQuestions.NextId(ParkedQuestions.Fold(string.Join('\n', stored)));
+        var folded = ParkedQuestions.Fold(string.Join('\n', stored));
+        if (adr is not null && folded.FirstOrDefault(q => q.Open && q.Adr == adr) is { } open)
+        {
+            return Refuse("adr_already_asked", $"{open.Id} already asks the user to settle {AdrVerb.Id(adr.Value)}", "park");
+        }
+
+        var id = ParkedQuestions.NextId(folded);
         var options = new JsonArray();
         foreach (var label in labels)
         {
@@ -105,18 +141,23 @@ internal sealed partial class MsgCommand
 
         var question = new JsonObject { ["question"] = text, ["header"] = header, ["multiSelect"] = false, ["options"] = options };
         var at = Timestamps.ToIsoString(_graph.Io.Clock.UtcNow);
-        var line = ParkedQuestions.ParkedLine(id, at, team, caller.SessionId, null, 0, question, null, assumed);
+        var source = adr is null ? null : ParkedQuestions.AdrAskSource;
+        var line = ParkedQuestions.ParkedLine(id, at, team, caller.SessionId, null, 0, question, source, assumed);
         if (askedFor is not null)
         {
             line["asked_for"] = askedFor;
         }
 
         line["class"] = cls;
+        if (adr is not null)
+        {
+            line["adr"] = (double)adr.Value;
+        }
 
         Hier.StateCalls.AppendParkedQuestion(home, line, new StateCallOptions(OperationId: $"park:{id}"));
         // b517: the append is not a write the daemon serves; the refresh is, and the watch model re-reads the home's parked questions on it
         Hier.Status.RefreshStatus(home);
-        var parked = new ParkedQuestion(id, at, team, caller.SessionId, null, 0, question, null, assumed);
+        var parked = new ParkedQuestion(id, at, team, caller.SessionId, null, 0, question, source, assumed);
         _out.Json(new JsonObject { ["id"] = id, ["parked"] = true, ["next"] = ParkedQuestions.ParkedReason([parked]) });
         return 0;
     }
@@ -175,7 +216,7 @@ internal sealed partial class MsgCommand
         string? Notify(string to, string eventName, string text) =>
             _graph.Mailbox.Send(MeshModule.EventRequest(to, "user", _cwd, dir, eventName, text), now).Failure is { } failure ? $"{failure.Code}: {failure.Message}" : null;
 
-        var res = Hier.Decisions.AnswerQuestion(_graph.Io.Files, Hier.StateCalls, Hier.Progress, ChecklistPool, dir, _teamArg, id, Prove, Given, _opts.Text("note"), now, Notify, t => _graph.Roster.ReadTeamRecord(dir, t), out var notes);
+        var res = Hier.Decisions.AnswerQuestion(_graph.Io.Files, Hier.StateCalls, Hier.Progress, ChecklistPool, dir, _teamArg, id, Prove, Given, _opts.Text("note"), now, Notify, t => _graph.Roster.ReadTeamRecord(dir, t), null, out var notes);
         if (res is null)
         {
             return refusedExit;

@@ -71,8 +71,11 @@ public sealed class UserAlarmTests
 
         public UserAlarm? Alarm(string key) => _alarms.GetValueOrDefault(key);
 
+        public int AlarmWrites { get; private set; }
+
         public void SetAlarm(string key, UserAlarm? alarm)
         {
+            AlarmWrites++;
             if (alarm is null)
             {
                 _ = _alarms.Remove(key);
@@ -118,11 +121,14 @@ public sealed class UserAlarmTests
             }
             else
             {
-                exited(0);
+                exited(Exit);
             }
 
             return true;
         }
+
+        /// <summary>The exit code a started command that is not held ends with.</summary>
+        public int Exit { get; set; }
 
         /// <summary>When set, a started command keeps running until the test calls what <see cref="Held"/> holds.</summary>
         public bool Hold { get; set; }
@@ -461,6 +467,38 @@ public sealed class UserAlarmTests
 
         Assert.Single(host.Lines);
         Assert.DoesNotContain(host.Rows, r => r.Str("skipped") == "still running");
+    }
+
+    [Fact]
+    public void AFailedStartedCommandIsNotRestartedOnTheNextSweepButIsAfterTheWait()
+    {
+        var host = new Host { Asked = T0.AddMinutes(-30), Exit = 1 };
+        var sweep = Sweeper(host);
+        sweep(0);
+        Assert.Single(host.Lines);
+        Assert.False(host.Alarm("alarm/tm/owner-asking")!.Delivered);
+
+        sweep(1);
+
+        // Negative: just inside the five-minute wait (10 x 30 s period) it still waits.
+        sweep(4);
+        Assert.Single(host.Lines);
+
+        sweep(5);
+        Assert.Equal(2, host.Lines.Count);
+    }
+
+    [Fact]
+    public void AWaitingSweepThatChangesNothingDoesNotRewriteTheRecord()
+    {
+        var host = new Host { Asked = T0.AddMinutes(-30), Exit = 1 };
+        var sweep = Sweeper(host);
+        sweep(0);
+        var writes = host.AlarmWrites;
+
+        sweep(1);
+
+        Assert.Equal(writes, host.AlarmWrites);
     }
 
     [Fact]

@@ -151,6 +151,34 @@ internal sealed class AhdHealEnvironment(AhdClient client, DaemonClientDependenc
     }
 
     public void Progress(string line) => progress(line);
+
+    public LifeRecord? ReadLife()
+    {
+        try
+        {
+            var path = Path.Combine(paths.Run, "ahd.life.json");
+            if (!deps.Files.Exists(path) || !JsonText.TryParse(deps.Files.ReadBytes(path), out var parsed) || parsed.AsObject() is not { } doc)
+            {
+                return null;
+            }
+
+            return doc.Int("pid") is { } pid && doc.Str("start") is { } start && doc.Str("home") is { } home ? new LifeRecord((int)pid, start, home) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    public string? StartOf(int pid) => deps.StartTime?.Invoke(pid);
+
+    public bool IsOurDaemon(int pid) => client.IsOurDaemon(pid);
+
+    public bool AskerIsUser() => deps.CallerIsUser?.Invoke() == true;
+
+    public int OwnPid => Environment.ProcessId;
+
+    public void LogLifeKill(HealTarget target, string reason) => client.LogLifeKill(target.Pid, target.StartedAt, reason);
 }
 
 /// <summary><c>run/heal-state.json</c>: <c>{restarts: [iso…], last_capped_row?, last?: {kind, at, detail, log_copy}}</c>. The heal writes it under its lock; the doctor row reads it.</summary>

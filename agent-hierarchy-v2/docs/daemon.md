@@ -71,7 +71,7 @@ ahd restart    # stop, then start
 Add `--plain` to any of these to get text instead of JSON. Example (`ahd status --plain` with a daemon up):
 
 ```
-up  version 2.0.43  pid 49124  uptime 0s  requests 0
+up  version 2.0.44  pid 49124  uptime 0s  requests 0
 root /path/to/the/plugin
 owns mailbox=true status=false timers=
 errors 0 (5xx)
@@ -373,7 +373,9 @@ shows why. Everything keeps working from files meanwhile.
 
 **The daemon is running but does not answer.** Run `ahd heal`. It probes the daemon for at least a minute and a half and
 replaces it only when no probe is answered; a slow daemon is left alone. A failed write and the overdue timer start
-the same heal in the background. See [troubleshooting](./troubleshooting.md#the-daemon).
+the same heal in the background. A daemon that still holds the home's life lock but has removed its own record is
+stopped only by a heal you run yourself, and only when `run/ahd.life.json` names it and its pid, start time and
+command line still match; a daemon started before 2.0.44 has no such file until it is restarted. See [troubleshooting](./troubleshooting.md#the-daemon).
 
 **Nothing is delivered, or `ah msg` prints `ah msg: warning: ahd unavailable (<reason>); using files`.** The sender could not reach the
 daemon and wrote the mailbox directly; the recipient only sees the message when it next looks at its mailbox.

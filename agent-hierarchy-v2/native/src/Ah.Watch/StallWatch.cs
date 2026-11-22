@@ -33,6 +33,9 @@ public sealed record UserAlarm(string Episode, DateTimeOffset FirstToldAt, DateT
 
     /// <summary>The alert served now for the team while the alarm is raised (ah2-180 Amendment 2), refreshed between tells, so not always the exact text last sent; null on an older record.</summary>
     public string? Line { get; init; }
+
+    /// <summary>When the last try launched <c>alarm.command</c>; null when it set none, its start threw, or the record predates the field (ah2-448).</summary>
+    public DateTimeOffset? StartedAt { get; init; }
 }
 
 /// <summary>What the stall watch reads and writes. It never signals a process, closes a pane or edits a request.</summary>
@@ -384,12 +387,16 @@ internal sealed class StallWatch
         }
 
         string Told() => digest ? line + Digest(team) : line;
+
+        // ah2-448 R2: an undelivered episode whose last try launched the command, and it failed, waits before the command starts again.
+        var retryWait = TimeSpan.FromTicks(Math.Min(_settings.Period.Ticks * 10, _settings.AlarmRepeat.Ticks));
+        var waiting = held is { Delivered: false, StartedAt: { } startedAt } && held.Episode == episode && now - startedAt < retryWait;
         UserAlarm next;
-        if (held is null || held.Episode != episode || !held.Delivered)
+        if (!waiting && (held is null || held.Episode != episode || !held.Delivered))
         {
             next = new UserAlarm(episode, held is not null && held.Episode == episode ? held.FirstToldAt : now, now, false) { Kind = kind, Line = Told() };
         }
-        else if (repeat && now - held.LastToldAt >= _settings.AlarmRepeat)
+        else if (!waiting && repeat && now - held!.LastToldAt >= _settings.AlarmRepeat)
         {
             next = held with { LastToldAt = now, Kind = kind, Line = Told() };
         }
@@ -397,7 +404,7 @@ internal sealed class StallWatch
         {
             // Not told this sweep: the served line is refreshed while the slot is free, so no command's exit callback writes past it.
             var served = Told();
-            if (served != held.Line && !_alarmRunning.ContainsKey(team.Name))
+            if (served != held!.Line && !_alarmRunning.ContainsKey(team.Name))
             {
                 _host.SetAlarm(key, held with { Line = served });
             }
@@ -412,16 +419,26 @@ internal sealed class StallWatch
         }
 
         // Recorded before the start: the command may end, and mark its first line delivered, before the start returns.
-        _host.SetAlarm(key, next);
+        _host.SetAlarm(key, next with { StartedAt = now });
         var first = !next.Delivered;
         var told = next.Line!;
-        var start = Run(team, kind, told, now, exit =>
+        Start start;
+        try
         {
-            if (first && exit == 0 && _host.Alarm(key) is { } recorded && recorded.Episode == episode)
+            start = Run(team, kind, told, now, exit =>
             {
-                _host.SetAlarm(key, recorded with { Delivered = true });
-            }
-        });
+                if (first && exit == 0 && _host.Alarm(key) is { } recorded && recorded.Episode == episode)
+                {
+                    _host.SetAlarm(key, recorded with { Delivered = true });
+                }
+            });
+        }
+        catch
+        {
+            // ah2-448 R3: a start that threw launched nothing, so the record does not say it started and the next sweep retries.
+            _host.SetAlarm(key, next);
+            throw;
+        }
         if (start != Start.Started)
         {
             // ah2-180 Amendment 2 (b): no channel carried it, but it is raised: the record stays (delivered as it was), so the alerts serve it and the next sweep tries a channel again

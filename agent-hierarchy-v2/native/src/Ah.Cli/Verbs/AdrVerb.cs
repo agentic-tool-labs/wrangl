@@ -17,7 +17,7 @@ internal static class AdrVerb
 {
     private const string Usage =
         "usage: ah adr add <title> [--status proposed|accepted] [--context s] [--decision s] [--consequences s] [--body-file -] [--governs atp-N]... [--source s] [--decided-by s] [--external path|url]"
-        + " | show <id> [--json] | list [--status s] [--governs atp-N] [--waiting] [--json] | settle <id> accepted|rejected [--note s] [--decided-by s] | supersede <old> --by <new>"
+        + " | show <id> [--json] | list [--status s] [--governs atp-N] [--waiting] [--json] | settle <id> accepted|rejected [--note s] [--decided-by s] | ask <id> | supersede <old> --by <new>"
         + " | deprecate <id> [--note s] | link <id> (--governs atp-N | --relates adr-N | --spec path | --external path|url) [--remove] | sync <id> [--context s] [--decision s] [--consequences s]"
         + "   (all take [--cwd dir]; every verb but supersede takes [--by name])";
 
@@ -101,6 +101,7 @@ internal static class AdrVerb
                 "show" => Show(call),
                 "list" => List(call),
                 "settle" => Settle(call),
+                "ask" => Ask(call),
                 "supersede" => Supersede(call),
                 "deprecate" => Deprecate(call),
                 "link" => Link(call),
@@ -163,6 +164,30 @@ internal static class AdrVerb
         var adr = new JsonObject { ["op"] = "settle", ["n"] = n, ["to"] = c.Word(2, "accepted or rejected"), ["by"] = c.By };
         Copy(c, adr, ("note", "note"), ("decided-by", "decided_by"));
         return Changed(c, adr, n);
+    }
+
+    /// <summary><c>ask &lt;id&gt;</c> (b195): parks a question for the user to settle a proposed ADR; their option answer on Needs-you settles it.</summary>
+    private static int Ask(Call c)
+    {
+        var n = ParseId(c.Word(1, "an id"));
+        var (title, status) = Read(c, r => r.Query("SELECT title, status FROM adrs WHERE hier_dir = ?1 AND n = ?2", c.Key, n) is [var row] ? ((string)row[0]!, (string)row[1]!) : throw new AdrFailure("no such ADR " + Id(n)));
+        if (status != "proposed")
+        {
+            throw new AdrFailure($"ask {Id(n)}: it is {status}; only a proposed ADR is asked");
+        }
+
+        return Msg.MsgCommand.AdrAsk(c.Context, c.G, c.Cwd, n, title, c.Stdout, c.Stderr);
+    }
+
+    /// <summary>
+    /// b195: settles ADR <paramref name="n"/> to <paramref name="to"/> from the user's answer to question <paramref name="id"/> on Needs-you, recorded
+    /// <c>decided_by = user</c>, <c>by = ui-answer</c>. Returns the text the Orchestrator's question-answered event gains: settled, or why not.
+    /// </summary>
+    internal static string SettleFromAnswer(ServiceGraph g, string dir, long n, string to, string id)
+    {
+        var adr = new JsonObject { ["op"] = "settle", ["n"] = n, ["to"] = to, ["decided_by"] = "user", ["by"] = "ui-answer", ["note"] = $"the user's answer to {id}" };
+        var result = Invoke(g, BacklogVerb.DirOf(g, dir), adr);
+        return result.Ok ? $"; {Id(n)} settled {to}" : $"; {Id(n)} not settled: {result.Error ?? result.ErrorCode ?? "the write failed"}";
     }
 
     private static int Supersede(Call c)
@@ -455,8 +480,7 @@ internal static class AdrVerb
 
     private static long Write(Call c, JsonObject adr)
     {
-        var result = c.G.Writer.Invoke(
-            "progress", HierarchyModule.WorkWriteOp, JsonText.ToUtf8(new JsonObject { ["dir"] = c.Dir, ["team"] = string.Empty, ["adr"] = adr }, 0), c.G.Hierarchy.Messages.PoolContext(c.Dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
+        var result = Invoke(c.G, c.Dir, adr);
         if (!result.Ok)
         {
             throw new AdrFailure(result.Error ?? result.ErrorCode ?? "the write failed");
@@ -464,6 +488,10 @@ internal static class AdrVerb
 
         return (long)(JsonText.Parse(result.ResultJson.Span).Member("n") ?? throw new AdrFailure("the write answered no number")).AsNumber();
     }
+
+    private static StateResult Invoke(ServiceGraph g, string dir, JsonObject adr) =>
+        g.Writer.Invoke(
+            "progress", HierarchyModule.WorkWriteOp, JsonText.ToUtf8(new JsonObject { ["dir"] = dir, ["team"] = string.Empty, ["adr"] = adr }, 0), g.Hierarchy.Messages.PoolContext(dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
 
     private static T Read<T>(Call c, Func<IStateDbReader, T> body)
     {

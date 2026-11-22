@@ -230,7 +230,11 @@ export const register: Register = (on, options) => {
       return [] as string[]
     })
     const ms = sourced.then(async source => (await rowsFor($, 'SessionStart', source)).filter(r => !r.async).reduce((sum, r) => sum + r.timeoutSec * 1000, 0), () => 0)
-    starting = { out, ms }
+    // A second run before the first prompt is chained on the first: the prompt waits for both and carries both texts, first run's first.
+    const prev = starting
+    starting = prev
+      ? { out: Promise.all([prev.out, out]).then(([a, b]) => [...a, ...b]), ms: Promise.all([prev.ms, ms]).then(([a, b]) => a + b) }
+      : { out, ms }
     await out
     return next(e)
   })
@@ -260,7 +264,7 @@ export const register: Register = (on, options) => {
         const out = await Promise.race([s.out, bound])
         // cut while it waited (its budget ran out, or a hook above settled): the prompt went on without this hook, so the text
         // stays for the next prompt
-        if (next.signal.aborted) return next(e)
+        if (next.signal?.aborted) return next(e) // a next with no signal is not aborted
         // claimed once: a second prompt that waited on the same run adds nothing
         if (out && starting === s) {
           starting = undefined

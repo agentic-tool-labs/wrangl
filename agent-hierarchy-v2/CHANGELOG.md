@@ -4,6 +4,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.44] - 2026-11-22
+
+### Added
+
+- **An ADR can be settled from Needs-you.** `ah adr ask <id>` parks an Accept or Reject question for a proposed
+  ADR. Choosing an option in the UI settles the ADR as decided by the user, recorded as `ui-answer`, and the
+  Orchestrator is told. A typed answer, a dismissal, or an answer given from the terminal settles nothing.
+- **`ahd heal` can stop a daemon that holds the life lock but left no record.** The daemon that wins the lock now
+  writes `run/ahd.life.json` naming itself. A heal the user runs stops that process only when its pid, start time
+  and command line still match, it is at least five minutes old, and it fails the health probes. A heal an agent
+  runs, and the automatic triggers, still only report. A daemon started before this version has no such file,
+  so heal only reports for it until it has been restarted once.
+
+### Changed
+
+- **A failing user-alarm command is retried every five minutes, not every sweep.** While an alarm is undelivered,
+  a command that ran and failed waits `min(10 x period, repeat)` before it runs again. No command set, or a
+  start that throws, is still retried on the next sweep.
+
+### Fixed
+
+- **The first prompt's wait for session-start text loses two latent cases.** A host that passes no abort signal no
+  longer breaks every later prompt, and a second session start before the first prompt no longer drops the first
+  run's text.
+
+### Tests
+
+- A test fails when a herdr mod file uses a name another mod file exports without importing it, the gap behind
+  the dead Wrangl pane of 2.0.39 to 2.0.41.
+- The directive size test no longer depends on the checkout path, and the test slot arrival-order test waits
+  for each run to queue instead of sleeping.
+
 ## [2.0.43] - 2026-11-22
 
 ### Fixed

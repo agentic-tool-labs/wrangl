@@ -49,8 +49,11 @@ public sealed class ParkedQuestion(
     /// <summary>How urgent the question is: <c>blocker</c>, <c>soon</c> or <c>eventually</c>; null (read as <c>soon</c>) when it was parked with none.</summary>
     public string? Class { get; init; }
 
+    /// <summary>The ADR number the question asks the user to settle (b195); set only on a line <c>ah adr ask</c> wrote (<see cref="ParkedQuestions.AdrAskSource"/>), else null.</summary>
+    public long? Adr { get; init; }
+
     internal ParkedQuestion With(bool? pushed = null, string? answeredAt = null, IReadOnlyList<string>? answeredLabels = null) =>
-        new(Id, At, Team, SessionId, ToolUseId, Index, Question, Source, Default, pushed ?? Pushed, answeredAt ?? AnsweredAt, answeredLabels ?? AnsweredLabels) { AskedFor = AskedFor, Class = Class };
+        new(Id, At, Team, SessionId, ToolUseId, Index, Question, Source, Default, pushed ?? Pushed, answeredAt ?? AnsweredAt, answeredLabels ?? AnsweredLabels) { AskedFor = AskedFor, Class = Class, Adr = Adr };
 
     public bool Open => AnsweredAt is null;
 
@@ -73,6 +76,9 @@ public sealed class ParkedQuestion(
 public static class ParkedQuestions
 {
     public const string FileName = "parked-questions.jsonl";
+
+    /// <summary>The source stamp of a question <c>ah adr ask</c> parked: the one source whose <c>adr</c> field is read (b195).</summary>
+    public const string AdrAskSource = "ah:adr-ask";
 
     public static string PathIn(string dir) => dir.TrimEnd('/') + "/" + FileName;
 
@@ -112,6 +118,8 @@ public static class ParkedQuestions
                     {
                         AskedFor = Text(row, "asked_for"),
                         Class = Text(row, "class"),
+                        // b195 rule 2: an adr field on a line any other writer made is read as none
+                        Adr = Text(row, "source") == AdrAskSource && row.Member("adr") is { IsNumber: true } adr ? (long)adr.AsNumber() : null,
                     };
                     break;
                 case "pushed" when parked.TryGetValue(id, out var open):

@@ -288,6 +288,7 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             {
                 Kind = entry.Get("kind") is { IsText: true } kind ? kind.AsString() : null,
                 Line = entry.Get("line") is { IsText: true } line ? line.AsString() : null,
+                StartedAt = At(entry, "started_at"),
             };
         }
 
@@ -318,6 +319,11 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             row["kind"] = kind;
             row["line"] = line;
             row["raised_at"] = Ah.Core.Time.Timestamps.ToIsoString(alarm.FirstToldAt);
+        }
+
+        if (alarm.StartedAt is { } started)
+        {
+            row["started_at"] = Ah.Core.Time.Timestamps.ToIsoString(started);
         }
 
         Episodes.Put(key, row);

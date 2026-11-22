@@ -237,15 +237,22 @@ ah_signal_child TERM "$HA"; wait "$HA" "$HB" 2>/dev/null
 
 # the head asks for all 4 while 2 are free: a later request of 1 (which would fit) waits behind it
 TF="$SB/fifo"; ORDER3="$SB/fifo.txt"; : >"$ORDER3"
+# each run starts only once the one before it holds its lease or has its ticket (a bounded poll: under load a fixed sleep let
+# the small run take its ticket before the big one had, so it was served first)
+queued() { cat "$TF"/q/*/waiter 2>/dev/null | grep -q "\"label\": \"$1\""; }
 AH_SLOTS_DIR="$TF" AH_TEST_TOKENS=4 bash "$WS" --eta 600 --tokens 2 sleep 4 >/dev/null 2>&1 & HC=$!
+for _ in $(seq 1 100); do [ "$(ls "$TF/held" 2>/dev/null | grep -c .)" = 1 ] && break; sleep 0.1; done
+AH_SLOTS_DIR="$TF" AH_TEST_TOKENS=4 AH_TEST_SLOT_WAIT=30 AH_SLOT_LABEL=big bash "$WS" --eta 600 --tokens 4 sh -c 'echo big >>"$1"; sleep 1' _ "$ORDER3" >/dev/null 2>&1 & HD=$!
+for _ in $(seq 1 100); do queued big && break; sleep 0.1; done
+AH_SLOTS_DIR="$TF" AH_TEST_TOKENS=4 AH_TEST_SLOT_WAIT=30 AH_SLOT_LABEL=small bash "$WS" --eta 600 --tokens 1 sh -c 'echo small >>"$1"' _ "$ORDER3" >/dev/null 2>&1 & HE=$!
+for _ in $(seq 1 100); do queued small && break; sleep 0.1; done
+# time for the small run to be served if the head did not block it
 sleep 1
-AH_SLOTS_DIR="$TF" AH_TEST_TOKENS=4 AH_TEST_SLOT_WAIT=30 bash "$WS" --eta 600 --tokens 4 sh -c 'echo big >>"$1"; sleep 1' _ "$ORDER3" >/dev/null 2>&1 & HD=$!
-sleep 0.5
-AH_SLOTS_DIR="$TF" AH_TEST_TOKENS=4 AH_TEST_SLOT_WAIT=30 bash "$WS" --eta 600 --tokens 1 sh -c 'echo small >>"$1"' _ "$ORDER3" >/dev/null 2>&1 & HE=$!
-sleep 1
+OUT=$(cat "$ORDER3"; ls "$TF/held" "$TF/q" 2>&1 | tr '\n' ' ')
 check "B3: a head request of 4 with 2 free blocks a later request of 1 (it has not run)" '[ ! -s "$ORDER3" ]'
 wait "$HC" "$HD" "$HE"
-check "...and when the tokens come free they are served in arrival order: big, then small" '[ "$(tr "\n" " " <"$ORDER3")" = "big small " ]'
+OUT=$(tr "\n" " " <"$ORDER3")
+check "...and when the tokens come free they are served in arrival order: big, then small" '[ "$OUT" = "big small " ]'
 
 # a holder killed with -9 frees its tokens at the next acquire
 TK="$SB/killed"
