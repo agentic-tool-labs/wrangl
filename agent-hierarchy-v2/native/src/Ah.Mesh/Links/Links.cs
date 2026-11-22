@@ -701,9 +701,10 @@ public sealed record Links(
         var l = args.Member("link") ?? throw new InvalidOperationException("link is required");
         NullCheck(l);
         string id;
-        if (l.Member("id") is { IsText: true } given && given.AsString().Length > 0)
+        var explicitId = l.Member("id") is { IsText: true } given && given.AsString().Length > 0;
+        if (explicitId)
         {
-            id = given.AsString();
+            id = l.Member("id")!.Value.AsString();
         }
         else
         {
@@ -744,6 +745,22 @@ public sealed record Links(
                 }
 
                 return new JsonObject { ["revoked"] = true, ["ended"] = Short(ended) };
+            }
+        }
+        else if (!explicitId && l.Member("task") is { IsText: true } task && l.Member("peers") is { IsArray: true } peers && peers.AsArray().Count == 1)
+        {
+            // A send-opened grant (no id given) reuses any active link for its task that lets requester send to peer, whoever granted it (ah2-385).
+            foreach (var x in data["links"].AsArray())
+            {
+                if (IsText(Field(x, "state"), "active") && StrictEquals(Field(x, "task"), task) && Covers(x, l.Member("requester"), peers.AsArray()[0]))
+                {
+                    if (ended.Count > 0)
+                    {
+                        WriteLinks(ctx, dir, team, data);
+                    }
+
+                    return new JsonObject { ["id"] = Undefined(Field(x, "id")), ["existed"] = true, ["ended"] = Short(ended) };
+                }
             }
         }
 

@@ -330,6 +330,51 @@ public sealed class AssignmentLinkTests
     }
 
     [Fact]
+    public void SendOpenedGrantsForOnePairAndTaskShareOneLink()
+    {
+        // ah2-385: two id-less grants racing with different op-ids, and an id-less grant beside a link-request link
+        var rig = new LinkCommandsTests.Rig();
+        JsonObject Grant(string opId, string task, string from, string to, string? id = null, string direction = "both")
+        {
+            var link = new JsonObject { ["task"] = task, ["peers"] = new JsonArray { to }, ["requester"] = from, ["direction"] = direction, ["granted_by"] = "ahd-auto" };
+            if (id is not null)
+            {
+                link["id"] = id;
+            }
+
+            return rig.Effects.LinksSync("grant", new JsonObject { ["dir"] = rig.Dir, ["team"] = Team, ["link"] = link, ["now"] = Now.ToUnixTimeMilliseconds() }, opId);
+        }
+
+        int Count() => rig.Fixture.Links.ReadLinks(rig.Dir, Team).Get("links")!.Value.AsArray().Count;
+
+        var first = Grant("sendlink-1", "t1", "a@tm", "b@tm");
+        var second = Grant("sendlink-2", "t1", "a@tm", "b@tm");
+        Assert.Equal(first.Get("id")!.Value.AsString(), second.Get("id")!.Value.AsString());
+        Assert.True(second.Get("existed") is { IsTruthy: true });
+        Assert.Equal(1, Count());
+
+        // negative: a grant with an explicit id (a link-request) still opens its own link for the same pair and task
+        var requested = Grant("grant-r0", "t1", "a@tm", "b@tm", "lk-r0");
+        Assert.False(requested.Get("existed") is { IsTruthy: true });
+        Assert.Equal(2, Count());
+
+        // an id-less grant, other direction, where a link-request link for that pair and task is active gets that link;
+        // negative: t1's links are not reused for t2
+        Grant("grant-r1", "t2", "a@tm", "b@tm", "lk-r1");
+        var onRequested = Grant("sendlink-3", "t2", "b@tm", "a@tm");
+        Assert.Equal("lk-r1", onRequested.Get("id")!.Value.AsString());
+        Assert.True(onRequested.Get("existed") is { IsTruthy: true });
+        Assert.Equal(3, Count());
+
+        // negative: a one-way link held the other way (b -> a, out) does not let a send, so it is not reused
+        Grant("grant-r3", "t3", "b@tm", "a@tm", "lk-r3", "out");
+        var pastReverse = Grant("sendlink-4", "t3", "a@tm", "b@tm");
+        Assert.False(pastReverse.Get("existed") is { IsTruthy: true });
+        Assert.NotEqual("lk-r3", pastReverse.Get("id")!.Value.AsString());
+        Assert.Equal(5, Count());
+    }
+
+    [Fact]
     public void ARequestedLinkKeepsItsShortNotesAndTheAssignmentTakesWhatItWouldRefuse()
     {
         var rig = new LinkCommandsTests.Rig();

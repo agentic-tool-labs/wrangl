@@ -1018,11 +1018,6 @@ internal sealed partial class MeshSend(
         var granted = State("links", "grant", new JsonObject { ["dir"] = dir, ["team"] = team, ["link"] = link, ["now"] = decided.Now }, context, $"sendlink-{entryId()}");
         var at = DateTimeOffset.FromUnixTimeMilliseconds((long)decided.Now);
         AnnounceEnded(context, team, granted.Member("ended"), at);
-        if (granted.Member("revoked") is { IsTruthy: true })
-        {
-            return verdict with { Message = $"{verdict.Message}\nah: not opened automatically: the Orchestrator revoked this pair's link for this task" };
-        }
-
         if (granted.Member("existed") is not { IsTruthy: true })
         {
             AnnounceGranted(context, team, $"{Js(granted.Member("id"))} {sender.Address} -> {recipient.Address} task {taskId} (auto: opened by send)", at);
@@ -1237,7 +1232,7 @@ internal sealed partial class MeshSend(
         AnnounceEnded(context, team0, endedByUse, now);
         if (verdict.Warn)
         {
-            mailbox.LogWouldRefuse(resolved!.Dir, Js(result.Get("entry")!.Value.AsObject().Get("id")), verdict.Would);
+            mailbox.LogWouldRefuse(resolved!.Dir, Js(result.Get("entry")!.Value.AsObject().Get("id")), verdict.Would, verdict.Message);
         }
 
         return result;

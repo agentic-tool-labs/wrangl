@@ -4,6 +4,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.37] - 2026-11-21
+
+### Changed
+
+- **A lone test run on an idle machine takes the whole test allowance.** `ah test run` with no `--tokens`, alone on
+  an idle default pool, was granted three quarters of the pool; it now gets all of it. A run that arrives meanwhile
+  waits for it to finish.
+
+### Fixed
+
+- **Two sends at the same instant open one link, not two.** A send that opens a link itself reuses any active link
+  its pair already holds for that task.
+- **A `star-warn` would-refuse log row keeps the reason,** not only the code.
+- **Docs: an Ultra-Advisor link needs no ruling.** `ah msg link-request` grants it at once, as it always did; the
+  comms protocol page said the user rules on it.
+
 ## [2.0.36] - 2026-11-21
 
 ### Added

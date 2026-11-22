@@ -1073,6 +1073,7 @@
               "rung": 0,
               "state": "would_refuse",
               "would": "not_linked",
+              "reason": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task 20260101-000000-aa11 --why \"<reason>\" ($ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md).\nOr send through orchestrator@tm.",
               "at": "2026-01-01T12:00:00.000Z"
             }
           ]
@@ -3201,6 +3202,7 @@
               "rung": 0,
               "state": "would_refuse",
               "would": "not_linked",
+              "reason": "ah: direct messages between team members need a link from the Orchestrator.\nAsk for one: node $AHROOT/hooks/msg.mjs link-request --to b@tm --task 20260101-000000-aa11 --why \"<reason>\" ($ROOT/h/msgs/20260101-000000-aa11--architect--work--request.md).\nOr send through orchestrator@tm.\nah: not opened automatically: task not dispatched to the requester or a peer",
               "at": "2026-01-01T12:00:00.000Z"
             }
           ]

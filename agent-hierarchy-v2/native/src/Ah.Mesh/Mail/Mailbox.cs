@@ -464,7 +464,7 @@ public interface IMailbox
     bool LiveClaudeSender(string? sessionId);
 
     /// <summary>Records that a <c>star-warn</c> send would have been refused; evidence only.</summary>
-    void LogWouldRefuse(string dir, string id, string? would);
+    void LogWouldRefuse(string dir, string id, string? would, string? reason);
 
     /// <summary>Records that a SendMessage named a recipient nothing could place; evidence only.</summary>
     void LogUnclassified(string dir, string id, JsonObject detail);
