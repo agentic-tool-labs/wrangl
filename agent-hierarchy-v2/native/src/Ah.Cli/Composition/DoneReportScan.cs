@@ -138,7 +138,8 @@ internal sealed class DoneReportScan(double startedMs)
     }
 
     /// <summary>
-    /// Whether request <paramref name="id"/> has a review exchange: a request to a reviewer-class role whose parent chain reaches it, or a
+    /// Whether request <paramref name="id"/> has a review exchange: a request to a reviewer-class role whose parent chain reaches it, or
+    /// reaches the root of its chain and was created after it (ah2-432), or a
     /// link with <paramref name="member"/> and a reviewer-class member whose task is it or one of its children. With a
     /// <paramref name="scope"/> whose item is set (ah2-222): the item is done or dropped, or a reviewer-class request on that item, in the
     /// same pool and team, was created at or after the report.
@@ -163,10 +164,27 @@ internal sealed class DoneReportScan(double startedMs)
         var parents = new Dictionary<string, string>(StringComparer.Ordinal);
         var reviews = new List<string>();
         var itemOf = new Dictionary<string, string>(StringComparer.Ordinal);
+        var createdOf = new Dictionary<string, double>(StringComparer.Ordinal);
         foreach (var e in exchanges)
         {
-            if (Str(e, "id") is not { } eid || eid == id || requestFm(e) is not { } fm)
+            if (Str(e, "id") is not { } eid || requestFm(e) is not { } fm)
             {
+                continue;
+            }
+
+            if (Ah.Core.Time.Timestamps.TryParseMs(Str(fm, "created"), out var made))
+            {
+                createdOf[eid] = made;
+            }
+
+            // ah2-432: the request's own parent, for the walk to its chain's root; "null" is no parent
+            if (eid == id)
+            {
+                if (Str(fm, "parent") is { Length: > 0 } own && own != "null")
+                {
+                    parents[id] = own;
+                }
+
                 continue;
             }
 
@@ -176,7 +194,7 @@ internal sealed class DoneReportScan(double startedMs)
                 itemOf[eid] = onItem;
             }
 
-            if (Str(fm, "parent") is { } parent)
+            if (Str(fm, "parent") is { Length: > 0 } parent && parent != "null")
             {
                 parents[eid] = parent;
                 if (review)
@@ -196,13 +214,23 @@ internal sealed class DoneReportScan(double startedMs)
             }
         }
 
-        // a reviewer-class request whose parent chain reaches the request
+        // ah2-432: the root of the request's chain; a parent cycle or a missing parent ends the walk
+        var root = id;
+        for (var walked = new HashSet<string>(StringComparer.Ordinal); parents.TryGetValue(root, out var up) && walked.Add(root);)
+        {
+            root = up;
+        }
+
+        var requestCreated = createdOf.TryGetValue(id, out var ownCreated) ? ownCreated : (double?)null;
+
+        // a reviewer-class request whose parent chain reaches the request, or (ah2-432) the request's root when the review was created after it
         foreach (var review in reviews)
         {
+            var later = requestCreated is { } since && createdOf.TryGetValue(review, out var reviewCreated) && reviewCreated > since;
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (var at = review; parents.TryGetValue(at, out var up) && seen.Add(at); at = up)
             {
-                if (up == id)
+                if (up == id || (later && up == root))
                 {
                     return true;
                 }

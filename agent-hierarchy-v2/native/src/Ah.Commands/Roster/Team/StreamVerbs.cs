@@ -152,6 +152,18 @@ internal static class StreamVerbs
     /// </summary>
     private static (string Ref, string? Sha) ResolveBase(RosterContext c, string root, string baseRef)
     {
+        if (FindBase(c, root, baseRef) is { } found)
+        {
+            return found;
+        }
+
+        var message = $"stream-open: --base {baseRef} names no local ref and no origin/{baseRef} — nothing was written";
+        throw c.Refuse(new JsonObject { ["refused"] = "base-not-found", ["base"] = baseRef, ["message"] = message }, message);
+    }
+
+    /// <summary><see cref="ResolveBase"/>'s candidates without the refusal: the first that names a commit, else null.</summary>
+    private static (string Ref, string? Sha)? FindBase(RosterContext c, string root, string baseRef)
+    {
         List<string> candidates = baseRef.StartsWith("origin/", StringComparison.Ordinal) ? [baseRef] : [baseRef, "origin/" + baseRef];
         foreach (var candidate in candidates)
         {
@@ -162,8 +174,7 @@ internal static class StreamVerbs
             }
         }
 
-        var message = $"stream-open: --base {baseRef} names no local ref and no origin/{baseRef} — nothing was written";
-        throw c.Refuse(new JsonObject { ["refused"] = "base-not-found", ["base"] = baseRef, ["message"] = message }, message);
+        return null;
     }
 
     /// <summary>
@@ -184,16 +195,18 @@ internal static class StreamVerbs
 
     /// <summary>
     /// The one warning for adopting a branch that existed before this stream-open: its tip, how far it trails <paramref name="baseRef"/>
-    /// (the ref a new branch would have been cut from), and that <c>--base</c> was ignored. The count is left out when git cannot give it.
+    /// (the ref a new branch would have been cut from, resolved as <see cref="ResolveBase"/> would), and that <c>--base</c> was ignored.
+    /// The count is left out when the base resolves to nothing or git cannot give it.
     /// </summary>
     private static string AdoptionWarning(RosterContext c, string root, string branch, string? tipSha, string baseRef, string? baseFlag)
     {
         var text = $"branch {branch} already existed at {Sha7(tipSha)}";
         if (tipSha is { Length: > 0 } && baseRef.Length > 0
-            && Git(c, ["-C", root, "rev-list", "--count", $"{tipSha}..{baseRef}"]) is { Ok: true } behind
+            && FindBase(c, root, baseRef) is { Ref: var counted }
+            && Git(c, ["-C", root, "rev-list", "--count", $"{tipSha}..{counted}"]) is { Ok: true } behind
             && int.TryParse(behind.Stdout.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n))
         {
-            text += n == 0 ? $": up to date with {baseRef}" : $": {n} {(n == 1 ? "commit" : "commits")} behind {baseRef}";
+            text += n == 0 ? $": up to date with {counted}" : $": {n} {(n == 1 ? "commit" : "commits")} behind {counted}";
         }
 
         return baseFlag is { Length: > 0 } ? $"{text}; --base {baseFlag} ignored" : text;

@@ -48,6 +48,9 @@
 .r6 .fcard.active .tag { color: var(--working); }
 .r6 .fcard .fstats { display: flex; gap: 12px; white-space: nowrap; padding: 6px 10px; font-size: var(--text-11); color: var(--muted); }
 .r6 .fcard .fstats b { color: var(--ink); font-weight: 600; }
+.r6 .fcard .fwork { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--text-11); }
+.r6 .fcard .fline { display: flex; align-items: center; height: 20px; padding: 0 10px; }
+.r6 .far .fcard .fwork { display: none; }
 .r6 .flow-legend { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 16px; align-items: center; padding: 6px 10px; background: var(--bar); border: 1px solid var(--line); border-radius: var(--radius-card); font-size: var(--text-12); color: var(--muted); }
 .r6 .flow-legend > span { display: flex; gap: 6px; align-items: center; }
 

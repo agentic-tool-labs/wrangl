@@ -3,7 +3,7 @@
 // copy (tests/web/herdr-graph-model.test.mjs), so edit this file and copy it. It also holds the jobs and subagents under their owners
 // (ah2-225 B6), which the Herdr sidebar's tree, both Graphs and the web Overview draw.
 import { inert, laneOf, memberOf } from "./select.js";
-import { MAX_SPARKS, shortName } from "./graph-world.js";
+import { MAX_SPARKS, currentItem, itemsId, planId, planStreams, shortName, streamOf } from "./graph-world.js";
 
 // ---- the columns by role, and where each card goes
 
@@ -19,7 +19,8 @@ export const flowColumn = (role, served, deputy = false) => (role === "sub-orche
 // A job or subagent drawn under its owner sits this far in from the owner's edge, across the column.
 export const UNDER_INDENT = 20;
 
-export const FLOW = { card: { w: 220, h: 64 }, row: { w: 200, h: 36 }, gap: 16, band: 64, lane: 100, top: 90, left: 40 };
+// ah2-450 G6: a working card with a work title is `work` taller, the title on its own line between the head and the stats.
+export const FLOW = { card: { w: 220, h: 64 }, row: { w: 200, h: 36 }, work: 20, gap: 16, band: 64, lane: 100, top: 90, left: 40 };
 
 // Cards positioned by column: {pos: id -> {x, y, w, h}, labels: [{text, x, y}], box}. Horizontal has the columns left to right; vertical has them
 // top to bottom, in COLUMN_ORDER, a column with no card left out (ah2-373 R6). A column's members keep name order, an orchestrator first;
@@ -35,7 +36,7 @@ export function flowLayout(nodes, active, orient) {
   const bands = [[], ...leaders.map(() => [])];
   byName.forEach((n) => bands[bandOf.get(n.lane || "") ?? 0].push(n));
   // a full test run in the Test column is a card; any other job or subagent a row (flowExtras)
-  const size = (n) => (n.item ? (n.after ? FLOW.row : n.item.kind === "job" && n.column === TEST_COLUMN ? FLOW.card : FLOW.row) : active.has(n.id) ? FLOW.card : FLOW.row);
+  const size = (n) => (n.item ? (n.after ? FLOW.row : n.item.kind === "job" && n.column === TEST_COLUMN ? FLOW.card : FLOW.row) : active.has(n.id) ? (n.work ? { w: FLOW.card.w, h: FLOW.card.h + FLOW.work } : FLOW.card) : FLOW.row);
   const along = (n) => (horizontal ? size(n).h : size(n).w);
   const step = horizontal ? FLOW.card.w + FLOW.lane : FLOW.card.h + FLOW.lane;
   const pos = new Map();
@@ -400,7 +401,9 @@ export function flowNodes(slices, team, ids, children) {
   const deputy = team?.body.duty?.member;
   const node = (id, laneId, teamOf) => {
     const role = slices.get(id)?.body.role ?? "";
-    const out = { id, role, name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: flowColumn(role, slices.get(id)?.body.column, id === deputy) };
+    const base = { id, role, name: slices.get(id)?.body.name ?? id.split("/").pop(), lane: laneId, team: teamOf, column: flowColumn(role, slices.get(id)?.body.column, id === deputy) };
+    // ah2-450 G6: a member with a work title, whose card (when working) is FLOW.work taller
+    const out = workTitle(slices, teamOf ? slices.get(teamOf) : team, id) ? { ...base, work: true } : base;
     return id === deputy ? { ...out, duty: true } : out;
   };
   return [...ids.map((id) => node(id, lane(id), "")), ...children.map((c) => node(c.id, c.lane, c.team))];
@@ -437,7 +440,28 @@ export function flowCardOf(slices, teamId, id) {
     duty: m.duty ?? null,
     decisions: team?.body.pipeline?.decisions_count ?? null,
     round: item && Number.isFinite(item.rounds) ? `r${item.rounds}/${item.round_cap ?? 3}` : null,
+    work: workTitle(slices, team, id),
   };
+}
+
+// ah2-450: the slices workTitle's item fallback reads, for teams by slice id: each one's plan (its stream names) and plan-items.
+export const workLeaseIds = (slices, teamIds) => [...new Set(teamIds)].flatMap((id) => {
+  const t = slices.get(id)?.body;
+  return t ? [planId(t), ...planStreams(slices, t).map((s) => itemsId(t, s))] : [];
+});
+
+// ah2-450 G2: what a member works on, one line of text: the title of its newest open request (the brief's --title), else the title
+// of the plan item it holds, else "". Both from slices the Graphs already lease: the team's open list with its exchanges, plan-items.
+export function workTitle(slices, team, id) {
+  const t = team?.body;
+  if (!t) return "";
+  for (const o of slices.get(`list:open:team:${t.dir_id}/${t.name}`)?.body.open ?? []) {
+    const b = o.to_member === id ? slices.get(o.id)?.body : null;
+    if (b?.title && !b.withdrawn) return inert(b.title).trim();
+  }
+  const m = slices.get(id)?.body;
+  const stream = m ? streamOf(slices, t, m.placement?.stream ?? null) : null;
+  return inert(currentItem(slices, t, stream, { id, name: m?.name ?? id.split("/").pop() })?.title ?? "").trim();
 }
 
 // ---- jobs and subagents under their owners (ah2-225 B1-B3, B6)
@@ -592,6 +616,8 @@ export function underLinks(nodes, rects, orient) {
 // ---- the view that fits
 
 export const ZOOM = { min: 0.25, max: 4, fitMax: 1.4, step: 1.25, pan: 60 };
+// ah2-450 G4: below this zoom a card's work line (11 px text) is under 7 px, too small to read, and is hidden.
+export const WORK_MIN_K = 0.65;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const round = (n) => Math.round(n * 10) / 10;
 

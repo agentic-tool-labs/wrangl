@@ -7,7 +7,7 @@ import { div } from "gpui-kit";
 import { v_flex, h_flex, Button, Popover, Tabs, Tab, Input, InputState, TextView } from "gpui-base";
 import { ah } from "./ah.js";
 import { Buffer } from "buffer";
-import { askerText, qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
+import { askerText, qaModel, qaRefresh, canSend, canDismiss, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
@@ -306,16 +306,17 @@ export function card(v, t, tm, c, noDesc = false, extra = null) {
       .on_click((_e, cx) => pickOther(v, c, cx, false))
       .child("Your answer"));
 
+  const nnOk = !busy && canDismiss(c);
   const nn = Popover.new(`qa-nn-${c.key}`).open(v.nnOpen === c.key)
     .on_open_change((open, cx) => {
-      v.nnOpen = open && !cardState(v, c).sending ? c.key : null;
+      v.nnOpen = open && !cardState(v, c).sending && canDismiss(c) ? c.key : null;
       cx.notify();
     })
-    .trigger(Button.new(`qa-nn-btn-${c.key}`).disabled(busy)
+    .trigger(Button.new(`qa-nn-btn-${c.key}`).disabled(!nnOk)
       .h(24).px(6).flex().items_center().rounded(6).cursor_pointer().text_size(11.5).text_color(t.muted)
       .border(1).border_color(t.raised)
-      .when(busy, (el) => el.opacity(0.6))
-      .when(!busy, (el) => el.hover((s) => s.text_color(t.foreground)))
+      .when(!nnOk, (el) => el.opacity(0.6))
+      .when(nnOk, (el) => el.hover((s) => s.text_color(t.foreground)))
       .focus((s) => s.border_color(t.accent))
       .accessibility_label("Not needed: dismiss this question")
       .on_mouse_down("left", stop)

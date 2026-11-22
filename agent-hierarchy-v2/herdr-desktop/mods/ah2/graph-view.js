@@ -20,6 +20,7 @@ import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, d
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, flowClamp, wheelAct, easedScale, dragAct, wasDrag, dragDrawn,
   cardStyle, edgeStyle, dotColor, ageText, flowCardText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
+import { FLOW, WORK_MIN_K } from "./flow-model.js";
 import { STEP_MS } from "./graph-world.js";
 import { loadingOf, terminalFinder, memberName } from "./model.js";
 import { target } from "./ah.js";
@@ -583,7 +584,7 @@ function leaf(t, g, n, i, v, gr) {
         .child(div().min_w(0).truncate().text_size(12).text_color(t.foreground).child(n.name))))
       .when(n.tier >= 3 && Boolean(n.role), (el) => el.child(line(n.role, 11, t.muted)))
       .when(n.tier >= 4, (el) => el.child(line([n.model, n.word.toLowerCase()].filter(Boolean).join(" · "), 11, t.muted)))
-      .when(n.tier >= 5, (el) => el.child(line(n.item || "no item", 11, t.muted))));
+      .when(n.tier >= 5, (el) => el.child(line(n.work || n.item || "no item", 11, t.muted)))); // ah2-450: what it works on
 }
 
 // ah2-225 B1/B3: a job or subagent on the Map, a small circle beside its owner: the job mark ◷ (⚠ when overdue) or a dashed ring for a
@@ -741,10 +742,14 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
   // ah2-373 R9: the deputy on duty is drawn as a lead, in the Orchestrator's colours, named for its part rather than its tool
   const { deputy, duty, tag, stats: cells, said, tip } = flowCardText(s, c.active, c.out, s.lastAt > 0 ? ageText(Date.now() - s.lastAt, live) : "");
   const st = cardStyle(deputy ? { ...s, role: "orchestrator" } : s, c.active, lt, t.surface);
+  // ah2-450: what it works on (the web's .fwork): a card's own line between the head and the stats (G6), a row's head after the name
+  const work = k >= WORK_MIN_K && s.work ? s.work : "";
+  const workLine = () => div().flex_1().min_w(0).truncate().text_size(11 * k).text_color(t.muted).child(work);
   const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
     .when(c.active, (el) => el.border_b(1).border_color(t.border))
     .child(div().flex_none().text_size(12 * k).text_color(st.mark ?? t.blocked).child(st.glyph))
-    .child(div().flex_1().min_w(0).truncate().text_size(12.5 * k).text_color(st.name ?? t.foreground).when(st.bold, (el) => el.font_semibold()).child(s.name))
+    .child(div().when(!work || c.active, (el) => el.flex_1()).min_w(0).truncate().text_size(12.5 * k).text_color(st.name ?? t.foreground).when(st.bold, (el) => el.font_semibold()).child(s.name))
+    .children(work && !c.active ? [workLine()] : [])
     .children(duty ? [div().flex_none().text_size(11 * k).text_color(t.muted).child(duty)] : [])
     .children(tag ? [div().flex_none().text_size(11 * k).text_color(st.tag ?? t.muted).child(tag)] : []);
   const bold = (value) => div().font_semibold().text_color(t.foreground).child(String(value));
@@ -757,6 +762,7 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
     .when(s.state === "gone", (el) => el.opacity(0.4))
     .tooltip(`${tip} · peer session. Click for its details`).accessibility_label(`${said}, peer session. Show its details`)
     .child(head)
+    .when(c.active && Boolean(work), (el) => el.child(h_flex().flex_none().h(FLOW.work * k).px(10 * k).items_center().child(workLine())))
     .when(stats.length > 0, (el) => el.child(h_flex().px(10 * k).py(6 * k).gap(12 * k).items_center().text_size(11 * k).text_color(t.muted).children(stats)));
 }
 

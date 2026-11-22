@@ -215,8 +215,9 @@ export function updateStep(prev, p, now, auto, landed = false, building = false)
 }
 
 // ah2-401 I3: whether the rebuild record (rebuild-model.js rebuildOf; null: none) holds the "available" notice for `offered`: a
-// build running for that version, a newer one, or one of unknown version holds it; one for an older version does not.
-export const buildHolds = (rebuild, offered) => rebuild?.state === "started" && !versionNewer(offered, rebuild.version);
+// build running for that version, a newer one, or one of unknown version holds it; one for an older version does not, nor a
+// "started" older than WATCH_MS (a crashed build, as updateDialogOf reads it).
+export const buildHolds = (rebuild, offered, now) => buildRunning(rebuild, now) && !versionNewer(offered, rebuild.version);
 
 // The command a click on the "available" notice sends this mod (herdr delivers "<mod>.<command>" to nextCommand()).
 export const INSTALL_COMMAND = "install";
@@ -263,6 +264,7 @@ export const claimFresh = (c, now) => c?.overlay != null && typeof c.at === "num
 export const RECENT_MS = 15 * 60e3;
 export const OUTPUT_LINES = 300;
 const WATCH_MS = 10 * 60e3; // rebuild-model.js REBUILD_WATCH_MS: a "started" older than this is not running
+const buildRunning = (b, now) => b?.state === "started" && now - Date.parse(b.at) < WATCH_MS;
 
 // The output pane's lines: the build log's, then the install's (or "Installing…" while it runs with none yet), the last `max`.
 export function outputOf(log, install, installing = false, max = OUTPUT_LINES) {
@@ -285,7 +287,7 @@ export function updateDialogOf(rebuild, update, now, opened = now, home = null, 
   const log = home ? `${home}/logs/rebuild.log` : "logs/rebuild.log in ah's home";
   const at = b ? Date.parse(b.at) : NaN;
   const build = { key: "build", version: str(b?.version), state: "none", reason: null };
-  if (b?.state === "started" && now - at < WATCH_MS) build.state = "running";
+  if (buildRunning(b, now)) build.state = "running";
   else if (b && at >= since) {
     build.state = b.state === "ok" ? "done" : "failed";
     if (b.state !== "ok") build.reason = b.state === "failed" ? `The build failed; see ${log}` : `No end seen after 10 minutes; see ${log}`;

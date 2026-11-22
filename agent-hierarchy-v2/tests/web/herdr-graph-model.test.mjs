@@ -603,3 +603,44 @@ test("b93: a held drag lives while its stage was drawn this render or the last, 
   assert.equal(dragDrawn(4, 5), true, "drawn in the previous render");
   assert.equal(dragDrawn(3, 5), false, "missed a render: ended");
 });
+
+// ---- ah2-450: what a member works on, the one line under its name (flow-model.js workTitle, through Flow's card model)
+
+const workSlices = ({ request = false, item = false } = {}) => {
+  const s = new Map(slices);
+  const team = s.get(`team:${TM4}`);
+  const id = SEL.memberIds(team)[0];
+  const m = s.get(id);
+  const name = m.body.name;
+  s.set(id, { ...m, body: { ...m.body, placement: { ...m.body.placement, stream: "wt" } } });
+  s.set(`list:open:team:${TM4}`, { id: `list:open:team:${TM4}`, body: { open: request ? [{ id: "exchange:x/wt-1", to_member: id, from_member: null }] : [] } });
+  s.set("exchange:x/wt-1", { id: "exchange:x/wt-1", body: { title: "Show each agent's work title in the Graph", item: "wt" } });
+  s.set(`plan:${TM4}`, { id: `plan:${TM4}`, body: { streams: [{ stream: "wt" }] } });
+  s.set(`plan-items:${TM4}/wt`, { id: `plan-items:${TM4}/wt`, body: { items: item ? [{ key: "wt:a", title: "The checklist item it holds", state: "in_progress", holder: name }] : [] } });
+  return { s, id };
+};
+
+test("a member's work line is the title of its open request, before the item it holds", () => {
+  const { s, id } = workSlices({ request: true, item: true });
+  assert.equal(F.flowCardOf(s, `team:${TM4}`, id).work, "Show each agent's work title in the Graph");
+});
+
+test("a member's work line falls back to the title of the item it holds", () => {
+  const { s, id } = workSlices({ item: true });
+  assert.equal(F.flowCardOf(s, `team:${TM4}`, id).work, "The checklist item it holds");
+});
+
+test("a member with no open request and no item has no work line", () => {
+  const { s, id } = workSlices();
+  assert.equal(F.flowCardOf(s, `team:${TM4}`, id).work, "");
+});
+
+test("ah2-450 G6/G7: a working card with a work title is one line taller in the layout; one without, and an idle row, keep their height", () => {
+  const nodes = [{ id: "a", role: "implementor", name: "a", column: 2, work: true }, { id: "b", role: "implementor", name: "b", column: 2 }, { id: "c", role: "implementor", name: "c", column: 2, work: true }];
+  for (const orient of ["horizontal", "vertical"]) {
+    const { pos } = F.flowLayout(nodes, new Set(["a", "b"]), orient);
+    assert.deepEqual(["a", "b", "c"].map((id) => pos.get(id).h), [F.FLOW.card.h + F.FLOW.work, F.FLOW.card.h, F.FLOW.row.h], orient);
+    const [a, b] = [pos.get("a"), pos.get("b")];
+    assert.ok(orient === "horizontal" ? b.y >= a.y + a.h : b.x >= a.x + a.w, `no overlap, ${orient}`);
+  }
+});

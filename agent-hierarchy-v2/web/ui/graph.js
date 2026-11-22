@@ -5,7 +5,7 @@ import { ageOf, ageText } from "./store.js";
 import { hoverProps } from "./hover.js";
 import { DUTY, DUTY_TITLE, stateWord } from "./select.js";
 import { MAX_SPARKS, MODES, glyphOf, modeOf, shortName } from "./graph-world.js";
-import { COLUMNS, FLOW, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, onDuty, pairKey, pathText, runText, sparkKinds, underLinks, underTip } from "./flow-model.js";
+import { COLUMNS, FLOW, WORK_MIN_K, ZOOM, fitView, flowCardOf, flowLayout, flowLinks, flowPath, isActive, onDuty, pairKey, pathText, runText, sparkKinds, underLinks, underTip } from "./flow-model.js";
 
 export { shortName, COLUMNS, FLOW, ZOOM, fitView, flowLayout, flowPath, isActive, pairKey, sparkKinds };
 
@@ -94,10 +94,12 @@ export class FlowCard extends Live {
     const tag = deputy ? "deputy chief" : reviewing ? "reviewing" : s.running ? "running" : s.tool ?? s.model;
     const duty = DUTY[s.duty] ?? null;
     const badge = duty ? html`<span class="duty-badge" title=${DUTY_TITLE[s.duty]}>${duty}</span>` : null;
-    return html`<div class=${cls} data-role=${deputy ? "orchestrator" : s.role || undefined} data-state=${s.state} data-id=${id} style=${place} tabindex="0" role="button" ...${hoverProps(store, id, "card")} aria-label=${`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${reviewing ? "reviewing" : stateWord(s.state, s.running)}`} onClick=${() => onSelect(id)} onKeyDown=${open}>
+    // ah2-450: what it works on: a card's own line between the head and the stats (G6), a row's head after the name
+    const work = s.work ? html`<span class="fwork" title=${s.work}>${s.work}</span>` : null;
+    return html`<div class=${cls} data-role=${deputy ? "orchestrator" : s.role || undefined} data-state=${s.state} data-id=${id} style=${place} tabindex="0" role="button" ...${hoverProps(store, id, "card")} aria-label=${`${s.name}, ${duty ? `${DUTY_TITLE[s.duty]}, ` : ""}${reviewing ? "reviewing" : stateWord(s.state, s.running)}${s.work ? `, on ${s.work}` : ""}`} onClick=${() => onSelect(id)} onKeyDown=${open}>
       ${active
-        ? html`<div class="fhead"><span class="glyph" aria-hidden="true">${reviewing ? "◆" : "◐"}</span><b title=${s.full}>${s.name}</b>${badge}${tag ? html`<span class="tag">${tag}</span>` : null}</div>${stats.length > 0 ? html`<div class="fstats">${stats}</div>` : null}`
-        : html`<div class="fhead"><span class="glyph" aria-hidden="true">${glyphOf(s.state)}</span><span class="fname" title=${s.full}>${s.name}</span>${badge}${deputy ? html`<span class="tag">deputy chief</span>` : s.state !== "idle" ? html`<span class="tag">${stateWord(s.state).toLowerCase()}</span>` : !badge && s.lastAt > 0 ? html`<span class="tag" title="Last activity">${ageFrom(s.lastAt)}</span>` : null}</div>`}
+        ? html`<div class="fhead"><span class="glyph" aria-hidden="true">${reviewing ? "◆" : "◐"}</span><b title=${s.full}>${s.name}</b>${badge}${tag ? html`<span class="tag">${tag}</span>` : null}</div>${work ? html`<div class="fline">${work}</div>` : null}${stats.length > 0 ? html`<div class="fstats">${stats}</div>` : null}`
+        : html`<div class="fhead"><span class="glyph" aria-hidden="true">${glyphOf(s.state)}</span><span class="fname" title=${s.full}>${s.name}</span>${work}${badge}${deputy ? html`<span class="tag">deputy chief</span>` : s.state !== "idle" ? html`<span class="tag">${stateWord(s.state).toLowerCase()}</span>` : !badge && s.lastAt > 0 ? html`<span class="tag" title="Last activity">${ageFrom(s.lastAt)}</span>` : null}</div>`}
     </div>`;
   }
 }
@@ -356,7 +358,7 @@ export class FlowStage extends Component {
         </g>
         ${rest > 0 ? html`<text class="more" x=${w - 20} y="30" text-anchor="end">+${rest} more briefs</text>` : null}
       </svg>
-      <div class="flow-layer"><div class=${`world flow-world${instant}`} style=${world}>
+      <div class="flow-layer"><div class=${`world flow-world${instant}${v.k < WORK_MIN_K ? " far" : ""}`} style=${world}>
         ${bands.map((b) => html`<div key=${`lane:${b.id}`} class="flane" style=${{ transform: at(b.x, b.y), width: `${b.w}px`, height: `${b.h}px` }}><span class="flane-label">${b.name}</span></div>`)}
         ${labels.map((l) => html`<span key=${l.text} class="flabel" style=${{ transform: at(l.x, l.y) }}>${l.text}</span>`)}
         ${(this.gone ?? []).map((g) => html`<div key=${g.key} class=${g.cls} aria-hidden="true" style=${{ transform: at(g.r.x, g.r.y), width: g.label ? undefined : `${g.r.w}px`, height: g.cls === "flane fleave" ? `${g.r.h}px` : undefined }}>${g.label ?? (g.text ? html`<div class="fhead"><span class="fname">${g.text}</span></div>` : null)}</div>`)}

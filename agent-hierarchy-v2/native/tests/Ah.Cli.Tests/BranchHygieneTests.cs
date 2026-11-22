@@ -414,6 +414,26 @@ public sealed class BranchHygieneTests : IDisposable
     }
 
     [Fact]
+    public void AdoptingABranchCountsBehindTheRemoteBaseWhenOnlyItExists()
+    {
+        Git(Project, "branch", "stale", "main");
+        var tip = Git(Project, "rev-parse", "stale").Trim();
+        Git(Project, "commit", "-q", "--allow-empty", "-m", "main moves on");
+        OriginMain();
+        NoGolden();
+        WriteTeam(string.Empty);
+
+        var (code, stdout, stderr) = Roster("stream-open", "fresh", "--branch", "stale", "--base", "main", "--dry-run");
+        var (otherCode, otherOut, otherErr) = Roster("stream-open", "other", "--branch", "stale", "--base", "nowhere", "--dry-run");
+
+        Assert.True(code == 0, stderr);
+        Assert.Contains($"branch stale already existed at {tip[..7]}: 1 commit behind origin/main; --base main ignored", Texts(Parse(stdout)["warnings"]));
+        // negative: a base that resolves to nothing still warns, without a count, and is not refused
+        Assert.True(otherCode == 0, otherErr);
+        Assert.Contains($"branch stale already existed at {tip[..7]}; --base nowhere ignored", Texts(Parse(otherOut)["warnings"]));
+    }
+
+    [Fact]
     public void AnUnresolvableReleaseRefRefusesOpenAndDoneEvenWithAFlag()
     {
         FeatureStream(shipped: true);

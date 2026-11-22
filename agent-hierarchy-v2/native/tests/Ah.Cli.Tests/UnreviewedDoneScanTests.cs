@@ -152,6 +152,45 @@ public sealed class UnreviewedDoneScanTests
         Assert.False(DoneReportScan.HasReview(parent, "impl-1@t", exchanges, Fm, static _ => "implement", [Link("impl-2@t")], Member));
     }
 
+    [Fact]
+    public void AReviewLaterInTheSameChainCountsAndNegativeOneInAnotherChainDoesNot()
+    {
+        const string first = "20261122-004320-10mc", review = "20261122-004516-1nmm", followUp = "20261122-004400-fol1";
+        const string otherRoot = "20261122-004000-oth0", otherReview = "20261122-004600-orev";
+        IReadOnlyList<JsonObject> exchanges =
+        [
+            Req(first, "implementor", "2026-11-22T00:43:20Z"),
+            Req(followUp, "implementor", "2026-11-22T00:44:00Z", parent: first),
+            Req(review, "reviewer", "2026-11-22T00:45:16Z", parent: first),
+            Req(otherRoot, "implementor", "2026-11-22T00:40:00Z"),
+            Req(otherReview, "reviewer", "2026-11-22T00:46:00Z", parent: otherRoot),
+        ];
+
+        Assert.True(DoneReportScan.HasReview(followUp, "impl-1@t", exchanges, FmOf, ClassOf, [], static _ => null));
+        // negative: a review in another chain, created later too, never counts
+        Assert.False(DoneReportScan.HasReview(followUp, "impl-1@t", [.. exchanges.Where(static e => e["id"].AsString() != review)], FmOf, ClassOf, [], static _ => null));
+    }
+
+    [Fact]
+    public void AReviewThatPredatesTheFollowUpDoesNotCountForItsDoneAndAParentCycleEndsTheWalk()
+    {
+        const string first = "20261122-014233-17ut", review = "20261122-014338-dgu5", followUp = "20261122-014500-fol2";
+        IReadOnlyList<JsonObject> exchanges =
+        [
+            Req(first, "implementor", "2026-11-22T01:42:33Z"),
+            Req(review, "reviewer", "2026-11-22T01:43:38Z", parent: first),
+            Req(followUp, "implementor", "2026-11-22T01:45:00Z", parent: first),
+        ];
+        IReadOnlyList<JsonObject> cycle =
+        [
+            Req(first, "implementor", "2026-11-22T01:42:33Z", parent: followUp),
+            Req(followUp, "implementor", "2026-11-22T01:45:00Z", parent: first),
+        ];
+
+        Assert.False(DoneReportScan.HasReview(followUp, "impl-1@t", exchanges, FmOf, ClassOf, [], static _ => null));
+        Assert.False(DoneReportScan.HasReview(followUp, "impl-1@t", cycle, FmOf, ClassOf, [], static _ => null));
+    }
+
     private const string Item = "s/fix-it";
     private const string ReportAt = "2026-11-18T15:00:00Z";
 

@@ -4,6 +4,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.45] - 2026-11-22
+
+### Added
+
+- **The Graph shows what each agent is working on.** In Flow, in herdr desktop and the web UI, an active
+  member's card shows the title of its open request on its own line, or the title of the plan item it holds.
+  A long title is cut with an ellipsis and stays whole in the hover text; a card with no title keeps its height.
+  In the herdr Map the closest zoom tier shows the same title. Run `ah herdr install` to get the changed mod.
+
+### Fixed
+
+- **Not needed is disabled on a terminal-only question card in herdr.** It used to stay enabled and answer
+  "Could not send: nothing picked".
+- **A crashed build's stamp no longer holds back herdr's update notice.** A `started` stamp older than the
+  rebuild watch window counts as no build in progress.
+- **`ah roster stream-open` counts how far an adopted branch is behind when only the remote base exists.**
+- **A pipeline run anchor no longer raises the not-sent alarm.** Any other unsent request still does.
+- **The unreviewed-done alarm finds a review anywhere in the request's chain**, not only directly under the
+  request that reported done. A review older than the follow-up brief does not count for it.
+
 ## [2.0.44] - 2026-11-22
 
 ### Added
