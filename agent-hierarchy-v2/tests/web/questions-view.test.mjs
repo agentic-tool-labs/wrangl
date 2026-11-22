@@ -207,7 +207,7 @@ test("an item's answer body names the item and its since, needs no run, and refu
   const [q] = attentionOf({ open: [], items: [SHIP], recent: [] }).open;
   assert.deepEqual(answerBody(TEAM, null, q, toggle(q, NO_PICK, 1)), { dir: DIR, team: "ship", item: "s:ship", since: SHIP.since, choice: "b" });
   assert.equal(answerBody(TEAM, null, q, NO_PICK), null, "nothing picked");
-  assert.equal(answerBody(TEAM, null, { id: "d1", options: [], multi: false }, { ...NO_PICK, other: true, text: "x" }), null, "negative: a decision still needs a run");
+  assert.deepEqual(answerBody(TEAM, null, { id: "q1", options: [], multi: false }, { ...NO_PICK, other: true, text: "x" }), { dir: DIR, team: "ship", id: "q1", choice: "other: x" }, "a decision with no run: the decision form without run");
 });
 
 test("an item with no options starts on Other; negative: one with options, and a decision with none, start on nothing", () => {
@@ -451,7 +451,11 @@ test("a pick becomes the request body: letters in option order, Other trimmed an
   assert.equal(answerBody(TEAM, "r1", D7, pick(D7, "other", "é".repeat(1000))).choice, `other: ${"é".repeat(1000)}`, "2000 bytes exactly is allowed");
   assert.equal(model.otherOver({ other: true, text: "😀".repeat(501) }), true, "4-byte characters count as 4");
   assert.equal(model.otherOver({ other: false, text: "😀".repeat(501) }), false, "an unchecked Other is never over");
-  assert.equal(answerBody(TEAM, null, D7, pick(D7, 1)), null, "no run");
+  assert.deepEqual(answerBody(TEAM, null, D7, pick(D7, 1)), { dir: DIR, team: "ship", id: "d7", choice: "b" }, "no run: the same body without run");
+  assert.equal(answerBody(TEAM, null, D7, NO_PICK), null, "negative: no run and nothing picked");
+  assert.equal(answerBody(TEAM, null, D7, pick(D7, "other", "   ")), null, "negative: no run and Other with only spaces");
+  assert.deepEqual(model.dismissBody(TEAM, null, D7, "Already done"), { dir: DIR, team: "ship", id: "d7", dismiss: "Already done" }, "no run: Not needed sends without run");
+  assert.deepEqual(model.dismissBody(TEAM, "r1", D7, "Already done"), { dir: DIR, team: "ship", run: "r1", id: "d7", dismiss: "Already done" }, "negative: with a run the dismiss body is today's");
   assert.deepEqual(answerBody(TEAM, "r1", D14, pick(D14, 2, "other", " Lint ", 0)).choices, ["a", "c", "other: Lint"], "multi: option order, Other last");
   assert.equal(answerBody(TEAM, "r1", D14, pick(D14, 2, 2)), null, "checked twice is unchecked");
   assert.equal(answerBody(TEAM, "r1", D14, pick(D14, 1, "other")), null, "a checked Other needs text");

@@ -76,6 +76,9 @@ public static class ParkedQuestions
 
     public static string PathIn(string dir) => dir.TrimEnd('/') + "/" + FileName;
 
+    /// <summary>Whether <paramref name="id"/> is a parked question's id, <c>q&lt;k&gt;</c>.</summary>
+    public static bool IsId(string? id) => id is { Length: > 1 } && id[0] == 'q' && id[1..].All(char.IsAsciiDigit);
+
     /// <summary>The fold of the file's lines, in the order the questions were parked. Unreadable lines are skipped.</summary>
     public static IReadOnlyList<ParkedQuestion> Fold(string? text)
     {

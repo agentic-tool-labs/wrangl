@@ -1122,6 +1122,126 @@ internal sealed partial class HierLib : IHierarchyDecisions
         return res;
     }
 
+    public JsonObject? AnswerQuestion(
+        IFileReader files,
+        StateCalls.IHierarchyStateCalls calls,
+        IHierarchyProgress progress,
+        string pool,
+        string dir,
+        string? team,
+        string id,
+        Func<ParkedQuestion, JsonObject?> prove,
+        Func<ParkedQuestion, (IReadOnlyList<string> Given, bool FreeText)> given,
+        string? note,
+        DateTimeOffset now,
+        Func<string, string, string, string?> notify,
+        Func<string?, JsonValue> readTeam,
+        out IReadOnlyList<string> notes)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(calls);
+        ArgumentNullException.ThrowIfNull(progress);
+        ArgumentNullException.ThrowIfNull(prove);
+        ArgumentNullException.ThrowIfNull(given);
+        ArgumentNullException.ThrowIfNull(notify);
+        var noted = new List<string>();
+        notes = noted;
+        var path = ParkedQuestions.PathIn(dir);
+        _ = ParkedQuestions.MatchRecorded(files, calls, dir);
+        // per-dir-files-to-db §6c G5: one read; a store that cannot be read is its own failure, not an unknown question
+        if (!files.ReadAskLog(path).TryLines(out var stored))
+        {
+            return Refused("store_unreadable", $"the asks store could not be read; {id} was not answered");
+        }
+
+        var question = ParkedQuestions.Fold(string.Join('\n', stored)).FirstOrDefault(q => q.Id == id && (team is null || q.Team == team));
+        if (question is null)
+        {
+            return Refused("unknown_question", $"No parked question {id} for this team.");
+        }
+
+        if (!question.Open)
+        {
+            return Refused("already_answered", $"{id} was already answered \"{string.Join(", ", question.AnsweredLabels)}\" at {question.AnsweredAt}");
+        }
+
+        if (prove(question) is not { } stamp)
+        {
+            return null;
+        }
+
+        var writer = stamp.Get("writer")!.Value.AsString();
+        var relayedPrompt = stamp.Get("relayed_prompt") is { IsText: true } prompt ? prompt.AsString() : null;
+        var byUser = stamp.Get("by_user") is { IsBool: true } u && u.AsBool();
+        var options = question.Labels;
+        var (labels, freeText) = given(question);
+        var chosen = new List<string>();
+        foreach (var label in labels)
+        {
+            var match = freeText ? label : ParkedQuestions.MatchLabel(question, label);
+            if (match is null)
+            {
+                return Refused("unmatched_label", $"\"{label}\" is not an option for {id}. Options: {string.Join(" | ", options)}.");
+            }
+
+            chosen.Add(match);
+        }
+
+        var at = Ah.Core.Time.Timestamps.ToIsoString(now);
+        var questions = new JsonArray();
+        questions.Add(question.Question);
+        var answers = new JsonObject { [question.Text] = string.Join(", ", chosen) };
+        var response = new JsonObject { ["answers"] = answers };
+        if (note is not null)
+        {
+            response["note"] = note;
+        }
+
+        JsonValue session = question.SessionId is { } sessionId ? sessionId : JsonValue.Null;
+        var evidence = relayedPrompt is null ? string.Empty : $";relayed-prompt={relayedPrompt}";
+        var row = AskRecord.Row(at, writer, session, questions, response, question.Source is null ? $"ah:relay{evidence};ref={id}" : $"{question.Source};ref={id}{evidence}");
+        calls.AppendAsk(dir, row, new StateCallOptions(OperationId: $"ans:{id}"));
+        ParkedQuestions.Answer(calls, dir, id, at, chosen, writer, $"ans:{id}", freeText: freeText);
+        // b517: as park does, so the answered question leaves the watch model's waiting list
+        RefreshStatus(dir);
+        _ = progress.AppendLedger(pool, question.Team, AskRecord.Ruling(questions, response, null));
+        var text = $"{id} answered: {question.Header} = {string.Join(", ", chosen)}";
+        string? eventError = null;
+        if (byUser)
+        {
+            eventError = notify($"orchestrator@{question.Team}", "question-answered", text);
+        }
+
+        // b19: the member it was parked for gets the same event, re-checked as still on the question's team; a skip or a failed send is noted, never fatal
+        if (question.AskedFor is { } gone && HierarchyModule.AskerRefusal(gone, question.Team, readTeam) is { } notMember)
+        {
+            noted.Add($"the question-answered event to the asker was not sent: {notMember}");
+        }
+        else if (question.AskedFor is { } asker && notify(asker, "question-answered", text) is { } failure)
+        {
+            noted.Add($"the question-answered event to {asker} was not sent: {failure}");
+        }
+
+        var labelsJson = new JsonArray();
+        foreach (var c in chosen)
+        {
+            labelsJson.Add(c);
+        }
+
+        var result = new JsonObject { ["id"] = id, ["team"] = question.Team, ["header"] = question.Header, ["labels"] = labelsJson };
+        if (relayedPrompt is not null)
+        {
+            result["relayed_prompt"] = relayedPrompt;
+        }
+
+        if (eventError is not null)
+        {
+            result["event_error"] = eventError;
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Records the answer on every item of the team waiting on the user that the answered decision names, as each was hidden behind it (spec ah-ui-answer §4). Two logs cannot be one
     /// write: the decision line is the record, so a failed row is returned as an error and fails nothing. An item left waiting then shows again, and can be answered or dismissed.

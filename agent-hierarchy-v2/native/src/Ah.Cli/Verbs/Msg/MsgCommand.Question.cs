@@ -10,7 +10,7 @@ namespace Ah.Cli.Verbs.Msg;
 
 internal sealed partial class MsgCommand
 {
-    private const string QuestionAnswerWriter = "decision-answer";
+    internal const string QuestionAnswerWriter = "decision-answer";
 
     /// <summary>
     /// The writer of an answer the Orchestrator relayed from a prompt the user typed. It is not <see cref="QuestionAnswerWriter"/>, so
@@ -18,7 +18,7 @@ internal sealed partial class MsgCommand
     /// </summary>
     private const string QuestionRelayWriter = "decision-answer-relayed";
 
-    private static bool IsQuestionId(string? id) => id is { Length: > 1 } && id[0] == 'q' && id[1..].All(char.IsAsciiDigit);
+    private static bool IsQuestionId(string? id) => ParkedQuestions.IsId(id);
 
     /// <summary>
     /// <c>decision answer q&lt;k&gt; &lt;option label&gt; [--note &lt;text&gt;] [--pick &lt;n&gt;]...</c>: the user's answer to a question parked while work was in
@@ -137,48 +137,78 @@ internal sealed partial class MsgCommand
             dir = teamHome;
         }
 
-        var path = ParkedQuestions.PathIn(dir);
-        var files = _graph.Io.Files;
-        _ = ParkedQuestions.MatchRecorded(files, Hier.StateCalls, dir);
-        // per-dir-files-to-db §6c G5: one read; a store that cannot be read is its own failure, not an unknown question
-        if (!files.ReadAskLog(path).TryLines(out var stored))
+        // ah2-377 P5: the one answer core; who may answer and how the answer was typed stay the verb's
+        var refusedExit = 0;
+        JsonObject? Prove(ParkedQuestion question)
         {
-            return Refuse("store_unreadable", $"the asks store could not be read; {id} was not answered", "answer");
-        }
+            var stamp = new JsonObject { ["writer"] = QuestionAnswerWriter, ["by_user"] = byUser };
+            if (byUser)
+            {
+                return stamp;
+            }
 
-        var question = ParkedQuestions.Fold(string.Join('\n', stored)).FirstOrDefault(q => q.Id == id && (_teamArg is null || q.Team == _teamArg));
-        if (question is null)
-        {
-            return Refuse("unknown_question", $"No parked question {id} for this team.", "answer");
-        }
-
-        if (!question.Open)
-        {
-            return Refuse("already_answered", $"{id} was already answered \"{string.Join(", ", question.AnsweredLabels)}\" at {question.AnsweredAt}", "answer");
-        }
-
-        string? relayedPrompt = null;
-        if (!byUser)
-        {
             // The Orchestrator relays the user's answer only when a typed prompt has reached its own session since the question was parked.
             if (DecisionProof.TeamOf(caller.Class.Detail) != question.Team || caller.SessionId is not { Length: > 0 } callerSession)
             {
-                return Refuse("answer_not_user", $"Only the user can answer {id}. Run this in a terminal: ah msg decision answer {id} \"<label>\"", "answer");
+                refusedExit = Refuse("answer_not_user", $"Only the user can answer {id}. Run this in a terminal: ah msg decision answer {id} \"<label>\"", "answer");
+                return null;
             }
 
             if (ParkedQuestions.IsTerminalOnly(question))
             {
-                return Refuse("answer_relay_reserved", $"{id} ({question.Header}) can only be answered by the user. Ask them to run in a terminal: ah msg decision answer {id} \"{(question.Labels.Count > 0 ? question.Labels[0] : "<label>")}\"", "answer");
+                refusedExit = Refuse("answer_relay_reserved", $"{id} ({question.Header}) can only be answered by the user. Ask them to run in a terminal: ah msg decision answer {id} \"{(question.Labels.Count > 0 ? question.Labels[0] : "<label>")}\"", "answer");
+                return null;
             }
 
             if (HierarchyModule.RelayPromptId(Hier.Peers.LatestUserPrompt(callerSession), question.At) is not { } promptId)
             {
-                return Refuse("answer_no_user_prompt", $"No prompt typed by the user has reached this session since {id} was parked, so it cannot be answered for them. Ask them, or have them run: ah msg decision answer {id} \"<label>\"", "answer");
+                refusedExit = Refuse("answer_no_user_prompt", $"No prompt typed by the user has reached this session since {id} was parked, so it cannot be answered for them. Ask them, or have them run: ah msg decision answer {id} \"<label>\"", "answer");
+                return null;
             }
 
-            relayedPrompt = promptId;
+            stamp["writer"] = QuestionRelayWriter;
+            stamp["relayed_prompt"] = promptId;
+            return stamp;
         }
 
+        var now = _graph.Io.Clock.UtcNow;
+        string? Notify(string to, string eventName, string text) =>
+            _graph.Mailbox.Send(MeshModule.EventRequest(to, "user", _cwd, dir, eventName, text), now).Failure is { } failure ? $"{failure.Code}: {failure.Message}" : null;
+
+        var res = Hier.Decisions.AnswerQuestion(_graph.Io.Files, Hier.StateCalls, Hier.Progress, ChecklistPool, dir, _teamArg, id, Prove, Given, _opts.Text("note"), now, Notify, t => _graph.Roster.ReadTeamRecord(dir, t), out var notes);
+        if (res is null)
+        {
+            return refusedExit;
+        }
+
+        if (res.Get("refused") is { IsMap: true } refused)
+        {
+            return Refuse(refused.Member("reason")!.Value.AsString(), refused.Member("detail")!.Value.AsString(), "answer");
+        }
+
+        foreach (var n in notes)
+        {
+            _out.Note("ah msg: decision answer recorded; " + n);
+        }
+
+        var chosen = string.Join(", ", res["labels"].AsArray().Select(static l => l.AsString()));
+        var result = new JsonObject { ["id"] = id, ["team"] = res["team"], ["answered"] = true, ["labels"] = chosen };
+        if (_teamArg is null)
+        {
+            _out.Note($"ah msg: answered {id} of team {res["team"].AsString()} ({res["header"].AsString()})");
+        }
+        if (res.Get("relayed_prompt") is { } relayedPrompt)
+        {
+            result["relayed_prompt"] = relayedPrompt;
+        }
+
+        _out.Json(result);
+        return 0;
+    }
+
+    /// <summary>The answer as the verb was given it, read against <paramref name="question"/>'s options: the labels or option text, and whether it is a free-text answer.</summary>
+    private (IReadOnlyList<string> Given, bool FreeText) Given(ParkedQuestion question)
+    {
         var options = question.Labels;
         // b431: --choice <letter|other:text>, the form the waiting list prints for d<k> and items, is accepted here too; other:<text> that is no option is a free-text answer
         var choice = _opts.Text("choice")?.Trim();
@@ -194,68 +224,6 @@ internal sealed partial class MsgCommand
             throw _out.Fail("usage: ah msg decision answer <q id> (<option label> | --choice <a|b|...|other:<text>>) [--note <text>] [--pick <n>]...");
         }
 
-        var chosen = new List<string>();
-        foreach (var label in given)
-        {
-            var match = freeText ? label : ParkedQuestions.MatchLabel(question, label);
-            if (match is null)
-            {
-                return Refuse("unmatched_label", $"\"{label}\" is not an option for {id}. Options: {string.Join(" | ", options)}.", "answer");
-            }
-
-            chosen.Add(match);
-        }
-
-        var now = _graph.Io.Clock.UtcNow;
-        var at = Timestamps.ToIsoString(now);
-        var questions = new JsonArray();
-        questions.Add(question.Question);
-        var answers = new JsonObject { [question.Text] = string.Join(", ", chosen) };
-        var response = new JsonObject { ["answers"] = answers };
-        if (_opts.Text("note") is { } note)
-        {
-            response["note"] = note;
-        }
-
-        JsonValue session = question.SessionId is { } sessionId ? sessionId : JsonValue.Null;
-        var writer = relayedPrompt is null ? QuestionAnswerWriter : QuestionRelayWriter;
-        var evidence = relayedPrompt is null ? string.Empty : $";relayed-prompt={relayedPrompt}";
-        var row = AskRecord.Row(at, writer, session, questions, response, question.Source is null ? $"ah:relay{evidence};ref={id}" : $"{question.Source};ref={id}{evidence}");
-        var calls = Hier.StateCalls;
-        calls.AppendAsk(dir, row, new StateCallOptions(OperationId: $"ans:{id}"));
-        ParkedQuestions.Answer(calls, dir, id, at, chosen, writer, $"ans:{id}", freeText: freeText);
-        // b517: as park does, so the answered question leaves the watch model's waiting list
-        Hier.Status.RefreshStatus(dir);
-        _ = Hier.Progress.AppendLedger(ChecklistPool, question.Team, AskRecord.Ruling(questions, response, null));
-        if (byUser)
-        {
-            _ = _graph.Mailbox.Send(
-                MeshModule.EventRequest($"orchestrator@{question.Team}", "user", _cwd, dir, "question-answered", $"{id} answered: {question.Header} = {string.Join(", ", chosen)}"),
-                now);
-        }
-
-        // b19: the member it was parked for gets the same event, re-checked as still on the question's team; a skip or a failed send is noted, never fatal
-        if (question.AskedFor is { } gone && HierarchyModule.AskerRefusal(gone, question.Team, t => _graph.Roster.ReadTeamRecord(dir, t)) is { } notMember)
-        {
-            _out.Note($"ah msg: decision answer recorded; the question-answered event to the asker was not sent: {notMember}");
-        }
-        else if (question.AskedFor is { } asker
-            && _graph.Mailbox.Send(MeshModule.EventRequest(asker, "user", _cwd, dir, "question-answered", $"{id} answered: {question.Header} = {string.Join(", ", chosen)}"), now).Failure is { } failure)
-        {
-            _out.Note($"ah msg: decision answer recorded; the question-answered event to {asker} was not sent: {failure.Code}: {failure.Message}");
-        }
-
-        var result = new JsonObject { ["id"] = id, ["team"] = question.Team, ["answered"] = true, ["labels"] = string.Join(", ", chosen) };
-        if (_teamArg is null)
-        {
-            _out.Note($"ah msg: answered {id} of team {question.Team} ({question.Header})");
-        }
-        if (relayedPrompt is not null)
-        {
-            result["relayed_prompt"] = relayedPrompt;
-        }
-
-        _out.Json(result);
-        return 0;
+        return (given, freeText);
     }
 }

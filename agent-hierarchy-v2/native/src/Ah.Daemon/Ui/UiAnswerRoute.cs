@@ -74,7 +74,7 @@ internal static class UiAnswerRoute
     }
 
     /// <summary>
-    /// The answer body as the support's input (<c>{dir: &lt;dirId&gt;, team, run, id, choice | choices}</c>), or why it is a bad request:
+    /// The answer body as the support's input (<c>{dir: &lt;dirId&gt;, team, run, id, choice | choices}</c>, <c>run</c> optional for a <c>q&lt;k&gt;</c> id), or why it is a bad request:
     /// every field a non-empty string, and exactly one of <c>choice</c> (a string) and <c>choices</c> (one or more strings). The fields
     /// that did parse are in <paramref name="input"/> either way, for the log.
     /// </summary>
@@ -89,8 +89,15 @@ internal static class UiAnswerRoute
         var obj = parsed.AsObject();
         string? missing = null;
         var isItem = obj.ContainsKey("item");
+        // ah2-377 P6: a parked question (q<k>) needs no run; every other decision id still does
+        var runless = !isItem && !obj.ContainsKey("run") && Ah.Hierarchy.ParkedQuestions.IsId(obj.Str("id"));
         foreach (var k in isItem ? ItemFields : DecisionFields)
         {
+            if (k == "run" && runless)
+            {
+                continue;
+            }
+
             if (obj.Str(k) is { Length: > 0 } value)
             {
                 input[k] = value;

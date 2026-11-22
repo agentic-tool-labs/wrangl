@@ -158,8 +158,13 @@ internal static class DaemonComposition
                     : Ah.Hierarchy.HierarchyModule.ChecklistDismiss(g.Hierarchy.Progress, pool, Str("team")!, item, Str("since")!, dismiss, g.Io.Clock.UtcNow, Notify, team => g.Roster.ReadTeamRecord(dir, team)));
             }
 
-            // a dismissed decision is answered Other with the reason, so an item it names goes to the lead (spec ah-ui-answer §6)
             var several = input.ContainsKey("choices");
+            if (Ah.Hierarchy.ParkedQuestions.IsId(Str("id")))
+            {
+                return WithEventId(UiQuestionAnswer(g, dir, Str("team")!, Str("id")!, dismiss, several ? [.. input["choices"].AsArray().Select(static c => c.AsString())] : [Str("choice") ?? string.Empty], dismiss is null ? Notify : (to, eventName, _) => Notify(to, eventName, $"{Str("id")} dismissed: {dismiss}")));
+            }
+
+            // a dismissed decision is answered Other with the reason, so an item it names goes to the lead (spec ah-ui-answer §6)
             IReadOnlyList<string> choices = dismiss is not null ? ["other: " + Ah.Hierarchy.HierarchyModule.ChecklistDismissed + dismiss]
                 : several ? [.. input["choices"].AsArray().Select(static c => c.AsString())] : [Str("choice")!];
             var res = g.Hierarchy.Decisions.AnswerParked(
@@ -187,6 +192,85 @@ internal static class DaemonComposition
             var page = Ah.Hierarchy.HierarchyModule.QaHistoryPage(Ah.Hierarchy.HierarchyModule.QaThreads(graph.Value.Hierarchy.Decisions.QaLogRows(dir)), query);
             return query.Id is null ? Ah.Hierarchy.HierarchyModule.QaHistoryJson(page, dir, heads: true) : Ah.Hierarchy.HierarchyModule.QaHistoryJson(page.Threads, dir);
         });
+
+    /// <summary>
+    /// A UI answer to a question parked for the user (<c>q&lt;k&gt;</c>, ah2-377 P6-P10), through the core the terminal verb uses, recorded as
+    /// the user's own answer. <paramref name="entries"/> are the route's letters, labels or <c>other: &lt;text&gt;</c>; a dismissal is the free-text
+    /// answer <c>&lt;ChecklistDismissed&gt;&lt;reason&gt;</c>. Out: the route's <c>{id, answers, decision}</c>, or the core's refusal.
+    /// </summary>
+    private static JsonObject UiQuestionAnswer(ServiceGraph g, string dir, string team, string id, string? dismiss, IReadOnlyList<string> entries, Func<string, string, string, string?> notify)
+    {
+        var home = g.Hierarchy.Messages.TeamHome(dir, null, team) is { Length: > 0 } teamHome ? teamHome : dir;
+        var pool = Ah.Hierarchy.HierarchyModule.ProgressPoolOf(g.Hierarchy.Messages.PoolContext(dir).MainHierarchyDirectory, dir);
+
+        // ah2-377 P11: an authority grant or a member launch consent stays the terminal's, as it was before the UI could answer a q<k>
+        JsonObject? terminalOnly = null;
+        JsonObject? Prove(Ah.Hierarchy.ParkedQuestion question)
+        {
+            if (Ah.Hierarchy.ParkedQuestions.IsTerminalOnly(question))
+            {
+                terminalOnly = new JsonObject { ["refused"] = new JsonObject { ["reason"] = "answer_relay_reserved", ["detail"] = $"{id} ({question.Header}) can only be answered in a terminal: ah msg decision answer {id} \"{(question.Labels.Count > 0 ? question.Labels[0] : "<label>")}\"" } };
+                return null;
+            }
+
+            return new JsonObject { ["writer"] = Verbs.Msg.MsgCommand.QuestionAnswerWriter, ["by_user"] = true };
+        }
+
+        (IReadOnlyList<string> Given, bool FreeText) Given(Ah.Hierarchy.ParkedQuestion question)
+        {
+            if (dismiss is not null)
+            {
+                return ([Ah.Hierarchy.HierarchyModule.ChecklistDismissed + dismiss], true);
+            }
+
+            var options = question.Labels;
+            var freeText = false;
+            var given = new List<string>();
+            foreach (var entry in entries)
+            {
+                if (entry.StartsWith("other:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var text = entry[6..].Trim();
+                    freeText |= Ah.Hierarchy.ParkedQuestions.MatchLabel(question, text) is null;
+                    given.Add(text);
+                }
+                else
+                {
+                    given.Add(entry is [var l] && char.ToLowerInvariant(l) is var c and >= 'a' and <= 'z' && c - 'a' < options.Count ? options[c - 'a'] : entry);
+                }
+            }
+
+            return (given, freeText);
+        }
+
+        var res = g.Hierarchy.Decisions.AnswerQuestion(
+            g.Io.Files,
+            g.Hierarchy.StateCalls,
+            g.Hierarchy.Progress,
+            pool,
+            home,
+            team,
+            id,
+            Prove,
+            Given,
+            null,
+            g.Io.Clock.UtcNow,
+            notify,
+            t => g.Roster.ReadTeamRecord(home, t),
+            out _) ?? terminalOnly!;
+        if (res.ContainsKey("refused"))
+        {
+            return res;
+        }
+
+        var answered = new JsonObject { ["id"] = id, ["answers"] = res["labels"], ["decision"] = JsonValue.Null };
+        if (res.Get("event_error") is { } eventError)
+        {
+            answered["event_error"] = eventError;
+        }
+
+        return answered;
+    }
 
     /// <summary>The daemon's own environment, handed to the holder and the opener it starts for the band button.</summary>
     private static Dictionary<string, string?> ProcessEnvironment()
