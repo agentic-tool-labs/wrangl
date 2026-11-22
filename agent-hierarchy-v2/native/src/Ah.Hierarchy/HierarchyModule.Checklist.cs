@@ -1079,6 +1079,9 @@ public static partial class HierarchyModule
         return (closed, skipped, first);
     }
 
+    /// <summary>Whether <paramref name="item"/> is an answered question with no work queued on it (b528); b204 D1 keeps its close from closing its parent.</summary>
+    public static bool ChecklistAnsweredWithNoWork(PlanItem item) => ChecklistRules.AnsweredWithNoWork(item);
+
     /// <summary>
     /// A checklist row under backlog item <paramref name="parent"/> was closed done (board-truth D2): the commits to close <paramref name="parent"/> with, the done rows' commits
     /// of every team of the pool in order, or null while a row under it is still open work. A row waiting on the user is a question, not work, and does not hold it.

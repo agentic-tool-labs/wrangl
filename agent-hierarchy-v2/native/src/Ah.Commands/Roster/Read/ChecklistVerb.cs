@@ -676,8 +676,8 @@ internal static partial class ChecklistVerb
         id = entry.Item.Item;
         commits.AddRange(c.Opts.All("commit"));
         var code = Write(c, progress, entry.Stream, id, "done", [new PlanInput(id, "done", Commits: commits.Count > 0 ? commits : null, Note: c.Opts.Text("note")) { Cause = HierarchyModule.ChecklistManualCause(c.Services.Clock.UtcNow) }]);
-        // board-truth D2: the last open work row under a backlog item closes it
-        if (entry.Item.Parent is { Length: > 0 } parent && HierarchyModule.ChecklistParentFinished(progress, c.ProgressPool, c.ProgressTeam, parent) is { } done
+        // board-truth D2: the last open work row under a backlog item closes it; an answered question closed with no commits is not work (b204 D1, D3)
+        if (entry.Item.Parent is { Length: > 0 } parent && !(commits.Count == 0 && HierarchyModule.ChecklistAnsweredWithNoWork(entry.Item)) && HierarchyModule.ChecklistParentFinished(progress, c.ProgressPool, c.ProgressTeam, parent) is { } done
             && c.Services.CloseDoneBacklog(c.ProgressPool, parent, done, $"checklist {HierarchyModule.ChecklistKey(entry)} done") is { } problem)
         {
             c.Warn($"checklist done: backlog row {parent} not closed ({problem})");

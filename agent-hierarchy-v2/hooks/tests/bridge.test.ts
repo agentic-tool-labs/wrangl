@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { ownPrompt } from '../register.ts'
+import { ownPrompt, waitBound } from '../register.ts'
 
 // A registry of the rows these tests need, in hooks/registry.json's shape.
 const cmd = (name: string) => ({ type: 'command', command: `sh "\${CLAUDE_PLUGIN_ROOT}/bin/ah-hook" ${name}` })
@@ -14,16 +14,16 @@ const REGISTRY = JSON.stringify({
 })
 
 // Stages the engine beneath the plugin: each ah-hook run is logged in `ran` and answered by `answer(name, payload)`.
-const stage = (on: any, answer: (name: string, payload: any) => unknown = () => undefined) => {
+const stage = (on: any, answer: (name: string, payload: any) => unknown = () => undefined, registry = REGISTRY) => {
   const ran: { name: string; payload: any }[] = []
   const order: string[] = []
-  on('fs.read', (_$: any, e: any) => (e.path.endsWith('/hooks/registry.json') ? { value: REGISTRY } : { deny: 'no file' }))
-  on('process.run', (_$: any, e: any) => {
+  on('fs.read', (_$: any, e: any) => (e.path.endsWith('/hooks/registry.json') ? { value: registry } : { deny: 'no file' }))
+  on('process.run', async (_$: any, e: any) => {
     const name = e.argv[2]
     const payload = JSON.parse(e.init?.stdin ?? '{}')
     ran.push({ name, payload })
     order.push(name)
-    const out: any = answer(name, payload)
+    const out: any = await answer(name, payload)
     if (out?.exitCode !== undefined) return { value: { exitCode: out.exitCode, stdout: '', stderr: 'failed', isStdoutTruncated: false, isStderrTruncated: false } }
     return { value: { exitCode: 0, stdout: out === undefined ? '' : JSON.stringify(out), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
@@ -31,6 +31,7 @@ const stage = (on: any, answer: (name: string, payload: any) => unknown = () => 
   on('session.cwd', () => ({ value: '/work/repo' }))
   on('session.messages', () => ({ value: [] }))
   on('env.get', () => ({ value: undefined }))
+  on('clock.every', (_$: any, e: any) => new Promise(r => setTimeout(() => r({ value: undefined }), e.ms))) // the timer ticks when this resolves
   on('session.start', (_$: any, e: any) => ({ cwd: e.cwd }))
   on('command.register', () => ({ value: {} })) // the UI mod's command, registered at session.start
   on('tool.call', () => {
@@ -78,6 +79,98 @@ test('prompt.submit: SessionStart context is carried once', async ($, on) => {
   const second: any = await $.prompt.submit({ text: 'again' })
   expect(first.text).toBe('AH DIRECTIVE\n\nhello')
   expect(second.text).toBe('again')
+})
+
+// A SessionStart row held open until `release()`: the brief mailed seconds after a spawn comes while it still runs (b206).
+// `entered` resolves once the row is running.
+const slowRow = (text?: string) => {
+  let release = () => {}
+  let enter = () => {}
+  const gate = new Promise<void>(r => (release = r))
+  const entered = new Promise<void>(r => (enter = r))
+  const answer = async (name: string) => {
+    if (name !== 'sessionstart') return undefined
+    enter()
+    await gate
+    return text === undefined ? undefined : { hookSpecificOutput: { additionalContext: text } }
+  }
+  return { answer, entered, release: () => release() }
+}
+const settled = (p: Promise<unknown>) => Promise.race([p.then(() => true), new Promise(r => setTimeout(() => r(false), 50))])
+
+test('prompt.submit: a prompt submitted while SessionStart still runs waits for it and carries its text, once', async ($, on) => {
+  const row = slowRow('Rules of engagement, set by the user.')
+  stage(on, row.answer)
+  const started = $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await row.entered
+  const first: Promise<any> = $.prompt.submit({ text: 'brief' })
+  expect(await settled(first)).toBe(false) // still waiting on the row
+  row.release()
+  await started
+  expect((await first).text).toBe('Rules of engagement, set by the user.\n\nbrief')
+  expect(((await $.prompt.submit({ text: 'again' })) as any).text).toBe('again')
+})
+
+test('prompt.submit: two prompts that wait on the same run carry its text once between them', async ($, on) => {
+  const row = slowRow('AH RULES')
+  stage(on, row.answer)
+  const started = $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await row.entered
+  const a: Promise<any> = $.prompt.submit({ text: 'mail' })
+  const b: Promise<any> = $.prompt.submit({ text: 'typed' })
+  row.release()
+  await started
+  const texts = [(await a).text, (await b).text]
+  expect(texts.filter(t => t.startsWith('AH RULES')).length).toBe(1)
+})
+
+test('negative: a slow SessionStart row with no output leaves the prompt text unchanged', async ($, on) => {
+  const row = slowRow()
+  stage(on, row.answer)
+  const started = $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await row.entered
+  const first: Promise<any> = $.prompt.submit({ text: 'brief' })
+  row.release()
+  await started
+  expect((await first).text).toBe('brief')
+})
+
+test('prompt.submit: a row slower than the hook budget lets the prompt go on unchanged within it, and the next prompt carries the text once', { timeoutMs: 30_000 }, async ($, on) => {
+  const row = slowRow('AH RULES') // the default 60 s row timeout: the hook's own budget sets the bound
+  stage(on, row.answer)
+  const started = $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await row.entered
+  const at = Date.now()
+  const first: any = await $.prompt.submit({ text: 'brief' })
+  const waited = Date.now() - at
+  row.release()
+  await started
+  expect(first.text).toBe('brief')
+  expect(waited).toBeLessThan(10_000)
+  expect(((await $.prompt.submit({ text: 'next' })) as any).text).toBe('AH RULES\n\nnext')
+  expect(((await $.prompt.submit({ text: 'third' })) as any).text).toBe('third')
+})
+
+test('waitBound: the rows\' sum cut to the budget left less 500 ms, never below 0; the sum alone with no budget', () => {
+  expect(waitBound(240_000, 10_000)).toBe(9_500)
+  expect(waitBound(1_000, 10_000)).toBe(1_000)
+  expect(waitBound(240_000, 300)).toBe(0)
+  expect(waitBound(240_000, undefined)).toBe(240_000)
+  expect(waitBound(240_000, Number.NaN)).toBe(240_000)
+})
+
+test('prompt.submit: a SessionStart row that never returns holds the prompt for its own timeout and no longer', async ($, on) => {
+  const quick = JSON.stringify({ hooks: { SessionStart: [{ matcher: 'startup|resume|clear|compact|fork', hooks: [{ ...cmd('sessionstart'), timeout: 1 }] }] } })
+  const row = slowRow('never') // never released
+  stage(on, row.answer, quick)
+  void $.session.start({ cwd: '/work/repo', surface: null, isInteractive: false })
+  await row.entered
+  const at = Date.now()
+  const first: any = await $.prompt.submit({ text: 'brief' })
+  const waited = Date.now() - at
+  expect(first.text).toBe('brief')
+  expect(waited).toBeGreaterThanOrEqual(900)
+  expect(waited).toBeLessThan(5000)
 })
 
 // The notice bin/ah-hook gives a non-member SessionStart with no binary.
