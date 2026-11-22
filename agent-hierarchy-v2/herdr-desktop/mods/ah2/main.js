@@ -29,7 +29,7 @@ import { settings, setSetting, settingsView, checkUpdate, installClick, readRebu
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { openRename, renameInit, renameView } from "./rename.js";
 import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
-import { target } from "./ah.js";
+import { ah, target } from "./ah.js";
 import { UNRESOLVED, targetKey } from "./target-model.js";
 import { Link } from "./link-model.js";
 
