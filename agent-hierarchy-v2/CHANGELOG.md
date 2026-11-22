@@ -4,6 +4,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.42] - 2026-11-22
+
+### Fixed
+
+- **The Wrangl pane in herdr loads again.** Since 2.0.39 the pane showed "ah is not defined" and "Retrying" in
+  place of the team: the pane's main file used the `ah` runner without importing it. The import is back. Run
+  `ah herdr install` after updating to get the fixed mod.
+
 ## [2.0.41] - 2026-11-22
 
 ### Fixed
