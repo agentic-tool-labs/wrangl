@@ -76,6 +76,37 @@ public sealed partial class HooksHostTests
         Assert.Equal(recorded ? [path] : [], DispatchRowsWritten(rig).Select(static r => r.Member("path")!.Value.AsString()).ToArray());
     }
 
+    /// <summary>N2: a bare id resolves with the verb's <c>--pool</c> and <c>--kind</c>; negative: a report's bare id names the response and records no row.</summary>
+    [Fact]
+    public void ABareIdRefResolvesWithThePoolAndAReportsIdRecordsNoRow()
+    {
+        var root = MakePluginRoot();
+        var rig = new Rig(null, root);
+        string Plant(string pool)
+        {
+            var dir = $"{rig.Sandbox.Root}/{pool}/.claude/ah2/msgs";
+            _ = Directory.CreateDirectory(dir);
+            var path = $"{dir}/{BriefId}--implementor--t1--request.md";
+            File.WriteAllText(path, $"---\nid: {BriefId}\ntype: request\n---\n");
+            return path;
+        }
+
+        _ = Plant("pA");
+        var inB = Plant("pB");
+
+        _ = rig.Run("pretooluse-ah-cli", BashAs(string.Empty, $"node {root}/hooks/msg.mjs send m@team --ref {BriefId} --pool {rig.Sandbox.Root}/pB/.claude/ah2 --cwd {rig.Sandbox.Root}/wt"));
+
+        Assert.Equal([inB], DispatchRowsWritten(rig).Select(static r => r.Member("path")!.Value.AsString()).ToArray());
+
+        var other = new Rig(null, root);
+        _ = Brief(other);
+        _ = Brief(other, "response");
+
+        _ = other.Run("pretooluse-ah-cli", BashAs(string.Empty, $"node {root}/hooks/msg.mjs send orchestrator@team --kind report --ref {BriefId} --cwd {other.Sandbox.Root}/wt"));
+
+        Assert.Empty(DispatchRowsWritten(other));
+    }
+
     [Fact]
     public void ARelativeRefIsMadeAbsoluteAgainstTheCommandsCwd()
     {

@@ -356,6 +356,13 @@ internal sealed class HierarchyCore(IFileReader files, IAhEnvironment environmen
     public MsgTokenHit? ResolveMsgToken(string? text, string? contextDir = null, string? expectedTo = null) =>
         MessageText.TokenParts(text) is [var first, ..] ? Resolve(first.Word, first.Type, contextDir, expectedTo) : null;
 
+    public MsgTokenHit ResolveMsgId(string id, string type, string? contextDir, string? pool, string? expectedTo)
+    {
+        var token = $"[hierarchy-msg {id} {type}]";
+        var hit = ResolveMsgToken(token, pool ?? contextDir, expectedTo)!;
+        return hit is { Key: null, Candidates.Count: > 1 } && pool is null ? ResolveMsgToken(token, null, expectedTo)! : hit;
+    }
+
     /// <summary>
     /// A token word as its key: a legacy path is the key; an id is looked up by (id, type) across every pool, and more than one row is
     /// narrowed to <paramref name="contextDir"/>'s pool, then to <paramref name="expectedTo"/>. Not exactly one row left is unresolved,

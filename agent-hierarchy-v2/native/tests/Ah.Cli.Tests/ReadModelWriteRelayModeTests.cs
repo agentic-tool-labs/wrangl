@@ -66,14 +66,14 @@ public sealed class ReadModelWriteRelayModeTests : IDisposable
     }
 
     // ah2-74 G4: a screen-clear mark or unmark that changed a row is told to the activity lane as a hook's record is; negatives: one that
-    // changed nothing (sent every blocked tick) is not, nor is put, which no hook sends
+    // changed nothing (sent every blocked tick) is not, nor is put, which no hook sends. b79: the one that changed nothing refreshes no status either
     [Theory]
-    [InlineData("mark", true, true)]
-    [InlineData("unmark", true, true)]
-    [InlineData("mark", false, false)]
-    [InlineData("unmark", false, false)]
-    [InlineData("put", true, false)]
-    public void AScreenClearMarkReReadsTheMembersActivitySlice(string op, bool written, bool told)
+    [InlineData("mark", true, true, true)]
+    [InlineData("unmark", true, true, true)]
+    [InlineData("mark", false, false, false)]
+    [InlineData("unmark", false, false, false)]
+    [InlineData("put", true, false, true)]
+    public void AScreenClearMarkReReadsTheMembersActivitySlice(string op, bool written, bool told, bool status)
     {
         var relay = new ReadModelWriteRelay(() => 0);
         var spy = new Spy();
@@ -81,6 +81,7 @@ public sealed class ReadModelWriteRelayModeTests : IDisposable
         relay.Wrote("activity", op, Encoding.UTF8.GetBytes("""{"dir":"/w/.claude/ah2","mirror_dir":"/m/.claude/ah2","subject":"s1"}"""), Encoding.UTF8.GetBytes(written ? """{"written":true}""" : """{"written":false}"""));
 
         Assert.Equal(told, spy.Emitted.Contains(("activity", WatchModule.ActivityKey("/m/.claude/ah2", "s1"))));
+        Assert.Equal(status, spy.Emitted.Contains(("status", "/w/.claude/ah2")));
     }
 
     /// <summary>

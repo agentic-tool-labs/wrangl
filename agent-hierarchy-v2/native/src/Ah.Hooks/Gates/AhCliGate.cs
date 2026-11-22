@@ -135,7 +135,7 @@ internal static partial class AhCliGate
     /// <summary>
     /// An <c>ah msg send &lt;address&gt; --ref &lt;request&gt;</c> mails a brief: record it as this session's dispatch, the row a
     /// SendMessage dispatch gets, with the request's path and the address. Only a send that names an existing request file records;
-    /// <c>--kind</c> is not consulted. Written before the command runs, so a send that then fails still leaves the row.
+    /// a bare id resolves with the verb's <c>--pool</c>, <c>--to</c> and <c>--kind</c>. Written before the command runs, so a send that then fails still leaves the row.
     /// </summary>
     private static void RecordMsgSend(GateContext c, AhCommand parsed)
     {
@@ -154,9 +154,12 @@ internal static partial class AhCliGate
 
         var sessionId = c.Input.Text("session_id") ?? string.Empty;
 
-        // ah2-296: a bare id resolves as `msg send` resolves it (MsgCommand.Mail), so `--ref <id>` records its dispatch too
+        // ah2-296: a bare id resolves as `msg send` resolves it (MsgCommand.Mail), so `--ref <id>` records its dispatch too;
+        // a report's `--ref` names a response, which records nothing
+        var pool = parsed.FlagText("pool") is { Length: > 0 } p ? ResolvedPath(c, parsed, p) : null;
         var path = !reference.Contains('/') && s.Hierarchy.Messages.IsMessageId(reference)
-            ? s.Hierarchy.Core.ResolveMsgToken($"[hierarchy-msg {reference} request]", s.Config.HierarchyDir(parsed.FlagText("cwd") ?? c.Cwd()))?.Key
+            ? s.Hierarchy.Core.ResolveMsgId(reference, parsed.FlagText("kind") == "report" ? "response" : "request",
+                s.Config.HierarchyDir(parsed.FlagText("cwd") ?? c.Cwd()), pool, parsed.FlagText("to")).Key
             : ResolvedPath(c, parsed, reference);
         var meta = path is null ? null : s.Hierarchy.Core.ParseMsgFilename(path);
         if (sessionId.Length > 0 && path is not null && meta is { Type: "request" } && s.Hierarchy.Core.MsgExists(path))

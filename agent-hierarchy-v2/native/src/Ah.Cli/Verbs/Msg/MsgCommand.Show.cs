@@ -161,12 +161,7 @@ internal sealed partial class MsgCommand
 
         var to = _opts.Text("to");
         var pool = _opts.Text("pool") is { Length: > 0 } p ? Path.GetFullPath(p, _cwd) : null;
-        var token = $"[hierarchy-msg {id} {type}]";
-        var hit = Hier.Core.ResolveMsgToken(token, pool ?? HierarchyDir, to)!;
-        if (hit is { Key: null, Candidates.Count: > 1 } && pool is null)
-        {
-            hit = Hier.Core.ResolveMsgToken(token, null, to)!;
-        }
+        var hit = Hier.Core.ResolveMsgId(id, type, HierarchyDir, pool, to);
 
         bool Fits(string? rowTo, string rowPool) => (to is null || rowTo == to) && (pool is null || SamePath(rowPool, pool));
         if (hit.Key is { } key)

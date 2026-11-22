@@ -648,10 +648,6 @@ internal class WatchHostAdapter(
         created is not null && Timestamps.TryParseMs(created, out var ms) && nowMs - ms <= DerivedHorizonMs;
 
     /// <summary>
-    /// Whether an exchange id's stamp puts it past the horizon, so its front matter need not be read. No file is consulted: a message kept only in the database has none.
-    /// The id does not say its zone, so a day of margin; <see cref="WithinHorizon"/> then decides exactly. An id with no stamp is not older.
-    /// </summary>
-    /// <summary>
     /// ah2-296 L3: whether the open request <paramref name="reviewId"/> is a review of request <paramref name="requestId"/>: it is to a reviewer, is
     /// not the request itself, and either names the request as its parent, or has no parent, is on the same checklist item, and the request is
     /// not itself to a reviewer. A review parented on another request is that request's.
@@ -663,12 +659,16 @@ internal class WatchHostAdapter(
 
     /// <summary>
     /// ah2-296: the one reading of "this brief entry sent its request", shared by the watch and the failsafe: a brief of a request file, from a sender
-    /// <paramref name="senderOk"/> accepts (an owned team's Orchestrator), whose request is inside the horizon.
+    /// <paramref name="senderOk"/> accepts (the watch: any owned team's Orchestrator; the failsafe: the request's own team's), whose request is inside the horizon.
     /// </summary>
     internal static bool IsSentBrief(string? reference, string? from, Func<string, bool> senderOk, double nowMs) =>
         reference is not null && reference.EndsWith("--request.md", StringComparison.Ordinal) && from is not null && senderOk(from)
         && !IdOlderThanHorizon(NodePath.Basename(reference).Split("--")[0], nowMs);
 
+    /// <summary>
+    /// Whether an exchange id's stamp puts it past the horizon, so its front matter need not be read. No file is consulted: a message kept only in the database has none.
+    /// The id does not say its zone, so a day of margin; <see cref="WithinHorizon"/> then decides exactly. An id with no stamp is not older.
+    /// </summary>
     internal static bool IdOlderThanHorizon(string id, double nowMs) =>
         id.Length >= 15
         && DateTimeOffset.TryParseExact(id[..15], "yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at)

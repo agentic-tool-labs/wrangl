@@ -143,6 +143,24 @@ public sealed class MsgQuestionAnswerTests : IDisposable
     }
 
     [Fact]
+    public void AUiPickPastTheOptionsBesideOtherIsRefusedUnmatchedAndTheQuestionStaysOpen()
+    {
+        AsOrchestrator();
+        Assert.Equal(0, Run("decision", "park", "--header", "Scope", "--question", "Ship it?", "--option", "Yes", "--option", "No", "--default", "d").Exit);
+
+        var bad = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","choices":["c","other: stale"]}""");
+
+        Assert.Equal(2, bad.Exit);
+        Assert.Equal("unmatched_label", JsonText.Parse(bad.Out).Member("reason")!.Value.AsString());
+        Assert.True(Assert.Single(ParkedQuestions.Fold(Log(StorePath))).Open);
+
+        // the negative: a pick that is an option beside other: is stored as before
+        var good = UiAnswer($$"""{"dir":"{{HierId()}}","team":"tm","id":"q1","choices":["b","other: stale"]}""");
+        Assert.True(good.Exit == 0, good.Err + good.Out);
+        Assert.Equal(["No", "stale"], Assert.Single(ParkedQuestions.Fold(Log(StorePath))).AnsweredLabels);
+    }
+
+    [Fact]
     public void ANoRunUiBodyForATerminalOnlyQuestionIsRefusedAndTheQuestionStaysOpen()
     {
         Park("q1");

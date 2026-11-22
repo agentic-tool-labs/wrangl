@@ -71,13 +71,14 @@ function entriesOf(q, pick) {
   return [...letters, ...(text ? [`other: ${text}`] : [])];
 }
 
-// The POST /ui/v1/answer body for a pick, or null when it cannot be sent yet: nothing picked, or Other on without text.
+// The POST /ui/v1/answer body for a pick, or null when it cannot be sent: nothing picked, Other on without text, or a terminal-only
+// question (ah2-387 T2: answered only with its answerCommand in a terminal).
 // `teamId` is `team:<dir>/<team>`; a multi question sends `choices`, a single one `choice`.
 export function answerBody(teamId, run, q, pick) {
   const entries = entriesOf(q, pick);
   const otherBlank = pick.other && entries.every((e) => !e.startsWith("other: "));
   const isItem = q.kind === "item";
-  if (entries.length === 0 || otherBlank) {
+  if (q.terminal_only || entries.length === 0 || otherBlank) {
     return null;
   }
   const [dir, team] = teamId.slice("team:".length).split(/\/(?=[^/]*$)/);
@@ -91,7 +92,11 @@ export function answerBody(teamId, run, q, pick) {
 export const DISMISS = ["Already done", "No longer needed"];
 
 // The POST /ui/v1/answer body that dismisses a row with `reason` in place of a choice; a decision with no open run carries no `run`.
+// Null for a terminal-only question, which only a terminal answers.
 export function dismissBody(teamId, run, q, reason) {
+  if (q.terminal_only) {
+    return null;
+  }
   const [dir, team] = teamId.slice("team:".length).split(/\/(?=[^/]*$)/);
   if (q.kind === "item") {
     return { dir, team, item: q.id, since: q.since, dismiss: reason };
@@ -162,6 +167,7 @@ export const openRow = (q) => ({
   options: (q.options ?? []).map((o, i) => ({ label: typeof o === "string" ? o : o.label, rec: (q.recommended ?? []).includes(i) })), def: q.default ?? null, multi: q.multi === true,
   // capped rows: the options not sent, and whether the text was cut; both are whole in the Q&A list
   more: Math.max(0, (q.options_total ?? 0) - (q.options ?? []).length), cut: (q.text ?? "").endsWith("…"), cls: classOf(q.class),
+  ...(q.terminal_only === true ? { terminal_only: true } : {}),
 });
 // A checklist item waiting on the user, drawn with the same form: its key answers it, and `since` proves the question is still the one read.
 // Its asker is who set it waiting on the user, not its owner; `workId` names the registered item, whose description the card reads.

@@ -55,7 +55,11 @@ public sealed class BlockedEventsAdviceTests
         const string Stuck = "Approve this?\n  1. Go\n  2. Stop\n";
         var events = BlockedEventsOverPolls("claude", null, (1_000_000, Hash, Stuck), (1_000_000, Hash, Stuck), (1_000_000 + BlockedEvents.UnrecognisedWakeMs, Hash, Stuck));
 
-        Assert.Contains("unrecognised screen, possibly blocked", Assert.Single(events).Text, StringComparison.Ordinal);
+        var text = Assert.Single(events).Text;
+        Assert.Contains("MAY be blocked", text, StringComparison.Ordinal);
+        Assert.Contains("its screen shows no prompt ah recognises and has not changed for at least 5 minutes, and the sidebar shows it working", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("is BLOCKED", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("possibly blocked", text, StringComparison.Ordinal);
     }
 
     [Fact]

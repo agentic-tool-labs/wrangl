@@ -302,6 +302,19 @@ public sealed class SummaryWorkTests
     }
 
     [Fact]
+    public void AnAuthorityQuestionsCardIsMarkedTerminalOnlyAndNegativeAnotherCardIsNot()
+    {
+        var records = With([]);
+        Park(records, ParkedLines + "\n" + """{"kind":"parked","id":"q4","at":"2026-11-02T09:08:00Z","team":"ship","question":{"question":"Grant?","header":"Authority","options":[{"label":"Yes"}]},"default":"none"}""");
+        var team = new TeamEntry(Dir, "/t", Name, JsonValue.Null, 1);
+
+        var open = QuestionsLane.Fold(JsonValue.Null, Dir, SummaryData.Waiting(records, ActivityLane.DirId(Dir), team)).Body["open"].AsArray().ToDictionary(static o => o.Member("id")!.Value.AsString());
+
+        Assert.True(open["q4"].Member("terminal_only")!.Value.AsBool());
+        Assert.Null(open["q1"].Member("terminal_only"));
+    }
+
+    [Fact]
     public void NegativeAParkedQuestionTheRunAlreadyListsOrThatIsAnsweredIsNotCountedAgain()
     {
         var listed = With([], ["""{"id":"q1","question":"Ship today?","item":null,"time":"2026-11-02T11:00:00Z"}"""]);

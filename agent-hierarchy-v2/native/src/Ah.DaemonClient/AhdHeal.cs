@@ -40,6 +40,12 @@ internal interface IHealEnvironment
 
     bool Alive(int pid);
 
+    /// <summary>The state home heal was run for.</summary>
+    string Home { get; }
+
+    /// <summary>Whether a live daemon holds <c>run/ahd.life.lock</c>; a lock that cannot be tried counts as free.</summary>
+    bool LifeHeld();
+
     /// <summary>
     /// Whether the process heal signalled is certainly gone: its pid is dead, and nothing else. A start time that reads differently
     /// is not proof (where it comes from <c>ps</c> it moves when the wall clock steps), nor is a removed or changed <c>ahd.json</c>
@@ -96,7 +102,10 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
         var target = env.ReadTarget();
         if (target is null || !env.Alive(target.Pid))
         {
-            return NotHung("exited", trigger, 0);
+            // Report only: every identity heal signals by is keyed on ahd.json, so an unrecorded daemon is the user's to end.
+            return env.LifeHeld()
+                ? NotHung("life-lock-held", trigger, 0, $"no record; an ahd for {env.Home} still holds run/ahd.life.lock (shutting down or stuck); heal cannot signal an unrecorded daemon; end it by hand: {AhdClient.LifeHint(env.Home)}")
+                : NotHung("exited", trigger, 0);
         }
 
         var verdict = await JudgeAsync(target, trigger).ConfigureAwait(false);
@@ -332,7 +341,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
         return new HealOutcome("capped", detail, row);
     }
 
-    private HealOutcome NotHung(string reason, HealTrigger trigger, long slowest)
+    private HealOutcome NotHung(string reason, HealTrigger trigger, long slowest, string? detail = null)
     {
         var row = new JsonObject { ["kind"] = "ahd-heal-not-hung", ["reason"] = reason, ["slowest_reply_ms"] = slowest, ["trigger"] = Name(trigger) };
         env.Journal(row);
@@ -342,7 +351,7 @@ internal sealed class AhdHeal(IHealEnvironment env, HealTiming timing)
             env.WriteState(state with { Last = null });
         }
 
-        return new HealOutcome("not-hung", reason, row);
+        return new HealOutcome("not-hung", detail ?? reason, row);
     }
 
     private static string Name(HealTrigger trigger) => trigger switch

@@ -199,6 +199,7 @@ public sealed class OverdueBriefDispatchTests : IDisposable
     [InlineData("implementor", "a1", "reviewer", null, "a1", true)] // no parent, same item, the request is not to a reviewer
     [InlineData("reviewer", "a1", "reviewer", null, "a1", false)] // an idle reviewer that has not reported is not quieted by another review on its item
     [InlineData("docs-writer", "a1", "reviewer", "OTHER", "a1", false)] // another role on the item: that review is of another request
+    [InlineData("docs-writer", "a1", "reviewer", null, "a1", true)] // no parent: the review cannot say whose work it is, so another role on the item is quieted too (N1)
     [InlineData("implementor", "a1", "qa", "R", "a1", false)] // not to a reviewer
     public void AReviewQuietsOnlyTheRequestItReviews(string requestTo, string item, string reviewTo, string? parent, string? reviewItem, bool quiets)
     {

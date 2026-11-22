@@ -226,6 +226,7 @@ internal static class DaemonComposition
             var options = question.Labels;
             var freeText = false;
             var given = new List<string>();
+            string? badPick = null;
             foreach (var entry in entries)
             {
                 if (entry.StartsWith("other:", StringComparison.OrdinalIgnoreCase))
@@ -236,11 +237,14 @@ internal static class DaemonComposition
                 }
                 else
                 {
-                    given.Add(entry is [var l] && char.ToLowerInvariant(l) is var c and >= 'a' and <= 'z' && c - 'a' < options.Count ? options[c - 'a'] : entry);
+                    var pick = entry is [var l] && char.ToLowerInvariant(l) is var c and >= 'a' and <= 'z' && c - 'a' < options.Count ? options[c - 'a'] : entry;
+                    badPick ??= Ah.Hierarchy.ParkedQuestions.MatchLabel(question, pick) is null ? pick : null;
+                    given.Add(pick);
                 }
             }
 
-            return (given, freeText);
+            // ah2-387 T3: free text lets the core skip matching, so a pick that is no option is handed back alone and refused unmatched_label, as it is without other:
+            return freeText && badPick is not null ? ([badPick], false) : (given, freeText);
         }
 
         var res = g.Hierarchy.Decisions.AnswerQuestion(

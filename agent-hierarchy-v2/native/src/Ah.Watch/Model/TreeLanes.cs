@@ -688,6 +688,12 @@ internal sealed class ParkedLane(Func<string, IReadOnlyList<Ah.Hierarchy.ParkedQ
                 row["multi"] = true;
             }
 
+            // ah2-387 T1: the answer route's own test; the row's source is Source, so the question's own source is read here
+            if (Ah.Hierarchy.ParkedQuestions.IsTerminalOnly(q))
+            {
+                row["terminal_only"] = true;
+            }
+
             open.Add(JsonValue.FromObject(row));
         }
 
