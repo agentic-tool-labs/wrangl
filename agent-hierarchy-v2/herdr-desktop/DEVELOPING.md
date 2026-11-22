@@ -30,7 +30,8 @@ horizontal and vertical; `dock-flow`: Flow docked; `graph-shot`: the team in the
 
 - To run the real mod on the fixture, give its layout block the prop
   `"fixture": "<absolute path to fixture/events.json>"`. It reads that one reply and does not poll.
-- `herdr-app check` renders only the first frame, which is the "Loading teams…" state. It does not run the poll.
+- `herdr-app check` renders only the first frame, which is the "Loading teams…" state. During a check the mod runs no ah and
+  reads no file in ah's home (`runnerOf` in `mods/ah2/target-model.js`).
 - A symlinked `mods/ah2` passes `check`. Whether the window follows the symlink for hot reload has not been tried.
 - `mods/ah2/questions-model.js` is a byte-identical copy of `web/ui/questions-model.js`, kept honest by a test
   (`tests/web/herdr-qa-model.test.mjs`), so the Q&A view reads the questions slice through the web's own code. Edit

@@ -3,12 +3,13 @@
 // filter set the tab keeps its slice list and sends nothing (A1); with one, it reads each running team's dir and merges (A2).
 
 import { threadOf } from "./questions-model.js";
-import { within, late, NO_ANSWER } from "./model.js";
+import { within, late, since, NO_ANSWER } from "./model.js";
 
 export const FILTER0 = Object.freeze({ search: "", team: null, time: "all", state: "all" });
 export const TIMES = [["all", "All time"], ["today", "Today"], ["week", "Last 7 days"]];
 export const STATES = [["all", "All"], ["answered", "Answered"], ["unanswered", "Not answered"]];
 export const NO_MATCH = "No questions match.";
+export const NO_TEAM = "No running team can be searched.";
 export const SCOPE = "Searching questions and replies. Answered decisions are not included.";
 export const DEBOUNCE_MS = 300;
 
@@ -62,10 +63,11 @@ export function historyArgv(hierDir, f, now, before = null) {
   return argv;
 }
 
-// A list-read thread ({prompt, replies, ask}) -> the row historyRow draws, the same fields the slice's question-log row carries.
-export function threadRow(doc, dir, teamName) {
+// A list-read thread ({prompt, replies, ask}) -> the row historyRow draws, the same fields the slice's question-log row carries
+// (its `age` from `now`, as the slice's).
+export function threadRow(doc, dir, teamName, now) {
   const head = doc.prompt ?? doc.ask ?? doc.replies?.[0] ?? {};
-  const base = { id: head.id ?? "", at: head.at ?? null, by: null, team: head.team ?? teamName, hierDir: dir.hierDir, dirId: dir.dirId, replyAt: null, preview: null };
+  const base = { id: head.id ?? "", at: head.at ?? null, age: since(head.at ?? null, now), by: null, team: head.team ?? teamName, hierDir: dir.hierDir, dirId: dir.dirId, replyAt: null, preview: null };
   if (doc.ask) {
     const qs = doc.ask.questions ?? [];
     const answers = doc.ask.answers ?? {};
@@ -85,7 +87,9 @@ const newest = (a, b) => (b.at ?? -Infinity) - (a.at ?? -Infinity);
 // bounded by 15 s as readThread's is (`sleep` is herdr's cx.sleep). Both give the same {threads, next} body; the search is the
 // daemon's or ah's (D1), never the mod's.
 // ponytail: merged pages are each dir's newest page; a dir far behind another can show its older rows only after Load more.
+// No dir to read (the chosen team stopped, or no team has a dir) is the no-team note, not an empty list.
 export async function historyRead(read, dirs, f, now, next = null, exec = null, sleep = null) {
+  if (dirs.length === 0) return { error: NO_TEAM };
   try {
     const pages = await Promise.all(dirs.filter((d) => !next || next[dirKey(d)]).map(async (d) => {
       const before = next ? next[dirKey(d)] : null;
@@ -99,22 +103,37 @@ export async function historyRead(read, dirs, f, now, next = null, exec = null, 
       const doc = JSON.parse(text);
       return { d, threads: doc.threads ?? [], next: doc.next ?? null };
     }));
-    const rows = pages.flatMap((p) => p.threads.map((th) => threadRow(th, p.d, p.d.name))).sort(newest);
+    const rows = pages.flatMap((p) => p.threads.map((th) => threadRow(th, p.d, p.d.name, now))).sort(newest);
     return { rows, next: Object.fromEntries(pages.filter((p) => p.next).map((p) => [dirKey(p.d), p.next])) };
   } catch (e) {
     return { error: `Could not read: ${e?.down ?? (late(e) ? NO_ANSWER : e?.message ?? String(e))}` };
   }
 }
 
-// The read's state: `seq` names the newest request; a new filter starts the first page over and drops the old rows; a page for an
-// older request is dropped; Load more keeps the filter and appends. `next` maps dirId -> cursor; empty means no more.
-export const historyInit = () => ({ seq: 0, filter: FILTER0, rows: [], next: {}, loading: false, error: null, more: false });
+// `rounds` rounds of historyRead from `next`, each next round only the dirs whose cursor the last round returned (as Load more does):
+// {rows: the union, newest first, next: the last round's cursors}, or the first round's error. A refresh re-reads the pages loaded.
+export async function historyReads(read, dirs, f, now, next, rounds, exec = null, sleep = null) {
+  const rows = [];
+  for (let i = 1; ; i++) {
+    const got = await historyRead(read, dirs, f, now, next, exec, sleep);
+    if (got.error) return got;
+    rows.push(...got.rows);
+    if (i >= rounds || Object.keys(got.next).length === 0) return { rows: rows.sort(newest), next: got.next };
+    next = got.next;
+  }
+}
 
-export const historyAsk = (h, filter) => ({ ...h, seq: h.seq + 1, filter, rows: [], next: {}, loading: true, error: null, more: false });
+// The read's state: `seq` names the newest request; a new filter starts the first page over and drops the old rows; a page for an
+// older request is dropped; Load more keeps the filter and appends. `next` maps dirId -> cursor; empty means no more. `rounds` counts
+// the pages loaded: a new filter is 1, each Load more that lands adds 1.
+export const historyInit = () => ({ seq: 0, filter: FILTER0, rows: [], next: {}, loading: false, error: null, more: false, rounds: 1 });
+
+export const historyAsk = (h, filter) => ({ ...h, seq: h.seq + 1, filter, rows: [], next: {}, loading: true, error: null, more: false, rounds: 1 });
 
 export const historyMore = (h) => ({ ...h, seq: h.seq + 1, loading: true, error: null, more: true });
 
-// The background refresh (a poll took new slices): the first page again under the same filter, the rows kept until it answers.
+// The background refresh (a poll took new slices): the `rounds` pages loaded again under the same filter (historyReads), the rows
+// kept until it answers.
 export const historyRefresh = (h) => ({ ...h, seq: h.seq + 1, loading: true, error: null, more: false });
 
 export const hasMore =(h) => Object.keys(h.next).length > 0;
@@ -123,5 +142,5 @@ export const hasMore =(h) => Object.keys(h.next).length > 0;
 export function historyTake(h, seq, got) {
   if (seq !== h.seq) return h;
   if (got.error) return { ...h, loading: false, error: got.error };
-  return { ...h, loading: false, error: null, rows: h.more ? [...h.rows, ...got.rows].sort(newest) : got.rows, next: got.next };
+  return { ...h, loading: false, error: null, rows: h.more ? [...h.rows, ...got.rows].sort(newest) : got.rows, next: got.next, rounds: h.rounds + (h.more ? 1 : 0) };
 }

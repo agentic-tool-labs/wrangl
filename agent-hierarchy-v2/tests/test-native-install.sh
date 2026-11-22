@@ -448,6 +448,8 @@ check "P-15 ... no aside copy was made" test -z "$(ls -a "$AH_HOME/bin" | grep '
 check "P-15 ... and the stamp records failed" grep -q '"last_rebuild":{"version":"1.2.3","at":"[^"]*","state":"failed"}}$' "$AH_HOME/install.json"
 rm -f "$AH_HOME/bin/.rebuild.lock"
 # negative: a stale lock whose pid exists but cannot be signalled (pid 1, another user's: kill -0 fails with EPERM) is alive
+# as root kill -0 1 succeeds, so the ps -p branch goes unexercised; the checks still assert as for any other user
+[ "$(id -u)" -eq 0 ] && echo "note: running as root, kill -0 1 succeeds and the ps -p branch of P-15 is not exercised"
 printf '{"pid":1,"at":%s,"nonce":"old"}' "$(( now_ms - 11 * 60 * 1000 ))" > "$AH_HOME/bin/.rebuild.lock"
 p3="$(publishes)"
 out="$(AH_INSTALL_FLOCK=off run_install --apply --rebuild-only --prefix "$T/bin2" 2>&1)"; rc=$?

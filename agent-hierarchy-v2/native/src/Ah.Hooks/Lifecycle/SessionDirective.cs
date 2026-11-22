@@ -3,6 +3,7 @@ using Ah.Config;
 using Ah.Core.Json;
 using Ah.Hooks.Gates;
 using Ah.Hooks.Plumbing;
+using Ah.Mesh;
 
 namespace Ah.Hooks.Lifecycle;
 
@@ -26,6 +27,13 @@ internal static class SessionDirective
         if (source == "clear")
         {
             SessionStart.CarryOrchestratorFlag(c, source, c.Cwd());
+        }
+
+        // As sessionstart does for a --agent Orchestrator whose start it does not refuse, idempotently whichever unit comes first: the role
+        // lines resolve from the rebound team records.
+        if (OrchestratorIdentity.LaunchedAsAgent(c) && !SessionStart.StartRefused(c))
+        {
+            TeamRebind.Run(c, "session-directive", c.Cwd(), c.Input.Text("session_id") ?? string.Empty, RebindModes.Both);
         }
 
         return Text(c, c.Cwd()) is { } text ? HookEmit.AdditionalContext("SessionStart", SessionStart.WithLeadLine(text)) : HookEmit.Silent;

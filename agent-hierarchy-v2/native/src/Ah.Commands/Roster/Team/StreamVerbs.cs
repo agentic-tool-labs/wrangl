@@ -183,6 +183,23 @@ internal static class StreamVerbs
     private static string Sha7(string? sha) => sha is { Length: > 7 } ? sha[..7] : sha ?? "unknown";
 
     /// <summary>
+    /// The one warning for adopting a branch that existed before this stream-open: its tip, how far it trails <paramref name="baseRef"/>
+    /// (the ref a new branch would have been cut from), and that <c>--base</c> was ignored. The count is left out when git cannot give it.
+    /// </summary>
+    private static string AdoptionWarning(RosterContext c, string root, string branch, string? tipSha, string baseRef, string? baseFlag)
+    {
+        var text = $"branch {branch} already existed at {Sha7(tipSha)}";
+        if (tipSha is { Length: > 0 } && baseRef.Length > 0
+            && Git(c, ["-C", root, "rev-list", "--count", $"{tipSha}..{baseRef}"]) is { Ok: true } behind
+            && int.TryParse(behind.Stdout.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n))
+        {
+            text += n == 0 ? $": up to date with {baseRef}" : $": {n} {(n == 1 ? "commit" : "commits")} behind {baseRef}";
+        }
+
+        return baseFlag is { Length: > 0 } ? $"{text}; --base {baseFlag} ignored" : text;
+    }
+
+    /// <summary>
     /// The rules a sub-orchestrator's <c>stream-open</c> on its child team obeys before any git write: the stream and branch are named
     /// <c>&lt;lane&gt;-…</c>, the base is the lane's recorded base or the lane's own branch, and the lane has room for another open
     /// stream. Returns the base: the lane base when <c>--base</c> names it, else the lane's branch, else the lane base.
@@ -393,9 +410,9 @@ internal static class StreamVerbs
             if (!wt.BranchCreated)
             {
                 baseSource = "existing branch";
-                if (!existed && baseFlag is { Length: > 0 })
+                if (!existed)
                 {
-                    warnings.Add($"adopted {branch} at {Sha7(wt.BaseSha)}; --base {baseFlag} ignored");
+                    warnings.Add(AdoptionWarning(c, root, branch, wt.BaseSha, baseRef, baseFlag));
                 }
             }
 

@@ -31,6 +31,10 @@
 # once a holder is known, `waiting for <pool> slot held by <label> (pid <pid>, <age>)` is printed once and then every 60 s.
 # The command runs with AH_TEST_SLOT_HELD=1 (a named pool: AH_SLOT_HELD_<POOL>=1), so a nested with-slot.sh (or a run-all.sh
 # started inside) takes no tokens of the same pool and cannot deadlock on the first.
+# What this script sets in the command's environment, over any value the caller exported: AH_TEST_SLOT_HELD (a named pool:
+# AH_SLOT_HELD_<POOL>), AH_TEST_SLOT_N, AH_TEST_TOKENS_GRANTED, the registry row's own variables, AH_SLOT_LABEL (to --label's value,
+# when given and the caller exported one), and AH_BIN (to the binary that ran the check, only when the caller exported it empty). A caller's non-empty AH_BIN
+# reaches the command as it was. Every other variable is passed through.
 #
 # How it works. A lease is the directory <pool dir>/held/<microseconds>-<pid>/ holding a `holder` record {label, pid, pid_start,
 # tokens, since}. The pool dir is AH_SLOTS_DIR for the default pool and AH_SLOTS_DIR/pool-<name> for a named one, and `capacity`
@@ -90,6 +94,9 @@ fi
 # refused too (its role cannot be checked); anyone else proceeds.
 # The tree's own bin/ah is a shim that fails where no native binary is installed for it (a member's work tree), so the installed
 # ~/.local/bin/ah answers instead; the first that runs the check wins. PATH is not searched: a member can steer it.
+# A caller's own AH_BIN is never used for the check or the plan; it is put back for the command (caller_ah_bin) when it was not empty.
+CALLER_AH_BIN="${AH_BIN:-}"
+caller_ah_bin() { [ -z "$CALLER_AH_BIN" ] || export AH_BIN="$CALLER_AH_BIN"; }
 AH_BIN=""
 CHECK_RC=127
 CHECK_ERR=""
@@ -177,7 +184,7 @@ ELASTIC=0
 [ -z "$EXPLICIT" ] && [ -z "$POOL" ] && [ "$PLAN_ELASTIC" = 1 ] && ELASTIC=1
 
 # a limiter that is off, or tokens this process tree already holds
-if [ "$K" = 0 ] || [ "${!HELD_VAR:-}" = 1 ]; then exec "$@"; fi
+if [ "$K" = 0 ] || [ "${!HELD_VAR:-}" = 1 ]; then caller_ah_bin; exec "$@"; fi
 
 if [ -z "$POOL" ] && [ -z "${AH_TEST_TOKENS:-}" ] && [ -n "${AH_TEST_SLOTS:-}" ]; then
   echo "with-slot: AH_TEST_SLOTS=$AH_TEST_SLOTS is read as AH_TEST_TOKENS=$AH_TEST_SLOTS (legacy name)" >&2
@@ -395,6 +402,7 @@ if [ "$PLANNED" = 1 ] && [ "$TOKENS" != "$PLAN_TOKENS" ] && [ "$ELASTIC" = 1 ]; 
 fi
 
 export "$HELD_VAR=1" AH_TEST_SLOT_N="$MYSLOT" AH_TEST_TOKENS_GRANTED="$TOKENS"
+caller_ah_bin
 CAP=$((ETA * 3))
 CAPPED="$POOLDIR/held/$MYSLOT/capped"
 

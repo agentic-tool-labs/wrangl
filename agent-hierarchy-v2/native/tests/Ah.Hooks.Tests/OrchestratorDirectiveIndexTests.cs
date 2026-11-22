@@ -3,6 +3,7 @@ using Ah.Config;
 using Ah.Core.Json;
 using Ah.Hooks.Lifecycle;
 using Ah.Hooks.Plumbing;
+using Ah.Mesh;
 
 namespace Ah.Hooks.Tests;
 
@@ -307,6 +308,69 @@ public sealed class OrchestratorDirectiveIndexTests
         Assert.Equal(index, directive.Contains("Agent hierarchy ACTIVE", StringComparison.Ordinal));
         Assert.Equal(index, indexText.Contains(IndexHeader, StringComparison.Ordinal));
         Assert.Equal(!index, start.Contains("Agent hierarchy ACTIVE", StringComparison.Ordinal));
+    }
+
+    private static readonly string[] OwnedTeams = ["ta", "tb"];
+
+    /// <summary>
+    /// b100: the directive unit rebinds a --agent Orchestrator's teams before it resolves, so with two owned teams whose records name this
+    /// session and a dead pid its role lines list both. A plain top-level session, or a start refused (pid 5151 is not a Claude harness),
+    /// triggers no rebind and its records stay as they were.
+    /// </summary>
+    [Theory]
+    [InlineData("wrangl:orchestrator", HarnessSessions.Pid, true)]
+    [InlineData(null, HarnessSessions.Pid, false)]
+    [InlineData("wrangl:orchestrator", 5151, false)]
+    public void TheDirectiveUnitRebindsAnAgentOrchestratorsTeamsBeforeItsRoleLines(string? agent, int pid, bool rebinds)
+    {
+        var f = new OrchestrateCommandTests.Fixture();
+        var dir = Dir(f);
+        var stale = new JsonObject { ["pid"] = 99, ["pid_start"] = "Fri Oct 16 08:00:00 2026", ["session_id"] = "s1" };
+        foreach (var team in OwnedTeams)
+        {
+            var path = f.Rig.Services.Roster.TeamPath(dir, team);
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllBytes(path, JsonText.ToUtf8(new JsonObject { ["version"] = 1, ["team_id"] = team, ["orchestrator"] = stale.Clone(), ["members"] = new JsonArray() }, 0));
+        }
+
+        var before = OwnedTeams.Select(t => File.ReadAllText(f.Rig.Services.Roster.TeamPath(dir, t))).ToList();
+        var rebound = new List<RebindRequest>();
+        var callers = new BindingAttestationTests.Callers(onRebind: r =>
+        {
+            // stands in for MailCallers.RebindOwnedTeams in Pid mode: the session already matches, the dead pid becomes this process
+            rebound.Add(r);
+            foreach (var t in OwnedTeams)
+            {
+                var path = f.Rig.Services.Roster.TeamPath(dir, t);
+                var doc = JsonText.Parse(File.ReadAllBytes(path)).AsObject().Clone();
+                var orchestrator = doc.Get("orchestrator")!.Value.AsObject().Clone();
+                orchestrator["pid"] = (double)r.Pid;
+                orchestrator["pid_start"] = HarnessSessions.Start;
+                doc["orchestrator"] = orchestrator;
+                File.WriteAllBytes(path, JsonText.ToUtf8(doc, 0));
+            }
+        });
+        var services = Services(f, pid);
+        services = services with { Advisory = services.Advisory! with { Callers = callers } };
+        var e = new JsonObject { ["hook_event_name"] = "SessionStart", ["session_id"] = "s1", ["cwd"] = Cwd(f), ["source"] = "resume" };
+        if (agent is not null)
+        {
+            e["agent_type"] = agent;
+        }
+
+        var stdout = Encoding.UTF8.GetString(f.Rig.Run("session-directive", JsonText.Stringify(e, 0), services: () => services).Stdout.Span);
+        var text = stdout.Length == 0 ? string.Empty : JsonText.Parse(stdout).Member("hookSpecificOutput")!.Value.Member("additionalContext")!.Value.AsString();
+
+        if (rebinds)
+        {
+            Assert.Equal("s1", Assert.Single(rebound).SessionId);
+            Assert.Contains(Lines(text), l => l.StartsWith("- ", StringComparison.Ordinal) && l.Contains("--team ta ", StringComparison.Ordinal) && l.Contains("--team tb ", StringComparison.Ordinal));
+        }
+        else
+        {
+            Assert.Empty(rebound);
+            Assert.Equal(before, OwnedTeams.Select(t => File.ReadAllText(f.Rig.Services.Roster.TeamPath(dir, t))));
+        }
     }
 
     [Fact]

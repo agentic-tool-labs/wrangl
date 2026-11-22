@@ -192,6 +192,31 @@ public sealed class UserAlarmTests
     }
 
     [Fact]
+    public void ADeliveredOwnerStalledLineIsRefreshedWithoutTellingAndNotWhileTheSlotIsTaken()
+    {
+        var host = new Host { Stalled = new LeadUncarried(3, "no-pane") };
+        var sweep = Sweeper(host);
+        sweep(1);
+        Assert.True(host.Alarm("alarm/tm/owner-stalled")!.Delivered);
+
+        host.Stalled = new LeadUncarried(5, "no-pane");
+        sweep(10);
+        var refreshed = host.Alarm("alarm/tm/owner-stalled")!;
+        Assert.Contains("has 5 unread", refreshed.Line, StringComparison.Ordinal);
+        Assert.Equal(T0.AddMinutes(1), refreshed.LastToldAt);
+        Assert.Single(host.Lines);
+        Assert.Single(host.Rows);
+
+        // Negative: an owner-asking command still running holds the team's slot, so this sweep leaves the line as it was.
+        host.Hold = true;
+        host.Asked = T0.AddMinutes(-30);
+        host.Stalled = new LeadUncarried(7, "no-pane");
+        sweep(11);
+        Assert.Equal(2, host.Lines.Count);
+        Assert.Contains("has 5 unread", host.Alarm("alarm/tm/owner-stalled")!.Line, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ARaisedAlarmOfATeamPutOnHoldIsClearedWithNoLineAndOneStillWatchedIsKept()
     {
         var host = new Host { Stalled = new LeadUncarried(2, "no-pane") };

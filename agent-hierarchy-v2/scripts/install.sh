@@ -576,7 +576,8 @@ rebuild_lock_round() {
         return 2
     fi
     seen_pid=$(printf '%s' "$seen" | sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p')
-    # alive means the process exists: kill -0 also fails for another user's process (EPERM), which ps -p still finds
+    # alive means the process exists: kill -0 also fails for another user's process (EPERM), which ps -p still finds;
+    # a ps without -p support fails here too and the pid is treated as gone, which is the old EPERM behaviour
     if [ -n "$seen_pid" ] && { kill -0 "$seen_pid" 2>/dev/null || ps -p "$seen_pid" >/dev/null 2>&1; }; then
         seen_age_min=$(( (now_ms - ${seen_at:-0}) / 60000 ))
         return 3

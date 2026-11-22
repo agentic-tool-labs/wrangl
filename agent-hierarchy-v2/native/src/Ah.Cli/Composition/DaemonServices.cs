@@ -617,14 +617,13 @@ internal sealed class DaemonServices
                 }
 
                 var pool = HierarchyModule.ProgressPoolOf(g.Config.MainHierarchyDir(root), dir);
-                var folder = Path.Combine(pool, "progress");
-                if (!pools.Add(pool) || _dirGate.Value.Admit([pool]).Count == 0 || !Directory.Exists(folder))
+                if (!pools.Add(pool) || _dirGate.Value.Admit([pool]).Count == 0)
                 {
                     continue;
                 }
 
                 var scope = new GitScope(root);
-                var teams = Directory.GetDirectories(folder).Select(static t => Path.GetFileName(t)!).Where(t => !g.Hierarchy.Progress.IsOff(pool, t)).ToList();
+                var teams = g.Hierarchy.Progress.DocTeams(pool).Where(t => !g.Hierarchy.Progress.IsOff(pool, t)).ToList();
                 ReleaseWatch.Tick(
                     g.Hierarchy.Progress,
                     pool,
