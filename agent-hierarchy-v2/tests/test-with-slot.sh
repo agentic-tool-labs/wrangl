@@ -513,6 +513,12 @@ check "...without any ah binary a member's run is refused (64)" '[ $RC = 64 ] &&
 OUT=$(AH_TEST_ADAPT=0 PATH=/usr/bin:/bin HOME="$SB/emptyHome" AH_SLOTS_DIR="$SB/ck7" AH_TEST_TOKENS=8 /bin/bash "$CKN/bin/ah-test-run" sh -c 'echo ran' 2>&1); RC=$?
 check "...and without any ah binary a session without the member marker still runs (nearest non-match)" '[ $RC = 0 ] && [ "$OUT" = ran ]'
 
+# ---- a caller's exported AH_BIN reaches the command; the check still uses the binary it found
+OUT=$(AH_BIN="$SB/marker-ah" AH_TEST_ADAPT=0 HOME="$SB/emptyHome" AH_SLOTS_DIR="$SB/ck11" AH_TEST_TOKENS=8 bash "$CKRUN" sh -c 'printf %s "$AH_BIN"' 2>&1); RC=$?
+check "AH_BIN: a caller's exported AH_BIN is the one the command sees" '[ $RC = 0 ] && [ "$OUT" = "$SB/marker-ah" ]'
+OUT=$(AH_BIN= AH_TEST_ADAPT=0 HOME="$SB/emptyHome" AH_SLOTS_DIR="$SB/ck12" AH_TEST_TOKENS=8 bash "$CKRUN" sh -c 'printf %s "$AH_BIN"' 2>&1); RC=$?
+check "...but an exported empty AH_BIN is not kept: the command sees the binary that ran the check (nearest non-match)" '[ $RC = 0 ] && [ "$OUT" = "$CK/bin/ah" ]'
+
 # ---- a member's work tree whose own bin/ah has no native binary: the installed ah (~/.local/bin/ah) answers the check
 CKW="$SB/checkworktree"; mkdir -p "$CKW/bin" "$CKW/tests" "$SB/instHome/.local/bin" "$SB/emptyHome"
 cp "$PLUGIN/bin/ah-test-run" "$CKW/bin/"; cp "$PLUGIN/tests/lib-pid.sh" "$PLUGIN/tests/lib-tokens.sh" "$CKW/tests/"

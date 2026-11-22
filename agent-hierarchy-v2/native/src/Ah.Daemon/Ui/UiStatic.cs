@@ -37,7 +37,8 @@ internal sealed class UiStatic(IFileReader files, string root)
             return null;
         }
 
-        if (!ContentTypes.TryGetValue(Path.GetExtension(relative).ToLowerInvariant(), out var contentType))
+        var extension = Path.GetExtension(relative).ToLowerInvariant();
+        if (!ContentTypes.TryGetValue(extension, out var contentType))
         {
             return null;
         }
@@ -51,11 +52,37 @@ internal sealed class UiStatic(IFileReader files, string root)
 
         try
         {
-            return (files.ReadBytes(full), contentType);
+            var bytes = files.ReadBytes(full);
+            return (extension == ".js" && !relative.StartsWith("vendor/", StringComparison.Ordinal) ? BlankLineComments(bytes) : bytes, contentType);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// <paramref name="source"/> with every line whose first non-blank characters (space or tab) are <c>//</c> made empty; the
+    /// line's terminator (<c>\n</c> or <c>\r\n</c>) stays, so line numbers match the source (adr-29).
+    /// </summary>
+    private static byte[] BlankLineComments(ReadOnlySpan<byte> source)
+    {
+        var output = new byte[source.Length];
+        var length = 0;
+        while (!source.IsEmpty)
+        {
+            var end = source.IndexOf((byte)'\n');
+            var line = end < 0 ? source : source[..(end + 1)];
+            source = source[line.Length..];
+            if (line.TrimStart(" \t"u8).StartsWith("//"u8))
+            {
+                line = line.EndsWith("\r\n"u8) ? "\r\n"u8 : line.EndsWith("\n"u8) ? "\n"u8 : ReadOnlySpan<byte>.Empty;
+            }
+
+            line.CopyTo(output.AsSpan(length));
+            length += line.Length;
+        }
+
+        return output[..length];
     }
 }

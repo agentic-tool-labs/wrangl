@@ -4,6 +4,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.40] - 2026-11-22
+
+### Changed
+
+- **The web UI's script is served with whole-line comments blanked.** The daemon removes them from first-party
+  script as it serves it, keeping line numbers; source files and vendored files are untouched. The served script is
+  back under its 1 MB budget.
+- **`ah roster stream-open` says when it adopts an old branch.** A branch that already existed is reported with its
+  commit and how far it is behind its base. Nothing is refused.
+- **Q&A History search in herdr desktop keeps its depth on refresh,** shows each result's age, and says "No running
+  team can be searched." when there is none.
+- **A delivered user alarm's text stays current between repeats,** without running the alarm command again.
+
+### Fixed
+
+- **An Orchestrator started with `--agent` sees its teams in its first directive.** The directive rebinds the
+  session's owned teams before it resolves them, and never for a start that is refused.
+- **The release watch ticks a pool that has no progress folder.** Its teams come from the database.
+- **A rebuild whose installer script cannot be read is marked failed at once.**
+- **`ah test run` gives the command back an exported `AH_BIN`.**
+- **The herdr desktop mod runs no `ah` during a herdr self-check.**
+
 ## [2.0.39] - 2026-11-22
 
 ### Fixed

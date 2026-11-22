@@ -11,7 +11,7 @@ import { askerText, qaModel, qaRefresh, canSend, sendAnswer, loadingOf, readThre
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
-import { FILTER0, TIMES, STATES, NO_MATCH, SCOPE, DEBOUNCE_MS, filterActive, historyDirs, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "./qa-history-model.js";
+import { FILTER0, TIMES, STATES, NO_MATCH, SCOPE, DEBOUNCE_MS, filterActive, historyDirs, historyReads, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "./qa-history-model.js";
 
 // The Herdr runtime has no TextEncoder (probed: typeof TextEncoder is "undefined"), and questions-model's Other byte cap needs
 // one. Buffer gives the same UTF-8 bytes.
@@ -72,14 +72,15 @@ function histAsk(v, filter, cx) {
   if (filterActive(filter)) histFetch(v, cx);
 }
 
-// One round of list reads for v.hist as it stands (first page, Load more or refresh), off the UI thread; only the newest lands.
+// The list reads for v.hist as it stands, off the UI thread; only the newest lands. Load more is one round from the cursors; a first
+// page or a refresh reads from the top, a refresh as many rounds as are loaded (historyAsk makes that 1).
 function histFetch(v, cx) {
   const h = v.hist;
   const dirs = historyDirs(historyTeams(v.st.slices), h.filter.team);
   cx.spawn(async (cx) => {
     const sleep = (ms) => cx.sleep(ms);
     const read = v.link ? (path) => v.link.read(path, 15000, sleep) : null;
-    v.hist = historyTake(v.hist, h.seq, await historyRead(read, dirs, h.filter, Date.now(), h.more ? h.next : null, ah().exec, sleep));
+    v.hist = historyTake(v.hist, h.seq, await historyReads(read, dirs, h.filter, Date.now(), h.more ? h.next : null, h.more ? 1 : h.rounds, ah().exec, sleep));
     cx.notify();
   });
 }

@@ -1,7 +1,7 @@
 // The ah2 herdr mod's link to ah (herdr-http-link.md): where ah runs (target-model.js) and how a copy reaches it.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { targetOf, runnerOf, paneOf, UNRESOLVED } from "../../herdr-desktop/mods/ah2/target-model.js";
+import { targetOf, runnerOf, paneOf, UNRESOLVED, CHECKING } from "../../herdr-desktop/mods/ah2/target-model.js";
 import { readFileSync } from "node:fs";
 import { terminalFinder, qaModel, sendAnswer, NO_REPLY, readThread } from "../../herdr-desktop/mods/ah2/model.js";
 import { readItemLog } from "../../herdr-desktop/mods/ah2/board-model.js";
@@ -82,6 +82,26 @@ test("a runner runs ah where the target is, and says why when it cannot", async 
   const slow = async () => { throw new Error("ah took longer than 10 s and was stopped"); };
   assert.equal(await reason(runnerOf(slow, read, { kind: "wsl", distro: "Ubuntu" }).exec("ah", [])), "no reason: ah took longer than 10 s and was stopped");
   assert.equal(await reason(runnerOf(dead, read, { kind: "local" }).exec("ah", [])), "no reason: can't start wsl.exe");
+});
+
+test("in a herdr check a runner runs no ah and reads no file, whatever the target (b102)", async () => {
+  const calls = [];
+  const exec = async (...a) => (calls.push(a), { code: 0, stdout: "", stderr: "" });
+  const read = async (...a) => (calls.push(a), "text");
+  const reason = (p) => p.then(() => "ok", (e) => e.down ?? `no reason: ${e.message}`);
+  let missing = 0;
+  const targets = [{ kind: "local" }, { kind: "machine", name: "m" }, { kind: "wsl", distro: "Ubuntu", auto: false }, { kind: "wsl", distro: null, auto: true }, { kind: "unresolved" }];
+  for (const t of targets) {
+    const r = runnerOf(exec, read, t, { platform: "windows", check: true, onMissingWsl: () => missing++ });
+    assert.equal(await reason(r.exec("ah", ["where"])), CHECKING, `exec ${t.kind}`);
+    assert.equal(await reason(r.install("/h", {})), CHECKING, `install ${t.kind}`);
+    assert.equal(await r.read("/h/CHANGELOG.md"), null, `read ${t.kind}`);
+  }
+  assert.deepEqual(calls, [], "herdr's exec and readTextFile are never called");
+  assert.equal(missing, 0, "auto WSL: nothing ran, so onMissingWsl is not told");
+  // the nearest input that must not match: check false runs as today
+  await runnerOf(exec, read, { kind: "local" }, { check: false }).exec("ah", ["where"]);
+  assert.deepEqual(calls, [["ah", ["where"], {}]]);
 });
 
 test("on a herdr machine target, a terminal's M/ prefix is stripped to match ah's pane id", () => {

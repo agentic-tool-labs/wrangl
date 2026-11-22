@@ -60,7 +60,7 @@ export function age(ms) {
   return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
-const since = (iso, now) => {
+export const since = (iso, now) => {
   const t = typeof iso === "number" ? iso : Date.parse(iso ?? "");
   return Number.isFinite(t) ? age(now - t) : "";
 };

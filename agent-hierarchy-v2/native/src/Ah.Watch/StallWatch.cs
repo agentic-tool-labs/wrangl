@@ -31,7 +31,7 @@ public sealed record UserAlarm(string Episode, DateTimeOffset FirstToldAt, DateT
     /// <summary>The alarm's kind (<c>owner-down</c>, <c>owner-asking</c>, <c>owner-stalled</c>); null on a record written before it was kept.</summary>
     public string? Kind { get; init; }
 
-    /// <summary>The line told to the user, served as the team's alert while the alarm is raised (ah2-180 Amendment 2); null on an older record.</summary>
+    /// <summary>The alert served now for the team while the alarm is raised (ah2-180 Amendment 2), refreshed between tells, so not always the exact text last sent; null on an older record.</summary>
     public string? Line { get; init; }
 }
 
@@ -395,6 +395,13 @@ internal sealed class StallWatch
         }
         else
         {
+            // Not told this sweep: the served line is refreshed while the slot is free, so no command's exit callback writes past it.
+            var served = Told();
+            if (served != held.Line && !_alarmRunning.ContainsKey(team.Name))
+            {
+                _host.SetAlarm(key, held with { Line = served });
+            }
+
             return;
         }
 

@@ -387,13 +387,30 @@ public sealed class BranchHygieneTests : IDisposable
         Assert.Equal("main", adopted["stream"].Member("base")!.Value.AsString());
         Assert.Equal(tip, adopted["stream"].Member("base_sha")!.Value.AsString());
         Assert.EndsWith("(existing branch)", adopted["base"].AsString(), StringComparison.Ordinal);
-        Assert.Contains($"adopted adopted at {tip[..7]}; --base main ignored", Texts(adopted["warnings"]));
+        Assert.Contains($"branch adopted already existed at {tip[..7]}: up to date with main; --base main ignored", Texts(adopted["warnings"]));
 
         // negative: a new branch is cut from the golden default, with no adoption warning and no checked-out-branch note
         Assert.True(newCode == 0, newErr);
         var fresh = Parse(newOut);
         Assert.Equal("origin/main", fresh["stream"].Member("base")!.Value.AsString());
-        Assert.DoesNotContain(Texts(fresh.Get("warnings")), w => w.StartsWith("adopted", StringComparison.Ordinal) || w.StartsWith("note:", StringComparison.Ordinal));
+        Assert.DoesNotContain(Texts(fresh.Get("warnings")), w => w.StartsWith("branch ", StringComparison.Ordinal) || w.StartsWith("note:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AdoptingABranchOneCommitBehindMainSaysSoWithNoBaseGiven()
+    {
+        Git(Project, "branch", "stale", "main");
+        var tip = Git(Project, "rev-parse", "stale").Trim();
+        Git(Project, "commit", "-q", "--allow-empty", "-m", "main moves on");
+        WriteTeam(string.Empty);
+
+        var (code, stdout, stderr) = Roster("stream-open", "fresh", "--branch", "stale", "--dry-run");
+
+        Assert.True(code == 0, stderr);
+        var warnings = Texts(Parse(stdout)["warnings"]);
+        Assert.Contains($"branch stale already existed at {tip[..7]}: 1 commit behind main", warnings);
+        // negative: no --base was passed, so nothing says one was ignored
+        Assert.DoesNotContain(warnings, w => w.Contains("ignored", StringComparison.Ordinal));
     }
 
     [Fact]

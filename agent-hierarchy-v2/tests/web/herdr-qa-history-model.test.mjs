@@ -2,7 +2,7 @@
 // paging reset and the stale answer.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { FILTER0, filterActive, sinceOf, historyPath, historyArgv, historyDirs, threadRow, historyRead, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "../../herdr-desktop/mods/ah2/qa-history-model.js";
+import { FILTER0, NO_TEAM, filterActive, sinceOf, historyPath, historyArgv, historyDirs, threadRow, historyRead, historyReads, historyInit, historyAsk, historyMore, historyRefresh, historyTake, hasMore } from "../../herdr-desktop/mods/ah2/qa-history-model.js";
 
 const NOW = new Date(2026, 10, 17, 15, 30).getTime();
 const TEAMS = [{ name: "a", dirId: "d1", hierDir: "/h1" }, { name: "b", dirId: "d1", hierDir: "/h1" }, { name: "c", dirId: "d2", hierDir: "/h2" }];
@@ -123,4 +123,46 @@ test("dash-led text on the ah path: the search goes with one leading dash, never
   // a late exec reads as readThread's does
   assert.deepEqual(await historyRead(async () => null, historyDirs(TEAMS, "c"), { ...FILTER0, search: "e" }, NOW, null, async () => { throw new Error("ah took longer than 15000 ms"); }),
     { error: "Could not read: ah did not answer" });
+});
+
+test("a refresh after two Load mores re-reads three rounds and keeps every row; a dir that ran out is read once (b71 D1)", async () => {
+  // d1 pages back three times (cursor 1, 2, then none); d2 has one page
+  const paths = [];
+  const read = async (path) => {
+    paths.push(path);
+    if (path.includes("d2")) return JSON.stringify({ threads: [{ prompt: { id: "z", at: 50, text: "z" }, replies: [] }], next: null });
+    const n = path.includes("before=2") ? 3 : path.includes("before=1") ? 2 : 1;
+    return JSON.stringify({ threads: [{ prompt: { id: `p${n}`, at: 40 - n, text: "p" }, replies: [] }], next: n < 3 ? String(n) : null });
+  };
+  const dirs = historyDirs(TEAMS, null);
+  const f = { ...FILTER0, search: "p" };
+  const fetch = async (h) => historyTake(h, h.seq, await historyReads(read, dirs, f, NOW, h.more ? h.next : null, h.more ? 1 : h.rounds));
+  let h = await fetch(historyAsk(historyInit(), f));
+  // a Load more that fails does not grow the count
+  const failed = historyTake(historyMore(h), h.seq + 1, { error: "down" });
+  assert.equal(failed.rounds, 1);
+  h = await fetch(historyMore(failed));
+  const two = h; // two pages loaded, d1 still has more
+  h = await fetch(historyMore(h));
+  assert.deepEqual([h.rows.map((r) => r.id), h.rounds], [["z", "p1", "p2", "p3"], 3]);
+  paths.length = 0;
+  h = await fetch(historyRefresh(h));
+  assert.deepEqual([h.rows.map((r) => r.id), h.next, h.rounds], [["z", "p1", "p2", "p3"], {}, 3]);
+  assert.deepEqual(paths.map((p) => p.replace("/ui/v1/history?", "")), ["dir=d1&q=p", "dir=d2&q=p", "dir=d1&q=p&before=1", "dir=d1&q=p&before=2"]);
+  // round 2 failing is the read's error: rows and next kept (d1's cursor survives)
+  let n = 0;
+  const flaky = async (path) => (++n === 3 ? (() => { throw new Error("gone"); })() : read(path));
+  const r = historyRefresh(two);
+  const kept = historyTake(r, r.seq, await historyReads(flaky, dirs, f, NOW, null, r.rounds));
+  assert.deepEqual([kept.error, kept.rows.map((x) => x.id), kept.next, kept.rounds], ["Could not read: gone", ["z", "p1", "p2"], { "/h1": "2" }, 2]);
+});
+
+test("no team to search: the no-team note, not an empty list (b71 D2)", async () => {
+  assert.deepEqual(await historyRead(async () => "{}", historyDirs(TEAMS, "gone"), { ...FILTER0, search: "e" }, NOW), { error: NO_TEAM });
+  assert.equal(NO_TEAM, "No running team can be searched.");
+});
+
+test("a list-read row carries its age for the read's now; no time is no age (b71 D3)", () => {
+  assert.equal(threadRow({ prompt: { id: "p", at: NOW - 3 * 3_600_000, text: "t" }, replies: [] }, TEAMS[2], "c", NOW).age, "3h");
+  assert.equal(threadRow({ prompt: { id: "p", at: null, text: "t" }, replies: [] }, TEAMS[2], "c", NOW).age, "");
 });

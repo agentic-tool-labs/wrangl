@@ -16,6 +16,11 @@ internal sealed class InstallStampHost(IRawFileWriter writer, IDetachedSpawner s
 
     public void StartRebuild(string script, string home, IReadOnlyDictionary<string, string?> environment)
     {
+        // sh exits 126/127 on a script it cannot read, which a detached spawn never sees: the open throws first, so the caller stamps failed
+        using (File.OpenRead(script))
+        {
+        }
+
         var logs = NodePath.Join(home, "logs");
         writer.Mkdir(logs);
         spawner.SpawnDetached(
