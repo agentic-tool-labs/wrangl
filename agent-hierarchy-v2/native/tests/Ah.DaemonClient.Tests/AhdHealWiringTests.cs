@@ -61,7 +61,10 @@ public sealed class AhdHealWiringTests : IDisposable
             return new ProcessResult(text.Length > 0 ? 0 : 1, null, false, false, Encoding.UTF8.GetBytes(text), default);
         }
 
-        public bool PidAlive(int pid) => Alive && pid == DaemonPid;
+        /// <summary>Whether the child this rig spawns (pid 7777) lives.</summary>
+        internal bool ChildAlive { get; set; }
+
+        public bool PidAlive(int pid) => pid == DaemonPid ? Alive : pid == 7777 && ChildAlive;
 
         public bool PidOwned(int pid) => PidAlive(pid);
 
@@ -334,6 +337,77 @@ public sealed class AhdHealWiringTests : IDisposable
         // the kernel drops it when the old daemon exits: `ahd start` ignores the backoff and starts one
         _ = await new AhdClient(Deps()).EnsureAsync(options with { Explicit = true }, TestContext.Current.CancellationToken);
         Assert.Single(_rig.Spawns);
+    }
+
+    /// <summary>A recorded daemon older than the client that accepts a drain and is then gone, and a client that will replace it.</summary>
+    private AhdClient OlderDaemonThatDrains()
+    {
+        RecordDaemon();
+        var calls = 0;
+        _rig.Answer = () =>
+        {
+            calls++;
+            if (calls == 1)
+            {
+                return Reply(200, $"{{\"pid\":{DaemonPid.ToString(CultureInfo.InvariantCulture)},\"protocol\":1,\"version\":\"0.0.1\"}}");
+            }
+
+            if (calls == 2)
+            {
+                _rig.Alive = false;
+                return Reply(200, "{}");
+            }
+
+            throw new TimeoutException("gone");
+        };
+        return new AhdClient(Deps() with
+        {
+            AhEnvironment = new FakeEnvironment(new Dictionary<string, string> { ["AH_HOME"] = _home, ["AH_TEST"] = "1", ["AHD_VERSION_OVERRIDE"] = "2.0.0" }),
+        });
+    }
+
+    private string Log() => File.ReadAllText(Path.Combine(_home, "logs", "ahd.log"));
+
+    [Fact]
+    public async Task AHookReplacementWhoseChildIsAliveButNotYetHealthyLogsStartPendingNotReplaceFailed()
+    {
+        _rig.ChildAlive = true;
+
+        Assert.Null(await OlderDaemonThatDrains().EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true), TestContext.Current.CancellationToken));
+
+        Assert.Single(_rig.Spawns);
+        Assert.Contains("ahd-client start pending pid 7777 caller=", Log(), StringComparison.Ordinal);
+        Assert.DoesNotContain("replace-failed", Log(), StringComparison.Ordinal);
+
+        // nearest non-match: the same child, alive after its whole start window, is a failed start
+        _rig.Alive = true;
+        Assert.Null(await OlderDaemonThatDrains().EnsureAsync(new EnsureOptions(BudgetMs: AhdClient.StartWaitMs * 2, Hook: true), TestContext.Current.CancellationToken));
+        Assert.Contains("ahd-client replace-failed reason=could not start or reach the daemon caller=", Log(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AHookReplacementWhoseChildDiedStillLogsReplaceFailed()
+    {
+        // nearest non-match: the same replace with a child that is not alive
+        Assert.Null(await OlderDaemonThatDrains().EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true), TestContext.Current.CancellationToken));
+
+        Assert.Single(_rig.Spawns);
+        Assert.Contains("ahd-client replace-failed reason=could not start or reach the daemon caller=", Log(), StringComparison.Ordinal);
+        Assert.DoesNotContain("start pending", Log(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AHookReplaceStoppedByTheLifeLockGivesTheShortReason()
+    {
+        var client = OlderDaemonThatDrains();
+        using var life = _io.Locks.TryHold(Path.Combine(_home, "run", "ahd.life.lock"));
+        Assert.NotNull(life);
+
+        Assert.Null(await client.EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true), TestContext.Current.CancellationToken));
+
+        Assert.Empty(_rig.Spawns);
+        Assert.Contains("ahd-client replace-failed reason=could not start or reach the daemon: life lock held caller=", Log(), StringComparison.Ordinal);
+        Assert.DoesNotContain("pgrep", Log(), StringComparison.Ordinal);
     }
 
     [Fact]
