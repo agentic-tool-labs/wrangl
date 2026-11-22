@@ -37,8 +37,8 @@ export const targetKey = (t) => `${t.kind}:${t.name ?? t.distro ?? ""}`;
 const down = (text, cause) => Object.assign(new Error(text), { down: text, cause });
 const slow = (e) => /longer than/.test(e?.message ?? String(e));
 
-// The runner for target `t`: `exec` takes herdr's exec arguments and runs the command where ah runs; `read(path)` a text file in ah's home (null where
-// the mod cannot read one: a WSL distro); `install(appHome, opts)` the `ah herdr install` into this herdr's home. `onMissingWsl` is
+// The runner for target `t`: `exec` takes herdr's exec arguments and runs the command where ah runs; `read(path)` a text file in ah's home (on WSL by
+// `cat` in the distro; null when it exits non-zero, and when the target is unresolved); `install(appHome, opts)` the `ah herdr install` into this herdr's home. `onMissingWsl` is
 // told when an auto WSL target finds no wsl.exe, so the next target is unresolved. `check` (herdr's checking()): a herdr check runs no
 // ah and reads no file in ah's home, so exec and install reject as down and read is null, whatever the target.
 export const CHECKING = "Not run during a herdr check";
@@ -65,7 +65,9 @@ export function runnerOf(exec, readTextFile, t, { platform = null, onMissingWsl 
   return {
     target: t,
     exec: run,
-    read: (path) => (t.kind === "local" ? readTextFile(path) : t.kind === "machine" ? readTextFile(path, { on: t.name }) : Promise.resolve(null)),
+    read: (path) => (t.kind === "local" ? readTextFile(path) : t.kind === "machine" ? readTextFile(path, { on: t.name })
+      : t.kind === "wsl" ? run("cat", ["--", path], { timeout: 10000 }).then((r) => (r.code === 0 ? r.stdout : null))
+      : Promise.resolve(null)),
     // `flags`: constant install flags (`--replace-layout`), appended to the command line.
     install: (appHome, opts, flags = []) => (platform === "windows" && t.kind !== "local"
       ? run("sh", ["-c", `HERDR_APP_HOME="$(wslpath -u "$1")" exec ah herdr install${flags.map((f) => ` ${f}`).join("")}`, "sh", appHome], opts)

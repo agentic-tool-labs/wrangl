@@ -54,6 +54,7 @@ let agentType: string | undefined // the main loop's --agent type, as classic ho
 const subagentTypes = new Map<string, string>()
 const asks = new Map<string, string>() // tool_use_id → a PreToolUse ask's reason, answered at tool.check
 let held: string[] = [] // additionalContext waiting for the next prompt.submit
+let starting: { out: Promise<string[]>; ms: Promise<number> } | undefined // the session.start run not yet taken by a prompt.submit, and its rows' summed timeouts
 let pendingSource: string | undefined // a SessionStart owed on the next prompt (after /clear, or one that did not run)
 let owed = false // pendingSource is a retry of a SessionStart that did not run, not a /clear's first
 let stopContinued = false // the last Stop block queued a follow-up turn: classic stop_hook_active
@@ -198,6 +199,13 @@ async function sessionStart($: any, source: string, retry = false): Promise<stri
   }
 }
 
+// How long prompt.submit waits on the session.start run: its awaited rows' summed timeouts, cut to the hook's remaining budget less a
+// margin so the hook ends its own wait before the engine would (b206 Amendment 2); with no budget given, the rows' sum alone.
+const BUDGET_MARGIN_MS = 500
+export function waitBound(rowsMs: number, remainingMs: number | undefined): number {
+  return typeof remainingMs === 'number' && Number.isFinite(remainingMs) ? Math.min(rowsMs, Math.max(0, remainingMs - BUDGET_MARGIN_MS)) : rowsMs
+}
+
 // One module may hook an event once without a matcher, and the UI mod already hooks session.start, prompt.submit,
 // turn.complete and tool.call so: the bridge's hooks there carry a matcher that every event fits.
 const ANY = /(?:)/
@@ -206,19 +214,24 @@ export const register: Register = (on, options) => {
   registerUi(on, options)
 
   on('session.start', { cwd: ANY }, async ($, e, next) => {
-    try {
-      originalCwd = e.cwd
+    originalCwd = e.cwd
+    const sourced = (async () => {
       agentType = (await $.env.get('CLAUDE_CODE_AGENT')) || undefined
-      let source = 'startup'
       try {
-        if ((await $.session.messages({ as: 'api' })).length > 0) source = 'resume'
+        if ((await $.session.messages({ as: 'api' })).length > 0) return 'resume'
       } catch {
         // unreadable: a fresh start
       }
-      held.push(...(await sessionStart($, source)))
-    } catch (err) {
+      return 'startup'
+    })()
+    // Set before any await, so a prompt submitted while the rows run (a brief mailed seconds after spawn) waits for their text (b206).
+    const out = sourced.then(source => sessionStart($, source)).catch(err => {
       log($, `session.start failed: ${String(err)}`)
-    }
+      return [] as string[]
+    })
+    const ms = sourced.then(async source => (await rowsFor($, 'SessionStart', source)).filter(r => !r.async).reduce((sum, r) => sum + r.timeoutSec * 1000, 0), () => 0)
+    starting = { out, ms }
+    await out
     return next(e)
   })
 
@@ -227,6 +240,33 @@ export const register: Register = (on, options) => {
   on('prompt.submit', { text: ANY }, async ($, e, next) => {
     let added: string[] = []
     try {
+      // The session.start run's text, taken once; waited for at most its rows' own timeouts and this hook's own budget (waitBound),
+      // past which the prompt goes on and the text rides on a later prompt.
+      if (starting) {
+        const s = starting
+        // a timer that cannot be set ends the wait at once: the prompt goes on as before this wait existed.
+        // clock.every used as a one-shot (b206 Amendment 3): cancelled on its first tick, or when the run settles first.
+        const bound = s.ms.then(ms => new Promise<undefined>(resolve => {
+          try {
+            const timer = $.clock.every(waitBound(ms, next.budget?.remainingMs), () => {
+              timer.cancel()
+              resolve(undefined)
+            })
+            void s.out.then(() => timer.cancel())
+          } catch {
+            resolve(undefined)
+          }
+        }))
+        const out = await Promise.race([s.out, bound])
+        // cut while it waited (its budget ran out, or a hook above settled): the prompt went on without this hook, so the text
+        // stays for the next prompt
+        if (next.signal.aborted) return next(e)
+        // claimed once: a second prompt that waited on the same run adds nothing
+        if (out && starting === s) {
+          starting = undefined
+          held.push(...out)
+        }
+      }
       if (pendingSource) {
         const source = pendingSource
         const retry = owed

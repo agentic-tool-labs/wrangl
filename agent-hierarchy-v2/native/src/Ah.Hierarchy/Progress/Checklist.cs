@@ -144,7 +144,7 @@ internal static class ChecklistRules
     /// Whether the item's last transition was the user's answer (its answer todo still stands) and no request was ever linked to it (no refs): an answered question,
     /// not queued work, so queue-stall does not offer it to a member (b528).
     /// </summary>
-    private static bool AnsweredWithNoWork(PlanItem item) =>
+    internal static bool AnsweredWithNoWork(PlanItem item) =>
         item.Answer is not null && item.Refs is not { Count: > 0 } && item.Todo is { } todo && todo.StartsWith(HierarchyModule.AnswerUserTodo, StringComparison.Ordinal);
 
     /// <summary>The members of <paramref name="role"/> that are live and not dismissed.</summary>

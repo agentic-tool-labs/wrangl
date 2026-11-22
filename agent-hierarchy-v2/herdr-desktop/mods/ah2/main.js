@@ -303,7 +303,7 @@ export default class Ah2 extends View {
 
   // One read of the stamp where ah runs: keeps what it says, posts the notice it calls for, and answers whether to keep watching.
   // ah's home comes from `ah where`, held per pane for the runner's target (homeFor: a target change or a reply with no home
-  // asks again); the stamp is then read as a file, no process. No home or no read (a WSL target: target-model.js read) says nothing.
+  // asks again); the stamp is then read as a file, no process. No home or no read says nothing.
   async rebuildRead() {
     this.ahHome ??= { key: null, home: null };
     const { home, now } = await readRebuild(this.ahHome);

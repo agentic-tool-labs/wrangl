@@ -215,6 +215,62 @@ public sealed class WorkChecklistAliasTests : IDisposable
         Assert.Equal(["abc1234", "def5678"], item.Commits);
     }
 
+    /// <summary>A <c>_run</c> row under b1 asked of the user with options, then answered through the UI's answer core, so its answer and <c>answer user:</c> todo are real.</summary>
+    private void AnsweredQuestion(string title, string slug)
+    {
+        Assert.Equal(0, Checklist("add", title, "--parent", "b1").Code);
+        var asked = Checklist("set", slug, "--state", "waiting-user", "--note", "which way?", "--option", "Left", "--option", "Right");
+        Assert.True(asked.Code == 0, asked.Err);
+        var since = HierarchyModule.ChecklistEntries(_graph.Hierarchy.Progress, _dir, "tm").Single(e => e.Item.Item == slug).Item.StateSince!;
+        var res = HierarchyModule.ChecklistAnswer(_graph.Hierarchy.Progress, _dir, "tm", "_run:" + slug, since, "a", DateTimeOffset.UtcNow, null, _ => Ah.Core.Json.JsonValue.Null);
+        Assert.Equal("Left", res["decision"].AsString());
+    }
+
+    [Fact]
+    public void ClosingAnAnsweredQuestionRowWithNoCommitLeavesItsBacklogItemOpen()
+    {
+        _ = BacklogRow("Ship it");
+        AnsweredQuestion("Which way", "which-way");
+
+        var done = Checklist("done", "which-way");
+
+        Assert.True(done.Code == 0, done.Err);
+        var item = Backlog("b1");
+        Assert.Equal("not_started", item.State);
+        Assert.Null(item.Note);
+    }
+
+    [Fact]
+    public void NegativeClosingAnAnsweredQuestionRowWithACommitClosesItsBacklogItem()
+    {
+        _ = BacklogRow("Ship it");
+        AnsweredQuestion("Which way", "which-way");
+
+        var done = Checklist("done", "which-way", "--commit", "abc1234");
+
+        Assert.True(done.Code == 0, done.Err);
+        var item = Backlog("b1");
+        Assert.Equal("done", item.State);
+        Assert.Equal(["abc1234"], item.Commits);
+    }
+
+    [Fact]
+    public void AWorkRowDoneAfterAnAnsweredQuestionClosesTheBacklogItemWithTheWorkRowsCommitOnly()
+    {
+        _ = BacklogRow("Ship it");
+        AnsweredQuestion("Which way", "which-way");
+        Assert.Equal(0, Checklist("done", "which-way").Code);
+        Assert.Equal("not_started", Backlog("b1").State);
+
+        Assert.Equal(0, Checklist("add", "Build", "--parent", "b1").Code);
+        var done = Checklist("done", "build", "--commit", "def5678");
+
+        Assert.True(done.Code == 0, done.Err);
+        var item = Backlog("b1");
+        Assert.Equal("done", item.State);
+        Assert.Equal(["def5678"], item.Commits);
+    }
+
     [Fact]
     public void AnOpenWorkRowHoldsTheBacklogItemAndAWaitingUserQuestionDoesNot()
     {

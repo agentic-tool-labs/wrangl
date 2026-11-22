@@ -58,7 +58,15 @@ test("a runner runs ah where the target is, and says why when it cannot", async 
   assert.deepEqual(await one({ kind: "wsl", distro: "Ubuntu" }, ahWhere), ["wsl.exe", ["-d", "Ubuntu", "--exec", "ah", "where"], { timeout: 10000 }]);
   assert.deepEqual(await one({ kind: "wsl", distro: null }, ahWhere), ["wsl.exe", ["--exec", "ah", "where"], { timeout: 10000 }]);
   assert.deepEqual(await one({ kind: "machine", name: "m" }, (r) => r.read("/h/CHANGELOG.md")), ["read", "/h/CHANGELOG.md", { on: "m" }]);
-  assert.equal(await runnerOf(exec, read, { kind: "wsl", distro: null }).read("/h/x"), null, "a file in a WSL home is not read");
+  // a WSL read: cat in the distro, `--` before the path; stdout on code 0, null on any other code
+  const catCalls = [];
+  const cat = (code) => async (cmd, args, opts) => (catCalls.push([cmd, args, opts]), { code, stdout: code === 0 ? "text" : "", stderr: "" });
+  assert.equal(await runnerOf(cat(0), read, { kind: "wsl", distro: "Ubuntu" }).read("/h/x"), "text");
+  assert.equal(await runnerOf(cat(1), read, { kind: "wsl", distro: null }).read("/h/x"), null, "a missing file reads as null");
+  assert.deepEqual(catCalls, [
+    ["wsl.exe", ["-d", "Ubuntu", "--exec", "cat", "--", "/h/x"], { timeout: 10000 }],
+    ["wsl.exe", ["--exec", "cat", "--", "/h/x"], { timeout: 10000 }],
+  ]);
   // install: Windows to a remote target converts herdr's home with wslpath; this computer runs it unchanged
   const wslInstall = await one({ kind: "wsl", distro: null }, (r) => r.install("C:\\h", { timeout: 60000 }));
   assert.deepEqual(wslInstall, ["wsl.exe", ["--exec", "sh", "-c", 'HERDR_APP_HOME="$(wslpath -u "$1")" exec ah herdr install', "sh", "C:\\h"], { timeout: 60000 }]);

@@ -4,6 +4,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.41] - 2026-11-22
+
+### Fixed
+
+- **A new session's first prompt carries its session-start text.** A prompt that arrived while the session-start
+  hooks were still running went through without their output, so a member briefed seconds after it was spawned
+  could miss the rules of engagement and the `ah CLI root` line until a later prompt, or for good. The first prompt
+  now waits for those hooks, within the hook's own time budget; if the wait is cut, the text rides on the next
+  prompt.
+- **Closing an answered question row no longer marks its parent work item done.** A checklist row that only asked
+  a question, closed with no commit, leaves the item it belongs to open.
+- **herdr desktop shows build notices for a WSL target.** The mod reads the build stamp, changelog and rebuild log
+  through `wsl.exe`.
+
 ## [2.0.40] - 2026-11-22
 
 ### Changed
