@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, CLICK_MS, PAN_KEEP_PX } from "../../herdr-desktop/mods/ah2/graph-model.js";
+import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, dragDrawn, CLICK_MS, PAN_KEEP_PX, flowClamp, flowRescale } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -583,4 +583,23 @@ test("after a layout change Flow settles for SETTLE_MS, then is at rest; reduced
   const r = {};
   FM.settle(r, moved, 0, true);
   assert.equal(FM.settle(r, model([card("a", 300)]), 10, true).active, false, "reduced motion: placed at once");
+});
+
+test("ah2-398 F2: Flow's scale stops where its drawing stops, and zooms back in on the first step", () => {
+  // a large team fits at 0.5: under scale 0.5 the drawing (fit × scale) is held at SCALE_MIN, so the scale is too
+  const m = { box: { x: 0, y: 0, w: 1000, h: 1000 }, fit: 0.5, k: 0.5, stage: { w: 500, h: 500 }, size: { w: 500, h: 500 } };
+  const ui = { graphScale: 1, graphPan: {} };
+  assert.ok(flowRescale(ui, m, 1 / SCALE_STEP / SCALE_STEP / SCALE_STEP / SCALE_STEP));
+  assert.equal(ui.graphScale, 0.5);
+  assert.equal(flowRescale(ui, { ...m, k: SCALE_MIN }, 0.5 / SCALE_STEP), false);
+  assert.ok(m.fit * flowClamp(ui.graphScale * SCALE_STEP, m) > SCALE_MIN);
+  // a team that fits at the minimum or above zooms as before: the plain clamp
+  assert.equal(flowClamp(SCALE_MIN, { ...m, fit: 1.2 }), SCALE_MIN);
+  assert.equal(flowClamp(0.1, null), SCALE_MIN);
+});
+
+test("b93: a held drag lives while its stage was drawn this render or the last, and ends once it missed one", () => {
+  assert.equal(dragDrawn(5, 5), true, "the render that drew the press");
+  assert.equal(dragDrawn(4, 5), true, "drawn in the previous render");
+  assert.equal(dragDrawn(3, 5), false, "missed a render: ended");
 });

@@ -226,6 +226,7 @@ export default class Ah2 extends View {
   }
 
   render(cx) {
+    this.renders = (this.renders ?? 0) + 1; // graph-view.js grip: a held drag ends if its stage missed a render (b93)
     const t = theme();
     if (this.desk) return this.drawDesk(t, cx);
     if (this.view === "tabs") return tabsView(t);

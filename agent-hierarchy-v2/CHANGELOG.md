@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.43] - 2026-11-22
+
+### Fixed
+
+- **The herdr Graph's zoom stops where the drawing stops.** Zoom now reads 100% at Fit and has no dead steps
+  below it; before, Fit read 25% and several steps did nothing.
+- **A drag in the herdr Graph ends cleanly at the edges.** A held drag whose stage missed a render is ended
+  instead of sticking to the pointer.
+
+Run `ah herdr install` after updating to get the changed mod.
+
 ## [2.0.42] - 2026-11-22
 
 ### Fixed
