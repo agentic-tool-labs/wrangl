@@ -759,7 +759,7 @@ export class BoardKanban extends Live {
   blCard(r, m) {
     return html`<article key=${r.id} class="kb-card kb-brow glass" data-nav data-id=${r.id} tabindex=${r.id === this.tab ? 0 : -1} aria-current=${m.sel === r.id ? "true" : undefined}
       aria-label=${`Backlog ${r.key}, ${r.title}${UNDER_WAY.has(r.state) ? `, ${STATE_LABEL[r.state]}` : ""}${workLabel(r.workId, r.blockedOpen)}`} onClick=${(e) => !e.target.closest?.("a") && this.pick(r.id)}>
-      <div class="kb-top"><span class="kb-ref mono" title=${r.key}>${r.key}${r.kind ? ` / ${r.kind}` : ""}</span>${r.workId ? html`<span class="chip mono" title=${`Work id ${r.workId}`}>${r.workId}</span>` : null}${r.size ? html`<span class="chip" title=${`Size ${r.size}`}>${r.size}</span>` : null}</div>
+      <div class="kb-top"><span class="kb-ref mono" title=${r.key}>${r.key}${r.kind && r.kind !== "gate" ? ` / ${r.kind}` : ""}</span>${r.kind === "gate" ? html`<span class="chip" title="A milestone gate">gate</span>` : null}${r.workId ? html`<span class="chip mono" title=${`Work id ${r.workId}`}>${r.workId}</span>` : null}${r.size ? html`<span class="chip" title=${`Size ${r.size}`}>${r.size}</span>` : null}</div>
       <h3 class="kb-title" title=${r.title} data-text=${r.title}>${r.title}</h3>
       ${UNDER_WAY.has(r.state) ? html`<div class="kb-meta"><span class="kb-flag wait">${STATE_LABEL[r.state]}</span>${r.holder ? html`<span class="kb-who">${memberLink(r.holderId, r.holder)}</span>` : null}</div>` : null}
       ${blockedBy(r.blockedOpen)}

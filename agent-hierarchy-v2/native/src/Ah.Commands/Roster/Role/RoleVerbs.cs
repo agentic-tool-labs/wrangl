@@ -23,6 +23,41 @@ internal static class RoleVerbs
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
         RosterCli.Execute(rest, stdout, stderr, Run);
 
+    /// <summary>
+    /// A trust commit (<c>role set --from</c>, <c>role trust</c>, <c>kit import --pin</c>; never a dry run) is refused here, before any
+    /// write, from a team member or while a pipeline run is live at <c>--cwd</c> or at this process's own cwd. An error while checking refuses.
+    /// </summary>
+    internal static void RefuseTrustCommitHere(RosterContext c, string label)
+    {
+        string? why = null;
+        try
+        {
+            if (c.EnvText("WRANGL_TEAM_FILE") is not null)
+            {
+                why = "this session is a team member (WRANGL_TEAM_FILE is set)";
+            }
+            else
+            {
+                var own = c.Services.CurrentDirectory;
+                var dirs = new[] { c.Cwd, own }.Distinct(StringComparer.Ordinal);
+                if (dirs.Any(d => c.Services.Hierarchy.Messages.PipelineRunLive(d)))
+                {
+                    why = "a pipeline run is live in this checkout";
+                }
+            }
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            why = $"the check couldn't run ({e.Message})";
+        }
+
+        if (why is not null)
+        {
+            throw new RosterFailure(
+                $"{label}: refused — {why}. Trust is committed only from the user's own top-level session, outside a pipeline run; nothing was written.");
+        }
+    }
+
     private static int Run(RosterContext c)
     {
         foreach (var key in c.Opts.Keys)
@@ -263,28 +298,27 @@ internal static class RoleVerbs
             _files.Write(path, next);
         }
 
-        private string DispatchModesText() => string.Join(", ", _config.DispatchModes);
-
-        private List<string> ModelsOf(string cls) =>
-            _config.Classes.Get(cls) is { IsMap: true } row && row.Member("models") is { IsArray: true } m
-                ? m.AsArray().Select(x => T(x)).ToList()
-                : [];
-
         private void CheckDispatch(string name, JsonObject row)
         {
-            if (row.Get("dispatch") is { } d && !(d.IsText && _config.DispatchModes.Contains(d.AsString())))
+            if (RoleRowChecks.DispatchError(_config, row) is { } why)
             {
-                throw new RosterFailure($"role set {name}: --dispatch must be one of {DispatchModesText()}");
+                throw new RosterFailure($"role set {name}: {why}");
             }
         }
 
         private void CheckModelAllowed(string name, string cls, JsonValue model)
         {
-            var allowed = ModelsOf(cls);
-            if (!(model.IsText && allowed.Contains(model.AsString())))
+            if (RoleRowChecks.ModelError(_config, name, cls, model) is { } why)
             {
-                throw new RosterFailure(
-                    $"role set {name}: model {JsonText.Stringify(model, 0)} is not allowed for {name} (allowed: {string.Join(", ", allowed)})");
+                throw new RosterFailure($"role set {name}: {why}");
+            }
+        }
+
+        private void CheckOwner(string name, string agent)
+        {
+            if (RoleRowChecks.OwnerError(_config, Reg, name, agent) is { } why)
+            {
+                throw new RosterFailure($"role set {name}: {why}");
             }
         }
 
@@ -339,11 +373,11 @@ internal static class RoleVerbs
 
             if (builtin)
             {
-                foreach (var k in new[] { "class", "label", "description", "routes", "scaffold", "shell" })
+                foreach (var k in RoleRowChecks.NotOnBuiltin)
                 {
                     if (opts.Has(k))
                     {
-                        throw new RosterFailure($"role set {name}: --{k} does not apply to a built-in role — only --agent, --model and --dispatch");
+                        throw new RosterFailure($"role set {name}: {RoleRowChecks.NotOnBuiltinError(k)}");
                     }
                 }
             }
@@ -435,18 +469,9 @@ internal static class RoleVerbs
             if (builtin)
             {
                 cls = _config.RoleClass(name, null) ?? string.Empty;
-                if (row.Get("agent") is { } agentValue)
+                if (row.Get("agent") is { } agentValue && RoleRowChecks.BuiltinAgentError(_config, name, agentValue) is { } why)
                 {
-                    if (_config.AgentRefError(agentValue) is { IsTruthy: true } why)
-                    {
-                        throw new RosterFailure($"role set {name}: {T(why)}");
-                    }
-
-                    var text = T(agentValue);
-                    if (text.StartsWith(_config.PluginName + ":", StringComparison.Ordinal) && text != _config.Qualified(name))
-                    {
-                        throw new RosterFailure($"role set {name}: {_config.PluginName}:* agents belong to the built-ins");
-                    }
+                    throw new RosterFailure($"role set {name}: {why}");
                 }
 
                 if (row.Get("model") is { } model)
@@ -484,18 +509,13 @@ internal static class RoleVerbs
                 checkedRow = check.Get("row") is { IsMap: true } rr ? rr.AsObject() : row;
             }
 
-            if (OptText("dispatch") == "model" && cls != "legwork")
+            if (RoleRowChecks.DispatchModelError(OptText("dispatch"), cls) is { } dispatchWhy)
             {
-                throw new RosterFailure($"role set {name}: --dispatch model is not allowed for a {cls} role — only legwork roles run as subagents");
+                throw new RosterFailure($"role set {name}: {dispatchWhy}");
             }
 
             var agent = builtin ? _config.RoleAgent(name, row) : T(checkedRow.Get("agent"));
-            var owner = _config.RegistryRoles(Reg)
-                .FirstOrDefault(r => r != name && _config.RoleAgent(r, Roles.Get(r)) == agent);
-            if (owner is not null)
-            {
-                throw new RosterFailure($"role set {name}: agent {JsonText.Quote(agent)} is already the {owner} role's agent — an agent maps to exactly one role");
-            }
+            CheckOwner(name, agent);
 
             if (!builtin)
             {
@@ -1113,40 +1133,7 @@ internal static class RoleVerbs
             return new Review(raw, cls, findings, warnings, details);
         }
 
-        /// <summary>
-        /// A trust commit (<c>role set --from</c> or <c>role trust</c>, not a dry run) is refused here, before any write, from a team
-        /// member or while a pipeline run is live at <c>--cwd</c> or at this process's own cwd. An error while checking refuses.
-        /// </summary>
-        private void RefuseTrustCommitHere(string label)
-        {
-            string? why = null;
-            try
-            {
-                if (c.EnvText("WRANGL_TEAM_FILE") is not null)
-                {
-                    why = "this session is a team member (WRANGL_TEAM_FILE is set)";
-                }
-                else
-                {
-                    var own = c.Services.CurrentDirectory;
-                    var dirs = new[] { c.Cwd, own }.Distinct(StringComparer.Ordinal);
-                    if (dirs.Any(d => c.Services.Hierarchy.Messages.PipelineRunLive(d)))
-                    {
-                        why = "a pipeline run is live in this checkout";
-                    }
-                }
-            }
-            catch (Exception e) when (e is not OutOfMemoryException)
-            {
-                why = $"the check couldn't run ({e.Message})";
-            }
-
-            if (why is not null)
-            {
-                throw new RosterFailure(
-                    $"{label}: refused — {why}. Trust is committed only from the user's own top-level session, outside a pipeline run; nothing was written.");
-            }
-        }
+        private void RefuseTrustCommitHere(string label) => RoleVerbs.RefuseTrustCommitHere(c, label);
 
         private void WriteStoredCopy(string pin, JsonObject row, string agentText, JsonValue files)
         {
@@ -1309,11 +1296,7 @@ internal static class RoleVerbs
 
             var review = PackReview(name, state, row);
             var agent = T(review.Raw.Get("agent"));
-            var owner = _config.RegistryRoles(Reg).FirstOrDefault(r => r != name && _config.RoleAgent(r, Roles.Get(r)) == agent);
-            if (owner is not null)
-            {
-                throw new RosterFailure($"role set {name}: agent {JsonText.Quote(agent)} is already the {owner} role's agent — an agent maps to exactly one role");
-            }
+            CheckOwner(name, agent);
 
             if (review.Findings.Count > 0)
             {

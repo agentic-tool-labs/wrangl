@@ -1,7 +1,7 @@
 import { html, Component } from "./h.js";
 import { getAnswerStatus, postAnswer } from "./bridge.js";
 import { Live } from "./live-component.js";
-import { Block } from "./item-log.js";
+import { Attachment, Block } from "./item-log.js";
 import { descriptionBlocks, itemDescId } from "./plans-model.js";
 import { Age } from "./ticker.js";
 import { askerLabel } from "./select.js";
@@ -197,6 +197,7 @@ export class AnswerForm extends Component {
 // A waiting item's description under its note, from the item's item-desc: slice (leased while the card is mounted): folded to four lines
 // with More when it runs longer, so the card carries the whole question. Nothing is drawn while it loads or when there is none.
 // The fold is measured once per text, after it draws; the button shows only when the folded box clips.
+// The item's attachments, when the body carries them, follow as a list (a link only for http(s)).
 class CardDescription extends Live {
   state = { open: false, over: false };
 
@@ -205,8 +206,9 @@ class CardDescription extends Live {
   }
 
   select(snap, { id }) {
-    const text = snap.slices.get(id)?.body?.description;
-    return { text: typeof text === "string" && text.trim() !== "" ? text : null };
+    const body = snap.slices.get(id)?.body;
+    const text = body?.description;
+    return { text: typeof text === "string" && text.trim() !== "" ? text : null, attachments: body?.attachments?.length ? body.attachments : null };
   }
 
   measure() {
@@ -227,15 +229,13 @@ class CardDescription extends Live {
     this.measure();
   }
 
-  draw({ uid }, { text }) {
-    if (text === null) {
-      return null;
-    }
+  draw({ uid }, { text, attachments }) {
     const { open, over } = this.state;
-    return html`<div class="qa-desc-wrap">
+    const list = attachments ? html`<ul class="kb-list wi-attach qa-attach" aria-label="Attachments">${attachments.map((a) => html`<${Attachment} key=${a.ref} a=${a} />`)}</ul>` : null;
+    return text === null ? list : html`<div class="qa-desc-wrap">
       <div id=${`qd-${uid}`} class=${open ? "qa-desc" : "qa-desc folded"} ref=${(el) => (this.box = el)}>${descriptionBlocks(text).map((b) => html`<${Block} b=${b} />`)}</div>
       ${over || open ? html`<button type="button" class="tab qa-desc-more" aria-expanded=${open ? "true" : "false"} aria-controls=${`qd-${uid}`} onClick=${() => this.setState({ open: !open })}>${open ? "Less" : "More"}</button>` : null}
-    </div>`;
+    </div>${list}`;
   }
 }
 

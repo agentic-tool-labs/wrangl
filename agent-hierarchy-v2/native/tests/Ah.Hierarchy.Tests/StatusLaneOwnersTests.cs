@@ -69,5 +69,7 @@ public sealed class StatusLaneOwnersTests
         public (bool Live, string? SessionId) MemberLife(JsonArray roster, JsonValue name, string? team) => (true, "s-" + name.AsString());
 
         public JsonArray Resources() => resources?.Invoke() ?? [];
+
+        public JsonArray Spend(string dir, string? team) => [];
     }
 }

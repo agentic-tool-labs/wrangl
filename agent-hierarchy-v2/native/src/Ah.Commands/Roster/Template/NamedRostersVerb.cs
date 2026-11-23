@@ -21,7 +21,7 @@ internal static class NamedRostersVerb
     internal static int Roster(string[] rest, TextWriter stdout, TextWriter stderr) =>
         RosterCli.Execute(rest, stdout, stderr, Run);
 
-    private sealed record Definition(string Level, string Path, JsonValue Block, JsonArray Members, JsonValue Route);
+    internal sealed record Definition(string Level, string Path, JsonValue Block, JsonArray Members, JsonValue Route);
 
     private static int Run(RosterContext c)
     {
@@ -86,7 +86,7 @@ internal static class NamedRostersVerb
     }
 
     /// <summary>Every visible level file holding roster block <paramref name="key"/> (null: the unnamed block), most specific first.</summary>
-    private static List<Definition> Definitions(RosterContext c, string? key)
+    internal static List<Definition> Definitions(RosterContext c, string? key)
     {
         var config = c.Services.Config;
         var candidates = config.RosterLevelCandidates(c.Cwd);
@@ -136,7 +136,7 @@ internal static class NamedRostersVerb
         return defs;
     }
 
-    private static Definition? Winning(List<Definition> defs) =>
+    internal static Definition? Winning(List<Definition> defs) =>
         defs.FirstOrDefault(d => d.Members.Count > 0) ?? defs.FirstOrDefault();
 
     /// <summary>Every team file of this checkout's hierarchy dir (and the main checkout's), by the roster key it records.</summary>

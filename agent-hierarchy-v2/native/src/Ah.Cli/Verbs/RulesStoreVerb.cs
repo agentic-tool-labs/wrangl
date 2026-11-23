@@ -14,16 +14,17 @@ internal static class RulesStoreVerb
     internal const string Usage =
         "usage: ah rules add|edit <scope> --key K --text T [--said W] | edit <scope> --key K [--text T] [--applies A] [--choose C] [--said W] | off|remove <scope> --key K [--said W] | propose <scope> --key K --text T --applies A --choose C [--said W] | accept K [<scope>] [--text T] [--applies A] [--choose C] | list [<scope> | --member name@team | --item <work id>] [--all] [--json] [--cwd <dir>]\n"
         + "       ah rules goal [--team <name>] [--text T [--done-when D] | --clear] [--said W] [--json] [--cwd <dir>]   (the team goal: guidance, never a gate; set or cleared only on the user's word)\n"
+        + "       ah rules cap (--team <name> | --project <work id> | --goal <work id>) --unit U --max N [--said W] [--json] [--cwd <dir>]   (a spend cap: reaching it asks the user and never stops a call)\n"
         + "<scope> is one of: --global | --roster <name> | --repo | --team <name> | --project <work id> | --goal <work id>";
 
     private static readonly HashSet<string> Bools = new(StringComparer.Ordinal) { "global", "repo", "json", "all", "clear" };
 
-    private static readonly HashSet<string> Values = new(StringComparer.Ordinal) { "roster", "team", "project", "goal", "key", "text", "said", "member", "item", "cwd", "applies", "choose", "done-when" };
+    private static readonly HashSet<string> Values = new(StringComparer.Ordinal) { "roster", "team", "project", "goal", "key", "text", "said", "member", "item", "cwd", "applies", "choose", "done-when", "unit", "max" };
 
     /// <summary>The scope flags <c>ah rules goal</c> refuses: a goal is a team's, named by <c>--team</c> or the caller's.</summary>
     private static readonly string[] NotWithGoal = ["global", "roster", "repo", "project", "goal", "member", "item", "key"];
 
-    internal static bool Handles(string? verb) => verb is "add" or "edit" or "off" or "remove" or "list" or "propose" or "accept" or "goal";
+    internal static bool Handles(string? verb) => verb is "add" or "edit" or "off" or "remove" or "list" or "propose" or "accept" or "goal" or "cap";
 
     internal static int Run(CliContext context, IReadOnlyList<string> args, TextWriter stdout, TextWriter stderr)
     {
@@ -71,6 +72,7 @@ internal static class RulesStoreVerb
             {
                 "list" => List(context, g, dir, flags, json, stdout, stderr),
                 "goal" => Goal(context, g, dir, flags, json, stdout, stderr),
+                "cap" => Cap(g, dir, flags, json, stdout, stderr),
                 _ => Write(context, g, dir, args[0], flags, json, stdout, stderr),
             };
         }
@@ -305,6 +307,53 @@ internal static class RulesStoreVerb
 
         stdout.WriteLine(message);
         stdout.WriteLine(RulesOfEngagement.Live);
+        return code;
+    }
+
+    /// <summary>
+    /// <c>ah rules cap</c> (ah2-512 S4): sets or replaces a spend cap through the daemon, which checks who may write exactly as for a rule. The text is generated there.
+    /// A cap only asks the user when it is reached; nothing stops a call.
+    /// </summary>
+    private static int Cap(ServiceGraph g, string dir, Dictionary<string, string?> flags, bool json, TextWriter stdout, TextWriter stderr)
+    {
+        var scopes = ScopesOf(flags);
+        if (scopes is not [(RulesOfEngagement.Team or RulesOfEngagement.Project or RulesOfEngagement.Goal, _)] || flags.ContainsKey("key") || flags.ContainsKey("text"))
+        {
+            return Fail(stderr, $"ah rules cap: exactly one of --team, --project or --goal (a cap has no --repo, --global or --roster scope; its key and text are made for it); {Usage}");
+        }
+
+        if (HierarchyModule.SpendUnitOf(flags.GetValueOrDefault("unit")) is not { } unit)
+        {
+            return Fail(stderr, $"ah rules cap: --unit is 1 to 40 of a-z, 0-9 and -; {Usage}");
+        }
+
+        if (HierarchyModule.SpendMicrosOf(flags.GetValueOrDefault("max")) is not { } max || max <= 0)
+        {
+            return Fail(stderr, $"ah rules cap: --max is a number above 0 with at most 6 decimal places; {Usage}");
+        }
+
+        var body = new JsonObject
+        {
+            ["op"] = "cap", ["dir"] = dir, ["level"] = scopes[0].Level, ["scope"] = scopes[0].Text, ["key"] = RulesOfEngagement.CapKeyPrefix + unit, ["applies"] = HierarchyModule.SpendFormat(max),
+        };
+        if (flags.GetValueOrDefault("said") is { } said)
+        {
+            body["said"] = said;
+        }
+
+        if (Post(g, "cap", body, stderr) is not { } answer)
+        {
+            return RulesOfEngagement.Refused;
+        }
+
+        var code = (int)answer.Member("code")!.Value.AsNumber();
+        var message = answer.Member("message") is { IsText: true } m ? m.AsString() : string.Empty;
+        if (code != RulesOfEngagement.Ok)
+        {
+            return Fail(stderr, $"ah rules cap: {message}", code);
+        }
+
+        stdout.WriteLine(json ? JsonText.Stringify(answer, 0) : message + "\n" + RulesOfEngagement.Live);
         return code;
     }
 

@@ -54,6 +54,7 @@ words, and it runs them.
 | add a member to the roster | `/wrangl:agent-roster add --role <role>` | inside Claude Code. Changing the roster starts nothing |
 | see the roster | `ah roster show` | |
 | list, copy or pick named rosters | `ah roster roster list` · `ah roster roster copy <from> <to>` · `ah roster roster use <name>` | see [Rosters](rosters.md#named-rosters) |
+| share a roster as one file | `ah roster kit export <roster> --out <file>` · `ah roster kit import <file> --dry-run` | see [Share a roster](rosters.md#share-a-roster) |
 | add a role of your own | `/wrangl:agent-role` | see [Custom roles](custom-roles.md) |
 | start the team | ask the Orchestrator: "set up my team" | the `/wrangl:agent-team` skill |
 
@@ -65,6 +66,8 @@ words, and it runs them.
 | set the team goal | `ah rules goal --team <name> --text "<goal>" --done-when "<test>"` | or tell the Orchestrator. Goal at most 160 characters, done-when at most 120. `--clear` removes it. Guidance only |
 | add a standing rule | `ah rules add --repo --key <key> --text "<rule>"` | the scope can also be `--global`, `--roster <name>`, `--team <name>`, `--project <work id>` or `--goal <work id>`. Text at most 300 characters |
 | list the rules that apply | `ah rules list` | |
+| set a spend cap | `ah rules cap --team <name> --unit credits --max 50` | yours, or the Orchestrator quoting you. Reaching it asks you; it never stops a call. See [`ah rules cap`](#ah-rules-cap-spend-cap) |
+| see what was spent | `ah spend` | what members counted, not a measurement. See [`ah spend`](#ah-spend-spend-counter) |
 | record a lesson for the next team | `ah lessons propose --lesson "<one line>" --when "<when it applies>" --pointer <commit\|item\|measurement>` | anyone may. A note, never a rule or a gate. `ah lessons list` shows them |
 | pause one member | ask the Orchestrator (`ah roster pause-member <member>`) | stops nudges, re-deliveries and alarms for it; closes nothing. `resume-member` ends it |
 | let a deputy run the team | ask the Orchestrator (`ah roster duty on <member>`) | `ah roster duty off` takes it back |
@@ -886,7 +889,7 @@ Each team row's `members` counts the agents: members that are live or whose live
 <ah> roster status [--plain] [--now <ISO>]
 ```
 
-Computes the status document ([status-file.md](status-file.md)), writes `<hier>/status.json` atomically and prints it as JSON. `--plain` prints `ah · <text>` for the timeline entry current now, or an empty line when that entry is not visible. `--now` evaluates as of that instant (tests). With no hierarchy dir it prints a document with `teams: []`, writes nothing and exits 0.
+Computes the status document ([status-file.md](status-file.md)), writes `<hier>/status.json` atomically and prints it as JSON. `--plain` prints `ah · <text>` for the timeline entry current now, or an empty line when that entry is not visible. `--now` evaluates as of that instant (tests). With no hierarchy dir it prints a document with `teams: []`, writes nothing and exits 0. A team with counted spend or a team cap has a `spend` list in its row (per unit: `unit`, `total`, `max` or null, `scope`, `state` or null), and `--plain` adds one line per team, such as `spend (ah2): 52/50 credits (asked q7), 3 images`. See [`ah spend`](#ah-spend-spend-counter).
 
 #### Init roster level
 
@@ -958,6 +961,25 @@ From a worktree, a block only the main checkout's file holds at that level is re
 Writes (or removes) `activeRoster`, at `repo-user` by default inside a git repo, else `global`. Refuses a name no visible level defines, `default` aside. Warns, and still writes, when the target level's readers can't see the roster: `--level global` when the global file doesn't define it (other repos), `--level repo` when only repo-user or global does (others in the repo); `repo-user` never warns.
 
 `--clear` deletes a file left with no keys. Prints the resulting `selection`.
+
+#### Export a roster kit
+
+```
+<ah> roster kit export <roster> --out <path> [--level <L>] [--force]
+```
+
+Packs `<roster>` into one JSON file: the roster block, the rows and agent file text of its custom roles, a reference for each pack role, and the row of any built-in role you overrode. Reads the effective config, or only `--level` when given. Writes only `<path>` and refuses an existing file without `--force`. Refuses a kit over 1 MiB. Prints the same listing as an import dry run. Param values, roster rules, pack agent text and per-team lane limits are not carried.
+
+#### Import a roster kit
+
+```
+<ah> roster kit import <file> --dry-run [--level global|repo|repo-user] [--agents user|repo] [--as <roster>]
+<ah> roster kit import <file> --pin sha256:<hash> [--level …] [--agents …] [--as <roster>]
+```
+
+`--dry-run` writes nothing. It lists each write as `path · key · new|identical|conflict`, every agent file in full with its findings and flagged tools, every pack reference with its adopt command, the findings and conflicts, and the kit's `sha256` pin last. It exits 0 even when findings stand. Defaults: `--level global`, `--agents user` (`~/.claude/agents`; `repo` is `<repo>/.claude/agents`).
+
+`--pin` commits. It is refused, with nothing written, when the pin differs from the file, when any finding or conflict stands, when a member names a pack role not adopted here, from a team member session, and while a pipeline run is live. Agent files are written first (never replacing one), then the level file once; if the level file cannot be written, the agent files this run created are removed. Rows are written as the kit gives them. An import never writes a permission rule, hook, setting, param value, `activeRoster`, pack adoption or team file, and runs nothing. An agent file with no `tools:` list is refused, as are `hooks`, MCP server settings, `permissionMode`, hidden characters, and the member keys `command`, `args`, `kind`, `harness`, `adapter` and `autoMode`. Importing an unchanged kit again writes nothing and exits 0.
 
 #### Create a team
 
@@ -2021,6 +2043,50 @@ One goal per team, guidance and never a gate. `--team` defaults to the caller's 
 `ah rules list` prints `[goal] T; done when: D (team T)` first, and `list --all` one `[goal]` line per stored goal (`"goal"` and `"goals"` in JSON). The goal line leads every session's rules block and every request's `msg show` footer.
 
 `ah msg new --type request --serves "<how>"` (or `"off-goal: <why>"`) records how a request serves it as `serves:`; it is cleaned and cut to 160, never refused, and a lead's request without it gets a stderr note while a goal applies. Who may write: as for `ah rules add`.
+
+#### `ah rules cap` (spend cap)
+
+*Who runs it:* you, Orchestrator.
+
+```
+<ah> rules cap (--team <name> | --project <work id> | --goal <work id>) --unit <unit> --max <n> [--said "<your words>"] [--json]
+```
+
+Sets a spend cap for one unit, for example `ah rules cap --team ah2 --unit credits --max 50`. Running it again for the same scope and unit replaces the max, switches the cap back on and starts a new cap version (see below). `--repo`, `--global` and `--roster` are refused (exit 2), as are `--key` and `--text`: the key is `cap-<unit>` and the text is written for you. `--unit` is 1 to 40 of `a-z`, `0-9` and `-`. `--max` is a number above 0 with at most 6 decimal places.
+
+**A cap only asks. It never stops, refuses or slows a call.** The count is what members report with `ah spend add`; ah measures nothing itself. A member that makes a paid call and does not count it is not caught.
+
+**Who may set one:** only you, or the top-level Orchestrator with your own words in `--said` (recorded, not verified). Anyone else gets the same refusal as for `ah rules add`. Setting a cap is the only way to change it: `ah rules edit` changes the rule text and never the max.
+
+A cap is a rule row with key `cap-<unit>`, so `ah rules list` shows it and every session in scope is told to count each paid call. A team cap reaches every member of that team. A project or goal cap reaches the brief of every item under it. `ah rules off <scope> --key cap-<unit>` keeps counting but never asks; `ah rules remove <scope> --key cap-<unit>` deletes it.
+
+What a cap counts:
+
+| Cap | Counts |
+|---|---|
+| `--team` | that team's rows in its **current run** only. A new run starts at zero. With no open run, rows with no run recorded since the cap was set |
+| `--project` or `--goal` | every row, across runs, on an item under that project or goal at any depth. A task under a project under a goal counts toward both caps |
+
+When a count reaches the max, one question is parked for `orchestrator@<team>` with the header `Spend cap reached` and the options `Raise the cap`, `Keep going, no more asks for this cap` (the default) and `Tell the team to stop paid calls`. Paid calls continue until you answer. Nothing acts on the answer by itself: raising the cap is `ah rules cap` again, and stopping is the Orchestrator telling members.
+
+It asks **once** per cap version and run. It asks again after a new run starts or after any change to the cap (raise, lower or set again). Answering the question does not re-ask, and neither does a correction that drops the total and a later crossing. Lowering a cap below the current total, or setting one when the total is already over it, asks at the next `ah spend add`, not at the `rules cap` call. Exit codes: 0 ok, 2 refused or bad input, 3 conflict (the key is already a rule that is not a cap).
+
+#### `ah spend` (spend counter)
+
+*Who runs it:* everyone.
+
+```
+<ah> spend add <units> <unit> --what "<text>" [--item <work id>] [--json]
+<ah> spend [show] [--run | --all | --item <work id>] [--json]
+```
+
+Members count each paid call to an outside service, for example `ah spend add 4 credits --what "render the intro"`. `<units>` is a number other than 0 with at most 6 decimal places (`0.04` is fine); a negative number is a correction and lowers the total. `<unit>` is 1 to 40 of `a-z`, `0-9` and `-`, lowercased (`Credits` and `credits` are one unit). `--what` is required, 1 to 120 characters. A number too large to add up exactly is refused. These are exit 2.
+
+The row records who counted, the team and its open run, and the work item. The item is `--item`, else the one item the caller has open; with none or several it is recorded with no item. `add` exits 0 however high the total is, with no team, and with no cap. Exit 1 only when the row could not be stored. A unit with no cap is still counted.
+
+This is a record of what members said, not a measurement. Output reads like `counted 4 credits for ah2-530 (run total 52/50 credits). Cap reached for team ah2 (52/50 credits): asked the user (q7); calls are not stopped.` A second crossing of the same cap in the same run says `already asked`.
+
+`ah spend` shows totals per unit, then per item and per member, with each cap that applies and its state: `under`, `reached`, `asked q<k>` or `off`. `--run` is the default: the caller's team and open run. `--all` shows every run of the repo, and `--item <id>` one item (exit 1 for an unknown item). Use at most one of them. An item that used a paid tool but shows no spend stands out. `--json` prints `{"team", "run", "units", "items", "members", "caps"}`.
 
 #### `ah lessons` (lessons journal)
 

@@ -92,7 +92,7 @@ R role set tech-writer --class implement \
 | `--dispatch model` | legwork only (exit 2 otherwise) |
 | `--params a,b` | the [parameters](#role-parameters) a member needs; `--params ""` deletes the key |
 | `--level global\|repo\|repo-user` | where the row lives; default is where the role is already defined, else `repo` with `--scaffold repo`, else `global` |
-| `--scaffold user\|repo` | write a template agent file that passes the contract: `~/.claude/agents/<agent>.md` or `<repo>/.claude/agents/<agent>.md` |
+| `--scaffold user\|repo` | write a template agent file that passes the contract: `~/.claude/agents/<agent>.md` or `<repo>/.claude/agents/<agent>.md`. The file has no `tools:` list; add one before you share the role in a [roster kit](rosters.md#share-a-roster), which refuses an agent that inherits every tool |
 | `--dry-run` | write nothing; print the findings |
 
 Drop `--dry-run` to commit. If the agent file is repo-level, define the role at
@@ -195,6 +195,10 @@ class allows. The built-in docs-writer, qa and ux-engineer roles launch on
 their default model when none is set. `edit
 --model ""` clears a stored one. An `advise` role always needs an explicit
 `fable` or `opus`.
+
+### A role that makes paid calls
+
+If a role calls a paid outside service (image, voice or model APIs), tell it in its directive to count each call with `ah spend add <n> <unit> --what "<what>"`. This is guidance: nothing checks that it was followed, and a call that is not counted is not seen. If you set a spend cap, every session in its scope is already told this by the cap rule. A cap only asks you a question when it is reached; it never stops a call. See `ah spend` and `ah rules cap` in `cli-tools.md`.
 
 ### Milestone gates in a roster
 

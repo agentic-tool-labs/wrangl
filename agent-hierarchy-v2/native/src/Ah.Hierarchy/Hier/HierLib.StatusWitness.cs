@@ -116,6 +116,9 @@ internal sealed partial class HierLib
         // ah2-509: the resources table and the process table, so a claim, a release or a holder's death re-derives the document
         public JsonArray Resources() => Note(static s => s.Resources());
 
+        // ah2-512: the spend ledger and its caps, so a count, a cap change or a park re-derives the document
+        public JsonArray Spend(string dir, string? team) => Note(s => s.Spend(dir, team));
+
         // not recorded: the entries alone
         public IReadOnlyList<string> TeamNames(string dir) => inner.TeamNames(dir);
 

@@ -22,6 +22,7 @@
   "progress": "Ah.Hierarchy",
   "qa": "Ah.Hierarchy",
   "resources": "Ah.Hierarchy",
+  "spend": "Ah.Hierarchy",
   "checkpoint": "Ah.Hierarchy",
   "qa-log": "Ah.Hierarchy",
   "hier-gitignore": "Ah.Hierarchy",

@@ -30,8 +30,8 @@ public sealed class LessonsMigrationTests : IDisposable
         }
 
         using var after = SqliteConnection.Open(DbPath, SqliteOpenMode.ReadWrite, 1000);
-        Assert.Equal("47", StateDbModule.SchemaVersion.ToString(CultureInfo.InvariantCulture));
-        Assert.Equal("47", after.ScalarText("SELECT value FROM meta WHERE key = 'schema_version'"));
+        Assert.Equal("48", StateDbModule.SchemaVersion.ToString(CultureInfo.InvariantCulture));
+        Assert.Equal("48", after.ScalarText("SELECT value FROM meta WHERE key = 'schema_version'"));
         after.Exec("INSERT INTO lessons(hier_dir, scope, lesson, applies, pointer, \"by\", created_ms, updated_ms) VALUES ('/h', 'team', 'l', 'w', 'p', 'user', 1, 1)");
         Assert.Equal("open", after.ScalarText("SELECT state FROM lessons"));
     }

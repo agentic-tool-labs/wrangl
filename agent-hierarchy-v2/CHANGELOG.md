@@ -4,6 +4,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.52] - 2026-11-23
+
+### Added
+
+- **A spend counter and cap.** `ah spend add <count> <unit> --what <text>` records what a member reports having
+  spent, against the work item in hand; `ah spend show` sums it. `ah rules cap` (the user or the Orchestrator)
+  sets a cap for a team's run or for a project or goal. Crossing a cap parks one question for the user. It never
+  stops a call, and the counter measures nothing by itself.
+- **Roster kits.** `ah roster kit export` writes one file with a roster, its role definitions and agent files.
+  `ah roster kit import --dry-run` lists everything an import would write, and `--pin` commits it only when that
+  listing is clean. An import never writes a permission rule, a hook, a setting or a setup command, and runs
+  nothing. An agent file with no `tools:` list is refused.
+- **The web UI shows a gate's needs** on the item log (filled or not, a reviewed need's verdict, the asked line)
+  **and an item's attachments** on its Needs-you card.
+
 ## [2.0.51] - 2026-11-23
 
 ### Added

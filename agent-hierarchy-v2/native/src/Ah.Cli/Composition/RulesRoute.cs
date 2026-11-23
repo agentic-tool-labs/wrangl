@@ -33,13 +33,23 @@ internal static class RulesWrites
         }
 
         var chain = ask.Level == RulesOfEngagement.Team ? RulesReads.TeamChain(g, ask.Dir, scope).Skip(1).ToList() : [];
+        var text = ask.Text;
+        // ah2-512 S5: a cap's text is generated, never typed
+        if (ask.Op == "cap" && ask.Key.StartsWith(RulesOfEngagement.CapKeyPrefix, StringComparison.Ordinal))
+        {
+            var where = ask.Level == RulesOfEngagement.Team
+                ? "per run"
+                : $"for {RulesJson.ScopeOf(new RuleRow(ask.Level, scope, ask.Key, string.Empty, false, ask.By, null, 0, 0), RulesReads.With<string?>(ahHome, null, query => HierarchyModule.WorkPrefix(query, ask.Dir)))}";
+            text = RulesOfEngagement.CapText(ask.Key[RulesOfEngagement.CapKeyPrefix.Length..], ask.Applies ?? string.Empty, where, ask.By);
+        }
+
         RuleWriteResult? result = null;
         var outcome = db.WriteOnce(Guid.NewGuid().ToString("N"), now.AddSeconds(10), tx =>
         {
             result = RulesOfEngagement.Apply(
                 (sql, args) => tx.Query(sql, args),
                 (sql, args) => tx.Execute(sql, args),
-                new RuleWrite(ask.Op, ask.Dir, ask.Level, scope, ask.Key, ask.Text, ask.By, ask.Said, now.ToUnixTimeMilliseconds(), chain, ask.Applies, ask.Choose));
+                new RuleWrite(ask.Op, ask.Dir, ask.Level, scope, ask.Key, text, ask.By, ask.Said, now.ToUnixTimeMilliseconds(), chain, ask.Applies, ask.Choose));
             return string.Empty;
         });
         return outcome.Status == OnceStatus.Applied && result is not null
@@ -79,7 +89,7 @@ internal sealed class RulesRoute(ServiceGraph g, string ahHome, Func<IStateDb>? 
             return Task.FromResult(Json(400, new JsonObject { ["error"] = "body must be a JSON object" }));
         }
 
-        if (Text(body, "op") is not { } op || !(RulesOfEngagement.Ops.Contains(op, StringComparer.Ordinal) || RulesOfEngagement.GoalOps.Contains(op, StringComparer.Ordinal)) || Text(body, "dir") is not { Length: > 0 } dir
+        if (Text(body, "op") is not { } op || !(RulesOfEngagement.Ops.Contains(op, StringComparer.Ordinal) || RulesOfEngagement.GoalOps.Contains(op, StringComparer.Ordinal) || RulesOfEngagement.CapOps.Contains(op, StringComparer.Ordinal)) || Text(body, "dir") is not { Length: > 0 } dir
             || Text(body, "level") is not { } level || Text(body, "key") is not { } key)
         {
             return Task.FromResult(Json(400, new JsonObject { ["error"] = "op, dir, level and key are required" }));

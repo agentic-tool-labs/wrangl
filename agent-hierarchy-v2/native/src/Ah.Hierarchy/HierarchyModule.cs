@@ -828,6 +828,21 @@ public static partial class HierarchyModule
         DateTimeOffset.FromUnixTimeMilliseconds((long)sinceMs).ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
         + $" ({Ah.Core.Time.Age.Format((nowMs - sinceMs) / 1000)})";
 
+    /// <summary>The longest <c>ah spend add --what</c> (ah2-512).</summary>
+    public const int SpendMaxWhat = SpendRules.MaxWhat;
+
+    /// <summary>A spend unit lowercased (ah2-512 S2), or null when it is not 1-40 characters of a-z, 0-9 and -.</summary>
+    public static string? SpendUnitOf(string? raw) => SpendRules.UnitOf(raw);
+
+    /// <summary>A spend count in micro-units (ah2-512 S2), or null when it is zero, unparsable or has more than 6 fractional digits.</summary>
+    public static long? SpendMicrosOf(string? text) => SpendRules.MicrosOf(text);
+
+    /// <summary>A micro-unit count as a plain decimal.</summary>
+    public static string SpendFormat(long micros) => SpendRules.Format(micros);
+
+    /// <summary>Every spend row of <paramref name="dir"/>'s repo, oldest first.</summary>
+    public static IReadOnlyList<SpendRow> SpendRows(Func<string, object?[], IReadOnlyList<object?[]>> query, string dir) => SpendRules.Rows(query, dir);
+
     /// <summary>The libraries of the hierarchy runtime directory, built from <paramref name="environment"/>.</summary>
     public static HierarchyServices Create(HierarchyEnvironment environment)
     {
@@ -850,6 +865,7 @@ public static partial class HierarchyModule
                 new PeerRecordsDomain(lib, peerRecordsState),
                 new QaDomain(lib, Ah.Core.Text.AhPaths.UserEntry(environment.Environment.HomeDirectory, Ah.Core.Text.AhPaths.QaStateDir)),
                 new ResourcesDomain(lib, Ah.Core.Text.AhPaths.UserEntry(environment.Environment.HomeDirectory, Ah.Core.Text.AhPaths.ResourcesStateDir)),
+                new SpendDomain(lib, Ah.Core.Text.AhPaths.UserEntry(environment.Environment.HomeDirectory, Ah.Core.Text.AhPaths.SpendStateDir)),
                 new DecisionsDomain(lib),
                 new ActivityDomain(lib),
                 new JobsDomain(lib),

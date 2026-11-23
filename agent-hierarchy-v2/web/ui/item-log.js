@@ -30,10 +30,33 @@ const Entry = ({ e }) => html`<li>
   ${e.body ? html`<details><summary>Details<span class="sr"> of ${e.title}</span></summary><pre>${e.body}</pre></details>` : null}
 </li>`;
 
-const Attachment = ({ a }) => {
+export const Attachment = ({ a }) => {
   const safe = a.kind === "url" ? httpUrl(a.ref) : null;
   const facts = [a.kind, a.kind === "url" ? null : a.sha ? a.sha.slice(0, 7) : "uncommitted"].filter(Boolean).join(" · ");
   return html`<li>${safe ? outLink(safe, a.title ?? a.ref) : html`<span class="mono">${a.ref}</span>`}${a.title && !safe ? ` ${a.title}` : ""} <span class="kb-sub">${facts}</span></li>`;
+};
+
+// A gate's needs (adr-38), in the `ah work gate --json` shape: each need met or not, a reviewed need's verdict, its fills, and the asked line.
+// The mark is a glyph plus words, so nothing rests on colour.
+const Need = ({ n }) => html`<li>
+  <span class=${n.filled ? "wi-mark ok" : "wi-mark no"} aria-hidden="true">${n.filled ? "✓" : "✗"}</span><span class="sr">${n.filled ? "Filled: " : "Not filled: "}</span>
+  <span class="mono">${n.name}</span>${n.title ? ` ${n.title}` : ""}
+  ${n.review ? html` <span class="kb-sub">review: ${n.review_state ?? "missing"}</span>` : null}
+  ${n.fills?.length ? html` <span class="kb-sub mono">${n.fills.join(", ")}</span>` : null}
+</li>`;
+
+const Gate = ({ g }) => html`<h3>Gate</h3>
+  <p class="kb-sub wi-gate-sum"><span class="tnum">${g.filled}/${g.total}</span> needs filled · decided by ${g.decider}${g.asked ? ` · asked: ${g.asked}` : ""}</p>
+  ${g.needs?.length ? html`<ul class="kb-list wi-gate">${g.needs.map((n) => html`<${Need} key=${n.name} n=${n} />`)}</ul>` : html`<p class="dim">No needs declared</p>`}`;
+
+// On a gate, its own rows (need declarations, the decider, the parked question) and the fills shown under their need leave the Attachments list.
+const GATE_KINDS = new Set(["need", "need-review", "gate", "ask"]);
+const plainAttachments = (b) => {
+  if (!b.gate) {
+    return b.attachments ?? [];
+  }
+  const filled = new Set((b.gate.needs ?? []).flatMap((n) => n.fills ?? []));
+  return (b.attachments ?? []).filter((a) => !GATE_KINDS.has(a.kind) && !filled.has(a.ref));
 };
 
 // Each entry keyed on itself, so an open <details> stays on its entry when the capped window shifts. Identical entries are told apart by count.
@@ -95,11 +118,13 @@ export class ItemLog extends Live {
     const shown = this.state.all ? total : Math.min(LOG_PAGE, total);
     const newest = keyed(b.entries.slice(total - shown)).reverse();
     const linked = b.links?.blocked_by?.length || b.links?.blocks?.length || (kids && b.children?.length);
+    const attachments = plainAttachments(b);
     return html`<h3>Timeline</h3>
       ${total === 0 ? html`<p class="dim">No entries</p>` : html`<ol class="pl-history wi-log">${newest.map(({ e, key }) => html`<${Entry} key=${key} e=${e} />`)}</ol>`}
       ${total > LOG_PAGE ? html`<div class="kb-more"><button type="button" class="tab" onClick=${() => this.setState({ all: !this.state.all })}>${this.state.all ? "Show fewer" : `Show all ${total}`}</button></div>` : null}
       ${b.more > 0 ? html`<p class="kb-sub">${b.more} older not shown: <span class="mono">ah work log ${b.id} --all</span></p>` : null}
       ${linked ? html`<h3>Links</h3><dl><${Ids} label="Blocked by" ids=${b.links?.blocked_by} /><${Ids} label="Blocks" ids=${b.links?.blocks} />${kids ? html`<${Ids} label="Children" ids=${b.children} />` : null}</dl>` : null}
-      ${b.attachments?.length ? html`<h3>Attachments</h3><ul class="kb-list wi-attach">${b.attachments.map((a) => html`<${Attachment} key=${a.ref} a=${a} />`)}</ul>` : null}`;
+      ${b.gate ? html`<${Gate} g=${b.gate} />` : null}
+      ${attachments.length ? html`<h3>Attachments</h3><ul class="kb-list wi-attach">${attachments.map((a) => html`<${Attachment} key=${a.ref} a=${a} />`)}</ul>` : null}`;
   }
 }
