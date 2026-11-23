@@ -28,6 +28,9 @@ Every command is `<ah> roster … --cwd <repo root>`:
    `.claude/worktrees/<name>` on branch `<name>` (or `--branch`) off `main`,
    records the stream in the team file and opens its tab. It spawns nothing,
    and re-running it is safe.
+   If the user set a `stream_setup` command, it runs once in a new work tree and
+   its result is the output's `setup`; a failure only adds a warning
+   (`docs/cli-tools.md` § Stream setup command). Never set it yourself.
 2. `spawn-one <role> --stream <name>` or `spawn-ad-hoc <role> --stream <name>`
    per peer. The first lands in the tab's own pane, later ones beside it. The
    output's `stream` carries the `worktree` and `branch`.

@@ -79,6 +79,13 @@ public interface IWatchHost : IRecoveryHost
     /// <summary>The most live members <paramref name="team"/> (null for the default team) may hold; null means no limit. The medium budget when no run anchor applies.</summary>
     int? SessionBudgetOf(string home, string? team) => SessionBudget.Default;
 
+    /// <summary>
+    /// ah2-514 LB-2: the live member rows of the team tree whose budget bounds <paramref name="team"/>, lanes included, and the teams of it whose file
+    /// could not be read. <paramref name="ownedLive"/> gives the count the session already holds for each team it owns (<c>""</c> for the default
+    /// team). Null when the host cannot count the tree: the team's own count is used, as before.
+    /// </summary>
+    (int Live, IReadOnlyList<string> Unreadable)? SessionTreeLive(string home, string? team, IReadOnlyDictionary<string, int> ownedLive) => null;
+
     /// <summary>The tracked jobs of <paramref name="team"/> (null for the default team), as the session <paramref name="session"/> sees them. Empty by default.</summary>
     IReadOnlyList<JobFact> Jobs(string session, string home, string? team) => [];
 
@@ -811,9 +818,15 @@ internal sealed class WatchTick
         lock (_queueTold)
         {
             // TODO: a member whose session has live descendant processes (a running test or build) is also blocked on a job; add it once IProcessTable can list descendants.
+            var ownedLive = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var t in owned)
+            {
+                ownedLive[t.Name ?? string.Empty] = t.Members.Count(static m => m.Live != false); // the Live flag the queue facts use
+            }
+
             events.AddRange(QueueEvents.Evaluate(
                 sid, now, [.. owned.Where(t => !host.TeamHeld(home, t.Name))], candidates, team => host.Checklist(sid, home, team), m => !string.IsNullOrEmpty(m.SessionId) && host.SlotStateOf(m.SessionId, now) is not null, _queueTold, out queueKeys,
-                budgetOf: team => host.SessionBudgetOf(home, team), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt, remindAt: _remindAt, qaJobs: host.QaJobs()));
+                budgetOf: team => host.SessionBudgetOf(home, team), treeLiveOf: team => host.SessionTreeLive(home, team, ownedLive), unstaffedAt: _unstaffedAt, readyBacklog: _ => host.ReadyBacklog(sid, home), idleCapacityAt: _idleCapacityAt, remindAt: _remindAt, qaJobs: host.QaJobs()));
         }
 
         IReadOnlyDictionary<WatchEvent, IReadOnlyList<string>> unlinkedKeys;

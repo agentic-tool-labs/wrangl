@@ -69,9 +69,12 @@ public sealed class BranchHygieneTests : IDisposable
     /// Real git for every <c>git</c> (or <c>env … git</c>) argv; <c>ps -o lstart=</c> of this process answers <see cref="SelfStart"/>;
     /// anything else fails as an absent tool would.
     /// </summary>
-    private sealed class RealGit(List<string[]> calls) : IProcessRunner
+    private sealed class RealGit(List<string[]> calls, string sandboxRoot) : IProcessRunner
     {
         private readonly IProcessRunner _real = PlatformModule.CreateProcessRunner();
+
+        /// <summary>The <c>sh -c</c> script that makes this runner throw, as a runner that fails would.</summary>
+        internal const string ThrowingScript = "the runner throws";
 
         public ProcessResult Run(ProcessRequest request)
         {
@@ -80,6 +83,13 @@ public sealed class BranchHygieneTests : IDisposable
             if (argv.Contains("lstart=") && argv.Contains(Environment.ProcessId.ToString(CultureInfo.InvariantCulture)))
             {
                 return new ProcessResult(0, null, false, false, Encoding.UTF8.GetBytes(SelfStart + "\n"), default);
+            }
+
+            // a stream_setup command: only sh -c, only in a work tree under this sandbox, with the environment stream-open gave it
+            if (argv is ["sh", "-c", var script] && request.WorkingDirectory is { } cwd
+                && (cwd.StartsWith(sandboxRoot + "/", StringComparison.Ordinal) || cwd.StartsWith("/private" + sandboxRoot + "/", StringComparison.Ordinal)))
+            {
+                return script == ThrowingScript ? throw new IOException("the runner failed") : _real.Run(request);
             }
 
             var isGit = argv.Length > 0 && (argv[0] == "git" || (argv[0] == "env" && argv.Contains("git")));
@@ -139,7 +149,7 @@ public sealed class BranchHygieneTests : IDisposable
         };
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.2.3", "1"));
         var io = PlatformModule.CreateIo(null);
-        var graph = ServiceGraph.Build(io, env, new RealGit(_calls), new FakeDaemonClient());
+        var graph = ServiceGraph.Build(io, env, new RealGit(_calls, _sandbox.Root), new FakeDaemonClient());
         var services = new Services(graph, io.Files, io.Clock, env, Project);
         CommandsModule.ComposeRoster(() => services);
         var verb = CommandsModule.Registry.Verbs.Single(v => v.Name == "roster");
@@ -1065,6 +1075,113 @@ public sealed class BranchHygieneTests : IDisposable
             Assert.Equal("shipped", result["verdict"].AsString());
             Assert.Equal($"refs/archive/{Today}/feat", result["would_archive"].Member("ref")!.Value.AsString());
         });
+    }
+
+    // ---------------------------------------------------------------- ah2-513: the stream setup command
+
+    /// <summary>Writes <c>{"stream_setup":{"argv":[sh,-c,script]}}</c> to the config file of <paramref name="level"/> for this checkout.</summary>
+    private void SetupAt(string level, string script)
+    {
+        var config = StoreGraph().Config;
+        var path = level == "repo-user"
+            ? Ah.Core.Text.AhPaths.RepoUserConfig(_sandbox.Home, config.PathSlug(config.CheckoutRoot(Project)!))
+            : config.RosterLevelPaths(Project)[level].AsString();
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, "{\"stream_setup\":{\"argv\":[\"sh\",\"-c\"," + Js(script) + "]}}");
+        // the command's PATH is the sandbox's (Amendment 4), so sh is found there
+        if (!File.Exists(Path.Combine(_sandbox.Bin, "sh")))
+        {
+            File.CreateSymbolicLink(Path.Combine(_sandbox.Bin, "sh"), "/bin/sh");
+        }
+    }
+
+    [Fact]
+    public void StreamSetupRunsInTheNewTreeWithItsStreamNameAndReportsOk()
+    {
+        WriteTeam(string.Empty);
+        SetupAt("repo-user", "printf '%s|%s|' \"$AH_STREAM\" \"$HOME\"; pwd -P");
+
+        var (code, stdout, stderr) = Roster("stream-open", "s1");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.True(result["worktree_created"].AsBool());
+        var setup = result["setup"].AsObject();
+        Assert.True(setup["ran"].AsBool());
+        Assert.True(setup["ok"].AsBool());
+        Assert.Equal(0, (int)setup["exit"].AsNumber());
+        var printed = setup["stdout_tail"].AsString();
+        Assert.StartsWith($"s1|{_sandbox.Home}|", printed, StringComparison.Ordinal); // the sandbox HOME, not the real one
+        Assert.EndsWith("/.claude/worktrees/s1\n", printed, StringComparison.Ordinal);
+        Assert.DoesNotContain(Texts(result.Get("warnings")), w => w.StartsWith("stream setup failed", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AFailingStreamSetupLeavesTheStreamOpenWithAWarning()
+    {
+        WriteTeam(string.Empty);
+        SetupAt("repo-user", "echo oops >&2; exit 3");
+
+        var (code, stdout, stderr) = Roster("stream-open", "s1");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.True(result["opened"].AsBool());
+        var setup = result["setup"].AsObject();
+        Assert.False(setup["ok"].AsBool());
+        Assert.Equal(3, (int)setup["exit"].AsNumber());
+        Assert.Equal("oops\n", setup["stderr_tail"].AsString());
+        Assert.Contains("stream setup failed (exit 3); the stream is open; see setup.stderr_tail", Texts(result["warnings"]));
+        Assert.Equal("open", StreamRecord("s1")["state"].AsString());
+    }
+
+    [Fact]
+    public void AStreamSetupWhoseRunnerThrowsStillPrintsAnOpenStream()
+    {
+        WriteTeam(string.Empty);
+        SetupAt("repo-user", RealGit.ThrowingScript);
+
+        var (code, stdout, stderr) = Roster("stream-open", "s1");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.True(result["opened"].AsBool());
+        var setup = result["setup"].AsObject();
+        Assert.Equal((false, false, "setup-start-failed"), (setup["ran"].AsBool(), setup["ok"].AsBool(), setup["error"].AsString()));
+        Assert.Contains("stream setup failed (setup-start-failed); the stream is open; see setup.message", Texts(result["warnings"]));
+        Assert.Equal("open", StreamRecord("s1")["state"].AsString());
+    }
+
+    [Fact]
+    public void StreamSetupDoesNotRunWhenTheTreeAlreadyExists()
+    {
+        var tree = AddWorktree("s1", "s1");
+        WriteTeam(Stream("s1", "s1", tree));
+        SetupAt("repo-user", "touch ran");
+
+        var (code, stdout, stderr) = Roster("stream-open", "s1");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.False(result["worktree_created"].AsBool());
+        Assert.Null(result.Get("setup"));
+        Assert.False(File.Exists(Path.Combine(tree, "ran")));
+    }
+
+    [Fact]
+    public void AStreamSetupInTheCheckedInConfigIsIgnoredWithAWarning()
+    {
+        WriteTeam(string.Empty);
+        SetupAt("repo", "touch ran");
+
+        var (code, stdout, stderr) = Roster("stream-open", "s1");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.True(result["worktree_created"].AsBool());
+        Assert.Null(result.Get("setup"));
+        Assert.Contains(Texts(result["warnings"]), w => w.StartsWith("stream_setup in ", StringComparison.Ordinal) && w.Contains(" was ignored: it is read only from ", StringComparison.Ordinal));
+        Assert.False(File.Exists(Path.Combine(Project, ".claude", "worktrees", "s1", "ran")));
     }
 
     // ---------------------------------------------------------------- status is untouched (§6)

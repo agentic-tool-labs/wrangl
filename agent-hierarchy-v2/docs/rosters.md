@@ -117,6 +117,18 @@ to or deleted. `delete` refuses a roster a live team was built from: disband
 the team first. `--team` names a live team, never a roster; to build a team
 from `rosters.docs`, pass `--roster docs` to `create`.
 
+### Rules for a roster
+
+A [rule of engagement](cli-tools.md#ah-rules-rules-of-engagement) can be tied to a roster name:
+`ah rules add --roster game-dev --key <key> --text "<rule>"`. Every team built from a roster
+called `game-dev` gets it, in any repo, and the roster does not have to exist yet. `--roster default`
+reaches teams built from the default block. A repo rule of the same key wins over it.
+
+### Parameters for a roster
+
+A role in a roster can declare values its members need, such as an engine-profile path. The plan from `create` lists them, and `ah roster create --param <name>=<value>` sets them. See
+[Role parameters](custom-roles.md#role-parameters).
+
 If the selection names a roster no level defines, commands exit 2 with the
 roster's source and the fixes; hooks fall back to the default block and warn;
 `doctor` shows a red `roster-selection` row. See

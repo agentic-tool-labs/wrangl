@@ -157,7 +157,41 @@ internal static partial class CreatePlanning
         CopyIfPresent(entry, "autoMode", m, "autoMode");
         entry["args"] = launch.Rules.MemberArgs(m) is { } args ? args : JsonValue.Null;
         entry["spawn"] = MemberPlanning.HasPane(c, route) ? ShapeFor(c, WithRoute(m, route), transport) : JsonValue.Null;
+        if (MemberPlanning.Text(m, "role") is { } role && c.Services.Config.RoleParams(c.Cwd, role, c.Registry) is { Count: > 0 } declared)
+        {
+            var values = new JsonObject();
+            foreach (var p in declared)
+            {
+                values[p.Name] = p.Value is { } v ? v : JsonValue.Null;
+            }
+
+            entry["params"] = values;
+        }
+
         return entry;
+    }
+
+    /// <summary>
+    /// The warning lines for <paramref name="entries"/>' unset params (RP-D6): one per member and name. A missing value never stops a spawn; the member starts and is told.
+    /// </summary>
+    internal static List<string> MissingParamWarnings(IEnumerable<JsonValue> entries)
+    {
+        var lines = new List<string>();
+        foreach (var e in entries)
+        {
+            if (e.Member("params") is not { IsMap: true } values)
+            {
+                continue;
+            }
+
+            var map = values.AsObject();
+            foreach (var name in map.Keys.Where(k => map[k].IsNull))
+            {
+                lines.Add($"{MemberPlanning.Text(e.Member("name"))} (role {MemberPlanning.Text(e.Member("role"))}) needs parameter {name}, which is not set for this repo; it was started anyway and told so. Set it: ah roster param set {name} <value>");
+            }
+        }
+
+        return lines;
     }
 
     private static JsonArray ToArray(IEnumerable<JsonObject> items)

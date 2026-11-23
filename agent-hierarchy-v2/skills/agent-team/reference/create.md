@@ -184,6 +184,16 @@ roster bar-named-roster"), run the steps below once per Team, driven by this lis
      (the re-run plan, `--spawn`, `--commit`), carried the same way as
      `--roster <r>`.
 
+   **Role parameters — only when the plan's `params` has an entry whose
+   `value` is `NOT SET`.** Each is a value a member's role needs for this repo
+   (e.g. an engine-profile path). Ask one free-text question per such name in
+   the **same** AskUserQuestion round as the questions above: "Value for
+   `<name>` (needed by <members>)?" with options "Enter a value (type it in
+   Other)" and "Leave it unset"; the value is the Other text. Each value given adds `--param <name>=<value>` to every later
+   phase, carried like `--roster <r>`; the committed create writes it at
+   repo-user. "Leave it unset" adds nothing: the member still launches and is
+   told the value is missing. Nothing is asked after bootstrap.
+
    **Codex trust — only when the plan has `needs` items of kind
    `codex-trust`.** Each item names a `root` Codex does not trust yet and the
    `command` that grants it. Granting is the user's decision, so ask in the

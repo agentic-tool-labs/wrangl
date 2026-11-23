@@ -55,6 +55,9 @@ internal static class TeamsVerb
         var byPane = roster.PaneResolver(dir);
         Ah.Core.Time.PhaseTrace.End("teams.pane-resolver", span);
         var livenessOf = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+        // ah2-514 LB-3: no member row is in two team files (a lent member stays a row of its home team; a sub-orchestrator is its
+        // child team's orchestrator, not a member row there), so the per-team counts add up to each session once
+        var liveMembers = 0;
 
         foreach (var row in rows)
         {
@@ -79,6 +82,7 @@ internal static class TeamsVerb
             Ah.Core.Time.PhaseTrace.End("teams.member-liveness", span);
             row["member_rows"] = row.Get("members") ?? JsonValue.FromNumber(members.Count);
             row["members"] = agents;
+            liveMembers += agents;
             // for branch-sweep.sh to keep: every member row's recorded work tree, live or not (a held member has no process), and the
             // team's latest checkpoint's orchestrator and member trees (a held Orchestrator). A checkpoint that cannot be read leaves
             // the field out, and the sweep then removes nothing.
@@ -240,6 +244,11 @@ internal static class TeamsVerb
         var result = new JsonObject
         {
             ["teams"] = teams,
+            ["live_sessions"] = new JsonObject
+            {
+                ["members"] = liveMembers,
+                ["harnesses"] = c.Services.Callers?.ProcessTable is { } table && Ah.Mesh.MeshModule.HarnessCount(table) is { } harnesses ? harnesses : JsonValue.Null,
+            },
             ["untracked_live"] = teardown.UntrackedLive(dir, NoTeam, trackedAll, context),
             ["sources"] = teardown.SourcesField(dir, NoTeam, JsonValue.Null, context),
         };

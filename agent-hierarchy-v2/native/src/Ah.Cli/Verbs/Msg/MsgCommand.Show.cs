@@ -27,12 +27,30 @@ internal sealed partial class MsgCommand
             {
                 return null;
             }
-
-            (pool, team) = ChecklistScope(fm);
         }
         catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
         {
             return null;
+        }
+
+        // RP-D8: the addressee role's parameters, for any request to it, team and item or none; an error shows no block
+        string? parameters;
+        try
+        {
+            parameters = FrontText(fm?.Member("to")) is { } role ? Ah.Config.ConfigModule.ParamBlock(_graph.Config.RoleParams(Path.GetDirectoryName(path), role)) : null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            parameters = null;
+        }
+
+        try
+        {
+            (pool, team) = ChecklistScope(fm);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            return parameters;
         }
 
         // ah2-53: every request's footer starts with its team's goal line; a request with no team names none, and a goal that cannot be read prints nothing
@@ -74,7 +92,13 @@ internal sealed partial class MsgCommand
         }
 
         var footer = goal is null ? work : goal + "\n" + work;
-        return lessons is null ? footer : footer + lessons;
+        if (lessons is not null)
+        {
+            footer += lessons;
+        }
+
+        // ah2-504: the role-params block comes last, after the goal, work and lessons lines
+        return parameters is null ? footer : footer is null ? parameters : footer + "\n" + parameters;
     }
 
     /// <summary>

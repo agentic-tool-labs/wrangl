@@ -41,7 +41,7 @@ Read [How it works](how-it-works.md) for the bigger picture.
 
 - **Team goal**: One sentence that says what the team is working towards, set on your word with `ah rules goal`. Every member sees it. It is guidance; nothing is refused because of it.
 
-- **Rules of engagement**: Your standing operating principles, kept with `ah rules add`. Members see them at start, after a compaction and with each brief. A rule never widens what a member may do.
+- **Rules of engagement**: Your standing operating principles, kept with `ah rules add`. A rule can be global, for one roster, or for one repo, team, project or goal; the most specific wins. Members see them at start, after a compaction and with each brief. A rule never widens what a member may do.
 
 - **Checklist**: The Orchestrator's written list of everything still outstanding, with a state and an owner for each item.
 

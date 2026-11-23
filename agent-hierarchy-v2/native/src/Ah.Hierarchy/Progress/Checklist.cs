@@ -158,7 +158,8 @@ internal static class ChecklistRules
     /// <summary>
     /// The queued items that have waited at least <paramref name="queuedMs"/> for a role with no live member while the team is under its
     /// session budget and no member of the role was spawned within <paramref name="recentSpawnMs"/>. <paramref name="budget"/> is the most live
-    /// members the team may have; null means no limit. The team's live count is every member that is live.
+    /// members the team may have; null means no limit. The live count is <paramref name="live"/>, the team tree's count (ah2-514 LB-2), else every
+    /// member of this team that is live.
     /// </summary>
     internal static IReadOnlyList<QueueEntry> Unstaffed(
         IReadOnlyList<ChecklistEntry> entries,
@@ -167,9 +168,10 @@ internal static class ChecklistRules
         double nowMs,
         double queuedMs,
         int? budget,
-        double recentSpawnMs)
+        double recentSpawnMs,
+        int? live = null)
     {
-        if (budget is { } limit && TeamLive(members) >= limit)
+        if (budget is { } limit && (live ?? TeamLive(members)) >= limit)
         {
             return [];
         }

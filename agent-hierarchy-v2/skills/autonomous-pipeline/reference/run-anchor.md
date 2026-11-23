@@ -48,7 +48,8 @@ Write the anchor in two steps:
    `ultra-advisor:` is step 3a's answer (`no` when unanswered): `yes` lets this run spawn and brief an Ultra-Advisor freely,
    with no further ask; `no` means the escalation ladder skips it. Written once, for this run only.
 
-   `session-budget:` is the most live members the run's team may hold when the
+   `session-budget:` is the most live members the run's team tree may hold (every
+   lane's child-team members included, each session once) when the
    tick starts parallel work (`reference/cadence.md`). Always write the line at
    bootstrap, for example `session-budget: med (12)` or
    `session-budget: max (uncapped)`. The levels are low = 8, med = 12 (default),

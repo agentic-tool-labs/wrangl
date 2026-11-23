@@ -245,6 +245,123 @@ public sealed class RosterRoleVerbTests : IDisposable
         Assert.False(File.Exists(RepoFile));
     }
 
+    private JsonValue? ParamsOf(string role) =>
+        Parse(Roster("role", "list", "--json").Stdout)["roles"].AsArray().First(r => r.Member("name")!.Value.AsString() == role).Member("params");
+
+    /// <summary>A1 (role-params RP-D1/D2, Amendment 1 Q2): --params writes the array and resolve keeps it, for a custom and a built-in role; "" removes it.</summary>
+    [Fact]
+    public void RoleSetParamsIsKeptThroughResolveAndAnEmptyValueRemovesIt()
+    {
+        var set = Roster("role", "set", "qc", "--class", "review", "--routes", "qc work", "--description", "Checks things", "--level", "repo", "--scaffold", "repo", "--params", "a, b");
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.Equal(["a", "b"], ParamsOf("qc")!.Value.AsArray().Select(x => x.AsString()).ToArray());
+
+        var builtin = Roster("role", "set", "architect", "--params", "a", "--level", "repo");
+        Assert.True(builtin.Code == 0, builtin.Stderr);
+        Assert.Equal(["a"], ParamsOf("architect")!.Value.AsArray().Select(x => x.AsString()).ToArray());
+        Assert.Contains("params: a", Roster("role", "list").Stdout, StringComparison.Ordinal);
+
+        Assert.Equal(0, Roster("role", "set", "qc", "--params", "", "--level", "repo").Code);
+        Assert.Null(ParamsOf("qc"));
+        Assert.False(Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["qc"].AsObject().ContainsKey("params"));
+    }
+
+    /// <summary>Negative: a bad name, a repeat and nine names are refused and nothing is written.</summary>
+    [Theory]
+    [InlineData("Bad_Name")]
+    [InlineData("a,a")]
+    [InlineData("a,b,c,d,e,f,g,h,i")]
+    public void RoleSetRefusesParamsThatDoNotFit(string names)
+    {
+        var run = Roster("role", "set", "architect", "--params", names, "--level", "repo");
+
+        Assert.Equal(2, run.Code);
+        Assert.Contains("--params:", run.Stderr, StringComparison.Ordinal);
+        Assert.False(File.Exists(RepoFile));
+    }
+
+    /// <summary>Negative: a hand-edited params that is not an array of names is dropped and the role stays usable.</summary>
+    [Theory]
+    [InlineData("\"x\"")]
+    [InlineData("[\"Bad_Name\"]")]
+    public void AMalformedParamsIsDroppedAndTheRoleKept(string declared)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(AgentFile("qc"))!);
+        File.WriteAllText(AgentFile("qc"), "---\nname: qc\ndescription: Checks things\ntools: Read, Grep, Glob, Bash, SendMessage\n---\n\nYou check things.\n");
+        File.WriteAllText(RepoFile, "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"params\":" + declared + "},\"architect\":{\"params\":" + declared + "}}}");
+
+        var listed = Roster("role", "list", "--json");
+
+        var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, new Dictionary<string, string?> { ["AH_TEST"] = "1", ["AH_HOME"] = _sandbox.AhHome, ["HOME"] = _sandbox.Home }, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.2.3", "1"));
+        var warnings = ServiceGraph.Build(PlatformModule.CreateIo(null), env, new FakeRunner(), new FakeDaemonClient()).Config.ResolveConfig(Project)["warnings"].AsArray().Select(w => w.AsString()).ToList();
+
+        Assert.Equal(0, listed.Code);
+        Assert.Single(warnings, w => w.StartsWith("ah: custom role \"qc\": params ignored:", StringComparison.Ordinal));
+        Assert.Single(warnings, w => w.StartsWith("ah: role architect: params ignored:", StringComparison.Ordinal));
+        Assert.Null(ParamsOf("qc"));
+        Assert.Null(ParamsOf("architect"));
+    }
+
+    private JsonObject? ParamRow(string name) =>
+        Parse(Roster("param", "list", "--json").Stdout)["params"].AsArray().Select(r => r.AsObject()).FirstOrDefault(r => r["name"].AsString() == name);
+
+    /// <summary>A2 (RP-D3/D4): repo-user beats repo beats global for one name; a declared name no level sets reads missing.</summary>
+    [Fact]
+    public void AParamResolvesRepoUserThenRepoThenGlobalAndAnUnsetDeclaredNameIsMissing()
+    {
+        foreach (var level in new[] { "global", "repo", "repo-user" })
+        {
+            var set = Roster("param", "set", "engine-profile", "/p/" + level, "--level", level);
+            Assert.True(set.Code == 0, set.Stderr);
+        }
+
+        Assert.Equal(0, Roster("role", "set", "architect", "--params", "engine-profile,asset-root", "--level", "repo").Code);
+        var init = Roster("init", "repo", "--route", "peer");
+        Assert.True(init.Code == 0, init.Stderr);
+        var add = Roster("add", "repo", "--role", "architect");
+        Assert.True(add.Code == 0, add.Stderr);
+
+        string Seen() => $"{ParamRow("engine-profile")!["value"].AsString()} ({ParamRow("engine-profile")!["level"].AsString()})";
+        Assert.Equal("/p/repo-user (repo-user)", Seen());
+        Assert.Equal(0, Roster("param", "unset", "engine-profile").Code);
+        Assert.Equal("/p/repo (repo)", Seen());
+        Assert.Equal(0, Roster("param", "unset", "engine-profile", "--level", "repo").Code);
+        Assert.Equal("/p/global (global)", Seen());
+
+        var missing = ParamRow("asset-root")!;
+        Assert.Equal(JsonValue.Null, missing["value"]);
+        Assert.Equal(["architect"], missing["roles"].AsArray().Select(r => r.AsString()).ToArray());
+        Assert.Contains("asset-root: missing — declared by architect", Roster("param", "list").Stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>Negative: a value with a newline, one of 501 characters and a bad name are refused and nothing is written; a name no role declares is written.</summary>
+    [Theory]
+    [InlineData("engine-profile", "a\nb", 2)]
+    [InlineData("engine-profile", null, 2)]
+    [InlineData("Bad_Name", "x", 2)]
+    [InlineData("undeclared", "x", 0)]
+    public void ParamSetRefusesABadNameOrValueButNotAnUndeclaredName(string name, string? value, int code)
+    {
+        var run = Roster("param", "set", name, value ?? new string('x', 501), "--level", "repo");
+
+        Assert.Equal(code, run.Code);
+        Assert.Equal(code == 0, File.Exists(RepoFile));
+    }
+
+    /// <summary>Negative: unsetting a name no level sets is not found (exit 1).</summary>
+    [Fact]
+    public void ParamUnsetOfAnAbsentNameIsNotFound()
+    {
+        Assert.Equal(1, Roster("param", "unset", "engine-profile").Code);
+        Assert.Equal(0, Roster("param", "set", "engine-profile", "x", "--level", "repo").Code);
+        Assert.Equal(1, Roster("param", "unset", "engine-profile", "--level", "global").Code);
+    }
+
     [Fact]
     public void RoleRemoveTakesTheRowOutAndRefusesARoleNothingDefines()
     {

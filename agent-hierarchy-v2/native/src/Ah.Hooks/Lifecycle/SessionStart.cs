@@ -135,6 +135,23 @@ internal static class SessionStart
         if (role is not null)
         {
             context = advisory.Directive.BuildRoleSessionNotice(role, agentType, registry);
+
+            // RP-D7: the role's parameters, on every start compaction included; a failed read is one line and the session starts
+            string? paramBlock;
+            try
+            {
+                paramBlock = Ah.Config.ConfigModule.ParamBlock(s.Config.RoleParams(cwd, role, registry));
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                paramBlock = Ah.Config.ConfigModule.ParamsUnreadableLine;
+            }
+
+            if (paramBlock is not null)
+            {
+                context += "\n\n" + paramBlock;
+            }
+
             RecordSessionRole(c, advisory, cwd, sessionIdValue, role);
             var misplaced = false;
             string? treeWarning = null;

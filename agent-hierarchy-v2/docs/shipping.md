@@ -89,7 +89,7 @@ Optional flags:
 | Flag | What it does |
 |---|---|
 | `--branch <name>` | plan runs only: work on this branch. Without it, a plan run makes a new branch, `ah/pipeline-<plan name>`, from where you are. |
-| `--budget low\|med\|high\|xhigh\|max` | how many member sessions the run may have open at once: 8, 12 (the default), 16, 20, or no limit. |
+| `--budget low\|med\|high\|xhigh\|max` | how many member sessions the run may have open at once, every lane's included: 8, 12 (the default), 16, 20, or no limit. |
 | `--auto-merge` | issue runs only: merges into `main` are approved for this run, and the run does not ask. |
 | `--adopt` | turn the work the Orchestrator already has in flight into a run. Members are not interrupted. |
 

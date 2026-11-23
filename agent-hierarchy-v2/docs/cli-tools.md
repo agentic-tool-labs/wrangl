@@ -63,7 +63,7 @@ words, and it runs them.
 |---|---|---|
 | see the team goal | `ah rules goal --team <name>` | |
 | set the team goal | `ah rules goal --team <name> --text "<goal>" --done-when "<test>"` | or tell the Orchestrator. Goal at most 160 characters, done-when at most 120. `--clear` removes it. Guidance only |
-| add a standing rule | `ah rules add --repo --key <key> --text "<rule>"` | the scope can also be `--team <name>`, `--project <work id>` or `--goal <work id>`. Text at most 300 characters |
+| add a standing rule | `ah rules add --repo --key <key> --text "<rule>"` | the scope can also be `--global`, `--roster <name>`, `--team <name>`, `--project <work id>` or `--goal <work id>`. Text at most 300 characters |
 | list the rules that apply | `ah rules list` | |
 | record a lesson for the next team | `ah lessons propose --lesson "<one line>" --when "<when it applies>" --pointer <commit\|item\|measurement>` | anyone may. A note, never a rule or a gate. `ah lessons list` shows them |
 | pause one member | ask the Orchestrator (`ah roster pause-member <member>`) | stops nudges, re-deliveries and alarms for it; closes nothing. `resume-member` ends it |
@@ -820,6 +820,8 @@ Each team row's `members` counts the agents: members that are live or whose live
 
 `<ah> roster teams [--json] [--orchestrator-pid <pid>] [--members]`. `--members` adds `member_status: [{name, session_id, pane_id, verdict, why}]` to each row: one answer per member, where `verdict` is `live`, `dead`, `unknown`, or what blocks a live member (`blocked-on-job`, `waiting-on-slot`).
 
+The top-level object also carries `live_sessions: {members, harnesses}`, for example `{"members": 9, "harnesses": 14}`. `members` is the sum of the teams' `members` counts (live or indeterminate rows only, each session once). `harnesses` is the number of Claude sessions running on this machine, every repo and non-ah session included, or `null` when the process list cannot be read. `--worktrees` does not print it.
+
 The top-level object carries the same `sources` block as `disband`; `untracked_live` rows from `herdr agent list` alone are marked `source: "herdr"`.
 
 An orphaned team's row adds `live_members: [{name, role, last_brief_from}]`, its records that are live (one whose liveness cannot be decided is listed with `indeterminate: true`), and `attributed_live: [{name, role, pane_id, last_brief_from}]`, its `untracked_live` rows: live sessions that claim it through their team file or a `<t>-` Herdr name and match no record (never for the legacy `team.json`: an untagged row and the repo-basename prefix are no claim on it).
@@ -912,6 +914,8 @@ Writes (or removes) `activeRoster`, at `repo-user` by default inside a git repo,
 #### Create a team
 
 One call: `<ah> roster create --yes [--team <t>] [--roster <r>] [--mode …] --transport <t> --roster-level <L>` plans, launches and records the team, printing `{plan, spawn, commit}` (a failed launch is left out of the commit) · plan: `<ah> roster create [--plan] [--team <t>] [--roster <r>] [--mode auto|columns|grid] [--roster-level <L>]` · spawn: `… create --spawn [--team <t>] [--roster <r>] [--mode auto|columns|grid] [--roster-level <L>]` · commit: `… create --commit --verified '<json>' --transport <t> --roster-level <L> [--team <t>] [--roster <r>] [--mode auto|columns|grid] [--partial] [--session <orchestrator session id>] [--orchestrator-pid <pid>]` · from history: `… create --from <id|alias> [--team <t>] [--mode …] [--plan|--commit|--spawn]`.
+
+`--param <name>=<value>` (repeatable) sets role parameters in the same call. A plan lists, under `params`, every parameter the roster's roles declare, with its value or `NOT SET` and the members that need it. A create that launches or records the team writes each `--param` at the `repo-user` level (as `param set` does) and lists them under `param_writes`; a plan-only create writes nothing. A name no role in the roster declares is still written, with a warning. A create with a missing value goes ahead and says which are `NOT SET`.
 
 `--team` is the team's name (default: the repo basename, or a legacy `team.json`'s own prefix); `--roster <r>` builds it from `rosters.<r>` (default: the `roster` block) and a missing block is an error; a `rosters.<t>` block matching `--team <t>` without `--roster` is only warned about (`warnings`).
 
@@ -1062,9 +1066,37 @@ Re-running is idempotent (`existed: true`); on a done stream it re-opens it (`re
 
 Re-opening a stream whose record still holds a tab re-checks that tab; if herdr cannot make it, the worktree is kept, `tab_id` becomes `null` and a warning is given. `stream-open` does not retry the tab: the next `spawn-one`/`spawn-ad-hoc` with `--stream` creates it. Outside herdr there is never a tab: `degraded: "no-tabs"`.
 
-`--dry-run` prints `would_run: {git, herdr}` and the `stream` it would record, and executes and writes nothing.
+`--dry-run` prints `would_run: {git, herdr}` (plus `setup`, see below, when a setup command is set and would run) and the `stream` it would record, and executes and writes nothing.
 
 Refusals (exit 2, `ok: false`): `stream-name-invalid` (the name must match `^[a-z][a-z0-9_-]{0,39}$`), `worktree-path-occupied`, `branch-in-use` (checked out in another worktree; `detail` is git's stderr), `git-failed` (`detail`); nothing is written on any of them Also creates `progress/<team>/<name>.md` when absent and records `opened_at` (UTC, once).
+
+##### Stream setup command
+
+You can have a command run in each new work tree, for example to copy a build cache from the main checkout. Add `stream_setup` to your own per-repo file, by hand:
+
+```
+~/.claude/ah2/projects/<slug>/agent-hierarchy.json
+```
+
+`<slug>` is the main checkout's absolute path with each `/` changed to `-`. A work tree finds the same file as the main checkout does.
+
+```json
+"stream_setup": { "argv": ["sh", "-c", "cp -R \"$AH_CHECKOUT_ROOT/.cache\" ."], "timeout_seconds": 300 }
+```
+
+- `argv` is required: a non-empty list of non-empty strings. It runs directly, with no shell; write `["sh", "-c", "..."]` if you want one.
+- `timeout_seconds` is optional, a whole number from 1 to 1800 (default 300). On timeout the command is killed.
+- It runs as you, on this machine, with ah's own environment and your identity, so an `ah` call inside it acts as whoever opened the stream. `HOME`, `AH_HOME`, `PATH` and `AH_TEST` come from ah's current environment; `AH_STREAM` (the stream name) and `AH_CHECKOUT_ROOT` (the main checkout) are added. Its working directory is the new work tree. Stdin is empty.
+- It is read only from that one file. A `stream_setup` in the checked-in `<repo>/.claude/ah2/agent-hierarchy.json` or the global `~/.claude/ah2/agent-hierarchy.json` is never run: `stream-open` warns `stream_setup in <path> was ignored: it is read only from <your file>`. No `ah` verb writes this key, and the verbs that rewrite that file keep it.
+- It runs once, as the last step, only when this call created the work tree. It does not run when the work tree already existed, with `--no-worktree`, with `--dry-run`, or for lane child teams, `spawn-one --stream` and `resume`. A reopened stream whose directory was deleted gets a new tree, so it runs again.
+
+`stream-open` waits for it and adds a `setup` object to its output (left out when no `stream_setup` is set). Example, with `stdout_tail` and `stderr_tail` the last 1024 bytes of each:
+
+```json
+"setup": {"ran": true, "ok": true, "argv": ["sh", "-c", "..."], "exit": 0, "timed_out": false, "seconds": 1.2, "stdout_tail": "", "stderr_tail": ""}
+```
+
+If it fails (non-zero exit, timeout, a command that cannot start, or an invalid `stream_setup`), the stream stays open, the exit code is unchanged, nothing is rolled back and it is not retried. `warnings` gets `stream setup failed (...); the stream is open; see setup.stderr_tail`. For a command that did not start, `setup` is `{ran: false, ok: false, error: "setup-config-invalid" | "setup-start-failed", message}` and the warning says `see setup.message`. To retry, run the command yourself in the work tree. A command that exits 127 with no output is reported as `setup-start-failed`.
 
 #### Work trees under the worktree gate
 
@@ -1144,7 +1176,7 @@ Lowering it below the live count dismisses no one; it refuses the next sub-orche
 
 A sub-orchestrator runs `<ah> roster stream-open <name> --team <X>-<ws>` (carved, like `spawn-one` and `move`, to its own child team): `<name>` and any `--branch` must start `<ws>-` (`lane-name`), `--base` may only be the lane base, and omitting it uses the lane base (`lane-base-fixed`), and at most `max_streams` child streams may be open (`lane-streams-full`).
 
-Its `spawn-one`/`spawn-ad-hoc` into the child team stop at `max_members` live members (`lane-members-full`). It may also run `stream-done` on its own child team's streams; the manager team's streams stay with the top Orchestrator.
+Its `spawn-one`/`spawn-ad-hoc` into the child team stop at `max_members` member rows (`lane-members-full`; a member counts until dismissed, live or not). It may also run `stream-done` on its own child team's streams; the manager team's streams stay with the top Orchestrator.
 
 #### Reassign a lane member
 
@@ -1164,7 +1196,7 @@ A sub-orchestrator may not pass `--replace-live` (`lane-replace-live`) or a pane
 
 Run by the owner of the manager team `<X>` (an unmarked Orchestrator shell). Allowed only for those four verbs and only on a confirmed lane child of the current incarnation of `<X>` (see `parent.team_id`); any other owner verb on the child is `not-team-owner` with text naming the lane, its lead and the four verbs, and anyone else gets today's refusal.
 
-The lane rules apply as they do to the lead (`role-not-for-lanes`, `lane-closed`, `lane-members-full`, `max_members`), and a spawn under a lead whose process is gone is refused `lane-lead-gone` (`dismiss` and `move` stay allowed).
+The lane rules apply as they do to the lead (`role-not-for-lanes`, `lane-closed`, `lane-members-full`, `max_members`: member rows, and a member counts until dismissed), and a spawn under a lead whose process is gone is refused `lane-lead-gone` (`dismiss` and `move` stay allowed).
 
 Rows written carry `placed_by`; each action is appended to the child's `parent_actions`, the child's `orchestrator{}` is never written, and removing the last member keeps the child's file with `members: []`. After the write, one `parent-action` event goes to `<lead>@<X>`; if it cannot be delivered the verb still exits 0 and stderr says `note: lane lead … not notified` (the journal holds the action).
 
@@ -1612,12 +1644,34 @@ Every built-in and custom role: class, agent, model, level, chain placement (`al
 #### Define or change a role
 
 ```
-<ah> roster role set <name> [--class advise|design|review|implement|legwork] [--agent <ref>] [--label <l>] [--description <d>] [--routes <r>] [--model <M>] [--dispatch peer|model] [--level global|repo|repo-user] [--scaffold repo|user] [--dry-run]
+<ah> roster role set <name> [--class advise|design|review|implement|legwork] [--agent <ref>] [--label <l>] [--description <d>] [--routes <r>] [--model <M>] [--dispatch peer|model] [--shell self-care] [--params a,b] [--level global|repo|repo-user] [--scaffold repo|user] [--dry-run]
 ```
 
-Upserts one row at one level (default: the level the role is already defined at, else `repo` with `--scaffold repo`, else `global`), seeded from the effective row. A built-in takes only `--agent`, `--model` and `--dispatch`. `--dispatch model` only for a legwork-class role (else exit 2). `--routes ""` / `--description ""` delete the key.
+Upserts one row at one level (default: the level the role is already defined at, else `repo` with `--scaffold repo`, else `global`), seeded from the effective row. A built-in takes only `--agent`, `--model`, `--dispatch` and `--params`. `--dispatch model` only for a legwork-class role (else exit 2). `--routes ""` / `--description ""` delete the key.
 
 The agent file is validated against the class contract: errors refuse the write and print each finding with its fix; warnings print and the write proceeds. `--scaffold` writes a template that passes the contract, and removes it again if the write fails. `--dry-run` writes nothing.
+
+`--params a,b` declares the [parameters](custom-roles.md#role-parameters) a member of the role needs: 1 to 8 names, each matching `^[a-z][a-z0-9-]{0,39}$`, comma-separated, order kept. `--params ""` deletes the key. A bad name is exit 2. A hand-edited `params` that is not a valid list is dropped with one warning, and the role stays usable. `role list` shows `params: a, b` for such a role; `--json` adds `params`.
+
+#### Set a role parameter
+
+```
+<ah> roster param set <name> <value> [--level repo-user|repo|global]
+<ah> roster param unset <name> [--level <L>]
+<ah> roster param list [--json]
+```
+
+A parameter is a value a role says its members need, such as a path to an engine profile. Values live in the top-level `params` object of the config level files, like `activeRoster`; per name the first level that has it wins: repo-user, then repo, then global. Anyone may run these verbs.
+
+- `set` writes `params.<name>`. The level defaults to `repo-user` inside a git repo, else `global`. A value is 1 to 500 characters with no newline or other control character, and is stored and shown as written: ah never opens or checks it as a path. The name need not be declared by any role yet. Exit 2 for a bad name or value, with nothing written.
+- `unset` removes it at `--level`, default the level it comes from. Exit 1 when no level has it.
+- `list` shows each name the roles of the resolved roster declare, plus each name set anywhere: its value and level (or `missing`) and the roles that declare it. `--json` prints `{"params": [{name, value, level, roles}]}`, with `value` and `level` null when missing.
+
+```
+ah roster param set engine-profile /work/engine/profile.json
+```
+
+A missing value never stops anything. `create`, `spawn-one` and `spawn-ad-hoc` start the member anyway and print `ah roster: warning — <member> (role <role>) needs parameter <name>, which is not set for this repo; it was started anyway and told so. Set it: ah roster param set <name> <value>` (also in the `warnings` array of the result; `--dry-run` prints it too). A member whose role declares parameters sees them in its session context, with `NOT SET` for a missing one, and in every `ah msg show` of a request addressed to its role. The `spawn-ad-hoc` path for a member in a custom harness prints no spawn warning, but the request footer still shows the block.
 
 #### Remove a role
 
@@ -1858,13 +1912,24 @@ The switch for member launch rules (the config key `member_allow`): permission r
 
 *Who runs it:* you, Orchestrator (writes); everyone (`list`).
 
-Usage: `add <scope> --key K --text T [--said W]` · `edit <scope> --key K --text T [--said W]` · `off <scope> --key K [--said W]` · `remove <scope> --key K [--said W]` · `list [<scope> | --member name@team | --item <work id>] [--all] [--json]`. A scope is `--repo`, `--team <name>`, `--project <work id>` or `--goal <work id>`
+Usage: `add <scope> --key K --text T [--said W]` · `edit <scope> --key K --text T [--said W]` · `off <scope> --key K [--said W]` · `remove <scope> --key K [--said W]` · `list [<scope> | --member name@team | --item <work id>] [--all] [--json]`. A scope is `--global`, `--roster <name>`, `--repo`, `--team <name>`, `--project <work id>` or `--goal <work id>`
 
-The user's operating principles at four levels; the most granular row of a key wins, an `off` row takes the key out for that scope and below, and `remove` lets the broader rule show through again.
+The user's operating principles at six levels; the most granular row of a key wins, an `off` row takes the key out for that scope and below, and `remove` lets the broader rule show through again.
 
-`list` prints the resolved list, by default the caller's, as `{"rules": [{"key", "text", "level", "scope", "by", "said", "updated_ms", "overrides"}], "off": [{"key", "level", "scope"}]}`; `--all` prints every row of the repo unresolved as `{"rows": [...]}`. Writes go through the daemon, and a write says `"live": "members see this at their next session start, compaction or brief"`.
+From broadest to most specific the levels are `global`, `roster`, `repo`, `team`, `project` and `goal`. So a repo rule beats a roster rule of the same key, and a roster rule beats a global one.
 
-These are injected principles: nothing checks that one was followed, and a rule never widens permissions. Exit codes: 0 ok, 1 not found, 2 refused, 3 conflict. Key `[a-z0-9-]{1,40}`, text at most 300 characters. **Who may write:** you, or the top-level Orchestrator with your own words in `--said` (recorded, not verified); anyone else gets exit 2. `list` is open to everyone.
+- **`--global`** is one rule that every session in every repo gets.
+- **`--roster <name>`** is one rule for every team built from the roster of that name, in any repo. The name is the identity: two repos that each define `rosters.game-factory` both get the `game-factory` rules. The name is 1 to 32 letters, digits or `-`, starting with a letter or digit, or `default`, which means a team built from the unnamed default block. The roster does not have to exist yet. A team started from a lane's parent team gets its parent's roster rules. A session with no team (a solo session) gets global and repo rules and no roster rules.
+
+```
+ah rules add --roster game-factory --key tests-first --text "Write the failing test before the fix."
+```
+
+Global and roster rules reach every repo, so add one only when you mean it. To switch one off in a single repo, run `ah rules off --repo --key <key>`; for a single team, `ah rules off --team <name> --key <key>`. `ah rules off --global --key <key>` with no global rule of that key exits 1.
+
+`list` prints the resolved list, by default the caller's, as `{"rules": [{"key", "text", "level", "scope", "by", "said", "updated_ms", "overrides"}], "off": [{"key", "level", "scope"}]}`; `--all` prints every row of the repo, and every global and roster row, unresolved as `{"rows": [...]}`. `list --global` shows the global rules alone. `list --roster <name>` shows the global rules and that roster's rules, and no repo rule. Any other `list` also shows the global rules, and the roster rules of the caller's team. In the text output a global rule is tagged `global` and a roster rule `roster <name>`; in JSON they have `level` `global` or `roster` and `scope` empty or the roster name. Global rules sit last in a member's block, so they are the first dropped when the block is full ("N more rules not shown"). Writes go through the daemon, and a write says `"live": "members see this at their next session start, compaction or brief"`.
+
+These are injected principles: nothing checks that one was followed, and a rule never widens permissions. Exit codes: 0 ok, 1 not found, 2 refused, 3 conflict. Key `[a-z0-9-]{1,40}`, text at most 300 characters. **Who may write:** you, or the top-level Orchestrator with your own words in `--said` (recorded, not verified); anyone else gets exit 2. The same holds for `--global` and `--roster`. `list` is open to everyone. `ah rules goal` refuses `--global` and `--roster`.
 
 #### `ah rules goal` (team goal)`
 

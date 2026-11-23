@@ -70,11 +70,13 @@ public static partial class WatchModule
     /// event is the one that waits for it.
     /// </summary>
     public static IReadOnlyList<QueueEntry> QueueUnstaffedFromFiles(
-        HierarchyServices hs, JsonValue teamRecord, IReadOnlyList<ChecklistEntry> entries, string hierarchyDir, string team, double nowMs, Func<string, bool> onJob, int? budget)
+        HierarchyServices hs, JsonValue teamRecord, IReadOnlyList<ChecklistEntry> entries, string hierarchyDir, string team, double nowMs, Func<string, bool> onJob, int? budget,
+        Func<int, int>? treeLive = null)
     {
         ArgumentNullException.ThrowIfNull(entries);
         var (members, dispatches, running) = QueueFactsAndRunningFromFiles(hs, teamRecord, hierarchyDir, team, onJob);
-        return HierarchyModule.QueueUnstaffed(HierarchyModule.ChecklistWithoutRunningDispatch(entries, running), members, dispatches, nowMs, budget, recentSpawnMs: 0);
+        var live = treeLive?.Invoke(HierarchyModule.QueueTeamLive(members));
+        return HierarchyModule.QueueUnstaffed(HierarchyModule.ChecklistWithoutRunningDispatch(entries, running), members, dispatches, nowMs, budget, recentSpawnMs: 0, live: live);
     }
 
     /// <summary>The budget a team gets when no run anchor of it or of an ancestor team names a level.</summary>
@@ -87,6 +89,10 @@ public static partial class WatchModule
     /// </summary>
     public static int? SessionBudgetOf(string? team, Func<string?, string?> anchorBodyOf, Func<string?, string?> parentOf) =>
         SessionBudget.ForTeam(team, anchorBodyOf, parentOf);
+
+    /// <summary><see cref="SessionBudgetOf"/> with the team that owns the budget: the root of the team tree the budget bounds (ah2-514 LB-1).</summary>
+    public static (int? Budget, string? Owner) SessionBudgetWithOwner(string? team, Func<string?, string?> anchorBodyOf, Func<string?, string?> parentOf) =>
+        SessionBudget.ForTeamWithOwner(team, anchorBodyOf, parentOf);
 
     /// <summary>The member and dispatch facts the queue rules read from the files: the one place both the stall rule and the queue view get them.</summary>
     public static (IReadOnlyList<QueueMember> Members, IReadOnlyList<QueueDispatch> Dispatches) QueueFactsFromFiles(

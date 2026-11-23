@@ -826,6 +826,14 @@ internal static class SpawnOne
         JsonValue memberRoute = candidateRoute is { } cr && MemberPlanning.HasPane(c, cr) ? cr : JsonValue.FromString("peer");
         var planEntry = CreatePlanning.PlanEntry(c, CreatePlanning.WithRoute(member, memberRoute), memberRoute, transport);
         var spawn = planEntry.Get("spawn") is { IsMap: true } sp ? sp.AsObject() : new JsonObject();
+
+        // RP-D6: an unset param is reported, a dry run included, and never stops the launch
+        var paramWarnings = CreatePlanning.MissingParamWarnings([planEntry]);
+        foreach (var w in paramWarnings)
+        {
+            c.Stderr.Write($"ah roster: warning — {w}\n");
+        }
+
         if (transport == "headless")
         {
             planEntry["headless_prompt"] = c.Opts.Text("prompt") ?? string.Empty;
@@ -879,6 +887,18 @@ internal static class SpawnOne
             RosterJson.Spread(dry, trust);
             MemberPlanning.SpreadRenamed(dry, renamedNow);
             CodexTrustNeeds.Attach(dry, CodexTrustNeeds.For(c, [member], c.LaunchCwd));
+            if (planEntry.Get("params") is { } dryParams)
+            {
+                dry["params"] = dryParams;
+            }
+
+            if (paramWarnings.Count > 0)
+            {
+                var dryWarnings = new JsonArray();
+                dryWarnings.AddRange(paramWarnings.Select(w => (JsonValue)w));
+                dry["warnings"] = dryWarnings;
+            }
+
             return new SpawnOutcome(dry, 0);
         }
 
@@ -1332,6 +1352,7 @@ internal static class SpawnOne
         RosterJson.Spread(spawnOut, validation);
         MemberPlanning.SpreadRenamed(spawnOut, renamedNow);
         var warnings = CreatePlanning.SpawnPlacementWarnings(c, dir);
+        warnings.AddRange(paramWarnings);
         warnings.AddRange(unknownLife);
         var workRoot = streamTree ?? WorkTreeAssignment.WorkRootOf(c, services.Hierarchy.Messages.RealCwd(launchCwd));
         warnings.AddRange(tmpWarnings);

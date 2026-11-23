@@ -224,6 +224,19 @@ internal sealed partial class ConfigCore
             row["shell"] = shell;
         }
 
+        // a malformed params is dropped, never the role
+        if (r.Get("params") is { } declared)
+        {
+            if (ConfigRegistry.ParamsError(declared) is { } why)
+            {
+                warnings.Add($"params ignored: {why}");
+            }
+            else
+            {
+                row["params"] = declared;
+            }
+        }
+
         if (cls.Chain)
         {
             if (r.Get("dispatch") is { } dispatch)

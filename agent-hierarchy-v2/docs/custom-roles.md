@@ -90,6 +90,7 @@ R role set tech-writer --class implement \
 | `--routes "<sentence>"` | makes it an alternative; `--routes ""` demotes it to a side role |
 | `--description`, `--label`, `--model` | as named; `--description ""` deletes the key |
 | `--dispatch model` | legwork only (exit 2 otherwise) |
+| `--params a,b` | the [parameters](#role-parameters) a member needs; `--params ""` deletes the key |
 | `--level global\|repo\|repo-user` | where the row lives; default is where the role is already defined, else `repo` with `--scaffold repo`, else `global` |
 | `--scaffold user\|repo` | write a template agent file that passes the contract: `~/.claude/agents/<agent>.md` or `<repo>/.claude/agents/<agent>.md` |
 | `--dry-run` | write nothing; print the findings |
@@ -132,6 +133,19 @@ in `cli-tools.md`):
 The marker is the exact string `self-care`; `role set` rejects any other value, and rejects the flag
 on a built-in. A role with the marker whose agent file still denies `Bash` simply has no shell;
 nothing is gated. The built-in Architect is gated by default.
+
+### Role parameters
+
+A role can say "a member of me needs the value `engine-profile` for this repo". The role names it; you set the value once.
+
+```
+R role set game-dev --params engine-profile,asset-root
+R param set engine-profile /work/engine/profile.json
+```
+
+Names are 1 to 8 per role, lowercase letters, digits and `-`. A built-in role can declare them too. Values are kept in the `params` object of the config files and the most specific level wins: repo-user, then repo, then global. `param set` writes repo-user in a repo unless you pass `--level`. When you create a team, the plan lists each parameter with its value or `NOT SET`, and `create --param <name>=<value>` sets it in the same call.
+
+A member sees its parameters at the start of its session (also after a compaction) and in every request addressed to its role. A missing one reads `NOT SET`, and the member is told to say so in its report, not to guess. Nothing is ever refused or delayed for a missing value, and ah never opens or checks the value as a path. A role run as a subagent gets no session start, so it sees them only in a request. A member in a custom harness started with `spawn-ad-hoc` gets no warning at spawn, but its requests still carry the block. Commands: [`roster param`](cli-tools.md#set-a-role-parameter).
 
 ### A custom `docs-writer` from before the role shipped
 

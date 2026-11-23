@@ -1331,6 +1331,9 @@ internal class WatchHostAdapter(
 
     public int? SessionBudgetOf(string home, string? team) => SessionBudgets.Of(graph, home, team, log);
 
+    public (int Live, IReadOnlyList<string> Unreadable)? SessionTreeLive(string home, string? team, IReadOnlyDictionary<string, int> ownedLive) =>
+        SessionBudgets.TreeLive(graph, home, team, ownedLive, log);
+
     public IReadOnlyList<JobFact> Jobs(string session, string home, string? team) =>
         WatchModule.JobsFromFiles(Hs.Status, SessionCwd(session) is { } cwd ? graph.Config.MainHierarchyDir(cwd) ?? home : home, team, log);
 

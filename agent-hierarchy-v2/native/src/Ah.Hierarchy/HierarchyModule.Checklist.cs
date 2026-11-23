@@ -42,10 +42,13 @@ public static partial class HierarchyModule
         IReadOnlyList<ChecklistEntry> entries, IReadOnlyList<QueueMember> members, IReadOnlyList<QueueDispatch> dispatches, double nowMs, double thresholdMs = QueueStallMs) =>
         ChecklistRules.Stalled(entries, members, dispatches, nowMs, thresholdMs, thresholdMs, thresholdMs);
 
-    /// <summary>The queued items past <paramref name="thresholdMs"/> whose role has no live member while the team is under <paramref name="budget"/> live members (null: no limit) and none of the role was spawned within <paramref name="thresholdMs"/>.</summary>
+    /// <summary>
+    /// The queued items past <paramref name="thresholdMs"/> whose role has no live member while the team is under <paramref name="budget"/> live members (null: no limit) and none of the role was spawned within <paramref name="thresholdMs"/>.
+    /// <paramref name="live"/> is the live count of the team tree the budget bounds (ah2-514 LB-2); null counts this team's live members only.
+    /// </summary>
     public static IReadOnlyList<QueueEntry> QueueUnstaffed(
-        IReadOnlyList<ChecklistEntry> entries, IReadOnlyList<QueueMember> members, IReadOnlyList<QueueDispatch> dispatches, double nowMs, int? budget, double thresholdMs = QueueStallMs, double? recentSpawnMs = null) =>
-        ChecklistRules.Unstaffed(entries, members, dispatches, nowMs, thresholdMs, budget, recentSpawnMs ?? thresholdMs);
+        IReadOnlyList<ChecklistEntry> entries, IReadOnlyList<QueueMember> members, IReadOnlyList<QueueDispatch> dispatches, double nowMs, int? budget, double thresholdMs = QueueStallMs, double? recentSpawnMs = null, int? live = null) =>
+        ChecklistRules.Unstaffed(entries, members, dispatches, nowMs, thresholdMs, budget, recentSpawnMs ?? thresholdMs, live);
 
     /// <summary>The queue line for a queued item whose role has no live member: <c>spawn &lt;role&gt; for &lt;item&gt;</c>.</summary>
     public static string ChecklistSpawnLine(string role, string itemKey) => $"spawn {role} for {itemKey}";

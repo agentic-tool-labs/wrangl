@@ -12,12 +12,12 @@ internal static class RoleVerbs
 {
     private static readonly string[] Flags =
     [
-        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "level", "scaffold", "from", "pin",
+        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "level", "scaffold", "from", "pin",
         "dry-run", "json", "cwd",
     ];
 
     private const string Usage =
-        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] (--dry-run | --pin sha256:…) | role trust <name> [--level L] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] (--dry-run | --pin sha256:…) | role trust <name> [--level L] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
 
     [Verb("roster:role")]
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
@@ -30,7 +30,7 @@ internal static class RoleVerbs
             if (!Flags.Contains(key))
             {
                 throw new RosterFailure(
-                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --level, --scaffold, --from, --pin, --dry-run, --json, --team, --cwd)");
+                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --level, --scaffold, --from, --pin, --dry-run, --json, --team, --cwd)");
             }
         }
 
@@ -172,6 +172,11 @@ internal static class RoleVerbs
                     ["path"] = validated && v.Member("file")?.Member("found") is { IsTruthy: true } fp ? fp : JsonValue.Null,
                     ["findings"] = findings,
                 };
+                if (entry.Member("params") is { IsArray: true } declared)
+                {
+                    row["params"] = declared;
+                }
+
                 if (entry.Member("from") is { IsTruthy: true } from)
                 {
                     row["from"] = from;
@@ -220,8 +225,9 @@ internal static class RoleVerbs
                     ? $" — \"{(from ? Esc(d) : T(d))}\" ({T(r.Member("description_source"))})"
                     : string.Empty;
                 var adopted = from ? $" — from {T(r.Member("from"))} ({T(r.Member("pin_state"))})" : string.Empty;
+                var declared = r.Member("params") is { IsArray: true } p ? $" — params: {string.Join(", ", p.AsArray().Select(x => T(x)))}" : string.Empty;
                 lines.Add(
-                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}");
+                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}{declared}");
             }
 
             foreach (var e in excluded)
@@ -312,11 +318,22 @@ internal static class RoleVerbs
 
             var builtin = _config.IsBuiltinRole(name);
             var dry = opts.IsTrue("dry-run");
-            foreach (var k in new[] { "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "scaffold", "level" })
+            foreach (var k in new[] { "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "scaffold", "level" })
             {
                 if (Valueless(k))
                 {
                     throw new RosterFailure($"role set: --{k} needs a value");
+                }
+            }
+
+            // a built-in may declare params too (role-params Amendment 1, Q2); "" deletes the key
+            JsonArray? declared = null;
+            if (OptText("params") is { Length: > 0 } paramsText)
+            {
+                declared = [.. paramsText.Split(',', StringSplitOptions.TrimEntries).Select(JsonValue.FromString)];
+                if (_config.ParamsError(declared) is { } paramsWhy)
+                {
+                    throw new RosterFailure($"role set {name}: --params: {paramsWhy}");
                 }
             }
 
@@ -382,6 +399,15 @@ internal static class RoleVerbs
             if (shell is not null)
             {
                 row["shell"] = shell;
+            }
+
+            if (declared is not null)
+            {
+                row["params"] = declared;
+            }
+            else if (OptText("params") is not null)
+            {
+                row.Remove("params");
             }
 
             foreach (var k in new[] { "description", "routes" })

@@ -8,7 +8,7 @@ internal sealed partial class ConfigCore
 {
     private const string AlwaysOrchestratorKey = "alwaysOrchestrator";
 
-    private static readonly string[] PreferenceOnlyKeys = ["version", "teamLayout", "modelTiers", "activeRoster", ITestingOrders.Key, AlwaysOrchestratorKey];
+    private static readonly string[] PreferenceOnlyKeys = ["version", "teamLayout", "modelTiers", "activeRoster", ParamsKey, ITestingOrders.Key, AlwaysOrchestratorKey];
 
     /// <summary>The top-level <c>teamLayout</c> of the global config file when it is a layout; warnings for an invalid one.</summary>
     internal (JsonValue? Layout, List<string> Warnings) TeamLayoutPreferenceTuple()
@@ -639,6 +639,14 @@ internal sealed partial class ConfigCore
             }
 
             roles[role] = TableFixedKeys(role, entry);
+            if (entry.Get("params") is { } declared && ConfigRegistry.ParamsError(declared) is { } paramsWhy)
+            {
+                warnings.Add($"ah: role {role}: params ignored: {paramsWhy}");
+                var withoutParams = roles[role].AsObject().Clone();
+                withoutParams.Remove("params");
+                roles[role] = withoutParams;
+            }
+
             if (entry.Get("agent") is not { } agent)
             {
                 continue;
