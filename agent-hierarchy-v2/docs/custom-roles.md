@@ -223,7 +223,7 @@ The rule reaches every member session and subagent of that team at start. A rule
 A review-class role can judge something with no diff: an image, a sound, a build, a document. The review is a verdict against the brief, and the evidence files ride on the report.
 
 1. **The brief** is an ordinary review request (`ah msg new … --item`). It names each artifact (a path, a URL or a `msg:<id>`) and lists the acceptance items.
-2. **The reviewer makes the evidence.** It cannot write files itself, so it has its runner produce them (screenshots, captures, measurements) in its `$TMPDIR`. Tools that save to their own paths work too.
+2. **The reviewer makes the evidence.** It can write files only in its own `$TMPDIR`, so it writes them there or has its runner produce them (screenshots, captures, measurements) in its `$TMPDIR`. Tools that save to their own paths work too.
 3. **It files the report with the files attached:**
 
 ```
@@ -234,7 +234,7 @@ The files are copied out of `$TMPDIR` into `<AH_HOME>/evidence/<id>/`, so they s
 
 4. **The first line is the usual verdict**: `VERDICT PASS <slug>@-` or `VERDICT CHANGES REQUIRED <slug>@-`. `@-` stands for no commit, which is what an artifact has; the verdict parser reads only the leading word. Then one line per acceptance item, citing its evidence as `[e1]`.
 
-What to know: the reviewer's own shell rules are unchanged. Every review-class role, whatever its name, gets the built-in reviewer's no-write rule: a file write is bounced to `ah msg fill --from <its role>`. A request answered by SendMessage has no message id, so it cannot carry evidence.
+What to know: the reviewer's own shell rules are unchanged. Every review-class role, whatever its name, gets the built-in reviewer's no-write rule: a file write is bounced to `ah msg fill --from <its role>`, except inside the member's own scratch directory (its `$TMPDIR`, under `<AH_HOME>/t/`), which every review-class member, the built-in reviewer included, may write with nothing declared. A request answered by SendMessage has no message id, so it cannot carry evidence.
 
 #### Write folders for a review-class role
 
