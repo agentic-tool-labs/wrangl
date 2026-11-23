@@ -14,6 +14,8 @@ internal sealed partial class ConfigCore
 
     public string ShellSelfCare => "self-care";
 
+    public string? ParamsError(JsonValue value) => ConfigRegistry.ParamsError(value);
+
     public IReadOnlyList<string> SelfCareBuiltinRoles => ["architect"];
 
     public int OneLineMax => ConfigRegistry.OneLineMax;

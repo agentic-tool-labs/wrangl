@@ -40,7 +40,14 @@ internal static partial class SessionBudget
     /// the budget is <see cref="Default"/>. <paramref name="anchorBodyOf"/> answers a team's open anchor text, or null when it has none;
     /// <paramref name="parentOf"/> answers a team's parent team, or null.
     /// </summary>
-    public static int? ForTeam(string? team, Func<string?, string?> anchorBodyOf, Func<string?, string?> parentOf)
+    public static int? ForTeam(string? team, Func<string?, string?> anchorBodyOf, Func<string?, string?> parentOf) =>
+        ForTeamWithOwner(team, anchorBodyOf, parentOf).Budget;
+
+    /// <summary>
+    /// <see cref="ForTeam"/> with the team that owns the budget (ah2-514 LB-2): the team whose open anchor decided, else the last team the walk
+    /// reached (the root, when the default applies). The budget bounds that team and every team below it.
+    /// </summary>
+    public static (int? Budget, string? Owner) ForTeamWithOwner(string? team, Func<string?, string?> anchorBodyOf, Func<string?, string?> parentOf)
     {
         ArgumentNullException.ThrowIfNull(anchorBodyOf);
         ArgumentNullException.ThrowIfNull(parentOf);
@@ -50,7 +57,7 @@ internal static partial class SessionBudget
         {
             if (anchorBodyOf(at) is { } body)
             {
-                return BudgetOf(LevelOf(body));
+                return (BudgetOf(LevelOf(body)), at);
             }
 
             if (parentOf(at) is not { } parent || !seen.Add(parent))
@@ -61,6 +68,6 @@ internal static partial class SessionBudget
             at = parent;
         }
 
-        return Default;
+        return (Default, at);
     }
 }

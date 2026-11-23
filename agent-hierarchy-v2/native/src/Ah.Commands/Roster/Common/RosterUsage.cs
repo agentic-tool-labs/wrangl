@@ -48,7 +48,9 @@ validation and reads/writes only, so validation lives in one place.
                       `roster` block; [--mode <auto|columns|grid>], the team's layout — an
                       explicit --mode on --spawn/--commit is stored as the default for future teams;
                       and [--member-model <name>=<model>], repeatable, the model a member runs on
-                      this time, which --spawn requires for every launched member with none stored.
+                      this time, which --spawn requires for every launched member with none stored;
+                      [--param <name>=<value>], repeatable, a value for a param a role declares,
+                      written at repo-user (as `param set` would) by --spawn/--commit; --plan lists it unwritten.
                       A legwork member with no model is skipped while task-gopher is installed:
                       `skipped_members` lists it, and its work goes to task-gopher subagents.
                       [--no-legwork-handoff] counts task-gopher as not installed, for a driver that
@@ -234,6 +236,10 @@ validation and reads/writes only, so validation lives in one place.
   ah roster whoami  [--team <T>] [--cwd <path>]
                       Read-only: which team member this session's pane is, and its
                       orchestrator's pid / liveness / best-effort reply address.
+  ah roster role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M]
+                      [--dispatch peer|model] [--shell self-care] [--params a,b] [--level L] [--scaffold repo|user]
+                      [--dry-run] [--cwd <path>]
+                      Defines or changes a role; --params names the params it declares ("" clears them).
   ah roster role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D]
                       [--routes R] [--model M] [--dispatch D] [--level L] (--dry-run | --pin sha256:…)
                       Adopts one role from an installed role pack (a plugin carrying ah-roles.json).
@@ -244,6 +250,12 @@ validation and reads/writes only, so validation lives in one place.
   ah roster pack show <plugin>[@<marketplace>] | --path <dir> [--json] [--cwd <path>]
                       Read-only: installed role packs; one pack's roles, findings, what else the
                       plugin carries, and its content digest.
+  ah roster param set <name> <value> [--level repo-user|repo|global] [--cwd <path>]
+  ah roster param unset <name> [--level L] [--cwd <path>]
+  ah roster param list [--json] [--cwd <path>]
+                      The values roles' `params` name (role set --params): per name the most specific
+                      level wins (repo-user, repo, global). set defaults to repo-user in a repo, else
+                      global; unset to the level the value comes from. Stored as written, never checked.
   ah roster doctor [--cwd <path>] [--check] [--brief] [--fix [--statusline-tap on|off]]
                       Read-only self-check: one JSON object, one row per thing that can be
                       wrong. `--check` exits 1 when any row is red. Writes nothing without --fix.

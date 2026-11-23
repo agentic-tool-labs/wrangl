@@ -374,7 +374,8 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
         _slots ??= new SlotFiles(g, null);
         var slotRecords = _slots.Read();
         var unstaffed = WatchModule.QueueUnstaffedFromFiles(
-            g.Hierarchy, record, entries, hierarchyDir, team, nowMs, session => WatchModule.SlotOf(slotRecords, session) is not null, SessionBudgets.Of(g, hierarchyDir, team));
+            g.Hierarchy, record, entries, hierarchyDir, team, nowMs, session => WatchModule.SlotOf(slotRecords, session) is not null, SessionBudgets.Of(g, hierarchyDir, team),
+            own => SessionBudgets.TreeLive(g, hierarchyDir, team, new Dictionary<string, int>(StringComparer.Ordinal) { [team] = own })?.Live ?? own);
         return [.. unstaffed.Select(static q => (q.Role, Ah.Hierarchy.HierarchyModule.ChecklistKey(q.Entry)))];
     }
 

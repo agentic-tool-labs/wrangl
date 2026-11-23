@@ -4691,6 +4691,81 @@ public sealed partial class RosterTeamVerbTests : IDisposable
     }
 
     [Fact]
+    public void TeamsLiveSessionsAddsEachTeamsLiveMembersOnceAndLeavesAGoneMemberOut()
+    {
+        WriteTeam("proj", LiveTeamJson("tmux", TwoPeers));
+        WriteTeam("lane", LiveTeamJson(
+            "tmux",
+            "{\"role\":\"implementor\",\"name\":\"lane-implementor\",\"route\":\"peer\",\"model\":\"sonnet\"},{\"role\":\"implementor\",\"name\":\"lane-gone\",\"route\":\"peer\",\"model\":\"sonnet\"}").TrimEnd('}')
+            + ",\"parent\":{\"team\":\"proj\",\"stream\":\"lane\"}}");
+        foreach (var (name, team) in new[] { ("proj-implementor", "proj"), ("proj-reviewer", "proj"), ("lane-implementor", "lane") })
+        {
+            _sandbox.PlantPeers(
+                Hierarchy,
+                $"{{\"type\":\"peer\",\"status\":\"up\",\"name\":\"{name}\",\"role\":\"implementor\",\"session_id\":\"sess-{name}\",\"pid\":{LivePidOfAnotherProcess()},\"team\":\"{team}\",\"ts\":\"{DateTimeOffset.UtcNow:yyyy-MM-dd'T'HH:mm:ss.fff'Z'}\"}}\n");
+        }
+
+        AppendGoneRow("lane-gone", "lane");
+
+        var (code, stdout, stderr) = Roster("teams");
+
+        Assert.True(code == 0, stdout + stderr);
+        var result = JsonText.Parse(stdout).AsObject();
+        int Members(string team) => (int)result["teams"].AsArray().Single(r => r.Member("name")?.AsString() == team).Member("members")!.Value.AsNumber();
+        Assert.Equal((2, 1), (Members("proj"), Members("lane")));
+        Assert.Equal(3, (int)result["live_sessions"].AsObject()["members"].AsNumber());
+    }
+
+    // ---------------------------------------------------------------- ah2-514 LB-2: the session budget counts the team tree
+
+    private void LiveRow(string name, string team) =>
+        _sandbox.PlantPeers(
+            Hierarchy,
+            $"{{\"type\":\"peer\",\"status\":\"up\",\"name\":\"{name}\",\"role\":\"implementor\",\"session_id\":\"sess-{name}\",\"pid\":{LivePidOfAnotherProcess()},\"team\":\"{team}\",\"ts\":\"{DateTimeOffset.UtcNow:yyyy-MM-dd'T'HH:mm:ss.fff'Z'}\"}}\n");
+
+    private static string Peer(string name, string role = "implementor") => $"{{\"role\":\"{role}\",\"name\":\"{name}\",\"route\":\"peer\",\"model\":\"sonnet\"}}";
+
+    /// <summary>proj (2 live) with lane below it (1 live, 1 gone), and other (1 live), a team outside the tree.</summary>
+    private void LaneTree(string projExtra = "")
+    {
+        WriteTeam("proj", LiveTeamJson("tmux", Peer("proj-implementor") + "," + Peer("proj-reviewer") + projExtra));
+        WriteTeam("lane", LiveTeamJson("tmux", Peer("lane-implementor") + "," + Peer("lane-gone")).TrimEnd('}') + ",\"parent\":{\"team\":\"proj\",\"stream\":\"lane\"}}");
+        WriteTeam("other", LiveTeamJson("tmux", Peer("other-implementor")));
+        foreach (var (name, team) in new[] { ("proj-implementor", "proj"), ("proj-reviewer", "proj"), ("lane-implementor", "lane"), ("other-implementor", "other") })
+        {
+            LiveRow(name, team);
+        }
+
+        AppendGoneRow("lane-gone", "lane");
+    }
+
+    [Fact]
+    public void LaneMembersCountTowardTheRootBudgetAndATeamOutsideTheTreeDoesNot()
+    {
+        LaneTree();
+        var graph = JobGraph();
+        var none = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        Assert.Equal(3, SessionBudgets.TreeLive(graph, Hierarchy, "proj", none)!.Value.Live);
+        Assert.Equal(3, SessionBudgets.TreeLive(graph, Hierarchy, "lane", none)!.Value.Live); // a lane with no anchor of its own counts the root's tree
+        Assert.Equal(5, SessionBudgets.TreeLive(graph, Hierarchy, "proj", new Dictionary<string, int>(StringComparer.Ordinal) { ["proj"] = 4 })!.Value.Live); // an owned team's count is the session's
+        Assert.Equal(1, SessionBudgets.TreeLive(graph, Hierarchy, "other", none)!.Value.Live);
+    }
+
+    [Fact]
+    public void ASubOrchestratorRecordedInItsParentAndOwningTheLaneCountsOnce()
+    {
+        // the lane's orchestrator record names this process, which is live; only proj-sub's row in proj is counted
+        LaneTree("," + Peer("proj-sub", "sub-orchestrator"));
+        LiveRow("proj-sub", "proj");
+
+        var tree = SessionBudgets.TreeLive(JobGraph(), Hierarchy, "lane", new Dictionary<string, int>(StringComparer.Ordinal));
+
+        Assert.Equal(4, tree!.Value.Live);
+        Assert.Empty(tree.Value.Unreadable);
+    }
+
+    [Fact]
     public void ALiveHolderWhoseRecordedStartIsNowAnotherProcessesDoesNotHoldTheTeam()
     {
         _callers = new RecordingCallers { StartText = SelfStart, OwnerGone = true };

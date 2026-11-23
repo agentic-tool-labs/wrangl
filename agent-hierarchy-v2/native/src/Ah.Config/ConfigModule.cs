@@ -20,6 +20,9 @@ public sealed record ResolveOptions(
 
 public sealed record TeamPrefixResult(string Prefix, string Source);
 
+/// <summary>One role parameter: its value as written and the level it came from (<c>repo-user</c>, <c>repo</c> or <c>global</c>), or both null when no level sets it.</summary>
+public sealed record RoleParam(string Name, string? Value, string? Level);
+
 /// <summary><c>resolveHierarchyRole</c>: the role, whether the payload named it directly, and the config read to find it, when one was read.</summary>
 public sealed record HierarchyRole(string? Role, bool Direct, JsonObject? Resolved)
 {
@@ -337,6 +340,19 @@ public interface IConfigCore
     /// <summary><c>SHELL_SELF_CARE</c>: the <c>shell</c> registry value that opts a custom role into the self-care shell gate.</summary>
     string ShellSelfCare { get; }
 
+    /// <summary>Why <paramref name="value"/> is not a role's <c>params</c> (1 to 8 distinct names, each <c>^[a-z][a-z0-9-]{0,39}$</c>), or null when it is.</summary>
+    string? ParamsError(JsonValue value);
+
+    /// <summary>Every role parameter set at any level, the most specific level's value per name (repo-user, repo, global). Never throws for a missing or unreadable level file.</summary>
+    IReadOnlyList<RoleParam> ParamValues(string? cwd);
+
+    /// <summary>The parameters <paramref name="role"/> declares, in order, each with its value and level or none; <paramref name="resolved"/> is read for <paramref name="cwd"/> when null.</summary>
+    IReadOnlyList<RoleParam> RoleParams(string? cwd, string role, JsonObject? resolved = null);
+
+    string? ParamNameError(string name);
+
+    string? ParamValueError(string value);
+
     IReadOnlyList<string> SelfCareBuiltinRoles { get; }
 
     int OneLineMax { get; }
@@ -562,6 +578,28 @@ public static partial class ConfigModule
     public const string RoleNamePattern = "[a-z][a-z0-9-]{0,30}";
 
     public static ModuleRegistry Registry => GeneratedRegistry.Instance;
+
+    /// <summary>The one line a session or brief gets when its role parameters cannot be read (RP-D7). The session always starts.</summary>
+    public const string ParamsUnreadableLine = "ah: role parameters could not be read; run ah roster param list";
+
+    /// <summary>
+    /// The role-parameter block a member's session notice and its briefs carry (RP-D7, RP-D8), or null when the role declares none. Each value through
+    /// <see cref="Ah.Core.Text.SafeText"/>, so a value cannot forge a frame.
+    /// </summary>
+    public static string? ParamBlock(IReadOnlyList<RoleParam> declared)
+    {
+        ArgumentNullException.ThrowIfNull(declared);
+        if (declared.Count == 0)
+        {
+            return null;
+        }
+
+        var lines = new List<string> { "Role parameters for this repo (`ah roster param list` shows them):" };
+        lines.AddRange(declared.Select(p => p.Value is { } value
+            ? $"- {p.Name}: {Ah.Core.Text.SafeText.Render(value, (500 * 6) + 2)} ({p.Level})"
+            : $"- {p.Name}: NOT SET. Do not guess it: say so in your report and ask your lead to have it set (ah roster param set {p.Name} <value>)."));
+        return string.Join('\n', lines);
+    }
 
     /// <summary>The shape of a team alias or named-roster name: 1-32 letters, digits or <c>-</c>, starting with a letter or digit.</summary>
     public static bool IsTeamAliasShape(string? name) => ConfigRegistry.IsTeamAliasShape(name);

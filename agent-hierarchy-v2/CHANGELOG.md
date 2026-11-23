@@ -4,6 +4,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.50] - 2026-11-23
+
+### Added
+
+- **Role parameters.** A role can declare the values it needs with `ah roster role set <role> --params a,b`
+  (built-in roles too). `ah roster create --param <name>=<value>` sets them when a team is created from a roster,
+  and the plan lists any that are `NOT SET`; `ah roster param set|unset|list` changes them later. A member's
+  session start and each brief to that role carry the values. A missing value never stops a spawn: the spawn
+  output, the context and the brief say it is not set.
+- **A stream setup command.** `stream_setup` in your own per-repo config file runs once when
+  `ah roster stream-open` creates a work tree (an import cache, a package restore), with a timeout, and its result
+  is in the output. A failure leaves the stream open and is reported. A value in a checked-in or global file is
+  ignored with a warning. See `docs/cli-tools.md`.
+- **`ah roster teams` shows `live_sessions`**: live members and harness processes on the machine.
+
+### Changed
+
+- **The session budget covers the whole team tree.** Lane members count toward the budget of the team that owns
+  it, each session once; a Sub-Orchestrator counts once, as its parent team's member. A team with no lanes
+  counts as before. The stall alarm names a lane team whose record could not be read.
+
+### Fixed
+
+- **`ah roster` usage lists `create --param` and the plain `role set` form.**
+
 ## [2.0.49] - 2026-11-23
 
 ### Added

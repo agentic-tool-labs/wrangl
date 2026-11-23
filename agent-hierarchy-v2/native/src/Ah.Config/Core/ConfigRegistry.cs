@@ -39,7 +39,44 @@ internal static partial class ConfigRegistry
     internal static readonly string[] RosterLayoutValues = ["auto", "columns", "grid"];
     internal static readonly string[] BuiltinFixedKeys = ["class", "label", "description", "routes"];
     internal static readonly string[] ReservedRoleNames = ["orchestrator", "advisor", "other", "chief"];
-    internal static readonly string[] PackRoleFields = ["class", "agent", "label", "description", "routes", "model", "dispatch"];
+    internal static readonly string[] PackRoleFields = ["class", "agent", "label", "description", "routes", "model", "dispatch", "params"];
+
+    /// <summary>The most parameter names one role may declare.</summary>
+    internal const int MaxParams = 8;
+
+    [GeneratedRegex("^[a-z][a-z0-9-]{0,39}\\z", RegexOptions.CultureInvariant)]
+    internal static partial Regex ParamNameRegex();
+
+    /// <summary>Why <paramref name="value"/> is not a role's <c>params</c> (an array of 1 to <see cref="MaxParams"/> distinct parameter names), or null when it is.</summary>
+    internal static string? ParamsError(JsonValue value)
+    {
+        if (!value.IsArray)
+        {
+            return "params must be an array of parameter names";
+        }
+
+        var names = value.AsArray();
+        if (names.Count is 0 or > MaxParams)
+        {
+            return $"params holds 1 to {MaxParams} names; this has {names.Count}";
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var name in names)
+        {
+            if (!name.IsText || !ParamNameRegex().IsMatch(name.AsString()))
+            {
+                return $"parameter name {JsonText.Stringify(name, 0)} must match ^[a-z][a-z0-9-]{{0,39}}$";
+            }
+
+            if (!seen.Add(name.AsString()))
+            {
+                return $"parameter name {name.AsString()} is listed twice";
+            }
+        }
+
+        return null;
+    }
 
     internal static readonly IReadOnlyList<ClassSpec> Classes =
     [

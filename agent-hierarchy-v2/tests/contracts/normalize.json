@@ -461,6 +461,25 @@
       }
     },
     {
+      "name": "live-sessions-harnesses-json",
+      "applies_to": [
+        "stdout"
+      ],
+      "keys": [
+        "harnesses"
+      ],
+      "any_value": true,
+      "within": "live_sessions",
+      "replace": "\"<N>\"",
+      "example": {
+        "in": "{\"live_sessions\":{\"members\":2,\"harnesses\":23}}",
+        "out": "{\"live_sessions\":{\"members\":2,\"harnesses\":\"<N>\"}}"
+      },
+      "counterexample": {
+        "in": "{\"load\":{\"members\":2},\"harnesses\":23,\"live\":{\"harnesses\":23}}"
+      }
+    },
+    {
       "name": "gc-json",
       "applies_to": [
         "file",

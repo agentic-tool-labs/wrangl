@@ -139,6 +139,13 @@ public static partial class MeshModule
     /// <summary>Whether a process command line is the Claude harness: <c>claude</c>, or node or bun running a claude-code path.</summary>
     public static bool IsHarnessCommand(string? commandLine) => HarnessCommand.Matches(commandLine);
 
+    /// <summary>The Claude harness processes on this machine, every repo and non-ah session included; null when the process table cannot be read.</summary>
+    public static int? HarnessCount(IProcessTable processes)
+    {
+        ArgumentNullException.ThrowIfNull(processes);
+        return processes.All() is { } all ? all.Count(static p => IsHarnessCommand(p.Command)) : null;
+    }
+
     /// <summary>
     /// Whether <paramref name="pid"/> is a Claude harness session: <paramref name="claudePid"/> (the environment's harness pid)
     /// is unset or this pid, a session-pids row exists for it from its start on, and its command is the harness.

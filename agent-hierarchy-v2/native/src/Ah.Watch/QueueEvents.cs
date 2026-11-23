@@ -101,7 +101,8 @@ internal static class QueueEvents
         Func<string?, IReadOnlyList<ReadyBacklogItem>>? readyBacklog = null,
         IDictionary<string, (double At, string Signature)>? idleCapacityAt = null,
         IDictionary<string, double>? remindAt = null,
-        IReadOnlyList<QaJob>? qaJobs = null)
+        IReadOnlyList<QaJob>? qaJobs = null,
+        Func<string?, (int Live, IReadOnlyList<string> Unreadable)?>? treeLiveOf = null)
     {
         foreach (var stale in unstaffedAt?.Where(e => now - e.Value >= thresholdMs).Select(static e => e.Key).ToList() ?? [])
         {
@@ -265,8 +266,10 @@ internal static class QueueEvents
             if (budgetOf is not null && HierarchyModule.QueueUnstaffed(entries, members, dispatches, now, null, thresholdMs).Count > 0)
             {
                 var budget = budgetOf(team.Name);
+                // ah2-514 LB-2: the budget bounds the whole team tree, lanes included
+                var tree = budget is null ? null : treeLiveOf?.Invoke(team.Name);
                 var emitted = raisedBefore;
-                foreach (var unstaffed in HierarchyModule.QueueUnstaffed(entries, members, dispatches, now, budget, thresholdMs))
+                foreach (var unstaffed in HierarchyModule.QueueUnstaffed(entries, members, dispatches, now, budget, thresholdMs, live: tree?.Live))
                 {
                     var itemKey = HierarchyModule.ChecklistKey(unstaffed.Entry);
                     var key = $"{session}|{teamName}|{UnstaffedName}|{itemKey}|{unstaffed.Role}|{unstaffed.Entry.Item.StateSince}";
@@ -277,13 +280,14 @@ internal static class QueueEvents
                     }
 
                     emitted = true;
-                    var live = HierarchyModule.QueueTeamLive(members);
+                    var live = tree?.Live ?? HierarchyModule.QueueTeamLive(members);
                     var limit = budget is { } n ? JsonValue.FromNumber(n) : JsonValue.FromString("max");
                     var spawn = $"spawn a {unstaffed.Role} for {itemKey} (spawn-one if the roster has the role, else spawn-ad-hoc)";
+                    var unread = tree is { Unreadable.Count: > 0 } t ? $"; not read, counted as 0: {string.Join(", ", t.Unreadable)}" : string.Empty;
                     var unstaffedEvent = new WatchEvent(
                         null,
                         "QUEUE-STALL-UNSTAFFED",
-                        $"ahd alarm: queue-stall-unstaffed — {spawn} (queued {Minutes(now - unstaffed.QueuedSinceMs)}m, no live {unstaffed.Role}, team live {live} of {(budget is { } b ? b.ToString(System.Globalization.CultureInfo.InvariantCulture) : "max")})\n"
+                        $"ahd alarm: queue-stall-unstaffed — {spawn} (queued {Minutes(now - unstaffed.QueuedSinceMs)}m, no live {unstaffed.Role}, team live {live} of {(budget is { } b ? b.ToString(System.Globalization.CultureInfo.InvariantCulture) : "max")}{unread})\n"
                         + $"Operational call (O2): {spawn}, or mark the item blocked/waiting_user with a note, {AfterWayOut(itemKey)}. (cadence step 3 applies: one new stream per tick)",
                         new JsonObject { ["request_id"] = JsonValue.Null, ["item"] = itemKey, ["role"] = unstaffed.Role, ["live"] = live, ["budget"] = limit })
                     { Name = UnstaffedName, Team = team.Name };

@@ -179,8 +179,9 @@ after a compaction and with each brief, and a brief can say how it serves the go
 that thinks a task is off-goal says so and still does it.
 
 Your standing operating principles, such as "never add a dependency without asking", are **rules of engagement**, kept
-with `ah rules add`. A rule can apply to the whole repository, one team, one project or one goal, and the most specific
-one wins. Members see rules the same way as the goal. Nothing checks that a rule was followed, and a rule never widens
+with `ah rules add`. A rule can apply everywhere (`--global`), to every team built from one roster in any repo (`--roster`), to the whole
+repository, one team, one project or one goal, and the most specific one wins. A repo rule beats a roster rule, and a
+roster rule beats a global one. Members see rules the same way as the goal. Nothing checks that a rule was followed, and a rule never widens
 what a member is allowed to do. You can also manage rules on the [web page](web-ui.md#rules).
 
 ## The checklist and the Sitrep

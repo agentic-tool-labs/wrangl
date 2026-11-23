@@ -46,7 +46,7 @@ internal sealed class LoadSource(string ahHome, IProcessTable processes) : ILoad
 
     public string? MemoryPressure() => PlatformModule.MachineMemoryPressure();
 
-    public int Harnesses() => processes.All() is { } all ? all.Count(p => MeshModule.IsHarnessCommand(p.Command)) : 0;
+    public int Harnesses() => MeshModule.HarnessCount(processes) ?? 0;
 
     public string? ConfigText()
     {

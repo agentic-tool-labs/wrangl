@@ -109,17 +109,29 @@ internal static class CreateVerb
             warnings.AddRange(CreatePlanning.SpawnPlacementWarnings(c, dir));
         }
 
+        JsonArray? paramWrites = null;
         JsonObject WithWarnings(JsonObject obj)
         {
-            if (warnings.Count == 0)
+            if (warnings.Count == 0 && paramWrites is null)
             {
                 return obj;
             }
 
             var copy = obj.Clone();
-            var list = new JsonArray();
-            list.AddRange(warnings.Select(w => (JsonValue)w));
-            copy["warnings"] = list;
+            if (warnings.Count > 0)
+            {
+                var list = new JsonArray();
+                list.AddRange(warnings.Select(w => (JsonValue)w));
+                copy["warnings"] = list;
+            }
+
+            if (paramWrites is not null)
+            {
+                var writes = new JsonArray();
+                writes.AddRange(paramWrites);
+                copy["param_writes"] = writes;
+            }
+
             return copy;
         }
 
@@ -127,14 +139,17 @@ internal static class CreateVerb
         TeamScopes.CheckNewTeamName(c, dir);
         TeamScopes.GuardTeamPrefixCollision(c, dir, c.TeamFile);
         TeamScopes.GuardLiveTeamAtScope(c, dir, committing);
+
+        // RP-D10/D11: before planning, so a launched member's plan entry carries what was just set
+        paramWrites = CreateParams(c, dir, spawning || committing, warnings);
         if (yes)
         {
-            return SpawnAndCommit(c, dir, WithWarnings, child);
+            return SpawnAndCommit(c, dir, WithWarnings, warnings, child);
         }
 
         if (spawning)
         {
-            return Spawn(c, dir, WithWarnings);
+            return Spawn(c, dir, WithWarnings, warnings);
         }
 
         if (committing)
@@ -143,6 +158,12 @@ internal static class CreateVerb
         }
 
         var plan = WithWarnings(CreatePlanning.GetMembersPlan(c, dir));
+        if (ParamsOfPlan(c, plan) is { Count: > 0 } declared)
+        {
+            plan = plan.Clone();
+            plan["params"] = declared;
+        }
+
         if (child is not null)
         {
             plan = plan.Clone();
@@ -168,6 +189,90 @@ internal static class CreateVerb
         return 0;
     }
 
+    // ---------------------------------------------------------------- params (role-params RP-D10, RP-D11)
+
+    /// <summary>
+    /// <c>--param name=value</c>, repeatable: every pair is checked before any is written, then, when <paramref name="write"/> (a create that launches or records),
+    /// written at repo-user by <c>param set</c>'s writer. A plan-only create lists them unwritten. A name no role in the roster declares is written too, with a warning.
+    /// </summary>
+    private static JsonArray? CreateParams(RosterContext c, string dir, bool write, List<string> warnings)
+    {
+        var given = c.Opts.All("param");
+        if (given.Count == 0)
+        {
+            return null;
+        }
+
+        var config = c.Services.Config;
+        var pairs = new List<(string Name, string Value)>();
+        foreach (var arg in given)
+        {
+            var eq = arg.IndexOf('=', StringComparison.Ordinal);
+            if (eq <= 0)
+            {
+                throw new RosterFailure($"create --param {arg}: give it as <name>=<value>; nothing was written");
+            }
+
+            var (name, value) = (arg[..eq], arg[(eq + 1)..]);
+            if ((config.ParamNameError(name) ?? config.ParamValueError(value)) is { } why)
+            {
+                throw new RosterFailure($"create --param {name}: {why}; nothing was written");
+            }
+
+            pairs.Add((name, value));
+        }
+
+        var declared = CreatePlanning.CreateSourceMembers(c, dir).Select(m => MemberPlanning.Text(m, "role")).OfType<string>().Distinct(StringComparer.Ordinal)
+            .SelectMany(role => config.RoleParams(c.Cwd, role, c.Registry)).Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
+        var files = new LevelFiles(c);
+        var rows = new JsonArray();
+        foreach (var (name, value) in pairs)
+        {
+            var path = write ? MemberPlanning.Text(ParamVerb.Write(c, files, "repo-user", name, value).Get("path")) : files.PathOf("repo-user");
+            rows.Add(new JsonObject { ["name"] = name, ["value"] = value, ["level"] = "repo-user", ["path"] = path ?? string.Empty, ["written"] = write });
+            if (!declared.Contains(name))
+            {
+                var w = $"parameter {name} is declared by no role in this roster; {(write ? "it was written anyway" : "a committed create would write it anyway")}";
+                warnings.Add(w);
+                c.Stderr.Write($"ah roster: warning — {w}\n");
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>Every param the plan's members declare, with its value and level, or <c>NOT SET</c>, and the members that need it.</summary>
+    private static JsonArray ParamsOfPlan(RosterContext c, JsonObject plan)
+    {
+        var needs = new SortedDictionary<string, JsonArray>(StringComparer.Ordinal);
+        foreach (var m in plan.Get("members") is { IsArray: true } ms ? ms.AsArray() : new JsonArray())
+        {
+            if (m.Member("params") is { IsMap: true } values)
+            {
+                foreach (var name in values.AsObject().Keys)
+                {
+                    (needs.TryGetValue(name, out var list) ? list : needs[name] = new JsonArray()).Add(MemberPlanning.Text(m.Member("name")) ?? string.Empty);
+                }
+            }
+        }
+
+        var set = c.Services.Config.ParamValues(c.Cwd).ToDictionary(p => p.Name, StringComparer.Ordinal);
+        var rows = new JsonArray();
+        foreach (var (name, members) in needs)
+        {
+            var found = set.GetValueOrDefault(name);
+            rows.Add(new JsonObject
+            {
+                ["name"] = name,
+                ["value"] = found?.Value is { } v ? v : "NOT SET",
+                ["level"] = found?.Level is { } l ? l : JsonValue.Null,
+                ["members"] = members,
+            });
+        }
+
+        return rows;
+    }
+
     // ---------------------------------------------------------------- --commit
 
     private static string JsTypeof(JsonValue v) => v.IsText ? "string" : v.IsNumber ? "number" : v.IsBool ? "boolean" : "object";
@@ -179,10 +284,10 @@ internal static class CreateVerb
         ["role", "name", "kind", "args", "model", "effort", "route", "autoMode", "transport_id", "tab_id", "workspace_id", "launch_cwd", "spawn_nonce", Ah.Core.Mux.HerdrFlavour.Field];
 
     /// <summary><c>create --yes</c>: plan, launch and record the team in one call; prints <c>{plan, spawn, commit}</c>.</summary>
-    private static int SpawnAndCommit(RosterContext c, string dir, Func<JsonObject, JsonObject> withWarnings, ChildTeamSpec? child)
+    private static int SpawnAndCommit(RosterContext c, string dir, Func<JsonObject, JsonObject> withWarnings, List<string> warnings, ChildTeamSpec? child)
     {
         var all = new JsonObject();
-        var exit = Spawn(c, dir, withWarnings, all);
+        var exit = Spawn(c, dir, withWarnings, warnings, all);
         if (exit != 0 || all.Get("spawn") is not { IsMap: true } spawned)
         {
             c.Out(all);
@@ -618,7 +723,7 @@ internal static class CreateVerb
 
     // ---------------------------------------------------------------- --spawn
 
-    private static int Spawn(RosterContext c, string dir, Func<JsonObject, JsonObject> withWarnings, JsonObject? into = null)
+    private static int Spawn(RosterContext c, string dir, Func<JsonObject, JsonObject> withWarnings, List<string> warnings, JsonObject? into = null)
     {
         var launch = c.Services.Launch!;
         if (c.Opts.Text("from") is not null)
@@ -635,6 +740,13 @@ internal static class CreateVerb
         var transport = MemberPlanning.Text(plan, "transport") ?? string.Empty;
         var layout = plan.Get("layout") is { IsMap: true } l ? l.AsObject() : new JsonObject();
         var members = plan.Get("members") is { IsArray: true } ml ? ml.AsArray().Select(MemberPlanning.Obj).ToList() : [];
+
+        // RP-D6: an unset param is reported and never stops the launch
+        foreach (var w in CreatePlanning.MissingParamWarnings(members.Select(m => (JsonValue)m)))
+        {
+            warnings.Add(w);
+            c.Stderr.Write($"ah roster: warning — {w}\n");
+        }
         var peers = members.Where(m => MemberPlanning.HasPane(c, m.Get("route"))).ToList();
         var needing = MemberPlanning.PlanNeedingModel(c, plan.Get("members") is { IsArray: true } pm ? pm.AsArray() : new JsonArray());
         if (needing.Count > 0)

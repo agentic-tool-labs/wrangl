@@ -298,6 +298,168 @@ internal static class StreamVerbs
         return 70;
     }
 
+    // ---------------------------------------------------------------- stream setup (ah2-513)
+
+    private const string SetupKey = "stream_setup";
+
+    /// <summary>The <c>stream_setup</c> value read from one config file: valid (<c>Argv</c> set) or invalid (<c>Problem</c> set).</summary>
+    private sealed record SetupConfig(string Path, List<string>? Argv, int TimeoutSeconds, string? Problem);
+
+    /// <summary><paramref name="path"/>'s top-level <c>stream_setup</c>; null when the file is absent, unreadable, not JSON or has no key.</summary>
+    private static JsonValue? SetupKeyIn(RosterContext c, string? path)
+    {
+        if (path is not { Length: > 0 } || !c.Services.Files.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonText.Parse(Encoding.UTF8.GetBytes(c.Services.Files.ReadText(path))) is { IsMap: true } doc ? doc.AsObject().Get(SetupKey) : null;
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The main checkout's repo-user config file, the one level <c>stream_setup</c> is read from (SS-1); null outside a checkout.</summary>
+    private static string? RepoUserPath(RosterContext c) =>
+        c.Services.Config.CheckoutRoot(c.Cwd) is { Length: > 0 } root
+            ? Ah.Core.Text.AhPaths.RepoUserConfig(c.Services.Environment.HomeDirectory, c.Services.Config.PathSlug(root))
+            : null;
+
+    /// <summary>SS-1/SS-2: <c>stream_setup</c> from the repo-user level file only, checked; null when that file has no such key.</summary>
+    private static SetupConfig? ReadSetup(RosterContext c)
+    {
+        var path = RepoUserPath(c);
+        if (SetupKeyIn(c, path) is not { } value)
+        {
+            return null;
+        }
+
+        SetupConfig Invalid(string why) => new(path!, null, 0, $"{SetupKey} in {path}: {why}");
+        if (!value.IsMap)
+        {
+            return Invalid("must be an object {argv, timeout_seconds}");
+        }
+
+        var block = value.AsObject();
+        if (block.Get("argv") is not { IsArray: true } argvValue || argvValue.AsArray().Count == 0
+            || argvValue.AsArray().Any(a => !a.IsText || a.AsString().Length == 0))
+        {
+            return Invalid("argv must be a non-empty array of non-empty strings");
+        }
+
+        var timeout = 300;
+        if (block.Get("timeout_seconds") is { } t)
+        {
+            if (!t.IsNumber || t.AsNumber() != Math.Floor(t.AsNumber()) || t.AsNumber() < 1 || t.AsNumber() > 1800)
+            {
+                return Invalid("timeout_seconds must be an integer from 1 to 1800");
+            }
+
+            timeout = (int)t.AsNumber();
+        }
+
+        return new SetupConfig(path!, argvValue.AsArray().Select(a => a.AsString()).ToList(), timeout, null);
+    }
+
+    private static string Tail(ReadOnlyMemory<byte> bytes) =>
+        Encoding.UTF8.GetString(bytes.Length > 1024 ? bytes.Span[^1024..] : bytes.Span);
+
+    /// <summary>
+    /// SS-3..SS-6: runs the repo-user <c>stream_setup</c> in the new work tree and returns the <c>setup</c> view, or null when none is
+    /// configured. A failure only adds a warning; a value at the repo or global level is never run and adds a warning.
+    /// </summary>
+    private static JsonObject? RunSetup(RosterContext c, string stream, string tree, List<string> warnings)
+    {
+        // Amendment 3 SS-F1: nothing the setup does stops the stream-open that already wrote the stream
+        try
+        {
+            return RunSetupCore(c, stream, tree, warnings);
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            warnings.Add(SetupFailed("setup-start-failed", "message"));
+            return new JsonObject { ["ran"] = false, ["ok"] = false, ["error"] = "setup-start-failed", ["message"] = $"stream setup could not run: {error.Message}" };
+        }
+    }
+
+    private static string SetupFailed(string why, string see) => $"stream setup failed ({why}); the stream is open; see setup.{see}";
+
+    private static JsonObject? RunSetupCore(RosterContext c, string stream, string tree, List<string> warnings)
+    {
+        var levels = c.Services.Config.RosterLevelPaths(c.Cwd);
+        var userPath = RepoUserPath(c);
+        foreach (var level in new[] { "repo", "global" })
+        {
+            if (levels.Get(level) is { IsText: true } p && p.AsString() != userPath && SetupKeyIn(c, p.AsString()) is not null)
+            {
+                warnings.Add($"{SetupKey} in {p.AsString()} was ignored: it is read only from {userPath}");
+            }
+        }
+
+        if (ReadSetup(c) is not { } config)
+        {
+            return null;
+        }
+
+        void Failed(string why, string see = "stderr_tail") => warnings.Add(SetupFailed(why, see));
+        if (config.Argv is not { } argv)
+        {
+            Failed("setup-config-invalid", "message");
+            return new JsonObject { ["ran"] = false, ["ok"] = false, ["error"] = "setup-config-invalid", ["message"] = config.Problem! };
+        }
+
+        var environment = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (System.Collections.DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
+        {
+            environment[(string)entry.Key] = entry.Value as string;
+        }
+
+        // Amendment 4 SS-F2: where ah's state lives comes from the injected environment, so a test's command sees its sandbox
+        foreach (var name in new[] { "HOME", "AH_HOME", "PATH", "AH_TEST" })
+        {
+            if (c.Services.Environment.GetVariable(name) is { } value)
+            {
+                environment[name] = value;
+            }
+        }
+
+        environment["AH_STREAM"] = stream;
+        environment["AH_CHECKOUT_ROOT"] = c.Services.Config.CheckoutRoot(c.Cwd);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var run = c.Services.Launch!.Processes.Run(new ProcessRequest(argv, tree, environment, Timeout: TimeSpan.FromSeconds(config.TimeoutSeconds)));
+        var seconds = Math.Round(clock.Elapsed.TotalSeconds, 1);
+
+        // ponytail: the runner reports "could not start" only as exit 127 with no output; a command that itself exits 127 silently reads the same
+        if (run is { ExitCode: 127, Signal: null, TimedOut: false } && run.Stdout.IsEmpty && run.Stderr.IsEmpty)
+        {
+            Failed("setup-start-failed", "message");
+            return new JsonObject { ["ran"] = false, ["ok"] = false, ["error"] = "setup-start-failed", ["message"] = $"{argv[0]} could not be started in {tree}" };
+        }
+
+        var exit = run.TimedOut ? null : run.ExitCode;
+        var ok = exit == 0;
+        if (!ok)
+        {
+            Failed(run.TimedOut ? $"timed out after {config.TimeoutSeconds}s" : $"exit {exit?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "by signal"}");
+        }
+
+        return new JsonObject
+        {
+            ["ran"] = true,
+            ["ok"] = ok,
+            ["argv"] = Strings(argv),
+            ["exit"] = exit is { } code ? code : JsonValue.Null,
+            ["timed_out"] = run.TimedOut,
+            ["seconds"] = seconds,
+            ["stdout_tail"] = Tail(run.Stdout),
+            ["stderr_tail"] = Tail(run.Stderr),
+        };
+    }
+
     // ---------------------------------------------------------------- stream-open
 
     internal static int Open(RosterContext c)
@@ -500,11 +662,17 @@ internal static class StreamVerbs
                 gitArgv.Add(Strings(plannedArgv));
             }
 
+            var wouldRun = new JsonObject { ["git"] = gitArgv, ["herdr"] = herdrArgv };
+            if (wt?.Argv is not null && ReadSetup(c) is { Argv: { } setupArgv })
+            {
+                wouldRun["setup"] = new JsonArray { Strings(setupArgv) };
+            }
+
             var dry = new JsonObject
             {
                 ["dry_run"] = true,
                 ["stream"] = StreamSupport.StreamView(name, record),
-                ["would_run"] = new JsonObject { ["git"] = gitArgv, ["herdr"] = herdrArgv },
+                ["would_run"] = wouldRun,
                 ["transport"] = transport,
             };
             if (transport != "herdr")
@@ -623,6 +791,9 @@ internal static class StreamVerbs
             label = tabCreated ? openLabel : RosterJson.Text(StreamSupport.RenderStream(c, dir, written, name, snap, warnings).Label);
         }
 
+        // ah2-513 SS-3: the last step before printing, only when this call ran git worktree add
+        var setup = wt?.Argv is not null ? RunSetup(c, name, wt.Path, warnings) : null;
+
         var next = new JsonArray
         {
             $"ah roster spawn-one <role> --stream {name}{teamFlag}",
@@ -642,6 +813,11 @@ internal static class StreamVerbs
         if (transport != "herdr")
         {
             result["degraded"] = "no-tabs";
+        }
+
+        if (setup is not null)
+        {
+            result["setup"] = setup;
         }
 
         if (baseLine is not null)
