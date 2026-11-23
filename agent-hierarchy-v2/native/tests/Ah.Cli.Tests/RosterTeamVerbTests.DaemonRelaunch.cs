@@ -319,7 +319,7 @@ public sealed partial class RosterTeamVerbTests
     }
 
     // ah2-570: a row with no claude_config_dir gets the value its relaunch resolved
-    private static readonly string[] RelaunchedRowMayChange = ["tmp", "transport_id", "spawned_at", "claude_config_dir"];
+    private static readonly string[] RelaunchedRowMayChange = ["tmp", "transport_id", "spawned_at", "claude_config_dir", "claude_securestorage_config_dir"];
 
     private void RecordExpectedRoot(string root, string? pane = null)
     {

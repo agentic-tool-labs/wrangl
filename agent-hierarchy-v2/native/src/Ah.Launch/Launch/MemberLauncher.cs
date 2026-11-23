@@ -487,13 +487,12 @@ public sealed record MemberLauncher(
         return With(res, ("appserver_pid", pid), ("appserver_thread_id", up.ThreadId ?? string.Empty));
     }
 
-    /// <summary>A shape's recorded Claude environment: null when absent, empty for unset, else the path.</summary>
-    private static string? ClaudeConfigOf(JsonObject spawn) =>
-        spawn.Get(LaunchModule.ClaudeConfigField) is { IsText: true } value ? value.AsString() : null;
+    /// <summary>A shape's recorded Claude environment: one (variable, value) per variable it records, empty value for unset.</summary>
+    private static List<(string Variable, string Value)> ClaudeConfigOf(JsonObject spawn) => SpawnShapes.ClaudeEnvOf(spawn);
 
-    /// <summary>The POSIX shell line that gives a pane's shell <paramref name="claudeConfig"/>: an export, or an unset when empty.</summary>
-    internal static string ClaudeConfigShellLine(string claudeConfig) =>
-        claudeConfig.Length == 0 ? "unset CLAUDE_CONFIG_DIR" : "export CLAUDE_CONFIG_DIR=" + Ah.Core.CoreModule.QuoteShellWord(claudeConfig);
+    /// <summary>The POSIX shell line that gives a pane's shell <paramref name="claudeConfig"/>: an export, or an unset when empty, per variable.</summary>
+    internal static string ClaudeConfigShellLine(IEnumerable<(string Variable, string Value)> claudeConfig) =>
+        string.Join("; ", claudeConfig.Select(r => r.Value.Length == 0 ? "unset " + r.Variable : $"export {r.Variable}=" + Ah.Core.CoreModule.QuoteShellWord(r.Value)));
 
     /// <summary>The path of <paramref name="command"/> as is when it names a path, else the first executable of that name on <paramref name="path"/>.</summary>
     private string? OnPath(string command, string? path)
@@ -551,15 +550,15 @@ public sealed record MemberLauncher(
         }
 
         // The member's recorded Claude environment, never the caller's by accident; absent leaves the caller's as it is.
-        if (ClaudeConfigOf(spawn) is { } claudeConfig)
+        foreach (var (variable, value) in ClaudeConfigOf(spawn))
         {
-            if (claudeConfig.Length == 0)
+            if (value.Length == 0)
             {
-                _ = env.Remove("CLAUDE_CONFIG_DIR");
+                _ = env.Remove(variable);
             }
             else
             {
-                env["CLAUDE_CONFIG_DIR"] = claudeConfig;
+                env[variable] = value;
             }
         }
 
@@ -640,7 +639,7 @@ public sealed record MemberLauncher(
 
         var placeholderText = placeholder is { IsTruthy: true } phText ? JsConvert.ToJsString(phText) : null;
         // The TUI's agent start has no env option: the pane's shell gets the member's Claude environment first, a new pane and a resume alike.
-        if (transport == "herdr" && Herdr.Flavour != Ah.Core.Mux.HerdrFlavour.Core && ClaudeConfigOf(spawn) is { } claudeConfig
+        if (transport == "herdr" && Herdr.Flavour != Ah.Core.Mux.HerdrFlavour.Core && ClaudeConfigOf(spawn) is { Count: > 0 } claudeConfig
             && transportId is { IsText: true } paneId && paneId.AsString() != placeholderText)
         {
             // The line is for the pane's shell: a pane whose agent still runs (or the caller's own) would take it as a prompt. A pane whose
@@ -803,7 +802,7 @@ public sealed record MemberLauncher(
 
         // The member's Claude environment goes on its own command: core types or runs `env … claude …`, with claude by its path as before.
         var kindAt = args.IndexOf("--kind");
-        if (member.Get("spawn") is { IsMap: true } shape && ClaudeConfigOf(shape.AsObject()) is { } claudeConfig
+        if (member.Get("spawn") is { IsMap: true } shape && ClaudeConfigOf(shape.AsObject()) is { Count: > 0 } claudeConfig
             && kindAt >= 0 && kindAt + 1 < args.Count && args[kindAt + 1] == "claude")
         {
             args[kindAt + 1] = "env";
@@ -815,7 +814,8 @@ public sealed record MemberLauncher(
                 dash = args.Count - 1;
             }
 
-            args.InsertRange(dash + 1, claudeConfig.Length == 0 ? ["-u", "CLAUDE_CONFIG_DIR", claude] : ["CLAUDE_CONFIG_DIR=" + claudeConfig, claude]);
+            // every -u before the first assignment: env reads options only up to it
+            args.InsertRange(dash + 1, [.. claudeConfig.OrderBy(r => r.Value.Length != 0).SelectMany(r => r.Value.Length == 0 ? new[] { "-u", r.Variable } : [r.Variable + "=" + r.Value]), claude]);
         }
 
         var result = Herdr.Run(args, CoreLaunchTimeoutMs);

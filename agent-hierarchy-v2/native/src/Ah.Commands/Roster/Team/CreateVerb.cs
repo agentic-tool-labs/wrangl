@@ -519,8 +519,8 @@ internal static class CreateVerb
             ["expected_root"] = messages.RealCwd(c.Cwd),
             ["roster"] = templateRoster.IsMap && templateRoster.Member("teamKey") is { IsTruthy: true } key ? key : JsonValue.Null,
             ["layout"] = layout.Get("mode")!.Value,
-            [ClaudeEnvironment.Field] = ClaudeEnvironment.Caller(c),
         };
+        ClaudeEnvironment.PutCaller(c, team);
         if (transport == "herdr" && c.Services.Launch?.Transports.Flavour() == Ah.Core.Mux.HerdrFlavour.Core)
         {
             team[Ah.Core.Mux.HerdrFlavour.Field] = Ah.Core.Mux.HerdrFlavour.Core;

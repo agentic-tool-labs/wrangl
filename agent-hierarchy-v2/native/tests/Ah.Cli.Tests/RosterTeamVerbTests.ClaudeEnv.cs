@@ -47,7 +47,7 @@ public sealed partial class RosterTeamVerbTests
 
         SpawnFor("lead spawn");
 
-        Assert.Contains("export CLAUDE_CONFIG_DIR='/lead/cfg'; claude ", TypedLaunch(), StringComparison.Ordinal);
+        Assert.Contains("export CLAUDE_CONFIG_DIR='/lead/cfg'; unset CLAUDE_SECURESTORAGE_CONFIG_DIR; claude ", TypedLaunch(), StringComparison.Ordinal);
         Assert.Equal("/lead/cfg", Recorded(TeamRecord()));
         Assert.Equal("/lead/cfg", Recorded(ImplementorRow()));
     }
@@ -60,9 +60,24 @@ public sealed partial class RosterTeamVerbTests
 
         SpawnFor("lead spawn without CLAUDE_CONFIG_DIR");
 
-        Assert.Contains("unset CLAUDE_CONFIG_DIR; claude ", TypedLaunch(), StringComparison.Ordinal);
+        Assert.Contains("unset CLAUDE_CONFIG_DIR; unset CLAUDE_SECURESTORAGE_CONFIG_DIR; claude ", TypedLaunch(), StringComparison.Ordinal);
         Assert.Equal(string.Empty, Recorded(TeamRecord()));
         Assert.Equal(string.Empty, Recorded(ImplementorRow()));
+    }
+
+    [Fact]
+    public void ALeadWithOnlyTheLoginVariableCarriesItAndUnsetsTheConfigDirectory()
+    {
+        // claude-env Amendment 4: a team record written by 2.0.55 holds only claude_config_dir; the login variable is the lead's
+        OnTmux();
+        WriteTeam("proj", TeamWithClaudeConfig(string.Empty));
+        _extraEnv["CLAUDE_SECURESTORAGE_CONFIG_DIR"] = "/login/a b'c";
+
+        SpawnFor("lead spawn with only the login variable");
+
+        Assert.Contains("unset CLAUDE_CONFIG_DIR; export CLAUDE_SECURESTORAGE_CONFIG_DIR='/login/a b'\\''c'; claude ", TypedLaunch(), StringComparison.Ordinal);
+        Assert.Equal("/login/a b'c", TeamRecord().Member("claude_securestorage_config_dir")?.AsString());
+        Assert.Equal("/login/a b'c", ImplementorRow().Member("claude_securestorage_config_dir")?.AsString());
     }
 
     /// <summary>
@@ -99,7 +114,7 @@ public sealed partial class RosterTeamVerbTests
 
     private static void ExportedBeforeTheStart(List<string> calls, string exported)
     {
-        var export = calls.IndexOf("herdr pane run pA export CLAUDE_CONFIG_DIR=" + exported);
+        var export = calls.IndexOf("herdr pane run pA export CLAUDE_CONFIG_DIR=" + exported + "; unset CLAUDE_SECURESTORAGE_CONFIG_DIR");
         var start = calls.FindIndex(c => c.Contains("agent start " + Impl, StringComparison.Ordinal));
         Assert.True(export >= 0 && start > export, string.Join(" | ", calls));
     }
@@ -127,7 +142,7 @@ public sealed partial class RosterTeamVerbTests
     // ---------------------------------------------------------------- E5: the doctor names a live member in another environment
 
     /// <summary>The <c>claude-env</c> doctor row for a team whose lead records <c>/lead/cfg</c> and whose one member records <paramref name="memberValue"/>; null when there is none.</summary>
-    private JsonValue? ClaudeEnvRow(string memberValue, bool live)
+    private JsonValue? ClaudeEnvRow(string memberValue, bool live, string field = ConfigField)
     {
         const string Name = "proj-implementor";
         if (live)
@@ -135,8 +150,8 @@ public sealed partial class RosterTeamVerbTests
             PeerUp(Name, "%3");
         }
 
-        var row = "{\"role\":\"implementor\",\"name\":\"" + Name + "\",\"route\":\"peer\",\"transport_id\":\"%3\",\"model\":\"sonnet\",\"expected_root\":\"" + Project + "\",\"" + ConfigField + "\":" + JsonText.Quote(memberValue) + "}";
-        WriteTeam("proj", LiveTeamJson("tmux", row).TrimEnd('}') + ",\"" + ConfigField + "\":\"/lead/cfg\"}");
+        var row = "{\"role\":\"implementor\",\"name\":\"" + Name + "\",\"route\":\"peer\",\"transport_id\":\"%3\",\"model\":\"sonnet\",\"expected_root\":\"" + Project + "\",\"" + field + "\":" + JsonText.Quote(memberValue) + "}";
+        WriteTeam("proj", LiveTeamJson("tmux", row).TrimEnd('}') + ",\"" + field + "\":\"/lead/cfg\"}");
         var (_, stdout, stderr) = Roster("doctor", "--team", "proj", "--orchestrator-pid", Self);
         var rows = JsonText.Parse(stdout).Member("rows")?.AsArray() ?? throw new InvalidOperationException(stdout + stderr);
         return rows.Where(r => r.Member("name")?.AsString() == "claude-env").Select(r => (JsonValue?)r).SingleOrDefault();
@@ -149,7 +164,16 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.NotNull(row);
         Assert.Equal("ok", row.Value.Member("status")!.Value.AsString());
-        Assert.Equal("proj-implementor runs in \"/other/cfg\"; the lead's is \"/lead/cfg\"", row.Value.Member("detail")!.Value.AsString());
+        Assert.Equal("proj-implementor runs with CLAUDE_CONFIG_DIR=\"/other/cfg\", the lead's is CLAUDE_CONFIG_DIR=\"/lead/cfg\"", row.Value.Member("detail")!.Value.AsString());
+    }
+
+    [Fact]
+    public void TheDoctorNamesALiveMemberWhoseLoginVariableDiffersFromTheLeads()
+    {
+        var row = ClaudeEnvRow(string.Empty, live: true, field: "claude_securestorage_config_dir");
+
+        Assert.NotNull(row);
+        Assert.Equal("proj-implementor runs with CLAUDE_SECURESTORAGE_CONFIG_DIR unset, the lead's is CLAUDE_SECURESTORAGE_CONFIG_DIR=\"/lead/cfg\"", row.Value.Member("detail")!.Value.AsString());
     }
 
     [Fact]
@@ -172,7 +196,7 @@ public sealed partial class RosterTeamVerbTests
 
         SpawnFor("a spawn that creates the team");
 
-        Assert.Contains("export CLAUDE_CONFIG_DIR='/new/cfg'; claude ", TypedLaunch(), StringComparison.Ordinal);
+        Assert.Contains("export CLAUDE_CONFIG_DIR='/new/cfg'; unset CLAUDE_SECURESTORAGE_CONFIG_DIR; claude ", TypedLaunch(), StringComparison.Ordinal);
         Assert.Equal("/new/cfg", Recorded(TeamRecord()));
     }
 }

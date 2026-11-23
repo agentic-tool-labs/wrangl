@@ -19,7 +19,7 @@
     "stdin": null
   },
   "expect": {
-    "stdout": "{\n  \"dry_run\": true,\n  \"role\": \"reviewer\",\n  \"name\": \"tm-reviewer-2\",\n  \"mode\": \"auto\",\n  \"launch\": [\n    \"env -u CLAUDE_CONFIG_DIR claude --agent wrangl:reviewer --name tm-reviewer-2 --model opus --settings '<ROOT:proj>/.claude/ah2/launch/tm-reviewer-2.settings.json' --bg\"\n  ]\n}\n",
+    "stdout": "{\n  \"dry_run\": true,\n  \"role\": \"reviewer\",\n  \"name\": \"tm-reviewer-2\",\n  \"mode\": \"auto\",\n  \"launch\": [\n    \"env -u CLAUDE_CONFIG_DIR -u CLAUDE_SECURESTORAGE_CONFIG_DIR claude --agent wrangl:reviewer --name tm-reviewer-2 --model opus --settings '<ROOT:proj>/.claude/ah2/launch/tm-reviewer-2.settings.json' --bg\"\n  ]\n}\n",
     "stderr": "roster.mjs: load unknown (daemon unavailable: down); the spawn is not paced\n",
     "exit": 0,
     "tree_diff": {

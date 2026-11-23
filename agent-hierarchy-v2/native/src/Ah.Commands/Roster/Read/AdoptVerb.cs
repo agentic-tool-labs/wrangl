@@ -164,7 +164,7 @@ internal static class AdoptVerb
                 }
 
                 copy["orchestrator"] = owner;
-                copy[ClaudeEnvironment.Field] = ClaudeEnvironment.Caller(c);
+                ClaudeEnvironment.PutCaller(c, copy);
                 adopted = copy;
                 return TeamFileOutcome.Write(copy);
             });

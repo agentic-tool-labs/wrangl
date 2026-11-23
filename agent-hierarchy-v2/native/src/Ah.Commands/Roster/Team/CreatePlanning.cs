@@ -155,7 +155,11 @@ internal static partial class CreatePlanning
         }
 
         CopyIfPresent(entry, "autoMode", m, "autoMode");
-        CopyIfPresent(entry, ClaudeEnvironment.Field, m, ClaudeEnvironment.Field);
+        foreach (var (_, field) in ClaudeEnvironment.Variables)
+        {
+            CopyIfPresent(entry, field, m, field);
+        }
+
         entry["args"] = launch.Rules.MemberArgs(m) is { } args ? args : JsonValue.Null;
         entry["spawn"] = MemberPlanning.HasPane(c, route) ? ShapeFor(c, WithRoute(m, route), transport) : JsonValue.Null;
         if (MemberPlanning.Text(m, "role") is { } role && c.Services.Config.RoleParams(c.Cwd, role, c.Registry) is { Count: > 0 } declared)
@@ -282,7 +286,7 @@ internal static partial class CreatePlanning
         // create is run by the team's lead: a Claude member launches in the caller's Claude environment
         var rows = named
             .Select(m => MemberPlanning.WithLaunchModel(c, m))
-            .Select(m => MemberPlanning.KindOf(c, m) == c.Services.Launch!.Registry.KindDefault ? MemberPlanning.With(m, ClaudeEnvironment.Field, ClaudeEnvironment.Caller(c)) : m)
+            .Select(m => MemberPlanning.KindOf(c, m) == c.Services.Launch!.Registry.KindDefault ? ClaudeEnvironment.Variables.Aggregate(m, (row, v) => MemberPlanning.With(row, v.Field, ClaudeEnvironment.Caller(c, v.Variable))) : m)
             .ToList();
         skipped = rows.Where(m => MemberPlanning.HasPane(c, EffectiveRoute(m, blockRoute)) && MemberPlanning.AutoSkipped(c, m)).ToList();
         var left = skipped;
