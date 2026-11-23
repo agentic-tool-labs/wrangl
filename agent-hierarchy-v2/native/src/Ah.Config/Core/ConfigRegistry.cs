@@ -78,6 +78,116 @@ internal static partial class ConfigRegistry
         return null;
     }
 
+    private static readonly System.Buffers.SearchValues<char> GlobSyntax = System.Buffers.SearchValues.Create("?[]{}!");
+
+    /// <summary>Why <paramref name="value"/> is not a review role's <c>writes</c> (a non-empty list of globs, see <see cref="WriteGlobError"/>), or null when it is.</summary>
+    internal static string? WritesError(JsonValue value)
+    {
+        if (!value.IsArray || value.AsArray().Count == 0)
+        {
+            return "writes must be a non-empty list of globs";
+        }
+
+        foreach (var glob in value.AsArray())
+        {
+            if (!glob.IsText)
+            {
+                return $"write glob {JsonText.Stringify(glob, 0)} must be text";
+            }
+
+            if (WriteGlobError(glob.AsString()) is { } why)
+            {
+                return $"write glob \"{glob.AsString()}\": {why}";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Why <paramref name="glob"/> is not a write glob: relative to the checkout root, <c>/</c> separators, <c>*</c> and whole-segment
+    /// <c>**</c> the only wildcards, no leading <c>/</c>, no <c>..</c>, <c>.</c> or empty segment, no <c>~</c>, not empty. Null when it is one.
+    /// </summary>
+    internal static string? WriteGlobError(string glob)
+    {
+        if (glob.Length == 0)
+        {
+            return "is empty";
+        }
+
+        if (glob.StartsWith('/'))
+        {
+            return "must be relative to the checkout root (no leading /)";
+        }
+
+        if (glob.Contains('~'))
+        {
+            return "may not hold ~";
+        }
+
+        if (glob.Contains('\\'))
+        {
+            return "must use / separators";
+        }
+
+        if (glob.AsSpan().IndexOfAny(GlobSyntax) >= 0)
+        {
+            return "only * and ** are wildcards";
+        }
+
+        foreach (var segment in glob.Split('/'))
+        {
+            if (segment == "..")
+            {
+                return "may not hold a .. segment";
+            }
+
+            if (segment is "" or ".")
+            {
+                return "may not hold an empty or . segment";
+            }
+
+            if (segment.Contains("**", StringComparison.Ordinal) && segment != "**")
+            {
+                return "** must be a whole path segment";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether <paramref name="glob"/> matches every path (<c>**</c>, <c>*</c>, <c>**/*</c>), which <c>role set</c> warns of.</summary>
+    internal static bool WriteGlobMatchesAll(string glob) => glob is "**" or "*" or "**/*";
+
+    /// <summary>Whether <paramref name="relative"/> (a normalised path relative to the checkout root, <c>/</c> separators) matches any glob of <paramref name="writes"/>.</summary>
+    internal static bool WritesMatch(JsonValue writes, string relative)
+    {
+        if (WritesError(writes) is not null)
+        {
+            return false;
+        }
+
+        var path = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return writes.AsArray().Any(g => GlobMatch(g.AsString().Split('/'), 0, path, 0));
+    }
+
+    private static bool GlobMatch(string[] glob, int i, string[] path, int j)
+    {
+        if (i == glob.Length)
+        {
+            return j == path.Length;
+        }
+
+        if (glob[i] == "**")
+        {
+            return GlobMatch(glob, i + 1, path, j) || (j < path.Length && GlobMatch(glob, i, path, j + 1));
+        }
+
+        return j < path.Length
+            && Regex.IsMatch(path[j], "^" + Regex.Escape(glob[i]).Replace("\\*", "[^/]*", StringComparison.Ordinal) + "\\z", RegexOptions.CultureInvariant)
+            && GlobMatch(glob, i + 1, path, j + 1);
+    }
+
     internal static readonly IReadOnlyList<ClassSpec> Classes =
     [
         new("advise", "ultra-advisor", "Escalate", TopTierModels, true, true, false, true, false),

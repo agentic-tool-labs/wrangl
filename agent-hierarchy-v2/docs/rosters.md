@@ -181,9 +181,14 @@ the kit or the clash, run the dry run again, and use the new pin.
   time everything reads `identical` and nothing is written.
 - **Agent files** are checked by the same rules as plugin agents. A file with
   `hooks`, MCP server settings or `permissionMode`, or with hidden characters, is
-  refused. So is a file with no `tools:` list, because that agent would inherit
-  every tool. This includes roles made with `--scaffold`, which writes no
-  `tools:` list: add one before you export.
+  refused. A file with no `tools:` list is not refused but **flagged**: the dry
+  run prints `inherits every tool, MCP servers included` for it, plus
+  `(except: …)` when it has `disallowedTools`, in a `flags` block above the
+  writes, and the commit prints the flags again. Committing with `--pin` is the
+  approval. Roles made with `--scaffold` write no `tools:` list, so they import
+  flagged. Such an agent can use every tool and MCP server the importing machine
+  has, so read the preview of a kit you did not make. (A pack agent with no
+  `tools:` list is still refused at adopt and trust.)
 - **Members** with `command`, `args`, `kind`, `harness`, `adapter` or `autoMode`
   are refused, and so is any key a kit does not list.
 - **Where it writes.** Config rows go to the `--level` file (default `global`);

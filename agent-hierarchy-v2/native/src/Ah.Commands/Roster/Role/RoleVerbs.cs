@@ -12,12 +12,12 @@ internal static class RoleVerbs
 {
     private static readonly string[] Flags =
     [
-        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "level", "scaffold", "from", "pin",
+        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold", "from", "pin",
         "dry-run", "json", "cwd",
     ];
 
     private const string Usage =
-        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] (--dry-run | --pin sha256:…) | role trust <name> [--level L] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] (--dry-run | --pin sha256:…) | role trust <name> [--level L] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
 
     [Verb("roster:role")]
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
@@ -65,7 +65,7 @@ internal static class RoleVerbs
             if (!Flags.Contains(key))
             {
                 throw new RosterFailure(
-                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --level, --scaffold, --from, --pin, --dry-run, --json, --team, --cwd)");
+                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --writes, --level, --scaffold, --from, --pin, --dry-run, --json, --team, --cwd)");
             }
         }
 
@@ -352,11 +352,22 @@ internal static class RoleVerbs
 
             var builtin = _config.IsBuiltinRole(name);
             var dry = opts.IsTrue("dry-run");
-            foreach (var k in new[] { "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "scaffold", "level" })
+            foreach (var k in new[] { "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "scaffold", "level" })
             {
                 if (Valueless(k))
                 {
                     throw new RosterFailure($"role set: --{k} needs a value");
+                }
+            }
+
+            // ah2-562: a review-class role's write folders; "" deletes the key. The class is checked once the row is known.
+            JsonArray? writes = null;
+            if (OptText("writes") is { Length: > 0 } writesText)
+            {
+                writes = [.. writesText.Split(',', StringSplitOptions.TrimEntries).Select(JsonValue.FromString)];
+                if (_config.WritesError(writes) is { } writesWhy)
+                {
+                    throw new RosterFailure($"role set {name}: --writes: {writesWhy}");
                 }
             }
 
@@ -444,6 +455,15 @@ internal static class RoleVerbs
                 row.Remove("params");
             }
 
+            if (writes is not null)
+            {
+                row["writes"] = writes;
+            }
+            else if (OptText("writes") is not null)
+            {
+                row.Remove("writes");
+            }
+
             foreach (var k in new[] { "description", "routes" })
             {
                 if (OptText(k) is not { } v)
@@ -486,6 +506,16 @@ internal static class RoleVerbs
                 if (!(row.Get("class") is { IsTruthy: true }))
                 {
                     throw new RosterFailure($"role set {name}: --class is required for a new role (one of {string.Join(", ", _config.Classes.Keys)})");
+                }
+
+                if (OptText("writes") is not null && T(row.Get("class")) != "review")
+                {
+                    throw new RosterFailure($"role set {name}: --writes applies only to a review-class role");
+                }
+
+                if (writes?.Select(g => g.AsString()).FirstOrDefault(_config.WriteGlobMatchesAll) is { } all)
+                {
+                    warnings.Add($"--writes \"{all}\" matches every path: {name} can then write anywhere in the checkout");
                 }
 
                 var check = _config.CheckCustomRow(name, row);

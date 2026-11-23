@@ -16,6 +16,12 @@ internal sealed partial class ConfigCore
 
     public string? ParamsError(JsonValue value) => ConfigRegistry.ParamsError(value);
 
+    public string? WritesError(JsonValue value) => ConfigRegistry.WritesError(value);
+
+    public bool WriteGlobMatchesAll(string glob) => ConfigRegistry.WriteGlobMatchesAll(glob);
+
+    public bool WritesMatch(JsonValue writes, string relative) => ConfigRegistry.WritesMatch(writes, relative);
+
     public IReadOnlyList<string> SelfCareBuiltinRoles => ["architect"];
 
     public int OneLineMax => ConfigRegistry.OneLineMax;

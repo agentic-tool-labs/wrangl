@@ -399,6 +399,7 @@ internal static partial class RosterKitVerb
         string Show(JsonValue? v) => Esc(JsonText.Stringify(v ?? JsonValue.Null, 0));
         var findings = new List<string>();
         var conflicts = new List<string>();
+        var flags = new List<string>();
         var writes = new List<string>();
         var notes = new List<string>();
         var agentSections = new List<string>();
@@ -630,7 +631,9 @@ internal static partial class RosterKitVerb
                 continue;
             }
 
-            Keys(row, RowKeys, $"{who} row", RefusedRowKeys);
+            // ah2-562: writes is carried on a custom review-class row only
+            var reviewRow = !builtin && row.Get("class") is { IsText: true } rc && rc.AsString() == "review";
+            Keys(row, reviewRow ? [.. RowKeys, "writes"] : RowKeys, $"{who} row", RefusedRowKeys);
             if (row.Get("shell") is { } shell && !(shell.IsText && shell.AsString() == config.ShellSelfCare))
             {
                 findings.Add($"{who} row: \"shell\" may only be {config.ShellSelfCare}");
@@ -736,6 +739,22 @@ internal static partial class RosterKitVerb
 
             var rowStatus = local is null ? "new" : Same(local, row) ? "identical" : "conflict";
             writes.Add($"{path} · roles.{Esc(role)} · {rowStatus}");
+            if (reviewRow && row.Get("writes") is { } roleWrites)
+            {
+                if (config.WritesError(roleWrites) is { } writesWhy)
+                {
+                    findings.Add($"{who} row: {Esc(writesWhy)}");
+                }
+                else
+                {
+                    var globs = roleWrites.AsArray().Select(g => g.AsString()).ToList();
+                    writes.Add($"  may write: {Esc(string.Join(", ", globs))}");
+                    if (globs.FirstOrDefault(config.WriteGlobMatchesAll) is { } all)
+                    {
+                        notes.Add($"{Esc(role)}: writes \"{Esc(all)}\" matches every path: it can then write anywhere in the checkout");
+                    }
+                }
+            }
             if (rowStatus == "new")
             {
                 newRoles.Add((role, row));
@@ -790,14 +809,27 @@ internal static partial class RosterKitVerb
             }
 
             var parsed = config.PackAgentParse(text, file);
+            string? everyTool = null;
             if (parsed.Get("findings") is { IsArray: true } pf)
             {
                 foreach (var f in pf.AsArray())
                 {
-                    // Amendment 2: until the user decides whether a kit may carry an agent with no tools list, the finding says so plainly.
+                    // scaffold-tools U1/U3: in a kit only, a missing tools: line is a flag the pin approves, not a finding; the pack check is unchanged.
                     var noTools = f.Member("code") is { IsText: true } fc && fc.AsString() == "pack-agent-tools"
                         && f.Member("message") is { IsText: true } fmsg && fmsg.AsString().StartsWith("tools is required", StringComparison.Ordinal);
-                    agentFindings.Add(noTools ? new JsonObject { ["level"] = "error", ["code"] = "pack-agent-tools", ["message"] = "agent inherits every tool (no tools: list)" } : f);
+                    if (!noTools)
+                    {
+                        agentFindings.Add(f);
+                        continue;
+                    }
+
+                    var except = Obj(parsed.Get("fm"))?.Get("disallowedTools") is { IsArray: true } dt && dt.AsArray().Count > 0
+                        ? string.Join(", ", dt.AsArray().Select(x => Esc(T(x))))
+                        : null;
+                    flags.Add($"role {Esc(role)} agent {Esc(agent)}: inherits every tool, MCP servers included{(except is null ? string.Empty : $" (except: {except})")}");
+
+                    // U5: the preview the pin approves may not understate what this agent can use.
+                    everyTool = $"every tool (no tools: list){(except is null ? string.Empty : $" except: {except}")}";
                 }
             }
 
@@ -820,7 +852,7 @@ internal static partial class RosterKitVerb
             var section = new List<string>
             {
                 $"  {file} (the kit names it {Show(agentEntry.Get("file"))}; that name is not used for the path)",
-                $"    flagged tools: {(flagged.Count == 0 ? "none" : string.Join(", ", flagged))}",
+                $"    flagged tools: {everyTool ?? (flagged.Count == 0 ? "none" : string.Join(", ", flagged))}",
             };
             foreach (var f in agentFindings)
             {
@@ -902,7 +934,14 @@ internal static partial class RosterKitVerb
             ruleLines.Add("rules: not carried by this kit (roster rules are added in a later version)");
         }
 
-        var lines = new List<string> { "writes:" };
+        var lines = new List<string>();
+        if (flags.Count > 0)
+        {
+            lines.Add($"flags ({flags.Count}) — approved by the pin:");
+            lines.AddRange(flags.Select(f => "  " + f));
+        }
+
+        lines.Add("writes:");
         lines.AddRange(writes.Select(w => "  " + w));
         lines.AddRange(notes.Select(n => "note: " + n));
         if (agentSections.Count > 0)
