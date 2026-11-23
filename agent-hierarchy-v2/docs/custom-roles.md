@@ -92,7 +92,7 @@ R role set tech-writer --class implement \
 | `--dispatch model` | legwork only (exit 2 otherwise) |
 | `--params a,b` | the [parameters](#role-parameters) a member needs; `--params ""` deletes the key |
 | `--level global\|repo\|repo-user` | where the row lives; default is where the role is already defined, else `repo` with `--scaffold repo`, else `global` |
-| `--scaffold user\|repo` | write a template agent file that passes the contract: `~/.claude/agents/<agent>.md` or `<repo>/.claude/agents/<agent>.md`. The file has no `tools:` list; add one before you share the role in a [roster kit](rosters.md#share-a-roster), which refuses an agent that inherits every tool |
+| `--scaffold user\|repo` | write a template agent file that passes the contract: `~/.claude/agents/<agent>.md` or `<repo>/.claude/agents/<agent>.md`. The file has no `tools:` list, so in a [roster kit](rosters.md#share-a-roster) the role imports flagged (`inherits every tool, MCP servers included`) and the pin approves it. Such an agent can use every tool and MCP server the importing machine has; add a `tools:` list to restrict it, and read the preview of a kit you did not make |
 | `--dry-run` | write nothing; print the findings |
 
 Drop `--dry-run` to commit. If the agent file is repo-level, define the role at
@@ -234,7 +234,21 @@ The files are copied out of `$TMPDIR` into `<AH_HOME>/evidence/<id>/`, so they s
 
 4. **The first line is the usual verdict**: `VERDICT PASS <slug>@-` or `VERDICT CHANGES REQUIRED <slug>@-`. `@-` stands for no commit, which is what an artifact has; the verdict parser reads only the leading word. Then one line per acceptance item, citing its evidence as `[e1]`.
 
-What to know: the reviewer's own shell rules are unchanged. A custom review-class role that is not named `reviewer` is not bound by the built-in reviewer's no-write rule, so that is yours to set in its agent file. A request answered by SendMessage has no message id, so it cannot carry evidence.
+What to know: the reviewer's own shell rules are unchanged. Every review-class role, whatever its name, gets the built-in reviewer's no-write rule: a file write is bounced to `ah msg fill --from <its role>`. A request answered by SendMessage has no message id, so it cannot carry evidence.
+
+#### Write folders for a review-class role
+
+A custom review-class role that must save its own files, such as a tester's scripts, can declare the folders it may write, so it still can't edit the code it judges:
+
+```
+ah roster role set tester --writes 'tests/automation/**' --cwd <abs cwd>
+```
+
+- Each glob is relative to the checkout root, with `/` separators and only `*` and `**` as wildcards. A leading `/`, a `..`, `.` or empty segment, a `~` or an empty glob is a usage error (exit 2) and nothing is written. Give several globs separated by commas; `--writes ""` clears them. A glob that matches every path (`**`, `*`, `**/*`) is accepted with a warning.
+- A Write, Edit, MultiEdit or NotebookEdit goes through only when its target, with links and `..` resolved, lies inside the member's own work tree and matches a glob. Any other write is bounced, and the bounce names the folders.
+- `--writes` applies only to a custom review-class role. The built-in `reviewer` and roles of every other class refuse it.
+- A roster kit carries `writes` on a custom review-class row. The dry run shows it as `may write: <globs>`, and a bad glob is a finding.
+- The rule covers the file tools only. It is not a sandbox: a shell command can still write anywhere.
 
 ## 5. A member in another harness (Codex)
 

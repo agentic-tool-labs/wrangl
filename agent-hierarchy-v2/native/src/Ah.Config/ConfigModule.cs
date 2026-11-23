@@ -343,6 +343,15 @@ public interface IConfigCore
     /// <summary>Why <paramref name="value"/> is not a role's <c>params</c> (1 to 8 distinct names, each <c>^[a-z][a-z0-9-]{0,39}$</c>), or null when it is.</summary>
     string? ParamsError(JsonValue value);
 
+    /// <summary>Why <paramref name="value"/> is not a review role's <c>writes</c> (a non-empty list of checkout-relative globs, <c>*</c> and <c>**</c> only), or null when it is.</summary>
+    string? WritesError(JsonValue value);
+
+    /// <summary>Whether a write glob matches every path (<c>**</c>, <c>*</c>, <c>**/*</c>).</summary>
+    bool WriteGlobMatchesAll(string glob);
+
+    /// <summary>Whether a normalised checkout-relative path matches any glob of a valid <c>writes</c> list; false for an invalid one.</summary>
+    bool WritesMatch(JsonValue writes, string relative);
+
     /// <summary>Every role parameter set at any level, the most specific level's value per name (repo-user, repo, global). Never throws for a missing or unreadable level file.</summary>
     IReadOnlyList<RoleParam> ParamValues(string? cwd);
 

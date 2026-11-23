@@ -237,6 +237,19 @@ internal sealed partial class ConfigCore
             }
         }
 
+        // ah2-562: only a review-class row keeps writes; a malformed one is dropped, never the role, so the role writes nothing
+        if (clsName == "review" && r.Get("writes") is { } writes)
+        {
+            if (ConfigRegistry.WritesError(writes) is { } why)
+            {
+                warnings.Add($"writes ignored: {why}");
+            }
+            else
+            {
+                row["writes"] = writes;
+            }
+        }
+
         if (cls.Chain)
         {
             if (r.Get("dispatch") is { } dispatch)

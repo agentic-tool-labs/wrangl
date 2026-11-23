@@ -266,6 +266,29 @@ public sealed class RosterRoleVerbTests : IDisposable
         Assert.False(Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["qc"].AsObject().ContainsKey("params"));
     }
 
+    /// <summary>ah2-562: --writes stores a review role's write folders and "" clears them; a .. glob and the built-in reviewer are refused, nothing written.</summary>
+    [Fact]
+    public void RoleSetWritesIsStoredClearedAndRefusedWhereItDoesNotFit()
+    {
+        JsonObject Qc() => Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["qc"].AsObject();
+        var set = Roster("role", "set", "qc", "--class", "review", "--description", "Checks things", "--level", "repo", "--scaffold", "repo", "--writes", "tests/automation/**, docs/*.md");
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.Equal(["tests/automation/**", "docs/*.md"], Qc()["writes"].AsArray().Select(x => x.AsString()).ToArray());
+
+        var before = File.ReadAllText(RepoFile);
+        var dotdot = Roster("role", "set", "qc", "--writes", "tests/../src/**", "--level", "repo");
+        Assert.Equal(2, dotdot.Code);
+        Assert.Contains("..", dotdot.Stderr, StringComparison.Ordinal);
+        var builtin = Roster("role", "set", "reviewer", "--writes", "tests/**", "--level", "repo");
+        Assert.Equal(2, builtin.Code);
+        Assert.Contains("--writes does not apply to a built-in role", builtin.Stderr, StringComparison.Ordinal);
+        Assert.Equal(2, Roster("role", "set", "builder", "--class", "implement", "--writes", "tests/**", "--level", "repo").Code);
+        Assert.Equal(before, File.ReadAllText(RepoFile));
+
+        Assert.Equal(0, Roster("role", "set", "qc", "--writes", "", "--level", "repo").Code);
+        Assert.False(Qc().ContainsKey("writes"));
+    }
+
     /// <summary>Negative: a bad name, a repeat and nine names are refused and nothing is written.</summary>
     [Theory]
     [InlineData("Bad_Name")]

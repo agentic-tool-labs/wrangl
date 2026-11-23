@@ -4,6 +4,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.53] - 2026-11-23
+
+### Changed
+
+- **Every review-class role is kept from editing files, not only the role named `reviewer`.** A custom role of
+  class `review` now gets the same rule: its Write and Edit calls are bounced. A custom review role may declare
+  the folders it may write, for test scripts for example: `ah roster role set <role> --writes tests/automation/**`.
+  The folders apply only inside the member's own work tree. The built-in reviewer still writes nothing. The rule
+  covers the Write and Edit tools; it is not a sandbox, and a shell command can still write a file.
+- **A roster kit can carry an agent file with no `tools:` list.** The import preview flags each one as
+  inheriting every tool, MCP servers included, and the pin approves it. Roles made with `--scaffold` can
+  therefore be shared. Agent files with hooks, MCP server settings or a permission mode are still refused, and
+  role packs are unchanged.
+
 ## [2.0.52] - 2026-11-23
 
 ### Added

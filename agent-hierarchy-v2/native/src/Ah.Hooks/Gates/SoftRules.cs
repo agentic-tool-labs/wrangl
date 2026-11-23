@@ -1,4 +1,5 @@
 using Ah.Abstractions;
+using Ah.Core.Json;
 using Ah.Hooks.Plumbing;
 
 namespace Ah.Hooks.Gates;
@@ -102,17 +103,77 @@ internal static partial class SoftRules
     {
         if (c.ToolName() is not ("Write" or "Edit" or "MultiEdit" or "NotebookEdit")
             || (c.ToolInput().Get("file_path") ?? c.ToolInput().Get("notebook_path")) is not { IsText: true } path
-            || Role(c) != "reviewer")
+            || Role(c) is not { } role)
         {
             return null;
         }
 
+        // ah2-562: the built-in reviewer writes nothing; a custom review-class role may write where its row's `writes` globs say.
+        JsonValue? writes = null;
+        if (role != "reviewer")
+        {
+            if (c.Services.Config.IsBuiltinRole(role))
+            {
+                return null;
+            }
+
+            var resolved = c.Services.Config.ResolveConfig(c.Cwd());
+            if (c.Services.Config.RoleClass(role, resolved) != "review")
+            {
+                return null;
+            }
+
+            writes = resolved?.Get("roles")?.Member(role)?.Member("writes");
+            if (writes is { } w && InWriteFolders(c, path.AsString(), w))
+            {
+                return null;
+            }
+        }
+
+        var folders = writes is { IsArray: true } list && c.Services.Config.WritesError(list) is null
+            ? " and: " + string.Join(", ", list.AsArray().Select(g => g.AsString()))
+            : string.Empty;
         return SoftGate.Bounce(
             c,
             "reviewer-write",
-            "the Reviewer writes only its own response.",
-            "write your findings with `ah msg fill --id <id> --from reviewer --body-file -`.",
+            $"the {(role == "reviewer" ? "Reviewer" : role)} writes only its own response{folders}.",
+            $"write your findings with `ah msg fill --id <id> --from {role} --body-file -`.",
             retryPasses: false);
+    }
+
+    /// <summary>
+    /// ah2-562: whether <paramref name="path"/>, made absolute against the cwd and resolved part by part (links followed, then <c>..</c>,
+    /// as the kernel does; <see cref="Ah.Core.Text.PathGuard.RealPath"/> strict), lies inside the member's OWN work tree and its path
+    /// relative to that tree matches a glob of <paramref name="writes"/>. The tree (V10) is <c>WRANGL_EXPECTED_ROOT</c> when set; else the
+    /// checkout at or above the cwd, only when its real path is the member's recorded <c>expected_root</c>; else none. False whenever the
+    /// root or the path cannot be resolved.
+    /// </summary>
+    private static bool InWriteFolders(GateContext c, string path, JsonValue writes)
+    {
+        // The cwd follows a cd into another checkout, which must not borrow the globs.
+        string? realRoot;
+        if (c.Services.Environment.GetVariable("WRANGL_EXPECTED_ROOT") is { Length: > 0 } expected)
+        {
+            realRoot = Path.IsPathRooted(expected) ? Ah.Core.Text.PathGuard.RealPath(expected, strict: true) : null;
+        }
+        else
+        {
+            var checkout = Ah.Hierarchy.HierarchyModule.CheckoutOfCwd(c.Cwd(), p => c.Services.Files.Stat(p) is not null);
+            var recorded = RecordedRootOfSession(c);
+            realRoot = checkout is not null && Path.IsPathRooted(checkout) && recorded is not null && Path.IsPathRooted(recorded)
+                && Ah.Core.Text.PathGuard.RealPath(checkout, strict: true) is { } a && a == Ah.Core.Text.PathGuard.RealPath(recorded, strict: true)
+                ? a
+                : null;
+        }
+
+        if (realRoot is null
+            || Ah.Core.Text.PathGuard.RealPath(Path.IsPathRooted(path) ? path : Path.Join(c.Cwd(), path), strict: true) is not { } real)
+        {
+            return false;
+        }
+
+        var prefix = realRoot.TrimEnd('/') + "/";
+        return real.StartsWith(prefix, StringComparison.Ordinal) && c.Services.Config.WritesMatch(writes, real[prefix.Length..]);
     }
 
     /// <summary>The simple commands of the Bash call; null for another tool or a line the lexer cannot classify.</summary>
@@ -327,6 +388,47 @@ internal static partial class SoftRules
                     .Where(m => m.Member("session_id") is { IsText: true } s && s.AsString() == session)
                     .Select(m => m.Member("name") is { IsText: true } n ? n.AsString() : null)
                     .FirstOrDefault(n => n is not null)
+                : null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            c.LogError(e);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// ah2-562 V10: the work tree recorded for this session's member: its team row's <c>expected_root</c>, else the team's. The row is found
+    /// as <see cref="MemberOfSession"/> finds it (the <c>up</c> record's team, at its <c>team_home</c>; the row with this session id or the
+    /// up record's name). Null when nothing is recorded or on any error, so no root and the write bounces.
+    /// </summary>
+    private static string? RecordedRootOfSession(GateContext c)
+    {
+        try
+        {
+            var dir = c.Services.Config.HierarchyDir(c.Cwd());
+            var session = c.SessionKey();
+            var up = c.Services.Hierarchy.Roster.UpRecordFor(dir, session);
+            var home = up.Member("team_home") is { IsText: true } h && h.AsString().Length > 0 ? h.AsString() : dir;
+            if (up.Member("team") is not { IsText: true } team)
+            {
+                return null;
+            }
+
+            var record = c.Services.Roster.ReadTeamRecord(home, team.AsString());
+            var name = up.Member("name") is { IsText: true } n ? n.AsString() : null;
+            JsonValue? row = record.Member("members") is { IsArray: true } members
+                ? members.AsArray().Where(m =>
+                    (m.Member("session_id") is { IsText: true } s && s.AsString() == session) || (name is not null && m.Member("name") is { IsText: true } mn && mn.AsString() == name))
+                    .Select(m => (JsonValue?)m).FirstOrDefault()
+                : null;
+            if (row is not { } found)
+            {
+                return null;
+            }
+
+            return found.Member("expected_root") is { IsText: true } own && own.AsString().Length > 0 ? own.AsString()
+                : record.Member("expected_root") is { IsText: true } shared && shared.AsString().Length > 0 ? shared.AsString()
                 : null;
         }
         catch (Exception e) when (e is not OutOfMemoryException)

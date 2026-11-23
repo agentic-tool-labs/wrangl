@@ -779,4 +779,87 @@ public sealed partial class HooksHostTests
         Assert.Equal(string.Empty, Chain(rig, WriteAs("wrangl:implementor", "/w/src/Foo.cs")));
         Assert.Empty(SoftRows(rig));
     }
+
+    /// <summary>ah2-562: the guard keys on class review, not the name; a custom implement-class role is the nearest non-match.</summary>
+    [Fact]
+    public void ReviewerWriteBouncesACustomReviewClassRoleButNotACustomImplementor()
+    {
+        var rig = SoftRig();
+        Directory.CreateDirectory(rig.Sandbox.Root + "/proj/.claude/ah2");
+        File.WriteAllText(rig.Sandbox.Root + "/proj/.claude/ah2/agent-hierarchy.json",
+            """{"version":1,"roles":{"critic":{"class":"review","agent":"acme:critic"},"builder":{"class":"implement","agent":"acme:builder"}}}""");
+
+        var first = rig.Run("pretooluse-chain", WriteAs("acme:critic", "/w/src/Foo.cs"));
+        Assert.True(IsDenied(first));
+        Assert.Contains("--from critic", Reason(first), StringComparison.Ordinal);
+        Assert.Equal(string.Empty, Chain(rig, WriteAs("acme:builder", "/w/src/Foo.cs")));
+    }
+
+    /// <summary>ah2-562 Amendment 1: a review-class role's write folders let through only paths inside its work tree that match a glob.</summary>
+    [Fact]
+    public void ReviewerWriteLetsAReviewRoleWriteOnlyItsDeclaredFolders()
+    {
+        // the member's own tree is WRANGL_EXPECTED_ROOT, so it must exist before the rig: a temp dir of its own
+        var proj = Directory.CreateTempSubdirectory("ah-writes-").FullName;
+        try
+        {
+            var rig = SoftRig(new() { ["WRANGL_EXPECTED_ROOT"] = proj });
+            Directory.CreateDirectory(proj + "/.claude/ah2");
+            Directory.CreateDirectory(proj + "/.git");
+            File.WriteAllText(proj + "/.claude/ah2/agent-hierarchy.json",
+                """{"version":1,"roles":{"tester":{"class":"review","agent":"acme:tester","writes":["tests/automation/**"]}}}""");
+            string Write(string path) => InCwd(WriteAs("acme:tester", path), proj);
+
+            Assert.Equal(string.Empty, Chain(rig, Write(proj + "/tests/automation/a.py")));
+            var bounced = rig.Run("pretooluse-chain", Write(proj + "/src/Foo.cs"));
+            Assert.True(IsDenied(bounced));
+            Assert.Contains("tester writes only its own response and: tests/automation/**", Reason(bounced), StringComparison.Ordinal);
+            Assert.True(IsDenied(rig.Run("pretooluse-chain", Write(proj + "/tests/automation/../../src/Bar.cs"))));
+            Assert.True(IsDenied(rig.Run("pretooluse-chain", Write("/elsewhere/tests/automation/a.py"))));
+
+            // a link is followed before the glob is matched; a relative path is taken against the cwd
+            Directory.CreateDirectory(proj + "/src");
+            Directory.CreateDirectory(proj + "/tests/automation");
+            Directory.CreateSymbolicLink(proj + "/tests/automation/out", proj + "/src");
+            Assert.True(IsDenied(rig.Run("pretooluse-chain", Write(proj + "/tests/automation/out/Foo.cs"))));
+            Assert.Equal(string.Empty, Chain(rig, Write("tests/automation/b.py")));
+        }
+        finally
+        {
+            Directory.Delete(proj, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// ah2-562 V10: a cd into another checkout does not lend it the member's globs (its own tree is WRANGL_EXPECTED_ROOT); with no
+    /// expected root and no recorded tree, the cwd's checkout is no root at all.
+    /// </summary>
+    [Fact]
+    public void ReviewerWriteKeepsTheWriteFoldersToTheMembersOwnTree()
+    {
+        var config = """{"version":1,"roles":{"tester":{"class":"review","agent":"acme:tester","writes":["tests/automation/**"]}}}""";
+        static void Tree(string tree, string config)
+        {
+            Directory.CreateDirectory(tree + "/.git");
+            Directory.CreateDirectory(tree + "/.claude/ah2");
+            File.WriteAllText(tree + "/.claude/ah2/agent-hierarchy.json", config);
+        }
+
+        var rig = SoftRig(new() { ["WRANGL_EXPECTED_ROOT"] = "/ah-test/own-tree" });
+        var other = rig.Sandbox.Root + "/other";
+        Tree(other, config);
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", InCwd(WriteAs("acme:tester", other + "/tests/automation/a.py"), other))));
+
+        var unrecorded = SoftRig();
+        var proj = unrecorded.Sandbox.Root + "/proj";
+        Tree(proj, config);
+        Assert.True(IsDenied(unrecorded.Run("pretooluse-chain", InCwd(WriteAs("acme:tester", proj + "/tests/automation/a.py"), proj))));
+    }
+
+    private static string InCwd(string eventJson, string cwd)
+    {
+        var e = JsonText.Parse(eventJson).AsObject();
+        e["cwd"] = cwd;
+        return JsonText.Stringify(e, 0);
+    }
 }

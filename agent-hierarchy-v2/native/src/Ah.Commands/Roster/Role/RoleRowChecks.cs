@@ -9,7 +9,7 @@ namespace Ah.Commands;
 internal static class RoleRowChecks
 {
     /// <summary>The fields a built-in role's row may not set: only agent, model and dispatch apply.</summary>
-    internal static readonly string[] NotOnBuiltin = ["class", "label", "description", "routes", "scaffold", "shell"];
+    internal static readonly string[] NotOnBuiltin = ["class", "label", "description", "routes", "scaffold", "shell", "writes"];
 
     internal static string NotOnBuiltinError(string field) =>
         $"--{field} does not apply to a built-in role — only --agent, --model and --dispatch";

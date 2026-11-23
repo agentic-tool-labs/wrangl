@@ -197,6 +197,7 @@ public sealed class RosterKitVerbTests : IDisposable
         Assert.Contains("qc · from demo@market:qc · trusted here · local row: identical", dry.Stdout, StringComparison.Ordinal);
         Assert.Contains("adopt: ah roster role set qc --from demo@market:qc --dry-run", dry.Stdout, StringComparison.Ordinal);
         Assert.False(dry.Stdout.Contains("findings (", StringComparison.Ordinal), dry.Stdout);
+        Assert.DoesNotContain("flags (", dry.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain("conflicts (", dry.Stdout, StringComparison.Ordinal);
         Assert.Contains("note: --level repo writes", dry.Stdout, StringComparison.Ordinal);
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(KitFile))).ToLowerInvariant();
@@ -529,5 +530,94 @@ public sealed class RosterKitVerbTests : IDisposable
 
         Assert.Contains("role scout2: agent \"scout\" is also role scout's agent in this kit", dry.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain("role scout: agent \"scout\" is also", dry.Stdout, StringComparison.Ordinal);
+    }
+
+    // ---------------------------------------------------------------- scaffold-tools Amendment 1
+
+    private string LintAgentFile => Path.Combine(Project, ".claude", "agents", "lint.md");
+
+    /// <summary>A review-class role made with <c>--scaffold repo</c> in roster <c>linted</c>, exported, then the machine's copy removed.</summary>
+    private void ExportScaffoldedThenForget(Action<JsonObject>? edit = null)
+    {
+        var set = Roster("role", "set", "lint", "--class", "review", "--description", "Lints things", "--scaffold", "repo", "--level", "repo");
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.DoesNotContain("\ntools:", File.ReadAllText(LintAgentFile), StringComparison.Ordinal);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["rosters"] = Parse("{\"linted\":{\"members\":[{\"role\":\"lint\"}]}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+        var export = Roster("kit", "export", "linted", "--out", KitFile);
+        Assert.True(export.Code == 0, export.Stderr);
+        if (edit is not null)
+        {
+            var kit = Parse(File.ReadAllText(KitFile));
+            edit(kit);
+            File.WriteAllText(KitFile, JsonText.Stringify(JsonValue.FromObject(kit), 2));
+        }
+
+        File.Delete(RepoFile);
+        File.Delete(LintAgentFile);
+    }
+
+    [Fact]
+    public void AScaffoldedRoleIsOneFlagNoFindingAndThePinImportsIt()
+    {
+        ExportScaffoldedThenForget();
+
+        var dry = DryRun();
+
+        Assert.True(dry.Code == 0, dry.Stderr);
+        Assert.Contains("flags (1) — approved by the pin:\n  role lint agent lint: inherits every tool, MCP servers included (except: Edit, Write, NotebookEdit, advisor)\n", dry.Stdout, StringComparison.Ordinal);
+        Assert.True(dry.Stdout.IndexOf("flags (1)", StringComparison.Ordinal) < dry.Stdout.IndexOf("writes:", StringComparison.Ordinal), dry.Stdout);
+        Assert.DoesNotContain("findings (", dry.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("inherits every tool (no tools: list)", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    flagged tools: every tool (no tools: list) except: Edit, Write, NotebookEdit, advisor\n", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("commit: nothing stands against a commit", dry.Stdout, StringComparison.Ordinal);
+
+        var commit = CommitWith(PinIn(dry.Stdout));
+
+        Assert.True(commit.Code == 0, commit.Stderr);
+        Assert.Contains("role lint agent lint: inherits every tool, MCP servers included", commit.Stdout, StringComparison.Ordinal);
+        Assert.Contains($"wrote {LintAgentFile}\n", commit.Stdout, StringComparison.Ordinal);
+        Assert.True(Parse(File.ReadAllText(RepoFile))["roles"].AsObject().ContainsKey("lint"));
+    }
+
+    [Fact]
+    public void AKitAgentWithNoToolsAndHooksIsStillRefused()
+    {
+        ExportScaffoldedThenForget(kit =>
+        {
+            var agent = kit["roles"].AsObject()["lint"].AsObject()["agent"].AsObject();
+            agent["text"] = agent["text"].AsString().Replace("\n---\n", "\nhooks: x\n---\n", StringComparison.Ordinal);
+        });
+
+        var dry = DryRun();
+
+        Assert.Contains("key hooks isn't allowed in a pack agent", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("commit: refused", dry.Stdout, StringComparison.Ordinal);
+        Assert.Equal(2, CommitWith(PinIn(dry.Stdout)).Code);
+        Assert.False(File.Exists(LintAgentFile));
+    }
+
+    [Fact]
+    public void APackAgentWithNoToolsIsStillRefusedAtAdoptAndAtTrust()
+    {
+        InstallPack();
+        var from = "demo@market:qc";
+        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
+        Assert.Equal(0, Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin).Code);
+        File.WriteAllText(Path.Combine(PackDir, "agents", "qc.md"), "---\nname: qc\ndescription: Checks things\n---\n\nYou check things.\n");
+
+        var trustDry = Roster("role", "trust", "qc", "--level", "repo", "--dry-run");
+        Assert.Contains("tools is required", trustDry.Stdout + trustDry.Stderr, StringComparison.Ordinal);
+        var trust = Roster("role", "trust", "qc", "--level", "repo", "--pin", Parse(trustDry.Stdout)["pin"].AsString());
+        Assert.Equal(2, trust.Code);
+        Assert.Contains("role trust qc: errors stand", trust.Stderr, StringComparison.Ordinal);
+
+        Assert.Equal(0, Roster("role", "remove", "qc", "--level", "repo").Code);
+        var adoptDry = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run");
+        Assert.Contains("tools is required", adoptDry.Stdout + adoptDry.Stderr, StringComparison.Ordinal);
+        var adopt = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", Parse(adoptDry.Stdout)["pin"].AsString());
+        Assert.Equal(2, adopt.Code);
+        Assert.Contains("role set qc --from: errors stand", adopt.Stderr, StringComparison.Ordinal);
     }
 }
