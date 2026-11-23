@@ -76,7 +76,8 @@ Your contract:
   commit under review, never in the implementor's tree; that clone stays in
   your `$TMPDIR` and your report names its path under `Left behind`. Uncommitted work is not
   reviewable: report it. Suites: `wrangl:qa`.
-- **Never edit.** A gate denies Write and Edit on every target. You file the
+- **Never edit.** A gate denies Write and Edit on every target outside your own
+  scratch directory (`$TMPDIR`), where notes and probes may go. You file the
   report with one `ah msg fill` (below), not by editing, and never "just fix"
   anything: describe the fix and hand it back. NotebookEdit is denied; of the
   session's MCP tools use only ones that read, never one that creates, updates,

@@ -130,13 +130,21 @@ internal static partial class SoftRules
             }
         }
 
-        var folders = writes is { IsArray: true } list && c.Services.Config.WritesError(list) is null
-            ? " and: " + string.Join(", ", list.AsArray().Select(g => g.AsString()))
-            : string.Empty;
+        // ah2-567 V12-V14: every review-class member, the built-in reviewer included, writes inside its own scratch directory.
+        var scratch = ScratchOfSession(c);
+        if (scratch is not null && Ah.Core.Text.PathGuard.Within(scratch, Path.IsPathRooted(path.AsString()) ? path.AsString() : Path.Join(c.Cwd(), path.AsString())))
+        {
+            return null;
+        }
+
+        string[] folders = [
+            .. writes is { IsArray: true } list && c.Services.Config.WritesError(list) is null ? list.AsArray().Select(g => g.AsString()) : [],
+            .. scratch is null ? Array.Empty<string>() : [$"its scratch directory {scratch}"],
+        ];
         return SoftGate.Bounce(
             c,
             "reviewer-write",
-            $"the {(role == "reviewer" ? "Reviewer" : role)} writes only its own response{folders}.",
+            $"the {(role == "reviewer" ? "Reviewer" : role)} writes only its own response{(folders.Length > 0 ? " and: " + string.Join(", ", folders) : string.Empty)}.",
             $"write your findings with `ah msg fill --id <id> --from {role} --body-file -`.",
             retryPasses: false);
     }
@@ -402,7 +410,34 @@ internal static partial class SoftRules
     /// as <see cref="MemberOfSession"/> finds it (the <c>up</c> record's team, at its <c>team_home</c>; the row with this session id or the
     /// up record's name). Null when nothing is recorded or on any error, so no root and the write bounces.
     /// </summary>
-    private static string? RecordedRootOfSession(GateContext c)
+    private static string? RecordedRootOfSession(GateContext c) =>
+        SessionRow(c) is not ({ } record, { } found) ? null
+            : found.Member("expected_root") is { IsText: true } own && own.AsString().Length > 0 ? own.AsString()
+            : record.Member("expected_root") is { IsText: true } shared && shared.AsString().Length > 0 ? shared.AsString()
+            : null;
+
+    /// <summary>
+    /// ah2-567 V13: the real path of this member's scratch directory: its team row's recorded <c>tmp</c> when it has one, else the
+    /// <c>TMPDIR</c> the hook sees; accepted only when its real path is a direct child of the real <c>&lt;ah home&gt;/t</c>. Null otherwise.
+    /// </summary>
+    private static string? ScratchOfSession(GateContext c)
+    {
+        var candidate = SessionRow(c) is (_, { } row) && row.Member("tmp") is { IsText: true } t && Path.IsPathRooted(t.AsString())
+            ? t.AsString()
+            : c.Services.Environment.GetVariable("TMPDIR");
+        return candidate is { Length: > 0 } && Path.IsPathRooted(candidate)
+            && Ah.Core.Text.PathGuard.RealPath(candidate, strict: true) is { } real
+            && Ah.Core.Text.PathGuard.RealPath(Path.Join(c.Services.Environment.AhHome, "t"), strict: true) is { } aliasRoot
+            && Path.GetDirectoryName(real) == aliasRoot.TrimEnd('/')
+            ? real
+            : null;
+    }
+
+    /// <summary>
+    /// This session's team record and its member row, found as <see cref="MemberOfSession"/> finds it (the <c>up</c> record's team, at
+    /// its <c>team_home</c>; the row with this session id or the up record's name). Null on no row or any error.
+    /// </summary>
+    private static (JsonValue Record, JsonValue Row)? SessionRow(GateContext c)
     {
         try
         {
@@ -422,14 +457,7 @@ internal static partial class SoftRules
                     (m.Member("session_id") is { IsText: true } s && s.AsString() == session) || (name is not null && m.Member("name") is { IsText: true } mn && mn.AsString() == name))
                     .Select(m => (JsonValue?)m).FirstOrDefault()
                 : null;
-            if (row is not { } found)
-            {
-                return null;
-            }
-
-            return found.Member("expected_root") is { IsText: true } own && own.AsString().Length > 0 ? own.AsString()
-                : record.Member("expected_root") is { IsText: true } shared && shared.AsString().Length > 0 ? shared.AsString()
-                : null;
+            return row is { } found ? (record, found) : null;
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {

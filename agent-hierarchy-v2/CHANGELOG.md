@@ -4,6 +4,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.54] - 2026-11-23
+
+### Changed
+
+- **A review-class member can write in its own scratch directory.** The built-in reviewer and every custom
+  review role may now use Write and Edit inside their own `$TMPDIR` (the member's tmp under the `ah` home, outside
+  every checkout) with nothing declared. Files in the work tree are still bounced unless the role has declared
+  write folders. Another member's scratch directory, and a link in scratch that points into a checkout, are
+  bounced.
+
 ## [2.0.53] - 2026-11-23
 
 ### Changed

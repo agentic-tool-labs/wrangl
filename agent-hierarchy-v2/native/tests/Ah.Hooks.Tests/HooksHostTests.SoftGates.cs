@@ -856,6 +856,73 @@ public sealed partial class HooksHostTests
         Assert.True(IsDenied(unrecorded.Run("pretooluse-chain", InCwd(WriteAs("acme:tester", proj + "/tests/automation/a.py"), proj))));
     }
 
+    /// <summary>
+    /// ah2-567 Amendment 4: a review-class member writes inside its own scratch directory (a direct child of <c>&lt;ah home&gt;/t</c>)
+    /// with nothing declared; another member's scratch, a TMPDIR outside <c>&lt;ah home&gt;/t</c>, and a link out of scratch are bounced.
+    /// </summary>
+    [Fact]
+    public void ReviewerWriteLetsAReviewMemberWriteOnlyItsOwnScratch()
+    {
+        var home = Directory.CreateTempSubdirectory("ah-scratch-").FullName;
+        try
+        {
+            var own = home + "/t/aaaa1111";
+            Directory.CreateDirectory(own);
+            Directory.CreateDirectory(home + "/t/bbbb2222");
+            Rig Rig(string tmpdir)
+            {
+                var rig = SoftRig(new() { ["AH_HOME"] = home, ["TMPDIR"] = tmpdir });
+                Directory.CreateDirectory(rig.Sandbox.Root + "/proj/.claude/ah2");
+                File.WriteAllText(rig.Sandbox.Root + "/proj/.claude/ah2/agent-hierarchy.json",
+                    """{"version":1,"roles":{"critic":{"class":"review","agent":"acme:critic"}}}""");
+                return rig;
+            }
+
+            var rig = Rig(own);
+            var src = rig.Sandbox.Root + "/proj/src/Foo.cs";
+            foreach (var agent in new[] { "wrangl:reviewer", "acme:critic" })
+            {
+                Assert.Equal(string.Empty, Chain(rig, WriteAs(agent, own + "/notes.md")));
+                var bounced = rig.Run("pretooluse-chain", WriteAs(agent, src));
+                Assert.True(IsDenied(bounced));
+                Assert.Contains("its scratch directory " + Ah.Core.Text.PathGuard.RealPath(own, strict: true), Reason(bounced), StringComparison.Ordinal);
+                Assert.True(IsDenied(rig.Run("pretooluse-chain", WriteAs(agent, own + "/../bbbb2222/x"))));
+            }
+
+            // a link inside scratch that points into the checkout is followed out of it
+            Directory.CreateDirectory(rig.Sandbox.Root + "/proj/src");
+            Directory.CreateSymbolicLink(own + "/src", rig.Sandbox.Root + "/proj/src");
+            Assert.True(IsDenied(rig.Run("pretooluse-chain", WriteAs("wrangl:reviewer", own + "/src/Foo.cs"))));
+
+            // a TMPDIR that is not a direct child of <ah home>/t is no scratch: /tmp/x, and a path inside the checkout
+            Assert.True(IsDenied(Rig("/tmp/x").Run("pretooluse-chain", WriteAs("wrangl:reviewer", "/tmp/x/notes.md"))));
+            var tmp = home + "/proj/tmp";
+            Directory.CreateDirectory(home + "/proj/.git");
+            Directory.CreateDirectory(tmp);
+            Assert.True(IsDenied(Rig(tmp).Run("pretooluse-chain", InCwd(WriteAs("wrangl:reviewer", tmp + "/notes.md"), home + "/proj"))));
+
+            // a TMPDIR that is a link under <ah home>/t into the checkout: its real path leaves t, so it is no scratch
+            Directory.CreateSymbolicLink(home + "/t/cccc3333", tmp);
+            var linked = Rig(home + "/t/cccc3333").Run("pretooluse-chain", WriteAs("wrangl:reviewer", home + "/t/cccc3333/notes.md"));
+            Assert.True(IsDenied(linked));
+            Assert.DoesNotContain("its scratch directory", Reason(linked), StringComparison.Ordinal);
+
+            // the team row's recorded tmp is preferred over TMPDIR: the row's directory is allowed, the other valid TMPDIR is not
+            var recorded = Rig(home + "/t/bbbb2222");
+            AutoTrackTests.WriteTeam(recorded, new JsonObject
+            {
+                ["members"] = new JsonArray { new JsonObject { ["name"] = "rev-1", ["role"] = "reviewer", ["session_id"] = "sess-1", ["tmp"] = own } },
+            });
+            recorded.PutPeers(HierDir(recorded), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"role\":\"reviewer\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
+            Assert.Equal(string.Empty, Chain(recorded, WriteAs("wrangl:reviewer", own + "/notes.md")));
+            Assert.True(IsDenied(recorded.Run("pretooluse-chain", WriteAs("wrangl:reviewer", home + "/t/bbbb2222/x"))));
+        }
+        finally
+        {
+            Directory.Delete(home, recursive: true);
+        }
+    }
+
     private static string InCwd(string eventJson, string cwd)
     {
         var e = JsonText.Parse(eventJson).AsObject();
