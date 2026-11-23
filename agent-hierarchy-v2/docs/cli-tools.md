@@ -65,9 +65,10 @@ words, and it runs them.
 | set the team goal | `ah rules goal --team <name> --text "<goal>" --done-when "<test>"` | or tell the Orchestrator. Goal at most 160 characters, done-when at most 120. `--clear` removes it. Guidance only |
 | add a standing rule | `ah rules add --repo --key <key> --text "<rule>"` | the scope can also be `--team <name>`, `--project <work id>` or `--goal <work id>`. Text at most 300 characters |
 | list the rules that apply | `ah rules list` | |
+| record a lesson for the next team | `ah lessons propose --lesson "<one line>" --when "<when it applies>" --pointer <commit\|item\|measurement>` | anyone may. A note, never a rule or a gate. `ah lessons list` shows them |
 | pause one member | ask the Orchestrator (`ah roster pause-member <member>`) | stops nudges, re-deliveries and alarms for it; closes nothing. `resume-member` ends it |
 | let a deputy run the team | ask the Orchestrator (`ah roster duty on <member>`) | `ah roster duty off` takes it back |
-| give one session your rights | `ah admin grant <pid>` | in a plain terminal only. `ah admin revoke` ends it; `ah admin show` shows it |
+| give one session your rights | `ah admin grant <pid>` in a plain terminal, or type `/wrangl:admin` in the session | `ah admin revoke` or `/wrangl:admin off` ends it; `ah admin show` shows it. See [`ah admin`](#ah-admin) |
 | switch the member launch rules off or on | `ah allow off` · `ah allow on` | on by default. `ah allow list` shows the state |
 
 ### Stop, pause and recover
@@ -1804,7 +1805,30 @@ Find and stop a runaway process that you own: one that descends from your sessio
 
 Designates one Claude session, by its process id, as an Orchestrator with admin rights: ah treats a call from that session as yours and refuses it nothing (rule writes, a daemon restart). The grant is a row of the state database (home document `home.admin-grant`) and ends when that process ends or you revoke it; one left in `<AH home>/admin.json` by an earlier build is taken in and the file removed.
 
-While the database cannot be read, no session counts as the admin session, and `show` says so. `grant` and `revoke` are refused inside a session: run them in a plain terminal.
+While the database cannot be read, no session counts as the admin session, and `show` says so. `show` also prints `via:`, how the grant arrived: `terminal` for `ah admin grant`, `prompt` for the typed command below. `grant` and `revoke` are refused inside a session unless it is already the admin session: run them in a plain terminal.
+
+**Granting from inside a session, for example through Remote Control.** Type this into the session as a prompt:
+
+```
+/wrangl:admin
+/wrangl:admin off
+/wrangl:admin show
+```
+
+`/wrangl:admin` (or `on`) makes that session the admin session. Wrangl answers with one line, then the session runs `ah admin show` so you can see the result. `off` ends the grant, but only if this session holds it. `show` changes nothing. A new grant replaces the old one, and the answer names the process it replaced. The grant lasts until the session exits, you type `off`, another grant replaces it, or you run `ah admin revoke`. There is no time limit.
+
+Only a prompt you type grants. If the model runs the command itself, nothing changes. Wrangl refuses, and says why in one line, when:
+
+- another Claude Code session started this one (a session an agent launched from its own shell);
+- the session was started non-interactive (print or stream mode);
+- the session has no terminal;
+- the session's process line cannot be read.
+
+The Claude desktop app is granted only in its exact standard shape, installed in `/Applications`. An app installed elsewhere is refused.
+
+**What an admin session can do.** Wrangl treats it as you. It can do anything you can do through `ah`: answer your Needs-you questions (this includes settling decisions), send as the user, edit roster templates, close teams, run `ahd heal --force`, and hand admin to another session with `ah admin grant`. Grant it only to a session you trust with all of that.
+
+**What this does not protect against.** The typed command is a convenience for a remote user. It is not a security boundary against an agent running as you on the same machine. The checks above stop the plain ways an agent could grant itself admin: running `ah`, or starting `claude -p` or a headless member. They cannot stop an agent that forges terminal input or a process identity, for example by typing the command into a pane it controls, or by starting a session on a fake terminal. Wrangl leaves that to Claude Code's auto-mode classifier. Whether a command typed through Remote Control is accepted has not been confirmed on a live setup; if it is refused, `ah admin show` shows no new grant, and the hook log says which check declined.
 
 #### `ah ledger`
 
@@ -1855,6 +1879,24 @@ One goal per team, guidance and never a gate. `--team` defaults to the caller's 
 `ah rules list` prints `[goal] T; done when: D (team T)` first, and `list --all` one `[goal]` line per stored goal (`"goal"` and `"goals"` in JSON). The goal line leads every session's rules block and every request's `msg show` footer.
 
 `ah msg new --type request --serves "<how>"` (or `"off-goal: <why>"`) records how a request serves it as `serves:`; it is cleaned and cut to 160, never refused, and a lead's request without it gets a stderr note while a goal applies. Who may write: as for `ah rules add`.
+
+#### `ah lessons` (lessons journal)
+
+*Who runs it:* everyone (`propose`, `list`); you, Orchestrator (`promote`, `retire`).
+
+Usage: `propose --lesson T --when W --pointer P [--happened H] [--role R] [--path P]... [--until <work id>] [--team T] [--json]` · `list [--scope team|role|repo|global] [--role R] [--team T] [--all] [--brief <request id>] [--json]` · `promote L<n> --to role|repo|global [--role R]` · `retire L<n> --why W`
+
+Lessons from earlier work, written by agents: notes with less authority than the user's rules, kept in their own table so no rules reader shows one as a rule. Guidance, never a gate.
+
+`propose` writes a new `team`-scope lesson for the caller's team and prints `L<id>`; `--team` names the team when the caller has none (exit 2 without it). The write goes through the daemon, which records the proven caller as `by`: its `name@team` address when it has one, else its role (`user`, `orchestrator`, `member`, …, `unknown`); `retired_by` and `promoted_by` read the same way. `--pointer` is the evidence: a commit, a work item or a measurement. `--role` keeps the lesson for one role; `--path` (up to 3) names repo-relative prefixes it is about. Caps, each refused with exit 2 and nothing written: lesson 200 characters, when 120, happened 200, pointer 120, none empty; a path at most 120, no leading `/`, no `..`; a role the registry knows.
+
+`list` prints the open lessons of this repo at every scope, and open `global` ones from any repo, one `L<id> <scope>, for <role>, by <by>, source <pointer>: <lesson> (when: …)` line each; `--scope`, `--role` and `--team` narrow it, `--all` adds retired ones with who retired them and why. `--json` prints `{"lessons": [{"id", "scope", "team", "role", "paths", "happened", "lesson", "when", "pointer", "until", "by", "state", "retired_by", "retired_why", "promoted_by", "promoted_ms", "created_ms", "updated_ms"}]}`. Exit codes: 0 ok, 1 not found, 2 refused or bad input.
+
+`--until <work id>` ties a lesson to the item that fixes it: from the moment that item is `done` the lesson reads as retired everywhere (`list --all` shows `[retired: <id> is done]`); a `dropped` item leaves it open. An id `ah work` cannot resolve exits 1 at `propose`.
+
+`promote` sets a lesson's scope: `--to repo`, `--to role` (needs `--role` or a role already on the lesson; exit 2 otherwise) or `--to global`, and records who promoted it and when (`promoted_by`, `promoted_ms`). `retire` marks it retired with who did it and `--why`; a lesson already retired stays as it was, exit 0. Both are yours or the top-level Orchestrator's; anyone else, a Sub-Orchestrator or deputy included, gets exit 2 and asks its Orchestrator. A row is never deleted.
+
+Every request's `msg show` footer ends, after the goal and work lines, with the `repo`- and `role`-scope lessons that match it, under a header that marks them as notes, not instructions. A lesson matches when it is open, belongs to this repo (worktrees share it), has no role or the request's `to` role, and has no paths or one path prefix that occurs, at the start of a token or right after a `/`, in a path the brief's `files` section names (a trailing `:12` or `:12-40` is ignored). Path matches come first, then role lessons, then general ones, newest first. At most 3 lessons and 1,000 characters are shown, whole lessons only, except that a first lesson longer than the cap on its own is cut to it with `…`; when more match, a last line says `N more lessons match: ah lessons list --brief <id>`, which lists them all. Each line reads `- L<id> <scope>, for <role>, by <by>, source "<pointer>": "<lesson>" When: "<when>"`, free text quoted on one line. `team` and `global` lessons are not delivered yet. A request with no match, a response or a note shows exactly what it did before, and lessons that cannot be read add nothing.
 
 #### `ah rules`
 

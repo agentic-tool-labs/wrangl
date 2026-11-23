@@ -240,6 +240,17 @@ internal static class StateDbMigrations
         new MigrationStep(42, c => Run(c, V42Statements)),
         new MigrationStep(43, c => Run(c, V43Statements)),
         new MigrationStep(44, c => Run(c, V44Statements)),
+        new MigrationStep(45, c => Run(c, V45Statements)),
+    ];
+
+    /// <summary>
+    /// Version 45 (ah2-54, adr-30): the lessons journal, apart from <c>rules</c> so no rules reader can show a lesson as a rule. A row is never
+    /// deleted; <c>paths</c> holds newline-joined prefixes. Additive.
+    /// </summary>
+    internal static IReadOnlyList<string> V45Statements =>
+    [
+        "CREATE TABLE IF NOT EXISTS lessons(id INTEGER PRIMARY KEY, hier_dir TEXT NOT NULL, scope TEXT NOT NULL, team TEXT, role TEXT, paths TEXT, happened TEXT, lesson TEXT NOT NULL, applies TEXT NOT NULL, pointer TEXT NOT NULL, until_item TEXT, \"by\" TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'open', retired_by TEXT, retired_why TEXT, promoted_by TEXT, promoted_ms INTEGER, created_ms INTEGER NOT NULL, updated_ms INTEGER NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS lessons_dir ON lessons(hier_dir, scope)",
     ];
 
     // V40 b397

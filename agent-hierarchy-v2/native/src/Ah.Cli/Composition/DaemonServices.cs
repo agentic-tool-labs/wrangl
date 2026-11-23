@@ -812,22 +812,25 @@ internal sealed class DaemonServices
         routes.Add(CodexAnswerRoute.Path, new CodexAnswerRoute(g, _codexRelay).HandleAsync);
         routes.Add(BareRecoverRoute.Path, new BareRecoverRoute(g, () => Volatile.Read(ref _bareHost)).HandleAsync);
         routes.Add(LoadAdmitRoute.Path, new LoadAdmitRoute(_load.Value).HandleAsync);
+        CutoverCaller CallerOf(int? peerPid)
+        {
+            var table = PlatformModule.CreateProcessTable(g.Runner);
+            var facts = new DaemonCutoverFacts(g, table, source.RegisteredHierarchyDirs);
+            var principal = g.Mailbox.PrincipalOf(peerPid);
+
+            // ah2-32: a top-level session with no team registers nothing, so it arrives anonymous. A Claude session that is no
+            // team's member process is the user's own session, the Orchestrator before it has a team: it is not refused.
+            return principal.Kind == PrincipalKind.Anonymous && Ah.Mesh.MeshModule.HarnessOf(table, peerPid) is { } harness && !facts.IsMemberProcess(harness)
+                ? new CutoverCaller(CutoverCallerKind.TopOrchestrator, "top-level session with no team")
+                : CutoverCallers.Classify(principal, facts);
+        }
+
+        routes.Add(LessonsRoute.Path, new LessonsRoute(g, _environment.AhHome, _stateDb, CallerOf, () => g.Io.Clock.UtcNow).HandleAsync);
         routes.Add(RulesRoute.Path, new RulesRoute(
             g,
             _environment.AhHome,
             _stateDb,
-            peerPid =>
-            {
-                var table = PlatformModule.CreateProcessTable(g.Runner);
-                var facts = new DaemonCutoverFacts(g, table, source.RegisteredHierarchyDirs);
-                var principal = g.Mailbox.PrincipalOf(peerPid);
-
-                // ah2-32: a top-level session with no team registers nothing, so it arrives anonymous. A Claude session that is no
-                // team's member process is the user's own session, the Orchestrator before it has a team: it is not refused.
-                return principal.Kind == PrincipalKind.Anonymous && Ah.Mesh.MeshModule.HarnessOf(table, peerPid) is { } harness && !facts.IsMemberProcess(harness)
-                    ? new CutoverCaller(CutoverCallerKind.TopOrchestrator, "top-level session with no team")
-                    : CutoverCallers.Classify(principal, facts);
-            },
+            CallerOf,
             () => g.Io.Clock.UtcNow,
             peerPid => peerPid is { } p ? PlatformModule.CreateProcessTable(g.Runner).StartTime(p) : null,
             // ah2-53: a goal lives in ah.db, so no file event tells of its write; the teams key of the team's file is re-read, as a team write's is

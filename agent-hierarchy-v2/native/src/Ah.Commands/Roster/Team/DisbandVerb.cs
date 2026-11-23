@@ -440,6 +440,7 @@ internal static class DisbandVerb
             ["warnings"] = TeardownSupport.Strings(planWarnings),
             ["sources"] = teardown.SourcesField(dir, TeardownSupport.ScopeOf(c), team, context),
             ["tmp_bytes"] = JsonValue.FromNumber(MemberTmp.PlanBytes(c, planRelease.Closable.Select(m => m.IsText ? m.AsString() : MemberPlanning.JsConvertText(m.Member("name"))))),
+            ["retro"] = Retro(TeardownSupport.TeamName(c)),
         };
         if (planClean is not null)
         {
@@ -460,6 +461,11 @@ internal static class DisbandVerb
         c.Out(disbandOut);
         return 0;
     }
+
+    /// <summary>ah2-54 D10: the retro the Orchestrator reads before it closes a team; text only, it never blocks the close.</summary>
+    internal static string Retro(string team) =>
+        "Retro, optional and never blocking: 1) What did this team learn that the next team should know? For each lesson: ah lessons propose --lesson \"<one line>\" --when \"<when it applies>\" --pointer <commit|item|measurement>. "
+        + $"A miss that is a bug is an issue in the friction loop, not a lesson. 2) ah lessons list --team {team}: promote what held up (ah lessons promote L<n> --to repo, or --to role --role <role>), retire the rest (ah lessons retire L<n> --why \"<why>\").";
 
     private static void Put(JsonObject target, string key, JsonValue? value)
     {

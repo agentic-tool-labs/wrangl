@@ -19,7 +19,7 @@ internal static partial class TeardownSupport
     /// <summary>The members a teardown can close and those it cannot, with the live registry peers outside the team file.</summary>
     internal sealed record CloseSet(JsonArray Extras, List<JsonValue> Closable, JsonArray NotClosable, List<string> Excluded);
 
-    private static string TeamName(RosterContext c) => c.TeamFile ?? "(default)";
+    internal static string TeamName(RosterContext c) => c.TeamFile ?? "(default)";
 
     internal static TeamScope ScopeOf(RosterContext c) => new(c.TeamFile);
 

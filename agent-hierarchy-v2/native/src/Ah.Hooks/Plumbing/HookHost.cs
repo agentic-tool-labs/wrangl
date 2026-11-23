@@ -78,6 +78,7 @@ internal static partial class HookHost
         "session-rules",
         "posttooluse-implicit-opt-in",
         "userpromptsubmit-peer-tracking",
+        "userpromptsubmit-admin",
         "subagentstart-cli-root",
     };
 

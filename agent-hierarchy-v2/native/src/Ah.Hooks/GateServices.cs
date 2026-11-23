@@ -30,7 +30,8 @@ public sealed record GateServices(
     Func<string, string, string, IReadOnlyList<string>, IReadOnlyList<string>>? ReadyToDismiss = null,
     Action<string, string?, string, string>? WorkCommit = null,
     Func<string, RulesSubject, string?>? RulesBlock = null,
-    Func<string, string?>? AdrWaiting = null);
+    Func<string, string?>? AdrWaiting = null,
+    IHomeDocs? HomeDocs = null);
 
 /// <summary>
 /// Who a session's rules are read for: its team, read in <paramref name="TeamDir"/> when set, and with <paramref name="Parent"/> the next link of
@@ -71,4 +72,7 @@ public interface IGateSessions
 
     /// <summary>The live registrations as the caller-identity predicate reads them: session, process, recorded start, addresses.</summary>
     IReadOnlyList<SessionRegistration> Sessions() => [];
+
+    /// <summary>The executable path of <paramref name="pid"/> as <c>ps -o comm=</c> prints it, or null when it cannot be read.</summary>
+    string? Executable(int pid) => null;
 }

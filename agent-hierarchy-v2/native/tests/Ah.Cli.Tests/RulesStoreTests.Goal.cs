@@ -316,6 +316,8 @@ public sealed partial class RulesStoreTests
     [InlineData("goal", "--team", "tm", "--text", "x", "--clear")]
     [InlineData("goal", "--team", "tm", "--done-when", "d")]
     [InlineData("goal", "--team", "tm", "--repo")]
+    [InlineData("goal", "--team", "tm", "--global")]
+    [InlineData("goal", "--team", "tm", "--roster", "x")]
     [InlineData("goal", "--team", "tm", "--key", "k", "--text", "x")]
     [InlineData("goal", "--text", "x")]
     public void NegativeAGoalCallThatDoesNotFitIsAUsageErrorAndWritesNothing(params string[] args)

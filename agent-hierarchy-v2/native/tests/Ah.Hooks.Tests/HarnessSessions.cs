@@ -17,6 +17,9 @@ internal sealed class HarnessSessions(params SessionRegistration[] live) : IGate
 
     public Dictionary<int, string> Starts { get; } = new() { [Pid] = Start };
 
+    /// <summary>The controlling terminal a pid answers (empty for none); a pid not listed cannot say (null).</summary>
+    public Dictionary<int, string> Ttys { get; } = [];
+
     /// <summary>The ancestor chain a pid answers, where it should have a parent other than pid 1.</summary>
     public Dictionary<int, IReadOnlyList<int>> Ancestry { get; } = [];
 
@@ -27,6 +30,11 @@ internal sealed class HarnessSessions(params SessionRegistration[] live) : IGate
     public IReadOnlyList<RegisteredSession> Registered() => [];
 
     IReadOnlyList<SessionRegistration> IGateSessions.Sessions() => live;
+
+    /// <summary>The executable path a pid answers (<c>ps -o comm=</c>); a pid not listed cannot say (null).</summary>
+    public Dictionary<int, string> Executables { get; } = [];
+
+    public string? Executable(int pid) => Executables.TryGetValue(pid, out var executable) ? executable : null;
 
     private sealed class FakeTable(HarnessSessions owner) : IProcessTable
     {
@@ -41,5 +49,7 @@ internal sealed class HarnessSessions(params SessionRegistration[] live) : IGate
         public string? StartTime(long pid) => owner.Starts.TryGetValue((int)pid, out var start) ? start : null;
 
         public string? Command(int pid) => owner.Commands.TryGetValue(pid, out var command) ? command : null;
+
+        public string? Tty(int pid) => owner.Ttys.TryGetValue(pid, out var tty) ? tty : null;
     }
 }

@@ -178,7 +178,7 @@ internal static class CliApp
 
     /// <summary>Every command group <see cref="RunAh"/> dispatches, in the order the usage lists them; the bin/ah shim prints the same line.</summary>
     internal static readonly string[] AhGroups =
-        ["roster", "progress", "ledger", "msg", "qa", "looks", "alarm", "proc", "admin", "view", "allow", "rules", "test", "usage", "usage-report", "herdr", "backlog", "work", "adr", "db", "issue-intake", "hook", "where"];
+        ["roster", "progress", "ledger", "msg", "qa", "looks", "alarm", "proc", "admin", "view", "allow", "rules", "lessons", "test", "usage", "usage-report", "herdr", "backlog", "work", "adr", "db", "issue-intake", "hook", "where"];
 
     /// <summary>What <c>ah</c> with no arguments prints.</summary>
     internal static string AhUsage => $"usage: ah <{string.Join('|', AhGroups)}> [args]";
@@ -254,6 +254,8 @@ internal static class CliApp
                 return 2;
             case "rules":
                 return RulesVerb.Run(context, args[1..], stdout, stderr);
+            case "lessons":
+                return LessonsVerb.Run(context, args[1..], stdout, stderr);
             case "test":
                 return TestVerb.Run(context, args[1..], stdout, stderr);
             case "usage":

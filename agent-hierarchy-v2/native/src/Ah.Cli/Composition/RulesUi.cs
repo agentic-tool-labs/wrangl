@@ -43,7 +43,7 @@ internal sealed class RulesUi(ServiceGraph g, string ahHome, Func<IReadOnlyList<
         {
             var prefix = HierarchyModule.WorkPrefix(query, dir);
             var rows = RulesOfEngagement.Rows(query, dir);
-            var teamSubject = new RuleSubject(RulesReads.TeamChain(g, dir, team), new HashSet<long>(), new HashSet<long>());
+            var teamSubject = RulesReads.SubjectOf(g, dir, team);
             var progressTeam = HierarchyModule.ProgressTeamOf(team);
             var board = HierarchyModule.WorkBoardOf(query, g.Hierarchy.Progress, dir);
             var items = new JsonArray();

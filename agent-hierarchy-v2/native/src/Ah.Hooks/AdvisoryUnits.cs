@@ -28,6 +28,7 @@ internal static class AdvisoryUnits
         new("stopfailure-recovery", StopFailureRecovery.Run, GateClass.NotAGate),
         new("permission-denied-alarm", PermissionDeniedAlarm.Run, GateClass.Advisory),
         new("userpromptsubmit-peer-tracking", UserPromptSubmitPeerTracking.Run, GateClass.NotAGate),
+        new("userpromptsubmit-admin", UserPromptSubmitAdmin.Run, GateClass.NotAGate),
         new("stop-orchestrator-liveness", StopOrchestratorLiveness.Run, GateClass.Advisory),
         new("stop-member-liveness", StopMemberLiveness.Run, GateClass.Advisory),
         new("sessionstart", SessionStart.Run, GateClass.NotAGate),

@@ -58,6 +58,42 @@ internal static class RulesReads
         return chain;
     }
 
+    /// <summary>The subject for <paramref name="team"/>'s chain, with its roster, and no goals or projects yet.</summary>
+    internal static RuleSubject SubjectOf(ServiceGraph g, string dir, string? team, string? parent = null)
+    {
+        var chain = TeamChain(g, dir, team, parent);
+        return new RuleSubject(chain, new HashSet<long>(), new HashSet<long>(), RosterOf(g, dir, chain));
+    }
+
+    /// <summary>
+    /// The roster over <paramref name="chain"/>: the first team in it that records one, so a lane child team runs its parent's; <c>default</c> when none does; null with no team.
+    /// A team record that cannot be read records none.
+    /// </summary>
+    internal static string? RosterOf(ServiceGraph g, string dir, IReadOnlyList<string> chain)
+    {
+        if (chain.Count == 0)
+        {
+            return null;
+        }
+
+        foreach (var team in chain)
+        {
+            try
+            {
+                if (g.Roster.TeamRosterKey(dir, team) is { } roster)
+                {
+                    return roster;
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException or JsonParseException)
+            {
+                // as ParentOf: an unreadable record names nothing
+            }
+        }
+
+        return RulesOfEngagement.DefaultRoster;
+    }
+
     private static string? ParentOf(ServiceGraph g, string dir, string team)
     {
         try
@@ -77,18 +113,18 @@ internal static class RulesReads
     /// for an Orchestrator, those of anyone in its team.
     /// </summary>
     internal static ResolvedRules ForMember(ServiceGraph g, string ahHome, string dir, RulesAsk ask) =>
-        Resolved(g, ahHome, dir, new RuleSubject(TeamChain(g, ask.TeamDir ?? dir, ask.Team, ask.Parent), new HashSet<long>(), new HashSet<long>()), board => HeldItems(g, dir, board, ask).Concat(BriefedRows(g, dir, board, ask)));
+        Resolved(g, ahHome, dir, SubjectOf(g, ask.TeamDir ?? dir, ask.Team, ask.Parent), board => HeldItems(g, dir, board, ask).Concat(BriefedRows(g, dir, board, ask)));
 
     /// <summary>What applies at a work item: repo, its own chain, and its team when it is a team item.</summary>
     internal static ResolvedRules ForItem(ServiceGraph g, string ahHome, string dir, WorkRow row)
     {
         var team = row.IsBacklog ? null : row.Team;
-        return Resolved(g, ahHome, dir, new RuleSubject(TeamChain(g, dir, team), new HashSet<long>(), new HashSet<long>()), board => board.ViewOf(row.N) is { } view ? [view] : []);
+        return Resolved(g, ahHome, dir, SubjectOf(g, dir, team), board => board.ViewOf(row.N) is { } view ? [view] : []);
     }
 
     /// <summary>What applies at a team, or with no team at the repo.</summary>
     internal static ResolvedRules ForTeam(ServiceGraph g, string ahHome, string dir, string? team) =>
-        Resolved(g, ahHome, dir, new RuleSubject(TeamChain(g, dir, team), new HashSet<long>(), new HashSet<long>()), _ => []);
+        Resolved(g, ahHome, dir, SubjectOf(g, dir, team), _ => []);
 
     /// <summary>
     /// What a session gets for <paramref name="ask"/>: the block (nothing when no rule applies, or the one line when the rules cannot be read), then the standing ADR line. The

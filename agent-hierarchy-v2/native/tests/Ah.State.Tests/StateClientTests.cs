@@ -190,6 +190,15 @@ public sealed class StateClientTests
     }
 
     [Fact]
+    public void ATooLargeReplyNamesTheRouteAndKeepsTheCap()
+    {
+        var rig = new Rig { Post = _ => Json(413, "{\"error\":{\"code\":\"too_large\",\"message\":\"body is 70000 bytes; the limit is 65536\"}}") };
+        var result = rig.Client.Invoke("store", "put", Args, Context);
+
+        Assert.Equal("POST /v1/state/store/put: body is 70000 bytes; the limit is 65536", result.Error);
+    }
+
+    [Fact]
     public void OpFailedCarriesTheOpsOwnErrorCode()
     {
         var rig = new Rig { Post = _ => Json(422, "{\"error\":{\"code\":\"op_failed\",\"message\":\"bad edit\",\"error_code\":\"stale_digest\"}}") };

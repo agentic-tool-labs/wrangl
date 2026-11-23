@@ -79,7 +79,7 @@ public static class StateDbModule
     public const int MinimumLibraryVersion = 3_024_000;
 
     /// <summary>The schema version this binary reads and writes.</summary>
-    public const int SchemaVersion = 44;
+    public const int SchemaVersion = 45;
 
     /// <summary>
     /// The tables whose rows can be rebuilt from files that still own the data (the caches and the teams and members imports), so a
@@ -99,7 +99,7 @@ public static class StateDbModule
     /// </summary>
     public static IReadOnlyList<string> AuthoritativeTables { get; } =
     [
-        "adr_history", "adr_links", "adrs", "applied_writes", "asks", "checkpoints", "decisions", "domain_seq", "gates", "hold_archive", "holds", "jobs", "links", "mail_acks", "mail_adapters", "mail_attempts", "mail_claims", "mail_entries", "mail_notes", "members_unplaced", "meta", "msg_bodies", "msg_exchanges", "msg_messages",
+        "adr_history", "adr_links", "adrs", "applied_writes", "asks", "checkpoints", "decisions", "domain_seq", "gates", "hold_archive", "holds", "jobs", "lessons", "links", "mail_acks", "mail_adapters", "mail_attempts", "mail_claims", "mail_entries", "mail_notes", "members_unplaced", "meta", "msg_bodies", "msg_exchanges", "msg_messages",
         "peer_records", "plan_events", "plan_items", "progress_docs", "progress_logs", "qa_jobs", "qa_log", "recover_records", "roster_records", "rules", "sessions", "sessions_unplaced", "sqlite_sequence", "stall_journal", "team_history", "team_snapshots", "teams_unplaced", "usage_rows",
         "work_attachments", "work_items", "work_links", "work_log", "work_prefixes", "work_repos", "worktree_grant_audit", "worktree_grants",
     ];

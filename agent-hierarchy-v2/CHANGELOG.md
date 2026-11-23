@@ -4,6 +4,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.49] - 2026-11-23
+
+### Added
+
+- **`/wrangl:admin [on|off|show]`** gives the session you type it in an admin grant, so a grant no longer needs a
+  plain terminal. It works for a prompt you type yourself, also through Remote Control. A nested or headless
+  session started by a command gets nothing. `ah admin show` prints how a grant arrived (`via`). An agent on the
+  same machine that forges terminal input or a process identity can still obtain a grant; that is left to the
+  auto-mode classifier. See `docs/cli-tools.md`.
+- **A lessons journal.** `ah lessons propose|list|promote|retire` keeps short lessons by role, team, repo or
+  global scope. Lessons that match a brief's role and files ride on the brief's footer, at most 3 or 1,000
+  characters. A team-scope lesson is delivered only once promoted. `--until <item>` retires a lesson when that
+  work item is done. `ah roster disband --plan` asks for a retro.
+- **Rules of engagement at two more levels.** `ah rules add --global` and `--roster <name>` add a rule for every
+  repo, or for every team built from a named roster. Precedence is global, roster, repo, team, project, goal.
+
+### Fixed
+
+- **A team with many streams can open another.** The team record's write was limited to 64 KiB; at about 128
+  streams `ah roster stream-open` and `stream-done` failed with `body is ... bytes; the limit is 65536`. That
+  write now takes 4 MiB, and a too-large reply names its route. Restart the daemon to get the fix.
+
 ## [2.0.48] - 2026-11-23
 
 ### Added

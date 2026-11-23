@@ -272,7 +272,8 @@ internal sealed class StateClient(
                 cts.Token));
             Ah.Core.Time.PhaseTrace.End("daemon.state-post", postStart);
             replayable = reply.Status >= 500;
-            return FromRoute(reply.Status, reply.Body.Span);
+            var routed = FromRoute(reply.Status, reply.Body.Span);
+            return reply.Status == 413 ? routed with { Error = $"POST /v1/state/{domain}/{op}: {routed.Error}" } : routed;
         }
         catch (OperationCanceledException)
         {
