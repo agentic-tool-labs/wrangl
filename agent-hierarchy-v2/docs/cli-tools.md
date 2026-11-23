@@ -786,6 +786,9 @@ One entry's fields, or one line per entry: `<id> <state> <priority> <set> <sha7>
 
 ### Teams and members: `ah roster`
 
+A flag can be written `--team pantry` or `--team=pantry`. A flag word that holds spaces, such as `--team pantry --cwd /p`
+arriving as one word from an unquoted zsh variable, is split the way a shell would have split it.
+
 #### Show roster
 
 ```

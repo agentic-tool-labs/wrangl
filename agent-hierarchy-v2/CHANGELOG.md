@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.47] - 2026-11-22
+
+### Changed
+
+- **A member blocked on a question stays blocked while it also owns an overdue job.** It used to be relabelled as
+  waiting on its job and dropped from the blocked count. A member that is only waiting on its own job is not
+  blocked in any view: the Graph now draws it as live, as the summary and the sidebar already counted it.
+
+### Fixed
+
+- **A member spawned into a reopened stream starts in the stream's work tree.** A stream opened again after it was
+  done got a new tab in the main checkout, and the member launched there.
+- **A tmux spawn into a team with no recorded transport records it.** `ah roster dismiss --close` and
+  `disband --close` used to fail for such a team with `transport "" has no addressable pane to close`.
+- **The site's egg bundle check sees a hand-edited bundle or a three.js or esbuild version change.**
+
+### Docs
+
+- The herdr desktop README describes the team Desk, its Sitrep tab and the row icon; `cli-tools.md` says
+  `ah roster` takes `--flag=value`.
+
 ## [2.0.46] - 2026-11-22
 
 ### Added

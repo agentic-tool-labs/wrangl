@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Ah.Abstractions;
 using Ah.Core.Json;
 using Ah.Hierarchy.StateCalls;
 
@@ -259,7 +260,8 @@ internal static partial class StreamSupport
 
     /// <summary>
     /// The stream's tab: its recorded one while <c>tab list</c> still shows it (or cannot say), else a new one labelled
-    /// <paramref name="label"/>.
+    /// <paramref name="label"/>. A new tab starts in the stream's work tree while it is on disk, else in <paramref name="rootCwd"/>:
+    /// a spawn launches into the tab's one pane as is, so a tab made by a reopen starts its first member where the tab started.
     /// </summary>
     internal static StreamTab EnsureStreamTab(RosterContext c, JsonValue record, string label, string rootCwd, JsonArray? tabs)
     {
@@ -272,9 +274,10 @@ internal static partial class StreamSupport
             }
         }
 
+        var cwd = MemberPlanning.Text(record.Member("worktree")) is { Length: > 0 } tree && c.Services.Files.Stat(tree) is { Kind: FileKind.Directory } ? tree : rootCwd;
         try
         {
-            var r = c.Services.Launch!.Herdr.Invoke(TabCreateArgv(c, label, rootCwd));
+            var r = c.Services.Launch!.Herdr.Invoke(TabCreateArgv(c, label, cwd));
             if (r.Member("result")?.Member("tab")?.Member("tab_id") is not { IsTruthy: true } tabId)
             {
                 throw new InvalidOperationException("herdr tab create produced unexpected shape (missing .result.tab.tab_id)");

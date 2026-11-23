@@ -48,7 +48,7 @@ public sealed class TreeReadsPublishedStateTests
     }
 
     [Theory]
-    [InlineData("blocked-on-job", "blocked")]
+    [InlineData("blocked-on-job", "live")]
     [InlineData("blocked", "blocked")]
     [InlineData("failed", "blocked")]
     [InlineData("working", "busy")]
@@ -148,6 +148,28 @@ public sealed class TreeReadsPublishedStateTests
 
         Assert.Equal(1, RootSummary(src).Int("blocked"));
         Assert.Equal("blocked", ViewBuilder.MemberGraphState(member));
+    }
+
+    /// <summary>ah2-475 A1: a member waiting on its own job is neither counted nor drawn blocked; one blocked on a question is, in both.</summary>
+    [Theory]
+    [InlineData("working", null, "blocked-on-job", 0, "live")]
+    [InlineData("blocked", "question", "blocked", 1, "blocked")]
+    public void AMemberOnItsOwnJobIsNotBlockedWhereOneOnAQuestionIs(string activity, string? blockedBy, string published, int count, string tile)
+    {
+        var src = Source();
+        src.Status["impl"]["activity"] = activity;
+        var member = new JsonObject { ["name"] = "impl", ["live"] = true, ["activity"] = activity };
+        if (blockedBy is not null)
+        {
+            src.Status["impl"]["blocked_by"] = blockedBy;
+            member["blocked_by"] = blockedBy;
+        }
+
+        Publish(src, ("impl", State(published, "live")));
+        ViewBuilder.ApplyPublishedState(member, new JsonObject { [TreeIds.Member(ModelSource.Dir, "alpha", "impl")] = State(published, "live") }, ModelSource.Dir, "alpha");
+
+        Assert.Equal(count, RootSummary(src).Int("blocked"));
+        Assert.Equal(tile, ViewBuilder.MemberGraphState(member));
     }
 
     [Fact]

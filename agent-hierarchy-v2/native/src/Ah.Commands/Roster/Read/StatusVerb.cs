@@ -79,6 +79,7 @@ internal static class StatusVerb
             {
                 var row = member.AsObject();
                 if (row.Get("live") is { IsBool: true } live && live.AsBool() && row.Get("name") is { IsText: true } who
+                    && !Ah.Watch.WatchModule.BlockedWinsOverJob(row.Get("activity") is { IsText: true } activity ? activity.AsString() : null)
                     && Ah.Watch.WatchModule.JobOverdueOf(jobs, who.AsString(), eta => c.Services.Hierarchy.Messages.ThresholdFor(JsonValue.FromString(eta)), nowMs, 30000) is { } blocked)
                 {
                     row["state"] = "blocked-on-job";

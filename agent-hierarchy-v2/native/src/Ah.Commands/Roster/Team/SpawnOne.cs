@@ -71,11 +71,18 @@ internal static class TeamRecords
     }
 
     /// <summary>
-    /// ah2-143: completes <paramref name="team"/> after a herdr launch (<paramref name="launched"/> carries its flavour): <c>transport</c> and
-    /// <c>herdr_flavour</c> are set where absent or null, and a value already present is kept.
+    /// Completes <paramref name="team"/> after a launch on <paramref name="transport"/>; a value already present is kept. ah2-393: a tmux
+    /// launch sets an absent or null <c>transport</c> to <c>tmux</c>; its row's tmux pane id is what teardown closes. ah2-143: a herdr launch
+    /// (<paramref name="launched"/> carries its flavour) sets <c>transport</c> and <c>herdr_flavour</c> where absent or null.
     /// </summary>
-    internal static void CompleteAfterHerdrLaunch(JsonObject team, JsonObject launched)
+    internal static void CompleteAfterLaunch(JsonObject team, JsonObject launched, string transport)
     {
+        if (transport == "tmux" && team.Get("transport") is null or { IsNull: true })
+        {
+            team["transport"] = "tmux";
+            return;
+        }
+
         if (launched.Get(Ah.Core.Mux.HerdrFlavour.Field) is not { IsText: true } flavour)
         {
             return;
@@ -1283,7 +1290,7 @@ internal static class SpawnOne
 
                 var next = doc.AsObject().Clone();
                 next["members"] = list;
-                TeamRecords.CompleteAfterHerdrLaunch(next, launched);
+                TeamRecords.CompleteAfterLaunch(next, launched, transport);
                 outTeam = next;
                 newRecord = merged;
                 return TeamFileOutcome.Write(next);
@@ -2157,7 +2164,7 @@ internal static class SpawnOne
 
                     var next = doc.AsObject().Clone();
                     next["members"] = list;
-                    TeamRecords.CompleteAfterHerdrLaunch(next, launched);
+                    TeamRecords.CompleteAfterLaunch(next, launched, transport);
                     outTeam = next;
                     row = merged;
                     return TeamFileOutcome.Write(next);

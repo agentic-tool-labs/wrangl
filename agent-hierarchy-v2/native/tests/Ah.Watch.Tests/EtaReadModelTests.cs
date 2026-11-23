@@ -571,7 +571,7 @@ public sealed class EtaReadModelTests
     }
 
     /// <summary>The served state of member <c>cd</c> whose summary says <paramref name="liveness"/> and whose team has the one job <paramref name="job"/>; no client holds the jobs slice.</summary>
-    private static string ServedMemberState(string liveness, JobRow job)
+    private static string ServedMemberState(string liveness, JobRow job, string state = "working")
     {
         var reader = new Reader();
         var clock = new Clock();
@@ -580,7 +580,7 @@ public sealed class EtaReadModelTests
         var canonical = new[] { Canon, Other };
         var lane = new MessagesLane(reader, () => canonical, () => canonical, rereadSelf: key => model!.Emit(MessagesLane.LaneName, key));
         var jobsLane = new JobsLane(() => canonical, id => model!.Leases.IsSubscribed(id), (_, _, _) => [job]);
-        var composers = new ComposerRegistry().Register(new FixedOpenList(A)).Register(new FixedSummary("working", 0, liveness));
+        var composers = new ComposerRegistry().Register(new FixedOpenList(A)).Register(new FixedSummary(state, 0, liveness));
         model = new ReadModel([lane, jobsLane], new ModelOptions { SeedAtStart = false }, clock.Read, null, "e1", new PathLaneTable(() => canonical, MessageIdOf, null, null, Peer), composers) { WallClockMs = wall.Read };
         using var owner = model;
         reader.Open[(Canon, A)] = true;
@@ -603,6 +603,19 @@ public sealed class EtaReadModelTests
         var job = JobRowAt("j", served - ageMs, endedAtMs) with { Owner = owner };
 
         Assert.Equal(expected, ServedMemberState(liveness, job));
+    }
+
+    /// <summary>ah2-475 J4: a live member blocked or failed that also owns an overdue job keeps its state; a working one becomes blocked-on-job.</summary>
+    [Theory]
+    [InlineData("blocked", "blocked")]
+    [InlineData("failed", "failed")]
+    [InlineData("working", "blocked-on-job")]
+    [InlineData("idle", "blocked-on-job")]
+    public void ABlockedOrFailedMemberStaysSoWhenItAlsoOwnsAnOverdueJob(string state, string expected)
+    {
+        var job = JobRowAt("j", CreatedMs + 400_000 - 1_000_000, null) with { Owner = "cd" };
+
+        Assert.Equal(expected, ServedMemberState("live", job, state));
     }
 
     [Theory]

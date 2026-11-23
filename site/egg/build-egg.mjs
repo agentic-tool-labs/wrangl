@@ -13,19 +13,23 @@ export const VENDOR = path.join(SITE, 'vendor', 'canvas-ui');
 export const BUNDLE = path.join(EGG, 'ascii-object.js');
 export const HASH = path.join(EGG, 'ascii-object.sha256');
 
-// One hash over the inputs' content: every file under vendor/canvas-ui/ and egg/ascii-egg.mjs, in a fixed order.
+const installed = dep => JSON.parse(readFileSync(path.join(SITE, 'node_modules', dep, 'package.json'), 'utf8')).version;
+
+// One hash over every file under vendor/canvas-ui/, egg/ascii-egg.mjs and the built bundle itself, in a fixed order,
+// then the installed three and esbuild versions: a changed input, a hand-edited bundle or a version bump all show.
 export function inputsHash() {
   const files = readdirSync(VENDOR, { recursive: true, withFileTypes: true }).filter(e => e.isFile())
-    .map(e => path.join(e.parentPath, e.name)).concat(path.join(EGG, 'ascii-egg.mjs'))
+    .map(e => path.join(e.parentPath ?? e.path, e.name)).concat(path.join(EGG, 'ascii-egg.mjs'), BUNDLE)
     .map(f => path.relative(SITE, f).split(path.sep).join('/')).sort();
   const h = createHash('sha256');
   for (const f of files) h.update(`${f}\0`).update(readFileSync(path.join(SITE, f))).update('\0');
+  for (const dep of ['three', 'esbuild']) h.update(`${dep}@${installed(dep)}\0`);
   return h.digest('hex');
 }
 
 async function main() {
   const { buildSync } = await import('esbuild');
-  const three = JSON.parse(readFileSync(path.join(SITE, 'node_modules', 'three', 'package.json'), 'utf8')).version;
+  const three = installed('three');
   buildSync({ entryPoints: [path.join(EGG, 'ascii-egg.mjs')], outfile: BUNDLE, bundle: true, format: 'esm', minify: true,
     legalComments: 'none', logLevel: 'warning',
     banner: { js: `/*! Canvas UI ASCII Object (c) 2026 David Haz, MIT + Commons Clause: see canvas-ui-LICENSE.md.\n`
