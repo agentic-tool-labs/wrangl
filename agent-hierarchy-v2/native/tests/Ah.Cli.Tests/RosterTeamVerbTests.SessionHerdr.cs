@@ -5,7 +5,7 @@ namespace Ah.Cli.Tests;
 /// <summary>ah2-143: a spawn completes a team record that names no herdr server, and says where the member landed.</summary>
 public sealed partial class RosterTeamVerbTests
 {
-    private (int Code, string Stdout, string Stderr) CoreSpawnInto(string teamJson)
+    private (int Code, string Stdout, string Stderr) CoreSpawnInto(string? teamJson, string role = "implementor")
     {
         _sandbox.Executable("bin/hc");
         _extraEnv["PATH"] = _sandbox.Bin;
@@ -18,8 +18,12 @@ public sealed partial class RosterTeamVerbTests
             : argv.Contains("run") ? "{\"address\":\"t7\",\"state\":\"live\"}"
             : argv.Contains("get") ? """{"error":{"code":"agent_not_found"}}"""
             : "{}";
-        WriteTeam("proj", teamJson);
-        return Roster("spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--allow-main", "--split");
+        if (teamJson is not null)
+        {
+            WriteTeam("proj", teamJson);
+        }
+
+        return Roster("spawn-ad-hoc", role, "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--allow-main", "--split");
     }
 
     [Fact]
@@ -46,6 +50,46 @@ public sealed partial class RosterTeamVerbTests
         var team = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
         Assert.Equal("herdr", team.Member("transport")?.AsString());
         Assert.Equal("tui", team.Member("herdr_flavour")?.AsString());
+    }
+
+    [Fact]
+    public void ATmuxSpawnIntoARecordWithNoTransportRecordsTmuxAndALaterHerdrSpawnLeavesIt()
+    {
+        OnTmux();
+        WriteTeam("proj", LiveTeamJson("tmux", string.Empty).Replace("\"transport\":\"tmux\"", "\"transport\":null", StringComparison.Ordinal));
+
+        var (code, stdout, stderr) = Roster("spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--allow-main");
+
+        Assert.True(code == 0, stdout + stderr);
+        var team = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
+        Assert.Equal("tmux", team.Member("transport")?.AsString());
+        var row = team.Member("members")!.Value.AsArray().Single();
+        Assert.Equal("%7", row.Member("transport_id")?.AsString());
+        Assert.Null(row.Member("herdr_flavour"));
+
+        // the next launch is on herdr: the transport the record now names stays
+        _ = _extraEnv.Remove("TMUX");
+        _ = _extraEnv.Remove("TMUX_PANE");
+        AgeSpawnedRows();
+        (code, stdout, stderr) = CoreSpawnInto(null, "reviewer");
+
+        Assert.True(code == 0, stdout + stderr);
+        team = JsonText.Parse(_sandbox.TeamText(TeamPath("proj")));
+        Assert.Equal("tmux", team.Member("transport")?.AsString());
+        var reviewer = team.Member("members")!.Value.AsArray().Single(m => m.Member("name")?.AsString() == "proj-reviewer");
+        Assert.Equal("core", reviewer.Member("herdr_flavour")?.AsString());
+    }
+
+    [Fact]
+    public void ATmuxSpawnIntoARecordThatNamesATransportLeavesIt()
+    {
+        OnTmux();
+        WriteTeam("proj", LiveTeamJson("terminal", string.Empty));
+
+        var (code, stdout, stderr) = Roster("spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--allow-main");
+
+        Assert.True(code == 0, stdout + stderr);
+        Assert.Equal("terminal", JsonText.Parse(_sandbox.TeamText(TeamPath("proj"))).Member("transport")?.AsString());
     }
 
     private const string StampedPeer =

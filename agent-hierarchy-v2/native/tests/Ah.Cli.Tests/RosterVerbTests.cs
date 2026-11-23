@@ -606,6 +606,21 @@ public sealed class RosterVerbTests : IDisposable
         Assert.False(member.TryGetValue("blocked_job", out _));
     }
 
+    /// <summary>ah2-475 J5: a live member blocked or failed that also owns an overdue job is not shown blocked-on-job; its activity stands.</summary>
+    [Theory]
+    [InlineData("blocked")]
+    [InlineData("failed")]
+    public void StatusKeepsABlockedOrFailedMemberThatOwnsAnOverdueJob(string activity)
+    {
+        WriteStatusRig(activity, "tm-dev");
+
+        var member = StatusMember("2026-03-01T13:00:00.000Z");
+
+        Assert.Equal(activity, member["activity"].AsString());
+        Assert.False(member.TryGetValue("state", out _));
+        Assert.False(member.TryGetValue("blocked_job", out _));
+    }
+
     // ---------------------------------------------------------------- adopt
 
     private const string DeadPidTeam =

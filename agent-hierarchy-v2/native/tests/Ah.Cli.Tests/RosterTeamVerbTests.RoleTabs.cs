@@ -622,6 +622,42 @@ public sealed partial class RosterTeamVerbTests
         var after = JsonText.Parse(_sandbox.TeamText(TeamPath("proj"))).Member("streams")!.Value.Member("s1")!.Value;
         Assert.False(after.Member("tab_id")!.Value.IsNull);
         Assert.False(after.Member("root_pane_id")!.Value.IsNull);
+        Assert.DoesNotContain(".claude", TabCreateCwd(), StringComparison.Ordinal);
+    }
+
+    private string TabCreateCwd()
+    {
+        var create = _runner.Calls.Last(argv => argv.Length > 2 && argv[0] == "herdr" && argv[1] == "tab" && argv[2] == "create");
+        return create[Array.IndexOf(create, "--cwd") + 1];
+    }
+
+    [Fact]
+    public void ASpawnIntoAReopenedStreamWhoseOldTabIsGoneLaunchesInTheStreamsWorkTree()
+    {
+        var herdr = new HerdrFake();
+        PutHerdrOnPath();
+        _extraEnv["HERDR_ENV"] = "1";
+        _extraEnv["HERDR_PANE_ID"] = "pOrch";
+        _extraEnv["HERDR_TAB_ID"] = "tCaller";
+        Directory.CreateDirectory(Path.Combine(Project, ".git"));
+        var tree = MakeWorkTree("s1");
+        _runner.Output = argv => argv.Contains("worktree") && argv.Contains("list")
+            ? $"worktree {Project}\nHEAD 0000000000000000000000000000000000000000\nbranch refs/heads/main\n\nworktree {tree}\nHEAD 1111111111111111111111111111111111111111\nbranch refs/heads/feat/s1\n"
+            : herdr.Answer(argv);
+        _runner.Exit = herdr.Exit;
+        WriteTeam("proj", LiveTeamJson("herdr", string.Empty).TrimEnd('}')
+            + ",\"streams\":{\"s1\":{\"state\":\"done\",\"branch\":\"feat/s1\",\"base\":\"main\",\"worktree\":\"" + tree
+            + "\",\"tab_id\":\"tOld\",\"opened\":\"2026-10-11T00:00:00.000Z\",\"closed\":\"2026-10-11T02:00:00.000Z\"}}}");
+
+        var (openCode, openOut, openErr) = Roster("stream-open", "s1", "--team", "proj", "--orchestrator-pid", Self);
+        Assert.True(openCode == 0, openErr + openOut);
+        Assert.True(JsonText.Parse(openOut).Member("reopened")!.Value.AsBool());
+        var (code, stdout, err) = Roster("spawn-ad-hoc", "implementor", "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--stream", "s1", "--cwd", Project);
+
+        Assert.True(code == 0, err + stdout);
+        Assert.Equal(tree, TabCreateCwd());
+        var root = JsonText.Parse(_sandbox.TeamText(TeamPath("proj"))).Member("streams")!.Value.Member("s1")!.Value.Member("root_pane_id")!.Value.AsString();
+        Assert.Contains($"--pane {root}", _runner.Calls.Last(argv => argv[0] == "/bin/sh")[^1], StringComparison.Ordinal);
     }
 
     private (int Code, string Launch, HerdrFake Herdr) SpawnIntoStreamTabHolding(string pane)

@@ -887,7 +887,7 @@ internal sealed class ReadModel : IReadModel
 
         foreach (var key in states.AsObject().Keys.ToList())
         {
-            if (states.AsObject().Get(key) is { IsMap: true } entry && entry.AsObject().Str("liveness") == "live" && owners.Contains(key[(key.LastIndexOf('/') + 1)..]))
+            if (states.AsObject().Get(key) is { IsMap: true } entry && entry.AsObject().Str("liveness") == "live" && !WatchModule.BlockedWinsOverJob(entry.AsObject().Str("state")) && owners.Contains(key[(key.LastIndexOf('/') + 1)..]))
             {
                 entry.AsObject()["state"] = "blocked-on-job";
             }

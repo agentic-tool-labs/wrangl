@@ -22,7 +22,7 @@ html:has(> body.r6), body.r6 { height: 100%; overflow: hidden; }
 .r6 .menu-scrim { position: fixed; inset: 0; z-index: 30; border: 0; background: none; cursor: default; }
 .r6 .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 200px; margin: 0; padding: 4px; list-style: none; background: var(--bar); border: 1px solid var(--line-control); border-radius: var(--radius-pane); box-shadow: var(--shadow-pop); }
 .r6 .menu.right { left: auto; right: 0; }
-.r6 .menu button { display: flex; align-items: center; width: 100%; height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius); background: none; color: var(--ink); font-size: var(--text-13); text-align: left; cursor: pointer; }
+.r6 .menu button { display: flex; align-items: center; width: 100%; height: 28px; padding: 0 var(--sp-8); border: 0; border-radius: var(--radius); background: none; color: var(--ink); font-size: var(--text-13); text-align: left; cursor: pointer; }
 .r6 .menu button:hover, .r6 .menu button.on { background: var(--row-sel); }
 .r6 .menu button[aria-checked="true"]::after { content: "✓"; margin-left: auto; color: var(--ok); }
 .r6 .menu .muted { color: var(--muted); margin-left: 6px; }
@@ -39,10 +39,12 @@ html:has(> body.r6), body.r6 { height: 100%; overflow: hidden; }
 }
 /* The knob: a 10px circle 2px inside the track, flat (the house sheets carry no gradients). */
 .r6 .menu button.mode-toggle::before {
+  /* The leading var(--sp-8) in `right` is the menu button's own right padding (.r6 .menu button). */
   content: ""; position: absolute; top: 50%; right: calc(var(--sp-8) + var(--sp-16) - 1px); width: calc(var(--sp-8) + var(--sp-2)); height: calc(var(--sp-8) + var(--sp-2));
   border-radius: var(--radius-dot); background: var(--muted); transform: translateY(-50%); pointer-events: none;
 }
 .r6 .menu button.mode-toggle[aria-checked="true"]::after { border-color: var(--accent); background: var(--accent); }
+/* The leading var(--sp-8) in `right` is the menu button's own right padding (.r6 .menu button). */
 .r6 .menu button.mode-toggle[aria-checked="true"]::before { right: calc(var(--sp-8) + var(--sp-4) - 1px); background: var(--on-accent); }
 /* A preset's swatch: page over accent on the diagonal, drawn as four 8px border triangles (top+left page, right+bottom accent). */
 .r6 .menu .preset-swatch {

@@ -14,7 +14,7 @@ Wrangl also does the unglamorous work around a team: it passes messages between 
 outside their own work area, tells you when someone is stuck, and brings the team back after a crash or reboot.
 
 > [!WARNING]
-> **Early testing: use with caution.** Wrangl 2.0.46 is an early public release and is still being tested. It starts
+> **Early testing: use with caution.** Wrangl 2.0.47 is an early public release and is still being tested. It starts
 > and controls other agent sessions that edit files and run commands in your repository, so use it only on work you
 > have committed or backed up. Expect bugs, and expect commands, settings and screens to change between releases.
 > Wrangl is provided "as is", without warranties of any kind; see the [LICENSE](../LICENSE). Report problems at
@@ -146,11 +146,11 @@ Claude Code it does not edit that file for you.
 SDK and your shell startup file. Without `--apply` it only prints its plan:
 
 ```
-sh ~/.claude/plugins/cache/wrangl/wrangl/2.0.46/scripts/install.sh
-sh ~/.claude/plugins/cache/wrangl/wrangl/2.0.46/scripts/install.sh --apply
+sh ~/.claude/plugins/cache/wrangl/wrangl/2.0.47/scripts/install.sh
+sh ~/.claude/plugins/cache/wrangl/wrangl/2.0.47/scripts/install.sh --apply
 ```
 
-`2.0.46` is the version you installed; `ls ~/.claude/plugins/cache/wrangl/wrangl/` shows it. `--prefix DIR` picks
+`2.0.47` is the version you installed; `ls ~/.claude/plugins/cache/wrangl/wrangl/` shows it. `--prefix DIR` picks
 the link folder, `--login` adds the login item, and `--help` lists every flag. In a terminal the installer may also
 offer allow rules so the Orchestrator can run team commands without a prompt each time; nothing is added unless you
 say yes ([Lifecycle permissions](docs/lifecycle-permissions.md)). It also installs Anthropic's `frontend-design`
@@ -163,7 +163,7 @@ ahd --version
 ahd where --plain
 ```
 
-`ahd --version` prints `ahd 2.0.46 (contract 1)`. `ahd where --plain` prints where the program and the plugin are,
+`ahd --version` prints `ahd 2.0.47 (contract 1)`. `ahd where --plain` prints where the program and the plugin are,
 and includes the line `compatible: yes` when the two match. If the terminal says `ah` or `ahd` is not found, add the
 link folder (by default `~/.local/bin`) to your `PATH`.
 

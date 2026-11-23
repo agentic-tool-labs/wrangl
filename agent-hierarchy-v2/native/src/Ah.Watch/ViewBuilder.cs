@@ -544,6 +544,12 @@ internal static partial class ViewBuilder
     }
 
     /// <summary>
+    /// Whether a member is blocked, for the summary's <c>blocked</c> count and the Graph alike: something blocks it, or its activity is blocked or
+    /// failed. A member waiting on its own job (<c>blocked-on-job</c>) is not: nobody has to act for it.
+    /// </summary>
+    internal static bool IsBlocked(JsonObject m) => Truthy(Get(m, "blocked_by")) || m.Str("activity") is "blocked" or "failed";
+
+    /// <summary>
     /// A member as the web reads it: <paramref name="m"/> with its <c>live</c>, <c>activity</c> and <c>activity_at</c> from the published
     /// <c>member_states</c> entry. A member that entry does not hold keeps what it has, and so does a liveness of <c>unknown</c>: that is no verdict,
     /// and the entry can lag a new member's registration that the status row has already read.
@@ -706,7 +712,7 @@ internal static partial class ViewBuilder
             ["members"] = members.Count,
             ["live"] = members.Count(static m => m.TryGetValue("live", out var l) && l.Kind == JsonKind.Bool && l.AsBool()),
             ["working"] = members.Count(static m => m.Str("activity") == "working"),
-            ["blocked"] = members.Count(static m => Truthy(Get(m, "blocked_by")) || m.Str("activity") is "blocked" or "failed"),
+            ["blocked"] = members.Count(IsBlocked),
             ["owed"] = open.Count,
             ["ctx_high"] = members.Count(static m => m.Int("context_pct") is { } p && p >= ContextAlerts.Warn),
             ["overdue"] = overdue,

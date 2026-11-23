@@ -19,7 +19,7 @@ internal static partial class ViewBuilder
             return "notlive";
         }
 
-        if (Truthy(Get(member, "blocked_by")))
+        if (IsBlocked(member))
         {
             return "blocked";
         }
@@ -28,7 +28,6 @@ internal static partial class ViewBuilder
         {
             "working" => "busy",
             "idle" => "idle",
-            "blocked" or "failed" or "blocked-on-job" => "blocked",
             _ => "live",
         };
     }

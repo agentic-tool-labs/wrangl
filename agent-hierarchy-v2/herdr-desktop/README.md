@@ -6,7 +6,8 @@ waits on you, and how the work moves. Words you have not met yet are in the [Glo
 
 The Wrangl sidebar lives in Herdr's left sidebar, sharing the agents list's place behind two tabs, **Agents** and
 **Wrangl**. Each running team is a group, with its lanes nested under it, and each member is a row. Beside it, the
-**Desk** holds four larger views: **Q&A**, **Board**, **Feed** and **Graph**.
+**Desk** holds four larger views: **Q&A**, **Board**, **Feed** and **Graph**. Each team also has its own Desk, with a
+**Sitrep** tab added (see [A team's Desk](#a-teams-desk)).
 
 Wrangl 2.0.0 is a beta, and so is this sidebar. If you have the older `ah` plugin (v1), keep it turned off while you
 use Wrangl (see [Wrangl and ah v1](../README.md#ah2-and-ah-v1)).
@@ -76,12 +77,12 @@ Each team row shows:
 - its **goal**, when the team has one of its own, as a second, muted line under the name. Hover the row to read the
   whole goal, with its "done when" if it has one;
 - the counts: `N needs you`, then `N working · N blocked`;
-- a **Sitrep** pill;
+- an icon that opens the team's own Desk (see [A team's Desk](#a-teams-desk));
 - on a top-level team, a **⋯** menu (below).
 
-Click the **Sitrep** pill, or press Enter on it, to open that team's sitrep in a window.
+Click the icon, or press Enter on it, to open that team's Desk on its **Sitrep** tab.
 
-A top-level team also has a **⋯** button beside the Sitrep pill that opens the team's menu. It can
+A top-level team also has a **⋯** button beside the icon that opens the team's menu. It can
 **Pin to top** (or **Unpin**) the team, **Move up** or **Move down** it among the pinned or the unpinned teams, and
 **Collapse** it to its header line (or **Expand** it; the `▾`/`▸` at the row's left does the same), and, last,
 **Dismiss** it (see [Dismiss a team](#dismiss-a-team)). A collapsed team
@@ -91,6 +92,9 @@ Herdr; the web UI and the TUI keep their own order.
 ### Member rows
 
 Each member row shows a state mark, the member's name, what it is working on, and for how long.
+
+A Sub-Orchestrator shows once. Its row sits at the head of its lane, under the member's own name, and the parent team
+does not list it a second time. The status bar, the Desk totals and the Feed's Now strip count it once as well.
 
 | Mark | State |
 |---|---|
@@ -116,15 +120,21 @@ is not clickable.
 - **The status line** at the foot reads `ahd · N teams · updated <age>`, or says why it cannot read your teams (see
   [If something looks wrong](#if-something-looks-wrong)).
 
-## The sitrep window
+## A team's Desk
 
-A team's sitrep opens in a window with five regions: **Waiting on you**, **Blocked**, **In progress**, **Up next** and
-**Completed**. Each region shows at most 10 rows, then `+ N more`. A decision waiting on you has an **Answer in Q&A**
-link. Close the window with `esc` or **×**.
+The icon on a team's row opens that team's own Desk, in a window. Tabs: **Sitrep** (where it opens), **Q&A**,
+**Board**, **Feed** and **Graph**. Every tab shows only that team and its lanes, and the team pickers are hidden. A
+lane's row opens a Desk for that lane alone. The window has a maximize button and **×** (or `esc`), but no dock button:
+a team Desk is always a window. Open the icons of several teams and you get several Desks at once. Clicking the icon of
+a team whose Desk is already open switches that window to **Sitrep** and keeps any answer you have not sent.
+
+The **Sitrep** tab has five regions: **Waiting on you**, **Blocked**, **In progress**, **Up next** and **Completed**.
+Each region shows at most 10 rows, then `+ N more`. A decision waiting on you has an **Answer in Q&A** link, which
+switches the same window to its **Q&A** tab. **Dismiss** and **Rename** sit in the tab's toolbar.
 
 ## Dismiss a team
 
-Open the dialog from **Dismiss** in a team row's **⋯** menu or the sitrep window's **Dismiss**.
+Open the dialog from **Dismiss** in a team row's **⋯** menu or the **Dismiss** button on a team Desk's **Sitrep** tab.
 
 - A team with no running session is dismissed at once, and a notice says so.
 - A team that is still working lists its running members, with any uncommitted or unmerged work found, and offers:
@@ -145,7 +155,8 @@ The second command is only for a team you paused.
 
 ## The Desk
 
-The Desk holds **Q&A** (with the count waiting on you), **Board**, **Feed** and **Graph** as tabs. It opens in one of
+This Desk shows all teams, and holds **Q&A** (with the count waiting on you), **Board**, **Feed** and **Graph** as
+tabs. (For one team's Desk, see [A team's Desk](#a-teams-desk).) It opens in one of
 two places, and it remembers which one you used last:
 
 - **The side column** (the default), beside Herdr's Files and Changes panel. **⧉** moves the whole Desk to a window on

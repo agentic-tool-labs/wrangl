@@ -201,6 +201,12 @@ public static partial class WatchModule
             .FirstOrDefault();
     }
 
+    /// <summary>
+    /// Whether a member in <paramref name="state"/> stays so when it also owns an overdue job, rather than being shown <c>blocked-on-job</c>:
+    /// blocked (on a question, a person or another member) or failed wins (ah2-475 J4).
+    /// </summary>
+    public static bool BlockedWinsOverJob(string? state) => state is "blocked" or "failed";
+
     /// <summary>The eta state of an open dispatch at <paramref name="nowMs"/>, by the one eta function.</summary>
     public static string OverdueStateOf(OverdueDispatch dispatch, double nowMs, double pollMs)
     {
