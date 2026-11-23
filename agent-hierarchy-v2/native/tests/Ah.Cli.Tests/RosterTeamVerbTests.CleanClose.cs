@@ -388,6 +388,21 @@ public sealed partial class RosterTeamVerbTests
         Assert.True(Killed("%1"));
     }
 
+    /// <summary>ah2-54 D10: the plan carries the retro text naming the team; the close does not.</summary>
+    [Fact]
+    public void ADisbandPlanCarriesTheRetroAndTheCloseDoesNot()
+    {
+        ArrangeCleanImplementor();
+
+        var (_, plan, _) = PlanDisband();
+        Assert.Contains("ah lessons list --team proj", plan.Member("retro")!.Value.AsString(), StringComparison.Ordinal);
+        Assert.StartsWith("Retro, optional and never blocking", plan.Member("retro")!.Value.AsString(), StringComparison.Ordinal);
+
+        var (_, stdout, _) = Roster(["disband", "--close", "--confirm", "--plan-token", TokenOf(plan), "--team", "proj"]);
+        Assert.DoesNotContain("retro", stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("ah lessons", stdout, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void CT21NegativeADisbandWhoseMemberHasAStreamNotDoneGetsAnOrdinaryToken()
     {

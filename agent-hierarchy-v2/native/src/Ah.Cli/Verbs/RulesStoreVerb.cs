@@ -14,14 +14,14 @@ internal static class RulesStoreVerb
     internal const string Usage =
         "usage: ah rules add|edit <scope> --key K --text T [--said W] | edit <scope> --key K [--text T] [--applies A] [--choose C] [--said W] | off|remove <scope> --key K [--said W] | propose <scope> --key K --text T --applies A --choose C [--said W] | accept K [<scope>] [--text T] [--applies A] [--choose C] | list [<scope> | --member name@team | --item <work id>] [--all] [--json] [--cwd <dir>]\n"
         + "       ah rules goal [--team <name>] [--text T [--done-when D] | --clear] [--said W] [--json] [--cwd <dir>]   (the team goal: guidance, never a gate; set or cleared only on the user's word)\n"
-        + "<scope> is one of: --repo | --team <name> | --project <work id> | --goal <work id>";
+        + "<scope> is one of: --global | --roster <name> | --repo | --team <name> | --project <work id> | --goal <work id>";
 
-    private static readonly HashSet<string> Bools = new(StringComparer.Ordinal) { "repo", "json", "all", "clear" };
+    private static readonly HashSet<string> Bools = new(StringComparer.Ordinal) { "global", "repo", "json", "all", "clear" };
 
-    private static readonly HashSet<string> Values = new(StringComparer.Ordinal) { "team", "project", "goal", "key", "text", "said", "member", "item", "cwd", "applies", "choose", "done-when" };
+    private static readonly HashSet<string> Values = new(StringComparer.Ordinal) { "roster", "team", "project", "goal", "key", "text", "said", "member", "item", "cwd", "applies", "choose", "done-when" };
 
     /// <summary>The scope flags <c>ah rules goal</c> refuses: a goal is a team's, named by <c>--team</c> or the caller's.</summary>
-    private static readonly string[] NotWithGoal = ["repo", "project", "goal", "member", "item", "key"];
+    private static readonly string[] NotWithGoal = ["global", "roster", "repo", "project", "goal", "member", "item", "key"];
 
     internal static bool Handles(string? verb) => verb is "add" or "edit" or "off" or "remove" or "list" or "propose" or "accept" or "goal";
 
@@ -91,12 +91,15 @@ internal static class RulesStoreVerb
     private static List<(string Level, string Text)> ScopesOf(Dictionary<string, string?> flags)
     {
         var scopes = new List<(string, string)>();
-        if (flags.ContainsKey("repo"))
+        foreach (var level in new[] { RulesOfEngagement.Global, RulesOfEngagement.Repo })
         {
-            scopes.Add((RulesOfEngagement.Repo, string.Empty));
+            if (flags.ContainsKey(level))
+            {
+                scopes.Add((level, string.Empty));
+            }
         }
 
-        foreach (var level in new[] { RulesOfEngagement.Team, RulesOfEngagement.Project, RulesOfEngagement.Goal })
+        foreach (var level in new[] { RulesOfEngagement.Roster, RulesOfEngagement.Team, RulesOfEngagement.Project, RulesOfEngagement.Goal })
         {
             if (flags.GetValueOrDefault(level) is { } text)
             {
@@ -361,6 +364,14 @@ internal static class RulesStoreVerb
             resolved = RulesReads.ForItem(g, ahHome, dir, row);
             chain = RulesReads.TeamChain(g, dir, row.IsBacklog ? null : row.Team);
         }
+        else if (scopes is [(RulesOfEngagement.Global or RulesOfEngagement.Roster, var roster)])
+        {
+            // the global rules alone, or with one roster's for a team of it: no repo rule
+            string[] levels = roster.Length == 0 ? [RulesOfEngagement.Global] : [RulesOfEngagement.Global, RulesOfEngagement.Roster];
+            var rows = RulesReads.With<IReadOnlyList<RuleRow>>(ahHome, [], query => RulesOfEngagement.Rows(query, dir)).Where(r => levels.Contains(r.Level, StringComparer.Ordinal));
+            resolved = RulesOfEngagement.Resolve(rows, RuleSubject.RepoOnly with { Roster = roster.Length == 0 ? null : roster });
+            chain = [];
+        }
         else if (scopes.Count == 1)
         {
             var team = scopes[0].Level == RulesOfEngagement.Team ? scopes[0].Text : null;
@@ -514,5 +525,5 @@ internal static class RulesStoreVerb
         !row.IsDecision ? row.Text : $"{(row.IsProposed ? "proposed" : "accepted")} decision: when {row.Applies}, choose {row.Choose}. {row.Text}";
 
     private static string Where(RuleRow row, string? prefix) =>
-        row.Level == RulesOfEngagement.Repo ? RulesOfEngagement.Repo : $"{row.Level} {RulesJson.ScopeOf(row, prefix)}";
+        row.Level is RulesOfEngagement.Repo or RulesOfEngagement.Global ? row.Level : $"{row.Level} {RulesJson.ScopeOf(row, prefix)}";
 }

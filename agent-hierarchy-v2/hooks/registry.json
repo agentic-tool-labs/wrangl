@@ -158,6 +158,16 @@
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" activity"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/bin/ah-hook\" userpromptsubmit-admin",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [

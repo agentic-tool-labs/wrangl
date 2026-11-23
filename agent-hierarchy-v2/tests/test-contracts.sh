@@ -85,8 +85,8 @@ const C=process.argv[1];
 const rows=[]; const doc=JSON.parse(fs.readFileSync(path.join(C,"..","..","hooks","registry.json"),"utf8"));
 for (const [ev,groups] of Object.entries(doc.hooks||doc)) for (const g of groups) for (const h of g.hooks||[]) rows.push(ev+" "+(h.command.match(/ah-hook" ([a-z0-9-]+)$/)||[])[1]);
 console.log(rows.length)' "$C")
-# 45: the rows the cases were written against, the PreToolUse gates being one chain row; the count is not itemised.
-check "hooks.json has the 45 rows the cases were written against (a row added later fails the coverage row above)" '[ "$OUT" = 45 ]'
+# 46: the rows the cases were written against, the PreToolUse gates being one chain row; the count is not itemised.
+check "hooks.json has the 46 rows the cases were written against (a row added later fails the coverage row above)" '[ "$OUT" = 46 ]'
 
 # ---- K4: verbs.json against each CLI's help and dispatch
 cat >"$SB/verbs.mjs" <<EOF

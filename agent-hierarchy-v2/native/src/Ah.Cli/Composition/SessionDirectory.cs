@@ -91,6 +91,8 @@ internal sealed class SessionDirectory(ServiceGraph g) : IGateSessions
 
     public IReadOnlyList<SessionRegistration> Sessions() => MeshModule.LiveSessions(g.Mailbox);
 
+    public string? Executable(int pid) => ExecutableOf(g.Runner, pid);
+
     public IReadOnlyList<RegisteredSession> Registered()
     {
         var sessions = new List<RegisteredSession>();

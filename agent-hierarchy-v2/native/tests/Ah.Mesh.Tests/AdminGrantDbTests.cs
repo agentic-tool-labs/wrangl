@@ -77,6 +77,37 @@ public sealed class AdminGrantDbTests : IDisposable
     }
 
     [Fact]
+    public void ARowWithoutViaReadsAsTerminal()
+    {
+        var old = $$"""{"pid": 200, "pid_start": "{{Start}}", "session_id": null, "granted_at": "2026-11-14T02:19:00.000Z"}""";
+        var docs = new Docs();
+        docs.Rows["home.admin-grant"] = old;
+
+        Assert.Equal("terminal", MeshModule.AdminGrantVia(old));
+        Assert.True(MeshModule.HoldsAdminGrant(new Line(), 300, docs, _home)); // an old row still counts, with no migration
+        Assert.Equal("terminal", MeshModule.AdminGrantVia(null));
+        Assert.Equal("terminal", MeshModule.AdminGrantVia("not json"));
+    }
+
+    [Fact]
+    public void ANewRowRoundTripsItsVia()
+    {
+        var docs = new Docs();
+        var table = new Line();
+
+        Assert.Null(MeshModule.WriteAdminGrant(table, docs, _home, 200, "s1", DateTimeOffset.UnixEpoch, MeshModule.AdminGrantViaPrompt));
+        Assert.True(MeshModule.TryReadAdminGrant(docs, _home, out var body));
+        Assert.Equal("prompt", MeshModule.AdminGrantVia(body));
+        Assert.Equal(200, MeshModule.AdminGrantPid(body));
+        Assert.True(MeshModule.HoldsAdminGrant(table, 300, docs, _home));
+
+        // negative: a terminal grant (the default) is not recorded as a prompt grant
+        Assert.Null(MeshModule.WriteAdminGrant(table, docs, _home, 200, "s1", DateTimeOffset.UnixEpoch));
+        Assert.True(MeshModule.TryReadAdminGrant(docs, _home, out body));
+        Assert.Equal("terminal", MeshModule.AdminGrantVia(body));
+    }
+
+    [Fact]
     public void AGrantLeftInTheOldFileCountsAndIsTakenInOnce()
     {
         var docs = new Docs();

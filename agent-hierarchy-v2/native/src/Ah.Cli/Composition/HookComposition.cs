@@ -76,6 +76,7 @@ internal static class HookComposition
             (dir, root, team, names) => Ah.Commands.CommandsModule.ReadyToDismiss(new RosterComposition(graph, io.Clock, env), dir, root, team, names),
             (cwd, session, subject, sha) => Verbs.WorkVerb.RecordCommit(env, graph, cwd, session, subject, sha),
             (cwd, who) => RulesReads.Block(graph, env.AhHome, Verbs.BacklogVerb.DirOf(graph, cwd), new RulesAsk(who.Team, who.Names, who.Orchestrator, who.TeamDir, who.Parent)),
-            cwd => Verbs.AdrVerb.Waiting(env.AhHome, HierarchyModule.WorkDirKey(Verbs.BacklogVerb.DirOf(graph, cwd))));
+            cwd => Verbs.AdrVerb.Waiting(env.AhHome, HierarchyModule.WorkDirKey(Verbs.BacklogVerb.DirOf(graph, cwd))),
+            graph.HomeDocs);
     }
 }

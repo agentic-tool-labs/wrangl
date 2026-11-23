@@ -156,8 +156,20 @@ public static partial class MeshModule
     public static bool HoldsAdminGrant(IProcessTable table, int? callerPid, IHomeDocs? docs, string ahHome) => AdminGrant.Holds(table, callerPid, docs, ahHome);
 
     /// <summary>ah2-32: records the admin grant for the Claude session process <paramref name="pid"/> in the state database; an error text when it cannot.</summary>
-    public static string? WriteAdminGrant(IProcessTable table, IHomeDocs? docs, string ahHome, int pid, string? sessionId, DateTimeOffset at) =>
-        AdminGrant.Write(table, docs, ahHome, pid, sessionId, at);
+    public static string? WriteAdminGrant(IProcessTable table, IHomeDocs? docs, string ahHome, int pid, string? sessionId, DateTimeOffset at, string via = AdminGrant.ViaTerminal) =>
+        AdminGrant.Write(table, docs, ahHome, pid, sessionId, at, via);
+
+    /// <summary>ah2-499: how a grant is recorded when a typed <c>/wrangl:admin</c> prompt made it.</summary>
+    public const string AdminGrantViaPrompt = AdminGrant.ViaPrompt;
+
+    /// <summary>ah2-499: the grant's <c>via</c>; a row without one reads as <c>terminal</c>.</summary>
+    public static string AdminGrantVia(string? body) => AdminGrant.ViaOf(body);
+
+    /// <summary>ah2-499 (admin-remote A3.2): why a harness may not take a grant from a typed prompt (nested, print/stream, no terminal), or null.</summary>
+    public static string? AdminPromptGrantRefusal(IProcessTable table, int harness, Func<int, string?> executableOf) => AdminGrant.PromptGrantRefusal(table, harness, executableOf);
+
+    /// <summary>ah2-499: the pid a grant names; null when there is none or it cannot be read.</summary>
+    public static int? AdminGrantPid(string? body) => AdminGrant.PidOf(body);
 
     /// <summary>ah2-32: removes the admin grant; an error text when the database refuses.</summary>
     public static string? RevokeAdminGrant(IHomeDocs? docs, string ahHome) => AdminGrant.Revoke(docs, ahHome);

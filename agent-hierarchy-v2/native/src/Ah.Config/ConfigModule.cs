@@ -563,6 +563,9 @@ public static partial class ConfigModule
 
     public static ModuleRegistry Registry => GeneratedRegistry.Instance;
 
+    /// <summary>The shape of a team alias or named-roster name: 1-32 letters, digits or <c>-</c>, starting with a letter or digit.</summary>
+    public static bool IsTeamAliasShape(string? name) => ConfigRegistry.IsTeamAliasShape(name);
+
     /// <summary>Every built-in role in display order.</summary>
     public static IReadOnlyList<string> BuiltinRoles => ConfigRegistry.Roles;
 

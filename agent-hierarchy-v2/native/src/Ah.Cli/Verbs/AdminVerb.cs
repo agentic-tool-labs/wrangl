@@ -38,6 +38,7 @@ internal static class AdminVerb
                 stdout.WriteLine(grant?.TrimEnd() ?? "no admin session");
                 if (grant is not null)
                 {
+                    stdout.WriteLine($"via: {MeshModule.AdminGrantVia(grant)}");
                     stdout.WriteLine(MeshModule.HoldsAdminGrant(table, Environment.ProcessId, docs, home) ? "this call is from the admin session" : "this call is not from the admin session");
                 }
             }

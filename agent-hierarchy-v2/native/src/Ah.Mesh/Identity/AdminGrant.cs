@@ -14,7 +14,7 @@ namespace Ah.Mesh;
 /// </summary>
 internal static class AdminGrant
 {
-    /// <summary>The home document (a <c>meta</c> row) that holds the grant: <c>{pid, pid_start, session_id, granted_at}</c>.</summary>
+    /// <summary>The home document (a <c>meta</c> row) that holds the grant: <c>{pid, pid_start, session_id, granted_at, via}</c>.</summary>
     public const string Key = "home.admin-grant";
 
     /// <summary>The file that held the grant before ah2-46; read until it is taken in, never written.</summary>
@@ -50,6 +50,72 @@ internal static class AdminGrant
             return null;
         }
     }
+
+    /// <summary>The desktop app's main process, as argv word 0 (spec admin-remote A3.2 D7, A5 D10). One path on purpose.</summary>
+    private const string DesktopHost = "/Applications/Claude.app/Contents/MacOS/Claude";
+
+    /// <summary>The desktop app's helper that starts its harness, as argv word 0 (A5 D10).</summary>
+    private const string DesktopHelper = "/Applications/Claude.app/Contents/Helpers/disclaimer";
+
+    private static readonly string[] NonInteractiveFlags = ["--print", "--input-format", "--output-format", "--sdk-url"];
+
+    /// <summary>
+    /// ah2-499 (spec admin-remote A3.2 D4-D7, A5 D9-D11): why the harness <paramref name="harness"/> may not take a grant from a typed
+    /// prompt, or null when it may. D4/D9: no other harness on its ancestor line, by command or by executable (<paramref name="executableOf"/>),
+    /// and every command and executable on it readable; never waived. D7/D10: H's parent the desktop helper and its grandparent the desktop
+    /// host waives D5 and D6. D5/D11: no print or stream flag, and no short-flag cluster with <c>p</c>, in its argv. D6: it has a terminal.
+    /// Only the prompt path asks this; the terminal <c>ah admin grant</c> does not.
+    /// </summary>
+    public static string? PromptGrantRefusal(IProcessTable table, int harness, Func<int, string?> executableOf)
+    {
+        const string Nested = "this session was started by another Claude Code session.";
+        if (CallerIdentity.WholeLine(table, harness) is not { } line)
+        {
+            return Nested;
+        }
+
+        foreach (var p in line.Skip(1))
+        {
+            if (table.Command(p) is not { Length: > 0 } command || executableOf(p) is not { Length: > 0 } executable)
+            {
+                return Nested;
+            }
+
+            if (HarnessCommand.IsHarnessProcess(p, _ => command, _ => executable)
+                || Argv0(command, executable).Split('/').Contains("claude-code", StringComparer.Ordinal))
+            {
+                return Nested;
+            }
+        }
+
+        if (line is [_, var parent, var grandparent, ..]
+            && Words(table.Command(parent) ?? string.Empty) is [DesktopHelper, ..]
+            && Words(table.Command(grandparent) ?? string.Empty) is [DesktopHost, ..])
+        {
+            return null;
+        }
+
+        if (table.Command(harness) is not { Length: > 0 } own || Words(own).Skip(1).Any(PrintOrStream))
+        {
+            return "this session is not interactive (print or stream mode).";
+        }
+
+        return table.Tty(harness) is { Length: > 0 } ? null : "this session has no terminal.";
+    }
+
+    /// <summary>A print or stream flag as a whole word or <c>--flag=value</c> (D5), or a short-flag cluster holding <c>p</c> such as <c>-p</c> or <c>-cp</c> (D11).</summary>
+    private static bool PrintOrStream(string word) =>
+        NonInteractiveFlags.Any(f => word == f || word.StartsWith(f + "=", StringComparison.Ordinal))
+        || (word.Length > 1 && word[0] == '-' && word[1] != '-' && word.Skip(1).All(char.IsAsciiLetter) && word.Contains('p', StringComparison.Ordinal));
+
+    /// <summary>
+    /// Argv 0 of <paramref name="command"/>: the executable path when the command line starts with it, so a path with a space in it is
+    /// kept whole (D9), else the first word.
+    /// </summary>
+    private static string Argv0(string command, string executable) =>
+        command.StartsWith(executable, StringComparison.Ordinal) ? executable : Words(command) is [var first, ..] ? first : string.Empty;
+
+    private static string[] Words(string command) => command.Split([' ', '\t', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
     /// <summary>
     /// The recorded grant's text, or null when there is none. False when the database cannot answer: the caller is then not the admin.
@@ -132,8 +198,42 @@ internal static class AdminGrant
         }
     }
 
+    /// <summary>How a grant written by <c>ah admin grant</c> in a terminal is recorded, and how a row with no <c>via</c> reads (ah2-499).</summary>
+    public const string ViaTerminal = "terminal";
+
+    /// <summary>How a grant made by a typed <c>/wrangl:admin</c> prompt is recorded (ah2-499).</summary>
+    public const string ViaPrompt = "prompt";
+
+    /// <summary>The grant's <c>via</c>: how it was made. A row without one (written before ah2-499) reads as <see cref="ViaTerminal"/>.</summary>
+    public static string ViaOf(string? body)
+    {
+        try
+        {
+            return body is not null && JsonText.Parse(body) is { IsMap: true } grant && grant.AsObject().Get("via") is { IsText: true } via && via.AsString().Length > 0
+                ? via.AsString()
+                : ViaTerminal;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return ViaTerminal;
+        }
+    }
+
+    /// <summary>The pid the grant names, or null when there is none or it cannot be read.</summary>
+    public static int? PidOf(string? body)
+    {
+        try
+        {
+            return body is not null && JsonText.Parse(body) is { IsMap: true } grant && grant.AsObject().Get("pid") is { IsNumber: true } p ? (int)p.AsNumber() : null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>Records the grant for <paramref name="pid"/>; an error text when it is not a live Claude session or the database refuses the write.</summary>
-    public static string? Write(IProcessTable table, IHomeDocs? docs, string ahHome, int pid, string? sessionId, DateTimeOffset at)
+    public static string? Write(IProcessTable table, IHomeDocs? docs, string ahHome, int pid, string? sessionId, DateTimeOffset at, string via = ViaTerminal)
     {
         if (pid <= 1 || table.Command(pid) is not { Length: > 0 } command || !HarnessCommand.IsHarnessProcess(pid, _ => command))
         {
@@ -156,6 +256,7 @@ internal static class AdminGrant
             ["pid_start"] = start,
             ["session_id"] = sessionId is { Length: > 0 } ? sessionId : JsonValue.Null,
             ["granted_at"] = Timestamps.ToIsoString(at),
+            ["via"] = via,
         };
         try
         {

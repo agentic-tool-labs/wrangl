@@ -19,7 +19,7 @@ Read [How it works](how-it-works.md) for the bigger picture.
 
 - **Deputy Chief**: A member that can run the team while the Orchestrator is away. It never asks you questions. It is put on duty with `ah roster duty on <member>`.
 
-- **Admin session**: One Claude session you name, by its process id, with `ah admin grant <pid>` in a plain terminal. Wrangl then treats that session's calls as your own.
+- **Admin session**: One Claude session that Wrangl treats as you. You name it by its process id with `ah admin grant <pid>` in a plain terminal, or type `/wrangl:admin` in the session itself. See [`ah admin`](cli-tools.md#ah-admin).
 
 ## Teams and work
 

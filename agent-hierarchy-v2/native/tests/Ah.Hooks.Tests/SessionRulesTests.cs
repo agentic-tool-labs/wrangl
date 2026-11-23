@@ -128,6 +128,17 @@ public sealed class SessionRulesTests
         Assert.Contains("You also see that members follow these rules", text, StringComparison.Ordinal);
     }
 
+    /// <summary>ah2-54 D11: the capture sentence reaches the Orchestrator only.</summary>
+    [Fact]
+    public void AnOrchestratorIsAskedToProposeLessonsAndASubOrchestratorIsNot()
+    {
+        const string capture = "After rework or a CHANGES REQUIRED review, propose a lesson if it would have saved the round (`ah lessons propose`).";
+
+        Assert.Contains(capture, Start(Fixture()), StringComparison.Ordinal);
+        Assert.DoesNotContain("ah lessons", Start(Fixture(), e => e["agent_type"] = "wrangl:sub-orchestrator"), StringComparison.Ordinal);
+        Assert.DoesNotContain("ah lessons", RulesOfEngagement.SubOrchestratorText, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ASubOrchestratorPassesRequestsUpInstead()
     {

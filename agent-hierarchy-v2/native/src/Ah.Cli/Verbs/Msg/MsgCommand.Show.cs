@@ -17,9 +17,12 @@ internal sealed partial class MsgCommand
         JsonValue? fm;
         string pool;
         string team;
+        string text;
         try
         {
-            fm = Hier.Core.ReadMsgFile(path).Member("fm");
+            var read = Hier.Core.ReadMsgFile(path);
+            fm = read.Member("fm");
+            text = read.Member("text") is { IsText: true } t ? t.AsString() : string.Empty;
             if (FrontText(fm?.Member("type")) != "request")
             {
                 return null;
@@ -59,7 +62,19 @@ internal sealed partial class MsgCommand
             work = null;
         }
 
-        return goal is null ? work : goal + "\n" + work;
+        // ah2-54 S3: the lessons block comes after the goal and work lines; a request with no matching lesson, or lessons that cannot be read, add nothing
+        string? lessons;
+        try
+        {
+            lessons = LessonsFooter.Render(LessonsFooter.ForRequest(_graph, _env.AhHome, pool, fm, text), id);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            lessons = null;
+        }
+
+        var footer = goal is null ? work : goal + "\n" + work;
+        return lessons is null ? footer : footer + lessons;
     }
 
     /// <summary>

@@ -548,6 +548,10 @@ public sealed partial class RulesStoreTests : IDisposable
     [InlineData("nonsense", "")]
     [InlineData("repo", "tm")]
     [InlineData("team", "")]
+    [InlineData("global", "x")]
+    [InlineData("roster", "")]
+    [InlineData("roster", "Bad_Name")]
+    [InlineData("roster", "-lead")]
     public void TheWritePathRefusesALevelAndScopeThatDoNotFit(string level, string scope)
     {
         var result = RulesWrites.Apply(_graph, _sandbox.AhHome, _db, new RuleAsk("add", _dir, level, scope, "k", "x", "user", null), DateTimeOffset.UtcNow);
@@ -891,7 +895,7 @@ public sealed partial class RulesStoreTests : IDisposable
 
         Assert.Equal(0, run.Code);
         Assert.Equal(string.Empty, run.Err);
-        Assert.Contains("<scope> is one of: --repo | --team <name> | --project <work id> | --goal <work id>", run.Out, StringComparison.Ordinal);
+        Assert.Contains("<scope> is one of: --global | --roster <name> | --repo | --team <name> | --project <work id> | --goal <work id>", run.Out, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -901,6 +905,95 @@ public sealed partial class RulesStoreTests : IDisposable
 
         Assert.Equal(0, run.Code);
         Assert.DoesNotContain("is one of", run.Out, StringComparison.Ordinal);
+    }
+
+    private static RuleRow Row(string level, string scope, string text) => new(level, scope, "style", text, false, "user", null, 1, 1);
+
+    /// <summary>A1 (ah2-505 RS-D5): global &lt; roster &lt; repo &lt; team.</summary>
+    [Fact]
+    public void TheMostSpecificStoreAndLevelWinsFromTeamDownToGlobal()
+    {
+        var subject = new RuleSubject(["tm"], new HashSet<long>(), new HashSet<long>(), "game-factory");
+        var rows = new List<RuleRow> { Row("global", "", "global"), Row("roster", "game-factory", "roster"), Row("repo", "", "repo"), Row("team", "tm", "team") };
+
+        var texts = new List<string>();
+        for (var at = rows.Count; at > 0; at--)
+        {
+            texts.Add(Assert.Single(RulesOfEngagement.Resolve(rows.Take(at), subject).Rules).Row.Text);
+        }
+
+        Assert.Equal(["team", "repo", "roster", "global"], texts);
+        Assert.Equal(["global"], Assert.Single(RulesOfEngagement.Resolve(rows.Take(2), subject).Rules).Overrides);
+    }
+
+    /// <summary>A2 (RS-D7): a roster row only for that roster; with no roster, global rows only. Negative: another roster's row and the <c>default</c> row.</summary>
+    [Fact]
+    public void ARosterRowAppliesOnlyToASubjectOfThatRoster()
+    {
+        var rows = new[] { Row("global", "", "g") with { Key = "g" }, Row("roster", "game-factory", "gf") with { Key = "gf" }, Row("roster", "default", "d") with { Key = "d" } };
+
+        string[] Keys(string? roster) => [.. RulesOfEngagement.Resolve(rows, new RuleSubject(["tm"], new HashSet<long>(), new HashSet<long>(), roster)).Rules.Select(r => r.Row.Key).Order(StringComparer.Ordinal)];
+
+        Assert.Equal(["g", "gf"], Keys("game-factory"));
+        Assert.Equal(["d", "g"], Keys("default"));
+        Assert.Equal(["g"], Keys("other"));
+        Assert.Equal(["g"], Keys(null));
+        Assert.Equal(["g"], RulesOfEngagement.Resolve(rows, RuleSubject.RepoOnly).Rules.Select(r => r.Row.Key).ToArray());
+    }
+
+    /// <summary>A3 (RS-D1/D8): a global write from another repo is listed here; that repo's own rule is not.</summary>
+    [Fact]
+    public void AGlobalWriteFromAnotherRepoIsListedHereAndItsRepoRuleIsNot()
+    {
+        var other = Path.Combine(_sandbox.Root, "other-repo", ".claude", "ah2");
+        foreach (var (level, key) in new[] { ("global", "everywhere"), ("repo", "theirs") })
+        {
+            Assert.Equal(0, RulesWrites.Apply(_graph, _sandbox.AhHome, _db, new RuleAsk("add", other, level, "", key, "x", "user", null), DateTimeOffset.UtcNow).Code);
+        }
+
+        var all = Rules("list", "--all");
+
+        Assert.Contains("[everywhere] x (global", all.Out, StringComparison.Ordinal);
+        Assert.DoesNotContain("theirs", all.Out, StringComparison.Ordinal);
+    }
+
+    /// <summary>A4 (RS-D8): <c>off --repo</c> of a global-only key inserts an off row here; <c>off --global</c> of a key with no global row is not found.</summary>
+    [Fact]
+    public void OffAtTheRepoOfAGlobalKeyInsertsAndOffAtGlobalOfAMissingKeyIsNotFound()
+    {
+        Assert.Equal(0, RulesWrites.Apply(_graph, _sandbox.AhHome, _db, new RuleAsk("add", _dir, "global", "", "k", "x", "user", null), DateTimeOffset.UtcNow).Code);
+        Assert.Equal(0, Rules("off", "--repo", "--key", "k").Code);
+        Assert.Equal(["k"], OffKeys(List()));
+
+        Assert.Equal(RulesOfEngagement.NotFound, RulesWrites.Apply(_graph, _sandbox.AhHome, _db, new RuleAsk("off", _dir, "global", "", "missing", null, "user", null), DateTimeOffset.UtcNow).Code);
+    }
+
+    /// <summary>A5 (RS-D4): a lane child team recording <c>roster: null</c> runs its parent's roster; a lone one runs <c>default</c>; no team, none.</summary>
+    [Fact]
+    public void AChildTeamWithNoRosterResolvesItsParentsAndATeamlessAskResolvesNone()
+    {
+        File.WriteAllText(Path.Combine(_dir, "teams", "parent.json"), """{"roster":"game-factory","members":[]}""");
+        File.WriteAllText(Path.Combine(_dir, "teams", "lane.json"), """{"roster":null,"parent":{"team":"parent"},"members":[]}""");
+        File.WriteAllText(Path.Combine(_dir, "teams", "lone.json"), """{"roster":null,"members":[]}""");
+
+        Assert.Equal("game-factory", RulesReads.SubjectOf(_graph, _dir, "lane").Roster);
+        Assert.Equal("default", RulesReads.SubjectOf(_graph, _dir, "lone").Roster);
+        Assert.Null(RulesReads.SubjectOf(_graph, _dir, null).Roster);
+    }
+
+    /// <summary>A6 (RS-D10): <c>list --roster R</c> is the global rules and R's, and no repo rule or other roster's.</summary>
+    [Fact]
+    public void ListAtARosterShowsTheGlobalRulesAndThatRostersOnly()
+    {
+        AddRule("--global", "--key", "g", "--text", "global text");
+        AddRule("--roster", "game-factory", "--key", "r", "--text", "roster text");
+        AddRule("--roster", "other", "--key", "o", "--text", "other text");
+        AddRule("--repo", "--key", "p", "--text", "repo text");
+
+        var list = List("--roster", "game-factory");
+
+        Assert.Equal(["r", "g"], list.Member("rules")!.Value.AsArray().Select(r => r.Member("key")!.Value.AsString()).ToArray());
+        Assert.Contains("[r] roster text (roster game-factory)", Rules("list", "--roster", "game-factory").Out, StringComparison.Ordinal);
     }
 
     [Fact]
