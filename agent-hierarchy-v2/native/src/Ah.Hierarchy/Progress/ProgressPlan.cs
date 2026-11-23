@@ -740,4 +740,115 @@ internal static partial class ProgressFormat
 
         return lines;
     }
+
+    // ---------------------------------------------------------------- add-plan (b134 D1)
+
+    [GeneratedRegex(@"^(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*\z")]
+    private static partial Regex PlanHeading();
+
+    [GeneratedRegex(@"^(?:[-*+]|[0-9]+[.)]) (.*)\z")]
+    private static partial Regex PlanBullet();
+
+    [GeneratedRegex(@"^\[[ xX]\] ")]
+    private static partial Regex PlanCheckbox();
+
+    /// <summary>
+    /// The items of a plan file, in file order: one per top-level heading, or, when the file has none, one per top-level bullet, each with
+    /// its text as the description (b134 D1). Front matter, a lone leading title heading and fenced lines never start an item.
+    /// </summary>
+    internal static IReadOnlyList<(string Title, string Description)> ReadPlanItems(string text)
+    {
+        var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+        var start = 0;
+        if (lines[0] == "---" && Array.IndexOf(lines, "---", 1) is var close and > 0)
+        {
+            start = close + 1;
+        }
+
+        var fenced = new bool[lines.Length];
+        string? fence = null;
+        for (var i = start; i < lines.Length; i++)
+        {
+            var bare = lines[i].TrimStart();
+            if (fence is null && (bare.StartsWith("```", StringComparison.Ordinal) || bare.StartsWith("~~~", StringComparison.Ordinal)))
+            {
+                fence = bare[..3];
+                fenced[i] = true;
+            }
+            else if (fence is not null)
+            {
+                fenced[i] = true;
+                if (bare.StartsWith(fence, StringComparison.Ordinal))
+                {
+                    fence = null;
+                }
+            }
+        }
+
+        var headings = new List<(int Line, int Level, string Text)>();
+        for (var i = start; i < lines.Length; i++)
+        {
+            if (!fenced[i] && PlanHeading().Match(lines[i]) is { Success: true } m)
+            {
+                headings.Add((i, m.Groups[1].Length, m.Groups[2].Value));
+            }
+        }
+
+        var first = Enumerable.Range(start, lines.Length - start).FirstOrDefault(i => lines[i].Trim().Length > 0, -1);
+        if (headings.Count > 0 && headings[0].Line == first && headings.Count(h => h.Level == headings[0].Level) == 1)
+        {
+            headings.RemoveAt(0);
+        }
+
+        var items = new List<(string Title, string Description)>();
+        if (headings.Count > 0)
+        {
+            var level = headings.Min(static h => h.Level);
+            for (var h = 0; h < headings.Count; h++)
+            {
+                if (headings[h].Level != level)
+                {
+                    continue;
+                }
+
+                var end = headings.Skip(h + 1).Where(n => n.Level <= level).Select(static n => n.Line).DefaultIfEmpty(lines.Length).First();
+                var body = string.Join('\n', lines[(headings[h].Line + 1)..end]).Trim();
+                var full = Blanks().Replace(headings[h].Text, " ").Trim();
+                items.Add((PlanTitle(full), body.Length > 0 ? body : full));
+            }
+
+            return items;
+        }
+
+        for (var i = start; i < lines.Length; i++)
+        {
+            if (fenced[i] || PlanBullet().Match(lines[i]) is not { Success: true } bullet)
+            {
+                continue;
+            }
+
+            var head = PlanCheckbox().Replace(bullet.Groups[1].Value, string.Empty);
+            var rest = new List<string>();
+            var j = i + 1;
+            for (; j < lines.Length; j++)
+            {
+                var line = lines[j];
+                if (!fenced[j] && line.Length > 0 && !char.IsWhiteSpace(line[0]))
+                {
+                    break;
+                }
+
+                rest.Add(line);
+            }
+
+            var indent = rest.Where(static l => l.Trim().Length > 0).Select(static l => l.Length - l.TrimStart().Length).DefaultIfEmpty(0).Min();
+            var description = string.Join('\n', [head, .. rest.Select(l => l.Length >= indent ? l[indent..] : l.TrimStart())]).TrimEnd();
+            items.Add((PlanTitle(Blanks().Replace(head, " ").Trim()), description));
+            i = j - 1;
+        }
+
+        return items;
+    }
+
+    private static string PlanTitle(string title) => title.Length == 0 ? "(untitled)" : title.Length > MaxTitle ? title[..MaxTitle] : title;
 }

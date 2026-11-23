@@ -6,7 +6,7 @@ using Ah.Mesh;
 namespace Ah.Cli.Composition;
 
 /// <summary>
-/// The <c>POST /v1/qa/*</c> routes of the QA queue: submit, next, done, release, status and list. Each body is a JSON object. A call
+/// The <c>POST /v1/qa/*</c> routes of the QA queue: submit, next, done, release, withdraw, status and list. Each body is a JSON object. A call
 /// that changes a job needs a session the peer's process tree proves; <c>status</c> and <c>list</c> accept the user too, and
 /// <c>release</c> also accepts the user and the orchestrator of the claimer's team. Every refusal is
 /// <c>{error:{code,message}}</c>.
@@ -23,6 +23,7 @@ internal sealed class QaRoutes(IHierarchyQa qa, Func<int?, CallerPrincipal> prin
         routes.Add("POST /v1/qa/next", (request, ct) => Handle(request, Next, ct));
         routes.Add("POST /v1/qa/done", (request, ct) => Handle(request, Done, ct));
         routes.Add("POST /v1/qa/release", (request, ct) => Handle(request, Release, ct));
+        routes.Add("POST /v1/qa/withdraw", (request, ct) => Handle(request, Withdraw, ct));
         routes.Add("POST /v1/qa/status", (request, ct) => Handle(request, Status, ct));
         routes.Add("POST /v1/qa/list", (request, ct) => Handle(request, List, ct));
     }
@@ -36,7 +37,7 @@ internal sealed class QaRoutes(IHierarchyQa qa, Func<int?, CallerPrincipal> prin
     {
         Unproven or "not-claimer" or "not-allowed" => 403,
         "qa-unknown-entry" => 404,
-        "qa-not-claimed" => 409,
+        "qa-not-claimed" or "qa-claimed" => 409,
         "qa-store-busy" => 503,
         _ => 400,
     };
@@ -189,6 +190,20 @@ internal sealed class QaRoutes(IHierarchyQa qa, Func<int?, CallerPrincipal> prin
         }
 
         return Reply(qa.Release(id, May));
+    }
+
+    /// <summary>Whoever may submit for the entry's repository may withdraw it (ah2-493).</summary>
+    private RouteResponse Withdraw(RouteRequest request, JsonObject body)
+    {
+        var (_, choice, _, refused) = Session(request, body);
+        if (refused is not null)
+        {
+            return refused;
+        }
+
+        return Str(body, "id") is not { } id
+            ? Error(400, "qa-bad-request", "id is required")
+            : Reply(qa.Withdraw(id, Str(body, "reason"), repo => RepoAllowed(choice, repo)));
     }
 
     private RouteResponse Status(RouteRequest request, JsonObject body)

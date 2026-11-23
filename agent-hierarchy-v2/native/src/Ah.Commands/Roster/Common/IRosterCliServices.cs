@@ -76,6 +76,9 @@ public interface IRosterCliServices
     /// <summary>The backlog row (<c>b&lt;N&gt;</c>) a work id names; null when it names none, or no registry is composed.</summary>
     string? WorkParent(string pool, string team, string id) => null;
 
+    /// <summary>Records <paramref name="body"/> as the description of <paramref name="team"/>'s item <paramref name="key"/> (<c>stream/slug</c>); null when written, else why not.</summary>
+    string? WorkDescribe(string pool, string team, string key, string body, string by, string? session) => "no work registry here";
+
     /// <summary>
     /// The team goal that applies to <paramref name="team"/> as the rules verb resolves it from <paramref name="cwd"/> (ah2-53): <c>{text, done_when, team}</c>, <c>team</c>
     /// naming whose row it is. Null with none, when it cannot be read, or where no rules read is composed.

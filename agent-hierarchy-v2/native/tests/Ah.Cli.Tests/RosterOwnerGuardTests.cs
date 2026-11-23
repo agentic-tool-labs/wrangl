@@ -145,6 +145,9 @@ public sealed partial class RosterOwnerGuardTests : IDisposable
 
         public IRosterWake? Wake => new RosterComposition(graph, clock, environment).Wake;
 
+        public string? WorkDescribe(string pool, string team, string key, string body, string by, string? session) =>
+            new RosterComposition(graph, clock, environment).WorkDescribe(pool, team, key, body, by, session);
+
         public IConfigCore Config => graph.Config;
 
         public IRosterCore Roster => graph.Roster;

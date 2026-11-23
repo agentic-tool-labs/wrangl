@@ -79,6 +79,13 @@ public static partial class HierarchyModule
     /// <summary>The item id for a new item titled <paramref name="what"/>: a slug of the title, made unique among <paramref name="taken"/>, which gains it.</summary>
     public static string ChecklistSlug(string what, ISet<string> taken) => ProgressFormat.ImportSlug(what, taken);
 
+    /// <summary>The items of a plan file for <c>checklist add-plan</c>, in file order, each with its title and description (b134 D1).</summary>
+    public static IReadOnlyList<(string Title, string Description)> ChecklistPlanItems(string text) => ProgressFormat.ReadPlanItems(text);
+
+    /// <summary>The item in <paramref name="stream"/> that <c>add-plan</c> reuses for <paramref name="what"/>: the same live title, of any age, or null (b134 D4).</summary>
+    public static ChecklistEntry? ChecklistTwin(IReadOnlyList<ChecklistEntry> entries, string stream, string what) =>
+        ChecklistRules.Twin(entries, stream, what);
+
     /// <summary>The classes a question for the user may have, most urgent first: <c>blocker</c>, <c>soon</c>, <c>eventually</c>.</summary>
     public static IReadOnlyList<string> ChecklistClasses => ProgressFormat.Classes;
 

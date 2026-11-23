@@ -9,6 +9,7 @@ internal static class QaUsage
           ah qa next [--max-set full|other] [--session <id>] [--json]
           ah qa done <id> (--result <path> | --error <one line>) [--session <id>] [--json]
           ah qa release <id> [--session <id>] [--json]
+          ah qa withdraw <id> [--reason <text>] [--session <id>] [--json]
           ah qa status [<id>] [--json]
           ah qa list [--all] [--json]
         """;

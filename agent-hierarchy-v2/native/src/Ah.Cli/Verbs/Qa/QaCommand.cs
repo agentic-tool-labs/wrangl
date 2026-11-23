@@ -18,6 +18,7 @@ internal sealed class QaCommand(ServiceGraph graph, QaOptions opts, string verb,
         ["next"] = ["max-set", "session", "json", "cwd"],
         ["done"] = ["result", "error", "session", "json", "cwd"],
         ["release"] = ["session", "json", "cwd"],
+        ["withdraw"] = ["reason", "session", "json", "cwd"],
         ["status"] = ["json", "cwd"],
         ["list"] = ["all", "json", "cwd"],
     };
@@ -51,6 +52,15 @@ internal sealed class QaCommand(ServiceGraph graph, QaOptions opts, string verb,
                 break;
             case "release":
                 body["id"] = OneId();
+                Hint(body);
+                break;
+            case "withdraw":
+                body["id"] = OneId();
+                if (opts.Has("reason"))
+                {
+                    body["reason"] = Value("reason");
+                }
+
                 Hint(body);
                 break;
             case "status":
@@ -255,7 +265,7 @@ internal sealed class QaCommand(ServiceGraph graph, QaOptions opts, string verb,
         }
 
         var e = job.AsObject();
-        if (verb is "done" or "release")
+        if (verb is "done" or "release" or "withdraw")
         {
             output.Line($"entry {Text(e, "id")} {Text(e, "state")}");
             return;

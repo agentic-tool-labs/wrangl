@@ -193,6 +193,9 @@ internal static class JobEvents
     /// <summary>How long <c>with-slot.sh</c> waits for a slot before it gives up and exits, in milliseconds: a job queued longer than this is not plausible.</summary>
     internal const double SlotGiveUpMs = 3600 * 1000;
 
+    /// <summary>The job eta word for a job meant to run until stopped: it is working and never due while open.</summary>
+    internal const string ServerEta = "server";
+
     /// <summary>When the job's own clock starts: the slot acquisition for a job holding the test slot, else the tool call.</summary>
     internal static double ClockStartMs(JobFact job) => ClockStartMs(job.Slot?.Phase, job.Slot?.SinceMs, job.SentAtMs);
 
@@ -220,6 +223,11 @@ internal static class JobEvents
             var due = Math.Max(queuedSince, extendedAtMs ?? 0) + SlotGiveUpMs;
             var late = now >= due;
             return new EtaStateResult(id, eta, null, due, null, late ? "overdue" : "working", late ? (now - due) / 1000 : null, null, 0, late ? null : due);
+        }
+
+        if (eta == ServerEta && !ended)
+        {
+            return new EtaStateResult(id, eta, null, double.PositiveInfinity, null, "working", null, null, 0, null);
         }
 
         return EtaState.Compute(
@@ -255,7 +263,7 @@ internal static class JobEvents
 
         var late = (int)Math.Max(0, Math.Round((now - due) / 60000));
         var pid = job.Pid is { } p ? $"; pid {p.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
-        return $"{what} is {late.ToString(CultureInfo.InvariantCulture)}m past its ETA {job.Eta}{pid}. Check it. Hung: kill the processes you started and report BLOCKED. Progressing: ah roster job extend {job.Id} --eta {job.Eta}.";
+        return $"{what} is {late.ToString(CultureInfo.InvariantCulture)}m past its ETA {job.Eta}{pid}. Check it. Hung: kill the processes you started and report BLOCKED. Progressing: ah roster job extend {job.Id} --eta {job.Eta}. Meant to run until stopped (a server): --eta server.";
     }
 
     /// <summary>What a cap kill did: how long the job ran, the cap and the pids killed.</summary>
@@ -360,5 +368,5 @@ internal static class JobEvents
 
     /// <summary>What the lead can do about an overdue job. <c>ah roster job extend</c> refuses anyone but the owner, so the lead asks the owner to run it.</summary>
     private static string OperationalCall(JobFact job) =>
-        $"Operational call (O1/O4): under machine load a long run is normal, so wait unless its output has stopped (only {job.Owner} can extend it: tell them to run ah roster job extend {job.Id}). If it has stopped, kill the job's process or re-dispatch the item. The owner's own turn may be blocked on it.";
+        $"Operational call (O1/O4): under machine load a long run is normal, so wait unless its output has stopped (only {job.Owner} can extend it: tell them to run ah roster job extend {job.Id}; meant to run until stopped (a server): --eta server). If it has stopped, kill the job's process or re-dispatch the item. The owner's own turn may be blocked on it.";
 }

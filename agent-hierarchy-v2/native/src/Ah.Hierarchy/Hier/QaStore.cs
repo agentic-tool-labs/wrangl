@@ -16,7 +16,7 @@ internal static partial class QaRows
 
     private static readonly string[] Priorities = ["gate", "lane", "adhoc"];
 
-    private static readonly string[] States = ["queued", "claimed", "done", "failed"];
+    private static readonly string[] States = ["queued", "claimed", "done", "failed", "withdrawn"];
 
     [GeneratedRegex("^[0-9a-fA-F]{40}$", RegexOptions.CultureInvariant)]
     private static partial Regex Sha();
@@ -55,13 +55,13 @@ internal static partial class QaRows
     internal static long EpochOf(IEnumerable<JsonObject> rows) =>
         rows.FirstOrDefault(r => r.Get("id")?.NonEmptyText == EpochId) is { } row ? RevOf(row) : 0;
 
-    /// <summary>The end time of a done or failed job, null for any other row.</summary>
+    /// <summary>The end time of a done, failed or withdrawn job, null for any other row.</summary>
     internal static long? EndedAt(JsonObject row) =>
-        row.Get("state")?.NonEmptyText is "done" or "failed" && row.Get("ended_at") is { IsNumber: true } ended && double.IsFinite(ended.AsNumber())
+        row.Get("state")?.NonEmptyText is "done" or "failed" or "withdrawn" && row.Get("ended_at") is { IsNumber: true } ended && double.IsFinite(ended.AsNumber())
             ? (long)ended.AsNumber()
             : null;
 
-    /// <summary>Whether a done or failed job ended more than <see cref="RetentionMs"/> before <paramref name="nowMs"/>; one with no readable end time stays.</summary>
+    /// <summary>Whether a done, failed or withdrawn job ended more than <see cref="RetentionMs"/> before <paramref name="nowMs"/>; one with no readable end time stays.</summary>
     internal static bool Expired(JsonObject row, double nowMs) => EndedAt(row) is { } ended && nowMs - ended > RetentionMs;
 
     /// <summary>Throws <c>qa-bad-row: &lt;id&gt;: &lt;key&gt;</c> for the first key of the row that is missing, mistyped or inconsistent with its state.</summary>
@@ -116,7 +116,7 @@ internal static partial class QaRows
             return row.Get("claimed_by")!.Value.IsNull ? "claimed_by" : row.Get("claimed_at")!.Value.IsNull ? "claimed_at" : null;
         }
 
-        return state is "done" or "failed" && row.Get("ended_at")!.Value.IsNull ? "ended_at" : null;
+        return state is "done" or "failed" or "withdrawn" && row.Get("ended_at")!.Value.IsNull ? "ended_at" : null;
     }
 
     /// <summary>The largest integer a JSON number holds exactly.</summary>
@@ -318,7 +318,7 @@ internal sealed partial class HierLib
             parsed.Member("conflict") is { IsArray: true } conflict ? [.. conflict.AsArray().Select(c => c.AsString())] : []);
     }
 
-    /// <summary><c>qa.compact</c>: deletes the done or failed jobs that ended more than <see cref="QaRows.RetentionMs"/> before <c>now_ms</c>: <c>{dropped: n}</c>.</summary>
+    /// <summary><c>qa.compact</c>: deletes the done, failed or withdrawn jobs that ended more than <see cref="QaRows.RetentionMs"/> before <c>now_ms</c>: <c>{dropped: n}</c>.</summary>
     internal static OpResult QaCompactDb(OpCall call, IDbOpTransaction tx) => OpArgs.Run(call, args =>
     {
         tx.Execute("DELETE FROM qa_jobs WHERE ended_at IS NOT NULL AND ended_at < ?1", (long)Math.Ceiling(JsConvert.ToNumber(args.Member("now_ms")) - QaRows.RetentionMs));

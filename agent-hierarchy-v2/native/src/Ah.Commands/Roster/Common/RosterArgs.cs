@@ -14,7 +14,7 @@ internal sealed class RosterArgs
         "plain", "json", "plan", "commit", "partial", "manual", "next", "apply", "kill", "keep-sessions", "spawn", "dry-run",
         "new-tab", "new-workspace", "allow-global", "cancel", "clear", "close", "confirm", "also-config", "no-spawn",
         "allow-roster-edit", "no-legwork-handoff", "wait-only", "no-worktree", "yes", "fix", "all", "status",
-        "checkpoint", "relaunch-missing", "revoke-all", "list", "user-choice", "hold", "brief", "failed", "here", "despite-load",
+        "checkpoint", "relaunch-missing", "revoke-all", "list", "user-choice", "hold", "brief", "failed", "here", "despite-load", "sequential",
     };
 
     private readonly List<string> _keys = [];

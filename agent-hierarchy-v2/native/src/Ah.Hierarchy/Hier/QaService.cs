@@ -45,6 +45,9 @@ public interface IHierarchyQa
     /// <summary>Returns a claimed job to the queue when <paramref name="mayRelease"/> accepts the address that claimed it.</summary>
     QaReply Release(string id, Func<string, bool> mayRelease);
 
+    /// <summary>Closes a queued job as <c>withdrawn</c> when <paramref name="mayWithdraw"/> accepts its repository; a claimed job is refused <c>qa-claimed</c>, an ended one answers unchanged.</summary>
+    QaReply Withdraw(string id, string? reason, Func<string, bool> mayWithdraw);
+
     QaReply Find(string id);
 
     /// <summary>The queued and claimed jobs, or every job with <paramref name="all"/>, oldest first.</summary>
@@ -219,6 +222,15 @@ internal sealed partial class QaService : IHierarchyQa
     {
         _scheduler.StalePass();
         return Of(_scheduler.Release(id, mayRelease), $"no entry {id}");
+    }
+
+    public QaReply Withdraw(string id, string? reason, Func<string, bool> mayWithdraw)
+    {
+        _scheduler.StalePass();
+        var result = _scheduler.Withdraw(id, reason, e => mayWithdraw(e.Repo));
+        return result is { Error: "qa-claimed", Entry: { } claimed }
+            ? Refused("qa-claimed", $"entry {id} is claimed by {claimed.ClaimedBy}; use ah qa release or ah qa done")
+            : result.Error == "not-allowed" ? Refused("not-allowed", "only a session that may submit for that entry's repository may withdraw it") : Of(result, $"no entry {id}");
     }
 
     public QaReply Find(string id)
