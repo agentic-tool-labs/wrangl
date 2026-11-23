@@ -168,7 +168,7 @@ internal sealed partial class MeshSend(
             }
             else
             {
-                var chosen = mailbox.ChooseFrom(addresses, toTeam);
+                var chosen = mailbox.ChooseFrom(addresses, toTeam, toTeamAncestors: mailbox.TeamAncestors(toTeam, lookup));
                 address = chosen.Failure is { } failure ? throw new MailboxError(failure.Code, failure.Message, failure.Candidates) : chosen.Value!;
             }
         }

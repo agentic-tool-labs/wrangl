@@ -53,8 +53,8 @@
     "work_root": "/Users/example/git/repos/agent-tools",
     "branch": "main",
     "running": true,
-    "members": 4,
-    "working": 2,
+    "members": 5,
+    "working": 3,
     "blocked": 1,
     "needs_you": 4,
     "waiting_on_you": 3,
@@ -132,6 +132,15 @@
       "process": "running",
       "tool": "claude",
       "state_at": "2026-11-08T16:59:00.000Z"
+     },
+     "member:a1b2c3d4/ah2-tm4/ah2-tm4-so-herdr": {
+      "state": "working",
+      "liveness": "live",
+      "pane_id": "t7",
+      "process": "running",
+      "tool": "claude",
+      "state_at": "2026-11-08T17:12:00.000Z",
+      "item": "herdr lane"
      }
     }
    }
@@ -851,7 +860,7 @@
   {"id": "member:a1b2c3d4/ah2-tm4/architect", "version": 850, "as_of": 1794158400000, "body": {"id": "member:a1b2c3d4/ah2-tm4/architect", "name": "architect", "role": "architect", "placement": {"stream": "main"}, "last_exchanges": []}},
   {"id": "flow:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"run": "ah-run-8f2", "start_ms": 1794147600000, "oldest_ms": 1794147600000, "truncated": false, "names": ["member:a1b2c3d4/ah2-tm4/@orchestrator", "member:a1b2c3d4/ah2-tm4/implementor", "member:a1b2c3d4/ah2-tm4/reviewer", "member:a1b2c3d4/ah2-tm4/architect"], "totals": [[0, 1, 9, 0], [1, 0, 0, 8], [1, 2, 4, 0], [0, 3, 3, 0], [3, 0, 0, 3], [2, 1, 0, 3], [0, 2, 1, 0], [-1, -1, 2, 1]], "page_size": 500, "pages_rev": "0", "pages": [], "tail": [[736, 2, 1, 1], [910, 1, 2, 0], [970, 0, 1, 0], [987, 0, 1, 0], [1001, 1, 2, 0], [1156, 0, 1, 0], [1193, 1, 0, 1], [1285, 0, 1, 0], [2974, 2, 1, 1], [3059, 0, 3, 0], [3448, 1, 0, 1], [3603, 3, 0, 1], [3617, 1, 0, 1], [5371, 1, 0, 1], [5475, 1, 0, 1], [5648, 3, 0, 1], [5652, 2, 1, 1], [5842, 0, 3, 0], [6144, 0, 1, 0], [8257, 3, 0, 1], [8350, 0, 2, 0], [8355, 0, 1, 0], [8428, 1, 0, 1], [8962, 0, 1, 0], [9614, 0, 3, 0], [9835, 1, 2, 0], [9894, 0, 1, 0], [9926, 1, 2, 0], [10145, 0, 1, 0], [10225, 1, 0, 1], [10433, 1, 0, 1]]}},
   {"id": "list:open:team:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/ah2-tm4", "open": [{"id": "exchange:a1b2c3d4/20261108-171500-b337", "from_member": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to_member": "member:a1b2c3d4/ah2-tm4/implementor"}, {"id": "exchange:a1b2c3d4/20261108-171600-r337", "from_member": "member:a1b2c3d4/ah2-tm4/implementor", "to_member": "member:a1b2c3d4/ah2-tm4/reviewer"}]}},
-  {"id": "topology:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/ah2-tm4", "nodes": {"members": [], "worktrees": []}, "edges": {"brief": [{"id": "exchange:a1b2c3d4/20261108-171600-r337", "brief": "review"}], "parent_child": [{"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/implementor"}, {"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/reviewer"}, {"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/architect"}]}}},
+  {"id": "topology:a1b2c3d4/ah2-tm4", "version": 850, "as_of": 1794158400000, "body": {"team": "team:a1b2c3d4/ah2-tm4", "nodes": {"members": [], "worktrees": [], "live_paths": {"member:a1b2c3d4/ah2-tm4/ah2-tm4-so-herdr": "/t/a1b2c3d4/lane-herdr/m/%40orchestrator"}}, "edges": {"brief": [{"id": "exchange:a1b2c3d4/20261108-171600-r337", "brief": "review"}], "parent_child": [{"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/implementor"}, {"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/reviewer"}, {"from": "member:a1b2c3d4/ah2-tm4/@orchestrator", "to": "member:a1b2c3d4/ah2-tm4/architect"}]}}},
   {"id": "exchange:a1b2c3d4/20261108-171500-b337", "version": 850, "as_of": 1794158400000, "body": {"slug": "b337-idle-alarms", "title": "b337-idle-alarms", "open": true, "dir_id": "a1b2c3d4", "team": "ah2-tm4"}},
   {"id": "exchange:a1b2c3d4/20261108-171600-r337", "version": 850, "as_of": 1794158400000, "body": {"slug": "review-b337", "title": "review-b337", "open": true, "dir_id": "a1b2c3d4", "team": "ah2-tm4"}},
   {"id": "team:a1b2c3d4/lane-herdr", "version": 850, "as_of": 1794158400000, "body": {"name": "lane-herdr", "dir_id": "a1b2c3d4", "orchestrator": "member:a1b2c3d4/lane-herdr/@orchestrator", "members": ["member:a1b2c3d4/lane-herdr/architect", "member:a1b2c3d4/lane-herdr/ux-engineer"], "worktrees": [], "lane": {"stream": "herdr", "parent_team": "ah2-tm4", "state": "open"}}},

@@ -20,6 +20,11 @@ export const DESK_KEY = "ah2.desk";
 // The open Desk window (main.js desk copy): {overlay, view, max} while open, {view, max} (its last tab and size) once closed, null
 // never seen. An opener that finds it open adds `want: <tab>` and the window switches to it (reopening the key would replace it).
 export const DESK_WINDOW_KEY = "ah2.desk-window";
+// The open team Desks (spec desk-per-team D3): { <team id>: <record> }, each record DESK_WINDOW_KEY's shape. Each copy writes only
+// its own entry, read-modify-write of the whole map.
+// ponytail: assumes Herdr's shared store is one synchronous store across copies; per-team keys would remove that, at the cost of
+// not being able to reset stale ones.
+export const TEAM_DESKS_KEY = "ah2.team-desks";
 // The Graph's Map | Flow choice and Flow's orientation, {mode, orient} (graph-view.js; read by graph-model.js graphChoice).
 export const GRAPH_KEY = "ah2.graph";
 // The Desk window's size, in one place so it can become a setting (atp-1727).
@@ -28,9 +33,10 @@ export const DESK_WINDOW_SIZE = { width: 620, height: 720 };
 // Herdr's window less a small margin. Herdr sizes an overlay only as it opens: maximize and restore reopen the window.
 export const DESK_WINDOW_MAX = { width: 0.95, height: 0.95 };
 export const deskWindowOpen = (w) => w?.overlay != null;
-// What opens the Desk window on `view`, at its maximized or normal size (dock.js).
-export const deskWindowSpec = (view, max = false) =>
-  ({ mod: "ah2", props: { view: "desk", tab: view, max }, kind: "window", key: "ah2-desk", ...(max ? DESK_WINDOW_MAX : DESK_WINDOW_SIZE) });
+// What opens the Desk window on `view`, at its maximized or normal size (dock.js). With `team`, that team's own Desk, keyed by the
+// team so two teams' Desks never replace each other (spec desk-per-team D1).
+export const deskWindowSpec = (view, max = false, team = null) =>
+  ({ mod: "ah2", props: { view: "desk", tab: view, max, ...(team ? { team } : {}) }, kind: "window", key: team ? `ah2-desk:${team}` : "ah2-desk", ...(max ? DESK_WINDOW_MAX : DESK_WINDOW_SIZE) });
 
 // Where openView takes a Desk tab (spec atp-1728 §2): "dock" (the column), "open" (a new Desk window) or "switch" (the open one).
 export function deskRoute(placement, dockable, windowOpen) {

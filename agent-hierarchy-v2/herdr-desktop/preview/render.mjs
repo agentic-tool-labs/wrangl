@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart, teamTree, treeRows, inFlightTo, rowDot, rowTrack, reportsFrom, rowReport } from "../mods/ah2/model.js";
+import { STATES, counts, deskModel, sidebarModel, sitrepModel, qaModel, canSend, descFold, historyReply, threadStart, teamTree, treeRows, inFlightTo, rowDot, rowTrack, reportsFrom, rowReport, soOnce } from "../mods/ah2/model.js";
 import { descriptionBlocks, inlineParts } from "../mods/ah2/plans-model.js";
 import { answerText, DIRECTION, threadOf } from "../mods/ah2/questions-model.js";
 import { boardModel, ownerOf } from "../mods/ah2/board-model.js";
@@ -148,7 +148,7 @@ function treeMember(m) {
   const v = ["l", "d"].map((th) => `--hu-${th}:${laneHue(m.role, m.column, th === "l") ?? "var(--foreground)"};--mk-${th}:${mk[th].mark ?? "var(--blocked)"}`).join(";");
   const full = `${m.name}${m.role && m.role !== m.name ? ` (${m.role})` : ""} · ${m.word} · ${m.what}${m.age ? ` · ${m.age}` : ""}`;
   const quiet = ["idle", "gone", "unknown"].includes(m.state);
-  return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri${m.state === "gone" || m.state === "unknown" ? " off" : ""}" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
+  return `<div class="row tr" style="${v}" title="${esc(full)}" aria-label="${esc(full)}"><span class="ri${m.state === "gone" || m.state === "unknown" ? " off" : ""}" aria-hidden="true">${icon(m.role)}</span><span class="rg" aria-hidden="true">${esc(mk.d.glyph)}</span><span class="nm${quiet ? " quiet" : ""}">${esc(m.label ?? m.name)}</span><span class="wt${m.what === m.word.toLowerCase() || m.what === "blocked" ? " wd" : ""}">${esc(m.what)}</span><span class="age">${esc(m.age)}</span></div>`;
 }
 // ah2-225: a job's or subagent's leaf row, as main.js under() draws it; a subagent's own elbow dashed (class dsh on its lead)
 function treeUnder(x, parent) {
@@ -164,7 +164,8 @@ function teamHead(t, lane) {
     `<button class="team" style="padding-left:${lane ? 4 : 8}px${lane ? ";flex:1;min-width:0" : ""}" title="Open the ${esc(t.label)} sitrep${t.real ? ` · ${esc(t.real)}` : ""}"><span class="tn">${esc(t.label)}</span>`,
     t.needsYou ? `<span class="cnt" title="${t.needsYou} needs you">${t.needsYou}</span>` : "",
     t.working || t.blocked ? `<span class="tc">${esc(counts({ working: t.working, blocked: t.blocked }))}</span>` : "",
-    `<span class="spill" role="button" title="Open the ${esc(t.label)} sitrep" aria-label="Open the ${esc(t.label)} sitrep">Sitrep</span>`,
+    // desk-per-team D9: the row's icon opens the team's own Desk on its Sitrep tab (main.js header)
+    `<span class="spill" role="button" title="Open the ${esc(t.label)} desk" aria-label="Open the ${esc(t.label)} desk, on its sitrep">${readFileSync(join(here, "..", "mods", "ah2", "app-window.svg"), "utf8").replace(/ width="24" height="24"/, "")}</span>`,
     "</button>",
   ].join("");
 }
@@ -694,7 +695,7 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 .none{padding:4px 0;font-size:11px;color:var(--muted)}
 .qrow{display:flex;align-items:center;gap:8px}.qrow .qm{flex:1;min-width:0}.qlink{height:24px;padding:0 6px;border:1px solid var(--raised);border-radius:6px;background:none;color:var(--muted);font:11px Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.qlink:hover{background:var(--hover);color:var(--foreground)}
 .cnt{height:16px;padding:0 5px;display:flex;align-items:center;border-radius:8px;border:1px solid var(--blocked);font:10.5px "Geist Mono",ui-monospace,monospace;color:var(--foreground)}
-.spill{height:18px;padding:0 6px;flex:none;display:flex;align-items:center;border-radius:9px;border:1px solid var(--border);font-size:10.5px;font-weight:500;color:var(--muted)}.spill:hover{background:var(--raised);color:var(--foreground)}
+.spill{width:18px;height:18px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--chrome);color:var(--muted)}.spill svg{width:12px;height:12px}.spill:hover{background:var(--raised);color:var(--foreground)}
 .gear.dk+.gear{margin-left:0}html[data-view=dock] .gear.dk{background:var(--raised);border-color:var(--border);color:var(--foreground)}
 .vt{height:34px;flex:none;padding:8px 16px 0;display:flex;align-items:center;gap:2px}.vt button{height:26px;padding:0 10px;border:1px solid var(--surface);border-radius:6px;background:var(--surface);color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif}.vt .on{background:var(--raised);border-color:var(--raised);color:var(--foreground)}
 .qa .grp{height:16px;margin:12px 0 6px;padding:0}
@@ -816,8 +817,8 @@ const w = new URLSearchParams(location.search).get("w"); if (w) document.documen
   <div class="ah2">
    <div class="head"><span class="lbl">Wrangl</span>${needs(side.needsYou)}</div>
    <div class="list">
-    <div class="lst-plain">${side.teams.flatMap((t) => teamRows(t)).join("\n    ")}</div>
-    <div class="lst-named">${sideNamed.teams.flatMap((t) => teamRows(t)).join("\n    ")}</div>
+    <div class="lst-plain">${soOnce(side.teams, slices).flatMap((t) => teamRows(t)).join("\n    ")}</div>
+    <div class="lst-named">${soOnce(sideNamed.teams, NAMED).flatMap((t) => teamRows(t)).join("\n    ")}</div>
     <div class="grp">Other agents</div>
     ${others.map((a) => member({ ...STATES[a.state], state: a.state, name: a.name, what: a.space, age: "" }, 14)).join("")}
    </div>

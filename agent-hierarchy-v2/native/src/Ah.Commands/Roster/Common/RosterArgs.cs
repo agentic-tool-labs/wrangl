@@ -3,6 +3,7 @@ namespace Ah.Commands;
 /// <summary>
 /// The roster CLI's argument parser: every <c>--key</c> takes the next word as its value unless the key is a boolean flag
 /// or the next word is itself a <c>--flag</c>, in which case it is true. Words that are not flags are positional.
+/// <c>--key=value</c> is one flag, split at the first <c>=</c>. A <c>--</c> word with no <c>=</c> that holds whitespace is first split as a shell would have.
 /// A key given twice keeps the position of its first appearance and the value of its last.
 /// </summary>
 internal sealed class RosterArgs
@@ -29,6 +30,11 @@ internal sealed class RosterArgs
     internal static RosterArgs Parse(IReadOnlyList<string> argv)
     {
         ArgumentNullException.ThrowIfNull(argv);
+
+        // ah2-471 D5: a -- word with no = that holds whitespace (zsh leaves an unquoted $VAR unsplit) is split as a shell would have
+        argv = [.. argv.SelectMany(static w => w.StartsWith("--", StringComparison.Ordinal) && !w.Contains('=', StringComparison.Ordinal) && w.Any(char.IsWhiteSpace)
+            ? w.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+            : [w])];
         var args = new RosterArgs();
         for (var i = 0; i < argv.Count; i++)
         {
@@ -40,6 +46,15 @@ internal sealed class RosterArgs
             }
 
             var key = word[2..];
+            if (key.IndexOf('=', StringComparison.Ordinal) is var eq and >= 0)
+            {
+                // ah2-471 D4: --k=v is one flag, split at the first =; --k= and a boolean flag's --k=anything are given without a value
+                var value = key[(eq + 1)..];
+                key = key[..eq];
+                args.Set(key, value.Length == 0 || BoolFlags.Contains(key) ? null : value);
+                continue;
+            }
+
             var next = i + 1 < argv.Count ? argv[i + 1] : null;
             if (!BoolFlags.Contains(key) && next is not null && !next.StartsWith("--", StringComparison.Ordinal))
             {

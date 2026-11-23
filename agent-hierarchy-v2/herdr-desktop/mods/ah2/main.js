@@ -10,11 +10,11 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button, Popover } from "gpui-base";
-import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, openOverlay, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
+import { readTextFile, theme, run, props, agents, terminals, setAgentOrder, closeOverlay, notify, shared, setShared, placement, checking, nextCommand } from "herdr";
 import { REBUILD_KEY, REBUILD_EVERY_MS, REBUILD_WATCH_MS, rebuildStep, rebuildGaveUp, rebuildNotify } from "./rebuild-model.js";
-import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree, teamTotals } from "./model.js";
+import { STATES, applyReply, age, counts, deskModel, needsMark, blockedText, sidebarModel, sitrepModel, qaModel, qaSubs, loadingOf, terminalFinder, STUCK, retryMs, activitySubs, dotSubs, rowTrack, paneTree, teamTotals } from "./model.js";
 import { runText, underTip } from "./flow-model.js";
-import { qaInit, qaPrune, qaTake, qaView } from "./qa.js";
+import { qaInit, qaPrune, qaTake, qaView, qaScope } from "./qa.js";
 import { boardSubs } from "./board-model.js";
 import { boardInit, boardLeave, boardView } from "./board.js";
 import { feedSubs } from "./feed-model.js";
@@ -22,9 +22,10 @@ import { feedView } from "./feed.js";
 import { graphSubs, leaveGraph, rowMark, roleHue, laneHue, roleIcon, dotColor, dotAt, trackOf, travelsOf, travelClock, DOT_MS } from "./graph-model.js";
 import { graphView, graphInit, light as isLight } from "./graph-view.js";
 import { tabsView, tabsInit, menuView, panelTabsView } from "./tabs.js";
-import { openView, closeOf, shownIn, isDocked, deskWindow } from "./dock.js";
+import { openView, closeOf, shownIn, isDocked, deskWindow, teamDesk, setTeamDesk, openTeamDesk } from "./dock.js";
+import { teamLabel, realNameNote } from "./select.js";
 import { markCell } from "./marks.js";
-import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, isInstallCommand, listen } from "./settings-model.js";
+import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, TEAM_DESKS_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, isInstallCommand, listen } from "./settings-model.js";
 import { settings, setSetting, settingsView, checkUpdate, installClick, readRebuild } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { openRename, renameInit, renameView } from "./rename.js";
@@ -42,8 +43,6 @@ const AGENT_STATE = { working: "working", blocked: "blocked", done: "done", idle
 const STEP = 16;
 const TREE_KEY = "ah2-sidebar-tree";
 
-const openTeam = (id) => openOverlay({ mod: "ah2", props: { view: "sitrep", team: id }, kind: "window", key: "ah2-sitrep", width: 620, height: 600 });
-
 export default class Ah2 extends View {
   init(_props, cx) {
     // A click on the "available" notice (settings-model.js updateNotify) arrives as a command. Which copy herdr hands it to is
@@ -55,7 +54,7 @@ export default class Ah2 extends View {
     this.view = props()?.view ?? "sitrep";
     // The Desk window: one copy for all four tabs; `view` is the tab shown (tabs.js draws its header, select switches it).
     this.desk = this.view === "desk";
-    if (this.desk) this.view = DOCKABLE.includes(props()?.tab) ? props().tab : "qa";
+    if (this.desk) this.view = this.deskTabs().includes(props()?.tab) ? props().tab : "qa";
     if (this.desk) this.max = props()?.max === true; // opened maximized (dock.js resizeDeskWindow)
     if (this.view === "tabs") return tabsInit(cx); // the sidebar's tab strip (tabs.js): the default tab and the update check, no poll
     if (this.view === "panel-tabs") return; // the desk's tab row reads DESK_KEY; no poll
@@ -63,6 +62,10 @@ export default class Ah2 extends View {
       // ponytail: assumes no Desk window is open when the drawer's copy starts (a layout switch closes windows)
       const w = deskWindow();
       if (w?.overlay != null) setShared(DESK_WINDOW_KEY, { view: w.view, max: w.max });
+      // and the team Desks' (desk-per-team D3): every entry drops its `overlay`, on the same assumption
+      const desks = shared(TEAM_DESKS_KEY);
+      if (desks && Object.values(desks).some((d) => d?.overlay != null))
+        setShared(TEAM_DESKS_KEY, Object.fromEntries(Object.entries(desks).map(([id, d]) => [id, { view: d?.view, max: d?.max }])));
       return;
     }
     if (this.view === "dismiss") return dismissInit(this, cx); // the Dismiss dialog (dismiss.js): its own bounded task, no poll
@@ -90,7 +93,8 @@ export default class Ah2 extends View {
     if (this.desk || this.view === "board") boardInit(this);
     if (this.desk || this.view === "graph") graphInit(this, cx); // the shown team, the scrubber and the zoom (graph-view.js); once, never per switch
     // The Desk window says it is open, and on which tab (cleared in close): the peek drawer and every opener read it.
-    if (this.desk) setShared(DESK_WINDOW_KEY, { overlay: (this.overlay = props()?.overlay ?? null), view: this.view, max: this.max });
+    // A team Desk (props.team, desk-per-team D1) writes its own entry in TEAM_DESKS_KEY instead (deskRec, setDeskRec).
+    if (this.desk) this.setDeskRec({ overlay: (this.overlay = props()?.overlay ?? null), view: this.view, max: this.max });
     if (this.view === "settings") checkUpdate(); // fresh versions while the dialog is open
     if (this.team || ["qa", "board", "feed", "graph", "settings"].includes(this.view)) {
       this.keys = cx.focus_handle();
@@ -114,7 +118,22 @@ export default class Ah2 extends View {
     this.graphAnim?.cancel(); // an eased Graph zoom (graph-view.js easeTo) leaves no task behind
     this.graphTravel?.cancel(); // a brief's dot in travel (graph-model.js travelClock) leaves no task behind
     this.treeTravel?.graphTravel?.cancel(); // and the tree's (ah2-239), on its own state
-    if (this.overlay != null && deskWindow()?.overlay === this.overlay) setShared(DESK_WINDOW_KEY, { view: this.view, max: this.max }); // its last tab and size
+    if (this.overlay != null && this.deskRec()?.overlay === this.overlay) this.setDeskRec({ view: this.view, max: this.max }); // its last tab and size
+  }
+
+  // The Desk window's tabs: a team's Desk adds Sitrep first (desk-per-team D6); the all-teams one keeps DOCKABLE, so any other
+  // tab (Sitrep too) falls back to Q&A and an odd `want` is dropped.
+  deskTabs() {
+    return this.team ? ["sitrep", ...DOCKABLE] : DOCKABLE;
+  }
+
+  // The Desk window's open record: DESK_WINDOW_KEY for the all-teams Desk, its own TEAM_DESKS_KEY entry for a team's (D3).
+  deskRec() {
+    return this.team ? teamDesk(this.team) : deskWindow();
+  }
+  setDeskRec(rec) {
+    if (this.team) setTeamDesk(this.team, rec);
+    else setShared(DESK_WINDOW_KEY, rec);
   }
 
   // The Desk window's tab: switch it, tell the key (without any `want`), and on to Q&A take what the list holds (qa.js qaTake), as a
@@ -128,7 +147,7 @@ export default class Ah2 extends View {
       if (view === "qa") qaTake(this, undefined, cx);
       cx.notify();
     }
-    setShared(DESK_WINDOW_KEY, { overlay: this.overlay, view, max: this.max });
+    this.setDeskRec({ overlay: this.overlay, view, max: this.max });
   }
 
   // The Q&A window adds one questions: slice per running team (spec P3.1); the sidebar copy stays on view:summary. The Desk window
@@ -136,7 +155,8 @@ export default class Ah2 extends View {
   subs() {
     if (this.desk) {
       const s = this.st.slices;
-      return unionSubs(["view:summary"], qaSubs(s), boardSubs(s, Date.now(), { open: this.kb?.open, log: this.view === "board" ? this.kb?.sel?.log : null, shown: this.view === "board", team: this.kb?.team, hide: this.kb?.hide, member: this.view === "board" ? this.kb?.sel : null }), feedSubs(s), graphSubs(s, this));
+      // a team's Desk also asks for its Sitrep tab's two slices (D6)
+      return unionSubs(["view:summary"], this.team ? [`team-summary:${this.team}`, `sitrep:${this.team}`] : [], qaSubs(s), boardSubs(s, Date.now(), { open: this.kb?.open, log: this.view === "board" ? this.kb?.sel?.log : null, shown: this.view === "board", team: this.kb?.team, hide: this.kb?.hide, member: this.view === "board" ? this.kb?.sel : null }), feedSubs(s), graphSubs(s, this));
     }
     if (this.view === "qa") return ["view:summary", ...qaSubs(this.st.slices)];
     if (this.view === "board") return ["view:summary", ...boardSubs(this.st.slices, Date.now(), { open: this.kb?.open, log: this.kb?.sel?.log, shown: true, team: this.kb?.team, hide: this.kb?.hide, member: this.kb?.sel })];
@@ -250,24 +270,33 @@ export default class Ah2 extends View {
   // tab with `want` in the key (dock.js): taken once, after this render (a shared write redraws every mod, this one too), with
   // the keyboard.
   drawDesk(t, cx) {
-    const w = deskWindow();
+    const w = this.deskRec();
     if (w?.want && w.overlay === this.overlay && !this.wanting) {
       this.wanting = true;
       cx.spawn(async (cx) => {
         await cx.sleep(0);
         this.wanting = false;
-        const want = deskWindow()?.want;
-        if (DOCKABLE.includes(want)) this.select(want, cx);
+        const want = this.deskRec()?.want;
+        if (this.deskTabs().includes(want)) this.select(want, cx);
         else this.select(this.view, cx); // an odd `want` is dropped, not retried
         this.keys.focus();
       });
     }
     const close = () => closeOverlay(props().overlay);
-    const body = { qa: qaView, board: boardView, feed: feedView, graph: graphView }[this.view];
+    const body = { sitrep: (v, t, close) => v.sitrep(t, close), qa: qaView, board: boardView, feed: feedView, graph: graphView }[this.view];
     return v_flex().id("ah2-desk-window").size_full().min_h(0).bg(t.surface)
-      .child(panelTabsView(t, { view: this.view, select: (view, cx) => this.select(view, cx), close, max: this.max }))
+      .child(panelTabsView(t, { view: this.view, select: (view, cx) => this.select(view, cx), close, max: this.max, ...this.deskTeam() }))
       // a press in the body stays in the body (text selection); only the tab row above drags the window
       .child(div().id(`ah2-desk-${this.view}-body`).flex_1().min_h(0).on_mouse_down("left", (_e, cx) => cx.stop_propagation()).child(body(this, t, close, cx)));
+  }
+
+  // A team Desk's tab row (tabs.js panelTabsView, D5): its team, the display name and the real one, as the sitrep title reads them.
+  deskTeam() {
+    if (!this.team) return {};
+    const sum = this.st.slices.get(`team-summary:${this.team}`)?.body ?? null;
+    // `waiting`: the Q&A tab's count, this Desk's own scope's, not DESK_KEY's all-teams one (desk-per-team Amendment 2)
+    return { team: this.team, name: sum ? teamLabel(sum) : this.team.split("/").pop(), real: sum ? realNameNote(sum) : null,
+      waiting: qaModel(this.st.slices, Date.now(), qaScope(this)).count };
   }
 
   // The sidebar copy only: alarms not seen before become herdr notices when the setting is on. The first reply only seeds.
@@ -569,16 +598,15 @@ export default class Ah2 extends View {
           .font_family(MONO).text_size(10.5).font_medium().text_color(t.foreground).child(String(c.needsYou))))
         .when(c.working > 0 || c.blocked > 0, (el) => el.child(div().flex_shrink(100).min_w(0).truncate().font_medium().text_color(t.muted)
           .child(counts({ working: c.working, blocked: c.blocked }))))
-        // this team's sitrep as a pill on its row (atp-1712; the foot strip's all-teams Sitrep is gone)
-        .child(this.ring(t, Button.new(`team-sitrep-${tm.id}`), t.border)
-          .h(18).px(6).flex().flex_none().items_center().rounded(9).cursor_pointer()
-          .text_size(10.5).font_medium().text_color(t.muted)
+        // this team's own Desk, on its Sitrep tab (desk-per-team D9; was the atp-1712 Sitrep pill), drawn as the ⋯ button beside it
+        .child(this.ring(t, Button.new(`team-sitrep-${tm.id}`), t.chrome)
+          .size(18).flex().flex_none().items_center().justify_center().rounded(9).cursor_pointer().text_color(t.muted)
           .hover((s) => s.bg(t.raised).text_color(t.foreground))
-          .tooltip(`Open the ${tm.label} sitrep`)
-          .accessibility_label(`Open the ${tm.label} sitrep`)
+          .tooltip(`Open the ${tm.label} desk`)
+          .accessibility_label(`Open the ${tm.label} desk, on its sitrep`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openTeam(tm.id))
-          .child("Sitrep"))
+          .on_click(() => openTeamDesk(tm.id, "sitrep"))
+          .child(svg("mods/ah2/app-window.svg").size(12)))
         .when(!lane, (el) => el.child(menu(tm)));
       return lead ? div().flex().w_full().gap(4).child(lead).child(row) : row;
     };
@@ -788,11 +816,12 @@ export default class Ah2 extends View {
 
   // ---- window overlay: one team's full sitrep ----
 
-  sitrep(t) {
+  // In a team's Desk (its Sitrep tab, desk-per-team D6, `deskClose` given) the tab row has the name and ×: a 36 px toolbar instead.
+  sitrep(t, deskClose = null) {
     const now = Date.now();
     const s = sitrepModel(this.st.slices, this.team, now, this.st.gone);
     const name = s?.name ?? this.team.split("/").pop();
-    const close = () => closeOverlay(props().overlay);
+    const close = deskClose ?? (() => closeOverlay(props().overlay));
 
     let body;
     if (s?.closed) body = [this.note(t, "Team closed.")];
@@ -805,8 +834,8 @@ export default class Ah2 extends View {
       .on_key_down((e, _cx) => {
         if (e.keystroke === "escape") close();
       })
-      .child(h_flex().h(44).px(16).gap(10).flex_none().items_center().border_b(1).border_color(t.border)
-        .child(div().id("ah2-sitrep-title").min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).when(Boolean(s?.real), (el) => el.tooltip(s.real)).child(`${name} · sitrep`))
+      .child(h_flex().h(deskClose ? 36 : 44).px(16).gap(10).flex_none().items_center().border_b(1).border_color(t.border)
+        .when(!deskClose, (el) => el.child(div().id("ah2-sitrep-title").min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).when(Boolean(s?.real), (el) => el.tooltip(s.real)).child(`${name} · sitrep`)))
         .when((s?.needsYou ?? 0) > 0, (el) => el.child(this.needs(t, s.needsYou, "Needs you", 0, s.blocked)))
         .child(div().flex_1())
         .when(Boolean(s) && !s.closed && !s.lane, (el) => el.child(this.ring(t, Button.new("ah2-sitrep-dismiss"), t.surface)
@@ -826,7 +855,7 @@ export default class Ah2 extends View {
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
           .on_click(() => openRename(this.team, name, s.displayName, s.realName, this.workRootOf(this.team)))
           .child("Rename")))
-        .child(this.closeButton(t, "ah2-sitrep-close", "Close the sitrep", close)))
+        .when(!deskClose, (el) => el.child(this.closeButton(t, "ah2-sitrep-close", "Close the sitrep", close))))
       .child(v_flex().id("ov-body").flex_1().min_h(0).px(16).pb(12).overflow_y_scrollbar().on_mouse_down("left", (_e, cx) => cx.stop_propagation()).children(body)); // the header drags; the body selects
   }
 
@@ -858,7 +887,8 @@ export default class Ah2 extends View {
           .hover((el) => el.bg(t.hover).text_color(t.foreground))
           .accessibility_label(`Answer ${x.key ?? "this question"} in Q&A`)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .on_click(() => openView("qa"))
+          // in a team's Desk, this same window's Q&A tab (D6)
+          .on_click((_e, cx) => (this.desk ? this.select("qa", cx) : openView("qa")))
           .child("Answer in Q&A")));
   }
 }

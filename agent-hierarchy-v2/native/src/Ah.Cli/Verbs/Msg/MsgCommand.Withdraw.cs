@@ -36,9 +36,10 @@ internal sealed partial class MsgCommand
         }
 
         var explicitFrom = Str("from");
-        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), mailbox.SplitAddress(held)?.Team, explicitFrom));
-        var plan = Unwrap(mailbox.WithdrawPlan(id, from));
         var ctx = _graph.Callers.RequestContext(Where);
+        var heldTeam = mailbox.SplitAddress(held)?.Team;
+        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), heldTeam, explicitFrom, toTeamAncestors: mailbox.TeamAncestors(heldTeam, mailbox.TeamLookup(ctx))));
+        var plan = Unwrap(mailbox.WithdrawPlan(id, from));
         ResolvedAddress? target = null;
         if (Str("to") is { Length: > 0 } to)
         {

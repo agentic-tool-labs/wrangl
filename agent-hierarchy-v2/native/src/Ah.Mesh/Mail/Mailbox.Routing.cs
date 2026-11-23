@@ -208,7 +208,14 @@ internal sealed partial class Mailbox
     /// those of every visible team, by real path. Ownership is decided only by the roster's own rule. A team name seen in an
     /// earlier dir is not taken again from a later one, so one address <c>orchestrator@&lt;team&gt;</c> names one team file.
     /// </summary>
-    internal IReadOnlyList<OwnedTeam> OwnedTeamsAnywhere(RequestContext context, TeamInvoker invoker)
+    internal IReadOnlyList<OwnedTeam> OwnedTeamsAnywhere(RequestContext context, TeamInvoker invoker) => WithoutYieldedImplicit(AllOwnedTeamsAnywhere(context, invoker));
+
+    /// <summary><paramref name="owned"/> without an empty implicit team when it holds another team (ah2-470): the implicit team lives in the main home, a named one may be in another.</summary>
+    internal IReadOnlyList<OwnedTeam> WithoutYieldedImplicit(IReadOnlyList<OwnedTeam> owned) =>
+        RosterModule.WithoutYieldedImplicitTeam(owned, t => roster.ReadTeamFileAt(t.TeamFile));
+
+    /// <summary><see cref="OwnedTeamsAnywhere"/> before an empty implicit team yields to another.</summary>
+    internal IReadOnlyList<OwnedTeam> AllOwnedTeamsAnywhere(RequestContext context, TeamInvoker invoker)
     {
         if (invoker.Pid is null && string.IsNullOrEmpty(invoker.SessionId))
         {
@@ -221,7 +228,7 @@ internal sealed partial class Mailbox
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var dir in dirs)
         {
-            foreach (var team in roster.OwnedTeams(dir, invoker))
+            foreach (var team in roster.AllOwnedTeams(dir, invoker))
             {
                 if (team is not null && names.Add(team))
                 {

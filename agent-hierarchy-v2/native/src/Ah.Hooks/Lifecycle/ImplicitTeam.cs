@@ -15,8 +15,7 @@ internal static class ImplicitTeam
     public const string Field = "implicit";
 
     /// <summary>Whether <paramref name="team"/> is an implicit team that no member has joined.</summary>
-    public static bool IsEmptyImplicit(JsonValue team) =>
-        team.IsMap && team.Member(Field) is { IsBool: true } flag && flag.AsBool() && team.Member("members") is { IsArray: true } members && members.AsArray().Count == 0;
+    public static bool IsEmptyImplicit(JsonValue team) => Ah.Roster.RosterModule.IsEmptyImplicitTeam(team);
 
     /// <summary>
     /// Creates the session's implicit team when it may have one; true when this call wrote it. Nothing is written for a member, a session

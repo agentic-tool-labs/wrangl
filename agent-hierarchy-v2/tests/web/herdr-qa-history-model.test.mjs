@@ -51,6 +51,18 @@ test("one round reads every dir and merges newest first; no bridge is an error, 
   assert.equal((await historyRead(async () => { throw new Error("ah did not answer"); }, historyDirs(TEAMS, "c"), f, NOW)).error, "Could not read: ah did not answer");
 });
 
+// desk-per-team Amendment 3: a dir holds teams outside a pinned Desk's scope (a lane shares its parent's dir); their rows go.
+test("a scoped History read drops a row from a team outside the scope that shares the dir; no scope keeps it", async () => {
+  const read = async () => JSON.stringify({ threads: [{ prompt: { id: "in", at: 2, text: "lane's", team: "b" }, replies: [] },
+    { prompt: { id: "out", at: 1, text: "parent's", team: "a" }, replies: [] }], next: null });
+  const f = { ...FILTER0, search: "e" };
+  const dirs = historyDirs([TEAMS[1]], null);
+  assert.deepEqual((await historyRead(read, dirs, f, NOW, null, null, null, ["d1/b"])).rows.map((r) => r.id), ["in"]);
+  assert.deepEqual((await historyReads(read, dirs, f, NOW, null, 1, null, null, ["d1/b"])).rows.map((r) => r.id), ["in"]);
+  // negative: no scope keeps the other team's row
+  assert.deepEqual((await historyRead(read, dirs, f, NOW)).rows.map((r) => r.id), ["in", "out"]);
+});
+
 test("a new filter resets paging and drops old rows; Load more keeps the filter and appends", () => {
   let h = historyAsk(historyInit(), { ...FILTER0, search: "x" });
   h = historyTake(h, h.seq, { rows: [{ at: 3 }, { at: 2 }], next: { d1: "c" } });

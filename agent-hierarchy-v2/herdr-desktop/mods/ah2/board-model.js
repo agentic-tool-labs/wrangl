@@ -157,7 +157,7 @@ function servedCounts(slices, now, mk = null) {
   };
 }
 
-export function boardModel(slices, now, { hide = new Set(), owner = "", blockedOnly = false, changesOnly = false, track = null, query = "", showFinished = false, open = new Set(), expand = new Set(), blFold = false, waveAll = new Set(), team = null, lane: laneAsk = null, epic: scopeEpic = null, deliv = null, only = null } = {}) {
+export function boardModel(slices, now, { hide = new Set(), owner = "", blockedOnly = false, changesOnly = false, track = null, query = "", showFinished = false, open = new Set(), expand = new Set(), blFold = false, waveAll = new Set(), team = null, lane: laneAsk = null, epic: scopeEpic = null, deliv = null, only = null, scope = null } = {}) {
   // The scope (the web's breadcrumb): a team (and its lanes' teams), then one lane or the top team, then an epic, then a deliverable.
   const running = teams(slices, now, team);
   const allLanes = team ? lanesOf(slices.get(`team:${team}`)?.body) : [];
@@ -183,7 +183,7 @@ export function boardModel(slices, now, { hide = new Set(), owner = "", blockedO
   const queue = new Map();
   const b = boardOf(shown, { itemsOf, lanes: "none", query, dayStart, expanded: [...open], markOf: (s, item) => marks.get(s.id)?.items.get(item.key) ?? null, blockedOnly, changesOnly, showFinished });
   const cells = b.lanes[0]?.cells ?? {};
-  const qa = qaModel(slices, now);
+  const qa = qaModel(slices, now, scope); // a pinned Board's Waiting on you: the Desk's scope (desk-per-team Amendment 2)
   const ownerOk = (o) => !owner || o === owner;
   // A team's decision card is covered only when the slice holds as many cards as the team's waiting_on_you (items included:
   // waiting_rows may not list them); a decision the slice does not hold keeps the plain card with the way into Q&A.

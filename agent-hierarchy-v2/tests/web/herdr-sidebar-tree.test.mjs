@@ -1,7 +1,7 @@
 // ah2-207: the Wrangl pane draws each team as a tree (model.js teamTree, treeRows), each row in the Graph's colours (graph-model.js rowMark).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sidebarModel, teamTree, treeRows, teamTotals } from "../../herdr-desktop/mods/ah2/model.js";
+import { sidebarModel, teamTree, treeRows, teamTotals, teamScope, soOnce } from "../../herdr-desktop/mods/ah2/model.js";
 import { cardStyle, rowMark } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { isActive } from "../../herdr-desktop/mods/ah2/flow-model.js";
 
@@ -176,4 +176,44 @@ test("teamTotals sums needs-you, working and blocked over a team and its nested 
   assert.deepEqual(teamTotals(tm(1, 2, 0, [tm(0, 1, 1, [tm(2, 0, 3)]), tm(0, 0, 0)])), { needsYou: 3, working: 3, blocked: 4 });
   // negative: a team with no lanes counts only itself
   assert.deepEqual(teamTotals(tm(0, 4, 1)), { needsYou: 0, working: 4, blocked: 1 });
+});
+
+// desk-per-team D7: a pinned Desk's scope is the pin and its lanes, recursively, never a lane's parent; an unknown pin is itself.
+test("teamScope holds a team and its nested lanes, a lane's excludes its parent, an unknown id is a scope of itself", () => {
+  const { teams } = sidebarModel(slicesOf(
+    summary("ah2", { "d1/ah2/@orchestrator": live("working") }),
+    summary("lane-a", { "d1/lane-a/@orchestrator": live("idle") }, "ah2"),
+    summary("lane-b", { "d1/lane-b/@orchestrator": live("idle") }, "lane-a"),
+    summary("other", { "d1/other/@orchestrator": live("idle") }),
+  ), NOW);
+  assert.deepEqual(teamScope(teams, "d1/ah2"), ["d1/ah2", "d1/lane-a", "d1/lane-b"]);
+  // negative: a lane's scope is it and its own lanes, not its parent nor a sibling team
+  assert.deepEqual(teamScope(teams, "d1/lane-a"), ["d1/lane-a", "d1/lane-b"]);
+  assert.deepEqual(teamScope(teams, "d1/gone"), ["d1/gone"]);
+});
+
+// ah2-468: a lane's Sub-Orchestrator, tied to its parent's member row by the parent topology's live_paths, is drawn once: as the lane's
+// lead row, named after the member, with the work text the parent's row carried.
+test("soOnce drops the parent's row for a lane's Sub-Orchestrator and names the lane's lead row after it; no lane or no tie, unchanged", () => {
+  // the served shapes (native TreeLanesLivePathTests): member keys `member:<dir>/<team>/<m>`, the path's member Seg-escaped "%40orchestrator"
+  const so = { ...live("working"), item: "api lane" };
+  const lane = summary("pantry-api", { "member:d1/pantry-api/@orchestrator": live("idle"), "member:d1/pantry-api/coder": live("working") }, "pantry");
+  const parent = summary("pantry", { "member:d1/pantry/@orchestrator": live("working"), "member:d1/pantry/pantry-so-api": so });
+  const tie = (path) => ["topology:d1/pantry", { id: "topology:d1/pantry", body: { nodes: { live_paths: { "member:d1/pantry/pantry-so-api": path } } } }];
+  const slices = slicesOf(parent, lane).set(...tie("/t/d1/pantry-api/m/%40orchestrator"));
+  const [tm] = soOnce(sidebarModel(slices, NOW).teams, slices);
+  const [root] = teamTree(tm);
+  assert.deepEqual(root.children.map((n) => n.kind === "lane" ? `lane:${n.team.name}` : n.name), ["lane:pantry-api"], "no parent row for it");
+  const lead = root.children[0].children[0];
+  assert.deepEqual([lead.name, lead.label, lead.title, lead.what], ["orchestrator", "pantry-so-api", "Sub-Orchestrator of pantry-api", "api lane"]);
+  assert.equal(tm.working, 0, "the parent counts the session no more; the lane still does");
+  // the path names the lane's real team (its id), so a lane whose summary name differs still ties
+  const renamed = new Map(slices).set(lane[0], { ...lane[1], body: { ...lane[1].body, name: "api-renamed" } });
+  assert.ok(!teamTree(soOnce(sidebarModel(renamed, NOW).teams, renamed)[0])[0].children.some((n) => n.name === "pantry-so-api"));
+  // negative: with no tie (no live_paths), or a path with the member unescaped, both rows stay; a team with no lanes is as given
+  const kept = (s) => teamTree(soOnce(sidebarModel(s, NOW).teams, s)[0])[0].children.some((n) => n.name === "pantry-so-api");
+  assert.ok(kept(slicesOf(parent, lane)));
+  assert.ok(kept(slicesOf(parent, lane).set(...tie("/t/d1/pantry-api/m/orchestrator"))));
+  const solo = slicesOf(summary("ah2", { "d1/ah2/@orchestrator": live("working"), "d1/ah2/implementor": live("idle") }));
+  assert.deepEqual(teamTree(soOnce(sidebarModel(solo, NOW).teams, solo)[0]), teamTree(sidebarModel(solo, NOW).teams[0]));
 });

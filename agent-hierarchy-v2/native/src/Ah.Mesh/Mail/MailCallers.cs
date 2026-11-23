@@ -177,7 +177,10 @@ internal sealed class MailCallers(
         }
 
         var livePid = r.Pid is { } p && hierarchy.Core.PidAlive(JsonValue.FromNumber(p)) ? p : (int?)null;
-        var owned = mailbox.OwnedTeamsAnywhere(RequestContext(r.Cwd), new TeamInvoker(livePid, string.IsNullOrEmpty(r.SessionId) ? null : r.SessionId));
+        var invoker = new TeamInvoker(livePid, string.IsNullOrEmpty(r.SessionId) ? null : r.SessionId);
+        var all = mailbox.AllOwnedTeamsAnywhere(RequestContext(r.Cwd), invoker);
+        var owned = mailbox.WithoutYieldedImplicit(all);
+        RetireYieldedImplicit(all.Except(owned), invoker);
         var member = MemberBoxOf(r, dir, homes);
         if (owned.Count == 0)
         {
@@ -194,6 +197,37 @@ internal sealed class MailCallers(
         }
 
         return boxes;
+    }
+
+    /// <summary>
+    /// ah2-470 D2: clears the record of each empty implicit team that yielded to another owned team, unless it has an open exchange
+    /// or a checklist row not done. Compare-and-set: only a record still yielding and still owned by <paramref name="invoker"/> is
+    /// cleared. It never throws; a skipped or failed clear leaves the record, which stays hidden.
+    /// </summary>
+    private void RetireYieldedImplicit(IEnumerable<OwnedTeam> yielded, TeamInvoker invoker)
+    {
+        foreach (var t in yielded)
+        {
+            try
+            {
+                var dir = Ah.Roster.RosterModule.TeamFileHome(t.TeamFile) ?? NodePath.Dirname(t.TeamFile);
+                if (environment.TestMode && !RealPathResolver.IsUnderProbeSandbox(mailbox.RealPath(t.TeamFile))
+                    || hierarchy.Messages.OpenExchanges(dir, t.Team, hierarchy.Messages.ListLiveExchangesAcross(dir, [t.Team])).Count > 0
+                    || HierarchyModule.ChecklistEntries(hierarchy.Progress, dir, t.Team).Any(static e => e.Item.State != "done"))
+                {
+                    continue;
+                }
+
+                hierarchy.StateCalls.UpdateTeamFile(
+                    t.TeamFile,
+                    dir,
+                    doc => Ah.Roster.RosterModule.ImplicitTeamYields(doc) && roster.IsTeamOwnedBy(doc, invoker) ? TeamFileOutcome.Clear() : null);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // no error log is in reach here; the record stays and D1 keeps it hidden, and the next registration retries
+            }
+        }
     }
 
     /// <summary>

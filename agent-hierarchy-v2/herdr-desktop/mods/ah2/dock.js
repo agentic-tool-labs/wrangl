@@ -8,7 +8,7 @@
 
 import { run, layout, props, closeOverlay, openOverlay, shared, setShared } from "herdr";
 import { settings, setSetting } from "./settings.js";
-import { DOCK, DOCK_BODY, DOCKABLE, DESK_WINDOW_KEY, deskWindowSpec, deskWindowOpen, deskRoute, dockShown } from "./settings-model.js";
+import { DOCK, DOCK_BODY, DOCKABLE, DESK_WINDOW_KEY, TEAM_DESKS_KEY, deskWindowSpec, deskWindowOpen, deskRoute, dockShown } from "./settings-model.js";
 
 export const block = (view) => `ah2-${view}`;
 
@@ -32,6 +32,10 @@ export const isDocked = () => props()?.dock === true;
 // The Desk window's copy.
 export const isDeskWindow = () => props()?.view === "desk";
 export const deskWindow = () => shared(DESK_WINDOW_KEY);
+// A team Desk's record (spec desk-per-team D3): its entry in TEAM_DESKS_KEY, DESK_WINDOW_KEY's shape. A write changes only that
+// entry (read-modify-write of the whole map, settings-model.js TEAM_DESKS_KEY's ponytail).
+export const teamDesk = (team) => shared(TEAM_DESKS_KEY)?.[team] ?? null;
+export const setTeamDesk = (team, rec) => setShared(TEAM_DESKS_KEY, { ...shared(TEAM_DESKS_KEY), [team]: rec });
 
 // A new Desk window on `view`, at the size it last had. Only when none is open: Herdr replaces a window opened again under its
 // key, and its copy's state (an unsent answer) with it.
@@ -39,10 +43,23 @@ const openDeskWindow = (view, max = deskWindow()?.max === true) => openOverlay(d
 
 // The window's maximize/restore (atp-1727): reopen it on the same tab at the other size. Lossy by design: the replaced copy's
 // scroll, selection and unsent Q&A answer go with it. The key is written first, so the old copy's close() (its own overlay id
-// only) leaves it alone.
-export function resizeDeskWindow(view, max) {
+// only) leaves it alone. With `team`, that team's Desk, under its own key and record (D4).
+export function resizeDeskWindow(view, max, team = null) {
+  if (team) {
+    setTeamDesk(team, { view, max });
+    openOverlay(deskWindowSpec(view, max, team));
+    return;
+  }
   setShared(DESK_WINDOW_KEY, { view, max });
   openDeskWindow(view, max);
+}
+
+// Open a team's Desk on `tab` (D4): always a window (D2), routed as the window placement is: the open one switches to `tab`
+// (`want`, so its unsent answer stays), else a new one at the size it last had.
+export function openTeamDesk(team, tab) {
+  const rec = teamDesk(team);
+  if (deskRoute("window", false, deskWindowOpen(rec)) === "switch") setTeamDesk(team, { ...rec, want: tab });
+  else openOverlay(deskWindowSpec(tab, rec?.max === true, team));
 }
 // The open Desk window shows `view`: it reads `want` on its next render (main.js) and takes the keyboard.
 const switchDeskWindow = (view) => setShared(DESK_WINDOW_KEY, { ...deskWindow(), want: view });

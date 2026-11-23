@@ -44,6 +44,9 @@ public interface IRosterCore : ITeamFiles
     /// </summary>
     IReadOnlyList<string?> TeamsOfSession(string hierarchyDirectory, string sessionId);
 
+    /// <summary><c>OwnedTeams</c> before an empty implicit team yields to another owned team (ah2-470): what retiring that team reads.</summary>
+    IReadOnlyList<string?> AllOwnedTeams(string hierarchyDirectory, TeamInvoker invoker);
+
     /// <summary>The directory that holds a team's hold file, its resume plans, stop evidence and archived holds.</summary>
     string HoldDir(string dir, string? team);
 
@@ -228,6 +231,15 @@ public static class RosterModule
 
     /// <summary><c>{deputy, since, cause}</c> of the team's duty when its deputy names a member row; null otherwise (the views' read of <c>duty</c>).</summary>
     public static JsonObject? DutyOf(JsonValue team) => DutyView.Of(team);
+
+    /// <summary>Whether <paramref name="team"/> is an implicit team (ah2-34) that no member has joined.</summary>
+    public static bool IsEmptyImplicitTeam(JsonValue team) => ImplicitTeams.IsEmptyImplicit(team);
+
+    /// <summary>Whether <paramref name="team"/> is an empty implicit team that yields to any other team its session owns (ah2-470): it records no stream either.</summary>
+    public static bool ImplicitTeamYields(JsonValue team) => ImplicitTeams.Yields(team);
+
+    /// <summary>An owned-team list without the empty implicit team when it holds another team (ah2-470); <paramref name="record"/> reads each one's record.</summary>
+    public static IReadOnlyList<T> WithoutYieldedImplicitTeam<T>(IReadOnlyList<T> teams, Func<T, JsonValue> record) => ImplicitTeams.WithoutYielded(teams, record);
 
     /// <summary>The pane rule of <c>IRosterCore.PaneResolver</c> over team records the caller already holds (status entries).</summary>
     public static Func<string?, PaneMatch?> PaneResolverOver(IReadOnlyList<(string? Name, JsonValue Team)> teams) => RosterCore.PaneResolverOver(teams);

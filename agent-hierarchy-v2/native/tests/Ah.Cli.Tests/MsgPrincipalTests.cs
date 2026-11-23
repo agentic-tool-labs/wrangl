@@ -170,6 +170,35 @@ public sealed class MsgPrincipalTests : IDisposable
         Assert.Null(_graph.Mailbox.ChooseFrom([], "b", "orchestrator@b", ["orchestrator@b"]).Value); // nor may it be claimed explicitly
     }
 
+    /// <summary>ah2-472 D3: with no address in a child team, the nearest ancestor holding exactly one decides; no ancestor, or one holding two, stays ambiguous.</summary>
+    [Fact]
+    public void AChildTeamsRecipientTakesTheSenderFromItsNearestAncestor()
+    {
+        var mailbox = _graph.Mailbox;
+        string[] two = ["orchestrator@pantry", "orchestrator@snackvote"];
+        Assert.Equal("orchestrator@pantry", mailbox.ChooseFrom(two, "pantry-web", toTeamAncestors: ["pantry"]).Value);
+        Assert.Equal("orchestrator@pantry", mailbox.ChooseFrom(two, "pantry-web-a", toTeamAncestors: ["pantry-web", "pantry"]).Value);
+        Assert.Equal("ambiguous_address", mailbox.ChooseFrom(two, "pantry-web", toTeamAncestors: []).Failure?.Code);
+        Assert.Equal("ambiguous_address", mailbox.ChooseFrom(["chief@pantry", "orchestrator@pantry"], "pantry-web", toTeamAncestors: ["pantry"]).Failure?.Code);
+        Assert.Equal("orchestrator@p", mailbox.ChooseFrom(["chief@m", "orchestrator@m", "orchestrator@p"], "c", toTeamAncestors: ["m", "p"]).Value);
+        Assert.Equal("ambiguous_address", mailbox.ChooseFrom(["a@w", "b@w", "orchestrator@p"], "w", toTeamAncestors: ["p"]).Failure?.Code); // two in its own team: no walk
+
+        // the walk: a child's parent chain, stopping at a missing record and at a cycle
+        var teams = new Dictionary<string, string>
+        {
+            ["pantry-web-a"] = "{\"parent\":{\"team\":\"pantry-web\"}}",
+            ["pantry-web"] = "{\"parent\":{\"team\":\"pantry\"}}",
+            ["pantry"] = "{}",
+            ["orphan"] = "{\"parent\":{\"team\":\"gone\"}}",
+            ["x"] = "{\"parent\":{\"team\":\"y\"}}",
+            ["y"] = "{\"parent\":{\"team\":\"x\"}}",
+        };
+        MeshTeam? Lookup(string name) => teams.TryGetValue(name, out var json) ? new MeshTeam(JsonText.Parse(json), null) : null;
+        Assert.Equal(["pantry-web", "pantry"], mailbox.TeamAncestors("pantry-web-a", Lookup));
+        Assert.Empty(mailbox.TeamAncestors("orphan", Lookup));
+        Assert.Equal(["y"], mailbox.TeamAncestors("x", Lookup));
+    }
+
     [Fact]
     public void NegativeTheAdminCannotTakeAnotherSessionsIdAndWithNoRegistrationHasNoSession()
     {

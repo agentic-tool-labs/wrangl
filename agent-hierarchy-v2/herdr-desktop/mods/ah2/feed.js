@@ -9,6 +9,7 @@ import { run, terminals, shared, setShared } from "herdr";
 import { isDocked, shownIn } from "./dock.js";
 import { feedModel, seenStates, KINDS } from "./feed-model.js";
 import { loadingOf, terminalFinder, counts } from "./model.js";
+import { qaScope } from "./qa.js";
 import { target } from "./ah.js";
 import { markCell } from "./marks.js";
 
@@ -36,7 +37,8 @@ export function feedView(v, t, close) {
 
   const loading = loadingOf(v, v.st.slices.has("list:teams"));
   if (!loading) v.feedSeen = seenStates(v.feedSeen, v.st.slices, now);
-  const m = feedModel(v.st.slices, now, { ...p, looked: v.feedLooked ?? 0, seen: v.feedSeen?.events ?? [] });
+  // a team's Desk (D7): the scope, never the shared prefs' team, which it neither reads nor writes
+  const m = feedModel(v.st.slices, now, { ...p, team: v.team ? qaScope(v) : p.team, looked: v.feedLooked ?? 0, seen: v.feedSeen?.events ?? [] });
   const terminalOf = terminalFinder(terminals(), target());
 
   let body;
@@ -110,7 +112,7 @@ function chips(v, t, m, p) {
   const nextName = nextTeam ? m.teams.find((x) => x.id === nextTeam).name : "all teams";
   // wraps in the 420 px column rather than clipping a chip
   return h_flex().id("feed-chips").min_h(40).flex_none().flex_wrap().px(12).py(8).gap(6).items_center().border_b(1).border_color(t.border)
-    .child(chip("team", teamName, team !== null, `Team: ${teamName}. Show ${nextName}`, (cx) => setPrefs({ team: nextTeam }, cx)))
+    .when(!v.team, (el) => el.child(chip("team", teamName, team !== null, `Team: ${teamName}. Show ${nextName}`, (cx) => setPrefs({ team: nextTeam }, cx)))) // none on a team's Desk (D7)
     .children(KINDS.map(([k, text]) => {
       const on = !p.off.includes(k);
       return chip(k, text, on, `${text}, ${on ? "shown" : "hidden"}. ${on ? "Hide" : "Show"} them`,

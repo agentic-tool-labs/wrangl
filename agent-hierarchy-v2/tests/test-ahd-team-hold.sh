@@ -244,6 +244,8 @@ herdr_team() {
   ah_test_fake_herdr_agent "$FAKE_STATE_DIR" "$2" w1:p5 "$PROJ"
 }
 herdr_prompts() { ah_test_fake_herdr_calls "$FAKE_STATE_DIR" | grep -c '^\["agent","prompt"'; }
+# ms from the Esc (the first send-keys) to the end of the last herdr call: the stop's own work, apart from the CLI's start
+herdr_span() { node -e 'const fs=require("fs"),d=process.argv[1]+"/calls";try{const r=fs.readdirSync(d).map(f=>JSON.parse(fs.readFileSync(d+"/"+f,"utf8")));const k=r.filter(c=>c.argv[0]==="agent"&&c.argv[1]==="send-keys");if(k.length)process.stdout.write(String(Math.max(...r.map(c=>c.end_ms))-Math.min(...k.map(c=>c.start_ms))))}catch{}' "$FAKE_STATE_DIR"; }
 member_signalled() { node -e 'const r=JSON.parse(process.argv[1]);const s=(r.signalled||[]).find(x=>x.member===process.argv[2]);process.stdout.write(s?JSON.stringify(s):"")' "$1" "$2"; }
 
 herdr_team tm5 q1
@@ -269,7 +271,9 @@ T0=$(node -e 'process.stdout.write(String(Date.now()))')
 ah_run roster stop --now --team tm8 --confirm --grace 0 --cwd "$PROJ"
 ELAPSED=$(( $(node -e 'process.stdout.write(String(Date.now()))') - T0 ))
 SIG=$(member_signalled "$OUT" q3)
-check "(T1.3) slow screen reads do not stretch the 8 s window: mail after about 8 s, not 8 tries of 1 s plus the read" 'printf %s "$SIG" | grep -q "\"via\": *\"mail\"" && [ "$ELAPSED" -ge 8000 ] && [ "$ELAPSED" -lt 15000 ]'
+SPAN=$(herdr_span)
+OUT="span_ms=$SPAN elapsed_ms=$ELAPSED sig=$SIG out=$OUT"
+check "(T1.3) slow screen reads do not stretch the 8 s window: mail after about 8 s, not 8 tries of 1 s plus the read" 'printf %s "$SIG" | grep -q "\"via\": *\"mail\"" && [ "$ELAPSED" -ge 8000 ] && [ -n "$SPAN" ] && [ "$SPAN" -lt 15000 ]'
 unset FAKE_HERDR_READ_FAIL_FIRST FAKE_HERDR_READ_DELAY_MS
 
 # blocked after the Esc (a harness prompt is up): mail at once, no settle loop, nothing typed.
@@ -280,9 +284,11 @@ ah_run roster stop --now --team tm9 --confirm --grace 0 --cwd "$PROJ"
 ELAPSED=$(( $(node -e 'process.stdout.write(String(Date.now()))') - T0 ))
 SIG=$(member_signalled "$OUT" q4)
 # evidence for a failure: the time from the Esc to the last herdr call, apart from the CLI's own start
-SPAN=$(node -e 'const fs=require("fs"),d=process.argv[1]+"/calls";try{const r=fs.readdirSync(d).map(f=>JSON.parse(fs.readFileSync(d+"/"+f,"utf8")));const k=r.filter(c=>c.argv[0]==="agent"&&c.argv[1]==="send-keys");if(k.length)process.stdout.write(String(Math.max(...r.map(c=>c.end_ms))-Math.min(...k.map(c=>c.start_ms))))}catch{}' "$FAKE_STATE_DIR")
-OUT="rc=$RC span_ms=$SPAN elapsed_ms=$ELAPSED prompts=$(herdr_prompts) sig=$SIG out=$OUT err=$(cat "$T/err") calls=$(ah_test_fake_herdr_calls "$FAKE_STATE_DIR")"
-check "(T1.4) a member showing a harness prompt after the Esc is mailed at once: no settle loop, nothing typed" 'printf %s "$SIG" | grep -q "\"via\": *\"mail\"" && printf %s "$SIG" | grep -q "pane_error\": *\"blocked" && [ "$ELAPSED" -lt 6000 ] && [ "$(herdr_prompts)" = 0 ] && stored_emergency_stop "team tm9"'
+SPAN=$(herdr_span)
+CALLS=$(ah_test_fake_herdr_calls "$FAKE_STATE_DIR")
+OUT="rc=$RC span_ms=$SPAN elapsed_ms=$ELAPSED prompts=$(herdr_prompts) sig=$SIG out=$OUT err=$(cat "$T/err") calls=$CALLS"
+# no settle loop, by the calls: the Esc is the only key sent, and one paste attempt reads the screen once after it (each settle try reads again)
+check "(T1.4) a member showing a harness prompt after the Esc is mailed at once: no settle loop, nothing typed" 'printf %s "$SIG" | grep -q "\"via\": *\"mail\"" && printf %s "$SIG" | grep -q "pane_error\": *\"blocked" && [ "$(printf %s "$CALLS" | grep -c "^\[\"agent\",\"send-keys\"")" = 1 ] && printf %s "$CALLS" | grep -q "^\[\"agent\",\"send-keys\",\"q4\",\"esc\"\]" && [ "$(printf %s "$CALLS" | sed -n "/^\[\"agent\",\"send-keys\"/,\$p" | grep -c "^\[\"agent\",\"read\"")" = 1 ] && [ "$(herdr_prompts)" = 0 ] && stored_emergency_stop "team tm9"'
 
 # unconfirmed (typed, no activity): mail, and no second paste.
 herdr_team tm10 q5

@@ -29,6 +29,22 @@ test("the Q&A model groups the fixture's cards oldest first, counts waiting_on_y
   assert.ok(qaSubs(slices).includes("questions:a1b2c3d4/ah2-tm4"));
 });
 
+// desk-per-team D7: a team's Desk scope keeps only its teams' cards, History and count; no scope is every team, as before.
+test("qaModel with a scope lists only the scope teams' cards and history; without one, every team's", () => {
+  const two = new Map(slices);
+  const other = "9f8e7d6c/engram-rc";
+  two.set(`questions:${other}`, { ...slices.get("questions:a1b2c3d4/ah2-tm4"), id: `questions:${other}` });
+  const sum = slices.get(`team-summary:${other}`);
+  two.set(`team-summary:${other}`, { ...sum, body: { ...sum.body, waiting_on_you: 2 } });
+  const pinned = qaModel(two, NOW, ["a1b2c3d4/ah2-tm4", "a1b2c3d4/lane-herdr"]);
+  assert.deepEqual([pinned.count, pinned.teams.map((t) => t.name), [...new Set(pinned.history.map((h) => h.team))]], [3, ["ah2-tm4"], ["ah2-tm4"]]);
+  // negative: no scope (or null) covers both teams, exactly as before
+  const all = qaModel(two, NOW);
+  assert.deepEqual([all.count, all.teams.map((t) => t.name).sort()], [5, ["ah2-tm4", "engram-rc"]]);
+  assert.deepEqual(qaModel(two, NOW, null), all);
+  assert.deepEqual(qaModel(slices, NOW, null), qaModel(slices, NOW));
+});
+
 test("the slice's recommended indexes reach the rows and the cards; with none, a card falls back to the default, an item to nothing", () => {
   assert.deepEqual(openRow({ id: "q", options: [{ label: "A" }, { label: "B" }], recommended: [1] }).options, [{ label: "A", rec: false }, { label: "B", rec: true }]);
   assert.deepEqual(openRow({ id: "q", options: [{ label: "A" }] }).options, [{ label: "A", rec: false }], "negative: no recommended key, nothing marked");
@@ -63,7 +79,14 @@ test("a blocker card leads its team's cards, and the badge reads n! only while a
   const d = deskModel(slices, NOW);
   const row = sidebarModel(slices, NOW).teams.find((t) => t.name === "ah2-tm4");
   assert.deepEqual([d.needsYou, d.needing.map((x) => x.n), sidebarModel(slices, NOW).needsYou, row.needsYou], [3, [3], 3, 3]);
-  assert.equal(counts(row), "3 needs you · 2 working · 1 blocked");
+  // the served counts: ah2-tm4's working counts its lane's Sub-Orchestrator member too (the pane's soOnce drops it there)
+  assert.equal(counts(row), "3 needs you · 3 working · 1 blocked");
+  // ah2-468 O6: the Desk's totals count the tied Sub-Orchestrator (ah2-tm4-so-herdr, lane-herdr's lead) once: 1 + 3 + 2 served, less it
+  assert.deepEqual([d.working, d.blocked], [5, 1]);
+  // negative: with no tie (no live_paths) every served member counts, as before
+  const topo = slices.get("topology:a1b2c3d4/ah2-tm4");
+  const untied = new Map(slices).set(topo.id, { ...topo, body: { ...topo.body, nodes: { ...topo.body.nodes, live_paths: {} } } });
+  assert.deepEqual([deskModel(untied, NOW).working, deskModel(untied, NOW).blocked], [6, 1]);
   // negative: a team needing you only through blocked rows (nothing waiting) shows no Needs you anywhere
   const onlyBlocked = new Map(slices);
   onlyBlocked.set(sum.id, { ...sum, body: { ...sum.body, waiting_on_you: 0 } });
@@ -249,7 +272,7 @@ test("exec runs only in the poll, sendAnswer and the filtered History read, and 
   assert.deepEqual(sendRuleViolations(src), []);
   assert.equal(Object.values(src).reduce((n, t) => n + (t.match(EXEC) ?? []).length, 0), 20, "exec( twenty times: update.js updateInit (ah where, the build log's read), main.js rebuildRead (ah where once per pane, the stamp's read; the sidebar's build check), dismiss-model.js teamClose (ah roster close, on a Dismiss click), rename-model.js teamRename (ah roster rename, on a Rename dialog's Save or Clear), target-model.js runnerOf (machine, WSL, this computer, a local install), link-model.js Link (the exec poll, ah where, the service lease; reached from main.js fetch), model.js sendAnswer and readThread, qa-history-model.js historyRead (the ah fallback of a filtered History: a filter change, Load more, the tab's refresh), board-model.js readItemLog (on a card click), settings.js probe (ah where, the CHANGELOG read) and install");
   // the check can fail: a render-time exec, and a send outside a click
-  const broken = { ...src, "qa.js": src["qa.js"].replace("const m = qaModel(v.st.slices, now);", "const m = qaModel(v.st.slices, now);\n  exec(\"ah\", []);\n  send(v, null, {}, null);") };
+  const broken = { ...src, "qa.js": src["qa.js"].replace("const m = qaModel(v.st.slices, now, scope);", "const m = qaModel(v.st.slices, now, scope);\n  exec(\"ah\", []);\n  send(v, null, {}, null);") };
   assert.equal(sendRuleViolations(broken).length, 2);
 });
 

@@ -24,6 +24,18 @@ test("maximize then restore reopens on the same tab at the right size, and the n
   assert.ok(DESK_WINDOW_MAX.width <= 1 && DESK_WINDOW_MAX.height <= 1, "a share of Herdr's window, not px");
 });
 
+// desk-per-team D1: a team's Desk is its own window, keyed by the team; no team is today's all-teams spec exactly.
+test("deskWindowSpec with a team keys the window by the team; two teams two keys; no team is today's spec", () => {
+  const a = deskWindowSpec("sitrep", false, "d1/ah2");
+  assert.deepEqual([a.key, a.props.team, a.props.view, a.props.tab, a.width], ["ah2-desk:d1/ah2", "d1/ah2", "desk", "sitrep", DESK_WINDOW_SIZE.width]);
+  assert.equal(deskWindowSpec("sitrep", true, "d1/ah2").width, DESK_WINDOW_MAX.width);
+  assert.notEqual(deskWindowSpec("qa", false, "d1/lane-a").key, a.key, "two teams' Desks never share a key");
+  // negative: no team (or a null one) gives exactly the all-teams spec
+  const today = { mod: "ah2", props: { view: "desk", tab: "qa", max: false }, kind: "window", key: "ah2-desk", ...DESK_WINDOW_SIZE };
+  assert.deepEqual(deskWindowSpec("qa", false), today);
+  assert.deepEqual(deskWindowSpec("qa", false, null), today);
+});
+
 // The one-window Desk (atp-1728): where a Desk tab opens, the window's one subscription, and when Q&A counts as showing.
 test("a Desk tab opens in the column, a new Desk window, or the open one", () => {
   assert.equal(deskRoute("column", true, false), "dock");

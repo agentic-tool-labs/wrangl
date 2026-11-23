@@ -67,7 +67,17 @@ test("one stream: plan moves, questions, alerts and seen state changes by minute
   assert.ok(!feedModel(slices, NOW, { off: ["plan"] }).rows.some((r) => r.kind === "plan"));
   assert.ok(feedModel(slices, NOW, { team: "a1b2c3d4/lane-herdr" }).rows.every((r) => r.team === "lane-herdr"));
   assert.equal(feedModel(slices, NOW, { off: ["msg", "plan", "alert", "ask", "seen"] }).filteredOut, true);
-  assert.deepEqual(m.now.rows.map((r) => r.state).at(-1), "blocked", "working first, then blocked");
+  // working first, then blocked (the fixture's blocked one may sit past NOW_SHOWN, so the order is checked, not the last row)
+  const st = m.now.rows.map((r) => r.state);
+  assert.deepEqual(st, [...st].sort((a, b) => Number(a === "blocked") - Number(b === "blocked")), "working first, then blocked");
+  assert.equal(m.now.blocked, 1);
+  // ah2-468 O11: the fixture's tied Sub-Orchestrator (ah2-tm4-so-herdr, lane-herdr's lead) is one Now row, the lane's; untied, both
+  const so = "member:a1b2c3d4/ah2-tm4/ah2-tm4-so-herdr";
+  const busyKeys = (s) => { const n = feedModel(s, NOW).now; return [n.working, [...n.rows.map((r) => r.key)].includes(so)]; };
+  const topo = slices.get("topology:a1b2c3d4/ah2-tm4");
+  const untied = new Map(slices).set(topo.id, { ...topo, body: { ...topo.body, nodes: { ...topo.body.nodes, live_paths: {} } } });
+  const [tied, untiedNow] = [busyKeys(slices), busyKeys(untied)];
+  assert.deepEqual([tied[1], untiedNow[0] - tied[0]], [false, 1], "tied: no row of its own, one fewer working");
   // a state change shows only once seen: the first look records, the next one that differs is an event
   const first = seenStates(null, slices, NOW);
   assert.equal(first.events.length, 0);
@@ -105,4 +115,16 @@ test("a lane orchestrator's seen event and a message to it read Sub-Orchestrator
     assert.equal(r.mb?.key, key, "the row still names the lane's orchestrator");
     assert.equal(focus(r.mb), "t7", "and keeps its Focus terminal");
   }
+});
+
+// desk-per-team D7: a team's Desk passes its scope, a list of ids; null and one id filter as before.
+test("feedModel with a list of team ids keeps those teams' rows and Now strip; null and a single id are unchanged", () => {
+  const scope = ["a1b2c3d4/ah2-tm4", "a1b2c3d4/lane-herdr"];
+  const m = feedModel(slices, NOW, { team: scope });
+  assert.deepEqual([...new Set(m.rows.map((r) => r.teamId))].sort(), scope);
+  assert.ok(m.now.rows.every((r) => r.team !== "engram-rc"));
+  // negative: a team outside the list is gone; null keeps all three, a single id only itself
+  assert.ok(feedModel(slices, NOW).rows.some((r) => r.teamId === "9f8e7d6c/engram-rc"));
+  assert.deepEqual(feedModel(slices, NOW, { team: null }), feedModel(slices, NOW));
+  assert.deepEqual([...new Set(feedModel(slices, NOW, { team: "a1b2c3d4/lane-herdr" }).rows.map((r) => r.teamId))], ["a1b2c3d4/lane-herdr"]);
 });

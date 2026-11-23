@@ -88,7 +88,9 @@ const newest = (a, b) => (b.at ?? -Infinity) - (a.at ?? -Infinity);
 // daemon's or ah's (D1), never the mod's.
 // ponytail: merged pages are each dir's newest page; a dir far behind another can show its older rows only after Load more.
 // No dir to read (the chosen team stopped, or no team has a dir) is the no-team note, not an empty list.
-export async function historyRead(read, dirs, f, now, next = null, exec = null, sleep = null) {
+// `scope` (a pinned Desk's team ids, desk-per-team Amendment 3): a dir can hold teams outside it (a lane shares its parent's), so
+// only rows whose team (`<dirId>/<team>`) is in it are kept; null keeps every row.
+export async function historyRead(read, dirs, f, now, next = null, exec = null, sleep = null, scope = null) {
   if (dirs.length === 0) return { error: NO_TEAM };
   try {
     const pages = await Promise.all(dirs.filter((d) => !next || next[dirKey(d)]).map(async (d) => {
@@ -103,7 +105,8 @@ export async function historyRead(read, dirs, f, now, next = null, exec = null, 
       const doc = JSON.parse(text);
       return { d, threads: doc.threads ?? [], next: doc.next ?? null };
     }));
-    const rows = pages.flatMap((p) => p.threads.map((th) => threadRow(th, p.d, p.d.name, now))).sort(newest);
+    const rows = pages.flatMap((p) => p.threads.map((th) => threadRow(th, p.d, p.d.name, now)))
+      .filter((r) => !scope || scope.includes(`${r.dirId}/${r.team}`)).sort(newest);
     return { rows, next: Object.fromEntries(pages.filter((p) => p.next).map((p) => [dirKey(p.d), p.next])) };
   } catch (e) {
     return { error: `Could not read: ${e?.down ?? (late(e) ? NO_ANSWER : e?.message ?? String(e))}` };
@@ -112,10 +115,10 @@ export async function historyRead(read, dirs, f, now, next = null, exec = null, 
 
 // `rounds` rounds of historyRead from `next`, each next round only the dirs whose cursor the last round returned (as Load more does):
 // {rows: the union, newest first, next: the last round's cursors}, or the first round's error. A refresh re-reads the pages loaded.
-export async function historyReads(read, dirs, f, now, next, rounds, exec = null, sleep = null) {
+export async function historyReads(read, dirs, f, now, next, rounds, exec = null, sleep = null, scope = null) {
   const rows = [];
   for (let i = 1; ; i++) {
-    const got = await historyRead(read, dirs, f, now, next, exec, sleep);
+    const got = await historyRead(read, dirs, f, now, next, exec, sleep, scope);
     if (got.error) return got;
     rows.push(...got.rows);
     if (i >= rounds || Object.keys(got.next).length === 0) return { rows: rows.sort(newest), next: got.next };

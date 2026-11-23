@@ -125,7 +125,8 @@ const stop = (_e, cx) => cx.stop_propagation(); // in the window the row drags i
 
 export function panelTabsView(t, win = null) {
   const on = win ? win.view : (find(layout(), DOCK_BODY)?.active ?? "").replace(/^ah2-/, "");
-  const waiting = shared(DESK_KEY)?.waiting ?? 0;
+  // a team's Desk counts its own scope (main.js deskTeam); the all-teams Desk and the column, DESK_KEY's
+  const waiting = win?.team ? win.waiting ?? 0 : shared(DESK_KEY)?.waiting ?? 0;
   const icon = (id, label, path, go) => Button.new(id)
     .size(24).flex().flex_none().items_center().justify_center().rounded(6).cursor_pointer()
     .border(1).border_color(t.surface).text_color(t.muted)
@@ -138,7 +139,7 @@ export function panelTabsView(t, win = null) {
     .child(svg(path).size(14));
   const tab = (view) => {
     const shown = view === on;
-    const label = DESK_LABEL[view];
+    const label = view === "sitrep" ? "Sitrep" : DESK_LABEL[view];
     const n = view === "qa" ? waiting : 0;
     return Button.new(`ah2-desk-${view}`)
       .h(26).px(10).gap(6).flex().flex_none().items_center().rounded(6).cursor_pointer()
@@ -156,17 +157,21 @@ export function panelTabsView(t, win = null) {
       .when(n > 0, (el) => el.child(div().h(16).px(5).flex().items_center().rounded(8).border(1).border_color(t.blocked)
         .font_family(MONO).text_size(10.5).text_color(t.foreground).child(String(n))));
   };
+  // A team's Desk (win.team, desk-per-team D5): the team's name first, no dock button (it cannot dock, D2), titles naming it.
+  const team = win?.team ?? null;
   const row = h_flex().id("ah2-desk-tabs").px(8).gap(2).items_center().bg(t.surface).border_b(1).border_color(t.border).text_size(12)
-    .children(DOCKABLE.map(tab))
+    .when(Boolean(team), (el) => el.child(div().id("ah2-desk-team").min_w(0).max_w(140).truncate().mr(6).text_size(12).font_semibold().text_color(t.muted)
+      .when(Boolean(win?.real), (x) => x.tooltip(win.real)).child(win.name)))
+    .children((team ? ["sitrep", ...DOCKABLE] : DOCKABLE).map(tab)) // Sitrep first, team Desks only (D6)
     .child(div().flex_1());
   // the window's row is 44 px (graph-view.js reserves 44 for a header when not docked)
   if (win) return row.h(44).flex_none()
-    .when(columnHere(), (el) => el.child(icon("ah2-desk-dock", "Dock the desk to the side", "mods/ah2/panel-right.svg", () => toColumn(on))))
+    .when(!team && columnHere(), (el) => el.child(icon("ah2-desk-dock", "Dock the desk to the side", "mods/ah2/panel-right.svg", () => toColumn(on))))
     // ⤢ / ⤡ (atp-1727): reopens the window at the other size, on this tab
     .child(win.max
-      ? icon("ah2-desk-restore", "Restore the desk window", "mods/ah2/minimize.svg", () => resizeDeskWindow(on, false))
-      : icon("ah2-desk-maximize", "Maximize the desk window", "mods/ah2/maximize.svg", () => resizeDeskWindow(on, true)))
-    .child(icon("ah2-desk-close", "Close the desk (esc)", "mods/ah2/x.svg", win.close));
+      ? icon("ah2-desk-restore", team ? `Restore the ${win.name} desk` : "Restore the desk window", "mods/ah2/minimize.svg", () => resizeDeskWindow(on, false, team))
+      : icon("ah2-desk-maximize", team ? `Maximize the ${win.name} desk` : "Maximize the desk window", "mods/ah2/maximize.svg", () => resizeDeskWindow(on, true, team)))
+    .child(icon("ah2-desk-close", team ? `Close the ${win.name} desk (esc)` : "Close the desk (esc)", "mods/ah2/x.svg", win.close));
   return row.size_full()
     .when(Boolean(DESK_LABEL[on]), (el) => el.child(icon("ah2-desk-window", "Open the desk in a window", "mods/ah2/app-window.svg", () => toWindow(on))))
     .child(icon("ah2-desk-close", "Close the desk", "mods/ah2/x.svg", undock));
