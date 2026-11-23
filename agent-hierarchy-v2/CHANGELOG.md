@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.55] - 2026-11-23
+
+### Fixed
+
+- **A member starts in the same Claude environment as the Orchestrator that spawned it.** An Orchestrator
+  started with an alternative `CLAUDE_CONFIG_DIR` used to get a team in the default one, because each terminal
+  transport typed `claude` into a shell with the terminal server's environment. The value is now carried on every
+  member launch (and explicitly unset when the spawner has none), recorded on the team and on each member so a
+  resume keeps it, and shown by `ah roster doctor` when a live member's differs from its lead's. In the older
+  herdr terminal UI the value is set by a line typed into the pane, which needs a POSIX-style shell.
+
 ## [2.0.54] - 2026-11-23
 
 ### Changed

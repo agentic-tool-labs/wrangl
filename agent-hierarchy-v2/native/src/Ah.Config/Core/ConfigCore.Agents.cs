@@ -14,13 +14,18 @@ internal sealed partial class ConfigCore
 
     private static JsonArray NoFixes() => new();
 
+    private const string ClaudeDirKey = ConfigModule.ClaudeDirKey;
+
+    /// <summary><paramref name="claudeDir"/> when given, else <c>~/.claude</c>.</summary>
+    private string ClaudeDirOr(string? claudeDir) => Ah.Core.CoreModule.ClaudeConfigDir(claudeDir, Home);
+
     // ---------------------------------------------------------------- where an agent file is
 
     /// <summary><c>installed_plugins.json</c>'s <c>plugins</c> entries as <c>(key, records)</c>, each record list an array; empty when unreadable.</summary>
-    private List<(string Key, JsonArray Records)> InstalledPluginEntries()
+    private List<(string Key, JsonArray Records)> InstalledPluginEntries(string? claudeDir)
     {
         var result = new List<(string, JsonArray)>();
-        var data = TryReadJson(NodePath.Join(Home, ".claude", "plugins", "installed_plugins.json"));
+        var data = TryReadJson(NodePath.Join(ClaudeDirOr(claudeDir), "plugins", "installed_plugins.json"));
         if (data is not { IsMap: true } doc || doc.AsObject().Get("plugins") is not { } plugins || !(plugins.IsMap || plugins.IsArray))
         {
             return result;
@@ -45,7 +50,7 @@ internal sealed partial class ConfigCore
     /// <c>locateAgentFile</c>: <c>{kind, path, level, shadowed, error, candidates}</c> (and <c>records</c> for a plugin ref). A bare name
     /// is looked up in <c>&lt;repoRoot&gt;/.claude/agents/</c> then <c>~/.claude/agents/</c>; <c>plugin:agent</c> goes through the install records.
     /// </summary>
-    public JsonObject LocateAgentFile(JsonValue? reference, string? cwd)
+    public JsonObject LocateAgentFile(JsonValue? reference, string? cwd, string? claudeDir = null)
     {
         var colon = reference is { IsText: true } r ? r.AsString().IndexOf(':', StringComparison.Ordinal) : -1;
         if (colon == -1)
@@ -54,7 +59,7 @@ internal sealed partial class ConfigCore
             var start = Resolve(string.IsNullOrEmpty(cwd) ? process.CurrentDirectory : cwd);
             var root = FindGitRoot(start) ?? start;
             var repo = NodePath.Join(root, ".claude", "agents", name + ".md");
-            var user = NodePath.Join(Home, ".claude", "agents", name + ".md");
+            var user = NodePath.Join(ClaudeDirOr(claudeDir), "agents", name + ".md");
             var inRepo = files.Exists(repo);
             var inUser = files.Exists(user);
             var candidates = ConfigRegistry.StringArray([repo, user]);
@@ -75,7 +80,7 @@ internal sealed partial class ConfigCore
         var agent = text[(colon + 1)..];
         var recordCount = 0;
         var paths = new List<string>();
-        foreach (var (key, list) in InstalledPluginEntries())
+        foreach (var (key, list) in InstalledPluginEntries(claudeDir))
         {
             if (key.Split('@')[0] != plugin)
             {
@@ -126,12 +131,12 @@ internal sealed partial class ConfigCore
     /// <c>readAgentFile</c>: locate an agent ref's file and parse its frontmatter. Never throws. Keys:
     /// <c>found, frontmatter, name, description, model, tools, disallowedTools, parseErrors, location</c> (<c>unreadable</c> when the read failed).
     /// </summary>
-    public JsonObject ReadAgentFile(JsonValue? reference, string? cwd)
+    public JsonObject ReadAgentFile(JsonValue? reference, string? cwd, string? claudeDir = null)
     {
         JsonObject location;
         try
         {
-            location = LocateAgentFile(reference, cwd);
+            location = LocateAgentFile(reference, cwd, claudeDir);
         }
         catch (Exception)
         {
@@ -238,6 +243,7 @@ internal sealed partial class ConfigCore
         var description = spec.Get("description") is { IsTruthy: true } dv ? dv : (JsonValue?)null;
         var builtin = spec.Get("builtin") is { IsTruthy: true };
         var cwd = spec.Get("cwd") is { IsText: true } cv ? cv.AsString() : null;
+        var claudeDir = spec.Get(ClaudeDirKey) is { IsText: true } cd ? cd.AsString() : null;
         var inMemory = spec.Get("inMemory") is { IsMap: true } im ? im.AsObject() : null;
 
         var findings = new JsonArray();
@@ -258,7 +264,7 @@ internal sealed partial class ConfigCore
         }
         else
         {
-            file = ReadAgentFile(agent, cwd);
+            file = ReadAgentFile(agent, cwd, claudeDir);
         }
 
         var loc = file["location"].AsObject();
@@ -531,6 +537,7 @@ internal sealed partial class ConfigCore
 
         JsonObject result;
         var cwd = resolved?.Get("cwd") is { IsText: true } cv ? cv : (JsonValue?)null;
+        var claudeDir = resolved?.Get(ClaudeDirKey) is { IsText: true } cd ? cd : (JsonValue?)null;
         if (ConfigRegistry.IsBuiltinRole(role))
         {
             if (!IsOverride(role, e))
@@ -542,6 +549,11 @@ internal sealed partial class ConfigCore
             if (cwd is not null)
             {
                 spec["cwd"] = cwd.Value;
+            }
+
+            if (claudeDir is not null)
+            {
+                spec[ClaudeDirKey] = claudeDir.Value;
             }
 
             if (inMemory is not null)
@@ -562,6 +574,11 @@ internal sealed partial class ConfigCore
             if (cwd is not null)
             {
                 spec["cwd"] = cwd.Value;
+            }
+
+            if (claudeDir is not null)
+            {
+                spec[ClaudeDirKey] = claudeDir.Value;
             }
 
             if (inMemory is not null)

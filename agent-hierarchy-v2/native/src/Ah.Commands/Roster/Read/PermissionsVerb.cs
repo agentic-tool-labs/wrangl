@@ -78,8 +78,7 @@ internal static class LifecyclePermissions
 
     private const string BackupSuffix = ".ah2-bak";
 
-    internal static string ClaudeDir(IAhEnvironment env) =>
-        env.GetVariable("CLAUDE_CONFIG_DIR") is { Length: > 0 } configured ? configured : NodePath.Join(env.HomeDirectory, ".claude");
+    internal static string ClaudeDir(IAhEnvironment env) => Ah.Core.CoreModule.ClaudeConfigDir(env.GetVariable("CLAUDE_CONFIG_DIR"), env.HomeDirectory);
 
     /// <summary>The plugin manager's install record, in the same Claude directory as the settings file.</summary>
     internal static string InstalledPluginsPath(IAhEnvironment env) => NodePath.Join(ClaudeDir(env), "plugins", "installed_plugins.json");

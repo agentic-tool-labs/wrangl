@@ -278,10 +278,11 @@ public interface IConfigCore
     string TaskGopher { get; }
 
     /// <summary>Where an agent ref's file is: <c>{kind, path, level, shadowed, error, candidates}</c>.</summary>
-    JsonObject LocateAgentFile(JsonValue? reference, string? cwd);
+    /// <paramref name="claudeDir"/> is the Claude configuration directory the user agents and install records are read from; null is <c>~/.claude</c>.
+    JsonObject LocateAgentFile(JsonValue? reference, string? cwd, string? claudeDir = null);
 
     /// <summary>Locate an agent ref's file and parse its frontmatter. Never throws.</summary>
-    JsonObject ReadAgentFile(JsonValue? reference, string? cwd);
+    JsonObject ReadAgentFile(JsonValue? reference, string? cwd, string? claudeDir = null);
 
     JsonObject ParseAgentFrontmatter(string text);
 
@@ -585,6 +586,9 @@ public static partial class ConfigModule
 {
     /// <summary>The grammar of a role name, unanchored: the one source for the role registry and for the recipient part of a message file name.</summary>
     public const string RoleNamePattern = "[a-z][a-z0-9-]{0,30}";
+
+    /// <summary>The key of a resolved registry naming the Claude configuration directory a launch reads agent files and install records from.</summary>
+    public const string ClaudeDirKey = "claudeDir";
 
     public static ModuleRegistry Registry => GeneratedRegistry.Instance;
 

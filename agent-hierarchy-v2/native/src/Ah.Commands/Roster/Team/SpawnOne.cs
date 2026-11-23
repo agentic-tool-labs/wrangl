@@ -59,6 +59,7 @@ internal static class TeamRecords
             ["expected_root"] = messages.RealCwd(c.Cwd),
             ["roster"] = resolved.IsMap && resolved.Member("teamKey") is { IsTruthy: true } key ? key : JsonValue.Null,
             ["layout"] = mode,
+            [ClaudeEnvironment.Field] = ClaudeEnvironment.Caller(c),
         };
 
         // ah2-143: the flavour it launches on, so later team-wide calls need not guess the server
@@ -786,6 +787,12 @@ internal static class SpawnOne
         }
 
         member = MemberPlanning.WithLaunchModel(c, member);
+        ClaudeEnvironment.Resolved? claudeEnv = kind == launch.Registry.KindDefault ? ClaudeEnvironment.Resolve(c, existingIsRecord ? existing : (JsonValue?)null, team) : null;
+        if (claudeEnv is { } resolvedEnv)
+        {
+            member = MemberPlanning.With(member, ClaudeEnvironment.Field, resolvedEnv.Value);
+        }
+
         var needing = MemberPlanning.MembersNeedingModel(c, [member], rosterMembers);
         if (needing.Count > 0)
         {
@@ -954,6 +961,7 @@ internal static class SpawnOne
         Copy(newRecord, "model", member, "model");
         Copy(newRecord, "effort", member, "effort");
         Copy(newRecord, "autoMode", member, "autoMode");
+        Copy(newRecord, ClaudeEnvironment.Field, member, ClaudeEnvironment.Field);
         newRecord["expected_root"] = services.Hierarchy.Messages.RealCwd(launchCwd);
         if (kind != launch.Registry.KindDefault)
         {
@@ -1073,6 +1081,11 @@ internal static class SpawnOne
                 }
 
                 next["members"] = list;
+                if (claudeEnv is { TeamTakesCaller: true } leadEnv && freshTeam.IsMap)
+                {
+                    next[ClaudeEnvironment.Field] = leadEnv.Value;
+                }
+
                 journaled = ParentAction.Entry(c, label, memberName, stream?.Name);
                 if (journaled is not null)
                 {

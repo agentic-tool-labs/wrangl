@@ -128,6 +128,12 @@ public static class LaunchModule
     public static ScratchSweepReport SweepScratch(IScratchDirectories scratch, ITeardown teardown, Ah.Roster.IRosterCore roster, IFileReader files, Func<string, JsonObject, JsonValue> grants, string dir, string teamHome, DateTimeOffset now, bool commit) =>
         ScratchSweep.Run(scratch, teardown, roster, files, grants, dir, teamHome, now, commit);
 
+    /// <summary>
+    /// The member-row and team-record field holding a Claude member's <c>CLAUDE_CONFIG_DIR</c>: a path sets it, an empty string unsets it,
+    /// an absent key carries nothing.
+    /// </summary>
+    public const string ClaudeConfigField = "claude_config_dir";
+
     /// <summary>The largest process id a signal may be sent to: Linux's <c>pid_max</c> ceiling (2^22).</summary>
     public const int PidCeiling = 4194304;
 

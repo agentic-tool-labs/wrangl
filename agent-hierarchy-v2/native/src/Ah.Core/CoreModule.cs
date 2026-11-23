@@ -61,4 +61,8 @@ public static class CoreModule
 
     /// <summary>One word quoted so that a shell reads it back as the same word.</summary>
     public static string QuoteShellWord(string word) => CommandSegments.Quote(word);
+
+    /// <summary>The Claude configuration directory of an environment: <paramref name="configured"/> (its <c>CLAUDE_CONFIG_DIR</c>) when non-empty, else <c>~/.claude</c>.</summary>
+    public static string ClaudeConfigDir(string? configured, string home) =>
+        configured is { Length: > 0 } ? configured : Ah.Core.Text.NodePath.Join(home, ".claude");
 }
