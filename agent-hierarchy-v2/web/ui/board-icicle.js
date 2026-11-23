@@ -488,7 +488,7 @@ export class BoardIcicle extends Live {
         aria-label=${`${kind} ${d.name}${status}${holder ? `, owner ${d.holderTitle ?? d.holder}` : ""}, ${msgsText}${changed}, level ${n.depth + 1}${on && isBox ? ", press again to open" : ""}`}
         onClick=${() => this.click(n)}><span class="t">${dot}${d.name}</span></button>
       <span class="m">
-        ${d.kind === "epic" || d.kind === "deliverable" ? html`<span class="k">${d.kind}</span>` : null}
+        ${d.kind === "epic" || d.kind === "deliverable" || d.kind === "gate" ? html`<span class="k">${d.kind}</span>` : null}
         ${pill ? html`<span class=${`chip pl-chip ${chipOf(st).cls}`}>${statusText}</span>` : null}
         ${holder ? html`<a class="who" href=${memberHref(`member:${d.team}/${d.holder}`)} title=${`Open ${d.holderTitle ?? d.holder}`} aria-label=${`Open member ${d.holderTitle ?? d.holder}`}>${d.who?.state && d.who.state !== "unknown" ? html`<span class=${`ice-glyph st-${d.who.state}`} aria-hidden="true">${glyphOf(d.who.state)} </span>` : null}${d.holderLabel ?? d.holder}</a>` : null}
         ${isBox ? html`<span class="num">${n.done}/${n.total} done</span>` : null}

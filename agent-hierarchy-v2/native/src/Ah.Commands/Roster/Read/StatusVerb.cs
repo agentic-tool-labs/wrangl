@@ -50,6 +50,11 @@ internal static class StatusVerb
             {
                 c.Stdout.Write(line + "\n");
             }
+
+            foreach (var line in SpendLines(document))
+            {
+                c.Stdout.Write(line + "\n");
+            }
         }
         else
         {
@@ -142,6 +147,30 @@ internal static class StatusVerb
             var queue = waiting.Count > 0 ? ", waiting: " + string.Join(", ", waiting) : string.Empty;
             var outside = hold.Member("outside") is { IsBool: true } o && o.AsBool() ? " (outside this team)" : string.Empty;
             yield return $"resource {name}: {Text(hold, "who")}{outside} since {Ah.Hierarchy.HierarchyModule.ResourceSince(Since(hold), nowMs)}{queue}";
+        }
+    }
+
+    /// <summary>
+    /// One line per team of the document with spend (ah2-512): <c>spend (&lt;team&gt;): 52/50 credits (asked q7), 3 images</c>; a capped unit shows its max and,
+    /// past <c>under</c>, its state.
+    /// </summary>
+    internal static IEnumerable<string> SpendLines(JsonObject document)
+    {
+        static string Text(JsonValue row, string key) => row.Member(key) is { IsText: true } v ? v.AsString() : string.Empty;
+        foreach (var team in document.Get("teams") is { IsArray: true } teams ? teams.AsArray() : [])
+        {
+            if (team.Member("spend") is not { IsArray: true } spend || spend.AsArray().Count == 0)
+            {
+                continue;
+            }
+
+            var units = spend.AsArray().Select(u =>
+            {
+                var max = Text(u, "max") is { Length: > 0 } m ? "/" + m : string.Empty;
+                var state = Text(u, "state") is { Length: > 0 } s && s != "under" ? $" ({s})" : string.Empty;
+                return $"{Text(u, "total")}{max} {Text(u, "unit")}{state}";
+            });
+            yield return $"spend ({Text(team, "team")}): {string.Join(", ", units)}";
         }
     }
 

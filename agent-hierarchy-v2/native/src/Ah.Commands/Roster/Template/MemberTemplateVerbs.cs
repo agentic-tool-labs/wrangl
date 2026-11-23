@@ -488,6 +488,16 @@ internal static class MemberTemplateVerbs
 
     // ---------------------------------------------------------------- shared
 
+    /// <summary>A roster block's <c>orchestrator_model</c>: one of the sub-orchestrator class's models, else the reason. Shared with <c>roster kit import</c>.</summary>
+    internal static string? OrchestratorModelError(RosterContext c, string model)
+    {
+        var cls = c.Services.Config.RoleClass("sub-orchestrator", c.Registry);
+        IReadOnlyList<string> allowed = cls is null ? [] : c.Services.Launch!.Registry.ClassModels(cls) ?? [];
+        return allowed.Contains(model, StringComparer.Ordinal)
+            ? null
+            : $"orchestrator model \"{model}\" is not valid (allowed: {string.Join(", ", allowed)})";
+    }
+
     /// <summary>
     /// The block-level <c>edit --orchestrator-model M</c>: sets the roster block's <c>orchestrator_model</c>, or removes it for <c>""</c>.
     /// The model must be one the orchestrate class (the sub-orchestrator row's class) allows.
@@ -506,14 +516,9 @@ internal static class MemberTemplateVerbs
         }
 
         var model = opts.Text("orchestrator-model") ?? "";
-        if (model.Length > 0)
+        if (model.Length > 0 && OrchestratorModelError(c, model) is { } why)
         {
-            var cls = c.Services.Config.RoleClass("sub-orchestrator", c.Registry);
-            IReadOnlyList<string> allowed = cls is null ? [] : c.Services.Launch!.Registry.ClassModels(cls) ?? [];
-            if (!allowed.Contains(model, StringComparer.Ordinal))
-            {
-                throw new RosterFailure($"orchestrator model \"{model}\" is not valid (allowed: {string.Join(", ", allowed)}); nothing was written");
-            }
+            throw new RosterFailure($"{why}; nothing was written");
         }
 
         var target = files.RequireTarget();

@@ -243,6 +243,20 @@ test("Attention: an item waiting with no run is listed and answerable: no NO_RUN
   assert.equal(find(root, "input").filter((i) => i.getAttribute("type") === "radio").length, 3, "two options and Other");
 });
 
+test("Attention: a waiting item's card lists both its attachments, a link only for http(s) (lane-questions slice 3)", async () => {
+  const root = installDom();
+  const attachments = [{ ref: "docs/a.md", kind: "file", title: "Candidate A", sha: null }, { ref: "https://example.com/b", kind: "url", title: "Candidate B", sha: null }];
+  render(html`<${AttentionView} store=${still([
+    [`questions:${DIR}/ship`, { version: 1, body: { open: [], items: [{ ...SHIP, work_id: "ah-9" }], recent: [], open_total: 0, waiting_total: 1, truncated: false } }],
+    [`item-desc:${DIR}/9`, { version: 1, body: { id: "ah-9", description: null, attachments } }],
+  ])} teamId=${TEAM} />`, root);
+  await settle();
+  const list = find(root, "ul.qa-attach")[0];
+  assert.equal(find(list, "li").length, 2);
+  assert.ok(text(list).includes("docs/a.md") && text(list).includes("Candidate B"), text(list));
+  assert.deepEqual(find(list, "a").map((a) => a.getAttribute("href")), ["https://example.com/b"]);
+});
+
 test("the open form and the log's Options badge only the options the slice marks Recommended; negative: an unmarked row has no badge", async () => {
   const badged = (el) => find(el, "label.qa-opt").map((l) => [text(find(l, "span.qa-label")[0]), find(l, "span.qa-badge").map(text)]);
   const root = installDom();

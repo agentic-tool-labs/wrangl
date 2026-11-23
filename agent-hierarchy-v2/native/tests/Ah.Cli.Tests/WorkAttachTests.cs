@@ -670,6 +670,41 @@ public sealed class WorkAttachTests : IDisposable
     }
 
     [Fact]
+    public void AGatesItemLogCarriesItsGateAndEachFillItsNeed()
+    {
+        var gate = Work("add", "G", "--kind", "gate").Out.Trim();
+        Ok(Work("gate", gate, "--need", "build"));
+        Ok(Work("attach", gate, "https://example.com/b", "--as", "build"));
+        var task = Work("add", "T").Out.Trim();
+        Ok(Work("attach", task, "https://example.com/b"));
+        JsonValue Body(string id) => JsonValue.FromObject(WorkRows.ItemLog(_graph, _sandbox.AhHome, _dir, long.Parse(id[(id.LastIndexOf('-') + 1)..], System.Globalization.CultureInfo.InvariantCulture))!);
+
+        var served = Body(gate).Member("gate")!.Value;
+        Assert.Equal(gate, served.Member("id")!.Value.AsString());
+        Assert.Equal(1, served.Member("filled")!.Value.AsNumber());
+        Assert.Equal("https://example.com/b", served.Member("needs")!.Value.AsArray().Single().Member("fills")!.Value.AsArray().Single().AsString());
+        Assert.Equal("build", Body(gate).Member("attachments")!.Value.AsArray().Single(static a => a.Member("ref")!.Value.AsString() == "https://example.com/b").Member("need")!.Value.AsString());
+
+        // the negative: a task has no gate, and its plain attachment no need
+        Assert.Null(Body(task).Member("gate"));
+        Assert.True(Body(task).Member("attachments")!.Value.AsArray().Single().Member("need")!.Value.IsNull);
+    }
+
+    [Fact]
+    public void TheItemDescCarriesTheAttachmentsOnlyWhenThereAreSome()
+    {
+        var with = Work("add", "With").Out.Trim();
+        Ok(Work("attach", with, "https://example.com/spec"));
+        var without = Work("add", "Without").Out.Trim();
+        JsonValue Body(string id) => JsonValue.FromObject(WorkRows.ItemDesc(_graph, _sandbox.AhHome, _dir, long.Parse(id[(id.LastIndexOf('-') + 1)..], System.Globalization.CultureInfo.InvariantCulture))!);
+
+        Assert.Equal("https://example.com/spec", Body(with).Member("attachments")!.Value.AsArray().Single().Member("ref")!.Value.AsString());
+
+        // the negative: no attachments, no field
+        Assert.Null(Body(without).Member("attachments"));
+    }
+
+    [Fact]
     public void TheItemLogKeepsTheNewestEntriesAndCountsTheRest()
     {
         var id = AddRow();

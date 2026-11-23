@@ -608,6 +608,12 @@ internal sealed partial class HierLib
                     team["resources"] = held;
                 }
 
+                // ah2-512: absent when the team has counted nothing and has no cap
+                if (src.Spend(dir, key) is { Count: > 0 } spend)
+                {
+                    team["spend"] = spend;
+                }
+
                 Ah.Core.Time.PhaseTrace.End("status.describe-pipeline", pipelineStart);
                 teams.Add(team);
                 var pid = Member(Member(t, "orchestrator"), "pid");

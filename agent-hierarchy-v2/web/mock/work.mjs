@@ -71,6 +71,46 @@ ah docs build --guide upgrade-2.5
 open docs/out/upgrade-2.5.html
 \`\`\``;
 
+// A gate (adr-38) in the backlog: its log body carries the attachments as served plus `gate` in the `ah work gate --json` shape. One need is
+// filled, one reviewed need has its artifact but a CHANGES REQUIRED report, one is missing; the user was asked and has not answered.
+const GATE = {
+  id: "ah-92",
+  description: null,
+  entries: [{ ts_ms: 0, type: "note", title: "Gate declared: build, screenshots, notes", by: "orchestrator", body: null }],
+  more: 0,
+  links: { blocked_by: [], blocks: ["ah-100"] },
+  attachments: [
+    { ref: "gate:decider", kind: "gate", title: "user", sha: null },
+    { ref: "need:build", kind: "need", title: "The release build", sha: null },
+    { ref: "need:screenshots", kind: "need-review", title: "Both themes at 1440x900", sha: null },
+    { ref: "need:notes", kind: "need", title: "Release notes", sha: null },
+    { ref: "dist/ah-2.0.52.tar.gz", kind: "file", title: null, sha: "9c1e4b7a20" },
+    { ref: "docs/shots/board-dark.png", kind: "file", title: null, sha: "41f0aa3c55" },
+    { ref: "msg:20261122-1410-rv07", kind: "report", title: null, sha: null },
+    { ref: "q:q3", kind: "ask", title: null, sha: null },
+    { ref: "https://example.com/release-plan", kind: "url", title: "Release plan", sha: null },
+  ],
+  gate: {
+    id: "ah-92",
+    decider: "user",
+    asked: "q3 open",
+    filled: 1,
+    total: 3,
+    needs: [
+      { name: "build", title: "The release build", review: false, filled: true, review_state: null, fills: ["dist/ah-2.0.52.tar.gz"] },
+      { name: "screenshots", title: "Both themes at 1440x900", review: true, filled: false, review_state: "CHANGES REQUIRED", fills: ["docs/shots/board-dark.png", "msg:20261122-1410-rv07"] },
+      { name: "notes", title: "Release notes", review: false, filled: false, review_state: null, fills: [] },
+    ],
+  },
+  children: [],
+};
+
+// The waiting item's attachments, served on its item-desc: body: a file and a URL.
+const CARD_ATTACHMENTS = [
+  { ref: "docs/fonts/JetBrainsMono.woff2", kind: "file", title: "The bundled font", sha: "5be0d2c913" },
+  { ref: "https://example.com/samples", kind: "url", title: "Both fonts side by side", sha: null },
+];
+
 export function withWork(out, slice, dir, now) {
   let n = 100;
   const logs = [];
@@ -83,11 +123,12 @@ export function withWork(out, slice, dir, now) {
       return { ...s, body: { ...s.body, items: s.body.items.map((item, i) => ({ ...item, ...work(`ah-${n++}`, i, now) })) } };
     }
     if (s.id === `backlog:${dir}`) {
+      logs.push(slice(`item-log:${dir}/92`, { ...GATE, entries: GATE.entries.map((e) => ({ ...e, ts_ms: now - 90 * MIN })) }, now));
       const row = (key, title, kind, rank, parent) => ({ key, title, kind, rank, parent, state: "not_started", wave: "now", work_id: `ah-${key.slice(1)}`, blocked_by_open: 0 });
-      return { ...s, body: { ...s.body, items: [row("b90", "The beta", "project", 0), row("b91", "Ship it", "goal", 0, "b90"), ...s.body.items.map((item, i) => ({ ...item, ...work(`ah-${item.key.slice(1)}`, i, now) }))] } };
+      return { ...s, body: { ...s.body, items: [row("b90", "The beta", "project", 0), row("b91", "Ship it", "goal", 0, "b90"), row("b92", "Beta sign-off", "gate", 0, "b90"), ...s.body.items.map((item, i) => ({ ...item, ...work(`ah-${item.key.slice(1)}`, i, now) }))] } };
     }
     if (s.id.startsWith(`questions:${dir}/`) && s.body.items?.length) {
-      logs.push(slice(`item-desc:${dir}/900`, { id: "ah-900", description: QUESTION }, now));
+      logs.push(slice(`item-desc:${dir}/900`, { id: "ah-900", description: QUESTION, attachments: CARD_ATTACHMENTS }, now));
       return { ...s, body: { ...s.body, items: s.body.items.map((item) => ({ ...item, work_id: "ah-900" })) } };
     }
     return s;

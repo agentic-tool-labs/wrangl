@@ -407,7 +407,7 @@ internal static class OwnerGuard
     /// Refuses a role-writing verb to an agent session: one that carries the member marker, or whose nearest registered ancestor is a
     /// member. It is not an owner verb, so a plain session outside any team still runs it.
     /// </summary>
-    internal static void RefuseAgentRoleWrite(RosterContext c, string sub)
+    internal static void RefuseAgentRoleWrite(RosterContext c, string sub, string verb = "role")
     {
         if (c.Services.OwnerProof is null)
         {
@@ -424,7 +424,7 @@ internal static class OwnerGuard
         throw new OwnerRefusal(
             $"member-cannot-role-{sub}",
             "member-ancestor",
-            $"ah roster role {sub}: this command runs under member {member}, and a member session cannot run owner verbs; nothing was changed.",
+            $"ah roster {verb} {sub}: this command runs under member {member}, and a member session cannot run owner verbs; nothing was changed.",
             $"owner proof: this command runs under member {member}. {Seen(proved.Nearest)}");
     }
 

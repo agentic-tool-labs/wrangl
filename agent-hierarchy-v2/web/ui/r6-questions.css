@@ -33,6 +33,7 @@
 .r6 .qa-desc code, .r6 .item-detail .id-desc code { padding: 0 var(--sp-2); border-radius: var(--radius); background: var(--surface-code); font-family: var(--font-mono); font-size: var(--text-12); user-select: all; }
 .r6 .qa-desc pre, .r6 .item-detail .id-desc pre { padding: var(--sp-8); border-radius: var(--radius); background: var(--surface-code); overflow-x: auto; white-space: pre; }
 .r6 .qa-desc pre code, .r6 .item-detail .id-desc pre code { padding: 0; background: none; user-select: text; }
+.r6 .qa-attach { margin: 0 0 var(--sp-8); color: var(--ink-2); font-size: var(--text-13); }
 .r6 .qa-card .qa-desc-more { min-height: 24px; margin: 0 0 var(--sp-8); padding: 0 var(--sp-8); font-size: var(--text-12); }
 .r6 .qa-class { padding: 0 6px; border: 1px solid var(--line, currentColor); border-radius: var(--radius); color: var(--ink-2); font-size: var(--text-12); }
 .r6 .qa-class-blocker { border-color: var(--pill-blocked); background: var(--pill-blocked-bg); color: var(--pill-blocked); font-weight: 600; }

@@ -89,6 +89,9 @@ internal interface IStatusSource
 
     /// <summary>The live resource holds and waits of the machine (adr-36), oldest first; reads the database and probes each row's process now.</summary>
     JsonArray Resources();
+
+    /// <summary>The spend of <paramref name="team"/> of <paramref name="dir"/> per unit, with its team cap (ah2-512); reads the ledger now.</summary>
+    JsonArray Spend(string dir, string? team);
 }
 
 internal sealed partial class HierLib
@@ -141,6 +144,8 @@ internal sealed partial class HierLib
         public JsonArray Subagents(string sessionId) => lib.OpenSubagentRows(sessionId);
 
         public JsonArray Resources() => lib.LiveResourceJson();
+
+        public JsonArray Spend(string dir, string? team) => lib.SpendJson(dir, team);
 
         public JsonArray RunExchanges(string dir, string? team, long sinceMs) =>
             lib._core.ListRunExchanges(lib.PoolDirs(dir, lib._roster.ListTeamNames(dir), null), team, sinceMs);

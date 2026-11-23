@@ -207,6 +207,22 @@ public static partial class RulesOfEngagement
     /// <summary>The team goal's write ops, apart from <see cref="Ops"/> so the web bridge, which checks only those, cannot write a goal.</summary>
     public static IReadOnlyList<string> GoalOps { get; } = ["goal", "goal-clear"];
 
+    /// <summary>The kind of a spend cap's row (ah2-512, adr-37): key <c>cap-&lt;unit&gt;</c>, its max in <see cref="RuleRow.Applies"/>. Not a decision, so it renders as a plain rule line.</summary>
+    public const string CapKind = "cap";
+
+    /// <summary>A spend cap's key prefix.</summary>
+    public const string CapKeyPrefix = "cap-";
+
+    /// <summary>The spend cap's write op, apart from <see cref="Ops"/> as the goal's are.</summary>
+    public static IReadOnlyList<string> CapOps { get; } = ["cap"];
+
+    /// <summary>
+    /// A cap's generated rule text (S5): <paramref name="where"/> is <c>per run</c> for a team cap and <c>for &lt;work id&gt;</c> for a project or goal cap.
+    /// Guidance only: reaching the cap asks the user and never stops a call.
+    /// </summary>
+    public static string CapText(string unit, string max, string where, string by) =>
+        $"Spend cap: {max} {unit} {where} (set by {by}). Count every paid call: ah spend add <n> {unit} --what \"<what>\". Reaching the cap asks the user; it does not stop calls.";
+
     private const string Columns = "level, scope, key, text, off, \"by\", said, created_ms, updated_ms, kind, applies, choose, accepted_at, accepted_by";
 
     [GeneratedRegex(@"^[a-z0-9-]{1,40}\z", RegexOptions.CultureInvariant)]
@@ -435,6 +451,11 @@ public static partial class RulesOfEngagement
             return ApplyGoal(query, execute, write);
         }
 
+        if (write.Op == "cap")
+        {
+            return ApplyCap(query, execute, write);
+        }
+
         if (BadInput(write) is { } bad)
         {
             return new RuleWriteResult(Refused, bad, null);
@@ -579,6 +600,50 @@ public static partial class RulesOfEngagement
             "UPDATE rules SET text = ?5, applies = ?6, \"by\" = ?7, said = ?8, updated_ms = ?9 WHERE hier_dir = ?1 AND level = ?2 AND scope = ?3 AND key = ?4",
             [dir, Team, w.Scope, GoalKey, w.Text, w.Applies, w.By, w.Said, w.NowMs]);
         return new RuleWriteResult(Ok, $"goal changed for team {w.Scope}", existing with { Text = w.Text!, Applies = w.Applies, By = w.By, Said = w.Said, UpdatedMs = w.NowMs });
+    }
+
+    /// <summary>
+    /// Sets or replaces a spend cap (ah2-512 S4): one <see cref="CapKind"/> row at <c>cap-&lt;unit&gt;</c> of a team, project or goal, its max in <c>applies</c>.
+    /// A replace switches it back on and moves <c>updated_ms</c> forward, which re-arms its park (S6). Nothing here or anywhere stops a call at the cap.
+    /// </summary>
+    private static RuleWriteResult ApplyCap(Func<string, object?[], IReadOnlyList<object?[]>> query, Action<string, object?[]> execute, RuleWrite w)
+    {
+        if (w.Level is not (Team or Project or Goal) || w.Scope.Length == 0)
+        {
+            return new RuleWriteResult(Refused, "a spend cap is set at a team, a project or a goal", null);
+        }
+
+        if (!KeyShape().IsMatch(w.Key) || !w.Key.StartsWith(CapKeyPrefix, StringComparison.Ordinal))
+        {
+            return new RuleWriteResult(Refused, $"a cap's key is {CapKeyPrefix}<unit> and fits 1 to 40 of a-z, 0-9 and -; got {w.Key.Length} characters that do not fit", null);
+        }
+
+        if (string.IsNullOrWhiteSpace(w.Text) || w.Text.Length > MaxText || string.IsNullOrWhiteSpace(w.Applies))
+        {
+            return new RuleWriteResult(Refused, "a cap needs its text and its max", null);
+        }
+
+        var dir = Backlog.DirKey(w.Dir);
+        var existing = query($"SELECT {Columns} FROM rules WHERE hier_dir = ?1 AND level = ?2 AND scope = ?3 AND key = ?4", [dir, w.Level, w.Scope, w.Key]).Select(RowOf).FirstOrDefault();
+        if (existing is null)
+        {
+            execute(
+                "INSERT INTO rules(hier_dir, level, scope, key, text, off, \"by\", said, created_ms, updated_ms, kind, applies) VALUES (?1, ?2, ?3, ?4, ?5, 0, ?6, ?7, ?8, ?8, ?9, ?10)",
+                [dir, w.Level, w.Scope, w.Key, w.Text, w.By, w.Said, w.NowMs, CapKind, w.Applies]);
+            return new RuleWriteResult(Ok, $"cap {w.Key} set", new RuleRow(w.Level, w.Scope, w.Key, w.Text!, false, w.By, w.Said, w.NowMs, w.NowMs, CapKind, w.Applies));
+        }
+
+        if (existing.Kind != CapKind)
+        {
+            return new RuleWriteResult(Conflict, $"rule {w.Key} already exists at this {w.Level} and is not a cap", existing);
+        }
+
+        // a re-set in the same millisecond still makes a new cap version
+        var updated = Math.Max(w.NowMs, existing.UpdatedMs + 1);
+        execute(
+            "UPDATE rules SET text = ?5, off = 0, applies = ?6, \"by\" = ?7, said = ?8, updated_ms = ?9 WHERE hier_dir = ?1 AND level = ?2 AND scope = ?3 AND key = ?4",
+            [dir, w.Level, w.Scope, w.Key, w.Text, w.Applies, w.By, w.Said, updated]);
+        return new RuleWriteResult(Ok, $"cap {w.Key} changed", existing with { Text = w.Text!, Off = false, Applies = w.Applies, By = w.By, Said = w.Said, UpdatedMs = updated });
     }
 
     /// <summary>

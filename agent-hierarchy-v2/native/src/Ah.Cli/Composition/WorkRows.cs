@@ -44,22 +44,43 @@ internal static class WorkRows
             new Dictionary<string, WorkCard>());
 
     /// <summary>
-    /// The <c>item-desc:</c> body of item <paramref name="n"/>: <c>{id, description}</c>, the description null when it has none. The store caps a body at
-    /// 8 KiB, so this is small. Null when the directory has no registry.
+    /// The <c>item-desc:</c> body of item <paramref name="n"/>: <c>{id, description, attachments?}</c>, the description null when it has none, the
+    /// attachments (as <see cref="WorkVerb.AttachmentJson"/>) absent when there are none. The store caps a description at 8 KiB. Null when the directory has no registry.
     /// </summary>
     internal static JsonObject? ItemDesc(ServiceGraph g, string ahHome, string dir, long n) =>
         Read<JsonObject?>(
             g,
             ahHome,
-            q => HierarchyModule.WorkPrefix(q, dir) is not { } prefix ? null : new JsonObject
+            q =>
             {
-                ["id"] = HierarchyModule.WorkId(prefix, n),
-                ["description"] = HierarchyModule.WorkDescription(q, dir, n) is { } description ? description : JsonValue.Null,
+                if (HierarchyModule.WorkPrefix(q, dir) is not { } prefix)
+                {
+                    return null;
+                }
+
+                var body = new JsonObject
+                {
+                    ["id"] = HierarchyModule.WorkId(prefix, n),
+                    ["description"] = HierarchyModule.WorkDescription(q, dir, n) is { } description ? description : JsonValue.Null,
+                };
+                var attachments = new JsonArray();
+                foreach (var attachment in HierarchyModule.WorkAttachments(q, dir, n))
+                {
+                    attachments.Add(WorkVerb.AttachmentJson(attachment));
+                }
+
+                if (attachments.Count > 0)
+                {
+                    body["attachments"] = attachments;
+                }
+
+                return body;
             },
             null);
 
     /// <summary>
-    /// The <c>item-log:</c> body of item <paramref name="n"/>: <c>{id, description, entries: [{ts_ms, type, title, by, body}], more, links: {blocked_by, blocks}, attachments: [{ref, kind, title, sha}], children}</c>;
+    /// The <c>item-log:</c> body of item <paramref name="n"/>: <c>{id, description, entries: [{ts_ms, type, title, by, body}], more, links: {blocked_by, blocks}, attachments: [{ref, kind, title, sha, need}], children, gate?}</c>,
+    /// <c>gate</c> in the <c>ah work gate --json</c> shape and only on a gate;
     /// the newest <see cref="MaxEntries"/> entries, oldest first, with <c>more</c> older ones left out. Null when there is no such item.
     /// </summary>
     internal static JsonObject? ItemLog(ServiceGraph g, string ahHome, string dir, long n) =>
@@ -98,13 +119,14 @@ internal static class WorkRows
                     entries.Add(WorkVerb.EntryJson(entry, body: true));
                 }
 
+                var rows = HierarchyModule.WorkAttachments(q, dir, n);
                 var attachments = new JsonArray();
-                foreach (var attachment in HierarchyModule.WorkAttachments(q, dir, n))
+                foreach (var attachment in rows)
                 {
                     attachments.Add(WorkVerb.AttachmentJson(attachment));
                 }
 
-                return new JsonObject
+                var body = new JsonObject
                 {
                     ["id"] = Id(n),
                     ["description"] = HierarchyModule.WorkDescription(q, dir, n) is { } description ? description : JsonValue.Null,
@@ -114,6 +136,12 @@ internal static class WorkRows
                     ["attachments"] = attachments,
                     ["children"] = Ids(board.Children(view.Row).Select(c => Id(c.Row.N))),
                 };
+                if (view.Plan?.Kind == HierarchyModule.WorkGateKind)
+                {
+                    body["gate"] = WorkVerb.GateJson(Id(n), WorkVerb.GateSummaryOf(g, dir, [.. rows]));
+                }
+
+                return body;
             },
             null);
 }

@@ -398,7 +398,43 @@ internal static partial class WorkVerb
     }
 
     internal static JsonObject AttachmentJson(WorkAttachment a) =>
-        new() { ["ref"] = a.Ref, ["kind"] = a.Kind, ["title"] = a.Title is { } t ? t : JsonValue.Null, ["sha"] = a.Sha is { } h ? h : JsonValue.Null };
+        new() { ["ref"] = a.Ref, ["kind"] = a.Kind, ["title"] = a.Title is { } t ? t : JsonValue.Null, ["sha"] = a.Sha is { } h ? h : JsonValue.Null, ["need"] = a.Need is { } need ? need : JsonValue.Null };
+
+    /// <summary>The <c>ah work gate --json</c> shape of a gate's summary.</summary>
+    internal static JsonObject GateJson(string id, GateSummary gate)
+    {
+        var needs = new JsonArray();
+        foreach (var n in gate.Needs)
+        {
+            needs.Add(new JsonObject { ["name"] = n.Name, ["title"] = n.Title is { } t ? t : JsonValue.Null, ["review"] = n.Review, ["filled"] = n.Filled, ["review_state"] = n.ReviewState is { } r ? r : JsonValue.Null, ["fills"] = Command.Strs(n.Fills) });
+        }
+
+        return new JsonObject { ["id"] = id, ["decider"] = gate.Decider, ["asked"] = gate.Asked is { } asked ? asked : JsonValue.Null, ["filled"] = gate.FilledCount, ["total"] = gate.Needs.Count, ["needs"] = needs };
+    }
+
+    /// <summary>Where a gate stands from its <paramref name="attachments"/>, its reports and its parked question read now.</summary>
+    internal static GateSummary GateSummaryOf(ServiceGraph g, string dir, IReadOnlyList<WorkAttachment> attachments) =>
+        HierarchyModule.WorkGate(attachments, ReportVerdicts(g, dir)) with
+        {
+            Asked = ParkedAsk(g, dir, attachments) is { Question: var q } ? q.Open ? q.Id + " open" : $"{q.Id} answered {string.Join(", ", q.AnsweredLabels)}" : null,
+        };
+
+    /// <summary>The gate's newest parked question, read from the store of the team that parked it; null when it was never asked or the store cannot be read.</summary>
+    internal static (string Ref, ParkedQuestion Question)? ParkedAsk(ServiceGraph g, string dir, IReadOnlyList<WorkAttachment> attachments)
+    {
+        if (attachments.LastOrDefault(static a => a.Kind == HierarchyModule.WorkAskKind) is not { } ask)
+        {
+            return null;
+        }
+
+        var home = ask.Title is { Length: > 0 } askTeam && g.Hierarchy.Messages.TeamHome(dir, null, askTeam) is { Length: > 0 } teamHome ? teamHome : dir;
+        _ = ParkedQuestions.MatchRecorded(g.Io.Files, g.Hierarchy.StateCalls, home);
+        var questionId = ask.Ref[HierarchyModule.WorkAskRefPrefix.Length..];
+        return g.Io.Files.ReadAskLog(ParkedQuestions.PathIn(home)).TryLines(out var lines)
+            && ParkedQuestions.Fold(string.Join('\n', lines)).FirstOrDefault(q => q.Id == questionId) is { } question
+            ? (ask.Ref, question)
+            : null;
+    }
 
     /// <summary>The team the caller belongs to, from the team file its session was launched with; null when it has none.</summary>
     internal static string? CallerTeam(IAhEnvironment env) =>
@@ -508,6 +544,13 @@ internal static partial class WorkVerb
     {
         var dir = BacklogVerb.DirOf(g, cwd);
         new Command(g, env.AhHome, env.HomeDirectory, cwd, dir, CallerOf(env, g, dir, null, session), static () => Stream.Null, TextWriter.Null, TextWriter.Null).LogCommit(subject, sha);
+    }
+
+    /// <summary>The one open item the caller holds, found as <c>ah work record</c> finds it (ah2-512); null when it holds none or several.</summary>
+    internal static WorkRow? HeldItem(IAhEnvironment env, ServiceGraph g, string cwd)
+    {
+        var dir = BacklogVerb.DirOf(g, cwd);
+        return new Command(g, env.AhHome, env.HomeDirectory, cwd, dir, CallerOf(env, g, dir, null), static () => Stream.Null, TextWriter.Null, TextWriter.Null).OneHeld();
     }
 
     private sealed class WorkFailure(string message, int code) : Exception(message)
@@ -946,42 +989,13 @@ internal static partial class WorkVerb
         }
 
         /// <summary>The gate's newest parked question, read from the store of the team that parked it; null when it was never asked or the store cannot be read.</summary>
-        private (string Ref, ParkedQuestion Question)? AskOf(long n)
-        {
-            if (Read(q => HierarchyModule.WorkAttachments(q, dir, n), []).LastOrDefault(static a => a.Kind == HierarchyModule.WorkAskKind) is not { } ask)
-            {
-                return null;
-            }
-
-            var home = ask.Title is { Length: > 0 } askTeam && g.Hierarchy.Messages.TeamHome(dir, null, askTeam) is { Length: > 0 } teamHome ? teamHome : dir;
-            _ = ParkedQuestions.MatchRecorded(g.Io.Files, g.Hierarchy.StateCalls, home);
-            var questionId = ask.Ref[HierarchyModule.WorkAskRefPrefix.Length..];
-            return g.Io.Files.ReadAskLog(ParkedQuestions.PathIn(home)).TryLines(out var lines)
-                && ParkedQuestions.Fold(string.Join('\n', lines)).FirstOrDefault(q => q.Id == questionId) is { } question
-                ? (ask.Ref, question)
-                : null;
-        }
+        private (string Ref, ParkedQuestion Question)? AskOf(long n) => ParkedAsk(g, dir, Read(q => HierarchyModule.WorkAttachments(q, dir, n), []));
 
         /// <summary>The user's answer to the gate's parked question, or null when unanswered or never asked.</summary>
         private string? AnswerOf(long n) => AskOf(n) is { Question: { Open: false } answered } ? string.Join(", ", answered.AnsweredLabels) : null;
 
         /// <summary>Where gate <paramref name="n"/> stands, its reports and its parked question read now.</summary>
-        private GateSummary GateOf(long n) =>
-            HierarchyModule.WorkGate(Read(q => HierarchyModule.WorkAttachments(q, dir, n), []), ReportVerdicts(g, dir)) with
-            {
-                Asked = AskOf(n) is { Question: var q } ? q.Open ? q.Id + " open" : $"{q.Id} answered {string.Join(", ", q.AnsweredLabels)}" : null,
-            };
-
-        private static JsonObject GateJson(string id, GateSummary gate)
-        {
-            var needs = new JsonArray();
-            foreach (var n in gate.Needs)
-            {
-                needs.Add(new JsonObject { ["name"] = n.Name, ["title"] = n.Title is { } t ? t : JsonValue.Null, ["review"] = n.Review, ["filled"] = n.Filled, ["review_state"] = n.ReviewState is { } r ? r : JsonValue.Null, ["fills"] = Strs(n.Fills) });
-            }
-
-            return new JsonObject { ["id"] = id, ["decider"] = gate.Decider, ["asked"] = gate.Asked is { } asked ? asked : JsonValue.Null, ["filled"] = gate.FilledCount, ["total"] = gate.Needs.Count, ["needs"] = needs };
-        }
+        private GateSummary GateOf(long n) => GateSummaryOf(g, dir, Read(q => HierarchyModule.WorkAttachments(q, dir, n), []));
 
         /// <summary>When an item last changed: the later of its plan's change time and the registry's (§9), so a log-only change shows. A gone placement has only the registry's.</summary>
         private static long UpdatedOf(WorkItemView v, IReadOnlyDictionary<string, long> backlog) =>
@@ -1387,6 +1401,8 @@ internal static partial class WorkVerb
                 .ToList();
         }
 
+        internal WorkRow? OneHeld() => Held() is [var one] ? one.Row : null;
+
         private WorkRow OnlyMine()
         {
             var held = Held();
@@ -1656,7 +1672,7 @@ internal static partial class WorkVerb
             return code;
         }
 
-        private static JsonArray Strs(IEnumerable<string> values)
+        internal static JsonArray Strs(IEnumerable<string> values)
         {
             var list = new JsonArray();
             foreach (var value in values)

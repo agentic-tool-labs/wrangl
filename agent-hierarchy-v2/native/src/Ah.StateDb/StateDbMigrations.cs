@@ -243,6 +243,17 @@ internal static class StateDbMigrations
         new MigrationStep(45, c => Run(c, V45Statements)),
         new MigrationStep(46, c => Run(c, V46Statements)),
         new MigrationStep(47, Version47),
+        new MigrationStep(48, c => Run(c, V48Statements)),
+    ];
+
+    /// <summary>
+    /// Version 48 (ah2-512, adr-37): the spend ledger, append-only and summed on read. <c>micros</c> is the count in millionths of a unit, so
+    /// sums are exact; a negative row is a correction. <c>run</c> is the team's open run anchor id, <c>item</c> the work number, either null. Additive.
+    /// </summary>
+    internal static IReadOnlyList<string> V48Statements =>
+    [
+        "CREATE TABLE IF NOT EXISTS spend(id INTEGER PRIMARY KEY, hier_dir TEXT NOT NULL, team TEXT, run TEXT, item INTEGER, unit TEXT NOT NULL, micros INTEGER NOT NULL, what TEXT NOT NULL, \"by\" TEXT NOT NULL, session TEXT, ts_ms INTEGER NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS spend_dir ON spend(hier_dir, unit)",
     ];
 
     /// <summary>

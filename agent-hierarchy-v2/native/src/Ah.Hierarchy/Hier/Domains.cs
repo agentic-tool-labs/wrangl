@@ -215,6 +215,26 @@ internal sealed class ResourcesDomain(HierLib lib, string homeStateDirectory) : 
     ];
 }
 
+[StateDomain("spend", "spend")]
+internal sealed class SpendDomain(HierLib lib, string homeStateDirectory) : HierDomain(lib, "spend", "spend")
+{
+    public override bool HomeScoped => true;
+
+    public override string StateDirectory(RequestContext context) => homeStateDirectory;
+
+    public override string StateDirectory(RequestContext context, ReadOnlyMemory<byte> argsJson) => homeStateDirectory;
+
+    // ah2-512: the ledger lives only in the spend table
+    public override bool DbOnly => true;
+
+    private static OpResult DbOnlyBody(OpCall call, IStoreWriteContext? writer) => new(false, default, $"spend.{call.Op} is db-only", "op_failed");
+
+    public override IReadOnlyList<StateOp> Ops =>
+    [
+        Write("add", OpStyle.Append, false, DbOnlyBody) with { DbBody = HierLib.SpendAddDb },
+    ];
+}
+
 [StateDomain("jobs", "jobs")]
 internal sealed class JobsDomain(HierLib lib) : HierDomain(lib, "jobs", "jobs")
 {

@@ -48,7 +48,8 @@ public sealed record HierarchyEnvironment(
     IUsageRows? UsageRows = null,
     Func<string, long?>? DomainSeq = null,
     Func<IReadOnlyList<ResourceRow>>? ResourceRows = null,
-    IProcessTable? ProcessTable = null);
+    IProcessTable? ProcessTable = null,
+    Func<string, string?, JsonArray>? Spend = null);
 
 /// <summary>
 /// Where the messages live when the <c>msgs</c> domain is in <c>db</c> mode, with the same meaning of <c>Modes</c> and
@@ -112,6 +113,7 @@ internal sealed partial class HierLib
     private readonly Func<IReadOnlyList<KeyValuePair<string, string>>>? _knownDirRows;
     private readonly Func<string, long?>? _domainSeq;
     private readonly Func<IReadOnlyList<ResourceRow>>? _resourceRows;
+    private readonly Func<string, string?, JsonArray>? _spend;
     private readonly IProcessInspector _processes;
     private readonly IProcessTable? _processTable;
 
@@ -120,6 +122,7 @@ internal sealed partial class HierLib
         ArgumentNullException.ThrowIfNull(e);
         _qaJobBodies = e.QaJobBodies;
         _resourceRows = e.ResourceRows;
+        _spend = e.Spend;
         _processes = e.Processes;
         _processTable = e.ProcessTable;
         _knownDirRows = e.KnownDirRows;

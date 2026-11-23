@@ -1336,6 +1336,9 @@ internal sealed partial class HierLib
         // ah2-509: not an entry: the resources table and the process table, read now (the recording source records it)
         public JsonArray Resources() => _lib.LiveResourceJson();
 
+        // ah2-512: not an entry: the spend ledger, read now (the recording source records it)
+        public JsonArray Spend(string dir, string? team) => _lib.SpendJson(dir, team);
+
         public JsonArray Subagents(string sessionId) =>
             Get(string.Empty, StatusKind.Subagents, sessionId).Member("rows") is { IsArray: true } rows ? rows.AsArray() : [];
 

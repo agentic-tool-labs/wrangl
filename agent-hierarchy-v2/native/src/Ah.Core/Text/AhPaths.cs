@@ -36,6 +36,8 @@ public static class AhPaths
 
     public const string ResourcesStateDir = "agent-hierarchy.resources.state";
 
+    public const string SpendStateDir = "agent-hierarchy.spend.state";
+
     public const string UsageCacheFile = "agent-hierarchy.usage-cache.json";
 
     public const string UsageStateDir = "agent-hierarchy.usage.state";

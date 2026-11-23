@@ -136,6 +136,73 @@ roster's source and the fixes; hooks fall back to the default block and warn;
 publish come separately, as [role packs](custom-roles.md#6-role-packs).
 
 
+## Share a roster
+
+A roster kit is one JSON file (1 MiB at most) that packs a named roster so
+another machine can import it. Export it, send the file, and the other person
+reads a dry run before anything is written.
+
+**What a kit carries:** the roster block (`route`, `members`, `max_lanes`,
+`orchestrator_model`); the row of each custom role a member uses, with the text
+of its agent file; a reference (`from` and `pin`) for each pack role; the row of
+a built-in role only if you changed it. Per-team lane limits are not part of a
+roster and are not carried.
+
+**What a kit never carries:** param values, roster rules in this version, pack
+agent text, permission rules, hooks, settings or setup commands.
+
+```
+ah roster kit export game-dev --out game-dev.kit.json
+ah roster kit import game-dev.kit.json --dry-run
+ah roster kit import game-dev.kit.json --pin sha256:<the pin the dry run printed>
+```
+
+The export refuses to replace an existing file unless you add `--force`, and it
+prints the same listing a dry run would.
+
+**The dry run writes nothing.** It lists each file and key an import would
+write, marked `new`, `identical` or `conflict`. It prints every agent file in
+full, with findings and flagged tools, every pack reference with the command to
+adopt it, and the kit's pin last. Read the agent text: it becomes a file a
+session will run as.
+
+**An import writes nothing unless the dry run is clean and the pin matches.**
+Any finding or conflict refuses the whole import, and nothing is written. Fix
+the kit or the clash, run the dry run again, and use the new pin.
+
+- **Pack roles come first.** An import never adopts a pack. If a member uses a
+  pack role you have not adopted, the import is refused and the dry run prints
+  `ah roster role set <role> --from <plugin>@<marketplace>:<role> --dry-run`.
+  Run that, adopt the pack, then import.
+- **Conflicts.** A roster or role name that exists with a different row, or an
+  agent file that exists with different text, is a conflict. `--as <name>`
+  renames the imported roster. Roles are not renamed: remove or rename the
+  local one, or edit the kit. Importing the same kit twice is safe: the second
+  time everything reads `identical` and nothing is written.
+- **Agent files** are checked by the same rules as plugin agents. A file with
+  `hooks`, MCP server settings or `permissionMode`, or with hidden characters, is
+  refused. So is a file with no `tools:` list, because that agent would inherit
+  every tool. This includes roles made with `--scaffold`, which writes no
+  `tools:` list: add one before you export.
+- **Members** with `command`, `args`, `kind`, `harness`, `adapter` or `autoMode`
+  are refused, and so is any key a kit does not list.
+- **Where it writes.** Config rows go to the `--level` file (default `global`);
+  `--level repo` writes the committed repo file and the dry run says so. Agent
+  files go to `~/.claude/agents` (`--agents user`, the default) or
+  `<repo>/.claude/agents` (`--agents repo`). An agent file is never replaced. If
+  the config write fails, the agent files this import created are removed again.
+
+**It never writes** a permission rule, hook or setting, a param value, an
+`activeRoster` choice (run `ah roster roster use <name>` yourself), a pack
+adoption, or a team. It runs nothing.
+
+**Who can commit.** A team member session, or any session while a pipeline run
+is live in the checkout, cannot commit an import; run it from your own
+top-level session. The dry run works anywhere. The pin only proves the file did
+not change after you read the dry run: nothing else asks you to confirm, so
+read the listing before you pass it. See
+[`ah roster kit` in the CLI reference](cli-tools.md#export-a-roster-kit).
+
 ## Starting a team, or several
 
 `/wrangl:agent-roster create` starts the resolved roster as a live **team**: the roster is the definition, the team

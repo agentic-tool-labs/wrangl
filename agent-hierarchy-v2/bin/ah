@@ -39,7 +39,7 @@ export AH_PLUGIN_ROOT
 
 if [ "$#" -eq 0 ]; then
   # The binary's own no-argument usage (CliApp.AhUsage), word for word, checked by HelpVerbTests; `ah --help` reaches the binary and prints it on stdout.
-  echo "usage: ah <roster|progress|ledger|msg|qa|looks|alarm|proc|admin|view|allow|rules|lessons|test|usage|usage-report|herdr|backlog|work|adr|db|issue-intake|hook|where> [args]" >&2
+  echo "usage: ah <roster|progress|ledger|msg|qa|looks|alarm|proc|admin|view|allow|rules|lessons|test|usage|usage-report|spend|herdr|backlog|work|adr|db|issue-intake|hook|where> [args]" >&2
   exit 2
 fi
 

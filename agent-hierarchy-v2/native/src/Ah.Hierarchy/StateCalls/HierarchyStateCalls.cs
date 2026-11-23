@@ -122,6 +122,9 @@ public interface IHierarchyStateCalls
 
     /// <summary>One op (<c>claim</c>, <c>release</c>, <c>leave</c>, <c>reap</c>, or the read <c>rows</c>) of the machine-wide <c>resources</c> domain (adr-36). Returns what the op returned.</summary>
     JsonValue Resources(string op, JsonObject args, StateCallOptions? options = null);
+
+    /// <summary>One op (<c>add</c>) of the machine-wide <c>spend</c> ledger domain (ah2-512, adr-37). Returns what the op returned.</summary>
+    JsonValue Spend(string op, JsonObject args, StateCallOptions? options = null);
 }
 
 internal sealed class HierarchyStateCalls(HierLib lib, IStateWriter? writer, IRosterCore roster, IAhEnvironment environment) : IHierarchyStateCalls
@@ -404,6 +407,9 @@ internal sealed class HierarchyStateCalls(HierLib lib, IStateWriter? writer, IRo
 
     public JsonValue Resources(string op, JsonObject args, StateCallOptions? options = null) =>
         Run("resources", op, args, lib.CwdContext(), options ?? new StateCallOptions());
+
+    public JsonValue Spend(string op, JsonObject args, StateCallOptions? options = null) =>
+        Run("spend", op, args, lib.CwdContext(), options ?? new StateCallOptions());
 
     public void AppendUsage(JsonValue record, StateCallOptions? options = null) =>
         Run("usage", "append", new JsonObject { ["rec"] = record }, lib.CwdContext(), options ?? Hook);
