@@ -4,7 +4,7 @@
 // those, so they are labelled as seen here). The team and party reads are the web's own select.js, the plan reads plans-model.js,
 // both byte-identical copies (kept honest by tests). Message rows are the web's Live feed rows (web/ui/app.js FeedRow).
 import { askerLabel, teamRows, partyName } from "./select.js";
-import { STATES, age, sidebarModel, qaModel, qaSubs } from "./model.js";
+import { STATES, age, sidebarModel, qaModel, qaSubs, soOnce } from "./model.js";
 import { planChangesId, STATE_LABEL, msOf } from "./plans-model.js";
 
 // The newest exchanges and plan changes read per team, the rows the stream keeps, the Now strip's rows, the seen changes kept.
@@ -73,8 +73,10 @@ export function seenStates(memo, slices, now) {
 }
 
 // The feed: the Now strip, the stream grouped by minute with the "new since you looked" divider, and what the chips offer.
-// opts: looked (ms, 0 = never), off (kind keys hidden), internal (show internal messages), team (`dir/name` or null), seen (seenStates events).
+// opts: looked (ms, 0 = never), off (kind keys hidden), internal (show internal messages), team (`dir/name`, a list of them for a
+// team's Desk scope (desk-per-team D7), or null), seen (seenStates events).
 export function feedModel(slices, now, { looked = 0, off = [], internal = false, team = null, seen = [] } = {}) {
+  const inTeam = (id) => !team || (Array.isArray(team) ? team.includes(id) : id === team);
   const side = sidebarModel(slices, now);
   const teams = flat(side.teams);
   const { of, byKey } = memberIndex(teams);
@@ -145,7 +147,7 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
 
   const hidden = new Set(off);
   const rows = all
-    .filter((e) => !hidden.has(e.kind) && (internal || !e.internal) && (!team || e.teamId === team))
+    .filter((e) => !hidden.has(e.kind) && (internal || !e.internal) && inTeam(e.teamId))
     .sort((a, b) => b.at - a.at || (a.key < b.key ? 1 : -1))
     .slice(0, FEED_SHOWN);
   const newCount = looked > 0 ? rows.filter((e) => e.at > looked).length : 0;
@@ -163,7 +165,8 @@ export function feedModel(slices, now, { looked = 0, off = [], internal = false,
   });
   if (newCount > 0 && newCount === rows.length) groups.push({ key: "new", divider: newCount });
 
-  const shownTeams = team ? teams.filter((t) => `${t.dir}/${t.name}` === team) : teams;
+  // the id, not dir/name: the sidebar's name can differ from the id's; a tied Sub-Orchestrator once, as the pane draws it (ah2-468 O11)
+  const shownTeams = flat(soOnce(side.teams, slices)).filter((t) => inTeam(t.id));
   const busy = shownTeams.flatMap((t) => t.members.filter((m) => m.state === "working" || m.state === "blocked").map((m) => ({ ...m, team: t.label ?? t.name })))
     .sort((a, b) => Number(a.state === "blocked") - Number(b.state === "blocked"));
   return {

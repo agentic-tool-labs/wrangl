@@ -81,7 +81,7 @@ function memberRow(key, m, now) {
   if (key.endsWith("/@orchestrator") && m.liveness === "live" && (state === "idle" || state === "unknown")) state = m.turn_open === true ? "working" : "running";
   const s = STATES[state];
   const what = m.item || (state === "blocked" ? "blocked" : s.word.toLowerCase());
-  return { key, name, state, ...s, what, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
+  return { key, name, state, ...s, what, work: m.item || null, age: since(m.state_at, now), at: Date.parse(m.state_at ?? "") || 0,
     pane: memberPane(key, m), served: typeof m.role === "string" ? m.role : "", column: Number.isInteger(m.column) ? m.column : null };
 }
 
@@ -100,7 +100,8 @@ const roleIn =(mb, lane, team) => mb.served || (mb.name === "orchestrator" ? (la
 export function teamTree(tm, depth = 0, lane = Boolean(tm.parent)) {
   const orch = tm.members.find((mb) => mb.name === "orchestrator");
   const extras = (key, d) => (tm.under?.get(key) ?? []).map((x) => ({ kind: x.kind, key: x.key, depth: d, role: x.role ?? "", item: x, alerts: [], children: [] }));
-  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane, tm.name), lane ? tm.name : null), alerts: tm.alerts.filter((a) => a.member === mb.key), children: extras(mb.key, d + 1) });
+  // `as` (soOnce): a lane's lead row reads as the parent's member name; its tooltip still says Sub-Orchestrator
+  const node = (mb, d) => ({ kind: "member", ...mb, depth: d, ...memberLabel(mb.key, mb.name, roleIn(mb, lane, tm.name), lane ? tm.name : null), ...(mb.as ? { label: mb.as } : {}), alerts: tm.alerts.filter((a) => a.member === mb.key), children: extras(mb.key, d + 1) });
   const under = (d) => [
     ...tm.members.filter((mb) => mb !== orch).map((mb) => node(mb, d)),
     ...tm.lanes.map((l) => ({ kind: "lane", key: `lane:${l.id}`, depth: d, team: l, children: teamTree(l, d + 1, true) })),
@@ -187,7 +188,7 @@ export function paneTree(memo, key, slices, now, { shown, open, track }) {
   const m = sidebarModel(slices, now);
   const inFlight = inFlightTo(slices);
   const reports = reportsFrom(slices);
-  const teams = shown(m.teams);
+  const teams = shown(soOnce(m.teams, slices));
   const of = (tm) => {
     const tree = teamTree(tm);
     // a job's or subagent's parent row, for its tooltip: the member it is a child of; none under the team's header
@@ -258,6 +259,53 @@ export function sidebarModel(slices, now) {
   return { teams: top, count: teams.length, needsYou, blocked: teams.reduce((n, t) => n + t.blocked, 0) };
 }
 
+// ah2-468: a lane's Sub-Orchestrator is one session the pane would draw twice, as a member row of its parent and as the lane's own
+// orchestrator. The tie is the parent's topology `nodes.live_paths` {<member key>: "/t/<dir>/<lane>/m/%40orchestrator"}, which ahd sets
+// only when the lane's orchestrator is the same session as that member (native Ah.Watch TreeComposers.cs TreeIds.LivePathOf, its
+// path segments ViewBuilder.Seg: encodeURIComponent's unreserved set, upper-case %XX). Where it holds, the parent's row goes and the
+// lane's lead row reads as the member's name and takes what only the parent's row carried: its work text, alerts, jobs and subagents,
+// and the terminal it focuses (the lead row's own value wins). The parent's counts drop that member's state (served counts count
+// member states, TreeComposers.cs ~1488). No tie (closed stream, no session on one side): both rows stay, as before.
+// The pane's tree only (paneTree): the Graph and every other reader keep sidebarModel's teams as served.
+export function soOnce(teams, slices) {
+  const under = new Map(teams[0]?.under ?? []); // one map for every team (sidebarModel), copied once and shared again
+  const seg = (s) => encodeURIComponent(s);
+  const fix = (tm) => {
+    const t = { ...tm, under, lanes: tm.lanes.map(fix) };
+    const paths = Object.entries(body(slices, `topology:${tm.id}`)?.nodes?.live_paths ?? {});
+    for (const l of t.lanes) {
+      // TreeIds.NodePath: the lane's real team name (its id's, not the summary's name) and the member "@orchestrator", each Seg-escaped
+      const path = `/t/${seg(l.dir)}/${seg(l.id.slice(l.dir.length + 1))}/m/${seg("@orchestrator")}`;
+      const so = t.members.find((mb) => paths.some(([k, p]) => k === mb.key && p === path));
+      const lead = l.members.find((mb) => mb.name === "orchestrator");
+      if (!so || !lead) continue;
+      t.members = t.members.filter((mb) => mb !== so);
+      t.working = Math.max(0, t.working - Number(so.state === "working"));
+      t.blocked = Math.max(0, t.blocked - Number(so.state === "blocked"));
+      const merged = { ...lead, as: so.name, work: lead.work ?? so.work, what: lead.work || !so.work ? lead.what : so.what, pane: lead.pane ?? so.pane };
+      l.members = l.members.map((mb) => (mb === lead ? merged : mb));
+      const own = new Set(l.alerts.filter((a) => a.member === lead.key).map((a) => a.key));
+      l.alerts = [...l.alerts, ...t.alerts.filter((a) => a.member === so.key && !own.has(a.key)).map((a) => ({ ...a, member: lead.key }))];
+      t.alerts = t.alerts.filter((a) => a.member !== so.key);
+      const leadUnder = under.get(lead.key) ?? [];
+      const ids = new Set(leadUnder.map((x) => x.key));
+      if (under.has(so.key)) under.set(lead.key, [...leadUnder, ...under.get(so.key).filter((x) => !ids.has(x.key))]);
+      under.delete(so.key);
+    }
+    return t;
+  };
+  return teams.map(fix);
+}
+
+// A pinned Desk's scope (spec desk-per-team D7): the pin and its lanes, recursively, from sidebarModel's `teams` tree; never a
+// lane's parent. A pin not in the tree (not loaded yet, closed) is a scope of the pin alone.
+export function teamScope(teams, pin) {
+  const find = (list) => { for (const t of list) { if (t.id === pin) return t; const f = find(t.lanes); if (f) return f; } return null; };
+  const ids = (t) => [t.id, ...t.lanes.flatMap(ids)];
+  const t = find(teams);
+  return t ? ids(t) : [pin];
+}
+
 // The live terminal a member row focuses: the one a live member registered from (the orchestrator's own, which ah never spawned
 // and so never labelled; a gone or stale member serves no pane), else, E3 (docs/herdr-desktop/evidence.md), the one live
 // terminal labelled ah.name=<member>; null otherwise. On a herdr machine `target` (target-model.js), ah's pane id is the address with
@@ -297,7 +345,7 @@ export function deskModel(slices, now) {
   const m = sidebarModel(slices, now);
   const all = [];
   const walk = (list) => list.forEach((t) => { all.push(t); walk(t.lanes); });
-  walk(m.teams);
+  walk(soOnce(m.teams, slices)); // a tied Sub-Orchestrator counts once, as the pane draws it (ah2-468 O6)
   let newest = null;
   const seen = (at, text, team) => { if (at > (newest?.at ?? 0)) newest = { at, text, team }; };
   for (const t of all) {
@@ -371,8 +419,9 @@ export const historyReply = (x) => ({
 // The Q&A window: For you cards grouped by team (oldest first within a team), History across teams (newest first, at most 20),
 // and the count, the sum of `waiting_on_you` (never `needs_you`, which also counts blocked members). A team with nothing open
 // or no slice yet has no group. `loaded` is false until the team list has arrived.
-export function qaModel(slices, now) {
-  const all = runningTeams(slices);
+// `scope` (a team's Desk, desk-per-team D7: teamScope's ids): its teams only, in the groups, History and count; none is every team.
+export function qaModel(slices, now, scope = null) {
+  const all = runningTeams(slices).filter(({ id }) => !scope || scope.includes(id));
   const teams = [];
   const history = [];
   let count = 0;
@@ -404,18 +453,18 @@ export function qaModel(slices, now) {
 // The running teams the History filter offers and reads (qa-history-model.js historyDirs): name, dirId, and the hierarchy dir its
 // questions: slice names (the ah fallback's --dir).
 export const historyTeams = (slices) => runningTeams(slices).map(({ t, id, b }) =>
-  ({ name: b.name ?? t.name, dirId: t.dir_id ?? null, hierDir: body(slices, questionsId(`team:${id}`))?.dir ?? null }));
+  ({ id, name: b.name ?? t.name, dirId: t.dir_id ?? null, hierDir: body(slices, questionsId(`team:${id}`))?.dir ?? null }));
 
 // The Q&A window's list never blanks on a refresh (atp-1708). `qa` is {shown, pending}: `shown` the slices drawn (a copy, so
 // ages stay live), `pending` whether the live slices give a different list ("Updates available"). Live slices that are not a
 // whole answer yet (`ready` false: first load, a resync that cleared them) change nothing. `take` (auto-update on, or the
 // Updates available click) takes them at once.
 const qaSig = (m) => JSON.stringify([m.count, m.teams, m.history], (k, x) => (k === "age" ? undefined : x));
-export function qaRefresh(qa, slices, now, take, ready) {
-  const next = qaModel(slices, now);
+export function qaRefresh(qa, slices, now, take, ready, scope = null) {
+  const next = qaModel(slices, now, scope);
   if (!ready || !next.loaded) return qa;
   if (!qa?.shown || take) return { shown: new Map(slices), pending: false };
-  return { shown: qa.shown, pending: qaSig(qaModel(qa.shown, now)) !== qaSig(next) };
+  return { shown: qa.shown, pending: qaSig(qaModel(qa.shown, now, scope)) !== qaSig(next) };
 }
 
 // One For you card. `key` keeps a card's local state (selection, sending) across polls: team + run + id, or the item key and the

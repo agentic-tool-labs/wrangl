@@ -28,7 +28,8 @@ export const FLOW = { card: { w: 220, h: 64 }, row: { w: 200, h: 36 }, work: 20,
 // first the members in no lane, then one band per leader in name order, holding the leader and its lane's members; each card of a lane
 // carries `band`, its band's extent across the columns. With lanes or a deputy every card carries `routed`, which has flowLinks route
 // round them (laneRoutes).
-export function flowLayout(nodes, active, orient) {
+// k: the zoom the layout is drawn at; below WORK_MIN_K no card draws its work line, so none is taller for it (ah2-456 N1).
+export function flowLayout(nodes, active, orient, k = 1) {
   const horizontal = orient !== "vertical";
   const byName = [...nodes].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   const leaders = byName.filter((n) => n.lane === n.id);
@@ -36,7 +37,7 @@ export function flowLayout(nodes, active, orient) {
   const bands = [[], ...leaders.map(() => [])];
   byName.forEach((n) => bands[bandOf.get(n.lane || "") ?? 0].push(n));
   // a full test run in the Test column is a card; any other job or subagent a row (flowExtras)
-  const size = (n) => (n.item ? (n.after ? FLOW.row : n.item.kind === "job" && n.column === TEST_COLUMN ? FLOW.card : FLOW.row) : active.has(n.id) ? (n.work ? { w: FLOW.card.w, h: FLOW.card.h + FLOW.work } : FLOW.card) : FLOW.row);
+  const size = (n) => (n.item ? (n.after ? FLOW.row : n.item.kind === "job" && n.column === TEST_COLUMN ? FLOW.card : FLOW.row) : active.has(n.id) ? (drawsWork(n, active, k) ? { w: FLOW.card.w, h: FLOW.card.h + FLOW.work } : FLOW.card) : FLOW.row);
   const along = (n) => (horizontal ? size(n).h : size(n).w);
   const step = horizontal ? FLOW.card.w + FLOW.lane : FLOW.card.h + FLOW.lane;
   const pos = new Map();
@@ -618,6 +619,8 @@ export function underLinks(nodes, rects, orient) {
 export const ZOOM = { min: 0.25, max: 4, fitMax: 1.4, step: 1.25, pan: 60 };
 // ah2-450 G4: below this zoom a card's work line (11 px text) is under 7 px, too small to read, and is hidden.
 export const WORK_MIN_K = 0.65;
+// ah2-456 N1: whether a node's card draws its work line, and so is FLOW.work taller: it is working, it has a title, and zoom k shows it.
+export const drawsWork = (n, active, k = 1) => active.has(n.id) && Boolean(n.work) && k >= WORK_MIN_K;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const round = (n) => Math.round(n * 10) / 10;
 

@@ -18,9 +18,7 @@ internal static class TeamScopes
     private static string Transport(RosterContext c) => c.Services.Launch!.Transports.Detect();
 
     /// <summary>Whether <paramref name="doc"/> is an implicit team (ah2-34) that no member has joined: <c>implicit</c> is boolean true and <c>members</c> an empty array.</summary>
-    internal static bool IsEmptyImplicitTeam(JsonValue doc) =>
-        doc.Member("implicit") is { IsBool: true } flag && flag.AsBool()
-        && doc.Member("members") is { IsArray: true } none && none.AsArray().Count == 0;
+    internal static bool IsEmptyImplicitTeam(JsonValue doc) => Ah.Roster.RosterModule.IsEmptyImplicitTeam(doc);
 
     /// <summary>A member-name suffix a Herdr agent name can carry: a dash, then one or more of <c>[a-z0-9_-]</c>.</summary>
     internal static bool ValidHerdrSuffix(string suffix)

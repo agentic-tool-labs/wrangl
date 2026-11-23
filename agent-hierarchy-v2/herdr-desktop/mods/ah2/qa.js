@@ -7,7 +7,7 @@ import { div } from "gpui-kit";
 import { v_flex, h_flex, Button, Popover, Tabs, Tab, Input, InputState, TextView } from "gpui-base";
 import { ah } from "./ah.js";
 import { Buffer } from "buffer";
-import { askerText, qaModel, qaRefresh, canSend, canDismiss, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams } from "./model.js";
+import { askerText, qaModel, qaRefresh, canSend, canDismiss, sendAnswer, loadingOf, readThread, descFold, threadStart, historyTeams, sidebarModel, teamScope } from "./model.js";
 import { settings } from "./settings.js";
 import { descriptionBlocks, inlineParts } from "./plans-model.js";
 import { toggle, DISMISS, DIRECTION, answerText, classLabel } from "./questions-model.js";
@@ -72,15 +72,22 @@ function histAsk(v, filter, cx) {
   if (filterActive(filter)) histFetch(v, cx);
 }
 
+// A team's Desk (v.team, desk-per-team D7): the scope's team ids, else null (every team). History's filters read only its dirs.
+// ponytail: the scope filters what is drawn only; every open team Desk long-polls every team's Q&A, Feed and Graph slices. Scope
+// qaSubs/feedSubs/graphSubs if windows multiply.
+export const qaScope = (v) => (v.team ? teamScope(sidebarModel(v.st.slices, Date.now()).teams, v.team) : null);
+const scopedHistoryTeams = (v, scope = qaScope(v)) => historyTeams(v.st.slices).filter((tm) => !scope || scope.includes(tm.id));
+
 // The list reads for v.hist as it stands, off the UI thread; only the newest lands. Load more is one round from the cursors; a first
 // page or a refresh reads from the top, a refresh as many rounds as are loaded (historyAsk makes that 1).
 function histFetch(v, cx) {
   const h = v.hist;
-  const dirs = historyDirs(historyTeams(v.st.slices), h.filter.team);
+  const scope = qaScope(v);
+  const dirs = historyDirs(scopedHistoryTeams(v, scope), h.filter.team);
   cx.spawn(async (cx) => {
     const sleep = (ms) => cx.sleep(ms);
     const read = v.link ? (path) => v.link.read(path, 15000, sleep) : null;
-    v.hist = historyTake(v.hist, h.seq, await historyReads(read, dirs, h.filter, Date.now(), h.more ? h.next : null, h.more ? 1 : h.rounds, ah().exec, sleep));
+    v.hist = historyTake(v.hist, h.seq, await historyReads(read, dirs, h.filter, Date.now(), h.more ? h.next : null, h.more ? 1 : h.rounds, ah().exec, sleep, scope));
     cx.notify();
   });
 }
@@ -90,7 +97,7 @@ function histFetch(v, cx) {
 // A filtered History refreshes with its filter when the list moves (`cx`, from the poll or a click).
 export function qaTake(v, take = settings().autoQa, cx = null) {
   const was = v.qa?.shown;
-  v.qa = qaRefresh(v.qa, v.st.slices, Date.now(), take, !loadingOf(v, true));
+  v.qa = qaRefresh(v.qa, v.st.slices, Date.now(), take, !loadingOf(v, true), qaScope(v));
   if (v.qa?.shown !== was) {
     qaPrune(v);
     if (cx && v.hist && filterActive(v.hist.filter)) {
@@ -102,7 +109,7 @@ export function qaTake(v, take = settings().autoQa, cx = null) {
 
 // A card whose row left what is drawn goes, with its selection and its Other input (the Q&A window: its shown slices).
 export function qaPrune(v) {
-  const live = new Set(qaModel(v.qa?.shown ?? v.st.slices, Date.now()).teams.flatMap((tm) => tm.cards.map((c) => c.key)));
+  const live = new Set(qaModel(v.qa?.shown ?? v.st.slices, Date.now(), qaScope(v)).teams.flatMap((tm) => tm.cards.map((c) => c.key)));
   for (const k of v.cards.keys()) if (!live.has(k)) v.cards.delete(k);
   for (const [k, inp] of v.inputs) {
     if (!live.has(k)) {
@@ -167,8 +174,9 @@ export function qaView(v, t, close) {
   // What was last taken (qaTake): a refresh in flight, a failed one or a resync never blanks it (atp-1708).
   // `m` the live slices (loading only), `d` what is drawn
   const shown = v.qa?.shown ?? null;
-  const m = qaModel(v.st.slices, now);
-  const d = shown ? qaModel(shown, now) : m;
+  const scope = qaScope(v);
+  const m = qaModel(v.st.slices, now, scope);
+  const d = shown ? qaModel(shown, now, scope) : m;
   // Loading until a reply has answered the whole sub set once: the questions: ids join it only after the first reply names the teams.
   const loading = loadingOf(v, m.loaded);
   let body;
@@ -556,7 +564,7 @@ function histControls(v, t) {
       .accessibility_label("Search questions and replies")
       .on_mouse_down("left", stop)
       .child(Input.new(v.histInput).flex_1().h_full().text_size(12).text_color(t.foreground)))
-    .child(menu("team", "Team", [[null, "All teams"], ...teams.map((n) => [n, n])], f.team, "team"))
+    .when(!v.team, (el) => el.child(menu("team", "Team", [[null, "All teams"], ...teams.map((n) => [n, n])], f.team, "team"))) // a team's Desk: no team menu (D7)
     .child(menu("time", "Time", TIMES, f.time, "time"))
     .child(menu("state", "State", STATES, f.state, "state"))
     .when(on, (el) => el.child(Button.new("qa-hf-clear")

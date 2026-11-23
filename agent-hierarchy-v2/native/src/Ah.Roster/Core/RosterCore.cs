@@ -329,7 +329,13 @@ internal sealed partial class RosterCore(
         return ProcessStart.IsSame(ProcessStart.Compare(current, () => processTable?.LocalStartTime(pid), text.AsString()));
     }
 
-    public IReadOnlyList<string?> OwnedTeams(string hierarchyDirectory, TeamInvoker invoker)
+    public IReadOnlyList<string?> OwnedTeams(string hierarchyDirectory, TeamInvoker invoker) =>
+        [.. ImplicitTeams.WithoutYielded(OwnedTeamRecords(hierarchyDirectory, invoker), static t => t.Team).Select(static t => t.Name)];
+
+    public IReadOnlyList<string?> AllOwnedTeams(string hierarchyDirectory, TeamInvoker invoker) =>
+        [.. OwnedTeamRecords(hierarchyDirectory, invoker).Select(static t => t.Name)];
+
+    private List<(string? Name, JsonValue Team)> OwnedTeamRecords(string hierarchyDirectory, TeamInvoker invoker)
     {
         ArgumentNullException.ThrowIfNull(invoker);
         if (invoker.Pid is null && string.IsNullOrEmpty(invoker.SessionId))
@@ -339,12 +345,13 @@ internal sealed partial class RosterCore(
 
         var names = ListTeamNames(hierarchyDirectory).ToList();
         names.Sort(StringComparer.Ordinal);
-        var result = new List<string?>();
+        var result = new List<(string? Name, JsonValue Team)>();
         foreach (var name in new string?[] { null }.Concat(names))
         {
-            if (TeamOwnedBy(ReadTeamRecord(hierarchyDirectory, name), invoker))
+            var team = ReadTeamRecord(hierarchyDirectory, name);
+            if (TeamOwnedBy(team, invoker))
             {
-                result.Add(name);
+                result.Add((name, team));
             }
         }
 
@@ -361,7 +368,7 @@ internal sealed partial class RosterCore(
 
         var names = ListTeamNames(hierarchyDirectory).ToList();
         names.Sort(StringComparer.Ordinal);
-        var result = new List<string?>();
+        var result = new List<(string? Name, JsonValue Team)>();
         foreach (var name in new string?[] { null }.Concat(names))
         {
             var team = ReadTeamRecord(hierarchyDirectory, name);
@@ -377,11 +384,11 @@ internal sealed partial class RosterCore(
                 && ProcessStart.IsSame(ProcessStart.Compare(registration.Start, () => processTable.LocalStartTime(registration.Pid), recorded.AsString()));
             if (bySession || byPid)
             {
-                result.Add(name);
+                result.Add((name, team));
             }
         }
 
-        return result;
+        return [.. ImplicitTeams.WithoutYielded(result, static t => t.Team).Select(static t => t.Name)];
     }
 
     public TeamLife TeamLifeOf(JsonValue team) => TeamLifeWhy(team).Life;

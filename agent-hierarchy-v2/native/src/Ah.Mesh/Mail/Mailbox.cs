@@ -448,8 +448,16 @@ public interface IMailbox
     /// The address a send is from: the caller's only address, the one in the recipient's team, or the explicit one. A caller with no
     /// address (the user) sends as <c>user</c>, unless <paramref name="adminOrchestrators"/>, the admin's own session's
     /// <c>orchestrator@</c> boxes, decide one: the only one, else the one of <paramref name="teamHint"/> or <paramref name="toTeam"/>.
+    /// With several addresses and none in the recipient's team, the nearest of <paramref name="toTeamAncestors"/> holding exactly one
+    /// of them decides (ah2-472).
     /// </summary>
-    MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null);
+    MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null, IReadOnlyList<string>? toTeamAncestors = null);
+
+    /// <summary>
+    /// The ancestor teams of <paramref name="team"/>, nearest first, by each record's <c>parent.team</c> as <paramref name="lookup"/>
+    /// reads it. Stops at a missing record, a repeated name, or 8 hops.
+    /// </summary>
+    IReadOnlyList<string> TeamAncestors(string? team, Func<string, MeshTeam?> lookup);
 
     /// <summary>The text a SendMessage relay carries for <paramref name="entry"/> in the box of <paramref name="address"/>.</summary>
     string RelayLine(JsonValue entry, string address);

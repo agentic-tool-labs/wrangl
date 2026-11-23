@@ -225,9 +225,11 @@ test("Flow's drawn scale is the fit times the scale, clamped, and every rect is 
     const team = slices.get(`team:${TM4}`);
     const ids = SEL.memberIds(team);
     const nodes = F.flowNodes(slices, team, ids, SEL.laneChildren(slices, team, ids));
-    const lay = F.flowLayout(nodes, F.flowActive(slices, team, nodes), orient);
+    const active = F.flowActive(slices, team, nodes);
     const stage = { w: room.w, h: room.h - FM.LEGEND_H };
-    const k = FM.clampScale(F.fitView(lay.box, stage.w, stage.h).k * scale);
+    const k = FM.clampScale(F.fitView(F.flowLayout(nodes, active, orient).box, stage.w, stage.h).k * scale);
+    // ah2-456 N1: the fit is the titled layout's; the rects are laid out at k
+    const lay = F.flowLayout(nodes, active, orient, k);
     assert.equal(m.k, k);
     for (const c of m.cards) {
       const r = lay.pos.get(c.id);
@@ -643,4 +645,32 @@ test("ah2-450 G6/G7: a working card with a work title is one line taller in the 
     const [a, b] = [pos.get("a"), pos.get("b")];
     assert.ok(orient === "horizontal" ? b.y >= a.y + a.h : b.x >= a.x + a.w, `no overlap, ${orient}`);
   }
+});
+
+test("ah2-456 N1: below WORK_MIN_K a working card with a work title is laid out at its pre-title height", () => {
+  const nodes = [{ id: "a", role: "implementor", name: "a", column: 2, work: true }];
+  for (const orient of ["horizontal", "vertical"]) {
+    assert.equal(F.flowLayout(nodes, new Set(["a"]), orient, F.WORK_MIN_K).pos.get("a").h, F.FLOW.card.h + F.FLOW.work, orient);
+    assert.equal(F.flowLayout(nodes, new Set(["a"]), orient, F.WORK_MIN_K - 0.01).pos.get("a").h, F.FLOW.card.h, orient);
+  }
+  const m = FM.flowModel(slices, TM4, "horizontal", 1, { w: 500, h: 300 });
+  assert.ok(m.k < F.WORK_MIN_K, "the small room draws below the threshold");
+  assert.ok(m.cards.every((c) => c.rect.h <= F.FLOW.card.h * m.k + 1e-9), "no card keeps the title line's height");
+});
+
+test("ah2-456 N2: a vertical lane is taller for the title line only when one of its own cards draws it", () => {
+  const id = `team-summary:${TM4}`;
+  const sum = slices.get(id);
+  const rev = Object.keys(sum.body.member_states).find((m) => m.endsWith("/reviewer"));
+  const idle = new Map(slices);
+  idle.set(id, { ...sum, body: { ...sum.body, member_states: { ...sum.body.member_states, [rev]: { ...sum.body.member_states[rev], state: "idle" } } } });
+  // the fixture's members all fall in Implement; the reviewer gets a lane of its own
+  idle.set(rev, { ...slices.get(rev), body: { ...slices.get(rev).body, column: F.COLUMNS.indexOf("Review") } });
+  const m = FM.flowModel(idle, TM4, "vertical", 1, WIDE);
+  const card = (end) => m.cards.find((c) => c.id.endsWith(end));
+  assert.ok(card("/implementor").active && card("/implementor").card.work, "Implement holds an active titled card");
+  assert.ok(!card("/reviewer").active && card("/reviewer").card.work, "Review holds only an idle titled member");
+  const lane = (text) => m.lanes[m.labels.findIndex((l) => l.text === text)].h / m.k;
+  assert.ok(Math.abs(lane("Implement") - (24 + F.FLOW.card.h + F.FLOW.work)) < 1e-9, "the lane with the drawn title");
+  assert.ok(Math.abs(lane("Review") - (24 + F.FLOW.card.h)) < 1e-9, "the idle lane has no extra height");
 });

@@ -7,7 +7,7 @@ import { DUTY, DUTY_TITLE, laneChildren, memberIds, memberOf, sparksOf, stateWor
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
-import { COLUMNS, FLOW, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, onDuty, runText, subagentsUnder, underLinks, underOf, underTip, workLeaseIds, workTitle } from "./flow-model.js";
+import { COLUMNS, FLOW, WORK_MIN_K, drawsWork, fitView as fitBox, isActive, flowActive, flowCardOf, flowLayout, flowLinks, flowNodes, flowExtras, activityId, columnOf, graphSources, jobsUnder, onDuty, runText, subagentsUnder, underLinks, underOf, underTip, workLeaseIds, workTitle } from "./flow-model.js";
 import { hashOf, memberHref } from "./deeplink.js";
 import { memberLeaseIds } from "./member-model.js";
 import { STATES, sidebarModel, memberPane } from "./model.js";
@@ -484,9 +484,12 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
     layout = flowLayout(nodes, active, picked);
   } else if (!o && room) picked = "horizontal";
   o = o ?? picked ?? "horizontal";
+  // ah2-456 N1/N3: the zoom is read off the layout with its work lines; below WORK_MIN_K the cards are laid out again without them.
+  // fit stays the first layout's, so crossing the threshold changes heights only, never the zoom
+  const fit = layout.box ? fitBox(layout.box, stage.w, stage.h).k : 1;
+  const k = layout.box ? clampScale(fit * scale) : 1;
+  if (k < WORK_MIN_K) layout = flowLayout(nodes, active, o, k);
   const box = layout.box;
-  const fit = box ? fitBox(box, stage.w, stage.h).k : 1;
-  const k = box ? clampScale(fit * scale) : 1;
   const X = (x) => (x - (box?.x ?? 0)) * k;
   const Y = (y) => (y - (box?.y ?? 0)) * k;
   const rect = (r) => ({ x: X(r.x), y: Y(r.y), w: r.w * k, h: r.h * k });
@@ -520,7 +523,7 @@ export function flowModel(slices, team = null, orient = null, scale = 1, room = 
     cards, unders, labels: layout.labels.map((l) => ({ text: l.text, x: X(l.x), y: Y(l.y), i: COLUMNS.indexOf(l.text) })),
     // V10: each lane's column from its header to the stage's foot (vertical: its row, across the laid-out width; the content is centred), and its cards' width for the header's rule
     lanes: layout.labels.map((l) => ({ i: COLUMNS.indexOf(l.text), l })).map(({ i, l }) => (o === "vertical"
-      ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h + (members.some((n) => n.work) ? FLOW.work : 0)) * k, rule: FLOW.card.w * k }
+      ? { i, x: X(l.x), y: Y(l.y), w: (box ? box.w * k : 0) - X(l.x), h: (24 + FLOW.card.h + (members.some((n) => (COLUMNS[n.column] !== undefined ? n.column : 2) === i && drawsWork(n, active, k)) ? FLOW.work : 0)) * k, rule: FLOW.card.w * k }
       : { i, x: X(l.x), y: Y(l.y), w: FLOW.card.w * k, h: Math.max(box ? box.h * k : 0, stage.h) - Y(l.y), rule: FLOW.card.w * k })), bands: layout.bands.map((b) => ({ id: b.id, name: b.name, ...rect(b) })),
     links, dots, rest: fl.rest, said };
 }

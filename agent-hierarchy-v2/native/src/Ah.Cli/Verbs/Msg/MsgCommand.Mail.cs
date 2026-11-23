@@ -319,7 +319,7 @@ internal sealed partial class MsgCommand
         }
 
         var explicitFrom = Str("from");
-        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), team, explicitFrom, string.IsNullOrEmpty(explicitFrom) ? AdminOrchestratorAddresses() : null, Str("team")));
+        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), team, explicitFrom, string.IsNullOrEmpty(explicitFrom) ? AdminOrchestratorAddresses() : null, Str("team"), mailbox.TeamAncestors(team, mailbox.TeamLookup(ctx))));
         var request = new JsonObject
         {
             ["to"] = to,

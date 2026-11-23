@@ -16,7 +16,7 @@ import { boardModel, trackAfter, nothingChanged, ownerOf, readItemLog, workLog, 
 import { paneOfMember } from "./graph-model.js";
 import { streamName, inlineParts } from "./plans-model.js";
 import { loadingOf, terminalFinder, memberName } from "./model.js";
-import { card, note, empty, clock } from "./qa.js";
+import { card, note, empty, clock, qaScope } from "./qa.js";
 import { markCell } from "./marks.js";
 
 const MONO = "Geist Mono";
@@ -28,7 +28,7 @@ const stop = (_e, cx) => cx.stop_propagation(); // a press on a control must not
 
 // The board's own state, made on first draw: the filters, the change baseline (board-model marker) and the open item sheet.
 // `open`: quiet team ids expanded (main.js subscribes their plan and items); `expand`: column keys drawn whole.
-const stateOf = (v) => (v.kb ??= { link: () => v.link, hide: new Set(), owner: "", blockedOnly: false, changesOnly: false, showFinished: false, open: new Set(), expand: new Set(), blFold: false, waveAll: new Set(), team: null, lane: null, epic: null, deliv: null, crumbOpen: false, only: null, track: loadTrack(Date.now(), STORE), trackRev: 0, handles: null, ownerOpen: false, sel: null, log: null });
+const stateOf = (v) => (v.kb ??= { link: () => v.link, hide: new Set(), owner: "", blockedOnly: false, changesOnly: false, showFinished: false, open: new Set(), expand: new Set(), blFold: false, waveAll: new Set(), team: v.team ?? null, lane: null, epic: null, deliv: null, crumbOpen: false, only: null, track: loadTrack(Date.now(), STORE), trackRev: 0, handles: null, ownerOpen: false, sel: null, log: null });
 
 // What the viewer has seen, kept across restarts (D1): plans-seen.js reads and writes it through this, Herdr's persisted shared
 // store, the mod's settings store (settings.js), under the web's own keys.
@@ -62,7 +62,7 @@ export function boardView(v, t, close) {
   // and the half minute (ages). Herdr redraws every mod on any live change, and a render has 50 ms.
   f.query = v.kbInput?.value() ?? "";
   const key = [v.sliceGen, f.owner, f.blockedOnly, f.changesOnly, f.showFinished, f.query, [...f.hide].join("|"), [...f.open].join("|"), [...f.expand].join("|"), f.blFold, [...f.waveAll].join("|"), f.team, f.lane, f.epic, f.deliv, f.trackRev, f.only?.team, f.only?.stream, Math.floor(Date.now() / 30000)];
-  if (!f.memo || key.some((k, i) => k !== f.memo.key[i])) f.memo = { key, m: boardModel(v.st.slices, Date.now(), f) };
+  if (!f.memo || key.some((k, i) => k !== f.memo.key[i])) f.memo = { key, m: boardModel(v.st.slices, Date.now(), { ...f, scope: qaScope(v) }) };
   const m = f.memo.m;
   // Loading until a reply has answered the whole sub set once: plans join it after the teams, items after the plans.
   const loading = loadingOf(v, m.loaded);
@@ -157,7 +157,7 @@ function filters(v, t, f, m) {
   // the two toggles first: a narrow board scrolls this row sideways, and the team chips are the part that can run long
   const older = m.showFinished ? "Hide older streams" : `Show ${m.agedCount} older ${m.agedCount === 1 ? "stream" : "streams"}`;
   return h_flex().id("kb-filters").h(40).px(16).gap(6).flex_none().items_center().border_b(1).border_color(t.border).overflow_x_scrollbar()
-    .child(crumbsRow(t, f, m))
+    .child(crumbsRow(t, f, m, Boolean(v.team)))
     .when(Boolean(m.stream), (el) => el.child(Button.new("kb-stream").selected(true)
       .h(24).px(8).gap(4).flex().flex_none().items_center().rounded(6).cursor_pointer().text_size(11.5)
       .border(1).border_color(t.border).bg(t.selected).text_color(t.foreground)
@@ -600,9 +600,11 @@ const linkBtn = (t, id, text, act) => Button.new(id).flex().min_w(0).cursor_poin
 
 // The scope breadcrumb (board-kanban.js crumbs): All teams › team › lane › epic › deliverable. A pill above the last goes up to
 // its level; the last opens the next level's menu (Teams, Lanes, Epics, Deliverables) with each choice's card count. A step
-// closes the open sheet, as the web's.
-function crumbsRow(t, f, m) {
-  const last = m.crumbs.length - 1;
+// closes the open sheet, as the web's. `pinned` (a team's Desk, desk-per-team D7): the row starts at the pinned team, with no
+// All teams crumb and so no Teams menu, so no step leaves the pin.
+function crumbsRow(t, f, m, pinned = false) {
+  const crumbs = pinned ? m.crumbs.filter((c) => c.depth > 0) : m.crumbs;
+  const last = crumbs.length - 1;
   const up = (depth) => (cx) => {
     if (depth < 4) f.deliv = null;
     if (depth < 3) f.epic = null;
@@ -635,7 +637,7 @@ function crumbsRow(t, f, m) {
     .child(div().flex_1().min_w(0).truncate().child(c.name))
     .child(div().flex_none().font_family(MONO).text_size(11).text_color(t.muted).child(String(c.n)));
   return h_flex().id("kb-crumbs").gap(4).flex_none().items_center().accessibility_label("Board scope")
-    .children(m.crumbs.map((it, i) => {
+    .children(crumbs.map((it, i) => {
       const sep = i ? [div().flex_none().text_color(t.muted).child("›")] : [];
       if (i < last) return h_flex().gap(4).flex_none().items_center().children(sep)
         .child(pill(Button.new(`kb-crumb-${it.depth}`), it, false).accessibility_label(`Go up to ${it.name}`).on_click((_e, cx) => up(it.depth)(cx)));

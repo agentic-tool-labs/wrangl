@@ -4,6 +4,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.46] - 2026-11-22
+
+### Added
+
+- **A Desk for each team in herdr desktop.** The icon on a team's row in the Wrangl pane opens that team's own
+  Desk window, pinned to the team and its lanes: Sitrep, Q&A, Board, Feed and Graph show only that team, and their
+  team pickers are hidden. Several team Desks can be open at once. The side column and the all-teams Desk are
+  unchanged. Run `ah herdr install` to get the changed mod.
+- **Sitrep is a tab of the team Desk.** It replaces the separate sitrep window, and "Answer in Q&A" switches the
+  same window to its Q&A tab.
+- **`ah roster` accepts `--flag=value`.** A flag word that arrives glued together, as `--team pantry --cwd /p` does
+  from an unsplit zsh variable, is split as a shell would have split it.
+
+### Changed
+
+- **The team row's "Sitrep" pill is an icon.** It opens the team's Desk on its Sitrep tab.
+- **A Sub-Orchestrator shows once in the Wrangl pane.** The lane's lead row carries the member's name and what the
+  parent's row showed; the parent team no longer lists it a second time, and the status bar, the Desk totals and
+  the Feed's Now strip count it once.
+- **An empty team named after the repo steps aside.** A session that works under a team name it chose no longer
+  also owns the empty team its start created: that team is hidden, and its record is cleared when it has no
+  members, streams, open exchanges or unfinished checklist rows.
+
+### Fixed
+
+- **`ah roster quit` reaches members of a lane team.** Mail to a member of a child team is sent from the parent
+  team's address when the sender has none in the child team; it used to fail with `ambiguous_address`.
+- **A lane of idle members is no taller than its cards in the herdr Graph.** A lane grows for a work title only
+  when one of its own members shows one, and a card below zoom 0.65 has no empty title line.
+- **The team-hold test no longer fails on a loaded machine.** It checks what the stop did, not how long it took.
+
 ## [2.0.45] - 2026-11-22
 
 ### Added

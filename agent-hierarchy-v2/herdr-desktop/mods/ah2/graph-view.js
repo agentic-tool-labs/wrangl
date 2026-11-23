@@ -295,7 +295,8 @@ export function graphView(v, t, close, cx) {
     // above the list moves when the teams arrive; the scale controls sit at its end.
     .child(h_flex().h(34).px(16).pt(8).gap(8).flex_none().items_center()
       .child(Tabs.new("graph-tabs").flex_1().min_w(0).gap(2).flex().items_center()
-        .children(loading || v.status === "down" ? [] : m.tabs.map(tab)))
+        // a team's Desk (desk-per-team D7): the pin is the shown team, no team tabs; the row stays, so its height does not change
+        .children(loading || v.status === "down" || v.team ? [] : m.tabs.map(tab)))
       .child(modeTabs(v, t))
       .children(flow ? [orientButton(v, t)] : [])
       .children(scaleBar(v, t, loading || v.status === "down" ? null : m.id, m)))

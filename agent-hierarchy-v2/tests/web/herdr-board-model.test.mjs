@@ -33,6 +33,18 @@ test("the board subscribes per running team and puts the fixture's items in the 
   assert.equal(m.count, 3);
 });
 
+// desk-per-team Amendment 2: a pinned Board (team = the pin, scope its ids) has only its scope's Q&A cards in Waiting on you.
+test("a pinned Board's Waiting on you holds only its scope's Q&A cards; with no scope, every team's as before", () => {
+  const waiting = (o) => boardModel(slices, NOW, o).columns.find((c) => c.key === "waiting").cards.map((x) => (x.qa ? `qa:${x.qa.q.id}` : x.key));
+  const all = ["qa:core:atp-1140", "qa:d8", "qa:d7"];
+  assert.deepEqual(waiting({ team: "a1b2c3d4/ah2-tm4", scope: ["a1b2c3d4/ah2-tm4", "a1b2c3d4/lane-herdr"] }), all);
+  const other = boardModel(slices, NOW, { team: "9f8e7d6c/engram-rc", scope: ["9f8e7d6c/engram-rc"] });
+  assert.deepEqual([other.count, other.columns.find((c) => c.key === "waiting").cards.length], [0, 0], "another team's pin: none of ah2-tm4's");
+  // negative: no scope (or null) is today's column
+  assert.deepEqual(waiting({}), all);
+  assert.deepEqual(waiting({ scope: null }), all);
+});
+
 // One summary changed: the rest of the fixture as is.
 const withSummary = (id, patch) => {
   const s = slices.get(`team-summary:${id}`);

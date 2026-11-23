@@ -1070,7 +1070,26 @@ internal sealed partial class Mailbox
         && r.Get("pid") is { IsNumber: true } pid && double.IsFinite(pid.AsNumber()) && pid.AsNumber() == Math.Floor(pid.AsNumber())
         && hierarchy.Core.PidRunning(pid, r.Get("pid_start"), Ah.Core.Time.LivenessPolicy.RunningOrUnknown);
 
-    public MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null)
+    public IReadOnlyList<string> TeamAncestors(string? team, Func<string, MeshTeam?> lookup)
+    {
+        var chain = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var name = team; !string.IsNullOrEmpty(name) && seen.Add(name) && chain.Count < 8;)
+        {
+            var parent = lookup(name)?.Data.Member("parent") is { IsMap: true } link && link.Member("team") is { IsText: true } t ? t.AsString() : null;
+            if (string.IsNullOrEmpty(parent) || seen.Contains(parent) || lookup(parent) is null)
+            {
+                break;
+            }
+
+            chain.Add(parent);
+            name = parent;
+        }
+
+        return chain;
+    }
+
+    public MailboxOutcome<string> ChooseFrom(IReadOnlyList<string> callerAddresses, string? toTeam, string? explicitFrom = null, IReadOnlyList<string>? adminOrchestrators = null, string? teamHint = null, IReadOnlyList<string>? toTeamAncestors = null)
     {
         if (!string.IsNullOrEmpty(explicitFrom))
         {
@@ -1103,10 +1122,16 @@ internal sealed partial class Mailbox
             return new MailboxOutcome<string>(callerAddresses[0], null);
         }
 
-        var inTeam = callerAddresses.Where(a => a.EndsWith($"@{toTeam}", StringComparison.Ordinal)).ToList();
+        var inTeam = InTeam(toTeam);
         if (inTeam.Count == 1)
         {
             return new MailboxOutcome<string>(inTeam[0], null);
+        }
+
+        // ah2-472: none in the recipient's own team (a child team), so its nearest ancestor holding exactly one decides
+        if (inTeam.Count == 0 && (toTeamAncestors ?? []).Select(InTeam).FirstOrDefault(static held => held.Count == 1) is [var ancestral])
+        {
+            return new MailboxOutcome<string>(ancestral, null);
         }
 
         return new MailboxOutcome<string>(
@@ -1114,5 +1139,6 @@ internal sealed partial class Mailbox
             new MailboxFailure("ambiguous_address", $"this session has several addresses: {string.Join(", ", callerAddresses)}; pass --from <address>", callerAddresses));
 
         static MailboxOutcome<string> Refused(string code, string message) => new(null, new MailboxFailure(code, message));
+        List<string> InTeam(string? team) => callerAddresses.Where(a => a.EndsWith($"@{team}", StringComparison.Ordinal)).ToList();
     }
 }
