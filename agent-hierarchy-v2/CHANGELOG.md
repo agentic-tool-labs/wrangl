@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.48] - 2026-11-23
+
+### Added
+
+- **A background job can be marked long-running.** `ah roster job start --eta server` and
+  `ah roster job extend <id> --eta server` mark a job that is meant to run until it is stopped, such as a preview
+  server. It raises no overdue alarm while its process is alive, and ends like any job when the process dies.
+- **`ah roster checklist add-plan --file <path>`** adds a whole plan to the checklist in one call: one item per
+  heading, or per top-level bullet when the file has no headings, each with its text as the description, in file
+  order. `--sequential` makes each item wait on the one before. Running it again on the same file adds nothing.
+- **`ah qa withdraw <id>`** closes a queued QA entry that nobody has claimed, whatever the machine load. The
+  stall alarm stops for it. A claimed entry is not withdrawn: release or finish it.
+
+### Fixed
+
+- **An explicit `--eta` on `ah roster job start` is applied when the job already exists.** A job a hook had
+  already recorded used to keep its old estimate and drop the flag.
+
 ## [2.0.47] - 2026-11-22
 
 ### Changed

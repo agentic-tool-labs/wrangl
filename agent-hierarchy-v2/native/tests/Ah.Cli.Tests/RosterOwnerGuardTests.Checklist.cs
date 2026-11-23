@@ -187,6 +187,40 @@ public sealed partial class RosterOwnerGuardTests
     private static List<string> Ids(string plain) =>
         [.. plain.Split('\n').Where(static l => l.Contains(" owner=", StringComparison.Ordinal)).Select(static l => l.Split(' ')[0])];
 
+    [Fact]
+    public void AddPlanAddsEachStepInFileOrderWithItsDescriptionAndARerunAddsNothing()
+    {
+        TwoStreamsWithItemA();
+        File.WriteAllText(Path.Combine(Project, "plan.md"), "- Write the parser\n  in ProgressPlan\n- Wire the verb\n- Run the tests\n");
+
+        var first = Run("checklist", "add-plan", "--file", "plan.md", "--stream", "s1", "--sequential", "--team", "tm");
+
+        Assert.Equal(0, first.Code);
+        Assert.DoesNotContain("has no description", first.Stderr, StringComparison.Ordinal);
+        var made = Ah.Core.Json.JsonText.Parse(first.Stdout).Member("items")!.Value.AsArray().Select(static i => i.Member("item")!.Value.AsString()).ToList();
+        Assert.Equal(["write-the-parser", "wire-the-verb", "run-the-tests"], made);
+        var shown = Ah.Core.Json.JsonText.Parse(Run("checklist", "show", "--all", "--team", "tm").Stdout).Member("items")!.Value.AsArray()
+            .Select(static i => i.Member("id")!.Value.AsString()).Where(made.Contains).ToList();
+        Assert.Equal(made, shown);
+        // negative: the first step waits on nothing
+        Assert.Null(AfterOf("s1/write-the-parser"));
+        Assert.Equal("s1/write-the-parser", AfterOf("s1/wire-the-verb"));
+        Assert.Equal("s1/wire-the-verb", AfterOf("s1/run-the-tests"));
+        using (var reader = Ah.StateDb.StateDbModule.OpenReader(_sandbox.AhHome).Reader!)
+        {
+            string? Description(string key) => HierarchyModule.WorkDescription(reader.Query, Hierarchy, HierarchyModule.WorkResolve(reader.Query, Hierarchy, key, "tm").Row!.N);
+            Assert.Equal("Write the parser\nin ProgressPlan", Description("s1/write-the-parser"));
+            Assert.Equal("Run the tests", Description("s1/run-the-tests"));
+        }
+
+        var count = ReadLogLines(LogOf("s1")).Length;
+        var again = Run("checklist", "add-plan", "--file", "plan.md", "--stream", "s1", "--sequential", "--team", "tm");
+
+        Assert.Equal(0, again.Code);
+        Assert.All(Ah.Core.Json.JsonText.Parse(again.Stdout).Member("items")!.Value.AsArray(), static i => Assert.False(i.Member("created")!.Value.AsBool()));
+        Assert.Equal(count, ReadLogLines(LogOf("s1")).Length);
+    }
+
     private void TwoStreamsWithItemA()
     {
         TeamOwnedBy(Self, "{\"s1\":{\"state\":\"open\"},\"s2\":{\"state\":\"open\"}}");

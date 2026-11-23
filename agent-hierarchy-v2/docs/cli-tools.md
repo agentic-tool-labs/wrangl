@@ -774,15 +774,17 @@ An error line fails the entry (use `qa-unknown-set: <set>` for a set `tests/run-
 
 The claimer, the orchestrator of the claimer's team, or the user. Prints `entry <id> queued`.
 
+`<ah> qa withdraw <id> [--reason <text>] [--session <id>] [--json]` closes a queued entry as `withdrawn` (anyone who may submit for its repo; no load gate); a claimed one is refused `qa-claimed` (use `release` or `done`), an ended one prints its state.
+
 #### Look at the QA queue
 
 `<ah> qa status [<id>] [--json]`, `<ah> qa list [--all] [--json]`
 
-One entry's fields, or one line per entry: `<id> <state> <priority> <set> <sha7> requesters=<n> claimer=<addr|-> age=<n>s|m|h`. `list` hides `done` and `failed` unless `--all`. `--json` prints the daemon's answer on one line.
+One entry's fields, or one line per entry: `<id> <state> <priority> <set> <sha7> requesters=<n> claimer=<addr|-> age=<n>s|m|h`. `list` hides `done`, `failed` and `withdrawn` unless `--all`. `--json` prints the daemon's answer on one line.
 
 #### QA exit codes
 
-`ah qa` exits 0 on success (including an empty `next` or `list`), 1 when the daemon refuses or is down (stderr `error: <code>: <message>`; codes `qa-caller-unproven`, `qa-bad-request`, `qa-bad-result`, `qa-unknown-entry`, `qa-not-claimed`, `not-claimer`, `not-allowed`, `qa-store-busy`, `daemon-unavailable`), 2 on a usage error.
+`ah qa` exits 0 on success (including an empty `next` or `list`), 1 when the daemon refuses or is down (stderr `error: <code>: <message>`; codes `qa-caller-unproven`, `qa-bad-request`, `qa-bad-result`, `qa-unknown-entry`, `qa-not-claimed`, `qa-claimed`, `not-claimer`, `not-allowed`, `qa-store-busy`, `daemon-unavailable`), 2 on a usage error.
 
 ### Teams and members: `ah roster`
 
@@ -1312,10 +1314,12 @@ Plain `recover --team` never changes a child's link.
 #### Track a long job
 
 ```
-<ah> roster job start --kind test|build|slot|smoke|bg --label <text> [--eta small|medium|large] [--pid N] [--tool-use-id ID] [--background] [--cap-secs N]
+<ah> roster job start --kind test|build|slot|smoke|bg --label <text> [--eta small|medium|large|server] [--pid N] [--tool-use-id ID] [--background] [--cap-secs N]
 end <id> [--exit <code>]
-extend <id> --eta small|medium|large
+extend <id> --eta small|medium|large|server
 ```
+
+`server`: a job meant to run until stopped; it raises no overdue alarm while its process runs and ends when the process does.
 
 #### Wait for ahd's next event (Orchestrator)
 

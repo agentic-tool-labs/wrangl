@@ -40,7 +40,7 @@ internal static class JobProjection
 
             var row = value.AsObject();
             row["state"] = state.State;
-            row["due_at"] = Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)state.DueMs));
+            row["due_at"] = double.IsFinite(state.DueMs) ? Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)state.DueMs)) : JsonValue.Null;
             row["overdue_by"] = state.OverdueBySeconds is { } over ? JsonValue.FromNumber(Math.Floor(over)) : JsonValue.Null;
         }
     }

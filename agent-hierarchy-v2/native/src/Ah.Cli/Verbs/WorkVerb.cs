@@ -373,6 +373,32 @@ internal static partial class WorkVerb
         }
     }
 
+    /// <summary>A registry write, naming the team of the item whose board card it changes so the read model refreshes that team; empty is a backlog row. The failure, or a null error.</summary>
+    private static (string? Error, bool Conflict) WorkWrite(ServiceGraph g, string dir, JsonObject args, string team)
+    {
+        args["dir"] = dir;
+        args["team"] = team;
+        var result = g.Writer.Invoke("progress", HierarchyModule.WorkWriteOp, JsonText.ToUtf8(args, 0), g.Hierarchy.Messages.PoolContext(dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
+        return result.Ok ? (null, false) : (result.Error ?? result.ErrorCode ?? "the write failed", result.ErrorCode == HierarchyModule.BacklogConflictCode);
+    }
+
+    /// <summary>The <c>record</c> entry <c>ah work record</c> writes on <paramref name="row"/>; <c>checklist add-plan</c>'s descriptions use it too (b134 D5).</summary>
+    internal static (string? Error, bool Conflict) WriteRecord(ServiceGraph g, string dir, WorkRow row, string type, string title, string? body, string by, string? session)
+    {
+        var entry = new JsonObject { ["n"] = row.N, ["type"] = type, ["title"] = title, ["by"] = by };
+        if (body is not null)
+        {
+            entry["body"] = body;
+        }
+
+        if (session is not null)
+        {
+            entry["session"] = session;
+        }
+
+        return WorkWrite(g, dir, new JsonObject { ["record"] = entry }, row.Team);
+    }
+
     internal static int Run(CliContext context, string[] args, TextWriter stdout, TextWriter stderr)
     {
         if (context.Services is not { } services)
@@ -615,12 +641,9 @@ internal static partial class WorkVerb
         /// <summary>A registry write, naming the team of the item whose board card it changes so the read model refreshes that team; empty is a backlog row.</summary>
         private void WriteWork(JsonObject args, string team)
         {
-            args["dir"] = dir;
-            args["team"] = team;
-            var result = g.Writer.Invoke("progress", HierarchyModule.WorkWriteOp, JsonText.ToUtf8(args, 0), g.Hierarchy.Messages.PoolContext(dir), new StateCallOptions(OperationId: Guid.NewGuid().ToString("N")));
-            if (!result.Ok)
+            if (WorkWrite(g, dir, args, team) is { Error: { } error } failed)
             {
-                throw new WorkFailure(result.Error ?? result.ErrorCode ?? "the write failed", result.ErrorCode == HierarchyModule.BacklogConflictCode ? 3 : 2);
+                throw new WorkFailure(error, failed.Conflict ? 3 : 2);
             }
         }
 
@@ -1073,18 +1096,10 @@ internal static partial class WorkVerb
 
         private void WriteEntry(WorkRow row, string type, string title, string? body)
         {
-            var entry = new JsonObject { ["n"] = row.N, ["type"] = type, ["title"] = title, ["by"] = caller.By };
-            if (body is not null)
+            if (WriteRecord(g, dir, row, type, title, body, caller.By, caller.Session) is { Error: { } error } failed)
             {
-                entry["body"] = body;
+                throw new WorkFailure(error, failed.Conflict ? 3 : 2);
             }
-
-            if (caller.Session is { } session)
-            {
-                entry["session"] = session;
-            }
-
-            WriteWork(new JsonObject { ["record"] = entry }, row.Team);
         }
 
         /// <summary>A commit's entry, on the one open item the caller holds; holding none or several logs nothing (S6). A directory with no team and no prefix is a scratch repository: reconciling it would register it.</summary>

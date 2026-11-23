@@ -1411,4 +1411,17 @@ public sealed class PlanTransitionTests
         // negative: an item made by hand is the lead's to close
         Assert.Equal("waiting_orch", State("real"));
     }
+
+    [Fact]
+    public void APlanFileGivesOneItemPerTopLevelHeadingOrBulletWithItsTextAsTheDescription()
+    {
+        var headings = HierarchyModule.ChecklistPlanItems("# Plan\n\n## Step one\nDo the first thing.\n- a bullet in the body\n\n## Step two\n");
+        Assert.Equal([("Step one", "Do the first thing.\n- a bullet in the body"), ("Step two", "Step two")], headings);
+
+        var bullets = HierarchyModule.ChecklistPlanItems("- [ ] one\n  more\n- two\n```\n- not an item\n```\nA closing paragraph.\n");
+        Assert.Equal([("one", "one\nmore"), ("two", "two\n```\n- not an item\n```")], bullets);
+
+        // negative: prose with no heading or top-level bullet, and an indented bullet, give no items
+        Assert.Empty(HierarchyModule.ChecklistPlanItems("Just a paragraph.\n  - indented\nAnother line.\n"));
+    }
 }

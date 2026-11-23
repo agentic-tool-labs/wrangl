@@ -341,6 +341,35 @@ internal sealed class QaScheduler(IQaStore store, IHostProbe probe, IClock clock
     }
 
     /// <summary>
+    /// Closes a queued job as <c>withdrawn</c> with <paramref name="reason"/> when <paramref name="mayWithdraw"/> accepts it. A claimed job
+    /// answers <c>qa-claimed</c> with the entry; a job that already ended answers its entry unchanged. No load gate.
+    /// </summary>
+    internal QaChangeResult Withdraw(string id, string? reason, Func<QaEntry, bool> mayWithdraw)
+    {
+        var plan = Transact(entries =>
+        {
+            if (entries.FirstOrDefault(e => e.Id == id) is not { } entry)
+            {
+                return new Plan<QaChangeResult>([], new QaChangeResult(null, "qa-unknown-entry"));
+            }
+
+            if (!mayWithdraw(entry))
+            {
+                return new Plan<QaChangeResult>([], new QaChangeResult(null, "not-allowed"));
+            }
+
+            if (entry.State != "queued")
+            {
+                return new Plan<QaChangeResult>([], new QaChangeResult(entry, entry.State == "claimed" ? "qa-claimed" : null));
+            }
+
+            var withdrawn = entry with { Rev = entry.Rev + 1, State = "withdrawn", Reason = reason, EndedAt = NowMs() };
+            return new Plan<QaChangeResult>([withdrawn], new QaChangeResult(withdrawn, null), ShapeChange: true);
+        });
+        return plan?.Result ?? new QaChangeResult(null, StoreBusy);
+    }
+
+    /// <summary>
     /// Returns each claimed job whose claimer is no longer live to the queue, and fails a job that loses its claimer a second time. Returns
     /// how many jobs changed; 0 when none did or the store stayed busy.
     /// </summary>

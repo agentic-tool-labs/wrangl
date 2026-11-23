@@ -313,6 +313,26 @@ public sealed class QaRoutesTests : IDisposable
     }
 
     [Fact]
+    public void AQueuedEntryIsWithdrawnAndNeverHandedOutButAClaimedOneStaysClaimed()
+    {
+        var rig = NewRig();
+        var queued = rig.Submit(1, set: "other")["id"].AsString();
+
+        var (status, body) = rig.Call("withdraw", 2, new JsonObject { ["id"] = queued, ["reason"] = "already passed" });
+        Assert.Equal(200, status);
+        Assert.Equal("withdrawn", body["entry"].AsObject()["state"].AsString());
+        Assert.Equal("already passed", rig.Call("status", 5, new JsonObject { ["id"] = queued }).Body["entry"].AsObject()["reason"].AsString());
+        Assert.True(rig.Call("next", 4, new JsonObject()).Body["entry"].IsNull);
+
+        var claimed = rig.Claimed();
+        var (refusedStatus, refused) = rig.Call("withdraw", 1, new JsonObject { ["id"] = claimed });
+        Assert.Equal(409, refusedStatus);
+        Assert.Equal("qa-claimed", Rig.ErrorCode(refused));
+        Assert.Contains("qa1@t", refused["error"].AsObject()["message"].AsString(), StringComparison.Ordinal);
+        Assert.Equal("claimed", rig.Call("status", 5, new JsonObject { ["id"] = claimed }).Body["entry"].AsObject()["state"].AsString());
+    }
+
+    [Fact]
     public void StatusAndListAnswerTheUserAndASessionButNotAnUnprovenCaller()
     {
         var rig = NewRig();

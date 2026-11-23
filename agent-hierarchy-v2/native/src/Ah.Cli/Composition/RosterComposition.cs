@@ -47,6 +47,18 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
     public string? WorkParent(string pool, string team, string id) =>
         Ah.Cli.Verbs.WorkVerb.Resolve(graph, environment.AhHome, pool, id, team).Row is { IsBacklog: true } row ? row.Item : null;
 
+    public string? WorkDescribe(string pool, string team, string key, string body, string by, string? session)
+    {
+        if (Ah.Cli.Verbs.WorkVerb.Resolve(graph, environment.AhHome, pool, key, team).Row is not { IsBacklog: false } row || row.Team != team)
+        {
+            return $"no work row for {key}";
+        }
+
+        var cleaned = HierarchyModule.WorkClean(body);
+        return HierarchyModule.WorkBodyProblem(cleaned)
+            ?? Ah.Cli.Verbs.WorkVerb.WriteRecord(graph, pool, row, "description", "Description", cleaned, by, session).Error;
+    }
+
     public Ah.Core.Json.JsonObject? TeamGoal(string cwd, string team) =>
         RulesReads.ShownGoal(environment.AhHome, () => Ah.Cli.Verbs.BacklogVerb.DirOf(graph, cwd), dir => RulesReads.TeamChain(graph, dir, team), graph.OpenReader);
 

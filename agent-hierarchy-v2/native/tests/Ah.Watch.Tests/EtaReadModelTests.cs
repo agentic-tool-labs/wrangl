@@ -756,6 +756,26 @@ public sealed class EtaReadModelTests
     }
 
     [Fact]
+    public void AnOpenServerJobRowIsWorkingWithNoDueTimeAndIsNotCountedAndNegativeALargeOneIs()
+    {
+        var sent = CreatedMs - (24 * 3600 * 1000.0);
+        string Rows(string eta) =>
+            $"{{\"rows\":[{{\"id\":\"j\",\"eta\":\"{eta}\",\"threshold_s\":300,\"sent_at\":\"{Ah.Core.Time.Timestamps.ToIsoString(DateTimeOffset.FromUnixTimeMilliseconds((long)sent))}\",\"extended_at\":null,\"ended_at\":null}}]}}";
+
+        var server = JsonText.Parse(Rows("server")).AsObject();
+        JobProjection.Project(server, CreatedMs, EtaProjection.DefaultPollMs);
+        var row = server.Get("rows")!.Value.AsArray().Single().AsObject();
+        Assert.Equal("working", row.Str("state"));
+        Assert.True(row.Get("due_at")!.Value.IsNull);
+        Assert.Equal(0, JobProjection.OverdueCount(server, CreatedMs, EtaProjection.DefaultPollMs));
+
+        var large = JsonText.Parse(Rows("large")).AsObject();
+        JobProjection.Project(large, CreatedMs, EtaProjection.DefaultPollMs);
+        Assert.Equal("overdue", large.Get("rows")!.Value.AsArray().Single().AsObject().Str("state"));
+        Assert.Equal(1, JobProjection.OverdueCount(large, CreatedMs, EtaProjection.DefaultPollMs));
+    }
+
+    [Fact]
     public void AnOpenListEntryWithNoEtaHasNoLatenessFieldsAndIsNotCounted()
     {
         var (model, list, _) = ServedOpenList((A, true, 0), (C, false, 0));

@@ -12,11 +12,11 @@ namespace Ah.Commands;
 internal static class JobVerb
 {
     private const string Usage =
-        "usage: ah roster job start --kind test|build|slot|smoke|bg --label <text> [--eta small|medium|large] [--pid N] [--tool-use-id ID] [--background] [--cap-secs N] | end <id> [--exit <code>] | extend <id> --eta small|medium|large";
+        "usage: ah roster job start --kind test|build|slot|smoke|bg --label <text> [--eta small|medium|large|server] [--pid N] [--tool-use-id ID] [--background] [--cap-secs N] | end <id> [--exit <code>] | extend <id> --eta small|medium|large|server";
 
     private static readonly string[] Kinds = ["test", "build", "slot", "smoke", "bg"];
 
-    private static readonly string[] Etas = ["small", "medium", "large"];
+    private static readonly string[] Etas = ["small", "medium", "large", "server"];
 
     private static readonly HashSet<string> Flags = new(StringComparer.Ordinal)
     {
@@ -118,7 +118,14 @@ internal static class JobVerb
 
         if (WatchModule.JobFindOpen(records, caller.Owner, caller.Session, toolUse, pidNumber) is { } known)
         {
-            c.Services.Hierarchy.StateCalls.PutJob(c.MainDir ?? c.Dir, known.Team, known.Id, WatchModule.JobPatch(known.Record, WatchModule.JobMerged(known.Record, pidNumber, toolUse, pidStart)), ifOpen: true);
+            var merged = WatchModule.JobMerged(known.Record, pidNumber, toolUse, pidStart);
+            if (c.Opts.Text("eta") is { } etaArg && etaArg != Text(known.Record, "eta"))
+            {
+                // D6 (UA d3): an explicit, differing --eta on a deduplicated start is applied, as extend would
+                merged = WatchModule.JobExtended(merged, etaArg, now);
+            }
+
+            c.Services.Hierarchy.StateCalls.PutJob(c.MainDir ?? c.Dir, known.Team, known.Id, WatchModule.JobPatch(known.Record, merged), ifOpen: true);
             c.Stdout.Write(Text(known.Record, "id") + "\n");
             return 0;
         }

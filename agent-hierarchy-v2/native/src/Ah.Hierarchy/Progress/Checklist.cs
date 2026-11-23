@@ -269,6 +269,13 @@ internal static class ChecklistRules
             && nowMs - added.ToUnixTimeMilliseconds() < AddRepeatWindow.TotalMilliseconds);
     }
 
+    /// <summary>The item in <paramref name="stream"/> with <paramref name="what"/>'s title (the <see cref="RecentTwin"/> comparison), not dropped, of any age; null when none.</summary>
+    internal static ChecklistEntry? Twin(IReadOnlyList<ChecklistEntry> entries, string stream, string what)
+    {
+        var title = CollapseSpace(what);
+        return entries.FirstOrDefault(e => e.Stream == stream && e.Item.State != PlanStates.Dropped && CollapseSpace(e.Item.Title) == title);
+    }
+
     private static string CollapseSpace(string text) => string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
     private static int Rank(ChecklistEntry e, IReadOnlySet<string> stalledIds) => e.Item.State switch

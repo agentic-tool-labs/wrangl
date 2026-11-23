@@ -14,13 +14,13 @@ internal static partial class ChecklistVerb
     private static partial System.Text.RegularExpressions.Regex NamedWork();
 
     private const string Usage =
-        "usage: ah roster checklist show [--all] [--state S] [--stale] [--since <ISO|6h>] | show <id> --trail | add <what> [--role R] [--stream S] [--todo T] [--ref ID] [--parent bN] [--after <id>|last] | set <id> [--after <id>|none] [--state queued|dispatched|waiting-orch|blocked*|waiting-user*|dropped, or a stored name in_progress|waiting_orch|waiting_user*|next|reported|in_review|approved  (* needs --note)] [--owner M] [--todo T] [--ref ID] [--note T] [--option L]... [--for name@team] [--class blocker|soon|eventually] [--parent bN|none] | done <id> [--note T] [--commit SHA]... | ship <sha> [--failed] [--team T] [--plain] | audit [--stream S] [--plain]  — to finish an item use: checklist done <id>. --parent names a backlog epic or deliverable; only its shape is checked, not that it exists. A waiting-user --note (at most 300 characters) names what is asked; the item's description (ah work record <stream>/<item> --type description --title Description --body-file -) says why it reaches the user, what each --option does and what Not needed (Already done, No longer needed) does: the Needs-you card shows it under the note, so the user can answer without coming back to you. Output is JSON; --plain prints text";
+        "usage: ah roster checklist show [--all] [--state S] [--stale] [--since <ISO|6h>] | show <id> --trail | add <what> [--role R] [--stream S] [--todo T] [--ref ID] [--parent bN] [--after <id>|last] | add-plan --file <path> [--stream S] [--sequential] | set <id> [--after <id>|none] [--state queued|dispatched|waiting-orch|blocked*|waiting-user*|dropped, or a stored name in_progress|waiting_orch|waiting_user*|next|reported|in_review|approved  (* needs --note)] [--owner M] [--todo T] [--ref ID] [--note T] [--option L]... [--for name@team] [--class blocker|soon|eventually] [--parent bN|none] | done <id> [--note T] [--commit SHA]... | ship <sha> [--failed] [--team T] [--plain] | audit [--stream S] [--plain]  — to finish an item use: checklist done <id>. --parent names a backlog epic or deliverable; only its shape is checked, not that it exists. A waiting-user --note (at most 300 characters) names what is asked; the item's description (ah work record <stream>/<item> --type description --title Description --body-file -) says why it reaches the user, what each --option does and what Not needed (Already done, No longer needed) does: the Needs-you card shows it under the note, so the user can answer without coming back to you. Output is JSON; --plain prints text";
 
     private const string StateList = "queued, dispatched, waiting-orch, blocked*, waiting-user*, dropped, or a stored name: in_progress, waiting_orch, waiting_user*, next, reported, in_review, approved (* needs --note)";
 
     private static readonly HashSet<string> Flags = new(StringComparer.Ordinal)
     {
-        "cwd", "team", "orchestrator-pid", "all", "role", "stream", "todo", "ref", "state", "owner", "note", "commit", "plain", "parent", "trail", "stale", "since", "option", "failed", "for", "class", "after",
+        "cwd", "team", "orchestrator-pid", "all", "role", "stream", "todo", "ref", "state", "owner", "note", "commit", "plain", "parent", "trail", "stale", "since", "option", "failed", "for", "class", "after", "file", "sequential",
     };
 
     internal static int Run(RosterContext c)
@@ -73,6 +73,8 @@ internal static partial class ChecklistVerb
                 return 0;
             case "add" when words.Count >= 2:
                 return Add(c, progress, entries, string.Join(' ', words.Skip(1)));
+            case "add-plan" when words.Count == 1:
+                return AddPlan(c, progress, entries);
             case "set" when words.Count == 2:
                 return Set(c, progress, entries, words[1]);
             case "done" when words.Count == 2 || (words.Count > 2 && c.Opts.IsTrue("commit")):
@@ -336,10 +338,25 @@ internal static partial class ChecklistVerb
 
     private static int Write(RosterContext c, IHierarchyProgress progress, string stream, string item, string verb, List<PlanInput> events, bool? created = null, string? asked = null)
     {
-        var by = By(c);
+        Record(c, progress, stream, verb, events);
+        var after = HierarchyModule.ChecklistEntries(progress, c.ProgressPool, c.ProgressTeam).FirstOrDefault(e => e.Stream == stream && e.Item.Item == item);
+        var state = after is null ? "unknown" : HierarchyModule.ChecklistDisplayState(after.Item.State);
+        // ah2-210 D5: a state asked under another name than the one stored is echoed, so the caller sees both
+        var echoed = asked is not null && asked != state ? asked : null;
+        if (echoed is not null)
+        {
+            c.Stderr.Write($"`{echoed}` is shown as `{state}`\n");
+        }
+
+        return Report(c, stream, item, state, created, echoed);
+    }
+
+    /// <summary>The one plan writer's call for a verb's rows, each with the verb's cause unless it names its own; off or refused is a failure, with nothing written.</summary>
+    private static void Record(RosterContext c, IHierarchyProgress progress, string stream, string verb, List<PlanInput> events)
+    {
         // a row the verb wrote is a recorded fact the board audit replays as it is (board-derive § E2)
         var verbCause = new PlanCause(HierarchyModule.ChecklistCauseVerb, verb, HierarchyModule.ChecklistEventTime(c.Services.Clock.UtcNow));
-        var result = progress.RecordChecklist(c.ProgressPool, c.ProgressTeam, stream, by, [.. events.Select(e => e with { Cause = e.Cause ?? verbCause })], c.Proved().SessionId);
+        var result = progress.RecordChecklist(c.ProgressPool, c.ProgressTeam, stream, By(c), [.. events.Select(e => e with { Cause = e.Cause ?? verbCause })], c.Proved().SessionId);
         if (result.Off)
         {
             throw new RosterFailure($"checklist {verb}: progress is off for {c.ProgressTeam}; nothing written");
@@ -354,17 +371,98 @@ internal static partial class ChecklistVerb
         {
             c.Warn($"checklist {verb}: the event was recorded, but {warning}");
         }
+    }
 
-        var after = HierarchyModule.ChecklistEntries(progress, c.ProgressPool, c.ProgressTeam).FirstOrDefault(e => e.Stream == stream && e.Item.Item == item);
-        var state = after is null ? "unknown" : HierarchyModule.ChecklistDisplayState(after.Item.State);
-        // ah2-210 D5: a state asked under another name than the one stored is echoed, so the caller sees both
-        var echoed = asked is not null && asked != state ? asked : null;
-        if (echoed is not null)
+    /// <summary>
+    /// <c>add-plan --file &lt;path&gt;</c> (b134): one item per plan step, in file order, in one write, each with its text as its description. A step
+    /// whose title a live item of the stream already has is reused (D4); <c>--sequential</c> puts each created step after the one before it (D3).
+    /// </summary>
+    private static int AddPlan(RosterContext c, IHierarchyProgress progress, IReadOnlyList<ChecklistEntry> entries)
+    {
+        var file = c.Opts.Text("file") ?? throw new RosterFailure(Usage);
+        string text;
+        try
         {
-            c.Stderr.Write($"`{echoed}` is shown as `{state}`\n");
+            text = c.Services.Files.ReadText(Path.Combine(c.Cwd, file));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            throw new RosterFailure($"checklist add-plan: cannot read {file} ({e.Message}); nothing written");
         }
 
-        return Report(c, stream, item, state, created, echoed);
+        var stream = c.Opts.Text("stream") ?? ProgressStreamRun;
+        var steps = HierarchyModule.ChecklistPlanItems(text);
+        if (steps.Count == 0)
+        {
+            c.Stderr.Write($"checklist add-plan: no items found in {file}; nothing written\n");
+        }
+
+        var taken = entries.Select(static e => e.Item.Item).ToHashSet(StringComparer.Ordinal);
+        var events = new List<PlanInput>();
+        var plan = new List<(string Item, string Title, string Description, bool Created)>();
+        string? previous = null;
+        foreach (var (title, description) in steps)
+        {
+            if (HierarchyModule.ChecklistTwin(entries, stream, title) is { } twin)
+            {
+                plan.Add((twin.Item.Item, title, description, false));
+                previous = HierarchyModule.ChecklistKey(twin);
+                continue;
+            }
+
+            var item = HierarchyModule.ChecklistSlug(title, taken);
+            events.Add(new PlanInput(item, "add", title));
+            events.Add(new PlanInput(item, "next"));
+            if (NamedWork().Match(title) is { Success: true } named && c.Services.WorkParent(c.ProgressPool, c.ProgressTeam, named.Groups[1].Value) is { } row)
+            {
+                events.Add(new PlanInput(item, "parent") { Parent = row });
+            }
+
+            if (c.Opts.IsTrue("sequential") && previous is not null)
+            {
+                events.Add(new PlanInput(item, "after") { After = previous });
+            }
+
+            plan.Add((item, title, description, true));
+            previous = stream + "/" + item;
+        }
+
+        if (events.Count > 0)
+        {
+            Record(c, progress, stream, "add-plan", events);
+        }
+
+        var by = By(c);
+        foreach (var step in plan.Where(static p => p.Created))
+        {
+            var key = stream + "/" + step.Item;
+            if (c.Services.WorkDescribe(c.ProgressPool, c.ProgressTeam, key, step.Description, by, c.Proved().SessionId) is { } reason)
+            {
+                c.Stderr.Write($"checklist add-plan: description of {key} not recorded ({reason})\n");
+                c.Stderr.Write(HierarchyModule.WorkDescriptionNudge(key) + "\n");
+            }
+        }
+
+        var now = HierarchyModule.ChecklistEntries(progress, c.ProgressPool, c.ProgressTeam);
+        string StateOf(string item) => now.FirstOrDefault(e => e.Stream == stream && e.Item.Item == item) is { } e ? HierarchyModule.ChecklistDisplayState(e.Item.State) : "unknown";
+        if (c.Opts.IsTrue("plain"))
+        {
+            foreach (var step in plan)
+            {
+                c.Stdout.Write($"checklist: {step.Item} → {StateOf(step.Item)}\n");
+            }
+
+            return 0;
+        }
+
+        var items = new JsonArray();
+        foreach (var step in plan)
+        {
+            items.Add(new JsonObject { ["item"] = step.Item, ["title"] = step.Title, ["state"] = StateOf(step.Item), ["created"] = step.Created });
+        }
+
+        c.Out(new JsonObject { ["stream"] = stream, ["items"] = items });
+        return 0;
     }
 
     private static int Report(RosterContext c, string stream, string item, string state, bool? created, string? asked = null)
