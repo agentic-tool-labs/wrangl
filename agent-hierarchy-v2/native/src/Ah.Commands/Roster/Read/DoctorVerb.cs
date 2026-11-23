@@ -258,6 +258,11 @@ internal static partial class DoctorVerb
         Add("team", () => Team(c));
         Add("progress", () => ProgressRow(c));
         Add("jobs-unseen", () => JobsUnseenRow(c));
+        Add("evidence", () =>
+        {
+            var (n, bytes) = HierarchyModule.EvidenceTotals(c.Services.Environment.AhHome);
+            return new Check("ok", $"{n} files, {HierarchyModule.EvidenceSize(bytes)}"); // informational (adr-39): never a failure
+        });
         Add("alarm", () => AlarmRow(c));
         if (LeadMailRow(c) is { } leadMail)
         {

@@ -413,9 +413,39 @@ A long report goes in `--body-file` (plain text, same size limit as `--body`), w
 
 The body is one JSON string: `\n` for a newline and `\u0027` for a single quote, since a literal `'` cannot sit inside the single quotes; at most 256 KiB, and no line that is exactly `---`. A body without a trailing newline gets one, and one that does not start with an empty line gets an empty line after the frontmatter, as `new`'s skeleton has.
 
-The permission hook runs `fill` without a prompt only for a session whose own role (the one its hook payload names) equals `--from`; a session with no known role, or another role's `--from`, is denied. Repeatable: each run puts the new body first and keeps the earlier one below it. Prints `{id, path, bytes}` (`bytes` is the size of the file written).
+The permission hook runs `fill` without a prompt only for a session whose own role (the one its hook payload names) equals `--from`; a session with no known role, or another role's `--from`, is denied. Repeatable: each run puts the new body first and keeps the earlier one below it. Prints `{id, type, path, rev, bytes}` (`bytes` is the size of the file written); with `--evidence` it also prints an `evidence` list (see below).
 
 Any role may use it for a response whose `from` it names; the Architect and other self-care roles do not (their shell refuses it).
+
+#### Attach evidence to a report
+
+```
+<ah> msg fill --id <id> --from <your role> --body-file - --evidence shot.png --evidence boot.wav --cwd <abs cwd>
+```
+
+Use it when a report needs files to back it, such as a screenshot, a recording or a log. `--evidence <path>` can be repeated and works on any fill: a final report, a `--part`, an implementor's report. Each file is copied into `<AH_HOME>/evidence/<id>/` as `e<k>-<name>`, and the fill appends a generated `## evidence` section after your text:
+
+```
+## evidence
+- [e1] shot.png · image/png · 240 KiB · evidence:<id>/e1
+```
+
+You can cite `[e1]` in your own text. `k` counts from 1 across all the parts of one message and is never renumbered.
+
+- **Limits.** At most 20 files per message, 20 MiB per file and 50 MiB per message. The path must be a readable regular file (a symlink is followed and must end at one). Break a limit, or name a missing or unreadable file, and the command exits 2, says which file and which limit, and stores nothing: no body and no copy.
+- **Storage.** The files are outside every checkout, read-only, and kept as long as the message. If the copy or the fill fails part way, the files copied by that call are removed and the body is not stored.
+- **Never copied back.** No `ah` command copies evidence out to a path, and nothing opens, parses or runs a file. A reviewer still cannot write files; it takes evidence from its runner or tools (for example, files in its `$TMPDIR`).
+- **Names and types.** Path separators are removed from the name and control characters become `?`. The type comes from the extension alone: png, jpg, jpeg, gif, webp, svg, wav, mp3, ogg, flac, mp4, webm, mov, txt, log, md, json, csv, pdf; anything else is `application/octet-stream`. The same file passed twice is two entries.
+- **Needs a message id.** A brief answered by SendMessage has no message, so no evidence home. Ask for a `[hierarchy-msg]` request instead.
+- **Printed result.** The JSON gains `"evidence": [{"k":1,"name":"shot.png","type":"image/png","bytes":245760}]`.
+- **Doctor.** `ah roster doctor` shows an informational `evidence` row (`<n> files, <size>`). It is never a failure.
+
+In the web UI (`ahd ui`), a report's evidence lines are drawn in place, served read-only by `GET /ui/v1/evidence/<id>/e<k>` with the same sign-in as the other `/ui/v1` routes:
+
+- Images show inline; audio and video get controls; text, json and csv show the first 64 KiB. Anything else is a download link.
+- svg and html are never drawn: they are links, and the route serves them sandboxed so they cannot run in the UI page.
+- The route does not serve byte ranges, so some browsers (Safari) may not play video inline. The file name link still downloads it.
+- Where the UI shows a cut excerpt of a report (4 KiB; the member page and the message pair dialog), the last `## evidence` section is kept after the cut, so its figures still show. A report filled in parts keeps only its last evidence section in that excerpt; earlier parts' files are still stored and reachable by `ah msg show <id> response`, the file name link, or the route above.
 
 #### List exchanges
 
@@ -677,9 +707,27 @@ A team's Orchestrator only. `--class` (default `soon`) is stored on the `q<k>` l
 
 `--for` must name a member of the question's own team (a row of its team record, live or not), else it is refused and nothing is written; it records `asked_for` on the `q<k>` line, and its answer's `question-answered` event then also goes to that member (re-checked at answer time; a member no longer on the team, or a failed send, is a note).
 
-`ah roster checklist set <id> --state waiting-user --for <name@team>` does the same for an item, and is refused on any other state. Writes `q<k>` to the parked-question store, without holding the turn as AskUserQuestion does, and prints `{id, parked, next}`; `next` holds the push to send.
+`ah roster checklist set <id> --state waiting-user --for <name@team>` does the same for an item, and is refused on any other state. (A lane lead parks a pick without `--for`; see the next section.) Writes `q<k>` to the parked-question store, without holding the turn as AskUserQuestion does, and prints `{id, parked, next}`; `next` holds the push to send.
 
 The user answers with `<ah> msg decision answer q<k> "<label>"` or in their next typed message, which the Orchestrator relays; the web Inbox does not list `q<k>` questions and cannot answer them.
+
+#### Park a pick from a lane
+
+```
+<ah> roster checklist set <item> --team <M>-<ws> --state waiting-user --note <what is asked> --option <label> --option <label> [--class blocker|soon|eventually]
+```
+
+For a lane lead (a Sub-Orchestrator) on an item of its own lane, whose items live in the lane's child team `<M>-<ws>`. The lead never asks the user directly and never uses `msg decision park`, which stays the top Orchestrator's. It parks a pick instead: the item shows on Needs-you with its options, and the lead keeps working. Attach files or links the user needs to see with `<ah> work attach <item> <path|url>`.
+
+Who hears about it, each address once:
+
+- **At park:** one `lane-question-parked` event goes to the top Orchestrator: `lane <ws> parked a question for the user on <item>: <note>`. If it cannot be sent, the verb still succeeds and prints one `note:` line on stderr.
+- **At answer or dismissal:** the usual `question-answered` event goes to the lane lead, and a copy goes to the top Orchestrator. A failed copy is reported as `manager_event_error` in the reply and is never fatal.
+- **No push.** A lane park sends no notification to the user. The top can withdraw the question by setting the item back (`--state in_progress`) or dropping it.
+
+`--for` works as above and is not needed here. Nothing else changes: the answer still needs the user (a terminal, or the web form), and an item of the top team behaves as before.
+
+**What is not checked.** A lane lead may park only a pick inside its own charter, such as which of four candidates to keep. Reserved, policy, product-direction, dangerous and design questions, and the R and D classes, must still go up to the top Orchestrator as `QUESTION [<class>]`. No code enforces this; it is guidance in the lead's instructions. The top sees each park through the event above and on its board.
 
 #### Answer as the web form does, from a GUI
 
@@ -1353,6 +1401,35 @@ extend <id> --eta small|medium|large|server
 ```
 
 `server`: a job meant to run until stopped; it raises no overdue alarm while its process runs and ends when the process does.
+
+#### Claim a named resource
+
+```
+<ah> roster resource claim <name> [--wait <secs>] [--note <text>] [--json]
+release <name> [--force] [--json]
+list [--json]
+```
+
+One session at a time holds a named live thing: an editor, a modelling-tool session, a device or a port. The name is 1 to 40 characters of `a-z`, `0-9` and `-`; capitals are lowercased, and any other name is a usage error (exit 2). The names are shared by every team on the machine.
+
+Example: `<ah> roster resource claim blender --note "rendering the intro"`. When the name is free it prints `resource blender is yours (waited 0s)` and exits 0. Run `release blender` when you are done.
+
+- **Waiting.** If another session holds the name, `claim` waits its turn. Waiters are served in the order they arrived. It prints who holds the name and how long at once, then every 60 seconds, and checks every 2 seconds. It is never refused.
+- **How long.** `--wait <secs>` sets the limit (default 3600). When it runs out the call exits 75, which is a report that the wait ran out and can be repeated, not a refusal. `--wait 0` makes one attempt, says who holds the name and exits 75 if it is held. A `--wait` that is not a number, or is too large, exits 2.
+- **Long waits.** A wait that may pass 2 minutes should run with `run_in_background`; the harness wakes you when it exits. This is advice. Nothing enforces it.
+- **Claiming again.** If you already hold the name, `claim` prints `already yours since …` and exits 0. Holds are not counted: one `release` ends it.
+- **Release.** `release` by the holder ends the hold. From anyone else it changes nothing, prints who holds the name and exits 0. `release --force` ends any live hold and prints who was released and by whom. Anyone may force a release. The released holder is not told. A free or unknown name prints `resource <name> is free`.
+- **List.** `list` shows every live hold (name, who, since, age, note) and its waiters, on the whole machine. With nothing held it prints `no resource is held`.
+- **JSON.** `--json` prints the answer or the rows as JSON instead of the line.
+- **`--note`** is shown on `list` and the board; at most 120 characters.
+
+A hold belongs to the session's process, not to a member name. It ends when you release it, or when that process is gone: the member is dismissed, crashes or its pane closes. `/clear` and compaction keep the process, so they keep the hold. `--resume` starts a new process, so the old hold ends and you claim again. From a plain terminal or a script the holder is the shell that ran `ah`, and the hold ends when that shell exits. A subagent shares its parent session's process, so a parent and its subagents count as one holder. A tool that starts a fresh shell for every command has no long-lived process to hold the name: its hold ends almost at once.
+
+This is cooperative. Nothing stops a member that uses the device without claiming it. Two members that each hold a name the other waits for both wait until `--wait` runs out; there is no deadlock check. A claim wait is not tracked as a job and raises no overdue alarm. Test runs already serialise one command on a named pool (`AH_SLOT_POOL=<name> AH_SLOT_POOL_SLOTS=1 <ah> test run -- <cmd>`); use that when one command is all that uses the resource.
+
+Holds and waits show on `<ah> roster status --plain` as one line per name, `resource <name>: <who> since <HH:MM> (<age>), waiting: <who> <waited>`, and on the Overview card of the web view. A hold by a member of another team is marked `(outside this team)` when one of your members waits on it. The status file records them under each team's `resources` key ([status-file.md](status-file.md)). The web card can lag: it updates when something else refreshes the status, so a hold that just ended can still show for a while. `list` always reads the live table.
+
+`claim` exits 0 when granted, 75 when the wait ran out, 1 when the store call fails, 2 on a usage error.
 
 #### Wait for ahd's next event (Orchestrator)
 
@@ -2124,7 +2201,8 @@ The same block (short form) is status.json's `backlog`, and `ah roster status --
 <ah> work add <title> [--kind k] [--parent id] [--wave w] [--theme t] [--size s]
 <ah> work set <id> [--title s] [--parent id|none] [--ext ref] [--url u]
 <ah> work link <a> (--blocked-by <b> | --blocks <b>) [--remove]
-<ah> work attach <id> <path|url> [--title s] [--remove]
+<ah> work attach <id> <path|url|msg:<id>> [--as need] [--title s] [--remove]
+<ah> work gate <id> [--need name [--review] [--title s] [--remove]]... [--decider user|team] [--ask] [--json]
 <ah> work export [--since ms] [--json]
 <ah> work next [--under id] [--json]
 <ah> work list … [--under id|none] [--ready] [--blocked]
@@ -2141,6 +2219,26 @@ On a backlog row the id is also the row's `ext`. `attach` stores a path relative
 An Architect's reply attaches up to three `docs/specs/` paths it names, by `auto`, and a failure there never fails the reply. `export` is what a mirror reads, with no bodies: pass its `as_of_ms` back as `--since`, which also finds a change that only wrote history; nothing changed is exit 1. Mirroring itself is the Orchestrator's job, opt-in: `backlog-sync.md`.
 
 `next` is the first of those, backlog order then team items by number; none is exit 1. `--under` walks to any depth; `--under none` is the items with no parent.
+
+**Milestone gates.** A gate is an item added with `--kind gate` under a project, goal, epic or deliverable. It is a record and a signal. It warns and logs. It never holds or refuses work.
+
+```
+<ah> work add "Beta ready" --kind gate --parent <project>
+<ah> work link <next-phase> --blocked-by <gate>
+<ah> work gate <gate> --need build --need notes --title "Release notes" --need screenshots --review --decider user
+<ah> work attach <gate> ./out/game.apk --as build
+<ah> work gate <gate> --ask
+<ah> work done <gate> --note "passed"
+```
+
+- `gate <id>` with no flags prints the summary: `decided by: user|team`, then one line per need: `<name> ✓|✗ [review: pass|<verdict>|missing] <fills>`. `show` prints the same summary, and `list` shows `gate <k>/<n>`. `--json` prints it as JSON. `--need` on an item that is not a gate is exit 2.
+- A need is a name of 1 to 40 characters of `a-z 0-9 - .`, lower-cased; a bad name is exit 2. `--title` and `--remove` belong to the `--need` before them. Removing a need keeps its fills as plain attachments. `--decider` is `user` (the default) or `team`; it is a label in the summary and the warning, and `ah` does not check it.
+- A fill is `attach <gate> <path|url|msg:<id>> --as <need>`. The need must be declared on that item, else exit 2. `msg:<id>` attaches a report by its message id; only the id's shape is checked. Without `--as`, `attach` is unchanged.
+- A need is met by any fill. A need declared with `--review` is met only by an artifact fill plus a `msg:` report whose verdict passes. A report with any other verdict shows `review: <verdict>` and the need stays ✗; the summary reads the report each time, so a later non-passing reply un-meets it.
+- **The start warning.** When an item starts (a dispatch to a member, `checklist set --state dispatched|in_progress`, a reopen), `ah` checks the item and its parents for an open gate that blocks them. For each one it prints `note — starting <id> past open gate <gate-id> "<name>": <k>/<n> needs filled (missing: …); decided by <user|team>` on stderr and adds a `note` entry to the item's log. The start goes ahead and the exit code is unchanged. A reviewer dispatch is not a start. A blocker that is not a gate stays silent. A backlog row dispatched by `msg new --item bN` is not started, so it gets no note.
+- **`--ask`** parks one question for the user, with the options `Pass` and `Not yet`, class `soon`, naming the gate and what is missing. It shows on Needs-you, and the user answers there or with `ah msg decision answer`. Only the top Orchestrator or the user may run it; any other caller is refused. It works with needs missing. Asking again while the question is open parks nothing and names it. The summary prints `asked: q<k> open` or `answered <label>`.
+- **`done`** on a gate prints the summary and writes a `decision` entry to the item's log: `gate passed by <who>; needs <k>/<n>; answer <Pass|Not yet|none>`. If the decider is `user` and the question was never answered `Pass`, it prints `note — gate <id> is decided by the user and has no Pass answer`. It still closes. A `Pass` answer does not close the gate: the Orchestrator closes it.
+- **Not checked.** Anyone may declare, fill, ask or close. Needs are matched by name, not by content. An artifact attached under the wrong need, or a gate closed early, is not caught; the summary, the warning and the decision entry make it visible.
 
 #### `ah work`
 

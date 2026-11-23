@@ -13,6 +13,14 @@ const TEAM = {
   decisions: 1,
   stuck: [["20261031-1254-td18", 52]],
   pipelineItems: [{ slug: "msg-delivery", rounds: 2, round_cap: 3 }, { slug: "board-icicle", rounds: 1, round_cap: 3 }],
+  // The team's `resources` (ah2-509): name, role, who, minutes since, note, outside. One hold with a waiter, and a
+  // wait on a name held outside the team.
+  resources: [
+    ["port-5173", "hold", "implementor-1", 18, "mock dev server", false],
+    ["port-5173", "wait", "qa", 6, "e2e run", false],
+    ["gpu-runner", "hold", "release/implementor-3", 42, "bench", true],
+    ["gpu-runner", "wait", "ux-engineer", 11, "screenshots", false],
+  ],
   // name, role, state, tool, minutes since the tool, stream branch
   members: [
     ["architect", "architect", "idle", null, 14, "ah/liveness"],
@@ -93,7 +101,7 @@ const TEAM = {
     ["20261031-1316-td19", "msg-delivery", "implementor-1", "orchestrator", 44, 41, "20261031-1302-td14", "md1", "Question: dedupe on request id or content?", "Dedupe on the request id, or on a hash of the report body?", "The request id: the same text can legitimately be sent twice."],
     ["20261031-1320-td20", "board-icicle", "implementor-2", "orchestrator", 40, 38, "20261031-1148-td09", "bi2", "Question: read parent from the backlog meanwhile?", "May I read parent from the backlog slice until plan-items has it?", "No: wait for E2, it lands today. Pick up bi3 groundwork if idle."],
     ["20261031-1325-td21", "msg-delivery", "orchestrator", "implementor-1", 35, 31, "20261031-1302-td14", "md1", "Status: dedupe", "Where are you on the dedupe?", "Halfway: request-id dedupe is in; the rename case is left."],
-    ["20261031-1334-td22", "board-icicle", "ux-engineer", "qa", 30, 26, "20261031-1245-td15", "bi1", "Screenshot both themes at 1440x900", "Screenshot the board in light and dark at 1440x900 and check contrast.", "DONE: 4 PNGs; every row at 4.5:1 or better."],
+    ["20261031-1334-td22", "board-icicle", "ux-engineer", "qa", 30, 26, "20261031-1245-td15", "bi1", "Screenshot both themes at 1440x900", "Screenshot the board in light and dark at 1440x900 and check contrast.", "DONE: 4 PNGs; every row at 4.5:1 or better. The dark board is [e1]; the contrast log is [e2].\n\n## evidence\n- [e1] board-1440x900-dark.png · image/png · 169 KiB · evidence:20261031-1334-td22/e1\n- [e2] contrast.txt · text/plain · 1 KiB · evidence:20261031-1334-td22/e2\n"],
     ["20261031-1338-td23", "msg-delivery", "implementor-1", "qa", 22, 15, "20261031-1302-td14", "md1", "Run the delivery suite on the dedupe branch", "Run the delivery regression suite on ah/msg-delivery at HEAD.", "FAIL: 1 of 14, rename-during-send. The other 13 pass."],
     ["20261031-1340-td25", "liveness", "architect", "reviewer", 20, 11, "20261031-1254-td18", "lv1", "Pre-read: liveness spec r2 draft", "Pre-read the r2 draft before I hand it in.", "Reads clean; one nit on how pid_start is compared."],
     ["20261031-1348-td26", "msg-delivery", "orchestrator", "reviewer", 12, null, "20261031-1250-td17", "md5", "Review the delivery regression suite", "Review the 14 scenarios: do they pin the spec, and can each fail?"],

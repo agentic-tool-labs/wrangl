@@ -113,6 +113,39 @@ internal sealed partial class MsgCommand
         }
     }
 
+    /// <summary>
+    /// <c>ah work gate --ask</c> (adr-38 G7): parks a q&lt;k&gt; asking the user to pass a gate, options Pass and Not yet, class soon. The caller rule is park's.
+    /// Returns the exit code, and on success the question id and the team whose store holds it; park's own output is not printed.
+    /// </summary>
+    internal static (int Code, string? Id, string? Team) GateAsk(CliContext context, ServiceGraph graph, string cwd, string header, string text, string assumed, TextWriter stderr)
+    {
+        using var parked = new StringWriter(CultureInfo.InvariantCulture);
+        var command = new MsgCommand(context, graph, MsgOptions.Parse(["--cwd", cwd]), "gate-ask", new MsgOutput(parked, stderr), parked, stderr);
+        (int Code, string? Id, string? Team) result;
+        try
+        {
+            command._teamArg = command.ResolveTeamArg();
+            var caller = command.ResolveDecisionCaller();
+            var team = DecisionProof.TeamOf(caller.Class.Detail) ?? string.Empty;
+            var code = caller.Class.Kind is CutoverCallerKind.TopOrchestrator or CutoverCallerKind.User
+                ? command.Park(command.HierarchyDir, caller, team, header, text, ["Pass", "Not yet"], assumed, null, "soon", null)
+                : command.Refuse("park_not_orchestrator", "Only a team's Orchestrator parks a question. A member sends its question to its parent.", "park");
+            result = (code, code == 0 && JsonText.TryParse(System.Text.Encoding.UTF8.GetBytes(parked.ToString()), out var json) && json.Member("id") is { IsText: true } q ? q.AsString() : null, team);
+        }
+        catch (MsgExit exit)
+        {
+            result = (exit.Code, null, null);
+        }
+
+        // a refusal is said on stdout as park says it; the work verb shows it on stderr
+        if (result.Id is null)
+        {
+            stderr.Write(parked.ToString());
+        }
+
+        return result;
+    }
+
     private int Park(string dir, DecisionCaller caller, string team, string header, string text, IReadOnlyList<string> labels, string assumed, string? askedFor, string cls, long? adr)
     {
         var home = Hier.Messages.TeamHome(dir, null, team) is { Length: > 0 } teamHome ? teamHome : dir;

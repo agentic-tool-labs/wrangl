@@ -113,6 +113,9 @@ internal sealed partial class HierLib
         // from its entry, else the decision log of no run: read where the entry is missing, so it is recorded
         public JsonObject Decisions(string dir, string anchorId) => Note(s => s.Decisions(dir, anchorId));
 
+        // ah2-509: the resources table and the process table, so a claim, a release or a holder's death re-derives the document
+        public JsonArray Resources() => Note(static s => s.Resources());
+
         // not recorded: the entries alone
         public IReadOnlyList<string> TeamNames(string dir) => inner.TeamNames(dir);
 

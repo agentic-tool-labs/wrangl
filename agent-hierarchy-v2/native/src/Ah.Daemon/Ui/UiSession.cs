@@ -25,7 +25,7 @@ internal sealed class UiBindException(string message, Exception? inner = null) :
 internal sealed class UiSession : IDisposable
 {
     /// <summary>The routes the listener serves, exactly. Everything else is 404.</summary>
-    internal static readonly IReadOnlyList<string> RouteTable = ["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "POST /ui/v1/team-rename", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}"];
+    internal static readonly IReadOnlyList<string> RouteTable = ["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "POST /ui/v1/team-rename", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}", "GET /ui/v1/evidence/{id}/{ek}"];
 
     internal const int MaxBodyBytes = 4096;
 
@@ -48,6 +48,7 @@ internal sealed class UiSession : IDisposable
     private const string RulesPath = "/ui/v1/rules";
     private const string LooksPath = "/ui/v1/looks";
     private const string LooksMergePath = "/ui/v1/looks/merge";
+    private const string EvidencePath = "/ui/v1/evidence/";
 
     private readonly UiBridgeOptions _o;
     private readonly UiStatic _static;
@@ -193,6 +194,7 @@ internal sealed class UiSession : IDisposable
         Rules,
         Looks,
         LooksMerge,
+        Evidence,
     }
 
     private static Kind Classify(string path) => path switch
@@ -209,6 +211,7 @@ internal sealed class UiSession : IDisposable
         ReadModelPath => Kind.ReadModel,
         _ when ManifestName(path) is not null => Kind.Manifest,
         _ when path.StartsWith(ListPath, StringComparison.Ordinal) && path.Length > ListPath.Length => Kind.List,
+        _ when path.StartsWith(EvidencePath, StringComparison.Ordinal) => Kind.Evidence,
         ActionsPath or ActionsPath + "/" => Kind.Actions,
         _ when path.StartsWith(ActionsPath + "/", StringComparison.Ordinal) => Kind.Actions,
         _ when path.StartsWith("/ui/", StringComparison.Ordinal) && !path.StartsWith("/ui/v1/", StringComparison.Ordinal) => Kind.Static,
@@ -354,6 +357,13 @@ internal sealed class UiSession : IDisposable
             return;
         }
 
+        if (kind == Kind.Evidence)
+        {
+            Touch();
+            await ServeEvidenceAsync(ctx, path[EvidencePath.Length..]).ConfigureAwait(false);
+            return;
+        }
+
         if (_static.Read(path) is { } file)
         {
             await WriteAsync(ctx, 200, file.ContentType, file.Bytes).ConfigureAwait(false);
@@ -416,6 +426,37 @@ internal sealed class UiSession : IDisposable
         }
 
         await WriteAsync(ctx, response.Status, "application/json", response.Body, response.Headers).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// <c>GET /ui/v1/evidence/&lt;msg id&gt;/e&lt;k&gt;</c> (adr-39): one stored evidence file, read only. The id and <c>e&lt;k&gt;</c> must be of
+    /// their shape, so the route resolves only inside <c>&lt;ah home&gt;/evidence/</c>; anything else is 404. The file is never parsed or run:
+    /// it goes out inline with its extension's type, and an svg or html-like one sandboxed.
+    /// </summary>
+    private async Task ServeEvidenceAsync(HttpContext ctx, string rest)
+    {
+        var parts = rest.Split('/');
+        if (parts.Length != 2 || Ah.Hierarchy.HierarchyModule.EvidenceFind(_o.Home, parts[0], parts[1]) is not { } stored)
+        {
+            await ReplyAsync(ctx, 404, "not_found").ConfigureAwait(false);
+            return;
+        }
+
+        var read = _o.Files.ReadNoFollow(stored, int.MaxValue);
+        if (read.Kind != FileKind.File)
+        {
+            await ReplyAsync(ctx, 404, "not_found").ConfigureAwait(false);
+            return;
+        }
+
+        var type = Ah.Hierarchy.HierarchyModule.EvidenceType(stored);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["Content-Disposition"] = "inline" };
+        if (type.Contains("svg", StringComparison.Ordinal) || type.Contains("html", StringComparison.Ordinal) || type.EndsWith("+xml", StringComparison.Ordinal))
+        {
+            headers["Content-Security-Policy"] = ctx.Response.Headers.ContentSecurityPolicy + "; sandbox";
+        }
+
+        await WriteAsync(ctx, 200, type, read.Bytes, headers).ConfigureAwait(false);
     }
 
     /// <summary>

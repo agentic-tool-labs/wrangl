@@ -41,7 +41,7 @@ public sealed class StatusLaneOwnersTests
         Assert.Equal(listed, sessions.Contains("s-dep"));
     }
 
-    private sealed class Source(Dictionary<string, string> teams) : IStatusSource
+    internal sealed class Source(Dictionary<string, string> teams, Func<JsonArray>? resources = null) : IStatusSource
     {
         public IReadOnlyList<string> TeamNames(string dir) => [.. teams.Keys];
         public JsonValue TeamRecord(string dir, string? team) => team is not null && teams.TryGetValue(team, out var doc) ? JsonText.Parse(doc) : JsonValue.Null;
@@ -67,5 +67,7 @@ public sealed class StatusLaneOwnersTests
         public string? Branch(string workTree) => null;
         public string? Checkout(string cwd) => null;
         public (bool Live, string? SessionId) MemberLife(JsonArray roster, JsonValue name, string? team) => (true, "s-" + name.AsString());
+
+        public JsonArray Resources() => resources?.Invoke() ?? [];
     }
 }

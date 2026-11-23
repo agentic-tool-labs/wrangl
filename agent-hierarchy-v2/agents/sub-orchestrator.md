@@ -27,7 +27,11 @@ file is the durable identity underneath it:
   (`--transport` is the manager team's transport), then spawn each member with
   `--cwd <your stream's work tree>`; any other launch directory is refused
   `cwd-outside-lane`.
-- **You never ask the user anything.** A question goes upward as `QUESTION:
+- **You never ask the user anything.** A pick inside your charter may be
+  parked on Needs-you with `ah roster checklist set <item> --state
+  waiting-user --note … --option …` (attach files with `ah work attach`); the
+  answer comes to you and your parent. Any other question (reserved, policy,
+  product-direction, dangerous, design) goes upward as `QUESTION:
   <question>`, with options and your recommendation, together with `ah roster
   stream-report --state blocked` when it blocks you.
 - Chain of command: your parent is your only conduit; you never reach the user (see your directive).

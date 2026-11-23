@@ -107,6 +107,11 @@ and its own **Sub-Orchestrator**, which acts as a manager for that line. The Sub
 team (up to the member and stream limits the Orchestrator sets), hands out work, and reports back to the
 Orchestrator when a piece is done. It does not push or merge. It returns the branch, the commit and the test and
 review results, and the top Orchestrator merges. Members of a lane can message their lane lead directly.
+A Sub-Orchestrator never asks you anything directly. For a simple pick inside its lane, such as which of four candidates
+to keep, it can park the question on your Needs-you list and keep working. You answer when you choose, and the answer
+goes to the lane lead with a copy to the top Orchestrator, which is also told when the question is parked. Bigger
+questions (policy, product direction, anything risky or reserved) still go up through the top Orchestrator. That split is
+guidance to the lane lead, not something the software checks. Nothing is pushed to you for a lane question.
 
 ## Briefs and mail
 

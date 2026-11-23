@@ -241,6 +241,30 @@ internal static class StateDbMigrations
         new MigrationStep(43, c => Run(c, V43Statements)),
         new MigrationStep(44, c => Run(c, V44Statements)),
         new MigrationStep(45, c => Run(c, V45Statements)),
+        new MigrationStep(46, c => Run(c, V46Statements)),
+        new MigrationStep(47, Version47),
+    ];
+
+    /// <summary>
+    /// Version 47 (ah2-503, adr-38): the gate need an attachment declares or fills, null for a plain attachment. Additive. Applied
+    /// idempotently, as version 26 is: a table that already has the column is not altered again.
+    /// </summary>
+    private static void Version47(SqliteConnection connection)
+    {
+        if (connection.ScalarText("SELECT COUNT(*) FROM pragma_table_info('work_attachments') WHERE name = 'need'") == "0")
+        {
+            connection.Exec("ALTER TABLE work_attachments ADD COLUMN need TEXT");
+        }
+    }
+
+    /// <summary>
+    /// Version 46 (ah2-509, adr-36): named exclusive resources, machine-wide, keyed by name only. A row is a hold or a waiter, owned by the
+    /// process its <c>pid</c> and <c>pid_start</c> name; the partial unique index lets at most one hold exist per name. Additive.
+    /// </summary>
+    internal static IReadOnlyList<string> V46Statements =>
+    [
+        "CREATE TABLE IF NOT EXISTS resources(id INTEGER PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL, pid INTEGER NOT NULL, pid_start TEXT, who TEXT NOT NULL, session TEXT, note TEXT, since_ms INTEGER NOT NULL)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS resources_one_hold ON resources(name) WHERE kind = 'hold'",
     ];
 
     /// <summary>

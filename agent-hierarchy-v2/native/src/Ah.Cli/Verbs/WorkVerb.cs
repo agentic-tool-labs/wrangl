@@ -27,7 +27,7 @@ internal static partial class WorkVerb
         "usage: ah work list [--state open|all|<state>] [--team t] [--holder m] [--under id|none] [--kind k] [--ready] [--blocked] [--limit 50] [--json] | show <id> [--log] [--json] | prefix [<new>] [--json]"
         + " | log <id> [--tail 20] [--since ms] [--body] [--all] [--json] | record [<id>] --type t --title s [--body-file -|--body s] | mine [--json]"
         + " | add <title> [--kind k] [--parent id] [--wave w] [--theme t] [--size s] [--body-file -|--body s] | set <id> [--title s] [--parent id|none] [--ext ref] [--url u] | link <a> (--blocked-by <b> | --blocks <b>) [--remove] | next [--under id] [--json]"
-        + " | attach <id> <path|url> [--title s] [--remove] | export [--since ms] [--json] | done <id> [--commit sha]... [--note text] [--json]   (all take [--cwd dir] [--by name])";
+        + " | attach <id> <path|url|msg:<id>> [--as need] [--title s] [--remove] | gate <id> [--need name [--review] [--title s] [--remove]]... [--decider user|team] [--ask] [--json] | export [--since ms] [--json] | done <id> [--commit sha]... [--note text] [--json]   (all take [--cwd dir] [--by name])";
 
     private const int ListLimit = 50;
     private const int LineMax = 160;
@@ -40,11 +40,11 @@ internal static partial class WorkVerb
     private const int DescriptionLogMax = 1024;
     private const string DescriptionHead = "description:\n";
 
-    private static readonly HashSet<string> Bools = new(StringComparer.Ordinal) { "json", "log", "all", "ready", "blocked", "remove" };
+    private static readonly HashSet<string> Bools = new(StringComparer.Ordinal) { "json", "log", "all", "ready", "blocked", "remove", "ask" };
 
     private static readonly HashSet<string> Values = new(StringComparer.Ordinal)
     {
-        "state", "team", "holder", "kind", "limit", "cwd", "by", "tail", "since", "type", "title", "body-file", "under", "parent", "wave", "theme", "size", "blocked-by", "blocks", "ext", "url", "note",
+        "state", "team", "holder", "kind", "limit", "cwd", "by", "tail", "since", "type", "title", "body-file", "under", "parent", "wave", "theme", "size", "blocked-by", "blocks", "ext", "url", "note", "as", "decider",
     };
 
     /// <summary>Who is asking: their team, the name entries are written under, the names a holder may hold them by, and their session.</summary>
@@ -189,6 +189,19 @@ internal static partial class WorkVerb
     private static JsonObject AttachArgs(ServiceGraph g, string home, string cwd, string dir, long n, string text, string by)
     {
         var attach = new JsonObject { ["n"] = n, ["by"] = by };
+        if (text.StartsWith(HierarchyModule.WorkReportRefPrefix, StringComparison.Ordinal))
+        {
+            // the id's shape only: the message is read when a gate's summary is
+            if (!g.Hierarchy.Messages.IsMessageId(text[HierarchyModule.WorkReportRefPrefix.Length..]))
+            {
+                throw new WorkFailure($"{text}: not a message id", 2);
+            }
+
+            attach["ref"] = text;
+            attach["kind"] = HierarchyModule.WorkReportKind;
+            return attach;
+        }
+
         var colon = text.IndexOf(':', StringComparison.Ordinal);
         if (colon > 0 && !text[..colon].Contains('/', StringComparison.Ordinal))
         {
@@ -298,6 +311,79 @@ internal static partial class WorkVerb
                 return "brief " + request;
             }
         };
+    };
+
+    /// <summary>
+    /// The start warning (adr-38 G5): one line per open gate that the started item <paramref name="key"/>, or any ancestor through its parent chain, is blocked by, each also logged as a
+    /// <c>note</c> on the item. Only a blocker of kind gate counts. It never changes the start: any failure reads as no gate.
+    /// </summary>
+    internal static IReadOnlyList<string> PastOpenGates(ServiceGraph g, string ahHome, string pool, string team, string key, string by, string? session)
+    {
+        try
+        {
+            if (Resolve(g, ahHome, pool, key, team).Row is not { } row || StateDbModule.OpenReader(ahHome).Reader is not { } reader)
+            {
+                return [];
+            }
+
+            WorkBoard board;
+            string prefix;
+            ILookup<long, WorkAttachment> attachments;
+            using (reader)
+            {
+                board = HierarchyModule.WorkBoardOf(reader.Query, g.Hierarchy.Progress, pool);
+                prefix = HierarchyModule.WorkPrefix(reader.Query, pool) ?? "w";
+                attachments = HierarchyModule.WorkAttachments(reader.Query, pool, null).ToLookup(static a => a.N);
+            }
+
+            var gates = new List<long>();
+            var seen = new HashSet<long>();
+            for (var at = board.ViewOf(row.N); at is not null && seen.Add(at.Row.N); at = at.Plan?.Parent is { Length: > 0 } parent ? board.BacklogRow(parent) : null)
+            {
+                gates.AddRange(board.OpenBlockers(at.Row.N).Where(b => board.ViewOf(b)?.Plan?.Kind == HierarchyModule.WorkGateKind && !gates.Contains(b)));
+            }
+
+            var id = HierarchyModule.WorkId(prefix, row.N);
+            var lines = new List<string>();
+            foreach (var n in gates)
+            {
+                var gateId = HierarchyModule.WorkId(prefix, n);
+                var summary = HierarchyModule.WorkGate([.. attachments[n]], ReportVerdicts(g, pool));
+                var missing = summary.Missing.Count > 0 ? $" (missing: {string.Join(", ", summary.Missing)})" : string.Empty;
+                lines.Add($"starting {id} past open gate {gateId} \"{board.ViewOf(n)?.Plan?.Title}\": {summary.FilledCount}/{summary.Needs.Count} needs filled{missing}; decided by {summary.Decider}");
+                _ = WriteRecord(g, pool, row, "note", "started past open gate " + gateId, null, by, session);
+            }
+
+            return lines;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>A report's verdict, read from its exchange's reply when asked: (passes, the reply's first line), or null when it has no reply or cannot be read.</summary>
+    internal static Func<string, (bool Pass, string Verdict)?> ReportVerdicts(ServiceGraph g, string dir) => request =>
+    {
+        try
+        {
+            // ponytail: one exchange listing per report; a gate has a few
+            foreach (var exchange in g.Hierarchy.Core.ListExchangesWithIds(PoolsOf(g, dir), [request]))
+            {
+                if (exchange.Member("id") is { IsText: true } id && id.AsString() == request
+                    && exchange.Member("response")?.Member("path") is { IsText: true } path && g.Hierarchy.Core.ReadMsgFile(path.AsString()).Member("text") is { IsText: true } text)
+                {
+                    var (pass, verdict) = HierarchyModule.ReportVerdict(AfterFrontmatter(text.AsString()));
+                    return (pass, Command.Clip(verdict, 40));
+                }
+            }
+
+            return null;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException and not OperationCanceledException)
+        {
+            return null;
+        }
     };
 
     internal static JsonObject EntryJson(WorkEntry e, bool body)
@@ -435,14 +521,42 @@ internal static partial class WorkVerb
         private readonly Dictionary<string, string> _flags = new(StringComparer.Ordinal);
         private readonly List<string> _commits = [];
 
+        /// <summary>The <c>--need</c>s of <c>gate</c>, each with the <c>--title</c> and <c>--remove</c> that follow it.</summary>
+        private readonly List<(string Name, string? Title, bool Remove, bool Review)> _needs = [];
+
         private string? team => caller.Team;
 
         internal int Run(string[] args)
         {
             // --body is a switch on `log` and takes the text on `record`
             var bodyIsSwitch = args.FirstOrDefault(static a => !a.StartsWith("--", StringComparison.Ordinal)) == "log";
+            var isGate = args.FirstOrDefault(static a => !a.StartsWith("--", StringComparison.Ordinal)) == "gate";
             for (var i = 0; i < args.Length; i++)
             {
+                if (isGate && args[i] == "--need" && i + 1 < args.Length)
+                {
+                    _needs.Add((args[++i], null, false, false));
+                    continue;
+                }
+
+                if (isGate && _needs.Count > 0 && args[i] == "--remove")
+                {
+                    _needs[^1] = _needs[^1] with { Remove = true };
+                    continue;
+                }
+
+                if (isGate && _needs.Count > 0 && args[i] == "--review")
+                {
+                    _needs[^1] = _needs[^1] with { Review = true };
+                    continue;
+                }
+
+                if (isGate && _needs.Count > 0 && args[i] == "--title" && i + 1 < args.Length)
+                {
+                    _needs[^1] = _needs[^1] with { Title = args[++i] };
+                    continue;
+                }
+
                 if (args[i] == "--body")
                 {
                     if (bodyIsSwitch)
@@ -506,6 +620,7 @@ internal static partial class WorkVerb
                     "link" => Link(),
                     "next" => Next(),
                     "attach" => Attach(),
+                    "gate" => Gate(),
                     "export" => Export(),
                     "done" => Done(),
                     _ => throw new WorkFailure(Usage, 2),
@@ -574,6 +689,7 @@ internal static partial class WorkVerb
 
             var shown = matched.Take(limit).ToList();
             var more = matched.Count - shown.Count;
+            string? GateCount(WorkItemView v) => v.Plan?.Kind == HierarchyModule.WorkGateKind && GateOf(v.Row.N) is var gate ? $"gate {gate.FilledCount}/{gate.Needs.Count}" : null;
             if (Json)
             {
                 var list = new JsonArray();
@@ -598,7 +714,7 @@ internal static partial class WorkVerb
 
             foreach (var v in shown)
             {
-                stdout.Write(Line(prefix, v, board) + "\n");
+                stdout.Write(Line(prefix, v, board, GateCount(v)) + "\n");
             }
 
             if (more > 0)
@@ -610,9 +726,9 @@ internal static partial class WorkVerb
         }
 
         /// <summary>One item, one line, at most <see cref="LineMax"/> chars: only the title gives way, and a long holder or placement is clipped first.</summary>
-        private static string Line(string prefix, WorkItemView v, WorkBoard board)
+        private static string Line(string prefix, WorkItemView v, WorkBoard board, string? gate = null)
         {
-            var head = $"{HierarchyModule.WorkId(prefix, v.Row.N)} {StateOf(v)} {Clip(v.Plan?.Holder ?? "-", 32)}  {Clip(v.Row.Placement, 40)}  ";
+            var head = $"{HierarchyModule.WorkId(prefix, v.Row.N)} {StateOf(v)} {Clip(v.Plan?.Holder ?? "-", 32)}  {Clip(v.Row.Placement, 40)}  {(gate is null ? string.Empty : gate + "  ")}";
             var blockers = board.OpenBlockers(v.Row.N);
             var tail = (blockers.Count > 0 ? " [blocked by " + Clip(string.Join(", ", blockers.Select(b => HierarchyModule.WorkId(prefix, b))), 24) + "]" : string.Empty)
                 + (v.Row.ExtId is { } ext ? " {" + Clip(ext, 16) + "}" : string.Empty);
@@ -665,10 +781,7 @@ internal static partial class WorkVerb
             }
 
             var id = IdOf(row.N);
-            if (ViewOf(row).Plan is null)
-            {
-                throw new WorkFailure($"{id} is gone; nothing changed", 1);
-            }
+            var plan = ViewOf(row).Plan ?? throw new WorkFailure($"{id} is gone; nothing changed", 1);
 
             string[] note = F("note") is { } n ? ["--note", n] : [];
             string[] by = F("by") is { } b ? ["--by", b] : [];
@@ -691,12 +804,36 @@ internal static partial class WorkVerb
             }
 
             stdout.Write($"{id} done ({(row.IsBacklog ? "backlog" : $"checklist {row.Team}/{row.Stream}")})\n");
+            if (plan.Kind == HierarchyModule.WorkGateKind)
+            {
+                GateDone(row, id, AnswerOf(row.N));
+            }
+
             if (Json)
             {
                 stdout.Write(routed.ToString());
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// A gate's close (adr-38 G8): its summary, a warning when the user decides it and its latest answer is not <c>Pass</c>, and the decision record. Never a refusal: the gate is
+        /// already done, and a failed record is a warning.
+        /// </summary>
+        private void GateDone(WorkRow row, string id, string? answer)
+        {
+            var gate = GateOf(row.N);
+            stdout.Write(string.Concat(gate.Lines().Select(static l => "  " + l + "\n")));
+            if (gate.Decider == "user" && answer != "Pass")
+            {
+                stderr.WriteLine($"ah work: note — gate {id} is decided by the user and has no Pass answer");
+            }
+
+            if (WriteRecord(g, dir, row, "decision", $"gate passed by {caller.By}; needs {gate.FilledCount}/{gate.Needs.Count}; answer {answer ?? "none"}", F("note"), caller.By, caller.Session) is { Error: { } error })
+            {
+                stderr.WriteLine($"ah work: note — gate {id} is done, but its decision record was not written: {error}");
+            }
         }
 
         private int Attach()
@@ -713,9 +850,137 @@ internal static partial class WorkVerb
                 attach["remove"] = true;
             }
 
+            if (F("as") is { } need)
+            {
+                attach["need"] = need.ToLowerInvariant();
+            }
+
             WriteWork(new JsonObject { ["attach"] = attach }, row.Team);
             stdout.Write(IdOf(row.N) + "\n");
             return 0;
+        }
+
+        /// <summary>
+        /// <c>gate</c> (adr-38): declares or removes needs and sets the decider, then prints where the gate stands. Only an item of kind <c>gate</c> has needs.
+        /// </summary>
+        private int Gate()
+        {
+            var row = RowOf(_words.Count > 1 ? _words[1] : throw new WorkFailure($"gate needs an id; {Usage}", 2));
+            var id = IdOf(row.N);
+            if (ViewOf(row).Plan is not { Kind: HierarchyModule.WorkGateKind })
+            {
+                throw new WorkFailure($"{id} is not a gate; only an item added with --kind gate has needs", 2);
+            }
+
+            var decider = F("decider")?.ToLowerInvariant();
+            if (decider is not (null or "user" or "team"))
+            {
+                throw new WorkFailure($"--decider {decider}: must be user or team", 2);
+            }
+
+            var needs = _needs.Select(static n => n with { Name = n.Name.ToLowerInvariant() }).ToList();
+            if (needs.FirstOrDefault(static n => !HierarchyModule.WorkValidNeed(n.Name)) is { Name: { } bad })
+            {
+                throw new WorkFailure($"--need {bad}: a need name is {HierarchyModule.WorkNeedShape}", 2);
+            }
+
+            foreach (var (name, title, remove, review) in needs)
+            {
+                var attach = new JsonObject { ["n"] = row.N, ["ref"] = HierarchyModule.WorkNeedRefPrefix + name, ["kind"] = review ? HierarchyModule.WorkReviewNeedKind : HierarchyModule.WorkNeedKind, ["need"] = name, ["by"] = caller.By };
+                if (title is not null)
+                {
+                    attach["title"] = title;
+                }
+
+                if (remove)
+                {
+                    attach["remove"] = true;
+                }
+
+                WriteWork(new JsonObject { ["attach"] = attach }, row.Team);
+            }
+
+            if (decider is not null)
+            {
+                WriteWork(new JsonObject { ["attach"] = new JsonObject { ["n"] = row.N, ["ref"] = HierarchyModule.WorkDeciderRef, ["kind"] = HierarchyModule.WorkGateKind, ["title"] = decider, ["by"] = caller.By } }, row.Team);
+            }
+
+            var gate = GateOf(row.N);
+            if (F("ask") is not null)
+            {
+                Ask(row, id, gate);
+                gate = GateOf(row.N);
+            }
+
+            if (Json)
+            {
+                return WriteJson(GateJson(id, gate), 0);
+            }
+
+            stdout.Write(string.Concat(gate.Lines().Select(static l => l + "\n")));
+            return 0;
+        }
+
+        /// <summary>
+        /// <c>gate --ask</c> (adr-38 G7, Amendment 2): parks a question for the user with park's core, and keeps its id on the gate. A question still open is named and nothing is parked.
+        /// </summary>
+        private void Ask(WorkRow row, string id, GateSummary gate)
+        {
+            if (AskOf(row.N) is { Question.Open: true } open)
+            {
+                stderr.WriteLine($"ah work: {open.Question.Id} already asks the user to pass {id}; nothing parked");
+                return;
+            }
+
+            var title = ViewOf(row).Plan?.Title ?? row.Item;
+            var missing = gate.Missing.Count > 0 ? $" (missing: {string.Join(", ", gate.Missing)})" : string.Empty;
+            var text = $"Gate \"{title}\" ({id}): {gate.FilledCount}/{gate.Needs.Count} needs filled{missing}. Pass it?";
+            var (code, question, askTeam) = Msg.MsgCommand.GateAsk(context ?? throw new WorkFailure("the services have not been composed", 70), g, cwd, id, text, $"{id} stays open.", stderr);
+            if (question is null)
+            {
+                throw new WorkFailure($"{id}: no question was parked", code == 0 ? 2 : code);
+            }
+
+            WriteWork(new JsonObject { ["attach"] = new JsonObject { ["n"] = row.N, ["ref"] = HierarchyModule.WorkAskRefPrefix + question, ["kind"] = HierarchyModule.WorkAskKind, ["title"] = askTeam is { Length: > 0 } t ? t : JsonValue.Null, ["by"] = caller.By } }, row.Team);
+            stderr.WriteLine($"ah work: parked {question} for the user: {text}");
+        }
+
+        /// <summary>The gate's newest parked question, read from the store of the team that parked it; null when it was never asked or the store cannot be read.</summary>
+        private (string Ref, ParkedQuestion Question)? AskOf(long n)
+        {
+            if (Read(q => HierarchyModule.WorkAttachments(q, dir, n), []).LastOrDefault(static a => a.Kind == HierarchyModule.WorkAskKind) is not { } ask)
+            {
+                return null;
+            }
+
+            var home = ask.Title is { Length: > 0 } askTeam && g.Hierarchy.Messages.TeamHome(dir, null, askTeam) is { Length: > 0 } teamHome ? teamHome : dir;
+            _ = ParkedQuestions.MatchRecorded(g.Io.Files, g.Hierarchy.StateCalls, home);
+            var questionId = ask.Ref[HierarchyModule.WorkAskRefPrefix.Length..];
+            return g.Io.Files.ReadAskLog(ParkedQuestions.PathIn(home)).TryLines(out var lines)
+                && ParkedQuestions.Fold(string.Join('\n', lines)).FirstOrDefault(q => q.Id == questionId) is { } question
+                ? (ask.Ref, question)
+                : null;
+        }
+
+        /// <summary>The user's answer to the gate's parked question, or null when unanswered or never asked.</summary>
+        private string? AnswerOf(long n) => AskOf(n) is { Question: { Open: false } answered } ? string.Join(", ", answered.AnsweredLabels) : null;
+
+        /// <summary>Where gate <paramref name="n"/> stands, its reports and its parked question read now.</summary>
+        private GateSummary GateOf(long n) =>
+            HierarchyModule.WorkGate(Read(q => HierarchyModule.WorkAttachments(q, dir, n), []), ReportVerdicts(g, dir)) with
+            {
+                Asked = AskOf(n) is { Question: var q } ? q.Open ? q.Id + " open" : $"{q.Id} answered {string.Join(", ", q.AnsweredLabels)}" : null,
+            };
+
+        private static JsonObject GateJson(string id, GateSummary gate)
+        {
+            var needs = new JsonArray();
+            foreach (var n in gate.Needs)
+            {
+                needs.Add(new JsonObject { ["name"] = n.Name, ["title"] = n.Title is { } t ? t : JsonValue.Null, ["review"] = n.Review, ["filled"] = n.Filled, ["review_state"] = n.ReviewState is { } r ? r : JsonValue.Null, ["fills"] = Strs(n.Fills) });
+            }
+
+            return new JsonObject { ["id"] = id, ["decider"] = gate.Decider, ["asked"] = gate.Asked is { } asked ? asked : JsonValue.Null, ["filled"] = gate.FilledCount, ["total"] = gate.Needs.Count, ["needs"] = needs };
         }
 
         /// <summary>When an item last changed: the later of its plan's change time and the registry's (§9), so a log-only change shows. A gone placement has only the registry's.</summary>
@@ -1183,6 +1448,7 @@ internal static partial class WorkVerb
             var board = Board();
             var attachments = Read(q => HierarchyModule.WorkAttachments(q, dir, row.N), []);
             var description = Read(q => HierarchyModule.WorkDescription(q, dir, row.N), null);
+            var gate = plan?.Kind == HierarchyModule.WorkGateKind ? GateOf(row.N) : null;
             if (Json)
             {
                 var json =
@@ -1211,6 +1477,11 @@ internal static partial class WorkVerb
                         ["attachments"] = Strs(attachments.Take(ListLimit).Select(AttachmentText)),
                         ["description"] = description is null ? JsonValue.Null : description,
                     };
+                if (gate is not null)
+                {
+                    json["gate"] = GateJson(id, gate);
+                }
+
                 if (withLog)
                 {
                     var log = new JsonArray();
@@ -1226,7 +1497,7 @@ internal static partial class WorkVerb
                 return WriteJson(json, 0);
             }
 
-            var text = ShowText(id, alias, row, view, dead, board, IdOf, attachments);
+            var text = ShowText(id, alias, row, view, dead, board, IdOf, attachments, gate);
             if (!withLog)
             {
                 stdout.Write(Budget(text, ShowMax));
@@ -1264,7 +1535,7 @@ internal static partial class WorkVerb
         private static string AttachmentText(WorkAttachment a) =>
             $"{a.Kind} {a.Ref}{(a.Kind == "url" ? string.Empty : a.Sha is { } sha ? " @" + sha : " uncommitted")}{(a.Title is { } title ? " (" + title + ")" : string.Empty)}";
 
-        private static string ShowText(string id, string alias, WorkRow row, WorkItemView view, bool dead, WorkBoard board, Func<long, string> idOf, IReadOnlyList<WorkAttachment> attachments)
+        private static string ShowText(string id, string alias, WorkRow row, WorkItemView view, bool dead, WorkBoard board, Func<long, string> idOf, IReadOnlyList<WorkAttachment> attachments, GateSummary? gate)
         {
             var plan = view.Plan;
             var lines = new List<string>
@@ -1318,6 +1589,11 @@ internal static partial class WorkVerb
             if (attachments.Count > 0)
             {
                 lines.Add("attachments: " + string.Join(", ", attachments.Select(AttachmentText)));
+            }
+
+            if (gate is not null)
+            {
+                lines.AddRange(gate.Lines().Select(static l => "  " + l));
             }
 
             if (row.ExtId is { } ext)

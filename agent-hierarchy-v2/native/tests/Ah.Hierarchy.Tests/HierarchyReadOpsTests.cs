@@ -52,7 +52,7 @@ public sealed class HierarchyReadOpsTests
         public string? Stamp(string hierDir) => real.Stamp(hierDir);
     }
 
-    internal static Rig Make(Func<IFileReader, IFileReader>? wrapFiles = null, MsgsRoute? msgsRoute = null, Func<string, PlanState?>? backlogPlan = null, ISessionAuthority? sessions = null, bool decisionsInDb = false, Func<IGateSource, IGateSource>? wrapGates = null)
+    internal static Rig Make(Func<IFileReader, IFileReader>? wrapFiles = null, MsgsRoute? msgsRoute = null, Func<string, PlanState?>? backlogPlan = null, ISessionAuthority? sessions = null, bool decisionsInDb = false, Func<IGateSource, IGateSource>? wrapGates = null, IProcessTable? processTable = null)
     {
         var sandbox = UnitSandbox.Create();
         var repo = Path.Combine(sandbox.Root, "repo");
@@ -73,7 +73,7 @@ public sealed class HierarchyReadOpsTests
         var writer = new InProcessStateWriter { AhHome = env.AhHome, DecisionsInDb = decisionsInDb };
         var services = HierarchyModule.Create(new HierarchyEnvironment(
             io.Files, env, new FakeClock(DateTimeOffset.Parse("2026-06-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture)),
-            new SequenceRandom(), io.Processes, config, roster, writer, facts, HierarchyModule.CreateBootstrap(io.Writer)) { MsgsRoute = msgsRoute ?? TestMsgStore.Route(env.AhHome), BacklogPlan = backlogPlan, Sessions = sessions, SessionPids = Ah.StateDb.StateDbModule.CreateSessionPids(env.AhHome), Activity = Ah.StateDb.StateDbModule.CreateActivity(env.AhHome), Gates = (wrapGates ?? (static g => g))(Ah.StateDb.StateDbModule.CreateGates(env.AhHome)), QaLogRows = Ah.StateDb.StateDbModule.CreateQaLog(env.AhHome), RosterRecords = Ah.StateDb.StateDbModule.CreateRosterRecords(env.AhHome), Jobs = Ah.StateDb.StateDbModule.CreateJobs(env.AhHome), Decisions = decisionsInDb ? Ah.StateDb.StateDbModule.CreateDecisions(env.AhHome) : null, ProgressLogs = Ah.StateDb.StateDbModule.CreateProgressLogs(env.AhHome), Checkpoints = Ah.StateDb.StateDbModule.CreateCheckpoints(env.AhHome), ProgressDocs = Ah.StateDb.StateDbModule.CreateProgressDocs(env.AhHome), QaJobBodies = () => Ah.StateDb.StateDbModule.QaJobBodies(env.AhHome), KnownDirRows = () => Ah.StateDb.StateDbModule.KnownDirs(env.AhHome) });
+            new SequenceRandom(), io.Processes, config, roster, writer, facts, HierarchyModule.CreateBootstrap(io.Writer)) { MsgsRoute = msgsRoute ?? TestMsgStore.Route(env.AhHome), BacklogPlan = backlogPlan, Sessions = sessions, SessionPids = Ah.StateDb.StateDbModule.CreateSessionPids(env.AhHome), Activity = Ah.StateDb.StateDbModule.CreateActivity(env.AhHome), Gates = (wrapGates ?? (static g => g))(Ah.StateDb.StateDbModule.CreateGates(env.AhHome)), QaLogRows = Ah.StateDb.StateDbModule.CreateQaLog(env.AhHome), RosterRecords = Ah.StateDb.StateDbModule.CreateRosterRecords(env.AhHome), Jobs = Ah.StateDb.StateDbModule.CreateJobs(env.AhHome), Decisions = decisionsInDb ? Ah.StateDb.StateDbModule.CreateDecisions(env.AhHome) : null, ProgressLogs = Ah.StateDb.StateDbModule.CreateProgressLogs(env.AhHome), Checkpoints = Ah.StateDb.StateDbModule.CreateCheckpoints(env.AhHome), ProgressDocs = Ah.StateDb.StateDbModule.CreateProgressDocs(env.AhHome), QaJobBodies = () => Ah.StateDb.StateDbModule.QaJobBodies(env.AhHome), KnownDirRows = () => Ah.StateDb.StateDbModule.KnownDirs(env.AhHome), ResourceRows = () => Ah.StateDb.StateDbModule.Resources(env.AhHome), ProcessTable = processTable });
         writer.Domains = services.StateDomains;
         var pool = Path.Combine(repo, ".claude", "ah2");
         Directory.CreateDirectory(pool);
@@ -896,6 +896,46 @@ public sealed class HierarchyReadOpsTests
         var huge = Parsed(Read(rig, "msgs", "read", new JsonObject { ["dir"] = rig.Pool, ["id"] = IdC }));
         Assert.True(huge.Member("request_excerpt")!.Value.AsString().Length <= 4096);
         Assert.True(huge.Member("excerpt_truncated")!.Value.AsBool());
+    }
+
+    [Fact]
+    public void MsgsReadKeepsATrailingEvidenceSectionAfterACutExcerpt()
+    {
+        var rig = Make();
+        var section = $"## evidence\n- [e1] a · b.png · image/png · 1 KiB · evidence:{IdA}/e1\n- [e2] c.wav · audio/wav · 2 KiB · evidence:{IdA}/e2";
+        _ = MsgFile(rig.Pool, IdA, "request", "r");
+        _ = MsgFile(rig.Pool, IdA, "response", new string('x', 9000) + "\n\n" + section + "\n");
+        _ = MsgFile(rig.Pool, IdB, "request", "r");
+        _ = MsgFile(rig.Pool, IdB, "response", new string('x', 9000));
+        _ = MsgFile(rig.Pool, IdC, "request", "r");
+        _ = MsgFile(rig.Pool, IdC, "response", new string('x', 9000) + $"\n\n## evidence\n- [e2] a.png · image/png · 1 KiB · evidence:{IdC}/e1\n");
+
+        var kept = ReadExchange(rig, IdA);
+        var excerpt = kept.Member("response_excerpt")!.Value.AsString();
+        Assert.EndsWith("x\n\n" + section, excerpt, StringComparison.Ordinal);
+        Assert.Equal(4096, excerpt.Count(c => c == 'x'));
+        Assert.True(kept.Member("excerpt_truncated")!.Value.AsBool());
+
+        // no section: cut as today; a line whose k is not its ref's is not the fill's shape, so nothing is appended
+        var plain = ReadExchange(rig, IdB).Member("response_excerpt")!.Value.AsString();
+        Assert.Equal(new string('x', 4096), plain);
+        Assert.Equal(new string('x', 4096), ReadExchange(rig, IdC).Member("response_excerpt")!.Value.AsString());
+
+        // a cut that falls inside the section: the excerpt is the whole body, section shown once, not truncated
+        const string IdD = "20261017-150000-dd44", IdE = "20261017-160000-ee55";
+        var long20 = "## evidence\n" + string.Join('\n', Enumerable.Range(1, 20).Select(k => $"- [e{k}] {new string('n', 200)}.png · image/png · 1 KiB · evidence:{IdD}/e{k}"));
+        _ = MsgFile(rig.Pool, IdD, "request", "r");
+        _ = MsgFile(rig.Pool, IdD, "response", "head\n\n" + long20 + "\n");
+        var whole = ReadExchange(rig, IdD);
+        Assert.Equal("head\n\n" + long20, whole.Member("response_excerpt")!.Value.AsString());
+        Assert.False(whole.Member("excerpt_truncated")!.Value.AsBool());
+
+        // F3c: a 16 KiB last line of repeated "a · " is rejected quickly: cut as today
+        _ = MsgFile(rig.Pool, IdE, "request", "r");
+        _ = MsgFile(rig.Pool, IdE, "response", "## evidence\n- [e1] " + string.Concat(Enumerable.Repeat("a · ", 3277)) + "\n");
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        Assert.DoesNotContain("evidence:", ReadExchange(rig, IdE).Member("response_excerpt")!.Value.AsString(), StringComparison.Ordinal);
+        Assert.True(started.ElapsedMilliseconds < 2000, $"{started.ElapsedMilliseconds} ms");
     }
 
     private static JsonValue ReadExchange(Rig rig, string id) =>

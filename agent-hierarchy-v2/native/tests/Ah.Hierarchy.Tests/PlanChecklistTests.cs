@@ -344,6 +344,7 @@ public sealed class PlanTransitionTests
 
     [Theory]
     [InlineData("VERDICT PASS x@abc1234")]
+    [InlineData("VERDICT PASS x@-")]
     [InlineData("PASS WITH NITS")]
     public void AnAckOfAPassApproves(string text) =>
         Assert.Equal(["approve"], Moves(HierarchyModule.ChecklistTransitions(Ack(text), Board(InReview)))["a"]);

@@ -93,6 +93,42 @@ public static partial class HierarchyModule
     public static IReadOnlyList<WorkAttachment> WorkAttachments(Func<string, object?[], IReadOnlyList<object?[]>> query, string dir, long? n) =>
         Work.Attachments(query, Backlog.DirKey(dir), n);
 
+    /// <inheritdoc cref="Work.Gate"/>
+    public static GateSummary WorkGate(IReadOnlyList<WorkAttachment> attachments, Func<string, (bool Pass, string Verdict)?> verdictOf) => Work.Gate(attachments, verdictOf);
+
+    /// <inheritdoc cref="Work.ValidNeed"/>
+    public static bool WorkValidNeed(string name) => Work.ValidNeed(name);
+
+    /// <inheritdoc cref="Work.GateKind"/>
+    public const string WorkGateKind = Work.GateKind;
+
+    /// <inheritdoc cref="Work.NeedKind"/>
+    public const string WorkNeedKind = Work.NeedKind;
+
+    /// <inheritdoc cref="Work.NeedRefPrefix"/>
+    public const string WorkNeedRefPrefix = Work.NeedRefPrefix;
+
+    /// <inheritdoc cref="Work.ReviewNeedKind"/>
+    public const string WorkReviewNeedKind = Work.ReviewNeedKind;
+
+    /// <inheritdoc cref="Work.AskKind"/>
+    public const string WorkAskKind = Work.AskKind;
+
+    /// <inheritdoc cref="Work.AskRefPrefix"/>
+    public const string WorkAskRefPrefix = Work.AskRefPrefix;
+
+    /// <inheritdoc cref="Work.DeciderRef"/>
+    public const string WorkDeciderRef = Work.DeciderRef;
+
+    /// <inheritdoc cref="Work.ReportRefPrefix"/>
+    public const string WorkReportRefPrefix = Work.ReportRefPrefix;
+
+    /// <inheritdoc cref="Work.ReportKind"/>
+    public const string WorkReportKind = Work.ReportKind;
+
+    /// <inheritdoc cref="Work.NeedShape"/>
+    public const string WorkNeedShape = Work.NeedShape;
+
     /// <inheritdoc cref="Work.Description"/>
     public static string? WorkDescription(Func<string, object?[], IReadOnlyList<object?[]>> query, string dir, long n) =>
         Work.Description(query, Backlog.DirKey(dir), n);

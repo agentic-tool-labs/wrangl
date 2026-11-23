@@ -548,6 +548,7 @@ internal sealed partial class HierLib
             Ah.Core.Time.PhaseTrace.End("status.read-gates", gatesStart);
             List<(JsonValue E, JsonValue Fm, double? ReportedMs)>? candidates = null;
             Dictionary<string, JsonValue>? origins = null;
+            JsonArray? resources = null;
             var keys = new List<string?> { null };
             keys.AddRange(src.TeamNames(dir));
             foreach (var key in keys)
@@ -600,6 +601,13 @@ internal sealed partial class HierLib
                     ["dispatches_truncated"] = Math.Max(0, dispatches.Count - DispatchCap),
                     ["pipeline"] = DescribePipeline(src, dir, RunExchanges(src, dir, exchanges, keyValue), keyValue),
                 };
+
+                // ah2-509: absent when the team holds and waits for nothing, so a document with no resource keeps its recorded shape
+                if (TeamResources(resources ??= src.Resources(), members, key) is { Count: > 0 } held)
+                {
+                    team["resources"] = held;
+                }
+
                 Ah.Core.Time.PhaseTrace.End("status.describe-pipeline", pipelineStart);
                 teams.Add(team);
                 var pid = Member(Member(t, "orchestrator"), "pid");

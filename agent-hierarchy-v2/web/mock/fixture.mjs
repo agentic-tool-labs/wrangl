@@ -417,7 +417,7 @@ export function buildSlices(now, runStart = now - RUN_MIN * MIN) {
   const onDuty = globalThis.process?.env?.AH_MOCK_DUTY;
   const deputy = onDuty ? memberIds.find((id) => id.endsWith(`/${onDuty}`)) : undefined;
   const duty = deputy ? { duty: { deputy: deputy.split("/").pop(), since: iso(t(25)), cause: "user", member: deputy } } : {};
-  out.push(slice(TEAM_ID, { name: TEAM, dir_id: DIR, orchestrator: orchId, members: memberIds, ...duty, ...laneFacts(t), pipeline: { run: runIdOf(runStart), waiting_on_user: questionsBody(now, SCENARIO?.decisions).open_total, decisions_count: 14, last_decision_at: iso(t(7)), scope: "dir", items: SCENARIO?.pipelineItems ?? [{ slug: "ui-r6a", rounds: 2, round_cap: 3 }] }, worktrees: worktreeIds }, t(7)));
+  out.push(slice(TEAM_ID, { name: TEAM, dir_id: DIR, orchestrator: orchId, members: memberIds, ...duty, ...laneFacts(t), pipeline: { run: runIdOf(runStart), waiting_on_user: questionsBody(now, SCENARIO?.decisions).open_total, decisions_count: 14, last_decision_at: iso(t(7)), scope: "dir", items: SCENARIO?.pipelineItems ?? [{ slug: "ui-r6a", rounds: 2, round_cap: 3 }] }, worktrees: worktreeIds, ...(SCENARIO?.resources ? { resources: SCENARIO.resources.map(([name, role, who, min, note, outside]) => ({ name, role, who, since: t(min), note, ...(outside ? { outside: true } : null) })) } : null) }, t(7)));
   out.push(slice(`topology:${DIR}/${TEAM}`, { team: TEAM_ID, nodes: { members: [orchId, ...memberIds], worktrees: worktreeIds }, edges: { parent_child: parentChild, member_worktree: memberWorktree } }, t(60)));
   out.push(slice("list:teams", { teams: [{ id: TEAM_ID, name: TEAM, dir_id: DIR }, ...(SCENARIO ? [] : [{ id: `team:${DIR}/${OTHER_TEAM}`, name: OTHER_TEAM, dir_id: DIR }])] }, t(7)));
 

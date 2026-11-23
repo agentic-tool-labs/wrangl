@@ -9,6 +9,7 @@ import { idsOf } from "./transcript-rows.js";
 import { tokensPerTurn } from "./conversation.js";
 import { itemsId, planStreams } from "./graph-world.js";
 import { STATE_LABEL } from "./plans-model.js";
+import { ReportBody } from "./evidence.js";
 
 // The member page, `#/member/<id>` (ah-ui-ia §1.3, §4): the member summary's header and Now, expanded with the current brief, the latest
 // report, the member's messages, files and tests, context, the items it has held, links and actions. Every section reads an existing
@@ -182,11 +183,11 @@ export class MemberPage extends Live {
       return html`<p class="dim skeleton">Loading…</p>`;
     }
     const { rows, failed, turns } = this.state;
-    const excerpt = (x, none) => (x === null
+    const excerpt = (x, none, report = false) => (x === null
       ? html`<p class="dim" aria-busy="true">Loading…</p>`
       : x.gone
         ? html`<p class="dim">no longer available</p>`
-        : html`<p class="prose">${x.text ?? none}</p>${x.truncated ? html`<p class="dim">Excerpt only: the daemon does not serve the full text.</p>` : null}`);
+        : html`${report ? html`<${ReportBody} text=${x.text ?? none} />` : html`<p class="prose">${x.text ?? none}</p>`}${x.truncated ? html`<p class="dim">Excerpt only: the daemon does not serve the full text.</p>` : null}`);
     return html`<article class="member-page" data-role=${m.role || undefined} data-state=${m.state} aria-label=${`Member ${m.title}`}>
       <p class="mp-back"><a href=${m.teamHref}>← ${m.team} · Overview</a></p>
       <header class="mp-head panel">
@@ -209,7 +210,7 @@ export class MemberPage extends Live {
         </section>
         <section class="mp-card mp-wide" aria-labelledby="mp-report"><h2 id="mp-report">Latest report</h2>
           ${rows === null && !failed ? html`<p class="dim">Loading…</p>` : m.report
-            ? html`<p class="mp-meta"><b>${m.report.slug}</b> <span class="dim">${when(m.report.created)}</span></p>${excerpt(m.report.text, "—")}`
+            ? html`<p class="mp-meta"><b>${m.report.slug}</b> <span class="dim">${when(m.report.created)}</span></p>${excerpt(m.report.text, "—", true)}`
             : html`<p class="dim">No report yet.</p>`}
         </section>
         <section class="mp-card mp-wide" aria-labelledby="mp-msgs"><h2 id="mp-msgs">Messages${m.messages.length ? html` <span class="dim">· ${m.messages.length}</span>` : null}</h2>

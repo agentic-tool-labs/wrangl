@@ -764,7 +764,62 @@ internal static partial class ChecklistVerb
 
         var code = Write(c, progress, entry.Stream, id, "set", events, asked: c.Opts.Text("state"));
         Supersede(c, progress, auto, HierarchyModule.ChecklistKey(entry));
+        if (code == 0 && c.Opts.Text("state") is "dispatched" or "in_progress")
+        {
+            foreach (var line in c.Services.WorkPastOpenGates(c.ProgressPool, c.ProgressTeam, HierarchyModule.ChecklistKey(entry), By(c), c.Proved().SessionId))
+            {
+                c.Warn(line);
+            }
+        }
+
+        if (c.Opts.Text("state") is "waiting-user" or "waiting_user")
+        {
+            TellTheTopOfALanePark(c, HierarchyModule.ChecklistKey(entry), note!);
+        }
+
         return code;
+    }
+
+    /// <summary>
+    /// ah2-510 L4: a sub-orchestrator parking a question on an item of its own lane tells the top Orchestrator, <c>orchestrator@&lt;manager&gt;</c>, once.
+    /// Any other caller or team sends nothing. An alert only: an unreached top costs one stderr line, never the verb.
+    /// </summary>
+    private static void TellTheTopOfALanePark(RosterContext c, string key, string note)
+    {
+        if ((c.Proved().Carve ?? c.RegisteredSoOfTarget()) is not { Disagreement: null } so || c.TeamFile is not { } child)
+        {
+            return;
+        }
+
+        var manager = c.Services.Roster.ReadTeamRecord(c.Dir, so.Team);
+        if (HierarchyModule.ConfirmedLaneStream(so.Team, manager, child, c.Services.Roster.ReadTeamRecord(c.Dir, child)) is not { } ws
+            || manager.Member("streams")?.AsObject().Get(ws)?.Member("sub_orchestrator") is not { IsText: true } lead || lead.AsString() != so.Member)
+        {
+            return;
+        }
+
+        var top = HierarchyModule.OrchestratorAddress(so.Team);
+        IReadOnlyList<string> reached = [];
+        try
+        {
+            reached = c.Services.EventMail?.SendEvent(
+                c.Cwd,
+                c.Dir,
+                $"lane-question-parked:{child}:{key}:{c.Services.Clock.UtcNow.ToUnixTimeMilliseconds()}",
+                "lane-question-parked",
+                $"lane {ws} parked a question for the user on {key}: {note}",
+                new JsonObject { ["team"] = child, ["stream"] = ws, ["item"] = key, ["note"] = note },
+                [top]) ?? [];
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            // an alert only: the item itself shows on the top's board
+        }
+
+        if (!reached.Contains(top))
+        {
+            c.Stderr.Write($"note: {top} not told of the parked question; it shows on the board\n");
+        }
     }
 
     /// <summary><c>commit</c> is a flag that never takes a value everywhere else, so the shas given after <c>--commit</c> arrive as the words after the item id.</summary>

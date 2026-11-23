@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountApp as mount, until, find, text, member } from "./mount-app.mjs";
 
-const { hierarchyLines, hiddenColumns, memberGroups } = await import("../../web/ui/overview.js");
+const { hierarchyLines, hiddenColumns, memberGroups, resourceLines } = await import("../../web/ui/overview.js");
 
 test("unknown reads as unknown and gone as gone, never Idle; idle is still idle", () => {
   const g = memberGroups(["working", "blocked", "idle", "unknown", "gone"].map((state) => ({ state })));
@@ -144,4 +144,15 @@ test("a running Orchestrator shows no idle glyph, and a field with no source dra
   await until(() => headings(m).some((h) => h.startsWith("Running ·")), "the Running group");
   assert.equal(text(row().all("span.g")[0]), "◐");
   assert.doesNotMatch(text(row().all("span.since")[0]), /—/);
+});
+
+test("resourceLines: at most two lines, name then the waiting count then the holder; +n more apart; the title carries outside and every waiter", () => {
+  const h = (name, extra = {}) => ({ name, who: "impl", outside: false, since: 0, waiting: [], ...extra });
+  const two = resourceLines([h("a"), h("b", { waiting: [{ who: "qa", since: 0 }] })]);
+  assert.deepEqual([two.lines.map((r) => [r.name, r.wait, r.who]), two.more], [[["a", null, "impl"], ["b", "1 waiting", "impl"]], 0]);
+  const four = resourceLines([h("a"), h("b"), h("c"), h("d")]);
+  assert.deepEqual([four.lines.map((r) => r.name), four.more], [["a", "b"], 2]);
+  const [r] = resourceLines([h("gpu", { outside: true, waiting: [{ who: "qa", since: 0 }, { who: "ux", since: 0 }] })]).lines;
+  assert.equal(r.wait, "2 waiting");
+  assert.match(r.title, /^gpu: held by impl \(outside this team\) since \d\d:\d\d; waiting: qa since \d\d:\d\d, ux since \d\d:\d\d$/);
 });

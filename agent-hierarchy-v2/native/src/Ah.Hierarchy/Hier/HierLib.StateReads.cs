@@ -506,10 +506,25 @@ internal sealed partial class HierLib
             return new MsgWindow(new JsonObject(), string.Empty, false, $"{name} has no body");
         }
 
+        var window = CutWindow(stored, stored.Length, name);
+
+        // F3b: a cut body keeps its trailing generated evidence section, so its figures reach the excerpt
+        if (window is { Error: null, Truncated: true } && Evidence.TrailingSection(stored) is { } section
+            && CutWindow(stored, section.Start, name) is { Error: null } before)
+        {
+            return before with { Excerpt = before.Excerpt.Length == 0 ? section.Text : before.Excerpt + "\n\n" + section.Text };
+        }
+
+        return window;
+    }
+
+    /// <summary>The excerpt of the first <paramref name="end"/> bytes of <paramref name="stored"/>, from its first <see cref="MsgsWindow"/> bytes.</summary>
+    private static MsgWindow CutWindow(byte[] stored, int end, string name)
+    {
         // ah2-1: the window is a span over the stored bytes, and the body is cut from the text without splitting it into lines
-        ReadOnlySpan<byte> bytes = stored.AsSpan(0, Math.Min(stored.Length, MsgsWindow));
+        ReadOnlySpan<byte> bytes = stored.AsSpan(0, Math.Min(end, MsgsWindow));
         var size = stored.Length;
-        var windowCut = size > bytes.Length;
+        var windowCut = end > bytes.Length;
         if (windowCut)
         {
             bytes = bytes[..WithoutIncompleteTail(bytes)];

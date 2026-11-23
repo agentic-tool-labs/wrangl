@@ -79,7 +79,7 @@ public static class StateDbModule
     public const int MinimumLibraryVersion = 3_024_000;
 
     /// <summary>The schema version this binary reads and writes.</summary>
-    public const int SchemaVersion = 45;
+    public const int SchemaVersion = 47;
 
     /// <summary>
     /// The tables whose rows can be rebuilt from files that still own the data (the caches and the teams and members imports), so a
@@ -100,7 +100,7 @@ public static class StateDbModule
     public static IReadOnlyList<string> AuthoritativeTables { get; } =
     [
         "adr_history", "adr_links", "adrs", "applied_writes", "asks", "checkpoints", "decisions", "domain_seq", "gates", "hold_archive", "holds", "jobs", "lessons", "links", "mail_acks", "mail_adapters", "mail_attempts", "mail_claims", "mail_entries", "mail_notes", "members_unplaced", "meta", "msg_bodies", "msg_exchanges", "msg_messages",
-        "peer_records", "plan_events", "plan_items", "progress_docs", "progress_logs", "qa_jobs", "qa_log", "recover_records", "roster_records", "rules", "sessions", "sessions_unplaced", "sqlite_sequence", "stall_journal", "team_history", "team_snapshots", "teams_unplaced", "usage_rows",
+        "peer_records", "plan_events", "plan_items", "progress_docs", "progress_logs", "qa_jobs", "qa_log", "recover_records", "resources", "roster_records", "rules", "sessions", "sessions_unplaced", "sqlite_sequence", "stall_journal", "team_history", "team_snapshots", "teams_unplaced", "usage_rows",
         "work_attachments", "work_items", "work_links", "work_log", "work_prefixes", "work_repos", "worktree_grant_audit", "worktree_grants",
     ];
 
@@ -338,6 +338,9 @@ public static class StateDbModule
 
     /// <summary>The QA job queue (<c>qa_jobs</c>) of the state database of <paramref name="ahHome"/>: each job's JSON text, in first-written order.</summary>
     public static IReadOnlyList<string> QaJobBodies(string ahHome) => StateDbHomeRows.QaJobBodies(ahHome);
+
+    /// <summary>The named-resource rows (<c>resources</c>, adr-36) of the state database of <paramref name="ahHome"/>, dead ones included, oldest first.</summary>
+    public static IReadOnlyList<ResourceRow> Resources(string ahHome) => StateDbHomeRows.Resources(ahHome);
 
     /// <summary>The known-dirs index (<c>meta</c> rows) of the state database of <paramref name="ahHome"/>: each dir and its last-seen ISO time, oldest first.</summary>
     public static IReadOnlyList<KeyValuePair<string, string>> KnownDirs(string ahHome) => StateDbHomeRows.KnownDirs(ahHome);

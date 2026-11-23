@@ -36,6 +36,29 @@ const briefStatus = (b) => (b.state === "working" ? "working" : "open");
 export const hiddenColumns = (briefs) => ({ branch: briefs.every((b) => !b.branch), status: new Set(briefs.map(briefStatus)).size <= 1 });
 const timeText = (ms) => (ms > 0 ? html`<${Age} text=${ageOfMs(ms)} />` : "—");
 
+// ah2-509: one line per resource the team holds or waits on (a hold outside the team is marked), each name once, with its waiters;
+// the rows are the status document's team `resources`.
+export const resourceHolds = (rows) => {
+  const list = Array.isArray(rows) ? rows : [];
+  const names = [...new Set(list.filter((r) => r.role === "hold").map((r) => r.name))];
+  return names.map((name) => {
+    const hold = list.find((r) => r.role === "hold" && r.name === name);
+    return { name, who: hold.who, outside: hold.outside === true, since: hold.since ?? 0, waiting: list.filter((r) => r.role === "wait" && r.name === name).map((w) => ({ who: w.who, since: w.since ?? 0 })) };
+  });
+};
+const clock = (ms) => new Date(ms).toTimeString().slice(0, 5);
+// ah2-552: the Resources cell: at most `max` lines, one per name, in the order name, "n waiting" (when anyone waits), holder, age.
+// The name and the waiting count never shrink; the holder and age truncate. `more` names past the cut get their own short line.
+// The full detail of each name is its line's title.
+export const resourceLines = (holds, max = 2) => ({
+  lines: holds.slice(0, max).map((r) => ({
+    ...r,
+    wait: r.waiting.length > 0 ? `${r.waiting.length} waiting` : null,
+    title: `${r.name}: held by ${r.who}${r.outside ? " (outside this team)" : ""} since ${clock(r.since)}${r.waiting.map((w, j) => `${j === 0 ? "; waiting: " : ", "}${w.who} since ${clock(w.since)}`).join("")}`,
+  })),
+  more: Math.max(0, holds.length - max),
+});
+
 // The hierarchy rows as text lines: indentation glyphs by depth, then the label and its detail.
 export function hierarchyLines(rows) {
   return rows.map((r) => ({ key: r.key, branch: r.depth === 0 ? "" : `${"│  ".repeat(r.depth - 1)}├─ `, kind: r.kind, state: r.state, label: r.label, detail: r.kind === "brief" ? r.detail : r.detail ?? "" }));
@@ -88,6 +111,7 @@ export class OverviewView extends Live {
       needsAt: decisions.length ? Math.min(...decisions.map((d) => d.at).filter((a) => a > 0)) : 0,
       decisions: Number.isFinite(t.pipeline?.decisions_count) ? t.pipeline.decisions_count : null,
       decidedAt: Date.parse(t.pipeline?.last_decision_at ?? "") || 0,
+      resources: resourceHolds(t.resources),
       oldest: briefs.find((b) => b.at > 0)?.at ?? 0,
       lines: hierarchyLines(flattenTree(snap.slices, team)),
       name: t.name,
@@ -96,7 +120,7 @@ export class OverviewView extends Live {
     // ah2-225 B1: each member's jobs under its row, and any whose owner is no one here under the Members header
     this.model.under = jobsUnder(graphSources(snap.slices, team, everyone.map((p) => p.id), [], "jobs"));
     const m = this.model;
-    return { under: JSON.stringify([...m.under]), key: JSON.stringify([[...m.working, ...m.blocked, ...m.running, ...m.idle, ...m.unknown, ...m.gone].map((p) => [p.id, p.name, p.role, p.state, p.slug, p.since, p.ctx.text, p.ctx.over, p.facts, p.duty]), m.briefs, m.stale, m.unattended, m.needs, m.needsPending, m.needsAt, m.decisions, m.decidedAt, m.lines, m.goal]), selected: snap.ui.selected ?? null };
+    return { under: JSON.stringify([...m.under]), key: JSON.stringify([[...m.working, ...m.blocked, ...m.running, ...m.idle, ...m.unknown, ...m.gone].map((p) => [p.id, p.name, p.role, p.state, p.slug, p.since, p.ctx.text, p.ctx.over, p.facts, p.duty]), m.briefs, m.stale, m.unattended, m.needs, m.needsPending, m.needsAt, m.decisions, m.decidedAt, m.resources, m.lines, m.goal]), selected: snap.ui.selected ?? null };
   }
 
   pick = (id) => this.props.store.setUi({ selected: this.props.store.state.ui.selected === id ? null : id });
@@ -138,6 +162,7 @@ export class OverviewView extends Live {
           <div class="stat attn"><h4>Needs you</h4><b>${needsText(m.needs, m.needsPending)}</b><span>${m.needs > 0 ? html`waiting on you${m.needsAt > 0 ? html` · ${timeText(m.needsAt)}` : ""}` : m.needsPending ? "not loaded yet" : "nothing waiting"}</span></div>
           <div class="stat"><h4>In flight</h4><b>${m.briefs.length}</b><span>${m.briefs.length > 0 ? (m.oldest > 0 ? html`oldest ${timeText(m.oldest)}` : "open") : "none open"}${m.stale > 0 ? ` · ${m.stale} stale` : ""}${m.unattended > 0 ? ` · ${m.unattended} unattended` : ""}</span></div>
           ${m.decisions === null ? null : html`<div class="stat"><h4>Decisions</h4><b>${m.decisions}</b><span>${m.decidedAt > 0 ? html`this run · last ${timeText(m.decidedAt)}` : "this run · none yet"}</span></div>`}
+          ${m.resources.length === 0 ? null : html`<div class="stat"><h4>Resources</h4><b>${m.resources.length}</b>${((rl) => [...rl.lines.map((r) => html`<span key=${r.name} class="res" title=${r.title}><span class="res-name">${r.name}</span>${r.wait ? html`<span class="res-wait">\u00a0· ${r.wait}</span>` : null}<span class="res-rest">\u00a0· ${r.who}${r.outside ? html` <span class="res-out">outside</span>` : ""} · ${timeText(r.since)}</span></span>`), rl.more > 0 ? html`<span key="+more" class="res-more">+${rl.more} more</span>` : null])(resourceLines(m.resources))}</div>`}
         </div>
         <header class="ov-h"><b>In flight</b><span class="dim">${m.briefs.length}</span></header>
         <div class=${`ov-table${hide.status ? " no-status" : ""}${hide.branch ? " no-branch" : ""}`} role="table" aria-label="In flight">

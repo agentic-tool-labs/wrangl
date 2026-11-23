@@ -97,6 +97,14 @@
 .ov-stats b { display: block; font-size: 22px; line-height: 28px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 .ov-stats .attn b { color: var(--blocked); }
 .ov-stats span { color: var(--muted); font-size: var(--text-12); }
+/* ah2-552: one line per held name (the full detail is the line's title): the name (ink voice) and the waiting count keep their
+   width; the holder and age give way with an ellipsis. "+n more" is its own line. */
+.ov-stats .res { display: flex; white-space: nowrap; overflow: hidden; }
+.ov-stats .res .res-name, .ov-stats .res .res-wait { flex: none; }
+.ov-stats .res .res-name { color: var(--ink); }
+.ov-stats .res .res-rest { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ov-stats .res .res-out { font-style: italic; }
+.ov-stats .res-more { display: block; }
 /* A team's goal (ah2-53), on the Overview and in the Sitrep: each label in the Overview's muted label voice over its text, which wraps. */
 .team-goal dl { display: grid; gap: var(--sp-8); margin: 0; }
 .team-goal dt { color: var(--muted-2); font-size: var(--text-11); line-height: 16px; letter-spacing: .04em; text-transform: uppercase; }

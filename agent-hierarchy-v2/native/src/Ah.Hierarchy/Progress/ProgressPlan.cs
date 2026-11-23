@@ -168,12 +168,12 @@ internal static partial class ProgressFormat
         ["add", "start", "done", "drop", "reopen", "testing", "retitle", "link", "note", "rank", "area", "assign", "next", "block", "wait-user", "unblock", "wait-orch", "role", "todo", "ref", "unref", "outcome", "size", "wave", "depend", "source", "ext", "kind", "parent", "review", "approve", "report", "after"];
 
     /// <summary>The kinds a plan item may have, with their rank: a parent link is valid only when the parent's rank is higher.</summary>
-    internal static readonly IReadOnlyList<string> Kinds = ["task", "deliverable", "epic", "goal", "project"];
+    internal static readonly IReadOnlyList<string> Kinds = ["task", "gate", "deliverable", "epic", "goal", "project"];
 
     /// <summary>Whether <paramref name="kind"/> only contains work: never handed out as next, and closed by hand only.</summary>
     internal static bool IsContainerKind(string? kind) => kind is "project" or "goal";
 
-    /// <summary>The rank of <paramref name="kind"/>: project 5, goal 4, epic 3, deliverable 2, task (or none) 1.</summary>
+    /// <summary>The rank of <paramref name="kind"/>: project 5, goal 4, epic 3, deliverable 2, task, gate (or none) 1.</summary>
     internal static int KindRank(string? kind) => kind switch
     {
         "project" => 5,

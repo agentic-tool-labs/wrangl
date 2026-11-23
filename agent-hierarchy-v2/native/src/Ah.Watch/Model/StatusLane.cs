@@ -40,7 +40,9 @@ internal sealed class StatusLane(IViewStateReader reader, Func<IReadOnlyList<str
 
     private static readonly Node Pipeline = new(("anchor_id", null), ("started", null), ("round_cap", null), ("waiting_on_user", null), ("items", PipelineItem));
 
-    private static readonly Node Team = new(("team", null), ("members", Member), ("dispatches", Dispatch), ("dispatches_truncated", null), ("pipeline", Pipeline));
+    private static readonly Node Resource = new(("name", null), ("role", null), ("who", null), ("since", null), ("note", null), ("outside", null));
+
+    private static readonly Node Team = new(("team", null), ("members", Member), ("dispatches", Dispatch), ("dispatches_truncated", null), ("pipeline", Pipeline), ("resources", Resource));
 
     private static readonly Node Owner = new(("sessions", null), ("teams", null), ("timeline", TimelineEntry));
 

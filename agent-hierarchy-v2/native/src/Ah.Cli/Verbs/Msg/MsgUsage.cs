@@ -16,7 +16,7 @@ internal static class MsgUsage
                       [--body-file <path>|-]   (write this text, or standard input for -, as the body under the frontmatter in the same call, instead of the skeleton;
                       at most 64 KiB, UTF-8, no line that is exactly ---, and more than the skeleton. A repeat of the same call returns the same file)
                       (pass --to-name when the brief is for a specific member; the UI's per-member view relies on it; the member name exactly as in the team file)
-          ah msg fill --id <id> --from <role> (--body '<JSON string>' | --body-file <path>|-) [--section <n>] [--request] [--part] [--req <abs request path>]
+          ah msg fill --id <id> --from <role> (--body '<JSON string>' | --body-file <path>|-) [--section <n>] [--request] [--part] [--req <abs request path>] [--evidence <path>]...
                       (replace everything after the frontmatter of the response to request <id>, creating the response first
                       when there is none; the frontmatter is kept byte for byte. --section <n>: replace only the body of `## [n]`,
                       appending it when absent. --request: amend the request itself (its author only). The body is one JSON string: `\n` for a newline, `\u0027` for a
@@ -24,6 +24,8 @@ internal static class MsgUsage
                       that is exactly `---`. May be repeated: each run puts the new body first and keeps the earlier one below it. Prints {id, type, rev, bytes}.)
                       (--part: a partial report, one per deliverable: appends the text under `## part <n> · <time>` and keeps the request open;
                       a plain fill afterwards is the final report and closes it. Ignored with --request)
+                      (--evidence <path>: repeatable; copies the file read-only to <ah home>/evidence/<id>/e<k>-<name> and appends a `## evidence`
+                      section citing evidence:<id>/e<k>. At most 20 files and 50 MiB per message, 20 MiB per file; a regular, readable file)
           ah msg show <id> [request|response|note] [--section <n>]... [--out <file> [--force]] [--to <name>] [--pool <dir>]
                       (print the message, frontmatter and body; --section prints only those `## [n]` sections)
           ah msg list [--open|--closed|--all] [--to <role>] [--team <name>] [--json] [--plain]

@@ -23,7 +23,7 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
 {
     private static readonly string[] RowNames =
         [
-            "version", "install", "identity", "owner-proof", "release-handshake", "lifecycle-permissions", "runtime-dir", "config", "team", "progress", "jobs-unseen", "alarm", "test-bucket", "peers", "work-roots", "tree-ownership", "registrations", "codex-grants", "state-db", "ahd-heal", "ahd-build", "hook-errors", "rejected-requests", "hooks-syntax", "marketplace", "ux-skills",
+            "version", "install", "identity", "owner-proof", "release-handshake", "lifecycle-permissions", "runtime-dir", "config", "team", "progress", "jobs-unseen", "evidence", "alarm", "test-bucket", "peers", "work-roots", "tree-ownership", "registrations", "codex-grants", "state-db", "ahd-heal", "ahd-build", "hook-errors", "rejected-requests", "hooks-syntax", "marketplace", "ux-skills",
             "trusted-homes", "trusted-hierarchy-dirs",
         ];
 

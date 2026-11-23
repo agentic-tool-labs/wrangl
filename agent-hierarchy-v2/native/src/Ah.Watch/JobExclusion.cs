@@ -5,7 +5,7 @@ namespace Ah.Watch;
 
 /// <summary>
 /// The commands that are not jobs: the wake sources (<c>ah roster wake</c>, <c>ah roster overdue</c>), which the wake files already track,
-/// and a bare <c>sleep N</c>, which is bounded by its own argument. A command counts only when it is exactly one simple command whose
+/// a resource claim (<c>ah roster resource claim</c>), which waits no longer than its own <c>--wait</c>, and a bare <c>sleep N</c>, which is bounded by its own argument. A command counts only when it is exactly one simple command whose
 /// program resolves to the real binary, so nothing that merely contains such text, or runs a look-alike, is excluded.
 /// </summary>
 internal static class JobExclusion
@@ -19,7 +19,8 @@ internal static class JobExclusion
             return false;
         }
 
-        if (argv.Count >= 3 && argv[1] == "roster" && argv[2] is "wake" or "overdue"
+        // ah2-509: a waiting resource claim is a wait bounded by its own --wait, like wake
+        if (argv.Count >= 3 && argv[1] == "roster" && (argv[2] is "wake" or "overdue" || (argv[2] == "resource" && argv.Count >= 4 && argv[3] == "claim"))
             && (ahBinaries.Contains(program, StringComparer.Ordinal) || IsInstalledAh(program, fileExists)))
         {
             return true;
