@@ -25,12 +25,17 @@ public sealed class ClaudeEnvironmentLaunchTests
         }
     }
 
-    private static JsonObject Member(string? claudeConfig)
+    private static JsonObject Member(string? claudeConfig, string? secureStorage = null)
     {
         var member = new JsonObject { ["role"] = "implementor", ["name"] = MemberName };
         if (claudeConfig is not null)
         {
             member[LaunchModule.ClaudeConfigField] = claudeConfig;
+        }
+
+        if (secureStorage is not null)
+        {
+            member[LaunchModule.ClaudeEnvironment[1].Field] = secureStorage;
         }
 
         return member;
@@ -45,8 +50,8 @@ public sealed class ClaudeEnvironmentLaunchTests
         return rig;
     }
 
-    private static string Launch(ScenarioRig rig, string? claudeConfig, string transport) =>
-        rig.Shapes.SpawnShape(Member(claudeConfig), transport, rig.Context).Shape.Get("launch")!.Value.AsArray()[0].AsString();
+    private static string Launch(ScenarioRig rig, string? claudeConfig, string transport, string? secureStorage = null) =>
+        rig.Shapes.SpawnShape(Member(claudeConfig, secureStorage), transport, rig.Context).Shape.Get("launch")!.Value.AsArray()[0].AsString();
 
     /// <summary>
     /// The command tmux types into the pane: the single-quoted word between <c>&lt;TARGET&gt; </c> and <c> Enter</c>, unquoted the way
@@ -78,11 +83,11 @@ public sealed class ClaudeEnvironmentLaunchTests
     private static string SeenByClaude(string line, string claude = " claude ") =>
         Sh(line[..line.IndexOf(claude, StringComparison.Ordinal)] + " printenv CLAUDE_CONFIG_DIR").TrimEnd('\n');
 
-    private static JsonObject Shaped(ScenarioRig rig, string? claudeConfig, string transport)
+    private static JsonObject Shaped(ScenarioRig rig, string? claudeConfig, string transport, string? secureStorage = null)
     {
-        var outcome = rig.Shapes.SpawnShape(Member(claudeConfig), transport, rig.Context);
+        var outcome = rig.Shapes.SpawnShape(Member(claudeConfig, secureStorage), transport, rig.Context);
         Assert.Null(outcome.Fail);
-        var member = Member(claudeConfig);
+        var member = Member(claudeConfig, secureStorage);
         member["spawn"] = outcome.Shape;
         return member;
     }
@@ -128,8 +133,8 @@ public sealed class ClaudeEnvironmentLaunchTests
     [Fact]
     public void TheTuiLineGivesThePaneShellTheValueUnexpanded()
     {
-        Assert.Equal(Expandable, Sh(MemberLauncher.ClaudeConfigShellLine(Expandable) + "; printenv CLAUDE_CONFIG_DIR").TrimEnd('\n'));
-        Assert.Equal("unset", Sh("CLAUDE_CONFIG_DIR=/x; export CLAUDE_CONFIG_DIR; " + MemberLauncher.ClaudeConfigShellLine(string.Empty) + "; printenv CLAUDE_CONFIG_DIR || echo unset").TrimEnd('\n'));
+        Assert.Equal(Expandable, Sh(MemberLauncher.ClaudeConfigShellLine([("CLAUDE_CONFIG_DIR", Expandable)]) + "; printenv CLAUDE_CONFIG_DIR").TrimEnd('\n'));
+        Assert.Equal("unset", Sh("CLAUDE_CONFIG_DIR=/x; export CLAUDE_CONFIG_DIR; " + MemberLauncher.ClaudeConfigShellLine([("CLAUDE_CONFIG_DIR", string.Empty)]) + "; printenv CLAUDE_CONFIG_DIR || echo unset").TrimEnd('\n'));
     }
 
     [Fact]
@@ -155,6 +160,22 @@ public sealed class ClaudeEnvironmentLaunchTests
         Assert.StartsWith("env CLAUDE_CONFIG_DIR='/cfg/a b'\\''c' claude ", Launch(rig, Odd, "terminal"), StringComparison.Ordinal);
         Assert.StartsWith("env -u CLAUDE_CONFIG_DIR claude ", Launch(rig, string.Empty, "terminal"), StringComparison.Ordinal);
         Assert.StartsWith("claude ", Launch(rig, null, "terminal"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheBackgroundLineWithOneSetAndOneUnsetPutsTheUnsetFirstAndRuns()
+    {
+        var line = Launch(Rig(), Odd, "terminal", secureStorage: string.Empty);
+
+        // env reads options only before its first assignment: `env A=x -u B claude` runs a command named -u
+        Assert.StartsWith("env -u CLAUDE_SECURESTORAGE_CONFIG_DIR CLAUDE_CONFIG_DIR='/cfg/a b'\\''c' claude ", line, StringComparison.Ordinal);
+        Assert.Equal(Odd, SeenByClaude(line));
+    }
+
+    [Fact]
+    public void TheBackgroundLineWithBothSetKeepsListOrder()
+    {
+        Assert.StartsWith("env CLAUDE_CONFIG_DIR='/a' CLAUDE_SECURESTORAGE_CONFIG_DIR='/b' claude ", Launch(Rig(), "/a", "terminal", secureStorage: "/b"), StringComparison.Ordinal);
     }
 
     // ---------------------------------------------------------------- headless: the child's environment
@@ -267,13 +288,13 @@ public sealed class ClaudeEnvironmentLaunchTests
 
     // ---------------------------------------------------------------- herdr core: the hidden terminal's command is env … claude
 
-    private static string CoreRun(string? claudeConfig) => CoreCall(claudeConfig, pane: null, out _);
+    private static string CoreRun(string? claudeConfig, string? secureStorage = null) => CoreCall(claudeConfig, pane: null, out _, secureStorage);
 
     /// <summary>
     /// One launch under herdr core: into <paramref name="pane"/> when given (the line <c>hc send</c> types comes back), else a hidden
     /// terminal (its argv after <c>--</c> comes back, joined by U+0001). <paramref name="root"/> is the rig's sandbox root.
     /// </summary>
-    private static string CoreCall(string? claudeConfig, string? pane, out string root)
+    private static string CoreCall(string? claudeConfig, string? pane, out string root, string? secureStorage = null)
     {
         var rig = Rig(env =>
         {
@@ -289,7 +310,7 @@ public sealed class ClaudeEnvironmentLaunchTests
             _ => null,
         };
         root = rig.Sandbox.Root;
-        var member = Shaped(rig, claudeConfig, "herdr");
+        var member = Shaped(rig, claudeConfig, "herdr", secureStorage);
         if (pane is not null)
         {
             member["transport_id"] = pane;
@@ -324,6 +345,23 @@ public sealed class ClaudeEnvironmentLaunchTests
 
         Assert.Equal(["env", "-u", "CLAUDE_CONFIG_DIR"], words[2..5]);
         Assert.EndsWith("/bin/claude", words[5], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheCoreHiddenTerminalWithOneSetAndOneUnsetPutsTheUnsetFirst()
+    {
+        var words = CoreRun(Odd, secureStorage: string.Empty).Split('\u0001');
+
+        Assert.Equal(["env", "-u", "CLAUDE_SECURESTORAGE_CONFIG_DIR", "CLAUDE_CONFIG_DIR=" + Odd], words[2..6]);
+        Assert.EndsWith("/bin/claude", words[6], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheCoreHiddenTerminalWithBothSetKeepsListOrder()
+    {
+        var words = CoreRun("/a", secureStorage: "/b").Split('\u0001');
+
+        Assert.Equal(["env", "CLAUDE_CONFIG_DIR=/a", "CLAUDE_SECURESTORAGE_CONFIG_DIR=/b"], words[2..5]);
     }
 
     [Fact]

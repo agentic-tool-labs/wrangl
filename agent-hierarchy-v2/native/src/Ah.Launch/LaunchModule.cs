@@ -134,6 +134,16 @@ public static class LaunchModule
     /// </summary>
     public const string ClaudeConfigField = "claude_config_dir";
 
+    /// <summary>
+    /// The Claude environment (claude-env Amendment 4): the variables a Claude member launches with, in launch-line order, each recorded under its
+    /// own member-row and team-record field with <see cref="ClaudeConfigField"/>'s meaning. Adding a variable is one row here.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Variable, string Field)> ClaudeEnvironment =
+    [
+        ("CLAUDE_CONFIG_DIR", ClaudeConfigField),
+        ("CLAUDE_SECURESTORAGE_CONFIG_DIR", "claude_securestorage_config_dir"),
+    ];
+
     /// <summary>The largest process id a signal may be sent to: Linux's <c>pid_max</c> ceiling (2^22).</summary>
     public const int PidCeiling = 4194304;
 

@@ -207,24 +207,23 @@ public sealed record SpawnShapes(
     /// <summary>The Claude configuration directory a member launches in: its recorded value, else <c>~/.claude</c> as before.</summary>
     private string ClaudeDirFor(string? recorded) => Ah.Core.CoreModule.ClaudeConfigDir(recorded, Environment.HomeDirectory);
 
-    /// <summary>The words before <c>claude</c> that put <paramref name="recorded"/> on the launch: none when absent, <c>env -u</c> when empty.</summary>
-    private string ClaudeEnvPrefix(string? recorded) => recorded switch
-    {
-        null => string.Empty,
-        "" => "env -u CLAUDE_CONFIG_DIR ",
-        _ => "env CLAUDE_CONFIG_DIR=" + ShQuote(recorded) + " ",
-    };
+    /// <summary>A Claude member's recorded Claude environment: one (variable, value) per <see cref="LaunchModule.ClaudeEnvironment"/> row it records, in list order.</summary>
+    internal static List<(string Variable, string Value)> ClaudeEnvOf(JsonValue member) =>
+        [.. LaunchModule.ClaudeEnvironment.Where(v => member.Member(v.Field) is { IsText: true }).Select(v => (v.Variable, member.Member(v.Field)!.Value.AsString()))];
 
     /// <summary>
-    /// The command before <c>claude</c> on a line typed into a pane's shell (tmux): an export or unset, so the shell still resolves <c>claude</c>
-    /// itself, an alias or function included; none when absent.
+    /// The words before <c>claude</c> that put <paramref name="recorded"/> on the launch: none when empty, else one <c>env</c> with <c>-u NAME</c> or
+    /// <c>NAME=value</c> per variable, every <c>-u</c> first: env reads options only before its first assignment.
     /// </summary>
-    private string ClaudeShellPrefix(string? recorded) => recorded switch
-    {
-        null => string.Empty,
-        "" => "unset CLAUDE_CONFIG_DIR; ",
-        _ => "export CLAUDE_CONFIG_DIR=" + ShQuote(recorded) + "; ",
-    };
+    private string ClaudeEnvPrefix(List<(string Variable, string Value)> recorded) =>
+        recorded.Count == 0 ? string.Empty : "env " + string.Concat(recorded.OrderBy(r => r.Value.Length != 0).Select(r => r.Value.Length == 0 ? $"-u {r.Variable} " : $"{r.Variable}={ShQuote(r.Value)} "));
+
+    /// <summary>
+    /// The commands before <c>claude</c> on a line typed into a pane's shell (tmux): an export or unset per variable, so the shell still resolves
+    /// <c>claude</c> itself, an alias or function included; none when nothing is recorded.
+    /// </summary>
+    private string ClaudeShellPrefix(List<(string Variable, string Value)> recorded) =>
+        string.Concat(recorded.Select(r => r.Value.Length == 0 ? $"unset {r.Variable}; " : $"export {r.Variable}={ShQuote(r.Value)}; "));
 
     public string InstructionsPath(string name, LaunchContext context) =>
         NodePath.Join(context.HierarchyDir ?? Config.HierarchyDir(context.Cwd), "instructions", name + ".md");
@@ -329,6 +328,7 @@ public sealed record SpawnShapes(
         }
 
         var claudeConfig = isClaude ? ClaudeConfigOf(member) : null;
+        List<(string Variable, string Value)> claudeEnv = isClaude ? ClaudeEnvOf(member) : [];
         string? settingsValue = null;
         JsonObject? permissions = null;
         if (!orchestrator || memberEnv.Count > 0)
@@ -444,7 +444,7 @@ public sealed record SpawnShapes(
         var launchArgs = plan?.Appserver is not null ? plan.LaunchArgs! : plainWithMarker;
         string StartLine(IReadOnlyList<string> args) =>
             $"herdr agent start {name} --kind {kind} --pane <TARGET>" + (args.Count > 0 ? " -- " + string.Join(' ', args.Select(ShQuote)) : string.Empty);
-        var claudeCmd = ClaudeEnvPrefix(claudeConfig) + "claude " + string.Join(' ', agentFlags);
+        var claudeCmd = ClaudeEnvPrefix(claudeEnv) + "claude " + string.Join(' ', agentFlags);
 
         if (orchestrator && transport == "foreground")
         {
@@ -477,7 +477,7 @@ public sealed record SpawnShapes(
                         ["target_placeholder"] = JsonValue.Null,
                         ["target_from"] = JsonValue.Null,
                         ["target_source"] = JsonValue.Null,
-                    }, claudeConfig),
+                    }, claudeEnv),
                     permissions),
                 null,
                 []);
@@ -509,7 +509,7 @@ public sealed record SpawnShapes(
             shape["target_placeholder"] = "<TARGET>";
             shape["target_from"] = JsonValue.Null;
             shape["target_source"] = new JsonObject { ["kind"] = "json", ["path"] = ".result.pane.pane_id" };
-            WithClaudeConfig(shape, claudeConfig);
+            WithClaudeConfig(shape, claudeEnv);
             WithPermissions(shape, permissions);
             return new ShapeOutcome(shape, null, shapeNotices);
         }
@@ -525,7 +525,7 @@ public sealed record SpawnShapes(
                         ["args"] = JsonValue.Null,
                         ["layout"] = Array($"tmux new-window -P -F '#{{pane_id}}' -c \"{launchCwd}\""),
                         // single quotes for the shell that runs this line: nothing in the typed command is expanded before tmux types it
-                        ["launch"] = Array($"tmux send-keys -t <TARGET> {ShQuote(ClaudeShellPrefix(claudeConfig) + "claude " + string.Join(' ', agentFlags))} Enter"),
+                        ["launch"] = Array($"tmux send-keys -t <TARGET> {ShQuote(ClaudeShellPrefix(claudeEnv) + "claude " + string.Join(' ', agentFlags))} Enter"),
                         ["launch_cwd"] = launchCwd,
                         ["target_placeholder"] = "<TARGET>",
                         ["target_from"] = 0,
@@ -556,11 +556,11 @@ public sealed record SpawnShapes(
     }
 
     /// <summary>Carries a recorded Claude environment on the shape, for the launcher to put on the child's environment or pane; absent stays absent.</summary>
-    private static JsonObject WithClaudeConfig(JsonObject shape, string? recorded)
+    private static JsonObject WithClaudeConfig(JsonObject shape, List<(string Variable, string Value)> recorded)
     {
-        if (recorded is not null)
+        foreach (var (variable, value) in recorded)
         {
-            shape[LaunchModule.ClaudeConfigField] = recorded;
+            shape[LaunchModule.ClaudeEnvironment.First(v => v.Variable == variable).Field] = value;
         }
 
         return shape;

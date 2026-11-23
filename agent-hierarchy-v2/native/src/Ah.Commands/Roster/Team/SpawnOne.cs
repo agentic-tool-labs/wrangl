@@ -59,8 +59,8 @@ internal static class TeamRecords
             ["expected_root"] = messages.RealCwd(c.Cwd),
             ["roster"] = resolved.IsMap && resolved.Member("teamKey") is { IsTruthy: true } key ? key : JsonValue.Null,
             ["layout"] = mode,
-            [ClaudeEnvironment.Field] = ClaudeEnvironment.Caller(c),
         };
+        ClaudeEnvironment.PutCaller(c, record);
 
         // ah2-143: the flavour it launches on, so later team-wide calls need not guess the server
         if (transport == "herdr" && c.Services.Launch?.Herdr.Flavour is { } flavour)
@@ -787,10 +787,10 @@ internal static class SpawnOne
         }
 
         member = MemberPlanning.WithLaunchModel(c, member);
-        ClaudeEnvironment.Resolved? claudeEnv = kind == launch.Registry.KindDefault ? ClaudeEnvironment.Resolve(c, existingIsRecord ? existing : (JsonValue?)null, team) : null;
-        if (claudeEnv is { } resolvedEnv)
+        var claudeEnv = kind == launch.Registry.KindDefault ? ClaudeEnvironment.Resolve(c, existingIsRecord ? existing : (JsonValue?)null, team) : [];
+        foreach (var resolvedEnv in claudeEnv)
         {
-            member = MemberPlanning.With(member, ClaudeEnvironment.Field, resolvedEnv.Value);
+            member = MemberPlanning.With(member, resolvedEnv.Field, resolvedEnv.Value);
         }
 
         var needing = MemberPlanning.MembersNeedingModel(c, [member], rosterMembers);
@@ -961,7 +961,11 @@ internal static class SpawnOne
         Copy(newRecord, "model", member, "model");
         Copy(newRecord, "effort", member, "effort");
         Copy(newRecord, "autoMode", member, "autoMode");
-        Copy(newRecord, ClaudeEnvironment.Field, member, ClaudeEnvironment.Field);
+        foreach (var (_, field) in ClaudeEnvironment.Variables)
+        {
+            Copy(newRecord, field, member, field);
+        }
+
         newRecord["expected_root"] = services.Hierarchy.Messages.RealCwd(launchCwd);
         if (kind != launch.Registry.KindDefault)
         {
@@ -1081,9 +1085,9 @@ internal static class SpawnOne
                 }
 
                 next["members"] = list;
-                if (claudeEnv is { TeamTakesCaller: true } leadEnv && freshTeam.IsMap)
+                foreach (var leadEnv in claudeEnv.Where(r => r.TeamTakesCaller && freshTeam.IsMap))
                 {
-                    next[ClaudeEnvironment.Field] = leadEnv.Value;
+                    next[leadEnv.Field] = leadEnv.Value;
                 }
 
                 journaled = ParentAction.Entry(c, label, memberName, stream?.Name);

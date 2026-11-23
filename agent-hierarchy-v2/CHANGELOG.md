@@ -4,6 +4,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.56] - 2026-11-23
+
+### Fixed
+
+- **A member also takes its Orchestrator's Claude login.** 2.0.55 carried only `CLAUDE_CONFIG_DIR`. A session
+  started with a different stored login (`CLAUDE_SECURESTORAGE_CONFIG_DIR`) and the default config directory
+  still got members on the default login. Both variables are now carried on every member launch, each set or
+  explicitly unset to match the spawner, recorded on the team and member, and compared by `ah roster doctor`.
+
 ## [2.0.55] - 2026-11-23
 
 ### Fixed
