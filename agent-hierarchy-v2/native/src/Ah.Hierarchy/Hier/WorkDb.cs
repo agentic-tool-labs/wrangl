@@ -7,7 +7,7 @@ namespace Ah.Hierarchy;
 internal sealed partial class HierLib
 {
     /// <summary>
-    /// Args: <c>dir</c>, and <c>prefix</c> (changes the repo's prefix), <c>record</c> (a history entry), <c>link</c> (blocker, blocked, by, remove), <c>attach</c> (n, ref, kind, title, sha, by, remove),
+    /// Args: <c>dir</c>, and <c>prefix</c> (changes the repo's prefix), <c>record</c> (a history entry), <c>link</c> (blocker, blocked, by, remove), <c>attach</c> (n, ref, kind, title, sha, by, remove, need),
     /// <c>ext_of</c> (a number, with ext and url) or <c>register</c> (rows of team, stream, item, added_at). A registration
     /// without <c>backfill</c> writes nothing and answers <c>{needs_backfill}</c> until the repo holds a team item, so older items keep their
     /// <c>AddedAt</c> order: the caller then reconciles. Result: <c>{prefix}</c>; a write's result is capped, so it never lists the numbers.
@@ -220,13 +220,29 @@ internal sealed partial class HierLib
             throw new InvalidOperationException($"no work item {n}");
         }
 
+        var kind = OpArgs.Text(attach, "kind");
+        var need = OpArgs.Text(attach, "need");
+
+        // a fill names a need its item declares (adr-38 G4)
+        if (need is not null && !Work.IsNeedKind(kind ?? string.Empty) && attach.Member("remove") is not { IsTruthy: true }
+            && tx.Query("SELECT 1 FROM work_attachments WHERE hier_dir = ?1 AND n = ?2 AND kind IN (?3, ?4) AND ref = ?5", dir, n, Work.NeedKind, Work.ReviewNeedKind, Work.NeedRefPrefix + need).Count == 0)
+        {
+            throw new InvalidOperationException($"--as {need}: {WorkIdIn(tx, dir, n)} declares no need {need}; declare it: ah work gate {WorkIdIn(tx, dir, n)} --need {need}");
+        }
+
         if (attach.Member("remove") is { IsTruthy: true })
         {
             tx.Execute("DELETE FROM work_attachments WHERE hier_dir = ?1 AND n = ?2 AND ref = ?3", dir, n, reference);
+
+            // a removed need's fills stay as plain attachments
+            if (Work.IsNeedKind(kind ?? string.Empty) && need is not null)
+            {
+                tx.Execute("UPDATE work_attachments SET need = NULL WHERE hier_dir = ?1 AND n = ?2 AND need = ?3", dir, n, need);
+            }
         }
         else
         {
-            var kind = ArgText(attach, "kind");
+            kind = ArgText(attach, "kind");
             if (kind == "url" && !Work.ValidUrl(reference))
             {
                 throw new InvalidOperationException($"{reference}: must be an absolute http or https URL of at most {Work.MaxUrl} characters");
@@ -239,8 +255,8 @@ internal sealed partial class HierLib
             }
 
             tx.Execute(
-                "INSERT INTO work_attachments(hier_dir, n, ref, kind, title, sha, by, ts_ms) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(hier_dir, n, ref) DO UPDATE SET kind = excluded.kind, title = COALESCE(excluded.title, title), sha = excluded.sha, by = excluded.by, ts_ms = excluded.ts_ms",
-                dir, n, reference, kind, title, OpArgs.Text(attach, "sha"), OpArgs.Text(attach, "by"), ms);
+                "INSERT INTO work_attachments(hier_dir, n, ref, kind, title, sha, by, ts_ms, need) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) ON CONFLICT(hier_dir, n, ref) DO UPDATE SET kind = excluded.kind, title = COALESCE(excluded.title, title), sha = excluded.sha, by = excluded.by, ts_ms = excluded.ts_ms, need = COALESCE(excluded.need, need)",
+                dir, n, reference, kind, title, OpArgs.Text(attach, "sha"), OpArgs.Text(attach, "by"), ms, need);
         }
 
         tx.Execute("UPDATE work_items SET updated_ms = ?3 WHERE hier_dir = ?1 AND n = ?2", dir, n, ms);

@@ -22,8 +22,34 @@ public sealed record WorkItemView(WorkRow Row, PlanItem? Plan);
 /// <summary>One entry of an item's history: when, its type, its one-line title, its body (may be empty) and who wrote it.</summary>
 public sealed record WorkEntry(long Ms, string Type, string Title, string Body, string By);
 
-/// <summary>What an item points at (§8): a repo-relative path or a URL, its kind (<c>spec</c>, <c>file</c>, <c>url</c>), an optional title, and for a committed file its last commit.</summary>
-public sealed record WorkAttachment(long N, string Ref, string Kind, string? Title, string? Sha);
+/// <summary>
+/// What an item points at (§8): a repo-relative path, a URL or a <c>msg:</c> report, its kind (<c>spec</c>, <c>file</c>, <c>url</c>, <c>report</c>; <c>need</c> and <c>gate</c> on a gate), an optional title,
+/// for a committed file its last commit, and the gate need it declares or fills (null for a plain attachment).
+/// </summary>
+public sealed record WorkAttachment(long N, string Ref, string Kind, string? Title, string? Sha, string? Need = null);
+
+/// <summary>One need of a gate (adr-38): its name, description, whether it needs a passing review, its fill refs, how its review stands (null without <c>--review</c>), and whether it is met.</summary>
+public sealed record GateNeed(string Name, string? Title, bool Review, IReadOnlyList<string> Fills, string? ReviewState, bool Filled);
+
+/// <summary>Where a gate stands: who decides it and its needs, in declared order.</summary>
+public sealed record GateSummary(string Decider, IReadOnlyList<GateNeed> Needs)
+{
+    /// <summary>The gate's parked question as a person reads it (<c>q3 open</c>, <c>q3 answered Pass</c>), or null when it was never asked.</summary>
+    public string? Asked { get; init; }
+
+    /// <summary>How many needs are met.</summary>
+    public int FilledCount => Needs.Count(static n => n.Filled);
+
+    /// <summary>The names of the needs not met.</summary>
+    public IReadOnlyList<string> Missing => [.. Needs.Where(static n => !n.Filled).Select(static n => n.Name)];
+
+    /// <summary>The summary as lines: the decider, then <c>&lt;name&gt; ✓|✗ [review: pass|&lt;verdict&gt;|missing] &lt;fill refs&gt;</c> per need.</summary>
+    public IReadOnlyList<string> Lines() =>
+    [
+        "decided by: " + Decider + (Asked is { } asked ? "; asked: " + asked : string.Empty),
+        .. Needs.Select(static n => string.Join(" ", new[] { n.Name, n.Filled ? "✓" : "✗", n.ReviewState is { } r ? "[review: " + r + "]" : null, n.Fills.Count > 0 ? string.Join(", ", n.Fills) : null }.OfType<string>())),
+    ];
+}
 
 /// <summary>One blocked-by link: <paramref name="Blocker"/> blocks <paramref name="Blocked"/>.</summary>
 public sealed record WorkLink(long Blocker, long Blocked);
@@ -244,8 +270,73 @@ internal static partial class Work
 
     /// <summary>The repo's attachments, of one item when <paramref name="n"/> is given.</summary>
     public static IReadOnlyList<WorkAttachment> Attachments(Func<string, object?[], IReadOnlyList<object?[]>> query, string dirKey, long? n) =>
-        [.. query("SELECT n, ref, kind, title, sha FROM work_attachments WHERE hier_dir = ?1 AND (?2 IS NULL OR n = ?2) ORDER BY n, ts_ms, ref", [dirKey, n])
-            .Select(static r => new WorkAttachment((long)r[0]!, (string)r[1]!, (string)r[2]!, r[3] as string, r[4] as string))];
+        [.. query("SELECT n, ref, kind, title, sha, need FROM work_attachments WHERE hier_dir = ?1 AND (?2 IS NULL OR n = ?2) ORDER BY n, ts_ms, ref", [dirKey, n])
+            .Select(static r => new WorkAttachment((long)r[0]!, (string)r[1]!, (string)r[2]!, r[3] as string, r[4] as string, r[5] as string))];
+
+    /// <summary>The kind of a gate item (adr-38).</summary>
+    public const string GateKind = "gate";
+
+    /// <summary>The attachment kind that declares a need; its ref is <see cref="NeedRefPrefix"/> and the name.</summary>
+    public const string NeedKind = "need";
+
+    public const string NeedRefPrefix = "need:";
+
+    /// <summary>The settings row naming who decides a gate; kind <see cref="GateKind"/>, title <c>user</c> or <c>team</c>.</summary>
+    public const string DeciderRef = "gate:decider";
+
+    /// <summary>The ref prefix of a message report; its kind is <see cref="ReportKind"/>.</summary>
+    public const string ReportRefPrefix = "msg:";
+
+    public const string ReportKind = "report";
+
+    public const string NeedShape = "1 to 40 characters of a-z 0-9 - .";
+
+    [GeneratedRegex(@"^[a-z0-9.-]{1,40}\z")]
+    private static partial Regex NeedPattern();
+
+    /// <summary>Whether <paramref name="name"/>, already lowercased, may name a need.</summary>
+    public static bool ValidNeed(string name) => NeedPattern().IsMatch(name);
+
+    /// <summary>
+    /// Where a gate stands, from its attachments. A need is met by any fill; a <c>--review</c> need by an artifact plus a <c>msg:</c> report whose verdict passes.
+    /// <paramref name="verdictOf"/> reads a report's id as (passes, its verdict line), or null when it has no reply; it is asked only for reports.
+    /// </summary>
+    public static GateSummary Gate(IReadOnlyList<WorkAttachment> attachments, Func<string, (bool Pass, string Verdict)?> verdictOf)
+    {
+        ArgumentNullException.ThrowIfNull(attachments);
+        ArgumentNullException.ThrowIfNull(verdictOf);
+        var decider = attachments.FirstOrDefault(static a => a.Ref == DeciderRef)?.Title is "team" ? "team" : "user";
+        var needs = attachments.Where(static a => IsNeedKind(a.Kind) && a.Ref.StartsWith(NeedRefPrefix, StringComparison.Ordinal)).Select(declared =>
+        {
+            var name = declared.Ref[NeedRefPrefix.Length..];
+            var fills = attachments.Where(a => a.Need == name && !IsNeedKind(a.Kind)).ToList();
+            var review = IsReviewNeed(declared);
+            if (!review)
+            {
+                return new GateNeed(name, declared.Title, false, [.. fills.Select(static f => f.Ref)], null, fills.Count > 0);
+            }
+
+            var reports = fills.Where(static f => f.Kind == ReportKind).Select(f => verdictOf(f.Ref[ReportRefPrefix.Length..])).ToList();
+            var passed = reports.Any(static r => r is { Pass: true });
+            var state = reports.Count == 0 ? "missing" : passed ? "pass" : reports[^1] is { } last ? last.Verdict : "no reply";
+            return new GateNeed(name, declared.Title, true, [.. fills.Select(static f => f.Ref)], state, passed && fills.Any(static f => f.Kind != ReportKind));
+        });
+        return new GateSummary(decider, [.. needs]);
+    }
+
+    /// <summary>Whether a need declaration asks for a passing review: its kind is <see cref="ReviewNeedKind"/>.</summary>
+    private static bool IsReviewNeed(WorkAttachment declared) => declared.Kind == ReviewNeedKind;
+
+    /// <summary>The attachment kind that declares a need with <c>--review</c>.</summary>
+    public const string ReviewNeedKind = "need-review";
+
+    /// <summary>Whether an attachment kind declares a need.</summary>
+    public static bool IsNeedKind(string kind) => kind is NeedKind or ReviewNeedKind;
+
+    /// <summary>The attachment kind that keeps a gate's parked question; its ref is <see cref="AskRefPrefix"/> and the id, its title the team whose store holds it.</summary>
+    public const string AskKind = "ask";
+
+    public const string AskRefPrefix = "q:";
 
     /// <summary>The item's description: the body of its newest <c>description</c> entry that has one, read past any timeline window. Null when there is none.</summary>
     public static string? Description(Func<string, object?[], IReadOnlyList<object?[]>> query, string dirKey, long n) =>

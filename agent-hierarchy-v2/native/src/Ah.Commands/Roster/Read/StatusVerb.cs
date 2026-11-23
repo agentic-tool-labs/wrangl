@@ -45,6 +45,11 @@ internal static class StatusVerb
             {
                 c.Stdout.Write($"goal ({team}): {Clip(text, PlainGoalCap)}\n");
             }
+
+            foreach (var line in ResourceLines(document, nowMs))
+            {
+                c.Stdout.Write(line + "\n");
+            }
         }
         else
         {
@@ -114,6 +119,30 @@ internal static class StatusVerb
         }
 
         return shown;
+    }
+
+    /// <summary>
+    /// One line per held resource of the document's teams (ah2-509), each name once:
+    /// <c>resource &lt;name&gt;: &lt;who&gt; since &lt;HH:MM&gt; (&lt;age&gt;)[, waiting: &lt;who&gt; &lt;w&gt;, …]</c>.
+    /// </summary>
+    internal static IEnumerable<string> ResourceLines(JsonObject document, double nowMs)
+    {
+        var rows = (document.Get("teams") is { IsArray: true } teams ? teams.AsArray() : [])
+            .SelectMany(static t => t.Member("resources") is { IsArray: true } r ? r.AsArray() : [])
+            .ToList();
+        string Text(JsonValue row, string key) => row.Member(key) is { IsText: true } v ? v.AsString() : string.Empty;
+        double Since(JsonValue row) => row.Member("since") is { IsNumber: true } n ? n.AsNumber() : nowMs;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var hold in rows.Where(r => Text(r, "role") == "hold" && seen.Add(Text(r, "name"))))
+        {
+            var name = Text(hold, "name");
+            var waiting = rows.Where(r => Text(r, "role") == "wait" && Text(r, "name") == name)
+                .Select(r => (Who: Text(r, "who"), Since: Since(r))).Distinct()
+                .Select(w => $"{w.Who} {Ah.Core.Time.Age.Format((nowMs - w.Since) / 1000)}").ToList();
+            var queue = waiting.Count > 0 ? ", waiting: " + string.Join(", ", waiting) : string.Empty;
+            var outside = hold.Member("outside") is { IsBool: true } o && o.AsBool() ? " (outside this team)" : string.Empty;
+            yield return $"resource {name}: {Text(hold, "who")}{outside} since {Ah.Hierarchy.HierarchyModule.ResourceSince(Since(hold), nowMs)}{queue}";
+        }
     }
 
     /// <summary>One inert line of <paramref name="text"/>, cut to <paramref name="cap"/> code points with a closing ellipsis when longer.</summary>

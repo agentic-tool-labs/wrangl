@@ -211,7 +211,7 @@ internal sealed class PlanFold : IPlanFold
             },
 
             // task and an unknown kind fold to null, so an unset kind and an explicit task look the same; an empty parent clears it
-            "kind" => current with { Kind = ProgressFormat.PlanText(row, "kind") is "project" or "goal" or "epic" or "deliverable" ? ProgressFormat.PlanText(row, "kind") : null },
+            "kind" => current with { Kind = ProgressFormat.PlanText(row, "kind") is "project" or "goal" or "epic" or "deliverable" or "gate" ? ProgressFormat.PlanText(row, "kind") : null },
             "parent" => current with { Parent = ProgressFormat.PlanText(row, "parent") is { Length: > 0 } parent ? parent : null },
             "after" => current with { After = ProgressFormat.PlanText(row, "after") is { Length: > 0 } after ? after : null },
             _ => current,

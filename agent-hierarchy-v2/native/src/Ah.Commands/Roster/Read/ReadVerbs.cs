@@ -57,6 +57,10 @@ internal static class ReadVerbs
     internal static int Job(string[] rest, TextWriter stdout, TextWriter stderr) =>
         RosterCli.Execute(rest, stdout, stderr, JobVerb.Run);
 
+    [Verb("roster:resource")]
+    internal static int Resource(string[] rest, TextWriter stdout, TextWriter stderr) =>
+        RosterCli.Execute(rest, stdout, stderr, ResourceVerb.Run);
+
     [Verb("roster:stall-diagnose")]
     internal static int StallDiagnose(string[] rest, TextWriter stdout, TextWriter stderr) =>
         RosterCli.Execute(rest, stdout, stderr, StallDiagnoseVerb.Run);

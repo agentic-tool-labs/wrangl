@@ -407,6 +407,15 @@ internal sealed class TeamComposer(ILaneFacts? lanes = null) : ISliceComposer
             ["pipeline"] = pipelineBody is null ? JsonValue.Null : JsonValue.FromObject(pipelineBody),
             ["worktrees"] = TreeData.Ids(TreeData.GrantMembers(grants).Select(m => TreeIds.Worktree(team.Dir, name, m))),
         };
+        // ah2-509: the team's resource holds and waits, as the status document of its directory records them; absent when it records none
+        if (records.Get(StatusLane.LaneName, team.Dir) is { IsAbsent: false } status
+            && status.Value.Member("teams") is { IsArray: true } statusTeams
+            && statusTeams.AsArray().FirstOrDefault(t => LaneParts.Text(t, "team") == team.Name) is { IsMap: true } statusTeam
+            && statusTeam.Member("resources") is { IsArray: true } resources && resources.AsArray().Count > 0)
+        {
+            body["resources"] = resources;
+        }
+
         if (Ah.Roster.RosterModule.DutyOf(team.Value) is { } duty)
         {
             // the slot still names the recorded chief; the deputy on duty is named here, by its member slice

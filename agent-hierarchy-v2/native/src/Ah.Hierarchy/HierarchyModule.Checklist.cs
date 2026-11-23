@@ -508,6 +508,9 @@ public static partial class HierarchyModule
         Back,
     }
 
+    /// <summary>Whether a report's reply passes, as <see cref="AckVerdictOf"/> reads it, and its first reply line.</summary>
+    public static (bool Pass, string Verdict) ReportVerdict(string? text) => (AckVerdictOf(text) == AckVerdict.Pass, FirstReplyLine(text));
+
     private static AckVerdict AckVerdictOf(string? text)
     {
         var line = FirstReplyLine(text);

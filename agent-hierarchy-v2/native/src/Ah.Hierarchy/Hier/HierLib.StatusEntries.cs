@@ -1333,6 +1333,9 @@ internal sealed partial class HierLib
 
         public MemberRegistrationLiveness? Registration(string name, string team) => _lib._core.Liveness?.ForMember(name, team, Registrations);
 
+        // ah2-509: not an entry: the resources table and the process table, read now (the recording source records it)
+        public JsonArray Resources() => _lib.LiveResourceJson();
+
         public JsonArray Subagents(string sessionId) =>
             Get(string.Empty, StatusKind.Subagents, sessionId).Member("rows") is { IsArray: true } rows ? rows.AsArray() : [];
 

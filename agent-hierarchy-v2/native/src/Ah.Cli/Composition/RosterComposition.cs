@@ -47,6 +47,9 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
     public string? WorkParent(string pool, string team, string id) =>
         Ah.Cli.Verbs.WorkVerb.Resolve(graph, environment.AhHome, pool, id, team).Row is { IsBacklog: true } row ? row.Item : null;
 
+    public IReadOnlyList<string> WorkPastOpenGates(string pool, string team, string key, string by, string? session) =>
+        Ah.Cli.Verbs.WorkVerb.PastOpenGates(graph, environment.AhHome, pool, team, key, by, session);
+
     public string? WorkDescribe(string pool, string team, string key, string body, string by, string? session)
     {
         if (Ah.Cli.Verbs.WorkVerb.Resolve(graph, environment.AhHome, pool, key, team).Row is not { IsBacklog: false } row || row.Team != team)

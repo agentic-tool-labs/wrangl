@@ -22,6 +22,7 @@ import { Header, Footer, applyTheme, storedTheme } from "./shell.js";
 import { bootLooks, looksNote, onLooks } from "./looks.js";
 import { TeamsView, TeamsRail } from "./teams.js";
 import { lazy, sheet } from "./lazy.js";
+import { ReportBody } from "./evidence.js";
 
 const TimelineView = lazy(() => import("./timeline.js"), (m) => m.TimelineView);
 const GraphMap = lazy(() => import("./graph-pack.js"), (m) => m.GraphMap);
@@ -196,7 +197,7 @@ class PairDialog extends Live {
               ${text?.gone ? html`<p class="dim">no longer available</p>` : text ? html`<h3>Brief</h3>
               <p class="prose">${text.request_excerpt ?? "—"}</p>
               <h3>Response</h3>
-              ${b.has_response ? html`<p class="prose">${text.response_excerpt ?? "—"}</p>` : html`<p class="dim">No response yet.</p>`}
+              ${b.has_response ? html`<${ReportBody} text=${text.response_excerpt ?? "—"} />` : html`<p class="dim">No response yet.</p>`}
               ${text.excerpt_truncated ? html`<p class="dim">Excerpts only: the daemon does not serve the full text.</p>` : null}` : html`<p class="dim">Loading…</p>`}
             </div>` : null}
           </li>`;

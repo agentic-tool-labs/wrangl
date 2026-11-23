@@ -168,7 +168,10 @@ public interface IDbOpTransaction
 /// <summary>One database-backed write: the domain, the write's id (null or empty: no dedup), the path recorded with it, the body to run in the transaction, whether it leaves <c>domain_seq</c> as it is, whether the domain is db-only (no mode row is read), and the state directory the write id is scoped to (null: unscoped).</summary>
 public sealed record DbOpRequest(string Domain, string? OperationId, string Path, Func<IDbOpTransaction, OpResult> Body, bool LeavesSeq = false, bool DbOnly = false, string? StateDirectory = null);
 
-/// <summary>One <c>session_pids</c> row: a pid the hook recorded for a session under a hierarchy dir, and when (ISO-8601) it last became that session's pid.</summary>
+/// <summary>One <c>resources</c> row (adr-36): a hold or a waiter (<paramref name="Kind"/> <c>hold</c> or <c>wait</c>) on a name, owned by the process <paramref name="Pid"/> started at <paramref name="PidStart"/>; <paramref name="Who"/> is for display only.</summary>
+public sealed record ResourceRow(long Id, string Name, string Kind, long Pid, string? PidStart, string Who, string? Session, string? Note, long SinceMs);
+
+/// <summary>One <c>session_pids</c> row:a pid the hook recorded for a session under a hierarchy dir, and when (ISO-8601) it last became that session's pid.</summary>
 public sealed record SessionPidEntry(string SessionId, long Pid, string At);
 
 /// <summary>The <c>session_pids</c> table, read.</summary>

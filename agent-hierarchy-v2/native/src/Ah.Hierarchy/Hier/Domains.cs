@@ -191,6 +191,30 @@ internal sealed class QaDomain(HierLib lib, string homeStateDirectory) : HierDom
     ];
 }
 
+[StateDomain("resources", "resources")]
+internal sealed class ResourcesDomain(HierLib lib, string homeStateDirectory) : HierDomain(lib, "resources", "resources")
+{
+    public override bool HomeScoped => true;
+
+    public override string StateDirectory(RequestContext context) => homeStateDirectory;
+
+    public override string StateDirectory(RequestContext context, ReadOnlyMemory<byte> argsJson) => homeStateDirectory;
+
+    // ah2-509: the holds live only in the resources table
+    public override bool DbOnly => true;
+
+    private static OpResult DbOnlyBody(OpCall call, IStoreWriteContext? writer) => new(false, default, $"resources.{call.Op} is db-only", "op_failed");
+
+    public override IReadOnlyList<StateOp> Ops =>
+    [
+        Write("claim", OpStyle.Replace, false, DbOnlyBody) with { DbBody = Lib.ResourceClaimDb },
+        Write("release", OpStyle.Replace, false, DbOnlyBody) with { DbBody = Lib.ResourceReleaseDb },
+        Write("leave", OpStyle.Replace, false, DbOnlyBody) with { DbBody = Lib.ResourceLeaveDb },
+        Write("reap", OpStyle.Replace, false, DbOnlyBody) with { DbBody = Lib.ResourceReapDb },
+        Read("rows", (call, _) => OpArgs.Run(call, _ => Lib.ResourceRowsOp())),
+    ];
+}
+
 [StateDomain("jobs", "jobs")]
 internal sealed class JobsDomain(HierLib lib) : HierDomain(lib, "jobs", "jobs")
 {

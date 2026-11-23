@@ -86,6 +86,9 @@ internal interface IStatusSource
     /// team, null, Registration)</c> in the compute): decided by its registration, else by its roster row, the process table and the clock.
     /// </summary>
     (bool Live, string? SessionId) MemberLife(JsonArray roster, JsonValue name, string? team);
+
+    /// <summary>The live resource holds and waits of the machine (adr-36), oldest first; reads the database and probes each row's process now.</summary>
+    JsonArray Resources();
 }
 
 internal sealed partial class HierLib
@@ -136,6 +139,8 @@ internal sealed partial class HierLib
         public MemberRegistrationLiveness? Registration(string name, string team) => lib._core.Liveness?.ForMember(name, team);
 
         public JsonArray Subagents(string sessionId) => lib.OpenSubagentRows(sessionId);
+
+        public JsonArray Resources() => lib.LiveResourceJson();
 
         public JsonArray RunExchanges(string dir, string? team, long sinceMs) =>
             lib._core.ListRunExchanges(lib.PoolDirs(dir, lib._roster.ListTeamNames(dir), null), team, sinceMs);

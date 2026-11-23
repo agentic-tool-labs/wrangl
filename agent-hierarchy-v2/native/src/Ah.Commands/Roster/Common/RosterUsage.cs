@@ -233,6 +233,13 @@ validation and reads/writes only, so validation lives in one place.
                     | extend <id> --eta <small|medium|large> [--team <T>] [--cwd <path>]
                       Record a long-running run so ahd can time it: start prints the job id; end and extend act only on the
                       caller's own jobs. A job past its eta raises job-overdue to the Orchestrator.
+  ah roster resource claim <name> [--wait <secs>] [--note <text≤120>] [--json] | release <name> [--force] [--json]
+                    | list [--json] [--cwd <path>]
+                      One session at a time holds a named live thing (an editor, a device, a port), machine-wide. A claim
+                      on a held name waits (default 3600s), printing who holds it at once and every 60s, and exits 75 when
+                      the wait runs out; --wait 0 only says who holds it. Run a wait that may pass 2 minutes with
+                      run_in_background. The hold ends on release or when this session's process is gone; release
+                      --force ends anyone's hold. Name: 1-40 of a-z, 0-9, -.
   ah roster whoami  [--team <T>] [--cwd <path>]
                       Read-only: which team member this session's pane is, and its
                       orchestrator's pid / liveness / best-effort reply address.

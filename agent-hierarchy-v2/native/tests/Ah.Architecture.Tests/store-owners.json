@@ -21,6 +21,7 @@
   "known-dirs": "Ah.Hierarchy",
   "progress": "Ah.Hierarchy",
   "qa": "Ah.Hierarchy",
+  "resources": "Ah.Hierarchy",
   "checkpoint": "Ah.Hierarchy",
   "qa-log": "Ah.Hierarchy",
   "hier-gitignore": "Ah.Hierarchy",

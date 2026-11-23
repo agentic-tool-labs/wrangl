@@ -199,6 +199,8 @@ public sealed class JobTrackTests
     [InlineData("/bin/sleep 600 && make", true)]
     [InlineData("@AH roster wake --team tm", false)]
     [InlineData("@AH roster wake; dotnet test", true)]
+    [InlineData("@AH roster resource claim x", false)]
+    [InlineData("@AH roster resource list", true)]
     public void ABackgroundWakeSourceOrBareSleepMakesNoRecordAndALookalikeOrChainDoes(string command, bool becomesAJob)
     {
         var rig = Exec(AutoTrackTests.OwnerRig());

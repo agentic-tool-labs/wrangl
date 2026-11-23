@@ -752,6 +752,7 @@ internal sealed partial class MsgCommand
 
         // The file holds the report as plain text; the plan wants it as one JSON string, as --body gives it.
         var body = _opts.Has("body-file") ? System.Text.Encoding.UTF8.GetString(JsonText.ToUtf8(JsonValue.FromString(ReadBodyFile(HierarchyModule.FillBodyMax)), 0)) : _opts.Text("body");
+        var evidence = PlanEvidence(id, ref body);
         var args = new JsonObject();
         args["id"] = id;
         SetIfText(args, "from", "from");
@@ -793,7 +794,16 @@ internal sealed partial class MsgCommand
         try
         {
             _ = Hier.Messages.FillPlan(args);
-            res = Hier.StateCalls.FillResponse(id, _opts.Text("from")!, req, body!, amend: amend, part: part);
+            StoreEvidence(id, evidence);
+            try
+            {
+                res = Hier.StateCalls.FillResponse(id, _opts.Text("from")!, req, body!, amend: amend, part: part);
+            }
+            catch when (evidence.Count > 0)
+            {
+                HierarchyModule.EvidenceRemove(_env.AhHome, id, evidence);
+                throw;
+            }
         }
         catch (InvalidOperationException e) when (stacked && (e.Message.Contains("--body is over ", StringComparison.Ordinal) || e.Message.Contains("a sealed message holds at most", StringComparison.Ordinal)))
         {
@@ -818,17 +828,94 @@ internal sealed partial class MsgCommand
         }
         else
         {
-            _out.Json(new JsonObject
+            var printed = new JsonObject
             {
                 ["id"] = id,
                 ["type"] = amend ? "request" : "response",
                 ["path"] = res.Get("path") ?? JsonValue.Null, // kept from before 7902a3827 (keep every API)
                 ["rev"] = res.Get("rev") ?? JsonValue.Null,
                 ["bytes"] = res.Get("bytes") ?? JsonValue.Null,
-            });
+            };
+            if (evidence.Count > 0)
+            {
+                var list = new JsonArray();
+                foreach (var f in evidence)
+                {
+                    list.Add(new JsonObject { ["k"] = f.K, ["name"] = f.Name, ["type"] = f.Type, ["bytes"] = f.Bytes });
+                }
+
+                printed["evidence"] = list;
+            }
+
+            _out.Json(printed);
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// adr-39: checks every <c>--evidence</c> file before anything is stored (a broken limit is a usage error) and appends the generated
+    /// <c>## evidence</c> section to the caller's body. Empty, and the body untouched, without the flag.
+    /// </summary>
+    private IReadOnlyList<EvidenceFile> PlanEvidence(string id, ref string? body)
+    {
+        if (!_opts.Has("evidence"))
+        {
+            return [];
+        }
+
+        if (_opts.Texts("evidence") is not { Count: > 0 } sources)
+        {
+            throw _out.Fail("fill: --evidence needs a file path");
+        }
+
+        IReadOnlyList<EvidenceFile> planned;
+        try
+        {
+            planned = HierarchyModule.EvidencePlan(_graph.Io.Files, _env.AhHome, id, sources);
+        }
+        catch (ArgumentException e)
+        {
+            throw _out.Fail($"fill: {e.Message}");
+        }
+
+        JsonValue parsed;
+        try
+        {
+            parsed = body is null ? JsonValue.Null : JsonText.Parse(body);
+        }
+        catch (JsonParseException)
+        {
+            return planned; // FillPlan refuses the body, so nothing is copied
+        }
+
+        if (parsed.IsText)
+        {
+            var text = parsed.AsString();
+            var lead = text.Length == 0 || text.EndsWith('\n') ? text : text + "\n";
+            body = System.Text.Encoding.UTF8.GetString(JsonText.ToUtf8(JsonValue.FromString(lead + "\n" + HierarchyModule.EvidenceSection(id, planned)), 0));
+        }
+
+        return planned;
+    }
+
+    /// <summary>Copies the planned evidence; a copy that fails has removed what it copied, and the fill ends before the body is stored.</summary>
+    private void StoreEvidence(string id, IReadOnlyList<EvidenceFile> evidence)
+    {
+        if (evidence.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            HierarchyModule.EvidenceStore(_env.AhHome, id, evidence);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _out.Note($"ah msg: fill: --evidence: copy failed, nothing stored: {e.Message}");
+            throw new MsgExit(1);
+        }
     }
 
     /// <summary>Files the response skeleton to request <paramref name="req"/>, as <c>msg new --type response --req</c> does, so one fill files a report.</summary>

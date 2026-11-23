@@ -304,7 +304,10 @@ internal sealed class ServiceGraph
             KnownDirRows: () => Ah.StateDb.StateDbModule.KnownDirs(environment.AhHome),
             // b397 group 2
             UsageRows: Ah.StateDb.StateDbModule.CreateUsageRows(environment.AhHome),
-            DomainSeq: domain => Ah.StateDb.StateDbModule.DomainSeq(environment.AhHome, domain)));
+            DomainSeq: domain => Ah.StateDb.StateDbModule.DomainSeq(environment.AhHome, domain),
+            // ah2-509
+            ResourceRows: () => Ah.StateDb.StateDbModule.Resources(environment.AhHome),
+            ProcessTable: processTable));
         // the daemon's writes would each recompute the status document of their directory; this bounds that to one pass a second
         var statusRefresh = inDaemon ? HierarchyModule.CoalesceStatusRefresh(hierarchy, TimeSpan.FromSeconds(1)) : null;
 

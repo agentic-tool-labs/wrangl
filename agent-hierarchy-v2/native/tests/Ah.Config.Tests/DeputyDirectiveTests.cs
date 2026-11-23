@@ -33,6 +33,17 @@ public sealed class DeputyDirectiveTests
         Assert.DoesNotContain("surface its verdict to the user", text, StringComparison.Ordinal);
     }
 
+    // ah2-510 L6: the same Orchestrator lines, rewritten for a sub-orchestrator
+    [Fact]
+    public void ASubOrchestratorIsToldItMayParkAPickOnNeedsYouAndTheOrchestratorLineIsUnchanged()
+    {
+        var text = DirectiveText.SubOrchestratorLines(OrchestratorLines);
+
+        Assert.Contains("A pick inside your charter may be parked on Needs-you with `ah roster checklist set <item> --state waiting-user", text, StringComparison.Ordinal);
+        Assert.Contains("the answer comes to you and your parent", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Decide operational calls yourself; never ask the user.", text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void NegativeARewordedAnchorCutsTheDeputyDirectiveToItsDutyLines()
     {

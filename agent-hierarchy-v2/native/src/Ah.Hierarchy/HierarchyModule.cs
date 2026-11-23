@@ -817,6 +817,17 @@ public static partial class HierarchyModule
         return new LocalPeerLatest(peers);
     }
 
+    /// <summary>The shape a resource name must have (ah2-509 R10).</summary>
+    public const string ResourceNameShape = ResourceRules.Shape;
+
+    /// <summary>A resource name lowercased (ah2-509 R10), or null when it does not have <see cref="ResourceNameShape"/>.</summary>
+    public static string? ResourceNameOf(string? raw) => ResourceRules.NameOf(raw);
+
+    /// <summary>When a hold or wait began, as the waiter line and the board print it: <c>HH:MM (age)</c>, local time.</summary>
+    public static string ResourceSince(double sinceMs, double nowMs) =>
+        DateTimeOffset.FromUnixTimeMilliseconds((long)sinceMs).ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+        + $" ({Ah.Core.Time.Age.Format((nowMs - sinceMs) / 1000)})";
+
     /// <summary>The libraries of the hierarchy runtime directory, built from <paramref name="environment"/>.</summary>
     public static HierarchyServices Create(HierarchyEnvironment environment)
     {
@@ -838,6 +849,7 @@ public static partial class HierarchyModule
                 new GatesDomain(lib),
                 new PeerRecordsDomain(lib, peerRecordsState),
                 new QaDomain(lib, Ah.Core.Text.AhPaths.UserEntry(environment.Environment.HomeDirectory, Ah.Core.Text.AhPaths.QaStateDir)),
+                new ResourcesDomain(lib, Ah.Core.Text.AhPaths.UserEntry(environment.Environment.HomeDirectory, Ah.Core.Text.AhPaths.ResourcesStateDir)),
                 new DecisionsDomain(lib),
                 new ActivityDomain(lib),
                 new JobsDomain(lib),

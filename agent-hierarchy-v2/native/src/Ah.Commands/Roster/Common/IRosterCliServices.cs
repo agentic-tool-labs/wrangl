@@ -76,6 +76,9 @@ public interface IRosterCliServices
     /// <summary>The backlog row (<c>b&lt;N&gt;</c>) a work id names; null when it names none, or no registry is composed.</summary>
     string? WorkParent(string pool, string team, string id) => null;
 
+    /// <summary>The start warning lines for <paramref name="team"/>'s item <paramref name="key"/> (<c>stream/slug</c>), one per open gate it is past, each logged on the item; none where no registry is composed.</summary>
+    IReadOnlyList<string> WorkPastOpenGates(string pool, string team, string key, string by, string? session) => [];
+
     /// <summary>Records <paramref name="body"/> as the description of <paramref name="team"/>'s item <paramref name="key"/> (<c>stream/slug</c>); null when written, else why not.</summary>
     string? WorkDescribe(string pool, string team, string key, string body, string by, string? session) => "no work registry here";
 

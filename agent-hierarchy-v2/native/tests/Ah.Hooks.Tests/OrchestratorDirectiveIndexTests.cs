@@ -428,6 +428,16 @@ public sealed class OrchestratorDirectiveIndexTests
         Assert.StartsWith("Wrangl Orchestrator directive. " + LeadLine, start, StringComparison.Ordinal);
     }
 
+    private const string LaneParkLine = "A pick inside your charter may be parked on Needs-you with `ah roster checklist set <item> --state waiting-user";
+
+    [Fact]
+    public void NegativeTheTopOrchestratorIsNotGivenTheLaneParkLine()
+    {
+        var f = Flagged();
+
+        Assert.DoesNotContain(LaneParkLine, Output(f, "sessionstart") + Output(f, "session-directive"), StringComparison.Ordinal);
+    }
+
     /// <summary>Evidence: with AH_PROBE_OUT set, the characters of each output for an opted-in Orchestrator, default configuration.</summary>
     [Fact]
     public void Evidence()

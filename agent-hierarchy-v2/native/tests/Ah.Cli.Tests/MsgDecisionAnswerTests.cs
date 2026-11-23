@@ -466,6 +466,33 @@ public sealed class MsgDecisionAnswerTests : IDisposable
         Assert.Equal([("orchestrator@tm", "question-answered", "s1:ask answered: Ship"), ("m@tm", "question-answered", "s1:ask answered: Ship")], sent);
     }
 
+    // ah2-510 L3: tm as lane s1's child team of manager proj
+    private static JsonValue LaneTm(string? team) =>
+        team == "tm" ? JsonText.Parse("{\"members\":[{\"name\":\"m\"}],\"parent\":{\"team\":\"proj\",\"stream\":\"s1\"}}") : JsonValue.Null;
+
+    [Fact]
+    public void ALaneItemAnsweredTellsTheLeadOnceAndCopiesTheTopOrchestratorOnce()
+    {
+        Waits("s1", "ask", "Ship", "Hold");
+        var sent = new List<string>();
+
+        var res = HierarchyModule.ChecklistAnswer(_graph.Hierarchy.Progress, _hierarchy, "tm", "s1:ask", Entry("s1", "ask").StateSince!, "a", DateTimeOffset.UtcNow, (to, _, _) => { sent.Add(to); return null; }, LaneTm);
+
+        Assert.Equal("Ship", res["decision"].AsString());
+        Assert.Equal(["orchestrator@tm", "orchestrator@proj"], sent);
+    }
+
+    [Fact]
+    public void NegativeAnItemOfATeamThatNamesNoParentGetsNoTopCopy()
+    {
+        Waits("s1", "ask", "Ship", "Hold");
+        var sent = new List<string>();
+
+        _ = ItemAnswer(Entry("s1", "ask").StateSince!, "a", notify: (to, _, _) => { sent.Add(to); return null; });
+
+        Assert.Equal("orchestrator@tm", Assert.Single(sent));
+    }
+
     [Fact]
     public void NegativeAReAskWithoutForTellsTheOrchestratorOnly()
     {

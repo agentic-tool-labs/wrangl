@@ -196,6 +196,42 @@ their default model when none is set. `edit
 --model ""` clears a stored one. An `advise` role always needs an explicit
 `fable` or `opus`.
 
+### Milestone gates in a roster
+
+A project can carry gates: named checkpoints with a list of artifacts that must be attached before the next phase. A role takes part by what its brief tells it to fill, for example `ah work attach <gate> <path> --as build`, or by sending a review report that is attached by its message id (`msg:<id>`). No role setting is needed, and no role is blocked or allowed by a gate.
+
+A gate warns and logs. It never holds or refuses work. When an item starts past an open gate, `ah` prints a note naming the gate and what is missing, and logs it. The work still starts. Only the top Orchestrator or the user can put the gate to the user (`ah work gate <gate> --ask`), which parks one Pass or Not yet question. Who may fill needs or close a gate is not checked. The commands are in `cli-tools.md` under `ah work`, "Milestone gates".
+
+### Resources a role uses
+
+If a role drives one live thing that only one session can use at a time (an editor, a modelling tool, a device, a port), have it claim the thing by name. See [Claim a named resource](./cli-tools.md#claim-a-named-resource). Claiming is cooperative: nothing stops a member that skips it.
+
+Tell the roles what to claim with a standing rule, written by you or by the Orchestrator with `--said`:
+
+```
+ah rules add --team <team> --key claim-blender --text "Claim resource blender (ah roster resource claim blender) before using it; release it when done."
+```
+
+The rule reaches every member session and subagent of that team at start. A rule must name each resource, so a member claims only what a rule names. To say it in the role itself, add one line to the role's agent body, for example: `Before you use Blender, run ah roster resource claim blender. Release it when you finish.` A claim waits while someone else holds the name; for a wait that may pass 2 minutes, run it in the background. The hold ends when the session's process is gone, so a resumed session claims again.
+
+### Artifact review
+
+A review-class role can judge something with no diff: an image, a sound, a build, a document. The review is a verdict against the brief, and the evidence files ride on the report.
+
+1. **The brief** is an ordinary review request (`ah msg new … --item`). It names each artifact (a path, a URL or a `msg:<id>`) and lists the acceptance items.
+2. **The reviewer makes the evidence.** It cannot write files itself, so it has its runner produce them (screenshots, captures, measurements) in its `$TMPDIR`. Tools that save to their own paths work too.
+3. **It files the report with the files attached:**
+
+```
+<ah> msg fill --id <id> --from <your role> --body-file - --evidence "$TMPDIR/title-screen.png" --evidence "$TMPDIR/boot.wav" --cwd <abs cwd>
+```
+
+The files are copied out of `$TMPDIR` into `<AH_HOME>/evidence/<id>/`, so they survive the member being dismissed. The limits and what is never written are under [Attach evidence to a report](cli-tools.md#attach-evidence-to-a-report).
+
+4. **The first line is the usual verdict**: `VERDICT PASS <slug>@-` or `VERDICT CHANGES REQUIRED <slug>@-`. `@-` stands for no commit, which is what an artifact has; the verdict parser reads only the leading word. Then one line per acceptance item, citing its evidence as `[e1]`.
+
+What to know: the reviewer's own shell rules are unchanged. A custom review-class role that is not named `reviewer` is not bound by the built-in reviewer's no-write rule, so that is yours to set in its agent file. A request answered by SendMessage has no message id, so it cannot carry evidence.
+
 ## 5. A member in another harness (Codex)
 
 A roster member's `kind` picks the agent CLI Herdr starts. Omitted means

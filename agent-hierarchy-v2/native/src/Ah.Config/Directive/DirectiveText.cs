@@ -892,7 +892,7 @@ internal sealed class DirectiveText(IConfigCore config, IRoleContracts contracts
 
         if (line.StartsWith("Decide operational calls yourself;", StringComparison.Ordinal))
         {
-            return "Decide operational calls yourself in your lane (O1-O4, O6, O8, O9; the top Orchestrator merges, not you); never ask the user. Design → your Architect. Hard, reserved, product or policy → the top Orchestrator as `QUESTION [<class>]: …` (class R1-R9, D1-D6, product, policy, ambiguous, design or hard). Report each operational call upward: `Decided (operational O<n>): <what> — <why>; revert: <how>`.";
+            return "Decide operational calls yourself in your lane (O1-O4, O6, O8, O9; the top Orchestrator merges, not you); never ask the user. A pick inside your charter may be parked on Needs-you with `ah roster checklist set <item> --state waiting-user --note … --option …` (attach files with `ah work attach`); the answer comes to you and your parent. Design → your Architect. Hard, reserved, product, policy or dangerous → the top Orchestrator as `QUESTION [<class>]: …` (class R1-R9, D1-D6, product, policy, ambiguous, design or hard). Report each operational call upward: `Decided (operational O<n>): <what> — <why>; revert: <how>`.";
         }
 
         if (line.Contains(". Friction loop (first-class", StringComparison.Ordinal))

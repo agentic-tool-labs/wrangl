@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.51] - 2026-11-23
+
+### Added
+
+- **Named exclusive resources.** `ah roster resource claim|release|list` lets members take turns on one live
+  thing only one session can use (an editor, a device). A hold ends when its holder's process is gone. Holds and
+  waits show in `ah roster status --plain` and on the web Overview. It is cooperative: nothing stops a member
+  that never claims.
+- **Milestone gates.** A work item of kind `gate` lists the artifacts a phase needs (`ah work gate --need`,
+  `ah work attach --as`); a need marked `--review` is met only by a report whose verdict passes.
+  `ah work gate --ask` parks one Pass or Not yet question for the user. Starting work past an open gate prints
+  and logs a warning. A gate never holds or refuses work.
+- **Evidence on a report.** `ah msg fill --evidence <path>` (repeatable) stores files with the report, read-only
+  and outside every checkout: at most 20 files, 20 MiB each, 50 MiB per report. The web UI shows images, audio,
+  video and text inline; SVG and HTML are never drawn.
+- **A lane lead can park a pick.** A Sub-Orchestrator may put a question for the user on one of its own lane's
+  items with the waiting-user state. The top Orchestrator is told when it is parked and when it is answered.
+
 ## [2.0.50] - 2026-11-23
 
 ### Added

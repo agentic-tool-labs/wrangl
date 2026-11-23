@@ -126,6 +126,15 @@ internal sealed partial class MsgCommand
                 return false;
             }
 
+            // a reviewer's dispatch is a review, not a start (adr-38 G5)
+            if (FrontText(fm?.Member("to")) != "reviewer")
+            {
+                foreach (var line in WorkVerb.PastOpenGates(_graph, _env.AhHome, pool, team, item, _opts.Text("from") + "@" + team, SessionId))
+                {
+                    _out.Note("ah msg: note — " + line);
+                }
+            }
+
             return true;
         }
         catch (Exception e) when (e is not OperationCanceledException)

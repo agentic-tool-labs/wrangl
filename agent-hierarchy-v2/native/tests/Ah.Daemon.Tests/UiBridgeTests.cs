@@ -201,7 +201,7 @@ public sealed class UiBridgeTests
 
     [Fact]
     public void TheTcpRouteTableIsExactlyTheSpecifiedRoutes() =>
-        Assert.Equal(["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "POST /ui/v1/team-rename", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}"], UiSession.RouteTable);
+        Assert.Equal(["GET /ui/", "GET /ui/{file}", "POST /ui/v1/answer", "GET /ui/v1/answer-status", "GET /ui/v1/history", "POST /ui/v1/team-close", "POST /ui/v1/team-rename", "GET /ui/v1/rules", "POST /ui/v1/rules", "GET /ui/v1/looks", "POST /ui/v1/looks", "POST /ui/v1/looks/merge", "GET /ui/v1/view", "GET /ui/v1/view/{name}", "GET /ui/v1/read-model", "GET /ui/v1/list/{*id}", "GET /ui/v1/actions", "GET /ui/v1/actions/{*id}", "GET /ui/v1/evidence/{id}/{ek}"], UiSession.RouteTable);
 
     [Theory]
     [InlineData("/ui/v1/status")]

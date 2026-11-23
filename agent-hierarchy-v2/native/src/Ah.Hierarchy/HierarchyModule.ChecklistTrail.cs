@@ -288,6 +288,25 @@ public static partial class HierarchyModule
             }
         }
 
+        // ah2-510 L3: a lane child team's answer is copied to the top Orchestrator of its manager; the item team's orchestrator@ above is the lane lead
+        if (team is not (null or "" or "default" or "_default") && LaneManager(new LeadRef(team, string.Empty), n => readTeam(n)) is { } manager
+            && OrchestratorAddress(manager) is var top && top != OrchestratorAddress(team) && top != entry.Item.AskedFor)
+        {
+            try
+            {
+                if (notify(top, "question-answered", told) is { } error)
+                {
+                    res["manager_event_error"] = error;
+                }
+            }
+#pragma warning disable CA1031 // the top's copy is an alert: its failure is noted, never fatal
+            catch (Exception e)
+#pragma warning restore CA1031
+            {
+                res["manager_event_error"] = e.Message;
+            }
+        }
+
         return res;
     }
 

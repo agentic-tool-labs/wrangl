@@ -34,6 +34,12 @@ export function turnsFromArgs(args) {
   });
 }
 
+// The team scenario's evidence (td22's report), served like GET /ui/v1/evidence/<msg id>/e<k>: an image and a text file.
+const EVIDENCE = {
+  "20261031-1334-td22/e1": ["image/png", () => readFileSync(join(UI, "..", "..", "docs", "specs", "mock", "shots", "graph-1440x900-dark.png"))],
+  "20261031-1334-td22/e2": ["text/plain", () => ["pair", "dark", "light"].join("\t") + "\n" + [["deliverable row / card", "4.62", "5.10"], ["item row / card", "7.81", "8.02"], ["muted label / card", "5.04", "4.71"], ["epic title / column", "12.4", "13.9"]].map((r) => r.join("\t")).join("\n") + "\nevery pair at 4.5:1 or better\n"],
+};
+
 const DIRECT = /^\/ui\/v1\/(list\/|actions(\/|$)|read-model$)/;
 
 export function createMockServer({ model = createMock(), host = "127.0.0.1" } = {}) {
@@ -100,6 +106,10 @@ export function createMockServer({ model = createMock(), host = "127.0.0.1" } = 
           return json(405, { error: "method" });
         }
         return await serveView(url, req, res, model, json);
+      }
+      if (req.method === "GET" && url.pathname.startsWith("/ui/v1/evidence/")) {
+        const file = EVIDENCE[url.pathname.slice("/ui/v1/evidence/".length)];
+        return file ? send(200, file[0], file[1]()) : json(404, { error: "not_found" });
       }
       if (req.method === "GET" && (url.pathname === "/ui/" || url.pathname.startsWith("/ui/"))) {
         return serveStatic(url.pathname, send, json);
