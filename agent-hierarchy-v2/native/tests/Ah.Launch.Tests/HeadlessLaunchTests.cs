@@ -84,7 +84,8 @@ public sealed class HeadlessLaunchTests
         var argv = Argv(rig.Shapes.SpawnShape(Member(), "headless", rig.Context).Shape);
         var tmux = Text(rig.Shapes.SpawnShape(Member(), "tmux", rig.Context).Shape.Get("launch")!.Value.AsArray()[0]);
         var quoted = tmux[(tmux.IndexOf("<TARGET> ", StringComparison.Ordinal) + "<TARGET> ".Length)..^" Enter".Length];
-        var claudeCmd = JsonText.Parse(quoted).AsString();
+        Assert.True(quoted.StartsWith('\'') && quoted.EndsWith('\''), quoted);
+        var claudeCmd = quoted[1..^1].Replace("'\\''", "'", StringComparison.Ordinal);
 
         var flags = argv.Skip(1).SkipLast(1).Chunk(2)
             .Select(pair => pair[0] + " " + (pair[0] == "--settings" ? "'" + pair[1].Replace("'", "'\\''", StringComparison.Ordinal) + "'" : pair[1]));

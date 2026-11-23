@@ -469,7 +469,7 @@
                   "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
                 ],
                 "launch": [
-                  "tmux send-keys -t <TARGET> \"claude --agent ah:implementor --name alpha-implementor --model sonnet --effort low --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                  "tmux send-keys -t <TARGET> 'claude --agent ah:implementor --name alpha-implementor --model sonnet --effort low --settings '\\''{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''\\'\\'''\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\''\\'\\'''\\'' '\\''\\'\\'''\\'''\\''\\'\\'''\\''\"}}'\\''' Enter"
                 ],
                 "launch_cwd": "$ROOT/proj",
                 "target_placeholder": "<TARGET>",
@@ -539,7 +539,7 @@
                   "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
                 ],
                 "launch": [
-                  "tmux send-keys -t <TARGET> \"claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                  "tmux send-keys -t <TARGET> 'claude --agent ah:implementor --name alpha-implementor --model sonnet --settings '\\''{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''\\'\\'''\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\''\\'\\'''\\'' '\\''\\'\\'''\\'''\\''\\'\\'''\\''\"}}'\\''' Enter"
                 ],
                 "launch_cwd": "$ROOT/proj",
                 "target_placeholder": "<TARGET>",
@@ -566,7 +566,7 @@
                   "tmux new-window -P -F '#{pane_id}' -c \"$ROOT/proj\""
                 ],
                 "launch": [
-                  "tmux send-keys -t <TARGET> \"claude --agent ah:reviewer --name alpha-reviewer --model opus --permission-mode plan --settings '{\\\"env\\\":{\\\"WRANGL_TEAM_FILE\\\":\\\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\\\",\\\"WRANGL_EXPECTED_ROOT\\\":\\\"$ROOT/proj\\\"},\\\"statusLine\\\":{\\\"type\\\":\\\"command\\\",\\\"command\\\":\\\"sh -c '\\\\''f=\\\\\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\\\\\"; if [ -r \\\\\\\"$f\\\\\\\" ]; then exec sh \\\\\\\"$f\\\\\\\" \\\\\\\"$0\\\\\\\"; else exec sh -c \\\\\\\"$0\\\\\\\"; fi'\\\\'' '\\\\'''\\\\''\\\"}}'\" Enter"
+                  "tmux send-keys -t <TARGET> 'claude --agent ah:reviewer --name alpha-reviewer --model opus --permission-mode plan --settings '\\''{\"env\":{\"WRANGL_TEAM_FILE\":\"$ROOT/proj/.claude/hierarchy/teams/alpha.json\",\"WRANGL_EXPECTED_ROOT\":\"$ROOT/proj\"},\"statusLine\":{\"type\":\"command\",\"command\":\"sh -c '\\''\\'\\'''\\''f=\\\"$HOME/.claude/ah2/bin/statusline-tap.sh\\\"; if [ -r \\\"$f\\\" ]; then exec sh \\\"$f\\\" \\\"$0\\\"; else exec sh -c \\\"$0\\\"; fi'\\''\\'\\'''\\'' '\\''\\'\\'''\\'''\\''\\'\\'''\\''\"}}'\\''' Enter"
                 ],
                 "launch_cwd": "$ROOT/proj",
                 "target_placeholder": "<TARGET>",

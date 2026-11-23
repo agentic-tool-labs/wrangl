@@ -181,6 +181,7 @@ switch (cmd) {
     finish(0);
   }
   case "agent send-keys":
+  case "pane run":
     ok({ type: "ok" });
   case "agent prompt": {
     const found = Object.entries(st.agents).find(([id, a]) => st.panes[id] && a.name === args[2]);

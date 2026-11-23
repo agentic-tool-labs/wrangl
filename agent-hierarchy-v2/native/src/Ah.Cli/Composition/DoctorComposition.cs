@@ -95,8 +95,7 @@ internal sealed class DoctorComposition(ServiceGraph graph, IAhEnvironment envir
 
     public IReadOnlyList<string> DesignSources()
     {
-        var configured = environment.GetVariable("CLAUDE_CONFIG_DIR");
-        var claude = string.IsNullOrEmpty(configured) ? Path.Combine(HomeOrNull() ?? string.Empty, ".claude") : configured;
+        var claude = Ah.Core.CoreModule.ClaudeConfigDir(environment.GetVariable("CLAUDE_CONFIG_DIR"), HomeOrNull() ?? string.Empty);
         bool Has(string relative) => _files.Exists(Path.Combine(claude, relative));
         var present = new List<string>();
         if (Has("skills/frontend-design"))

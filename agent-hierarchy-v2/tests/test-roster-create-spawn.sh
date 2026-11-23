@@ -85,6 +85,12 @@ if (args[0] === "pane" && args[1] === "split") {
   finish(0);
 }
 
+// the Claude environment line typed into a TUI pane before its agent starts
+if (args[0] === "pane" && args[1] === "run") {
+  console.log(JSON.stringify({ result: { type: "ok" } }));
+  finish(0);
+}
+
 if (args[0] === "agent" && args[1] === "start") {
   const name = args[2];
   const sleepMs = Number(process.env.FAKE_HERDR_SLEEP || 0);

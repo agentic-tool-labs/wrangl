@@ -456,6 +456,18 @@ internal static partial class DoctorVerb
 
         try
         {
+            if (ClaudeEnvDoctor.Row(c) is { } claudeEnvRow)
+            {
+                rows.Add(new JsonObject { ["name"] = "claude-env", ["status"] = claudeEnvRow.Status, ["detail"] = claudeEnvRow.Detail });
+            }
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            rows.Add(new JsonObject { ["name"] = "claude-env", ["status"] = "warn", ["detail"] = $"check failed: {e.Message}" });
+        }
+
+        try
+        {
             if (MaxLanesDoctor.Row(c) is { } maxLanesRow)
             {
                 rows.Add(new JsonObject { ["name"] = "max-lanes", ["status"] = maxLanesRow.Status, ["detail"] = maxLanesRow.Detail });

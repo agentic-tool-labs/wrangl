@@ -131,13 +131,13 @@ public sealed record SpawnShapes(
     /// the pane shows the same line and the tap records the rate limits; a command that already carries the guard is used as it is, and with
     /// no statusline the guard wraps an empty command. Settings files are only read.
     /// </summary>
-    internal JsonObject StatusLineFor(string cwd)
+    internal JsonObject StatusLineFor(string cwd, string claudeDir)
     {
         var inherited = new[]
         {
             NodePath.Join(cwd, ".claude", "settings.local.json"),
             NodePath.Join(cwd, ".claude", "settings.json"),
-            NodePath.Join(Environment.HomeDirectory, ".claude", "settings.json"),
+            NodePath.Join(claudeDir, "settings.json"),
         }.Select(StatusLineIn).FirstOrDefault(static s => s is not null);
 
         var line = new JsonObject();
@@ -199,6 +199,32 @@ public sealed record SpawnShapes(
         };
         return (outcome.Path ?? JsonText.Stringify(settings, 0), permissions);
     }
+
+    /// <summary>A Claude member's recorded <see cref="LaunchModule.ClaudeConfigField"/>: null when absent, empty for unset, else the path.</summary>
+    internal static string? ClaudeConfigOf(JsonValue member) =>
+        member.Member(LaunchModule.ClaudeConfigField) is { IsText: true } value ? value.AsString() : null;
+
+    /// <summary>The Claude configuration directory a member launches in: its recorded value, else <c>~/.claude</c> as before.</summary>
+    private string ClaudeDirFor(string? recorded) => Ah.Core.CoreModule.ClaudeConfigDir(recorded, Environment.HomeDirectory);
+
+    /// <summary>The words before <c>claude</c> that put <paramref name="recorded"/> on the launch: none when absent, <c>env -u</c> when empty.</summary>
+    private string ClaudeEnvPrefix(string? recorded) => recorded switch
+    {
+        null => string.Empty,
+        "" => "env -u CLAUDE_CONFIG_DIR ",
+        _ => "env CLAUDE_CONFIG_DIR=" + ShQuote(recorded) + " ",
+    };
+
+    /// <summary>
+    /// The command before <c>claude</c> on a line typed into a pane's shell (tmux): an export or unset, so the shell still resolves <c>claude</c>
+    /// itself, an alias or function included; none when absent.
+    /// </summary>
+    private string ClaudeShellPrefix(string? recorded) => recorded switch
+    {
+        null => string.Empty,
+        "" => "unset CLAUDE_CONFIG_DIR; ",
+        _ => "export CLAUDE_CONFIG_DIR=" + ShQuote(recorded) + "; ",
+    };
 
     public string InstructionsPath(string name, LaunchContext context) =>
         NodePath.Join(context.HierarchyDir ?? Config.HierarchyDir(context.Cwd), "instructions", name + ".md");
@@ -302,6 +328,7 @@ public sealed record SpawnShapes(
             memberEnv["TMPDIR"] = tmpDir;
         }
 
+        var claudeConfig = isClaude ? ClaudeConfigOf(member) : null;
         string? settingsValue = null;
         JsonObject? permissions = null;
         if (!orchestrator || memberEnv.Count > 0)
@@ -309,7 +336,7 @@ public sealed record SpawnShapes(
             var settings = new JsonObject { ["env"] = memberEnv };
             if (isClaude)
             {
-                settings["statusLine"] = StatusLineFor(launchCwd);
+                settings["statusLine"] = StatusLineFor(launchCwd, ClaudeDirFor(claudeConfig));
             }
 
             (settingsValue, permissions) = SettingsValue(member, settings, context, launchCwd, isClaude);
@@ -417,7 +444,7 @@ public sealed record SpawnShapes(
         var launchArgs = plan?.Appserver is not null ? plan.LaunchArgs! : plainWithMarker;
         string StartLine(IReadOnlyList<string> args) =>
             $"herdr agent start {name} --kind {kind} --pane <TARGET>" + (args.Count > 0 ? " -- " + string.Join(' ', args.Select(ShQuote)) : string.Empty);
-        var claudeCmd = "claude " + string.Join(' ', agentFlags);
+        var claudeCmd = ClaudeEnvPrefix(claudeConfig) + "claude " + string.Join(' ', agentFlags);
 
         if (orchestrator && transport == "foreground")
         {
@@ -438,7 +465,7 @@ public sealed record SpawnShapes(
             // The process is started directly with this argv, never through a shell, so the pid recorded is the member's own.
             return new ShapeOutcome(
                 WithPermissions(
-                    new JsonObject
+                    WithClaudeConfig(new JsonObject
                     {
                         ["transport"] = transport,
                         ["kind"] = kind,
@@ -450,7 +477,7 @@ public sealed record SpawnShapes(
                         ["target_placeholder"] = JsonValue.Null,
                         ["target_from"] = JsonValue.Null,
                         ["target_source"] = JsonValue.Null,
-                    },
+                    }, claudeConfig),
                     permissions),
                 null,
                 []);
@@ -482,6 +509,7 @@ public sealed record SpawnShapes(
             shape["target_placeholder"] = "<TARGET>";
             shape["target_from"] = JsonValue.Null;
             shape["target_source"] = new JsonObject { ["kind"] = "json", ["path"] = ".result.pane.pane_id" };
+            WithClaudeConfig(shape, claudeConfig);
             WithPermissions(shape, permissions);
             return new ShapeOutcome(shape, null, shapeNotices);
         }
@@ -496,7 +524,8 @@ public sealed record SpawnShapes(
                         ["kind"] = kind,
                         ["args"] = JsonValue.Null,
                         ["layout"] = Array($"tmux new-window -P -F '#{{pane_id}}' -c \"{launchCwd}\""),
-                        ["launch"] = Array($"tmux send-keys -t <TARGET> {JsonText.Stringify(claudeCmd, 0)} Enter"),
+                        // single quotes for the shell that runs this line: nothing in the typed command is expanded before tmux types it
+                        ["launch"] = Array($"tmux send-keys -t <TARGET> {ShQuote(ClaudeShellPrefix(claudeConfig) + "claude " + string.Join(' ', agentFlags))} Enter"),
                         ["launch_cwd"] = launchCwd,
                         ["target_placeholder"] = "<TARGET>",
                         ["target_from"] = 0,
@@ -524,6 +553,17 @@ public sealed record SpawnShapes(
                 permissions),
             null,
             []);
+    }
+
+    /// <summary>Carries a recorded Claude environment on the shape, for the launcher to put on the child's environment or pane; absent stays absent.</summary>
+    private static JsonObject WithClaudeConfig(JsonObject shape, string? recorded)
+    {
+        if (recorded is not null)
+        {
+            shape[LaunchModule.ClaudeConfigField] = recorded;
+        }
+
+        return shape;
     }
 
     /// <summary>Records the launch-settings result on a Claude member's shape; a member with no writer composed has no key.</summary>
@@ -838,7 +878,14 @@ public sealed record SpawnShapes(
             return null;
         }
 
-        var result = Config.ValidateRole(role, context.Registry);
+        var registry = context.Registry;
+        if (ClaudeConfigOf(member) is { } recorded)
+        {
+            registry = registry.Clone();
+            registry[ConfigModule.ClaudeDirKey] = ClaudeDirFor(recorded);
+        }
+
+        var result = Config.ValidateRole(role, registry);
         var findings = result.Member("findings") ?? new JsonArray();
         var failed = Config.HasContractErrors(findings);
         var name = Field(member, "name");

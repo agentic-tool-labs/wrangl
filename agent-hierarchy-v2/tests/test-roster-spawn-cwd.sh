@@ -47,6 +47,8 @@ cat > "$SANDBOX/bin/claude" <<'EOF'
 pwd > "$SPAWN_CWD_LOG"
 EOF
 chmod +x "$SANDBOX/bin/claude"
+# a Claude member's launch line starts with `env` (it carries CLAUDE_CONFIG_DIR), and the spawn's PATH below has no /usr/bin
+ln -s "$(command -v env)" "$SANDBOX/bin/env"
 
 # One fresh roster+repo per scenario, so team state never leaks across cases.
 setup_repo() {

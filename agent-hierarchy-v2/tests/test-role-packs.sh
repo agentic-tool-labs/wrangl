@@ -10,6 +10,9 @@
 PLUGIN="$(cd "$(dirname "$0")/.." && pwd)"
 # Every Claude session exports some of these; a test must not inherit any of them.
 unset WRANGL_TEAM_FILE CLAUDE_PID WRANGL_ROSTER WRANGL_HIERARCHY_DIR
+# This test's Claude directory is $FAKEHOME/.claude (its agents, install records and trust): a launch reads agent files from
+# CLAUDE_CONFIG_DIR when one is set, and run-all.sh hands every test an empty one of its own.
+unset CLAUDE_CONFIG_DIR
 H="$PLUGIN/hooks"
 SANDBOX="$(mktemp -d "${TMPDIR:-/tmp}/agent-hierarchy-role-packs-test.XXXXXX")"
 [ -n "$SANDBOX" ] && [ -d "$SANDBOX" ] || { echo "mktemp failed"; exit 1; }

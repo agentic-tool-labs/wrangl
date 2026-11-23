@@ -519,6 +519,7 @@ internal static class CreateVerb
             ["expected_root"] = messages.RealCwd(c.Cwd),
             ["roster"] = templateRoster.IsMap && templateRoster.Member("teamKey") is { IsTruthy: true } key ? key : JsonValue.Null,
             ["layout"] = layout.Get("mode")!.Value,
+            [ClaudeEnvironment.Field] = ClaudeEnvironment.Caller(c),
         };
         if (transport == "herdr" && c.Services.Launch?.Transports.Flavour() == Ah.Core.Mux.HerdrFlavour.Core)
         {
