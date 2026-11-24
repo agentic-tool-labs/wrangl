@@ -22,8 +22,11 @@ internal static partial class SubOrchestratorSpawn
     [GeneratedRegex("-[0-9]+\\z", RegexOptions.CultureInvariant)]
     private static partial Regex OrdinalRegex();
 
+    /// <summary>Whether <paramref name="role"/> spawns as a lane lead. The deputy-chief is of the orchestrate class but works the top team, so it spawns as an ordinary member.</summary>
     internal static bool Is(RosterContext c, string? role) =>
-        role is not null && c.Services.Config.RoleClass(role, c.Registry) == OrchestrateClass;
+        role is not null and not DeputyChiefRole && c.Services.Config.RoleClass(role, c.Registry) == OrchestrateClass;
+
+    private const string DeputyChiefRole = "deputy-chief";
 
     /// <summary>The name of the team the spawn goes into: its team file's name.</summary>
     private static string TeamName(RosterContext c, string dir) =>

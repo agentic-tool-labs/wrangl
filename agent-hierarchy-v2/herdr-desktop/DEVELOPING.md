@@ -25,7 +25,7 @@ node preview/render.mjs /tmp/ah2.html && open "file:///tmp/ah2.html#light"   # o
 
 Preview views: `?view=qa|qa2|history|thread|empty|down` for Q&A, `?view=graph` for the Graph (`graph-30`: a 30 minute
 window back in time; `graph-two`, `graph-zoom`: a second stream, zoomed; `graph-flow`, `graph-flow-v`: the team in Flow,
-horizontal and vertical; `dock-flow`: Flow docked; `graph-shot`: the team in the 2026-11-17 Herdr-vs-web screenshot, in Flow), `?view=settings` for the settings dialog,
+horizontal and vertical; `dock-flow`: Flow docked; `graph-idle`: idle rows with a long task and a 32 character name (ah2-586); `graph-shot`: the team in the 2026-11-17 Herdr-vs-web screenshot, in Flow), `?view=settings` for the settings dialog,
 `?view=menu` for the … menu, `?view=dock` for the Graph docked.
 
 - To run the real mod on the fixture, give its layout block the prop

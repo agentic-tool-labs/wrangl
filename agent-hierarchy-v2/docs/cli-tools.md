@@ -70,7 +70,7 @@ words, and it runs them.
 | see what was spent | `ah spend` | what members counted, not a measurement. See [`ah spend`](#ah-spend-spend-counter) |
 | record a lesson for the next team | `ah lessons propose --lesson "<one line>" --when "<when it applies>" --pointer <commit\|item\|measurement>` | anyone may. A note, never a rule or a gate. `ah lessons list` shows them |
 | pause one member | ask the Orchestrator (`ah roster pause-member <member>`) | stops nudges, re-deliveries and alarms for it; closes nothing. `resume-member` ends it |
-| let a deputy run the team | ask the Orchestrator (`ah roster duty on <member>`) | `ah roster duty off` takes it back |
+| let a deputy run the team | ask the Orchestrator (`ah roster spawn-ad-hoc deputy-chief` spawns `<team>-deputy-chief` on the top team, `--stream` optional; then `ah roster duty on <member>`) | `ah roster duty off` takes it back |
 | give one session your rights | `ah admin grant <pid>` in a plain terminal, or type `/wrangl:admin` in the session | `ah admin revoke` or `/wrangl:admin off` ends it; `ah admin show` shows it. See [`ah admin`](#ah-admin) |
 | switch the member launch rules off or on | `ah allow off` · `ah allow on` | on by default. `ah allow list` shows the state |
 

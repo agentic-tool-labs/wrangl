@@ -2,8 +2,10 @@
 name: deputy-chief
 description: >-
   The Deputy Chief Orchestrator: runs the top team's protocol while the chief
-  Orchestrator is away. Put on duty by the chief with `ah roster duty on
-  <member>`; never dispatched as a subagent. Holds orchestrator@<team> while on
+  Orchestrator is away. Spawned on the top team with `ah roster spawn-ad-hoc
+  deputy-chief` (named <team>-deputy-chief; `--stream` optional), then put on
+  duty by the chief with `ah roster duty on <member>`; never dispatched as a
+  subagent. Holds orchestrator@<team> while on
   duty; the chief stays the team's recorded owner at chief@<team>.
 model: sonnet
 disallowedTools: advisor, AskUserQuestion, PushNotification, SendUserFile, ExitPlanMode
