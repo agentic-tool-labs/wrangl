@@ -221,14 +221,16 @@ public sealed partial class RosterTeamVerbTests
         }
     }
 
-    private (int Code, JsonObject Out, string Err) SpawnIntoAStreamTreeHeldBy(string holderRole, string spawnRole, string holderStatus = "up")
+    private (int Code, JsonObject Out, string Err) SpawnIntoAStreamTreeHeldBy(string holderRole, string spawnRole, string holderStatus = "up", string? orchestratorSession = null)
     {
         var home = SpawnTeamHome();
         var worktree = RealPathOf(MakeWorkTree("s1"));
         var row = $"{{\"role\":\"{holderRole}\",\"name\":\"{Reviewer}\",\"route\":\"peer\",\"transport_id\":\"%2\",\"model\":\"sonnet\",\"stream\":\"s1\",\"expected_root\":\"{worktree}\"}}";
+        var teamJson = LiveTeamJson("tmux", row);
+        teamJson = orchestratorSession is null ? teamJson : teamJson.Replace("\"session_id\":null", $"\"session_id\":\"{orchestratorSession}\"", StringComparison.Ordinal);
         _sandbox.PlantTeam(
             Path.Combine(home, "teams", "proj.json"),
-            LiveTeamJson("tmux", row).TrimEnd('}')
+            teamJson.TrimEnd('}')
             + ",\"streams\":{\"s1\":{\"state\":\"open\",\"branch\":\"feat/s1\",\"base\":\"main\",\"worktree\":\"" + worktree + "\",\"tab_id\":null,\"opened\":\"2026-10-11T00:00:00.000Z\"}}}");
         PeerRow(home, "%2", holderRole, holderStatus);
         var (code, stdout, stderr) = Roster(["spawn-ad-hoc", spawnRole, "--model", "sonnet", "--team", "proj", "--orchestrator-pid", Self, "--stream", "s1"]);
@@ -250,6 +252,89 @@ public sealed partial class RosterTeamVerbTests
         {
             Assert.Equal("live-member", refused["refused"].AsString());
         }
+    }
+
+    /// <summary>
+    /// The stream holder's registration (written a minute ago) says <paramref name="holder"/>; the team's orchestrator session is
+    /// sess-orch; ahd's stall record holds <paramref name="stall"/> (none when null).
+    /// </summary>
+    private (int Code, JsonObject Out, string Err) SpawnPastAStallReportedHolder(Ah.Hierarchy.MemberRegistrationLiveness holder, string? stall)
+    {
+        _registrations = new() { [Reviewer + "@proj"] = holder };
+        _stallReported = stall;
+        return SpawnIntoAStreamTreeHeldBy("implementor", "implementor", orchestratorSession: "sess-orch");
+    }
+
+    /// <summary>A stall record of one entry: <paramref name="key"/> told for <paramref name="episode"/> <paramref name="toldSecondsAgo"/> seconds ago.</summary>
+    private static string StallEntry(string? key = null, string episode = "sess-2", int toldSecondsAgo = 10) =>
+        $"{{\"{key ?? $"proj/{Reviewer}@sess-orch"}\":{{\"episode\":\"{episode}\",\"at\":\"{Stamp(5)}\",\"told_at\":\"{Stamp(toldSecondsAgo)}\"}}}}";
+
+    private static string Stamp(int secondsAgo) => Stamp(DateTimeOffset.UtcNow.AddSeconds(-secondsAgo));
+
+    private static Ah.Hierarchy.MemberRegistrationLiveness Undecided =>
+        new("sess-2", false, "no usable observation of its process", DateTimeOffset.UtcNow.AddSeconds(-60));
+
+    [Fact]
+    public void AnUndecidedHolderAhdReportedDownForItsCurrentSessionYieldsItsStreamToAFlaglessSpawn()
+    {
+        var (code, spawned, err) = SpawnPastAStallReportedHolder(Undecided, StallEntry());
+
+        Assert.True(code == 0, err);
+        var superseded = Assert.Single(spawned["superseded"].AsArray()).AsObject();
+        Assert.Equal(Reviewer, superseded["name"].AsString());
+        Assert.Equal("sess-2", superseded["session_id"].AsString());
+        Assert.Equal("feat/s1", superseded["branch"].AsString());
+        Assert.EndsWith(Path.Combine("worktrees", "s1"), superseded["work_root"].AsString(), StringComparison.Ordinal);
+        Assert.Equal("stall-reported", superseded["evidence"].AsString());
+    }
+
+    [Fact]
+    public void AProvenDeadHolderIsListedAsSupersededByTheSpawnIntoItsStream()
+    {
+        var (code, spawned, err) = SpawnPastAStallReportedHolder(new("sess-2", false, "registration pid is not running", DateTimeOffset.UtcNow.AddSeconds(-60), ProvenDead: true), null);
+
+        Assert.True(code == 0, err);
+        Assert.Equal("proven-dead", Assert.Single(spawned["superseded"].AsArray()).AsObject()["evidence"].AsString());
+    }
+
+    [Theory]
+    [InlineData("other-session")]
+    [InlineData("none")]
+    [InlineData("earlier-orchestrator")]
+    [InlineData("older-than-registration")]
+    [InlineData("other-member")]
+    [InlineData("other-team")]
+    [InlineData("legacy-string")]
+    [InlineData("no-told-at")]
+    public void NegativeAStallRecordThatDoesNotShowTheHolderDownSinceItsLastLifeLeavesItRefusedWithItsWhy(string record)
+    {
+        var stall = record switch
+        {
+            "other-session" => StallEntry(episode: "sess-1"),
+            "none" => null,
+            "earlier-orchestrator" => StallEntry(key: $"proj/{Reviewer}@sess-old-orch"),
+            "older-than-registration" => StallEntry(toldSecondsAgo: 120),
+            "other-member" => StallEntry(key: "proj/proj-implementor@sess-orch"),
+            "other-team" => StallEntry(key: $"other/{Reviewer}@sess-orch"),
+            "legacy-string" => $"{{\"proj/{Reviewer}@sess-orch\":\"sess-2\"}}",
+            _ => $"{{\"proj/{Reviewer}@sess-orch\":{{\"episode\":\"sess-2\",\"at\":\"{Stamp(5)}\"}}}}",
+        };
+
+        var (code, refused, err) = SpawnPastAStallReportedHolder(Undecided, stall);
+
+        Assert.True(code == 2, err);
+        Assert.Equal("live-member", refused["refused"].AsString());
+        Assert.Contains("its liveness could not be checked: no usable observation of its process", err, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeALiveHolderIsRefusedEvenWhenAhdReportedItsSessionDown()
+    {
+        var (code, refused, err) = SpawnPastAStallReportedHolder(new("sess-2", true, "registration live", DateTimeOffset.UtcNow.AddSeconds(-60)), StallEntry());
+
+        Assert.True(code == 2, err);
+        Assert.Equal("live-member", refused["refused"].AsString());
+        Assert.Contains("is owned by live " + Reviewer, err, StringComparison.Ordinal);
     }
 
     private (int Code, JsonObject Out, string Err, string TeamFile) MoveIntoStreamTree(string ownerRole, string ownerStatus, string moverRole = "implementor", string stream = "s1", params string[] extra)

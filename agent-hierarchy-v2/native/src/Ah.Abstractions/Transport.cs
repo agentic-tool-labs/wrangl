@@ -74,7 +74,9 @@ public sealed record DaemonRequest(
     TimeSpan? Timeout = null,
     bool StartIfDown = true,
     // a running daemon older than this client that passes the protocol check answers it, as it is: nothing is drained (ah2-122 D3)
-    bool AnyVersion = false);
+    bool AnyVersion = false,
+    // false for a diagnostic read: a request that may not start the daemon launches no detached start either (ah2-566 K3a)
+    bool LaunchIfDown = true);
 
 /// <summary>
 /// The daemon's answer. <see cref="Status"/> 0 means "use the files": <see cref="FallbackReason"/> then says why (<c>down</c>,

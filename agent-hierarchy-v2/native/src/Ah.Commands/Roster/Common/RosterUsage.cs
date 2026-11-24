@@ -114,7 +114,7 @@ validation and reads/writes only, so validation lives in one place.
   ah roster recover show|hold|release|now <member> --team <T> [--cwd <path>]
   ah roster recover enable|disable|status --team <T> [--cwd <path>]
   ah roster recover --team <T> [--relink-lane <child team>]... [--cwd <path>]
-    After a restart: the team's owner re-stamps each member row whose process is gone from the one live session in its pane; a row with no such session is reported down with its spawn-one --resume remedy.
+    After a restart: the team's owner re-stamps each member row whose process is gone from the one live session in its pane; a row with no such session is reported down with two separate commands, resume --checkpoint --team <T> --relaunch <name> (when the team has a checkpoint; ask the user before --yes) and spawn-one <role> [--stream <s>] --team <T>, and its old session id; a row whose pane holds several live sessions, or a session claimed by several rows, gets no command (check by hand).
     --relink-lane: the owner stamps T's current team_id into the named lane child's parent link (the child's link must name T and T's stream must record a lane lead); a link naming another team_id is overwritten.
     The daemon's relaunch of a member that runs without ah's launch. hold/release/now/show: the team's Orchestrator or the user.
     enable: the user only. disable: the user or the team's Orchestrator. status: any caller. Recovery is off until enabled, and while it is off nothing is stopped or relaunched.

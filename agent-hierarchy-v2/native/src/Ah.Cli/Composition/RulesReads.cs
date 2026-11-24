@@ -149,6 +149,24 @@ internal static class RulesReads
         return (goal is null ? string.Empty : goal + "\n") + (block is null ? RulesOfEngagement.AdrLine : block + "\n" + RulesOfEngagement.AdrLine);
     }
 
+    /// <summary>
+    /// Whether a <see cref="RulesOfEngagement.LocalOnlyKey"/> rule applies to <paramref name="team"/> as resolved from <paramref name="cwd"/> (ah2-596). False when none does
+    /// and when the rules cannot be read, so <c>stream-done</c> then behaves as without it.
+    /// </summary>
+    internal static bool LocalOnly(ServiceGraph g, string ahHome, string cwd, string? team, Func<string, StateDbReaderOpen>? open = null)
+    {
+        try
+        {
+            var dir = BacklogVerb.DirOf(g, cwd);
+            var rows = With<IReadOnlyList<RuleRow>>(ahHome, [], query => RulesOfEngagement.Rows(query, dir), open);
+            return RulesOfEngagement.Resolve(rows, SubjectOf(g, dir, team)).Rules.Any(r => r.Row.Key == RulesOfEngagement.LocalOnlyKey && !r.Row.IsProposed);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>The team goal that applies over <paramref name="chain"/> (ah2-53): the nearest team's own, else a parent's; null with no team or no goal.</summary>
     internal static RuleRow? GoalOf(string ahHome, string dir, IReadOnlyList<string> chain, Func<string, StateDbReaderOpen>? open = null) =>
         chain.Count == 0 ? null : RulesOfEngagement.GoalOf(With<IReadOnlyList<RuleRow>>(ahHome, [], query => RulesOfEngagement.Goals(query, dir), open), chain);

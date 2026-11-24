@@ -69,6 +69,12 @@ public static partial class RulesOfEngagement
     /// <summary>A team goal's key: <see cref="KeyShape"/> refuses <c>_</c>, so no rule verb can name this row.</summary>
     public const string GoalKey = "_goal";
 
+    /// <summary>
+    /// The key of the rule that marks a run local-only, one that never pushes (ah2-596): while a row with this key applies to a team, <c>stream-done</c> closes a finished
+    /// stream of it whose commits are unshipped. Any level that applies to the team counts; an <c>off</c> or proposed row does not.
+    /// </summary>
+    public const string LocalOnlyKey = "local-only";
+
     public const int MaxGoal = 160;
 
     public const int MaxDoneWhen = 120;

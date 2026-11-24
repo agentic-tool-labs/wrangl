@@ -271,6 +271,18 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void InALocalOnlyRunAnUnmergedMemberCommitIsANoteAndTheTokenIsMinted()
+    {
+        _localOnly = true;
+
+        var plan = PlanOfAMemberCommit(merged: false);
+
+        Assert.True(Minted(plan), CleanReasons(plan));
+        var notes = plan.Member("clean_close")!.Value.Member("notes")!.Value.AsArray().Select(n => n.AsString()).ToList();
+        Assert.Contains(notes, n => n.Contains("unshipped commits (1 not on origin), kept: the run is local-only", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CT6ACommitNotOnOriginGivesAnOrdinaryTokenNamingTheUnshippedCommits()
     {
         ArrangeCleanImplementor();

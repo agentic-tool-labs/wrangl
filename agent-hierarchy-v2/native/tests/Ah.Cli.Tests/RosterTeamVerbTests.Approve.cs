@@ -12,6 +12,7 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.Equal(0, code);
         Assert.Contains("\"approved\"", stdout, StringComparison.Ordinal);
+        Assert.Contains("with no time limit, until that call is made", stdout, StringComparison.Ordinal);
         var row = Assert.Single(Ah.TestKit.TestGates.Text(_sandbox.AhHome, Hierarchy).Split('\n'), l => l.Contains("\"outcome\":\"approve\"", StringComparison.Ordinal));
         Assert.Contains($"\"member\":\"{Impl}\"", row, StringComparison.Ordinal);
         Assert.Contains("\"rule\":\"worktree\"", row, StringComparison.Ordinal);

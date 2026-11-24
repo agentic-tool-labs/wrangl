@@ -34,7 +34,7 @@ public interface IAlarmEpisodes
 }
 
 /// <summary>
-/// The map is one JSON object, <c>{key: {episode, at}}</c>. It is loaded once, kept in memory under one process-wide lock, and
+/// The map is one JSON object, <c>{key: {episode, at, told_at}}</c> (<c>told_at</c>: when the episode was first told, never refreshed). It is loaded once, kept in memory under one process-wide lock, and
 /// written through on every change; the daemon is its only writer, so a second process that writes the same file needs a file lock
 /// first. The saver is expected to replace the file atomically under a unique name. A file that cannot be parsed is handed to
 /// <c>keep</c> before the map starts empty, so it is not overwritten unread.
@@ -67,7 +67,18 @@ internal sealed class AlarmEpisodes(Func<string?> load, Action<string> save, Fun
                 return;
             }
 
-            map[key] = new JsonObject { ["episode"] = episode, ["at"] = Timestamps.ToIsoString(at) };
+            // told_at is when this episode was first told; a refresh of the same episode keeps it (one held without one stays without)
+            var entry = new JsonObject { ["episode"] = episode, ["at"] = Timestamps.ToIsoString(at) };
+            if (map.Get(key) is not { } prior || EpisodeOf(prior) != episode)
+            {
+                entry["told_at"] = Timestamps.ToIsoString(at);
+            }
+            else if (prior.Member("told_at") is { IsText: true } toldAt)
+            {
+                entry["told_at"] = toldAt;
+            }
+
+            map[key] = entry;
             Save(map);
         }
     }

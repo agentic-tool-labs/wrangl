@@ -108,6 +108,10 @@ public sealed partial class RosterTeamVerbTests
         Assert.NotNull(failure);
         Assert.StartsWith(Ah.Watch.WatchModule.RecoveryRefusalPrefix, failure, StringComparison.Ordinal);
         Assert.Contains("headless", failure, StringComparison.Ordinal);
+        Assert.Contains("Or a fresh member: `ah roster spawn-one ", failure, StringComparison.Ordinal);
+        Assert.Contains("Its old session id: " + RelaunchSession, failure, StringComparison.Ordinal);
+        Assert.DoesNotContain("dismiss", failure, StringComparison.Ordinal);
+        Assert.DoesNotContain("claude --resume", failure, StringComparison.Ordinal);
         Assert.Empty(LaunchLines());
     }
 
@@ -247,7 +251,7 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.NotNull(failure);
         Assert.StartsWith(Ah.Watch.WatchModule.RecoveryPaneUnknownPrefix, failure, StringComparison.Ordinal);
-        Assert.Contains($"team proj records transport {recorded ?? "none"}; ahd relaunches only into herdr or tmux panes; resume it with ah roster team resume", failure, StringComparison.Ordinal);
+        Assert.Contains($"team proj records transport {recorded ?? "none"}; ahd relaunches only into herdr or tmux panes; resume it with `ah roster resume --team proj` (ask the user first; add --yes only once they agree)", failure, StringComparison.Ordinal);
         Assert.Empty(LaunchLines());
         Assert.False(RanAnAgentStart());
         Assert.DoesNotContain(_runner.Calls, argv => argv.Length > 0 && argv.Any(a => a.Contains("claude", StringComparison.Ordinal)));

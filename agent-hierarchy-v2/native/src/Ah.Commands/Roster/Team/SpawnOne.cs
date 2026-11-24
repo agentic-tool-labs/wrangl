@@ -502,6 +502,9 @@ internal static class SpawnOne
     /// </summary>
     private static bool ConfirmsLater(string label) => label is "spawn-one" or "spawn-ad-hoc";
 
+    /// <summary>Whether ahd's stall record may step past an undecided holder: spawn-one and spawn-ad-hoc only (ah2-594 P2e).</summary>
+    private static bool StallReportedCounts(string label) => label is "spawn-one" or "spawn-ad-hoc";
+
     /// <summary>One member's launch for <paramref name="label"/>: a verb of its own or the resume that runs it per member.</summary>
     internal static SpawnOutcome Spawn(RosterContext c, string? role, string label, JsonObject? adHoc) => Core(c, role, label, adHoc);
 
@@ -806,10 +809,11 @@ internal static class SpawnOne
 
         WorkTreeAssignment.RefuseMainCheckout(
             c, label, memberName, MemberPlanning.Text(member, "role"), services.Hierarchy.Messages.RealCwd(c.LaunchCwd ?? c.Cwd), streamTree is not null);
+        var superseded = new JsonArray();
         if (stream is null)
         {
-            WorkTreeAssignment.RefuseLiveOccupant(
-                c, label, memberName, MemberPlanning.Text(member, "role"), WorkTreeAssignment.WorkRootOf(c, services.Hierarchy.Messages.RealCwd(c.Cwd)), team);
+            superseded = WorkTreeAssignment.RefuseLiveOccupant(
+                c, label, memberName, MemberPlanning.Text(member, "role"), WorkTreeAssignment.WorkRootOf(c, services.Hierarchy.Messages.RealCwd(c.Cwd)), team, StallReportedCounts(label));
         }
         if (stream is not null && c.Opts.Has("cwd"))
         {
@@ -918,8 +922,8 @@ internal static class SpawnOne
         if (stream is not null)
         {
             // The stream's tab lock is held, so the member rows read here include every earlier spawn into this stream.
-            WorkTreeAssignment.RefuseLiveOccupant(
-                c, label, memberName, MemberPlanning.Text(member, "role"), WorkTreeAssignment.WorkRootOf(c, services.Hierarchy.Messages.RealCwd(c.LaunchCwd ?? c.Cwd)), team);
+            superseded = WorkTreeAssignment.RefuseLiveOccupant(
+                c, label, memberName, MemberPlanning.Text(member, "role"), WorkTreeAssignment.WorkRootOf(c, services.Hierarchy.Messages.RealCwd(c.LaunchCwd ?? c.Cwd)), team, StallReportedCounts(label));
         }
 
 
@@ -1355,6 +1359,10 @@ internal static class SpawnOne
         Copy(spawnOut, "team_id", outTeam!, "team_id");
         Copy(spawnOut, "roster_level", outTeam!, "roster_level");
         spawnOut["launch_cwd"] = spawn.Get("launch_cwd") ?? JsonValue.Null;
+        if (superseded.Count > 0)
+        {
+            spawnOut["superseded"] = superseded;
+        }
         ReportPermissions(c, dir, memberName, spawn, spawnOut);
         if (ConfirmsLater(label) && kind == launch.Registry.KindDefault && transport is "herdr" or "tmux"
             && launched.Get("transport_id") is { IsText: true } launchedPane)

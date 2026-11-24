@@ -21,8 +21,11 @@ internal static partial class CleanClose
     /// <summary>What a plan or a close is judged on: the team, and the members that would close.</summary>
     internal sealed record Subject(string Dir, JsonValue Team, IReadOnlyList<Member> Members);
 
-    /// <summary>The first failed condition per member (empty when every member is clean) and, when clean, the token.</summary>
-    internal sealed record Reading(IReadOnlyList<string> Failures, string? Token);
+    /// <summary>
+    /// The first failed condition per member (empty when every member is clean) and, when clean, the token. <paramref name="Notes"/>: what is reported and holds no
+    /// one, such as unshipped commits in a local-only run (ah2-596).
+    /// </summary>
+    internal sealed record Reading(IReadOnlyList<string> Failures, string? Token, IReadOnlyList<string>? Notes = null);
 
     internal static Member MemberOf(string name, JsonValue row, ReleaseGate.Outcome release) =>
         new(name, row, release.Verdicts.FirstOrDefault(v => v.Member == name));
@@ -55,6 +58,7 @@ internal static partial class CleanClose
         var roster = reads?.Roster ?? c.Services.Hierarchy.Roster.AttributedRoster(subject.Dir);
         var open = reads?.Open ?? c.Services.Launch!.Streams.OpenTeamExchanges(subject.Dir, c.TeamFile, allTeams: false);
         var failures = new List<string>();
+        var notes = new List<string>();
         var entries = new JsonArray();
         var pools = new Dictionary<string, (IReadOnlyList<string> Pools, List<JsonObject> Exchanges)>(StringComparer.Ordinal);
         foreach (var member in subject.Members.OrderBy(m => m.Name, StringComparer.Ordinal))
@@ -65,17 +69,22 @@ internal static partial class CleanClose
                 failures.Add($"{member.Name}: {failure}");
             }
 
+            if (entry.Get(LocalOnlyNote) is { IsText: true } note)
+            {
+                notes.Add($"{member.Name}: {note.AsString()}");
+            }
+
             entries.Add(entry);
         }
 
         if (failures.Count > 0)
         {
-            return new Reading(failures, null);
+            return new Reading(failures, null, notes);
         }
 
         var digest = new JsonObject { ["base"] = normalToken, ["members"] = entries };
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(JsonText.Stringify(digest, 0)));
-        return new Reading([], Prefix + Convert.ToHexString(hash).ToLowerInvariant()[..16]);
+        return new Reading([], Prefix + Convert.ToHexString(hash).ToLowerInvariant()[..16], notes);
     }
 
     /// <summary>
@@ -178,8 +187,22 @@ internal static partial class CleanClose
             return ("work tree is dirty", entry);
         }
 
-        return (Unshipped(c, tree), entry);
+        var unshipped = Unshipped(c, tree);
+        if (unshipped is not null && unshipped.StartsWith(UnshippedCommits, StringComparison.Ordinal)
+            && c.Services.LocalOnly(c.Cwd, MemberPlanning.Text(subject.Team.Member("team")) ?? c.TeamFile))
+        {
+            // L3a: in a local-only run the commits are reported, and hold no one
+            entry[LocalOnlyNote] = $"{unshipped}, kept: the run is local-only";
+            return (null, entry);
+        }
+
+        return (unshipped, entry);
     }
+
+    private const string UnshippedCommits = "unshipped commits (";
+
+    /// <summary>The entry key that carries a local-only member's unshipped-commits note into <see cref="Reading.Notes"/> and the token's digest.</summary>
+    private const string LocalOnlyNote = "local_only_unshipped";
 
     /// <summary>
     /// Whether the newest <c>report-acked</c> row of request <paramref name="id"/> is later than the newest part of its response and than

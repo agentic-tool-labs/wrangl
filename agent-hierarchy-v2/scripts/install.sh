@@ -16,9 +16,9 @@
 #   --rebuild-only    build and place both binaries, update the stamp and the ah link; never touch the ahd link, PATH, rc files
 #                     or the login item
 #   --no-daemon-restart
-#                     start nothing and leave no daemon running as a result: never restart a running daemon, whatever its
-#                     version or the binary's change, and never start a stopped one (for CI and sandboxes); the caller
-#                     restarts it later with `ahd restart`
+#                     the script starts nothing: it never restarts a running daemon, whatever its version or the binary's
+#                     change, and never starts a stopped one (for CI and sandboxes). A newer ah client may still replace an
+#                     older daemon, and a client that finds no daemon starts one
 #   --quiet           print nothing but errors
 #   --allow-lifecycle     add allow rules for the Orchestrator's lifecycle commands, every ah command and SendMessage
 #                         (`ah roster permissions rules` lists them) to your Claude Code user settings, without asking;

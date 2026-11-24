@@ -587,6 +587,15 @@ public static partial class ConfigModule
     /// <summary>The grammar of a role name, unanchored: the one source for the role registry and for the recipient part of a message file name.</summary>
     public const string RoleNamePattern = "[a-z][a-z0-9-]{0,30}";
 
+    /// <summary>The grammar of a stream name, unanchored: branch-safe, directory-safe, and short enough that <c>&lt;glyph&gt; &lt;name&gt;</c> fits herdr's metadata limit.</summary>
+    public const string StreamNamePattern = "[a-z][a-z0-9_-]{0,39}";
+
+    /// <summary>Whether <paramref name="name"/> is a valid stream name (<see cref="StreamNamePattern"/>).</summary>
+    public static bool IsStreamName(string name) => StreamNameRegex().IsMatch(name);
+
+    [System.Text.RegularExpressions.GeneratedRegex("^" + StreamNamePattern + "\\z")]
+    private static partial System.Text.RegularExpressions.Regex StreamNameRegex();
+
     /// <summary>The key of a resolved registry naming the Claude configuration directory a launch reads agent files and install records from.</summary>
     public const string ClaudeDirKey = "claudeDir";
 

@@ -163,16 +163,21 @@ internal static class WorkTreeAssignment
     /// <summary>
     /// Refuses a spawn into a work root that another member of the team holds (in the grants, else by its expected_root) and whose
     /// liveness is not known to be false, unless <c>--replace-live</c> is given. Only a live writer holding the tree refuses a writer;
-    /// read-only roles share a tree freely, a stream's tree included.
+    /// read-only roles share a tree freely, a stream's tree included. With <paramref name="stallReported"/> (spawn-one and spawn-ad-hoc
+    /// only, ah2-594 P2e), an undecided holder ahd's stall watch reported down is treated as dead when <see cref="StallReportedDown"/>
+    /// holds. Returns the dead holders stepped past: <c>{name, session_id, work_root, branch, evidence}</c>, evidence
+    /// <c>proven-dead</c> or <c>stall-reported</c>.
     /// </summary>
-    internal static void RefuseLiveOccupant(RosterContext c, string label, string member, string? role, string workRoot, JsonValue team)
+    internal static JsonArray RefuseLiveOccupant(RosterContext c, string label, string member, string? role, string workRoot, JsonValue team, bool stallReported = false)
     {
+        var superseded = new JsonArray();
         if (!Ah.Hierarchy.HierarchyModule.IsWriterRole(role) || c.Opts.IsTrue("replace-live")
             || c.Services.Launch is not { } launch || team.Member("members") is not { IsArray: true } list)
         {
-            return;
+            return superseded;
         }
 
+        JsonValue? reported = null;
         foreach (var m in list.AsArray())
         {
             if (!m.IsMap || m.Member("name") is not { IsText: true } nameValue || nameValue.AsString() == member
@@ -182,23 +187,90 @@ internal static class WorkTreeAssignment
                 continue;
             }
 
+            var holder = nameValue.AsString();
             var liveness = launch.Teardown.MemberLiveness(c.Dir, m, TeamOf(c));
             var live = liveness.Get("live") is { IsTruthy: true };
+            var registration = c.Services.Hierarchy.Core.Liveness?.ForMember(holder, TeamOf(c));
+            var session = registration?.SessionId;
             if (liveness.Get("holds_claim") is not { IsTruthy: true })
             {
+                if (liveness.Get("liveness") is { IsText: true } verdict && verdict.AsString() == "proven_dead")
+                {
+                    superseded.Add(Superseded(m, team, holder, session ?? FieldOf(m, "session_id"), held, "proven-dead"));
+                }
+
                 continue;
             }
 
-            var holder = nameValue.AsString();
+            // P2c: a live verdict always wins; only an undecided one yields to ahd's record of the same registration session.
+            if (stallReported && !live && liveness.Get("indeterminate") is { IsTruthy: true } && registration is { SessionId.Length: > 0 }
+                && StallReportedDown(
+                    reported ??= ReadStallReported(c),
+                    $"{TeamOf(c)}/{holder}@{Ah.Hierarchy.HierarchyModule.OrchestratingSessionOf(team, TeamOf(c))?.SessionId}",
+                    registration.SessionId,
+                    [registration.At, Stamp(liveness.Get("last_life_at")), c.Services.Hierarchy.Roster.ActivityLifeOf(c.Dir, registration.SessionId, holder)]))
+            {
+                superseded.Add(Superseded(m, team, holder, session, held, "stall-reported"));
+                continue;
+            }
+
             var holderRole = FieldOf(m, "role") ?? "no role";
+            var why = liveness.Get("why") is { IsText: true } whyText && whyText.AsString().Length > 0 ? whyText.AsString() : "no reason recorded";
             var message = live
                 ? $"{label}: tree {workRoot} is owned by live {holder} ({holderRole}); open a stream for a new worktree, or remove {holder} first. Pass --replace-live to spawn anyway."
-                : $"{label}: {holder} ({holderRole}) may be live (its liveness could not be checked) in tree {workRoot}, so spawning {member} there could put two writers in one tree. Pass --replace-live to spawn anyway.";
+                : $"{label}: {holder} ({holderRole}) may be live (its liveness could not be checked: {why}) in tree {workRoot}, so spawning {member} there could put two writers in one tree. Pass --replace-live to spawn anyway.";
             throw c.Refuse(
                 new JsonObject { ["refused"] = "live-member", ["member"] = holder, ["work_root"] = workRoot, ["message"] = message },
                 message);
         }
+
+        return superseded;
     }
+
+    private static JsonObject Superseded(JsonValue row, JsonValue team, string name, string? session, string held, string evidence) => new()
+    {
+        ["name"] = name,
+        ["session_id"] = session is null ? JsonValue.Null : session,
+        ["work_root"] = held,
+        ["branch"] = FieldOf(row, "stream") is { } stream && team.Member("streams")?.Member(stream) is { IsMap: true } record && FieldOf(record, "branch") is { } branch
+            ? branch
+            : JsonValue.Null,
+        ["evidence"] = evidence,
+    };
+
+    /// <summary>ahd's stall-watch record (<c>{key: {episode, at}}</c>), or null when there is none or it cannot be read.</summary>
+    private static JsonValue ReadStallReported(RosterContext c)
+    {
+        try
+        {
+            return c.Services.StallReported is { Length: > 0 } text ? JsonText.Parse(text) : JsonValue.Null;
+        }
+        catch (JsonParseException)
+        {
+            return JsonValue.Null;
+        }
+    }
+
+    /// <summary>
+    /// Whether ahd's record shows the member down since its last sign of life (ah2-594 P2d): the entry at <paramref name="key"/>
+    /// (<c>team/member@orchestrator-session</c>, the team's current orchestrator session) names <paramref name="session"/>, and its
+    /// <c>told_at</c> is later than every sign of life in <paramref name="lives"/>, of which there must be one. A legacy entry with no
+    /// <c>told_at</c> never counts; in doubt, the spawn is refused as before.
+    /// </summary>
+    private static bool StallReportedDown(JsonValue reported, string key, string session, DateTimeOffset?[] lives)
+    {
+        if (key.EndsWith('@') || !reported.IsMap || reported.Member(key) is not { IsMap: true } entry
+            || FieldOf(entry, "episode") != session || Stamp(entry.Member("told_at")) is not { } toldAt)
+        {
+            return false;
+        }
+
+        var known = lives.OfType<DateTimeOffset>().ToList();
+        return known.Count > 0 && known.All(life => toldAt > life);
+    }
+
+    private static DateTimeOffset? Stamp(JsonValue? at) =>
+        at is { IsText: true } text && Ah.Core.Time.Timestamps.TryParseMs(text.AsString(), out var ms) ? DateTimeOffset.FromUnixTimeMilliseconds((long)ms) : null;
 
     /// <summary>
     /// Refuses to move a running member out of the tree its session started in. Claude Code pins that session to that tree (the

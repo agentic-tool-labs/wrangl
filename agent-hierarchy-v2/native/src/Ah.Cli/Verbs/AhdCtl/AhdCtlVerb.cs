@@ -307,7 +307,7 @@ internal static class AhdCtlVerb
             }
         }
 
-        var reply = await client.RequestAsync(new DaemonRequest("GET", target, Timeout: TimeSpan.FromSeconds(10), StartIfDown: false)).ConfigureAwait(false);
+        var reply = await client.RequestAsync(new DaemonRequest("GET", target, Timeout: TimeSpan.FromSeconds(10), StartIfDown: false, LaunchIfDown: false)).ConfigureAwait(false);
         if (reply.Status == 0)
         {
             return null;

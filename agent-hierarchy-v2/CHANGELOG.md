@@ -4,6 +4,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.58] - 2026-11-24
+
+### Fixed
+
+- **A long task on an active Graph card is cut at its end.** Active cards' head and work rows now take the card's
+  full width in herdr, as idle rows did in 2.0.57: the tag sits at the right edge and the full text is in the tooltip.
+- **The member-down alarm names commands that work.** It suggested `spawn-one --resume`, a flag that does not exist.
+  It now offers `ah roster resume --checkpoint --relaunch <member>` (ask the user first; only when the checkpoint
+  lists the member) and a fresh `ah roster spawn-one <role>` on the member's stream. Ambiguous or contested rows
+  get no command.
+- **A spawn steps past a member the daemon reported down.** `spawn-one` and `spawn-ad-hoc` into a dead member's
+  stream no longer need `--replace-live` when ahd reported that member down for its current session after its last
+  sign of life. The output lists who was stepped past (`superseded`), and a refusal says why liveness could not be
+  checked. A member reported down before this upgrade still needs `--replace-live` once.
+- **A worktree approval lets the refused call through.** A member whose team row had no session stamp could never
+  use an approval. `ah roster approve` and the refusal now say what one approval covers. A QA member checking out a
+  commit in its own run-set clone is no longer refused.
+- **A daemon is running again after an install.** When a newer client replaced an older daemon and its time ran
+  out, no daemon was left. The client whose replace failed now starts one, and so does a client that finds a
+  daemon lost (its record names a process that is gone). A daemon that exited in an orderly way, such as after
+  `ahd stop`, stays stopped. `ahd start` checks that the pid is a live daemon for the home. Status and other
+  diagnostic reads never start a daemon.
+
+### Added
+
+- **`local-only` rule.** In a run whose rules carry a `local-only` row, `ah roster stream-done` closes a finished
+  stream with unshipped commits (nothing is archived) and `dismiss` reports them as a note.
+
 ## [2.0.57] - 2026-11-24
 
 ### Fixed

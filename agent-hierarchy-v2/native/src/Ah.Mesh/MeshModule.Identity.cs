@@ -24,6 +24,18 @@ public static partial class MeshModule
     /// <summary>The way out mail gives a session refused a row held by another process, which is <paramref name="running"/> or gone.</summary>
     public static string HeldRowRemedy(JsonObject row, bool running, string team, string name) => HeldRow.Remedy(row, running, team, name);
 
+    /// <summary>The command that brings <paramref name="member"/> back on its old session from <paramref name="team"/>'s checkpoint (plan only, no <c>--yes</c>).</summary>
+    public static string MemberResumeCommand(string team, string member) => MemberHint.Resume(team, member);
+
+    /// <summary>The command that spawns a fresh member of <paramref name="role"/>, on <paramref name="stream"/> when it is a valid stream name.</summary>
+    public static string MemberRespawnCommand(string role, string? stream, string team) => MemberHint.Respawn(role, stream, team);
+
+    /// <summary>Whether a checkpoint <paramref name="record"/> lists <paramref name="member"/>, so <see cref="MemberResumeCommand"/> applies to it.</summary>
+    public static bool RecordListsMember(JsonValue? record, string member) => MemberHint.Lists(record, member);
+
+    /// <summary>A down member's hint lines: each command on its own line, and the old session id as information.</summary>
+    public static IReadOnlyList<string> MemberHintLines(string? resume, string respawn, string? session) => MemberHint.Lines(resume, respawn, session);
+
     /// <summary>Whether a resolved caller is the user or the session that holds <c>orchestrator@team</c>; any other is refused <see cref="NotTeamOwner"/>.</summary>
     public static CallerVerdict OrchestratorOrUser(CallerPrincipal principal, string? sessionHint, string team) =>
         CallerProof.OrchestratorOrUser(principal, sessionHint, team);

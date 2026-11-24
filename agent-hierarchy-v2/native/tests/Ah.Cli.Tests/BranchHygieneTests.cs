@@ -126,6 +126,8 @@ public sealed class BranchHygieneTests : IDisposable
         public IRosterOwnerProof? OwnerProof { get; } = new AllowingProof();
 
         public IHomeDocs? HomeDocs => graph.HomeDocs;
+
+        public bool LocalOnly(string cwd, string? team) => RulesReads.LocalOnly(graph, environment.AhHome, cwd, team);
     }
 
     private sealed class AllowingProof : IRosterOwnerProof
@@ -137,7 +139,7 @@ public sealed class BranchHygieneTests : IDisposable
         public NearestSession NearestAncestor(string dir, IReadOnlyList<string> rowDirs) => new(NearestKind.Session, null, null, Environment.ProcessId);
     }
 
-    private (int Code, string Stdout, string Stderr) Roster(params string[] args)
+    private (ServiceGraph Graph, PlatformIo Io, FakeEnv Env) Build()
     {
         var variables = new Dictionary<string, string?>
         {
@@ -149,7 +151,30 @@ public sealed class BranchHygieneTests : IDisposable
         };
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.2.3", "1"));
         var io = PlatformModule.CreateIo(null);
-        var graph = ServiceGraph.Build(io, env, new RealGit(_calls, _sandbox.Root), new FakeDaemonClient());
+        return (ServiceGraph.Build(io, env, new RealGit(_calls, _sandbox.Root), new FakeDaemonClient()), io, env);
+    }
+
+    /// <summary>Writes a <c>local-only</c> rule row at <paramref name="level"/>/<paramref name="scope"/> into the sandbox's state database.</summary>
+    private void LocalOnlyRule(string level, string scope)
+    {
+        var (graph, _, _) = Build();
+        using var db = Ah.StateDb.StateDbModule.Open(_sandbox.AhHome, mayCreate: true);
+        RuleWriteResult? written = null;
+        var outcome = db.WriteOnce(Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddSeconds(10), tx =>
+        {
+            written = RulesOfEngagement.Apply(
+                (sql, a) => tx.Query(sql, a),
+                (sql, a) => tx.Execute(sql, a),
+                new RuleWrite("add", Ah.Cli.Verbs.BacklogVerb.DirOf(graph, Project), level, scope, RulesOfEngagement.LocalOnlyKey, "commits local only, never push", "user", null, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), []));
+            return string.Empty;
+        });
+        Assert.Equal(Ah.StateDb.OnceStatus.Applied, outcome.Status);
+        Assert.Equal(RulesOfEngagement.Ok, written!.Code);
+    }
+
+    private (int Code, string Stdout, string Stderr) Roster(params string[] args)
+    {
+        var (graph, io, env) = Build();
         var services = new Services(graph, io.Files, io.Clock, env, Project);
         CommandsModule.ComposeRoster(() => services);
         var verb = CommandsModule.Registry.Verbs.Single(v => v.Name == "roster");
@@ -848,6 +873,37 @@ public sealed class BranchHygieneTests : IDisposable
             Assert.Equal("unshipped-commits", Refused(stdout, stderr));
             Assert.Contains("feat: add feature", stdout + stderr, StringComparison.Ordinal);
         });
+    }
+
+    [Fact]
+    public void InALocalOnlyRunUnshippedCommitsAreDoneAndNothingIsArchived()
+    {
+        var (tree, _) = FeatureStream(shipped: false);
+        LocalOnlyRule(RulesOfEngagement.Team, "proj");
+
+        var (code, stdout, stderr) = Roster("stream-done", "feat");
+
+        Assert.True(code == 0, stderr);
+        var result = Parse(stdout);
+        Assert.Equal("local-only", result["verdict"].AsString());
+        Assert.Equal(1, (int)result["unshipped"].AsNumber());
+        Assert.Contains(Texts(result.Get("warnings")), w => w.StartsWith("local-only: the run's rules say it never pushes", StringComparison.Ordinal));
+        Assert.Equal("done", StreamRecord("feat")["state"].AsString());
+        Assert.True(HasRef("refs/heads/feat"));
+        Assert.True(Directory.Exists(tree));
+        Assert.DoesNotContain("refs/archive/", Refs(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ALocalOnlyRuleOfAnotherTeamStillRefusesUnshippedCommits()
+    {
+        FeatureStream(shipped: false);
+        LocalOnlyRule(RulesOfEngagement.Team, "other");
+
+        var (code, stdout, stderr) = Roster("stream-done", "feat");
+
+        Assert.NotEqual(0, code);
+        Assert.Equal("unshipped-commits", Refused(stdout, stderr));
     }
 
     [Fact]

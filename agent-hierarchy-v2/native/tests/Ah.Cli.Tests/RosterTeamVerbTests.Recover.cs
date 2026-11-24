@@ -52,7 +52,7 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.True(code == 0, stderr);
         Assert.Contains("re-stamped 0, down 1, untouched 1", stdout, StringComparison.Ordinal);
-        Assert.Contains("imp: down; spawn-one implementor --resume old-session --team proj", stdout, StringComparison.Ordinal);
+        Assert.Contains("imp: down\n  Or a fresh member: `ah roster spawn-one implementor --team proj`\n  Its old session id: old-session", stdout.ReplaceLineEndings("\n"), StringComparison.Ordinal);
         Assert.Equal("old-session", RowOf("imp").Member("session_id")!.Value.AsString());
     }
 
@@ -66,7 +66,119 @@ public sealed partial class RosterTeamVerbTests
 
         Assert.Equal(0, code);
         Assert.Contains("re-stamped 0, down 1, untouched 0", stdout, StringComparison.Ordinal);
-        Assert.Contains("--resume old-session", stdout, StringComparison.Ordinal);
+        Assert.Contains("Its old session id: old-session", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("dismiss", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("claude --resume", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheDownRemedyKeepsTheMembersStream()
+    {
+        RecoverTeam(Environment.ProcessId, MemberRow("imp", "implementor", GonePid(), "p1", "old-session").Replace("}", ",\"stream\":\"s1\"}", StringComparison.Ordinal));
+        _liveSessions = [];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains("`ah roster spawn-one implementor --stream s1 --team proj`", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnInvalidStreamOrRoleIsLeftOutOfTheDownRemedy()
+    {
+        RecoverTeam(
+            Environment.ProcessId,
+            MemberRow("imp", "implementor", GonePid(), "p1", "old-session").Replace("}", ",\"stream\":\"S 1\"}", StringComparison.Ordinal),
+            MemberRow("bad", "x; curl evil", GonePid(), "p2", "old-bad"));
+        _liveSessions = [];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains("`ah roster spawn-one implementor --team proj`", stdout, StringComparison.Ordinal);
+        Assert.Contains("`ah roster spawn-one <role> --team proj`", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("curl", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACheckpointedTeamsDownRowAlsoNamesTheCheckpointResume()
+    {
+        ArrangeCheckpoint();
+        _ = Take();
+        RecoverTeam(Environment.ProcessId, MemberRow(Impl, "implementor", GonePid(), "p1", "old-session"));
+        _liveSessions = [];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains($"  Back on its old session (ask the user first; add --yes only once they agree): `ah roster resume --checkpoint --team proj --relaunch {Impl}`", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACheckpointThatDoesNotListTheMemberGivesNoResumeLine()
+    {
+        ArrangeCheckpoint();
+        _ = Take();
+        RecoverTeam(Environment.ProcessId, MemberRow("imp", "implementor", GonePid(), "p1", "old-session"));
+        _liveSessions = [];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains("Or a fresh member: `ah roster spawn-one implementor --team proj`", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("resume --checkpoint", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARowWhoseLiveSessionIsClaimedByTwoRowsGetsNoCommand()
+    {
+        RecoverTeam(
+            Environment.ProcessId,
+            MemberRow("imp", "implementor", GonePid(), "p1", "old-a"),
+            MemberRow("rev", "reviewer", GonePid(), "p1", "old-b"));
+        _liveSessions = [new LiveSession("one", LivePidOfAnotherProcess(), RecoverStart, "p1", [])];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains("imp: contested: live session one in pane p1 is claimed by 2 rows; check by hand", stdout, StringComparison.Ordinal);
+        Assert.Contains("rev: contested:", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("ah roster", stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>Every command a down line prints, as recover emits it.</summary>
+    private static IEnumerable<string[]> HintedCommands(string stdout) =>
+        System.Text.RegularExpressions.Regex.Matches(stdout, "`ah roster ([^`]+)`").Select(m => m.Groups[1].Value.Split(' '));
+
+    /// <summary>The commands recover's down lines and the shared builders (the member-down alarm, the held row, the headless relaunch) emit get past their verb's flag check.</summary>
+    [Fact]
+    public void TheHintedCommandsParse()
+    {
+        ArrangeCheckpoint();
+        _ = Take();
+        RecoverTeam(Environment.ProcessId, MemberRow(Impl, "implementor", GonePid(), "p1", "old-session").Replace("}", ",\"stream\":\"s1\"}", StringComparison.Ordinal));
+        _liveSessions = [];
+        var commands = HintedCommands(Recover().Stdout).ToList();
+        var held = JsonText.Parse(MemberRow("imp", "implementor", GonePid(), "p1", "old-session")).AsObject();
+        commands.AddRange(HintedCommands(Ah.Mesh.MeshModule.HeldRowRemedy(held, false, "proj", "imp")));
+        commands.Add(Ah.Mesh.MeshModule.MemberRespawnCommand("<role>", null, "proj").Split(' ')[2..]);
+        Assert.Contains(commands, a => a[0] == "spawn-one" && a.Contains("--stream"));
+        Assert.Contains(commands, a => a[0] == "resume");
+
+        foreach (var args in commands)
+        {
+            // a spawn only plans; resume without --yes only plans already
+            var (_, _, stderr) = Roster([.. args, .. args[0] == "spawn-one" ? new[] { "--orchestrator-pid", Self, "--dry-run" } : []]);
+
+            Assert.DoesNotContain("does not own", stderr, StringComparison.Ordinal);
+            Assert.DoesNotContain("unrecognized flag", stderr, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void TheOldResumeHintDoesNotParse()
+    {
+        RecoverTeam(Environment.ProcessId);
+
+        var (code, _, stderr) = Roster("spawn-one", "implementor", "--resume", "old-session", "--team", "proj", "--orchestrator-pid", Self, "--dry-run");
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("unrecognized flag --resume", stderr, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -82,6 +194,8 @@ public sealed partial class RosterTeamVerbTests
         var (_, stdout, _) = Recover();
 
         Assert.Contains("re-stamped 0, down 1", stdout, StringComparison.Ordinal);
+        Assert.Contains("imp: ambiguous: 2 live sessions in pane p1; check by hand", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("ah roster", stdout, StringComparison.Ordinal);
         Assert.Equal("old-session", RowOf("imp").Member("session_id")!.Value.AsString());
     }
 

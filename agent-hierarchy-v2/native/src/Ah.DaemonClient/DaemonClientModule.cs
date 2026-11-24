@@ -83,7 +83,7 @@ public static class DaemonClientModule
     {
         ArgumentNullException.ThrowIfNull(client);
         var reply = await client
-            .RequestAsync(new DaemonRequest("GET", "/v1/health", Timeout: timeout, StartIfDown: false), cancellationToken)
+            .RequestAsync(new DaemonRequest("GET", "/v1/health", Timeout: timeout, StartIfDown: false, LaunchIfDown: false), cancellationToken)
             .ConfigureAwait(false);
         if (reply.Status != 200 || !JsonText.TryParse(reply.Body.Span, out var body))
         {
