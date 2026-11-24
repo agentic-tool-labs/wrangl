@@ -65,6 +65,8 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
     public Ah.Core.Json.JsonObject? TeamGoal(string cwd, string team) =>
         RulesReads.ShownGoal(environment.AhHome, () => Ah.Cli.Verbs.BacklogVerb.DirOf(graph, cwd), dir => RulesReads.TeamChain(graph, dir, team), graph.OpenReader);
 
+    public bool LocalOnly(string cwd, string? team) => RulesReads.LocalOnly(graph, environment.AhHome, cwd, team, graph.OpenReader);
+
     public IAhEnvironment Environment => environment;
 
     public IClock Clock => clock;
@@ -103,6 +105,8 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
     private IRosterSpawnAdmission? _spawnAdmission;
 
     public IRosterSpawnAdmission? SpawnAdmission => _spawnAdmission ??= new SpawnAdmissionComposition(graph);
+
+    public string? StallReported => StallStore.TryRead(environment.AhHome, StallStore.Reported, out var reported) ? reported : null;
 
     /// <summary>The pane services (paste, screens, mesh gate), built the first time a verb asks.</summary>
     public IRosterPanes? Panes => _panes ??= new PaneComposition(graph, environment, clock);

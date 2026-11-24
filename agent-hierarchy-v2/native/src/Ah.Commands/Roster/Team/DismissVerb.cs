@@ -649,8 +649,16 @@ internal static class DismissVerb
     }
 
     /// <summary>Which kind of token a plan minted and, for the ordinary one, the first failed condition of each member.</summary>
-    internal static JsonObject CleanJson(CleanClose.Reading clean) =>
-        new() { ["minted"] = clean.Token is not null, ["reasons"] = TeardownSupport.Strings(clean.Failures) };
+    internal static JsonObject CleanJson(CleanClose.Reading clean)
+    {
+        var json = new JsonObject { ["minted"] = clean.Token is not null, ["reasons"] = TeardownSupport.Strings(clean.Failures) };
+        if (clean.Notes is { Count: > 0 } notes)
+        {
+            json["notes"] = TeardownSupport.Strings(notes);
+        }
+
+        return json;
+    }
 
     private static void Put(JsonObject target, string key, JsonValue? value)
     {

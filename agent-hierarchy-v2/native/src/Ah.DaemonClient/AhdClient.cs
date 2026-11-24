@@ -20,7 +20,8 @@ internal sealed record EnsureOptions(
     Action<string, string>? Warn = null,
     bool Start = true,
     bool Explicit = false,
-    bool AnyVersion = false);
+    bool AnyVersion = false,
+    bool Launch = true);
 
 /// <summary>
 /// Discovery, lazy start, the version and runtime handshake, and a request helper. "Daemon unavailable" is an
@@ -489,6 +490,42 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     }
 
     /// <summary>
+    /// Starts <c>ahd start</c> detached and returns its pid, so a daemon follows a client that may not wait for one (ah2-566). Null,
+    /// and nothing started, when AH_DAEMON=off, the executable is unknown, an implicit start backs off after a failed one, or another
+    /// client holds the start lock now. The detached start waits for an exiting daemon and starts at most one under that lock.
+    /// </summary>
+    internal int? LaunchStart(string reason)
+    {
+        try
+        {
+            if (DaemonOff || deps.SelfExecutable is null || ReadSpawnFailed() is not null)
+            {
+                return null;
+            }
+
+            deps.Writer.Mkdir(_paths.Run);
+            using (var held = deps.Locks.TryAcquire(_paths.Lock))
+            {
+                // ponytail: a burst of clients may each launch one before the first takes the lock; each later one finds the daemon and exits
+                if (held is null)
+                {
+                    return null;
+                }
+            }
+
+            var head = deps.SpawnPluginRoot?.Invoke() is { Length: > 0 } root
+                ? new[] { deps.SelfExecutable, "--plugin-root", root, "start" }
+                : [deps.SelfExecutable, "start"];
+            LogAction("launch-start", $"reason={reason}");
+            return deps.Spawner.SpawnDetached(new DetachedSpawnRequest(head, deps.AhEnvironment.AhHome, SpawnEnvironment(), _paths.Log));
+        }
+        catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// The command that starts the daemon: this executable's <c>serve</c>, behind the plugin root the caller already checked when
     /// there is one, so the daemon uses that root and does not resolve its own; null when the executable's path is unknown.
     /// </summary>
@@ -734,10 +771,10 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     internal async Task<Discovered?> EnsureAsync(EnsureOptions options, CancellationToken ct = default)
     {
         string? last = null;
-        var drained = false;
+        int? drained = null;
         int? pending = null;
-        var found = await EnsureCoreAsync(options with { Warn = (text, reason) => { last = text; options.Warn?.Invoke(text, reason); } }, () => drained = true, pid => pending = pid, ct).ConfigureAwait(false);
-        if (found is null && drained)
+        var found = await EnsureCoreAsync(options with { Warn = (text, reason) => { last = text; options.Warn?.Invoke(text, reason); } }, pid => drained = pid, pid => pending = pid, ct).ConfigureAwait(false);
+        if (found is null && drained is { } drainedPid)
         {
             // ah2-100 D5: a replace that ends with no daemon says so in one line; ah2-404 R1: a spawned child still alive did not fail.
             if (pending is { } pid)
@@ -747,13 +784,20 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             else
             {
                 LogAction("replace-failed", $"reason={last ?? "unknown"}");
+
+                // ah2-566 K2: the client that asked for the replace starts one once the old daemon is gone, unless another daemon lives (a
+                // replacement that is still older); `ahd start` itself is the end of that chain
+                if (!options.Explicit && (DaemonPidOnFile() is not { } now || now == drainedPid || OwnershipOf((int)now) is false))
+                {
+                    _ = LaunchStart("replace-failed");
+                }
             }
         }
 
         return found;
     }
 
-    private async Task<Discovered?> EnsureCoreAsync(EnsureOptions options, Action onDrained, Action<int> onPending, CancellationToken ct)
+    private async Task<Discovered?> EnsureCoreAsync(EnsureOptions options, Action<int> onDrained, Action<int> onPending, CancellationToken ct)
     {
         void Warn(string text) => options.Warn?.Invoke(text, "down");
         if (DaemonOff)
@@ -852,6 +896,13 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
 
             if (info is null)
             {
+                // ah2-566 K3 (Amendment 3): a request that may not start the daemon sees one started only for a lost daemon, one that
+                // ahd.json still names but is not a live ahd of this home; no ahd.json is an orderly exit (`ahd stop`, a signal, a drain)
+                if (!options.Start && options.Launch && DaemonPidOnFile() is { } recorded && OwnershipOf((int)recorded) is false)
+                {
+                    _ = LaunchStart("no-daemon");
+                }
+
                 // A caller that keeps only the last warning still sees why the start did not go ahead.
                 Warn(startWhy is null ? "could not start or reach the daemon" : $"could not start or reach the daemon: {startWhy}");
                 return null;
@@ -898,7 +949,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                     return null;
                 }
 
-                onDrained();
+                onDrained(info.Pid);
                 drainedPid = info.Pid;
                 continue;
             }
@@ -910,7 +961,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 return null;
             }
 
-            onDrained();
+            onDrained(info.Pid);
             if (!await WaitForPidExitAsync(info.Pid, DrainWaitMs, ct).ConfigureAwait(false))
             {
                 Warn("the old daemon did not exit after a drain");
@@ -963,7 +1014,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         DateTimeOffset? sentAt = null;
         try
         {
-            var found = await EnsureAsync(new EnsureOptions(Start: request.StartIfDown, AnyVersion: request.AnyVersion), ct).ConfigureAwait(false);
+            var found = await EnsureAsync(new EnsureOptions(Start: request.StartIfDown, AnyVersion: request.AnyVersion, Launch: request.LaunchIfDown), ct).ConfigureAwait(false);
             if (found is null)
             {
                 return new DaemonReply(0, ReadOnlyMemory<byte>.Empty, "down");

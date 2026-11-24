@@ -71,7 +71,7 @@ internal static class TeamRecover
 
         var restamp = new Dictionary<string, (double OldPid, LiveSession Session)>(StringComparer.Ordinal);
         var down = new List<string>();
-        var dead = new List<(string Name, double Pid, string Role, string? Recorded, List<LiveSession> Matches)>();
+        var dead = new List<(string Name, double Pid, string Role, string? Stream, string? Recorded, List<LiveSession> Matches)>();
         var untouched = 0;
         foreach (var row in rows.AsArray())
         {
@@ -90,19 +90,33 @@ internal static class TeamRecover
                 : live.Where(s => s.PaneId == pane && c.PidAlive(s.Pid) && !heldPids.Contains(s.Pid) && !NamesAnotherMember(s, name, team, names)).ToList();
             var recorded = row.Member("session_id") is { IsText: true } sid && sid.AsString().Length > 0 ? sid.AsString() : null;
             var role = row.Member("role") is { IsText: true } r ? r.AsString() : "<role>";
-            dead.Add((name, pid.AsNumber(), role, recorded, matches));
+            var stream = row.Member("stream") is { IsText: true } st ? st.AsString() : null;
+            dead.Add((name, pid.AsNumber(), role, stream, recorded, matches));
         }
 
         var claims = dead.Where(d => d.Matches.Count == 1).GroupBy(d => d.Matches[0].SessionId).ToDictionary(g => g.Key, g => g.Count());
-        foreach (var (name, oldPid, role, recorded, matches) in dead)
+        JsonValue? checkpoint = null;
+        foreach (var (name, oldPid, role, stream, recorded, matches) in dead)
         {
             if (matches.Count == 1 && claims[matches[0].SessionId] == 1)
             {
                 restamp[name] = (oldPid, matches[0]);
             }
+            else if (matches.Count > 1)
+            {
+                // a live session may be this member: no command, so nothing is followed that could kill it
+                down.Add($"{name}: ambiguous: {matches.Count.ToString(CultureInfo.InvariantCulture)} live sessions in pane {matches[0].PaneId}; check by hand");
+            }
+            else if (matches.Count == 1)
+            {
+                down.Add($"{name}: contested: live session {matches[0].SessionId} in pane {matches[0].PaneId} is claimed by {claims[matches[0].SessionId].ToString(CultureInfo.InvariantCulture)} rows; check by hand");
+            }
             else
             {
-                down.Add($"{name}: down; spawn-one {role} --resume {recorded ?? "<session_id>"} --team {team}");
+                checkpoint ??= CheckpointRecord(c, team);
+                var resume = Ah.Mesh.MeshModule.RecordListsMember(checkpoint, name) ? Ah.Mesh.MeshModule.MemberResumeCommand(team, name) : null;
+                var lines = Ah.Mesh.MeshModule.MemberHintLines(resume, Ah.Mesh.MeshModule.MemberRespawnCommand(role, stream, team), recorded);
+                down.Add($"{name}: down\n  {string.Join("\n  ", lines)}");
             }
         }
 
@@ -174,6 +188,20 @@ internal static class TeamRecover
         }
 
         return lines;
+    }
+
+    /// <summary><paramref name="team"/>'s checkpoint record, or JSON null when it has none or it cannot be read.</summary>
+    private static JsonValue CheckpointRecord(RosterContext c, string team)
+    {
+        try
+        {
+            var read = c.Services.Hierarchy.StateCalls.Checkpoint("read", new JsonObject { ["dir"] = c.Dir, ["team"] = team.Length > 0 ? team : "_default" });
+            return read.Member("found") is { IsTruthy: true } && read.Member("record") is { } record ? record : JsonValue.Null;
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            return JsonValue.Null;
+        }
     }
 
     internal static bool RecordedProcessIsGone(RosterContext c, JsonValue row, double pid)

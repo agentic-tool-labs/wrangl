@@ -14,6 +14,9 @@ internal static class StreamDoneGate
 
     internal static readonly string[] Flags = ["covered", "merged-into", "abandon"];
 
+    /// <summary>The verdict of a stream done with unshipped commits in a run whose rules mark it local-only (ah2-596). Never archived.</summary>
+    internal const string LocalOnly = "local-only";
+
     /// <summary>What step 6 would do: the work tree to remove (null: none), the ref to create and the head to delete.</summary>
     internal sealed record ArchivePlan(string Root, string Branch, string Sha, string Ref, string? Worktree);
 
@@ -184,6 +187,7 @@ internal static class StreamDoneGate
             verdict = unshipped.Count == 0 ? "shipped"
                 : covered is not null ? "covered"
                 : abandon is not null ? "abandoned"
+                : c.Services.LocalOnly(c.Cwd, MemberPlanning.Text(team.Member("team")) ?? c.TeamFile) ? LocalOnly
                 : throw Refuse(
                     c,
                     "unshipped-commits",
@@ -198,6 +202,13 @@ internal static class StreamDoneGate
 
         // step 4: the work tree must be clean
         CheckClean(c, prior);
+        if (verdict == LocalOnly)
+        {
+            // the unshipped commits are the run's only copy: nothing is archived, so the branch and work tree stay
+            warnings.Add($"local-only: the run's rules say it never pushes; {count} commit(s) of {branch} are not in {release.Ref} and stay on {branch}");
+            return new Plan(verdict, reason, head, count, false, null, null, warnings);
+        }
+
         var (archive, skipped, archiveWarnings) = PlanArchive(c, dir, team, name, root, branch, head, prior, streams, IsThis);
         warnings.AddRange(archiveWarnings);
         return new Plan(verdict, reason, head, count, true, archive, skipped, warnings);

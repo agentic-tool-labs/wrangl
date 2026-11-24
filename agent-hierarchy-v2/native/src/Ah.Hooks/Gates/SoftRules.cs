@@ -355,7 +355,9 @@ internal static partial class SoftRules
             ? [.. commands.Where(cmd => !cmd.Argv.Contains("--") && GitSubcommand(cmd.Argv) is "switch" or "checkout")]
             : [];
         var asked = c.ToolName() == "EnterWorktree" || switches.Count > 0;
-        if (!asked || !IsMember(c) || (switches.Count > 0 && IsLegworkRunner(c) && OutsideWorkTree(c, switches)))
+        // ah2-561 A3: a QA member moving its own run-set clone to another commit is no tree or branch switch.
+        if (!asked || !IsMember(c)
+            || (switches.Count > 0 && (IsLegworkRunner(c) || (Role(c) == "qa" && switches.All(RunSetClone))) && OutsideWorkTree(c, switches)))
         {
             return null;
         }
@@ -365,7 +367,7 @@ internal static partial class SoftRules
             c,
             "worktree",
             "switching this member's tree or branch is the Orchestrator's call.",
-            $"report BLOCKED with the reason (or put it in `open_questions`); once your Orchestrator runs `ah roster approve {member ?? "<your member name>"} worktree --cwd <cwd>`, re-run this call.",
+            $"report BLOCKED with the reason (or put it in `open_questions`); once your Orchestrator runs `ah roster approve {member ?? "<your member name>"} worktree --cwd <cwd>`, re-run this call ({Ah.Config.ConfigModule.ApprovalCovers})",
             retryPasses: false,
             SoftScope.Input,
             member);
@@ -390,13 +392,24 @@ internal static partial class SoftRules
             }
 
             var home = up.Member("team_home") is { IsText: true } h && h.AsString().Length > 0 ? h.AsString() : dir;
-            return up.Member("team") is { IsText: true } team
-                && c.Services.Roster.ReadTeamRecord(home, team.AsString()).Member("members") is { IsArray: true } members
-                ? members.AsArray()
-                    .Where(m => m.Member("session_id") is { IsText: true } s && s.AsString() == session)
-                    .Select(m => m.Member("name") is { IsText: true } n ? n.AsString() : null)
-                    .FirstOrDefault(n => n is not null)
-                : null;
+            if (up.Member("team") is not { IsText: true } team)
+            {
+                return null;
+            }
+
+            var record = c.Services.Roster.ReadTeamRecord(home, team.AsString());
+            // ah2-561 A1: a row whose session id was never stamped (seen 2026-11-23: no member on the bounce, so no approval could match)
+            // is found by the up row's pane, the lookup SessionStart claims the row by.
+            return (record.Member("members") is { IsArray: true } members
+                    ? members.AsArray()
+                        .Where(m => m.Member("session_id") is { IsText: true } s && s.AsString() == session)
+                        .Select(m => m.Member("name") is { IsText: true } n ? n.AsString() : null)
+                        .FirstOrDefault(n => n is not null)
+                    : null)
+                ?? (up.Member("pane_id") is { IsText: true } pane && pane.AsString().Length > 0
+                    && c.Services.Roster.SessionMemberRow(record, pane.AsString()).Member("name") is { IsText: true } byPane
+                    ? byPane.AsString()
+                    : null);
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -524,6 +537,20 @@ internal static partial class SoftRules
 
         return i < argv.Count ? argv[i] : null;
     }
+
+    /// <summary>
+    /// ah2-561 A3: whether the switch's <c>-C</c> dir is, by real path, a clone <c>tests/run-set.sh</c> makes: <c>ahprobe.&lt;alphanumerics&gt;</c>
+    /// directly inside <c>/tmp</c> or <c>/private/tmp</c>. A team work tree or the main checkout is never there.
+    /// </summary>
+    private static bool RunSetClone(ShellCommand cmd) =>
+        cmd.Argv.Count > 3 && cmd.Argv[1] == "-C" && Path.IsPathRooted(cmd.Argv[2])
+        && Ah.Core.Text.PathGuard.RealPath(cmd.Argv[2], strict: true) is { } real
+        && Path.GetDirectoryName(real.TrimEnd('/')) is "/tmp" or "/private/tmp"
+        && Path.GetFileName(real.TrimEnd('/')) is { Length: > 8 } name && name.StartsWith("ahprobe.", StringComparison.Ordinal)
+        && name.AsSpan(8).ContainsAnyExcept(AlphaNumerics) is false;
+
+    private static readonly System.Buffers.SearchValues<char> AlphaNumerics =
+        System.Buffers.SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
     private static readonly System.Buffers.SearchValues<char> ExpandingChars = System.Buffers.SearchValues.Create("$`*?[{~");
 

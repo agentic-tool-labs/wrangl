@@ -28,6 +28,10 @@ public static partial class ConfigModule
     /// <summary>ah2-310: the soft-gate rules a gate consults for <c>ah roster approve</c> rows; approving any other rule lifts nothing.</summary>
     public static IReadOnlyList<string> ApprovableRules { get; } = ["worktree"];
 
+    /// <summary>ah2-561 A2: what one <c>ah roster approve</c> covers and until when, said by the approve output and by the refusal.</summary>
+    public const string ApprovalCovers =
+        "one approval lets this member's next refused call of that rule through, once; it waits, with no time limit, until that call is made, and the call after it is refused again.";
+
     /// <summary>The resolved <c>dispatch</c> setting; absent or unknown is <c>peers</c>.</summary>
     public static string DispatchMode(Ah.Core.Json.JsonObject resolved) => DirectiveText.DispatchMode(resolved);
 

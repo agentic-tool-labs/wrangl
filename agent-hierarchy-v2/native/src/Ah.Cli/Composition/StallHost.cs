@@ -26,6 +26,19 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
 
     public bool IsRoleName(string role) => g.Config.IsRoleName(role);
 
+    public bool CheckpointLists(StallTeam team, string member)
+    {
+        try
+        {
+            var read = g.Hierarchy.StateCalls.Checkpoint("read", new JsonObject { ["dir"] = team.HierarchyDir, ["team"] = team.Name });
+            return read.Member("found") is { IsTruthy: true } && Ah.Mesh.MeshModule.RecordListsMember(read.Member("record"), member);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Whether <paramref name="pid"/> still is the Claude process started at <paramref name="start"/>: the same test the registrations are judged by.</summary>
     private bool ProcessIsThere(int pid, string? start) =>
         processIsThere is { } override_ ? override_(pid, start) : g.Hierarchy.Core.Liveness is { } liveness && liveness.PidIdentityLive(pid, start);
@@ -148,7 +161,8 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             var o = map.AsObject();
             var pane = o.Get("transport_id") is { IsText: true } t ? global::Ah.Abstractions.HeadlessTransport.PaneOf(t.AsString()) : null;
             members.Add(new StallMember(
-                name.AsString(), o.Get("role") is { IsText: true } role ? role.AsString() : null, pane, o.Get("sweep_keep") is { IsTruthy: true }));
+                name.AsString(), o.Get("role") is { IsText: true } role ? role.AsString() : null, pane, o.Get("sweep_keep") is { IsTruthy: true },
+                o.Get("stream") is { IsText: true } s && global::Ah.Config.ConfigModule.IsStreamName(s.AsString()) ? s.AsString() : null));
             if (global::Ah.Roster.RosterModule.StartingAgeSeconds(map, g.Io.Clock.UtcNow) is { } startingAge)
             {
                 _starting[BareKey(team, name.AsString())] = startingAge;

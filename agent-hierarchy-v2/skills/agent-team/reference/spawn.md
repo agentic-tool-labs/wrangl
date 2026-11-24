@@ -81,6 +81,8 @@ gap; it is not a lighter-weight alternative to Create for a full team.
     worktree. The output's `work_root` is the directory the gate will allow.
     Add `--allow-main` to put a code-writing role in the main checkout.
     A spawn into a work root whose recorded member is live (or whose liveness cannot be checked) is refused; add `--replace-live` to spawn there anyway.
+    One exception: `spawn-one` and `spawn-ad-hoc` go past a member whose liveness cannot be checked when ahd reported it down
+    for its current session, under the team's current Orchestrator session, after its last sign of life. The output's `superseded` lists each dead member passed.
   - Each Claude and Codex member gets its own tmp directory, reached as
     `$TMPDIR` (a Claude member's is `<ah home>/t/<key>`, outside every checkout; `--dry-run` only names it). A
     member launched with a custom `--command` harness gets no tmp and keeps

@@ -19,8 +19,8 @@ public sealed record StallTeam(string Name, string HierarchyDir, string Cwd, str
 /// <summary>A lead's box holds <paramref name="Unread"/> unread entries and is marked uncarried since they arrived: the daemon's wake failed for <paramref name="Reason"/>.</summary>
 public sealed record LeadUncarried(int Unread, string Reason);
 
-/// <summary>A tracked member row. <paramref name="Exempt"/> marks one the sweeper keeps (<c>sweep_keep</c>).</summary>
-public sealed record StallMember(string Name, string? Role, string? PaneId, bool Exempt);
+/// <summary>A tracked member row. <paramref name="Exempt"/> marks one the sweeper keeps (<c>sweep_keep</c>); <paramref name="Stream"/> is its valid stream name, or null.</summary>
+public sealed record StallMember(string Name, string? Role, string? PaneId, bool Exempt, string? Stream = null);
 
 /// <summary>A member's verdict, the session id of the registration it rests on, and when that registration last showed the member alive (null when unknown).</summary>
 public sealed record StallJudgement(MemberVerdict Verdict, string RegistrationSession, DateTimeOffset? LastEvidence = null);
@@ -126,6 +126,9 @@ public interface IStallHost
 
     /// <summary>Whether <paramref name="role"/> has the shape of a role name a resume line may name; a team record's role is otherwise any text.</summary>
     bool IsRoleName(string role) => false;
+
+    /// <summary>Whether the team's checkpoint record lists <paramref name="member"/>, so <c>resume --checkpoint --relaunch</c> applies; false when it cannot be read.</summary>
+    bool CheckpointLists(StallTeam team, string member) => false;
 
     /// <summary>A sweep is starting: the host may read once what it needs to judge every member in it.</summary>
     void BeginSweep();
@@ -235,13 +238,16 @@ internal sealed class StallWatch
                             var deadSince = judged.LastEvidence is { } evidence && evidence < track.DeadSince.Value ? evidence : track.DeadSince.Value;
                             var since = Timestamps.ToIsoString(deadSince);
                             var cause = PaneCrash.Cause(PaneTail(team, member));
-                            // no session to resume: relaunch it fresh under its name, so the alarm never ends on a placeholder it cannot fill
-                            var resume = $"ah roster spawn-one {(member.Role is { } role && _host.IsRoleName(role) ? role : "<role>")} {(_host.IsSessionId(judged.RegistrationSession) ? $"--resume {judged.RegistrationSession}" : $"--member {member.Name}")} --team {team.Name}";
+                            // spawn-one has no --resume: name the checkpoint resume where the team has one, and a fresh spawn, as two commands
+                            var roleWord = member.Role is { } role && _host.IsRoleName(role) ? role : "<role>";
+                            var session = _host.IsSessionId(judged.RegistrationSession) ? judged.RegistrationSession : null;
+                            var resume = _host.CheckpointLists(team, member.Name) ? Ah.Mesh.MeshModule.MemberResumeCommand(team.Name, member.Name) : null;
+                            var respawn = Ah.Mesh.MeshModule.MemberRespawnCommand(roleWord, member.Stream, team.Name);
                             if (Emit(
                                 team, member, "member-down",
                                 $"ahd alarm: member-down {member.Name} — {(cause is null ? string.Empty : $"its pane shows {cause}; ")}{judged.Verdict.Why}; dead since {since}",
-                                $"{(_host.IsSessionId(judged.RegistrationSession) ? "Resume" : "Relaunch")} it: `{resume}`\nCheck the member (`ah roster status`). Re-brief, re-spawn or close its requests. If the run is unattended, PushNotification the user.",
-                                work, work.Count > 0, deadSince, cause is null ? judged.Verdict.Why : $"{judged.Verdict.Why}; pane shows {cause}", cause, resume))
+                                $"{string.Join('\n', Ah.Mesh.MeshModule.MemberHintLines(resume, respawn, session))}\nCheck the member (`ah roster status`). Re-brief, re-spawn or close its requests. If the run is unattended, PushNotification the user.",
+                                work, work.Count > 0, deadSince, cause is null ? judged.Verdict.Why : $"{judged.Verdict.Why}; pane shows {cause}", cause, resume, respawn))
                             {
                                 track.Reported = judged.RegistrationSession;
                                 _host.SetReportedSession(told, track.Reported);
@@ -615,7 +621,7 @@ internal sealed class StallWatch
         }
     }
 
-    private bool Emit(StallTeam team, StallMember member, string kind, string first, string second, IReadOnlyList<string> work, bool urgent, DateTimeOffset since, string why, string? cause = null, string? resume = null)
+    private bool Emit(StallTeam team, StallMember member, string kind, string first, string second, IReadOnlyList<string> work, bool urgent, DateTimeOffset since, string why, string? cause = null, string? resume = null, string? respawn = null)
     {
         var text = new System.Text.StringBuilder().Append(first).Append('\n').Append(second);
         if (work.Count > 0)
@@ -646,6 +652,11 @@ internal sealed class StallWatch
         if (resume is not null)
         {
             data["resume"] = resume;
+        }
+
+        if (respawn is not null)
+        {
+            data["respawn"] = respawn;
         }
 
         var delivered = "none";

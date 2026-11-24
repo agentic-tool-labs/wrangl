@@ -1107,7 +1107,8 @@ The close summary adds `tabs_closed` (tab ids) and `tabs_kept` (`[{stream, tab, 
 - Not skill-gated.
 - `--allow-global` is an accepted no-op — under Herdr the member name must be `[a-z][a-z0-9_-]`, at most 32 characters.
 - A longer one is refused before any pane opens `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
-- It is refused (exit 2, `refused: live-member`) otherwise.
+- It is refused (exit 2, `refused: live-member`) otherwise. The refusal names why the liveness could not be checked.
+- Exception: a member of unknown liveness does not refuse when ahd's stall watch reported it down (`stall.reported`) under the team's current Orchestrator session, for the member's current registration session, at a time later than every sign of life its registration records. A live member always refuses.
 
 #### Spawn an ad hoc member
 
@@ -1118,9 +1119,9 @@ The close summary adds `tabs_closed` (tab ids) and `tabs_kept` (`[{stream, tab, 
 - Global roster ignored (`--allow-global` accepted, no-op).
 - `--kind custom --harness <name>` admits an agent runtime ah has no adapter for as a `route: mail` member (see `docs/participation.md`), and `--command` also starts it in a new tmux window with `AH_HOME` and `AH_ADDRESS` set — on herdr or a plain terminal `--command` is refused and the user starts the harness themselves — under Herdr the member name must be `[a-z][a-z0-9_-]`, at most 32 characters.
 - A longer one is refused before any pane opens `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
-- It is refused (exit 2, `refused: live-member`) otherwise.
+- It is refused (exit 2, `refused: live-member`) otherwise, with the same exception as `spawn-one`.
 
-Under herdr, `spawn-one` and `spawn-ad-hoc` take `--here` (split the caller's own pane: right when it is at least twice as wide as tall, else down) or `--tab <t>` (split that tab's first pane), each with an optional `--split right|down`, and every spawn prints `next: {name, terminal, tab, brief}` where `brief` is the `ah msg new --to-name` line to brief it, so spawning and placing a member is one call.
+Under herdr, `spawn-one` and `spawn-ad-hoc` take `--here` (split the caller's own pane: right when it is at least twice as wide as tall, else down) or `--tab <t>` (split that tab's first pane), each with an optional `--split right|down`, and every spawn prints `next: {name, terminal, tab, brief}` where `brief` is the `ah msg new --to-name` line to brief it, so spawning and placing a member is one call. When the spawn went past dead members holding its work tree, the output also carries `superseded`: one `{name, session_id, work_root, branch, evidence}` per such member, `evidence` being `proven-dead` or `stall-reported`. The dead member's row stays in the team record.
 
 A Claude member runs in the same Claude environment (`CLAUDE_CONFIG_DIR` and the login variable `CLAUDE_SECURESTORAGE_CONFIG_DIR`, each on its own) as the session that spawned it, whatever environment the terminal server has. A variable the spawner does not have is unset for the member. The values are recorded as `claude_config_dir` and `claude_securestorage_config_dir` on the member's row and on the team record. A resume, respawn or daemon relaunch of that member uses the recorded value. When the team's own Orchestrator or the lane's lead spawns, its environment wins and the team record is updated to it. Any other caller gets the team record's value, and a team with none gets the caller's. How each transport carries it: tmux types `export CLAUDE_CONFIG_DIR=…; claude …` (or `unset CLAUDE_CONFIG_DIR; claude …`), so the pane's shell still runs your `claude` alias or function; herdr's TUI types the `export` or `unset` line into the pane before the agent starts; herdr core and the background (`--bg`) launch put `env` before `claude`; a headless member gets it in its process environment. The tmux and TUI lines need a POSIX-style shell (sh, bash, zsh) in the pane: in another shell the `export` or `unset` may fail, and `claude` still starts in the pane's own environment. If an agent is still running in that pane, or it is the caller's own pane, nothing is typed and the launch fails as `pane-busy`. `ah roster doctor` shows a `claude-env` row when a live member's environment differs from the lead's. Non-Claude members are not affected.
 
@@ -1325,6 +1326,8 @@ Read-only, writes nothing, no network. One line per live stream with a branch, o
 Sets `state: "done"` and `closed`, and labels the tab `✓ <name>`. Closes no member pane and removes no worktree or branch. On herdr it closes the stream's tab only under this rule: a stream's recorded herdr tab is closed only when every pane in it is one ah made (a current member's or the stream's `root_pane_id`) and none runs a harness; an unreadable pane list or process table counts as unsafe.
 
 Output adds `tab_closed: <tab>`, or `tab_kept: "panes unknown"|"foreign pane"|"harness running"` with `tab_kept_pane` (the pane) for the last two. Output: `{done, already_done, stream, label, members, open_exchanges, next, warnings?}` — `next` is a `dismiss` per member, for when the user asks; `open_exchanges` is advisory. Idempotent (`already_done: true`). A tab that is gone is a warning.
+
+Local-only runs: when a rule with the key `local-only` applies to the team (`ah rules add --team <t> --key local-only --text "commits local only, never push"`, or `--repo`/`--global`; an `off` or proposed row does not count), a stream whose commits are not in golden is done with `verdict: "local-only"` instead of the `unshipped-commits` refusal. `unshipped` keeps the count, a `local-only:` warning says so, and nothing is archived: the branch and worktree stay. Uncommitted changes are still refused (`worktree-dirty`).
 
 `--dry-run` writes and renames nothing. Unknown name: `unknown-stream`. Also records `done_at` (UTC), warns when the checklist still lists In progress items, and sets the checklist's `State:` word to done.
 

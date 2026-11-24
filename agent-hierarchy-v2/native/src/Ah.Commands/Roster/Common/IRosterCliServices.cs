@@ -58,6 +58,9 @@ public interface IRosterCliServices
     /// <summary>The daemon's spawn pacing, or null when none is composed (then spawns are not paced).</summary>
     IRosterSpawnAdmission? SpawnAdmission => null;
 
+    /// <summary>ahd's stall-watch record of members it reported down (the <c>stall.reported</c> meta row) as JSON text; null when there is none or no store is composed.</summary>
+    string? StallReported => null;
+
     /// <summary>The services of the verbs that type into or read a member's pane, or null while they are not composed.</summary>
     IRosterPanes? Panes => null;
 
@@ -87,6 +90,9 @@ public interface IRosterCliServices
     /// naming whose row it is. Null with none, when it cannot be read, or where no rules read is composed.
     /// </summary>
     Ah.Core.Json.JsonObject? TeamGoal(string cwd, string team) => null;
+
+    /// <summary>Whether the run's rules mark <paramref name="team"/> local-only, one that never pushes (ah2-596); false when they cannot be read or no rules read is composed.</summary>
+    bool LocalOnly(string cwd, string? team) => false;
 
     /// <summary>The reads only <c>roster doctor</c> makes (the directive's status text, git), or null while they are not composed.</summary>
     IRosterDoctor? Doctor => null;

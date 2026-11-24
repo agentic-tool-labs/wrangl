@@ -579,6 +579,109 @@ public sealed partial class HooksHostTests
         Assert.Equal(string.Empty, Chain(rig, sw));
     }
 
+    /// <summary>
+    /// ah2-561 A1: a member whose team row carries no session id (the up row names no member) but whose pane is
+    /// <paramref name="rowPane"/>; this session's up row is on pane p1.
+    /// </summary>
+    private static Rig UnstampedMemberRig(string rowPane)
+    {
+        var rig = SoftRig(new() { ["WRANGL_TEAM_FILE"] = "/x/team.json" });
+        AutoTrackTests.WriteTeam(rig, new JsonObject
+        {
+            ["members"] = new JsonArray { new JsonObject { ["name"] = "qa-1", ["role"] = "qa", ["transport_id"] = rowPane } },
+        });
+        rig.PutPeers(HierDir(rig), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"pane_id\":\"p1\",\"role\":\"qa\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
+        return rig;
+    }
+
+    [Fact]
+    public void ARefusedSwitchIsLetThroughByAnApprovalGivenAfterItWhenTheRowHasNoSessionId()
+    {
+        var rig = UnstampedMemberRig("p1");
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        var refused = rig.Run("pretooluse-chain", sw);
+        Assert.True(IsDenied(refused));
+        Assert.Contains(Ah.Config.ConfigModule.ApprovalCovers, Reason(refused), StringComparison.Ordinal);
+        Assert.Equal("qa-1", Assert.Single(SoftRows(rig, "bounce")).Member("member")!.Value.AsString());
+        Approve(rig, "qa-1");
+
+        Assert.Equal(string.Empty, Chain(rig, sw));
+        Assert.Equal("qa-1", Assert.Single(SoftRows(rig, "approved")).Member("member")!.Value.AsString());
+    }
+
+    [Fact]
+    public void NegativeARowOnAnotherPaneIsNotThisSessionsAndItsApprovalLiftsNothing()
+    {
+        var rig = UnstampedMemberRig("p2");
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Approve(rig, "qa-1");
+
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    /// <summary>ah2-561 A3: a QA session (cwd checkout <c>proj</c>) and a run-set clone, <c>/private/tmp/ahprobe.&lt;hex&gt;</c>.</summary>
+    private static (Rig Rig, string Clone) QaRunSetRig(bool member = false)
+    {
+        var rig = TreeRig(member);
+        if (!member)
+        {
+            Ah.TestKit.TestHomeDocs.Put(rig.Sandbox.Root + "/ah", Ah.TestKit.TestHomeDocs.SessionRoles, "{\"version\":1,\"sessions\":{\"sess-1\":{\"role\":\"qa\"}}}");
+        }
+
+        var clone = "/private/tmp/ahprobe." + Guid.NewGuid().ToString("N")[..12];
+        Directory.CreateDirectory(clone + "/.git");
+        File.WriteAllText(clone + "/.git/config", "[core]\n\tbare = false\n[remote \"origin\"]\n\turl = /src\n");
+        return (rig, clone);
+    }
+
+    [Fact]
+    public void AQaMembersCheckoutInItsRunSetCloneIsNotRefused()
+    {
+        var (rig, clone) = QaRunSetRig();
+        try
+        {
+            Assert.Equal(string.Empty, Chain(rig, BashAs(string.Empty, "git -C " + clone + " checkout -q --detach abc123")));
+            Assert.Empty(SoftRows(rig));
+        }
+        finally
+        {
+            Directory.Delete(clone, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("git -C {clone} checkout --detach abc")] // a plain clone, but not where run-set makes one
+    [InlineData("git -C {root} checkout main")]
+    [InlineData("git checkout --detach abc")]
+    public void NegativeAQaMembersSwitchOutsideARunSetCloneIsStillRefused(string command)
+    {
+        var (rig, clone) = QaRunSetRig();
+        try
+        {
+            AssertHoldsThenGivesUp(rig, "worktree", BashAs(string.Empty, Line(rig, command)));
+        }
+        finally
+        {
+            Directory.Delete(clone, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void NegativeAnImplementorsCheckoutInARunSetCloneIsStillRefused()
+    {
+        var (rig, clone) = QaRunSetRig(member: true);
+        try
+        {
+            AssertHoldsThenGivesUp(rig, "worktree", BashAs(string.Empty, "git -C " + clone + " checkout --detach abc"));
+        }
+        finally
+        {
+            Directory.Delete(clone, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("git clone -u /tmp/x /w/repo /tmp/rv")]
     [InlineData("git clone --upload-pack=/tmp/x /w/repo /tmp/rv")]

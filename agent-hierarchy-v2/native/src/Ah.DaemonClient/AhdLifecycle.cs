@@ -72,7 +72,9 @@ internal sealed class AhdLifecycle(AhdClient client, Func<string, CancellationTo
         }
 
         var running = upgrade ? null : await LiveAsync(ct).ConfigureAwait(false);
-        if (running is not null)
+
+        // ah2-566 K4: an answer is "running" only while its pid is a live ahd for this home; one gone since it answered is started over
+        if (running is not null && client.OwnershipOf(running.Pid) is not false)
         {
             return Ok(("source", "daemon"), ("status", "running"), ("started", false), ("pid", running.Pid), ("version", running.Health!.TryGetValue("version", out var rv) ? rv : JsonValue.Null));
         }

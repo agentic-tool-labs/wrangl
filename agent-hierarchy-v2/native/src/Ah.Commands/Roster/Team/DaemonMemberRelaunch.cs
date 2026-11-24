@@ -101,14 +101,14 @@ internal sealed class DaemonMemberRelaunch(IRosterCliServices services) : IMembe
         var row = services.Roster.TeamMemberByName(dir, member, team);
         if (row.IsMap && global::Ah.Abstractions.HeadlessTransport.IsId(MemberPlanning.Text(row.Member("transport_id"))))
         {
-            return Ah.Watch.WatchModule.RecoveryRefusalPrefix + $"{member} runs headless, one claude -p turn with no pane; ahd does not relaunch it. Resume it with spawn-one --resume if its work is not done";
+            return Ah.Watch.WatchModule.RecoveryRefusalPrefix + $"{member} runs headless, one claude -p turn with no pane; ahd does not relaunch it. If its work is not done: " + string.Join(" — ", Ah.Mesh.MeshModule.MemberHintLines(null, Ah.Mesh.MeshModule.MemberRespawnCommand(MemberPlanning.Text(row.Member("role")) ?? "<role>", MemberPlanning.Text(row.Member("stream")), team), sessionId));
         }
 
         var teamRecord = services.Roster.ReadTeamRecord(dir, team);
         var transport = teamRecord is { IsMap: true } record ? MemberPlanning.Text(record.Member("transport")) : null;
         if (transport is not ("herdr" or "tmux"))
         {
-            return Ah.Watch.WatchModule.RecoveryPaneUnknownPrefix + $"team {team} records transport {transport ?? "none"}; ahd relaunches only into herdr or tmux panes; resume it with ah roster team resume";
+            return Ah.Watch.WatchModule.RecoveryPaneUnknownPrefix + $"team {team} records transport {transport ?? "none"}; ahd relaunches only into herdr or tmux panes; resume it with `ah roster resume --team {team}` (ask the user first; add --yes only once they agree)";
         }
 
         c.LaunchTransport = transport;

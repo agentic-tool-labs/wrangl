@@ -23,6 +23,6 @@ internal static class HeldRow
             ? $"the holder (pid {holder}) is alive: close it, or the team owner runs `ah roster recover --team {team}`"
             : MarkedBare(row)
             ? $"the recorded process (pid {holder}) is gone and this member is marked bare, so `ah roster recover --team` leaves its row alone until ah relaunches it: the team owner runs `ah roster recover now --team {team} {name}`; with recovery off, only the user can switch it on (`ah roster recover enable`)"
-            : $"the recorded process (pid {holder}) is gone, as after a reboot; this session's own claim does not re-stamp the row, so the team owner runs `ah roster recover --team {team}` (or `spawn-one <role> --resume <session_id>` if no session is live in its pane)";
+            : $"the recorded process (pid {holder}) is gone, as after a reboot; this session's own claim does not re-stamp the row, so the team owner runs `ah roster recover --team {team}` (or, if no session is live in its pane: {string.Join(" — ", MemberHint.Lines(null, MemberHint.Respawn(row.Get("role") is { IsText: true } role ? role.AsString() : "<role>", row.Get("stream") is { IsText: true } stream ? stream.AsString() : null, team), row.Get("session_id") is { IsText: true } sid && sid.AsString().Length > 0 ? sid.AsString() : null))})";
     }
 }

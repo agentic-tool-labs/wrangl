@@ -16,6 +16,12 @@ public sealed class MemberDownCauseTests
 
         public string RegistrationSession { get; init; } = Session;
 
+        public string? Stream { get; init; }
+
+        public bool Checkpointed { get; init; }
+
+        public bool CheckpointLists(StallTeam team, string member) => Checkpointed && member == "impl";
+
         public Func<string?> Tail { get; init; } = static () => null;
 
         public int TailReads { get; private set; }
@@ -28,7 +34,7 @@ public sealed class MemberDownCauseTests
 
         public IReadOnlyList<StallTeam> Teams() => [new StallTeam("tm", "/h", "/cwd", "orchestrator@tm", "orch")];
 
-        public IReadOnlyList<StallMember> Members(StallTeam team) => [new StallMember("impl", Role, "w1:p1", false)];
+        public IReadOnlyList<StallMember> Members(StallTeam team) => [new StallMember("impl", Role, "w1:p1", false, Stream)];
 
         public StallJudgement Judge(StallTeam team, StallMember member) => new(new MemberVerdict(Status, "its process is not running"), RegistrationSession);
 
@@ -92,11 +98,14 @@ public sealed class MemberDownCauseTests
 
         var mail = Assert.Single(host.Mails);
         var data = JsonValue.FromObject(mail.Data);
-        const string Resume = "ah roster spawn-one implementor --resume " + Session + " --team tm";
+        const string Respawn = "ah roster spawn-one implementor --team tm";
         Assert.Contains("member-down impl — its pane shows React error 185; its process is not running", mail.Text, StringComparison.Ordinal);
-        Assert.Contains("Resume it: `" + Resume + "`", mail.Text, StringComparison.Ordinal);
+        Assert.Contains("Or a fresh member: `" + Respawn + "`\nIts old session id: " + Session + "\n", mail.Text, StringComparison.Ordinal);
         Assert.Equal("React error 185", data.Member("cause")!.Value.AsString());
-        Assert.Equal(Resume, data.Member("resume")!.Value.AsString());
+        Assert.Equal(Respawn, data.Member("respawn")!.Value.AsString());
+        // no checkpoint: the resume command does not apply, so it is not printed
+        Assert.Null(data.Member("resume"));
+        Assert.DoesNotContain("resume --checkpoint", mail.Text, StringComparison.Ordinal);
         Assert.Equal("its process is not running; pane shows React error 185", Assert.Single(host.Journal).Get("evidence")!.Value.AsString());
     }
 
@@ -117,8 +126,66 @@ public sealed class MemberDownCauseTests
 
         var mail = Assert.Single(host.Mails);
         Assert.Contains("member-down impl — its process is not running; dead since", mail.Text, StringComparison.Ordinal);
-        Assert.Contains("--resume " + Session, mail.Text, StringComparison.Ordinal);
+        Assert.Contains("Its old session id: " + Session, mail.Text, StringComparison.Ordinal);
         Assert.Null(JsonValue.FromObject(mail.Data).Member("cause"));
+    }
+
+    [Fact]
+    public void ACheckpointedTeamGetsTheResumeCommandOnItsOwnLine()
+    {
+        var host = new Host { Checkpointed = true };
+        Sweep(host);
+
+        var mail = Assert.Single(host.Mails);
+        const string Resume = "ah roster resume --checkpoint --team tm --relaunch impl";
+        Assert.Contains("Back on its old session (ask the user first; add --yes only once they agree): `" + Resume + "`\nOr a fresh member: `ah roster spawn-one implementor --team tm`", mail.Text, StringComparison.Ordinal);
+        Assert.Equal(Resume, JsonValue.FromObject(mail.Data).Member("resume")!.Value.AsString());
+    }
+
+    [Fact]
+    public void TheAlarmNamesNoDestructiveOrBareCommand()
+    {
+        var host = new Host { Checkpointed = true, Stream = "s1" };
+        Sweep(host);
+
+        var mail = Assert.Single(host.Mails);
+        foreach (var banned in new[] { "dismiss", "untrack", "claude --resume", "&&", "--yes`" })
+        {
+            Assert.DoesNotContain(banned, mail.Text, StringComparison.Ordinal);
+        }
+
+        var data = JsonValue.FromObject(mail.Data);
+        Assert.DoesNotContain(";", data.Member("resume")!.Value.AsString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(";", data.Member("respawn")!.Value.AsString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMemberOnAStreamIsRelaunchedOnThatStream()
+    {
+        var host = new Host { Stream = "s1" };
+        Sweep(host);
+
+        Assert.Equal(
+            "ah roster spawn-one implementor --stream s1 --team tm",
+            JsonValue.FromObject(Assert.Single(host.Mails).Data).Member("respawn")!.Value.AsString());
+    }
+
+    [Fact]
+    public void AnInvalidStreamNameGetsNoStreamFlag()
+    {
+        var host = new Host { Stream = "s1; rm -rf" };
+        Sweep(host);
+
+        Assert.DoesNotContain("--stream", Assert.Single(host.Mails).Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMemberWithNoStreamGetsNoStreamFlag()
+    {
+        var host = new Host();
+        Sweep(host);
+
+        Assert.DoesNotContain("--stream", Assert.Single(host.Mails).Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -138,9 +205,9 @@ public sealed class MemberDownCauseTests
         Sweep(host);
 
         var text = Assert.Single(host.Mails).Text;
-        // with no session to resume, the line relaunches it under its name instead of ending on a placeholder
-        Assert.Contains("Relaunch it: `ah roster spawn-one <role> --member impl --team tm`", text, StringComparison.Ordinal);
+        Assert.Contains("Or a fresh member: `ah roster spawn-one <role> --team tm`", text, StringComparison.Ordinal);
         Assert.DoesNotContain("pane:w1:p1", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("old session id", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -150,7 +217,7 @@ public sealed class MemberDownCauseTests
         Sweep(host);
 
         var text = Assert.Single(host.Mails).Text;
-        Assert.Contains("spawn-one <role> --resume " + Session, text, StringComparison.Ordinal);
+        Assert.Contains("spawn-one <role> --team tm", text, StringComparison.Ordinal);
         Assert.DoesNotContain("curl", text, StringComparison.Ordinal);
     }
 

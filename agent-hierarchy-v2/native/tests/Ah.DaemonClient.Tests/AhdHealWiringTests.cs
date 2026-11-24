@@ -405,9 +405,132 @@ public sealed class AhdHealWiringTests : IDisposable
 
         Assert.Null(await client.EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true), TestContext.Current.CancellationToken));
 
-        Assert.Empty(_rig.Spawns);
+        // no daemon over the held life lock; the detached start (ah2-566 K2) waits for it to be freed
+        Assert.Equal(["/x/ahd", "start"], Assert.Single(_rig.Spawns));
         Assert.Contains("ahd-client replace-failed reason=could not start or reach the daemon: life lock held caller=", Log(), StringComparison.Ordinal);
         Assert.DoesNotContain("pgrep", Log(), StringComparison.Ordinal);
+    }
+
+    /// <summary>ah2-566 K2, as on 2026-11-23: a hook drains an older daemon whose stop outlasts the hook's budget.</summary>
+    [Fact]
+    public async Task AHookWhoseDrainedDaemonOutlastsItsBudgetLaunchesADetachedStart()
+    {
+        RecordDaemon();
+        var calls = 0;
+        _rig.Answer = () => ++calls == 1
+            ? Reply(200, $"{{\"pid\":{DaemonPid.ToString(CultureInfo.InvariantCulture)},\"protocol\":1,\"version\":\"0.0.1\"}}")
+            : calls == 2 ? Reply(200, "{}") : Reply(503, "{\"error\":{\"code\":\"draining\"}}");
+        var client = new AhdClient(Deps() with
+        {
+            AhEnvironment = new FakeEnvironment(new Dictionary<string, string> { ["AH_HOME"] = _home, ["AH_TEST"] = "1", ["AHD_VERSION_OVERRIDE"] = "2.0.0" }),
+        });
+
+        Assert.Null(await client.EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true), TestContext.Current.CancellationToken));
+
+        Assert.Equal(["/x/ahd", "start"], Assert.Single(_rig.Spawns));
+        Assert.Contains("ahd-client replace-failed reason=the daemon is still draining caller=", Log(), StringComparison.Ordinal);
+        Assert.Contains("ahd-client launch-start reason=replace-failed caller=", Log(), StringComparison.Ordinal);
+
+        // nearest non-match: the same failed replace by `ahd start` itself launches no second start
+        calls = 0;
+        Assert.Null(await client.EnsureAsync(new EnsureOptions(BudgetMs: 400, Hook: true, Explicit: true), TestContext.Current.CancellationToken));
+        _ = Assert.Single(_rig.Spawns);
+    }
+
+    /// <summary>ah2-566 K3 (Amendment 3): a request that may not start the daemon sees one started for a lost daemon, one ahd.json still names dead.</summary>
+    [Fact]
+    public async Task ARequestThatMayNotStartTheDaemonLaunchesADetachedStartForALostDaemon()
+    {
+        RecordDaemon();
+        _rig.Alive = false;
+        Assert.Null(await new AhdClient(Deps()).EnsureAsync(new EnsureOptions(Start: false), TestContext.Current.CancellationToken));
+        Assert.Equal(["/x/ahd", "start"], Assert.Single(_rig.Spawns));
+        Assert.Contains("ahd-client launch-start reason=no-daemon caller=", Log(), StringComparison.Ordinal);
+    }
+
+    /// <summary>ah2-566 K6/Amendment 3: no ahd.json is an orderly exit (`ahd stop`, a signal, a drain); a Start:false request launches nothing.</summary>
+    [Fact]
+    public async Task ARequestThatMayNotStartTheDaemonLaunchesNothingAfterAnOrderlyExit()
+    {
+        Assert.Null(await new AhdClient(Deps()).EnsureAsync(new EnsureOptions(Start: false), TestContext.Current.CancellationToken));
+        Assert.Empty(_rig.Spawns);
+    }
+
+    /// <summary>ah2-566 K3a: a diagnostic read (the timers-ownership probe) with a lost daemon launches nothing.</summary>
+    [Fact]
+    public async Task ADiagnosticReadWithNoDaemonLaunchesNothing()
+    {
+        RecordDaemon();
+        _rig.Alive = false;
+        Assert.False(await DaemonClientModule.OwnsTimersAsync(new AhdClient(Deps()), "s1", TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken));
+        Assert.Empty(_rig.Spawns);
+    }
+
+    /// <summary>ah2-566 K2a: a recorded pid that lives but is not this home's daemon (a recycled pid) does not count as a daemon.</summary>
+    [Fact]
+    public async Task ARecycledPidDoesNotSuppressTheLaunch()
+    {
+        RecordDaemon();
+        _rig.CommandLineOfDaemon = "/usr/bin/vim notes.txt";
+        Assert.Null(await new AhdClient(Deps()).EnsureAsync(new EnsureOptions(Start: false), TestContext.Current.CancellationToken));
+        Assert.Equal(["/x/ahd", "start"], Assert.Single(_rig.Spawns));
+    }
+
+    [Fact]
+    public async Task ARequestThatMayNotStartTheDaemonLaunchesNothingForALiveSlowDaemon()
+    {
+        // nearest non-match: recorded, alive, silent: slow, not down
+        RecordDaemon();
+        Assert.Null(await new AhdClient(Deps()).EnsureAsync(new EnsureOptions(Start: false), TestContext.Current.CancellationToken));
+        Assert.Empty(_rig.Spawns);
+    }
+
+    [Fact]
+    public async Task ARequestThatMayNotStartTheDaemonLaunchesNothingWhileAStartBacksOff()
+    {
+        // nearest non-match: no daemon, but a start failed within the backoff window
+        Directory.CreateDirectory(Path.Combine(_home, "run"));
+        File.WriteAllText(
+            Path.Combine(_home, "run", "ahd.spawn-failed"),
+            $"{{\"at\":\"{DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)}\",\"pid\":null,\"reason\":\"exited\"}}");
+        Assert.Null(await new AhdClient(Deps()).EnsureAsync(new EnsureOptions(Start: false), TestContext.Current.CancellationToken));
+        Assert.Empty(_rig.Spawns);
+    }
+
+    /// <summary>ah2-566 K4: a daemon that answered and is gone before `ahd start` reports is started over, not reported running.</summary>
+    [Fact]
+    public async Task StartDoesNotReportRunningForAPidThatIsNoLongerALiveDaemon()
+    {
+        RecordDaemon();
+        // it answers once, then exits before `ahd start` reports
+        _rig.Answer = () =>
+        {
+            if (!_rig.Alive)
+            {
+                throw new TimeoutException("gone");
+            }
+
+            _rig.Alive = false;
+            return Reply(200, $"{{\"pid\":{DaemonPid.ToString(CultureInfo.InvariantCulture)},\"protocol\":1}}");
+        };
+
+        var result = await new AhdLifecycle(new AhdClient(Deps())).StartAsync(false, TestContext.Current.CancellationToken);
+
+        Assert.NotEqual("running", result.Body.Str("status"));
+        Assert.Contains(_rig.Spawns, static argv => argv.Contains("serve"));
+    }
+
+    [Fact]
+    public async Task StartReportsRunningForALiveDaemonOfThisHome()
+    {
+        // nearest non-match: alive and this home's: running, nothing started
+        RecordDaemon();
+        _rig.Answer = static () => Reply(200, $"{{\"pid\":{DaemonPid.ToString(CultureInfo.InvariantCulture)},\"protocol\":1}}");
+
+        var result = await new AhdLifecycle(new AhdClient(Deps())).StartAsync(false, TestContext.Current.CancellationToken);
+
+        Assert.Equal("running", result.Body.Str("status"));
+        Assert.Empty(_rig.Spawns);
     }
 
     [Fact]

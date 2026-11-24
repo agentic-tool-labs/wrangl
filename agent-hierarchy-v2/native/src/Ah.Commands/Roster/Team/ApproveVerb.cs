@@ -32,7 +32,7 @@ internal static class ApproveVerb
         }
 
         c.Services.Hierarchy.Roster.AppendGateRouted(c.Dir, new JsonObject { ["type"] = "soft-gate", ["rule"] = rule, ["outcome"] = "approve", ["member"] = member });
-        c.Out(new JsonObject { ["status"] = "approved", ["member"] = member, ["rule"] = rule });
+        c.Out(new JsonObject { ["status"] = "approved", ["member"] = member, ["rule"] = rule, ["covers"] = Ah.Config.ConfigModule.ApprovalCovers });
         return 0;
     }
 }

@@ -12,7 +12,7 @@ namespace Ah.Commands;
 internal static partial class StreamSupport
 {
     /// <summary>A stream's name: branch-safe, directory-safe, and short enough that <c>&lt;glyph&gt; &lt;name&gt;</c> fits herdr's metadata limit.</summary>
-    [GeneratedRegex("^[a-z][a-z0-9_-]{0,39}\\z")]
+    [GeneratedRegex("^" + Ah.Config.ConfigModule.StreamNamePattern + "\\z")]
     internal static partial Regex NameRe();
 
     /// <summary>The words a member's own state may be given as in <c>stream-label --self-state</c>.</summary>

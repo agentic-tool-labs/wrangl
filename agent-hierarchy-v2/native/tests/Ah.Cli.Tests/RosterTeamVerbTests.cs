@@ -139,6 +139,8 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
     private bool _withPanes;
 
+    private bool _localOnly;
+
     private sealed class Services(
         ServiceGraph graph, IFileReader files, IClock clock, IAhEnvironment environment, string cwd, IRosterCallerRegistry? callers)
         : IRosterCliServices
@@ -148,6 +150,11 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         public IConfigCore Config => graph.Config;
 
         public IHomeDocs? HomeDocs => graph.HomeDocs;
+
+        /// <summary>Stands for a <c>local-only</c> rule applying to every team (the rules read itself is covered in BranchHygieneTests).</summary>
+        public bool LocalOnlyRun { get; init; }
+
+        public bool LocalOnly(string cwd, string? team) => LocalOnlyRun;
 
         /// <summary>The pane services and hold locks, for the verbs that need them (stop); off by default so every other test runs as before.</summary>
         public bool WithPanes { get; init; }
@@ -159,6 +166,8 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         public IRawFileWriter? Writer => WithPanes && !OperatingSystem.IsWindows() ? graph.Io.Writer : null;
 
         public IRosterSpawnAdmission? SpawnAdmission { get; init; }
+
+        public string? StallReported { get; init; }
 
         /// <summary>The real wake files, for the tests that read the journal; off by default.</summary>
         public IRosterWake? Wake { get; init; }
@@ -384,6 +393,9 @@ public sealed partial class RosterTeamVerbTests : IDisposable
 
     private IRosterSpawnAdmission? _spawnAdmission;
 
+    /// <summary>ahd's <c>stall.reported</c> text the spawn reads; none unless a test sets it.</summary>
+    private string? _stallReported;
+
     private bool _withJournal;
 
     private readonly Dictionary<string, Ah.Hierarchy.MemberRegistrationLiveness?> _registrationsLater = [];
@@ -431,7 +443,7 @@ public sealed partial class RosterTeamVerbTests : IDisposable
             ? new ScriptedRows(scripted, _registrationsLater, io.Processes)
             : new PidOnlyRows(graph.Hierarchy.Core.Liveness!, io.Processes, _realPidRunning);
         graph.Launch.PaneState = _graphPanes ?? _panes;
-        var services = new Services(graph, io.Files, (IClock?)_stepClock ?? io.Clock, fake, Project, _callers) { OnSleep = _stepClock is null ? null : span => { _stepClock.UtcNow += span; _onQuitSleep?.Invoke(); }, ExposeMailbox = _exposeMailbox, WithPanes = _withPanes, SpawnAdmission = _spawnAdmission, Wake = _withJournal ? new WakeComposition(graph, fake) : null,WrapStateCalls = _wrapStateCalls, EventMail = _eventMail, Detached = _detached, HookErrors = _hookErrors, Briefs = SendBriefFake, OwnerProof = _realWalk ? new RosterComposition(graph, io.Clock, fake).OwnerProof : new AllowingProof(() =>
+        var services = new Services(graph, io.Files, (IClock?)_stepClock ?? io.Clock, fake, Project, _callers) { OnSleep = _stepClock is null ? null : span => { _stepClock.UtcNow += span; _onQuitSleep?.Invoke(); }, ExposeMailbox = _exposeMailbox, WithPanes = _withPanes, SpawnAdmission = _spawnAdmission, StallReported = _stallReported, Wake = _withJournal ? new WakeComposition(graph, fake) : null,WrapStateCalls = _wrapStateCalls, EventMail = _eventMail, Detached = _detached, HookErrors = _hookErrors, Briefs = SendBriefFake, LocalOnlyRun = _localOnly, OwnerProof = _realWalk ? new RosterComposition(graph, io.Clock, fake).OwnerProof : new AllowingProof(() =>
         {
             _nearestAsked++;
             return _nearest;

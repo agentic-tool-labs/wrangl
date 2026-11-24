@@ -1087,7 +1087,7 @@ public sealed class RosterVerbTests : IDisposable
         Assert.Equal(1, code);
         var o = Parse(stdout).AsObject();
         Assert.True(o["row_held_elsewhere"].AsBool());
-        Assert.Equal(Ah.Mesh.MeshModule.HeldRowRemedy(new JsonObject { ["pid"] = double.Parse(Self, CultureInfo.InvariantCulture) }, running: false, "tm", "tm-dev"), o["next"].AsString());
+        Assert.Equal(Ah.Mesh.MeshModule.HeldRowRemedy(new JsonObject { ["pid"] = double.Parse(Self, CultureInfo.InvariantCulture), ["role"] = "dev" }, running: false, "tm", "tm-dev"), o["next"].AsString());
         Assert.Contains(o["next"].AsString(), stderr, StringComparison.Ordinal);
     }
 
