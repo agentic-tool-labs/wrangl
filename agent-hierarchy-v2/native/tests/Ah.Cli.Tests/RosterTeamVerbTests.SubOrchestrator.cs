@@ -46,6 +46,22 @@ public sealed partial class RosterTeamVerbTests
         Assert.Contains("tech-writer", customErr, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ADeputyChiefSpawnsAsAnOrdinaryMemberWithNoStreamWhileASubOrchestratorStillNeedsOne()
+    {
+        WriteTeam("proj", SoTeam(OpenStreamJson("s1")));
+
+        var (code, stdout, stderr) = Roster(["spawn-ad-hoc", "deputy-chief", "--team", "proj", "--orchestrator-pid", Self, "--dry-run"]);
+        var (soCode, _) = SpawnSo();
+
+        Assert.True(code == 0, stderr);
+        var plan = JsonText.Parse(stdout).AsObject();
+        Assert.EndsWith("-deputy-chief", plan["name"].AsString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("-so-", plan["name"].AsString(), StringComparison.Ordinal);
+        Assert.False(plan.TryGetValue("stream", out var ws) && ws.IsTruthy, stdout);
+        Assert.NotEqual(0, soCode);
+    }
+
     private string QaRow(bool live)
     {
         if (live)

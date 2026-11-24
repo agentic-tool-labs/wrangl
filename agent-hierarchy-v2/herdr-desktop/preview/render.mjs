@@ -580,7 +580,31 @@ const shotOf = (blocked = null, gone = null, extra = 0) => {
   return out;
 };
 const shotSlices = shotOf();
+// ah2-586: the demo team after a team quit: idle rows whose task is long, one with a 32 character name. `?view=graph-idle`.
+const idleOf = () => {
+  const out = new Map(shotSlices);
+  const m = (n) => `member:${SHOT}/${n}`;
+  const add = [["so-api", "implementor"], ["so-web", "implementor"], ["architect", "architect"], ["docs-writer", "docs-writer"], ["implementor-with-a-32-char-names", "implementor"]];
+  const team = out.get(`team:${SHOT}`);
+  out.set(`team:${SHOT}`, { ...team, body: { ...team.body, members: [...team.body.members, ...add.map(([n]) => m(n))] } });
+  const sum = out.get(`team-summary:${SHOT}`);
+  const states = Object.fromEntries(Object.entries(sum.body.member_states).map(([k, v]) => [k, k === m("@orchestrator") ? v : { ...v, state: "idle" }]));
+  for (const [n] of add) states[m(n)] = { ...states[m("reviewer-2")], state: "idle" };
+  out.set(`team-summary:${SHOT}`, { ...sum, body: { ...sum.body, member_states: states } });
+  for (const [n, role] of add) {
+    out.set(m(n), { id: m(n), as_of: NOW, body: { id: m(n), name: n, role, column: FLOW_COLUMN[role] ?? 2, placement: { stream: "main" }, model: "sonnet", last_exchanges: [], activity: `activity:${SHOT}/${n}` } });
+    out.set(`activity:${SHOT}/${n}`, { id: `activity:${SHOT}/${n}`, as_of: NOW - 480 * 1000, body: { tool: null } });
+  }
+  const quit = [...add.map(([n]) => n), "implementor", "reviewer-2", "reviewer-3"].map((n, i) => {
+    const id = `exchange:a1b2c3d4/q${i}`;
+    out.set(id, { id, as_of: NOW, body: { from: "orchestrator", to: n, from_member: m("@orchestrator"), to_member: m(n), title: "Save work and stop (team quit)", created: new Date(NOW - 60000).toISOString() } });
+    return { id, from_member: m("@orchestrator"), to_member: m(n) };
+  });
+  out.set(`list:open:team:${SHOT}`, { ...out.get(`list:open:team:${SHOT}`), body: { team: `team:${SHOT}`, open: quit } });
+  return out;
+};
 const FLOWS = {
+  "graph-idle": flowModel(idleOf(), SHOT, "horizontal", 1, { w: 1000, h: 560 }),
   "graph-shot": flowModel(shotSlices, SHOT, "horizontal", 1, { w: 1000, h: 560 }),
   "graph-shot-blocked": flowModel(shotOf("implementor-3"), SHOT, "horizontal", 1, { w: 1000, h: 560 }),
   "graph-flow": flowModel(flowSlices, team, "horizontal", 1, ROOM, NOW),
@@ -590,7 +614,7 @@ const goneShot = shotOf(null, "reviewer-3");
 const SHEETS = { "graph-sheet": [shotSlices, `member:${SHOT}/implementor-2`, "t2"], "graph-sheet-gone": [goneShot, `member:${SHOT}/reviewer-3`, null] };
 for (const [v, [sl]] of Object.entries(SHEETS)) FLOWS[v] = flowModel(sl, SHOT, "horizontal", 1, { w: 700, h: 560 });
 const sheetOf = (v, full) => (SHEETS[v] ? sheetHtml(SHEETS[v][0], SHOT, SHEETS[v][1], FLOWS[v].dots.length > 0, SHEETS[v][2], full) : "");
-const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" data-v="${v}" role="dialog" aria-label="Graph"${v.startsWith("graph-shot") || SHEETS[v] ? ' style="width:1034px"' : ""}>
+const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" data-v="${v}" role="dialog" aria-label="Graph"${v.startsWith("graph-shot") || v === "graph-idle" || SHEETS[v] ? ' style="width:1034px"' : ""}>
   ${deskTabs("graph", true)}
   ${flowHead(m)}${SHEETS[v] ? `<div class="shrow"><div class="ovb reg">${flowStage(m)}</div>${sheetOf(v, false)}</div>` : `<div class="ovb reg">${flowStage(m)}</div>`}
  </div>`).join("");

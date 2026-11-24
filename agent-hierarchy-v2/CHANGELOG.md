@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.57] - 2026-11-24
+
+### Fixed
+
+- **Idle member cards on the herdr Graph keep their text.** A card that went idle shrank to a one-line row narrower
+  than its content, so the member name lost its start and the trailing value was cut. The idle row now takes the
+  card's full width: the task text gives way first, and a long name is cut at its end and shown in full in the
+  tooltip.
+- **A Deputy Chief can be spawned.** `ah roster spawn-ad-hoc deputy-chief` was routed down the Sub-Orchestrator
+  lane path and could not launch. It now starts as an ordinary top-team member, ready for `ah roster duty on`.
+
 ## [2.0.56] - 2026-11-23
 
 ### Fixed

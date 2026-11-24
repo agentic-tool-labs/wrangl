@@ -746,7 +746,9 @@ function flowCard(t, c, i, k, v, gr, lt, live) {
   // ah2-450: what it works on (the web's .fwork): a card's own line between the head and the stats (G6), a row's head after the name
   const work = k >= WORK_MIN_K && s.work ? s.work : "";
   const workLine = () => div().flex_1().min_w(0).truncate().text_size(11 * k).text_color(t.muted).child(work);
-  const head = h_flex().flex_none().px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
+  // ah2-586 G2: an idle row's head takes the card's full width, so it never lays out wider than the card and is not cut at both
+  // ends; the task (flex_1, basis 0) gives way first, then the name is cut at its end
+  const head = h_flex().flex_none().when(!c.active, (el) => el.w_full()).px(10 * k).py(8 * k).gap(8 * k).items_center().min_w(0)
     .when(c.active, (el) => el.border_b(1).border_color(t.border))
     .child(div().flex_none().text_size(12 * k).text_color(st.mark ?? t.blocked).child(st.glyph))
     .child(div().when(!work || c.active, (el) => el.flex_1()).min_w(0).truncate().text_size(12.5 * k).text_color(st.name ?? t.foreground).when(st.bold, (el) => el.font_semibold()).child(s.name))
