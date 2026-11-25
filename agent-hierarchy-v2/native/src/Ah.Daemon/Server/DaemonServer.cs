@@ -575,6 +575,7 @@ internal sealed class DaemonServer : IAsyncDisposable
     // ---------------------------------------------------------------- jobs
 
     /// <summary>The job whose synchronous part the job thread is running, null when it runs none.</summary>
+    // assumes one job thread: the job executor runs one job's synchronous part at a time, so one field names it; a pool would need one per thread
     private string? _jobOnThread;
 
     private void StartJobs()

@@ -6,6 +6,8 @@
 #                              [--first FILE] [--fail-fast] [--no-abort] [--tap DIR] [--exact NAME] [--require-native] [PREFIX]
 #   -j N        parallel workers (default: min(2 ncpu / 3, 12)); -j 1 runs everything one at a time
 #   -t SECONDS  per-test timeout (default 300)
+#   --limit NAME  print the seconds a worker gives test NAME (the -t default, or AH_RUN_ALL_TMO, raised to its LONG_TESTS
+#               floor) and exit; tests/run-set.sh reads it for an isolated rerun
 #   -k          keep the run directory (logs and sandboxes) even when everything passed
 #   -o FILE     write the result set there, one "<name> ok|FAIL|TIMEOUT" line per test, sorted by name; two runs
 #               of the same tree agree exactly when their files are identical
@@ -95,6 +97,7 @@ test-native-frontend
 test-native-install
 test-role-packs
 test-roster-team-home
+test-roster-team-home-teardown
 test-run-set-s1
 test-run-set-s2
 test-run-set-s3
@@ -109,6 +112,8 @@ test-mod-readonly 600   # 267 s alone; timed out at 300 s in a loaded full run w
 [ -n "${AH_RUN_ALL_SERIAL+x}" ] && SERIAL_LANE="$AH_RUN_ALL_SERIAL"
 [ -n "${AH_RUN_ALL_LONG+x}" ] && LONG_TESTS="$AH_RUN_ALL_LONG"
 long_seconds() { printf '%s\n' "$LONG_TESTS" | sed -e 's/#.*//' | awk -v n="$1" '$1 == n && $2 ~ /^[0-9]+$/ { print $2; exit }'; }
+# suite_limit <name>: the seconds a worker gives that test: AH_RUN_ALL_TMO (default 300), raised to its LONG_TESTS floor
+suite_limit() { local t=${AH_RUN_ALL_TMO:-300} long; long=$(long_seconds "$1"); if [ -n "$long" ] && [ "$long" -gt "$t" ]; then t=$long; fi; echo "$t"; }
 # Tests that must keep the real HOME (they run a program that reads the user's real configuration): none known.
 REAL_HOME_LANE=""
 
@@ -123,12 +128,13 @@ TMO=300; KEEP=0; OUTSET=""
 serial_names() { printf '%s\n' "$SERIAL_LANE" | sed -e 's/#.*//' | awk 'NF {print $1}'; }
 if [ "${1:-}" = "--serial-lane" ]; then serial_names; exit 0; fi
 if [ "${1:-}" = "--long-tests" ]; then printf '%s\n' "$LONG_TESTS" | sed -e 's/#.*//' | awk 'NF { print $1, $2 }'; exit 0; fi
+if [ "${1:-}" = "--limit" ]; then AH_RUN_ALL_TMO=$TMO suite_limit "${2:-}"; exit 0; fi  # a run with no -t, as a rerun is
 
 # Worker mode: run one test and write its result. Called through xargs as: run-all.sh --one <run> <idx> <test file>
 if [ "${1:-}" = "--one" ]; then
-  RUN=$2; IDX=$3; FILE=$4; TMO=${AH_RUN_ALL_TMO:-300}
+  RUN=$2; IDX=$3; FILE=$4
   name=$(basename "$FILE" .sh)
-  long=$(long_seconds "$name"); if [ -n "$long" ] && [ "$long" -gt "$TMO" ]; then TMO=$long; fi
+  TMO=$(suite_limit "$name")
   d="$RUN/t$IDX"
   mkdir -p "$d/home" "$d/ah" "$d/tmp" || exit 0
   home="$d/home"

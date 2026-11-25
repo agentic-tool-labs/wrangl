@@ -59,6 +59,27 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void WithNoWaitGivenTheConfirmerWaitsUntilSixtySecondsAfterSpawnedAtNotSixtyFromNow()
+    {
+        var mail = new FullMail();
+        _eventMail = mail;
+        _stepClock = new StepClock(DateTimeOffset.UtcNow);
+        var (code, stdout, stderr) = SpawnBare();
+        Assert.True(code == 0, stdout + stderr);
+        var member = JsonText.Parse(stdout).Member("member")!.Value;
+        var spawnedAtText = member.Member("spawned_at")!.Value.AsString();
+        // the window has passed by the command's clock: a wait counted from now instead of from spawned_at would take the full 60 s
+        _stepClock.UtcNow = DateTimeOffset.Parse(spawnedAtText, System.Globalization.CultureInfo.InvariantCulture).AddSeconds(61);
+        var took = System.Diagnostics.Stopwatch.StartNew();
+
+        var confirmed = Roster("confirm-registration", "--member", member.Member("name")!.Value.AsString(), "--pane", member.Member("transport_id")!.Value.AsString(), "--transport", "tmux", "--to", "orchestrator@proj", "--team", "proj", "--spawned-at", spawnedAtText);
+
+        Assert.Equal(0, confirmed.Code);
+        Assert.Single(mail.Sent, s => s.Event == "member-unconfirmed");
+        Assert.True(took.Elapsed < TimeSpan.FromSeconds(30), $"took {took.Elapsed}");
+    }
+
+    [Fact]
     public void AMemberDismissedBeforeTheWindowEndsIsNotMailedUnconfirmed()
     {
         var mail = new FullMail();

@@ -362,6 +362,7 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
                 catch (Exception e) when (e is not OutOfMemoryException)
                 {
                     // an unreachable box is left out of the reply
+                    errors.Log("event-mail", $"{eventName} {entryId} to {address} failed: {e.GetType().Name}: {e.Message}");
                 }
             }
 

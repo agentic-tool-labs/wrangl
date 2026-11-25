@@ -45,6 +45,14 @@ internal sealed partial class HierLib
                 horizon?.At(until);
             }
 
+            // ah2-627 S1: the UI lane's ah2-74 B3 rule (TreeComposers.Members), mirrored and narrowed to a peer's permission block: one whose
+            // screen the watcher read and found no prompt on (screen_clear_at, no screen_prompt_at) is working. A question block is never cleared.
+            if (route == "peer" && activity == "blocked" && TextOf(Member(rec, "blocked_by")) == "permission" && TextOf(Member(rec, "question")) is null
+                && TextOf(Member(rec, "screen_clear_at")) is { Length: > 0 } && TextOf(Member(rec, "screen_prompt_at")) is not { Length: > 0 })
+            {
+                activity = "working";
+            }
+
             var transport = m.Member("transport") is { IsNull: false } tr ? tr : Member(team, "transport");
             var transportId = Member(m, "transport_id");
             var row = new JsonObject

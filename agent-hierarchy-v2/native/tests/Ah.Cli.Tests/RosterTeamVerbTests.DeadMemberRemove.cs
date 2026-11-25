@@ -192,6 +192,44 @@ public sealed partial class RosterTeamVerbTests
         Assert.DoesNotContain(_runner.Calls, argv => argv.Contains("kill-pane"));
     }
 
+    [Fact]
+    public void TheCaptureIsJournaledAsMemberRemoveBeforeTheCloseAndACloseThatFailsAfterItIsJournaledToo()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        ArrangeProvenDeadImplementor();
+        var registered = DateTimeOffset.UtcNow.AddHours(-1);
+        _registrations![Impl + "@proj"] = _registrations[Impl + "@proj"] with { At = registered };
+        var graph = JobGraph();
+        graph.Hierarchy.Core.Liveness = new ScriptedRows(_registrations, _registrationsLater, PlatformModule.CreateIo(null).Processes);
+        var host = new StallHost(graph, _sandbox.AhHome, () => true, () => null, memberRemoval: new CaptureThenFailedClose());
+        var dead = new StallJudgement(new MemberVerdict(Verdict.Dead, "registration pid 4242 is another process now"), ImplSession, registered);
+
+        var removal = host.RemoveDead(new StallTeam("proj", Hierarchy, Project, "orchestrator@proj", "sess-orch"), new StallMember(Impl, "implementor", "%1", false), dead, DateTimeOffset.UtcNow);
+
+        Assert.Null(removal);
+        var rows = StallStore.JournalRows(_sandbox.AhHome).Select(static r => JsonText.Parse(r).AsObject()).Where(static r => r["kind"].AsString().StartsWith("member-remove", StringComparison.Ordinal)).ToList();
+        Assert.Equal(["member-remove", "member-remove-failed"], rows.Select(static r => r["kind"].AsString()));
+        Assert.Equal(Impl, rows[0]["subject"].AsString());
+        Assert.Equal("proj", rows[0]["team"].AsString());
+        Assert.Equal(Impl, rows[0]["capture"].Member("name")?.AsString());
+        Assert.Equal("the close was not verified", rows[1]["why"].AsString());
+    }
+
+    /// <summary>A removal that hands over its capture, then reports the close as failed with the row still there.</summary>
+    private sealed class CaptureThenFailedClose : IMemberRemoval
+    {
+        public MemberRemovalResult Remove(string hierarchyDir, string projectRoot, string team, string member, Action<JsonObject>? captured = null)
+        {
+            var capture = new JsonObject { ["name"] = member };
+            captured?.Invoke(capture);
+            return new MemberRemovalResult(false, capture, "the close was not verified");
+        }
+    }
+
     private sealed class RemovalSpy : IMemberRemoval
     {
         public int Calls { get; private set; }

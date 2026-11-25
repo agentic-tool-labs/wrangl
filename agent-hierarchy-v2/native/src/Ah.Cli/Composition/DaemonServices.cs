@@ -152,8 +152,8 @@ internal sealed class DaemonServices
 
     internal bool StillOwner()
     {
-        var reason = NotOwnerReason();
-        if (Interlocked.Exchange(ref _notOwner, reason) is var last && last != reason)
+        var reason = NotOwnerReason(out var key);
+        if (Interlocked.Exchange(ref _notOwner, key) is var last && last != key)
         {
             _log(reason is null
                 ? "owner again: run/ahd.json names this daemon; the watch tick and stall watch run"
@@ -163,23 +163,27 @@ internal sealed class DaemonServices
         return reason is null;
     }
 
-    /// <summary>The last reason <see cref="StillOwner"/> gave, null while this daemon owns <c>run/ahd.json</c>; a line is logged when it changes.</summary>
+    /// <summary>The key of the last reason <see cref="StillOwner"/> gave, null while this daemon owns <c>run/ahd.json</c>; a line is logged when it changes.</summary>
     private string? _notOwner;
 
-    private string? NotOwnerReason()
+    /// <summary>Why this daemon is not the owner, null when it is; <paramref name="key"/> is the reason, or for an unreadable file only its exception type, so a varying message logs once.</summary>
+    private string? NotOwnerReason(out string? key)
     {
         try
         {
             var bytes = _graph.Value.Io.Files.ReadBytes(Path.Combine(_environment.AhHome, "run", "ahd.json"));
             if (JsonText.Parse(bytes) is not { IsMap: true } info || info.AsObject().Get("pid") is not { IsNumber: true } pid)
             {
-                return "names no pid";
+                key = "names no pid";
+                return key;
             }
 
-            return (int)pid.AsNumber() == Environment.ProcessId ? null : $"names pid {(int)pid.AsNumber()}";
+            key = (int)pid.AsNumber() == Environment.ProcessId ? null : $"names pid {(int)pid.AsNumber()}";
+            return key;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonParseException)
         {
+            key = $"is unreadable ({e.GetType().Name})";
             return $"is unreadable ({e.GetType().Name}: {e.Message})";
         }
     }

@@ -1384,6 +1384,12 @@ internal static partial class WorkVerb
         /// <summary>A commit's entry, on the one open item the caller holds; holding none or several logs nothing (S6). A directory with no team and no prefix is a scratch repository: reconciling it would register it.</summary>
         internal void LogCommit(string subject, string sha)
         {
+            // ah2-584: a repository with no hierarchy directory holds no item, and a state call here would create that directory in it
+            if (!Directory.Exists(dir))
+            {
+                return;
+            }
+
             var known = Read(q => HierarchyModule.WorkPrefix(q, dir), null) is not null
                 || g.Hierarchy.StateCalls.Progress("keys", new JsonObject { ["dir"] = dir }).Member("teams") is { IsArray: true } teams && teams.AsArray().Count > 0;
             if (known && caller.Names.Count > 0 && Held() is [var one] && !Read(q => HierarchyModule.WorkCommitLogged(q, dir, sha), false))

@@ -227,7 +227,8 @@ ah_test_team "$HIER" tm2 implementor:n1
 team_js "$HIER/teams/tm2.json" 't.orchestrator = o.orchestrator; t.members.forEach((m) => { m.session_id = "s-" + m.name; m.paste = false; m.transport_id = "%7"; })'
 ( QOUT=$(orch timeout 60 bash -c 'cd "$0" && "$1/bin/ah" "${@:2}"' "$PROJ" "$PLUGIN" roster quit --team tm2 --wait 8 --cwd "$PROJ" 2>"$T/qerr"); echo "$?" > "$T/q.rc"; printf %s "$QOUT$(cat "$T/qerr")" > "$T/q.out" ) &
 QPID=$!
-sleep 3
+# wait (deadline 30 s) until the quit has written its winding-down hold, so the stop lands during the wind-down
+END=$((SECONDS + 30)); until hold_of tm2 | grep -q '"phase": "winding-down"' || [ "$SECONDS" -ge "$END" ]; do sleep 0.2; done
 # the quit, past its owner check, still holds session orch live, and the store registers a session to one live process: its
 # registration is dropped so the stop can prove the same Orchestrator session
 ah_forget_sessions orch

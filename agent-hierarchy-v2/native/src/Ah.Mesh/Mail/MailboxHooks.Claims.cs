@@ -95,10 +95,23 @@ internal sealed partial class MailboxHooks
         return targets;
     }
 
-    /// <summary>Whether <paramref name="t"/> reads <c>delivery-failed</c> and no session holds its relay claim.</summary>
-    private bool DeliveryFailed(RelayTarget t) =>
-        ClaimState(t.Claim) != ClaimStates.RelayClaimed
-        && MsgStatus.Of(mailbox, new MsgStatus.Located(t.Dir, t.Address, t.Entry)).Get("state") is { IsText: true } state && state.AsString() == MsgStatus.DeliveryFailed;
+    /// <summary>Whether <paramref name="t"/> reads <c>delivery-failed</c> and no session holds its relay claim; records that cannot be read read as not delivery-failed.</summary>
+    private bool DeliveryFailed(RelayTarget t)
+    {
+        if (ClaimState(t.Claim) == ClaimStates.RelayClaimed)
+        {
+            return false;
+        }
+
+        try
+        {
+            return MsgStatus.Of(mailbox, new MsgStatus.Located(t.Dir, t.Address, t.Entry)).Get("state") is { IsText: true } state && state.AsString() == MsgStatus.DeliveryFailed;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
 
     /// <summary>The model-facing text for why <paramref name="t"/> cannot be relayed by <paramref name="session"/> now, or null when it can be claimed.</summary>
     private string? WhyNotClaimable(RelayTarget t, string session, string? toolUseId, string? recipient, ResolvedAddress? resolved, RequestContext context)
