@@ -179,6 +179,12 @@ OUT=$(AH_RUN_ALL_LONG="test-sleepy-other 30" R -j 1 -t 2 -o "$RES" sleepy); drop
 check "...a listing for another name does not apply (nearest non-match)" '[ "$(res_of test-sleepy)" = TIMEOUT ]'
 OUT=$(bash "$PLUGIN/tests/run-all.sh" --long-tests)
 check "run-all.sh lists test-mod-readonly with at least 600 s by default" 'printf %s "$OUT" | awk "\$1 == \"test-mod-readonly\" && \$2 >= 600 { f = 1 } END { exit !f }"'
+OUT=$(AH_RUN_ALL_LONG="test-sleepy 450" bash "$PLUGIN/tests/run-all.sh" --limit test-sleepy)
+check "--limit prints a listed suite's floor when it is above the default" '[ "$OUT" = 450 ]'
+OUT=$(AH_RUN_ALL_LONG="test-sleepy 450" bash "$PLUGIN/tests/run-all.sh" --limit test-sleepy-other)
+check "...and the 300 s default for a name that is not listed (nearest non-match)" '[ "$OUT" = 300 ]'
+OUT=$(AH_RUN_ALL_LONG="test-sleepy 30" bash "$PLUGIN/tests/run-all.sh" --limit test-sleepy)
+check "...and the default when the listed floor is below it" '[ "$OUT" = 300 ]'
 
 echo
 echo "RESULT: $PASS passed, $FAIL failed"

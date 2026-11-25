@@ -543,9 +543,13 @@ public sealed partial class WorkLogTests : IDisposable
             return 0;
         });
         Assert.True(cleared.Ok, cleared.Message);
+        // a user-level config makes every repository configured and enabled, as on a real machine
+        Directory.CreateDirectory(Path.GetDirectoryName(_graph.Config.UserConfigPath())!);
+        File.WriteAllText(_graph.Config.UserConfigPath(), """{"version":1,"enabled":true}""");
 
         WorkVerb.RecordCommit(_context.Env, _graph, scratch, null, "theirs", "scratch1");
         Assert.Equal(0, Scalar("SELECT COUNT(*) FROM work_repos"));
+        Assert.False(Directory.Exists(Path.Combine(scratch, ".claude")), "a commit in another repository created .claude there (ah2-584)");
 
         WorkVerb.RecordCommit(_context.Env, _graph, _cwd, null, "mine", "mine1");
         Assert.Equal(1, Scalar("SELECT COUNT(*) FROM work_repos"));

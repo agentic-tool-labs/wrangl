@@ -43,11 +43,19 @@ internal sealed class DaemonMemberRemove(IRosterCliServices services) : IMemberR
         try
         {
             capture = Capture(c, member);
-            captured?.Invoke(capture);
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
             return new MemberRemovalResult(false, null, $"its work could not be read: {e.Message}");
+        }
+
+        try
+        {
+            captured?.Invoke(capture);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return new MemberRemovalResult(false, null, $"its work could not be journaled: {e.Message}");
         }
 
         string? failed = null;
@@ -65,7 +73,17 @@ internal sealed class DaemonMemberRemove(IRosterCliServices services) : IMemberR
         // the row's absence decides, read after the close whatever it returned or threw: a step after the row's removal may still fail
         var report = JsonText.TryParse(System.Text.Encoding.UTF8.GetBytes(stdout.ToString()), out var parsed) && parsed.Kind == JsonKind.Map ? parsed : JsonValue.Null;
         var abandoned = report.Member("briefs_abandoned") is { IsArray: true } ids ? ids.AsArray().Where(static id => id.IsText).Select(static id => id.AsString()).ToList() : [];
-        return c.Services.Roster.TeamMemberByName(c.Dir, member, c.TeamFile).IsMap
+        bool stillListed;
+        try
+        {
+            stillListed = c.Services.Roster.TeamMemberByName(c.Dir, member, c.TeamFile).IsMap;
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return new MemberRemovalResult(false, capture, $"the team could not be read after the close: {e.Message}");
+        }
+
+        return stillListed
             ? new MemberRemovalResult(false, capture, failed ?? (stderr.ToString().Trim() is { Length: > 0 } why ? why : "the close was not verified"))
             : new MemberRemovalResult(true, capture, failed) { Abandoned = abandoned };
     }

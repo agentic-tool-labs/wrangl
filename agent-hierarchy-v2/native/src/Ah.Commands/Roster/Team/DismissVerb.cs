@@ -449,7 +449,18 @@ internal static class DismissVerb
         AbandonOpenBriefs(c, dir, name, target, warnings, summary, soleOfRole: role is { Length: > 0 } && Members(read.Team).Count(m => MemberPlanning.Text(m.Member("role")) == role) == 1);
 
         summary["untracked"] = true;
-        if (WorkTreeAssignment.Release(c, name) is { } releaseWarning)
+        // the row is already gone: a store that cannot answer is a warning, so the caller still stops the member's jobs
+        string? releaseWarning;
+        try
+        {
+            releaseWarning = WorkTreeAssignment.Release(c, name);
+        }
+        catch (Ah.Core.Json.StoreUnavailableException e)
+        {
+            releaseWarning = $"the grants of {name} were not released: {e.Message}";
+        }
+
+        if (releaseWarning is not null)
         {
             warnings.Add(releaseWarning);
             summary["warnings"] = TeardownSupport.Strings(warnings);

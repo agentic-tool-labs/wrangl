@@ -169,7 +169,10 @@ internal sealed class StallWatch
     private readonly DateTimeOffset _started;
     private readonly Dictionary<string, Track> _tracks = new(StringComparer.Ordinal);
 
-    /// <summary>A removed member's member-down mail that could not be sent, by its told key; each sweep tries it again until it goes.</summary>
+    /// <summary>How many sweeps retry a removed member's unsent member-down mail in one episode before it is dropped.</summary>
+    private const int MaxRemovedMailRetries = 5;
+
+    /// <summary>A removed member's member-down mail that could not be sent, by its told key; each sweep tries it again until it goes, at most <see cref="MaxRemovedMailRetries"/> times.</summary>
     // ponytail: in memory only, a daemon restart drops it; its journal row still carries removed and the capture
     private readonly Dictionary<string, Func<bool>> _unsentRemoved = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _ownerDownSince = new(StringComparer.Ordinal);
@@ -286,11 +289,13 @@ internal sealed class StallWatch
                                 }
                                 else
                                 {
+                                    var retries = 0;
                                     _unsentRemoved[told] = () =>
                                     {
                                         if (!Send())
                                         {
-                                            return false;
+                                            // given up after the cap: the journal's member-remove row still holds the capture
+                                            return ++retries >= MaxRemovedMailRetries;
                                         }
 
                                         track.Reported = reported;

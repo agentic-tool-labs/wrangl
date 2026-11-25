@@ -51,6 +51,26 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             return new StallRemoval(capture, removed.Abandoned);
         }
 
+        if (removed.Capture is not null)
+        {
+            // the member-remove row is written: record that the close then failed, so the journal does not read as a removal
+            try
+            {
+                Journal(new JsonObject
+                {
+                    ["at"] = Ah.Core.Time.Timestamps.ToIsoString(g.Io.Clock.UtcNow),
+                    ["team"] = team.Name,
+                    ["kind"] = "member-remove-failed",
+                    ["subject"] = member.Name,
+                    ["why"] = removed.Why ?? "no reason given",
+                });
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                // the R7 log line below still says the removal failed
+            }
+        }
+
         // R7: the stall watch tries once per episode, so this is logged once per episode
         log?.Invoke($"stall-watch: {team.Name}/{member.Name} proven dead but not removed: {removed.Why ?? "no reason given"}");
         return null;

@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.60] - 2026-11-25
+
+### Fixed
+
+- **`ah roster status` no longer calls a working member blocked on permission.** A permission notice that auto mode
+  or an allow rule resolved left the member reading `blocked`, `blocked_by: permission` until its tool call ended.
+  Roster status now follows the web UI: once the watcher has read the member's screen and found no prompt on it, the
+  member reads `working`. A member whose screen cannot be read still reads blocked.
+- **A commit in another repository no longer creates `.claude/ah2` there.** After `git -C <other repo> commit` the
+  commit log created a hierarchy directory in that repository, which changed a role pack's tree and so its trust pin.
+  The commit log now does nothing for a repository that has no hierarchy directory.
+- **Smaller fixes from the 2.0.59 reviews.** Any failure sending event mail is logged; a relay whose delivery record
+  cannot be read is bounced as before; retries of an unsent removal mail stop after five; a pane close that fails
+  after the capture was journaled leaves a `member-remove-failed` row; `ah roster dismiss` still stops the member's
+  jobs when releasing its work tree fails, and `dismiss --many` then goes on to the next member.
+
+### Tests
+
+- `test-roster-team-home` is split in two (it sat at its 300 s limit), an isolated rerun gets the suite's own time
+  limit, and the team-hold wind-down check waits on the state it asserts.
+
 ## [2.0.59] - 2026-11-25
 
 ### Changed

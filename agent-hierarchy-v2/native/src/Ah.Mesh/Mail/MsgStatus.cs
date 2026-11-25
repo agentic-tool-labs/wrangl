@@ -42,7 +42,7 @@ internal static class MsgStatus
     }
 
     /// <summary>
-    /// The status of the located entry: <c>state</c> is the first that holds of withdrawn, declined, superseded, acked, delivered, pending
+    /// The status of the located entry: <c>state</c> is the first that holds of withdrawn, declined, superseded, acked, delivered, delivery-failed (the ladder gave up), pending
     /// (the ladder has started) and routed (it has not); <c>relay_needed</c> is true while a relay was asked for and
     /// <see cref="RelayVoid.Check"/> finds nothing that voids it.
     /// </summary>

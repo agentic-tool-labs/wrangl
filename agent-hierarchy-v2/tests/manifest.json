@@ -1419,6 +1419,19 @@
     "reads_source": false
   },
   {
+    "name": "test-roster-team-home-teardown",
+    "kind": "contract",
+    "libs": [],
+    "covers": [
+      "bin/ah-hook",
+      "native/src/Ah.Commands/Roster/**",
+      "native/src/Ah.Roster/**"
+    ],
+    "units": [],
+    "lane": "fast",
+    "reads_source": false
+  },
+  {
     "name": "test-roster-team-override",
     "kind": "static",
     "libs": [],
