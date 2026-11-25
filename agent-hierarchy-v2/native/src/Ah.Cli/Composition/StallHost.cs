@@ -8,8 +8,54 @@ using Ah.Watch;
 namespace Ah.Cli.Composition;
 
 /// <summary>The stall watch's reads and writes over the daemon's service graph.</summary>
-internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner, Func<IReadOnlyList<string>?> knownDirs, Func<int, string?, bool>? processIsThere = null, Func<IReadOnlyList<string>, IReadOnlyList<string>>? admitDirs = null, Func<Ah.Launch.IHerdr, string, string, string?>? paneTail = null) : IStallHost
+internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner, Func<IReadOnlyList<string>?> knownDirs, Func<int, string?, bool>? processIsThere = null, Func<IReadOnlyList<string>, IReadOnlyList<string>>? admitDirs = null, Func<Ah.Launch.IHerdr, string, string, string?>? paneTail = null, Ah.Commands.IMemberRemoval? memberRemoval = null, Action<string>? log = null) : IStallHost
 {
+    private readonly Lazy<Ah.Commands.IMemberRemoval> _removal = new(
+        () => memberRemoval ?? Ah.Commands.CommandsModule.CreateMemberRemoval(new RosterComposition(g, g.Io.Clock, g.Environment)),
+        LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>
+    /// ah2-592: a member proven dead is removed through dismiss's close, unless it is an orchestrator, a sub-orchestrator or the deputy on
+    /// duty, its team is held or its checkpoint lists it, a relaunch covers it, or it reads alive or under another session when looked at again.
+    /// </summary>
+    public StallRemoval? RemoveDead(StallTeam team, StallMember member, StallJudgement judged, DateTimeOffset decidedAt)
+    {
+        if (judged.Verdict.Status != Verdict.Dead || member.Role is "orchestrator" or "sub-orchestrator"
+            || g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name) is not { IsMap: true } record
+            || (record.Member("duty")?.Member("deputy") is { IsText: true } deputy && deputy.AsString() == member.Name)
+            || g.Roster.HoldOf(team.HierarchyDir, team.Name) is not null || CheckpointLists(team, member.Name) || RecoveryCovers(team, member)
+            || (team.Cwd.Length > 0 ? team.Cwd : AhPaths.RepoRootOf(team.HierarchyDir)) is not { } projectRoot)
+        {
+            return null;
+        }
+
+        // the session came back unless every sign of life, read now, predates the verdict (WorkTreeAssignment's told_at rule)
+        _lastSeen = ReadLastSeen();
+        var again = Judge(team, member);
+        if (again.Verdict.Status != Verdict.Dead || again.RegistrationSession != judged.RegistrationSession || again.LastEvidence is not { } life || life >= decidedAt)
+        {
+            return null;
+        }
+
+        // R6: the work is on record before anything is closed, so it outlives a mail that fails afterwards
+        var removed = _removal.Value.Remove(team.HierarchyDir, projectRoot, team.Name, member.Name, read => Journal(new JsonObject
+        {
+            ["at"] = Ah.Core.Time.Timestamps.ToIsoString(g.Io.Clock.UtcNow),
+            ["team"] = team.Name,
+            ["kind"] = "member-remove",
+            ["subject"] = member.Name,
+            ["capture"] = read,
+        }));
+        if (removed is { Removed: true, Capture: { } capture })
+        {
+            return new StallRemoval(capture, removed.Abandoned);
+        }
+
+        // R7: the stall watch tries once per episode, so this is logged once per episode
+        log?.Invoke($"stall-watch: {team.Name}/{member.Name} proven dead but not removed: {removed.Why ?? "no reason given"}");
+        return null;
+    }
+
     /// <summary>The pane's recent screen, read through the herdr server the member lives on (<see cref="LaunchServices.HerdrFor(JsonValue?, string?, JsonObject?)"/>).</summary>
     public string? PaneTail(StallTeam team, StallMember member)
     {

@@ -67,7 +67,9 @@ internal static class MsgStatus
             "superseded" => "superseded",
             "acked" => "acked",
             "delivered" => "delivered",
+            "claimed" when claimState == ClaimStates.FallbackClaimed && Escalated(rows) => DeliveryFailed,
             "claimed" when claimState is ClaimStates.RelaySent or ClaimStates.RelayUnconfirmed or ClaimStates.FallbackClaimed or ClaimStates.Delivered => "delivered",
+            _ when Escalated(rows) => DeliveryFailed,
             _ => rows.Count == 0 && claimState is "" or ClaimStates.Pending ? "routed" : "pending",
         };
         var asked = rows.Any(static r => r.Get("rung") is { IsNumber: true } n && n.AsNumber() == 3 && r.Get("state") is { IsText: true } s && s.AsString() == "pending")
@@ -106,6 +108,13 @@ internal static class MsgStatus
             ["relay_reason"] = !needed && marker is not null ? Reason(marker) : JsonValue.Null,
         };
     }
+
+    /// <summary>The state of an entry the delivery ladder gave up on.</summary>
+    internal const string DeliveryFailed = "delivery-failed";
+
+    /// <summary>Whether the ladder wrote its rung-5 escalation for the entry.</summary>
+    private static bool Escalated(IReadOnlyList<JsonObject> rows) =>
+        rows.Any(static r => r.Get("rung") is { IsNumber: true } rung && rung.AsNumber() == 5 && r.Get("state") is { IsText: true } s && s.AsString() == "escalated");
 
     /// <summary>How the entry reached its recipient: the way the ack came when it was acked, else its claim's carrier or its route.</summary>
     private static string ViaOf(JsonObject entry, JsonObject? claim, JsonObject? ack)
@@ -146,7 +155,7 @@ internal static class MsgStatus
             return null;
         }
 
-        if (Text(status, "claim") is ClaimStates.RelayClaimed or ClaimStates.RelayFailed)
+        if (Text(status, "claim") is ClaimStates.RelayClaimed or ClaimStates.RelayFailed || Text(status, "state") == DeliveryFailed)
         {
             return null;
         }

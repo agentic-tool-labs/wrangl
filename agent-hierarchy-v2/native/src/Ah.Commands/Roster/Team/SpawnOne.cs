@@ -1369,7 +1369,7 @@ internal static class SpawnOne
         {
             var spawner = c.ParentOwnerLane is { } lane ? $"{lane.Member}@{lane.Manager}" : $"orchestrator@{c.ProgressTeam}";
             _ = c.Services.StartDetached(
-                ConfirmRegistrationVerb.CommandLine(c, memberName, launchedPane.AsString(), transport, spawner),
+                ConfirmRegistrationVerb.CommandLine(c, memberName, launchedPane.AsString(), transport, spawner, spawnedAt),
                 c.Cwd,
                 "/dev/null");
         }

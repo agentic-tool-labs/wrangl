@@ -142,7 +142,7 @@ public sealed record MemberLauncher(
                 var pane = launched.Get("transport_id") is { IsText: true } id ? id.AsString() : name;
                 var reason = PaneScreen(transport, name, pane).Contains(ClaudeTrustMarker, StringComparison.Ordinal)
                     ? $"needs folder trust in {pane}"
-                    : $"{name} launched ({status.AsString()}) but did not register as {name}@{team} within {RegistrationWait.TotalSeconds:0} s; it may have exited at boot or be waiting at a startup prompt";
+                    : $"{name} launched ({status.AsString()}) but did not register as {name}@{team} within {(wait ?? RegistrationWait).TotalSeconds:0} s; it may have exited at boot or be waiting at a startup prompt";
                 return With(launched, ("launch_status", "unconfirmed"), ("unconfirmed_reason", reason));
             }
 

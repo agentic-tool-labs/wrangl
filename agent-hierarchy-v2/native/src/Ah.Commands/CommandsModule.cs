@@ -30,6 +30,9 @@ public static class CommandsModule
     /// <summary>The daemon's relaunch of one member from its team's checkpoint over <paramref name="services"/>; see <see cref="IMemberRelaunch"/>.</summary>
     public static IMemberRelaunch CreateMemberRelaunch(IRosterCliServices services) => new DaemonMemberRelaunch(services);
 
+    /// <summary>The daemon's removal of one member proven dead over <paramref name="services"/>; see <see cref="IMemberRemoval"/>.</summary>
+    public static IMemberRemoval CreateMemberRemoval(IRosterCliServices services) => new DaemonMemberRemove(services);
+
     /// <summary>The members of <paramref name="team"/>, of <paramref name="names"/>, that <c>dismiss</c>'s release check would close now (live, idle, clean); the dismiss nudge's one check.</summary>
     public static IReadOnlyList<string> ReadyToDismiss(IRosterCliServices services, string hierarchyDir, string projectRoot, string team, IReadOnlyList<string> names) =>
         ReleaseGate.ReadyOf(services, hierarchyDir, projectRoot, team, names);

@@ -13,7 +13,55 @@ public sealed class RosterSendBriefTests : IDisposable
 {
     private readonly Sandbox _sandbox = Sandbox.PlantedFiles();
 
+    private ServiceGraph? _graph;
+
+    private string _teamFile = string.Empty;
+
     public void Dispose() => _sandbox.Dispose();
+
+    private sealed class Errors : IHookErrorLog
+    {
+        public List<string> Lines { get; } = [];
+
+        public void Log(string source, string message) => Lines.Add(message);
+
+        public void Log(HookErrorRecord record) => Lines.Add(record.Message);
+    }
+
+    [Fact]
+    public void AMemberUnconfirmedEventWithATmuxPaneIdIsStoredOnceAndAnIdInTheCharsetIsSentUnchanged()
+    {
+        _ = Build(relay: false);
+        var errors = new Errors();
+        var mail = new RosterComposition.EventMailComposition(_graph!.Mailbox, errors);
+        var hierarchy = Path.GetDirectoryName(Path.GetDirectoryName(_teamFile))!;
+
+        var first = mail.SendEvent(_sandbox.Root, hierarchy, "member-unconfirmed:tm:tm-implementor:%9", "member-unconfirmed", "t", new Ah.Core.Json.JsonObject(), ["orchestrator@tm"]);
+        var again = mail.SendEvent(_sandbox.Root, hierarchy, "member-unconfirmed:tm:tm-implementor:%9", "member-unconfirmed", "t", new Ah.Core.Json.JsonObject(), ["orchestrator@tm"]);
+        var plain = mail.SendEvent(_sandbox.Root, hierarchy, "plain.id-1", "member-unconfirmed", "u", new Ah.Core.Json.JsonObject(), ["orchestrator@tm"]);
+
+        Assert.Equal(["orchestrator@tm"], first);
+        Assert.Equal(["orchestrator@tm"], again);
+        Assert.Equal(["orchestrator@tm"], plain);
+        var ids = _graph.Mailbox.ReadEntries(_graph.Mailbox.BoxDirFor(_teamFile, "orchestrator")).Entries.Select(e => e.Member("id")!.Value.AsString()).ToList();
+        Assert.Equal(["member-unconfirmed-tm-tm-implementor--9", "plain.id-1"], ids);
+        Assert.Empty(errors.Lines);
+    }
+
+    [Fact]
+    public void AnEventTheMailboxRefusesIsLoggedOnceAndTheCallerIsNotFailed()
+    {
+        _ = Build(relay: false);
+        var errors = new Errors();
+        var mail = new RosterComposition.EventMailComposition(_graph!.Mailbox, errors);
+        var hierarchy = Path.GetDirectoryName(Path.GetDirectoryName(_teamFile))!;
+
+        var reached = mail.SendEvent(_sandbox.Root, hierarchy, "member-unconfirmed:tm:x:%9", "member-unconfirmed", "t", new Ah.Core.Json.JsonObject(), ["nobody@tm"]);
+
+        Assert.Empty(reached);
+        var line = Assert.Single(errors.Lines);
+        Assert.Contains("member-unconfirmed-tm-x--9", line, StringComparison.Ordinal);
+    }
 
     private (RosterComposition Seam, string Brief) Build(bool relay)
     {
@@ -45,6 +93,8 @@ public sealed class RosterSendBriefTests : IDisposable
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.0.0", "1"));
         var io = PlatformModule.CreateIo(null);
         var graph = ServiceGraph.Build(io, env, FakeRunner.KnowingSelf(), new FakeDaemonClient { Present = false, Reply = _ => new DaemonReply(0, default, "down") });
+        _graph = graph;
+        _teamFile = teamFile;
         Assert.True(graph.Mailbox.WriteRegistration(new RegistrationWrite("s-orch", [new BoxRef("orchestrator@tm", graph.Mailbox.BoxDirFor(teamFile, "orchestrator"))], teamFile, "claude", System.Environment.ProcessId, PidStart: FakeRunner.SelfStart, Bound: true)));
         if (relay)
         {

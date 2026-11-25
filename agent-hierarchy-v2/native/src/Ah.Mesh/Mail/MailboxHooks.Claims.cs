@@ -95,6 +95,11 @@ internal sealed partial class MailboxHooks
         return targets;
     }
 
+    /// <summary>Whether <paramref name="t"/> reads <c>delivery-failed</c> and no session holds its relay claim.</summary>
+    private bool DeliveryFailed(RelayTarget t) =>
+        ClaimState(t.Claim) != ClaimStates.RelayClaimed
+        && MsgStatus.Of(mailbox, new MsgStatus.Located(t.Dir, t.Address, t.Entry)).Get("state") is { IsText: true } state && state.AsString() == MsgStatus.DeliveryFailed;
+
     /// <summary>The model-facing text for why <paramref name="t"/> cannot be relayed by <paramref name="session"/> now, or null when it can be claimed.</summary>
     private string? WhyNotClaimable(RelayTarget t, string session, string? toolUseId, string? recipient, ResolvedAddress? resolved, RequestContext context)
     {
@@ -189,7 +194,8 @@ internal sealed partial class MailboxHooks
         }
 
         var session = sessionId ?? string.Empty;
-        var targets = RelayTargets(recipient, message, context, out var unknown);
+        // an entry the ladder gave up on is let through untouched: no claim is checked or taken for it (ah2-565 C5)
+        var targets = RelayTargets(recipient, message, context, out var unknown).Where(t => !DeliveryFailed(t)).ToList();
         foreach (var (dir, id) in unknown)
         {
             try

@@ -396,4 +396,37 @@ public sealed class MailRelayClaimTests
 
         Assert.Equal(["old"], acked);
     }
+
+    private static void Escalate(MailClaimTests.Rig rig, string id) =>
+        Assert.True(rig.Fx.Mailbox.AppendLadderRow(rig.BoxB, new JsonObject { ["id"] = id, ["rung"] = 5, ["state"] = "escalated" }, rig.Fx.Mailbox.LadderRowsOf(rig.BoxB, id).Count + 1L));
+
+    [Fact]
+    public void AnyoneMayRelayAnEntryTheLadderEscalatedAndItsClaimIsLeftAsItWas()
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1");
+        var beforeEscalation = rig.Fx.Hooks.ClaimRelay("s-x", "b@tm", Relay("e1"), ContextOf(rig), "toolu_x");
+        Escalate(rig, "e1");
+
+        var decision = rig.Fx.Hooks.ClaimRelay("s-x", "b@tm", Relay("e1"), ContextOf(rig), "toolu_y");
+
+        Assert.True(beforeEscalation.Deny);
+        Assert.False(decision.Deny, decision.Reason);
+        Assert.Empty(decision.Claimed);
+        Assert.Equal("pending", State(rig, "e1"));
+    }
+
+    [Fact]
+    public void NegativeAnEscalatedEntryWhoseRelayAnotherSessionHoldsIsStillBounced()
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1");
+        Assert.False(rig.Fx.Hooks.ClaimRelay("s-a", "b@tm", Relay("e1"), ContextOf(rig), "toolu_a").Deny);
+        Escalate(rig, "e1");
+
+        var decision = rig.Fx.Hooks.ClaimRelay("s-x", "b@tm", Relay("e1"), ContextOf(rig), "toolu_x");
+
+        Assert.True(decision.Deny);
+        Assert.Equal("relay-claimed", State(rig, "e1"));
+    }
 }

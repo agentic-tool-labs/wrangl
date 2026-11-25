@@ -150,18 +150,37 @@ internal sealed class DaemonServices
         }
     }
 
-    private bool StillOwner()
+    internal bool StillOwner()
+    {
+        var reason = NotOwnerReason();
+        if (Interlocked.Exchange(ref _notOwner, reason) is var last && last != reason)
+        {
+            _log(reason is null
+                ? "owner again: run/ahd.json names this daemon; the watch tick and stall watch run"
+                : $"not the owner: run/ahd.json {reason}, not pid {Environment.ProcessId}; the watch tick and stall watch skip");
+        }
+
+        return reason is null;
+    }
+
+    /// <summary>The last reason <see cref="StillOwner"/> gave, null while this daemon owns <c>run/ahd.json</c>; a line is logged when it changes.</summary>
+    private string? _notOwner;
+
+    private string? NotOwnerReason()
     {
         try
         {
             var bytes = _graph.Value.Io.Files.ReadBytes(Path.Combine(_environment.AhHome, "run", "ahd.json"));
-            return JsonText.Parse(bytes) is { IsMap: true } info
-                && info.AsObject().Get("pid") is { IsNumber: true } pid
-                && (int)pid.AsNumber() == Environment.ProcessId;
+            if (JsonText.Parse(bytes) is not { IsMap: true } info || info.AsObject().Get("pid") is not { IsNumber: true } pid)
+            {
+                return "names no pid";
+            }
+
+            return (int)pid.AsNumber() == Environment.ProcessId ? null : $"names pid {(int)pid.AsNumber()}";
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonParseException)
         {
-            return false;
+            return $"is unreadable ({e.GetType().Name}: {e.Message})";
         }
     }
 
@@ -396,7 +415,7 @@ internal sealed class DaemonServices
         }), cancellation));
         jobs.Meter("scratch-sweep", sweepCpu.Take);
 
-        var stallHost = new StallHost(_graph.Value, _environment.AhHome, StillOwner, () => Volatile.Read(ref _hierarchyDirs)?.Invoke(), admitDirs: _dirGate.Value.Admit, paneTail: (herdr, transport, pane) => Mux(_graph.Value, herdr).ReadRecent(transport, pane, 40));
+        var stallHost = new StallHost(_graph.Value, _environment.AhHome, StillOwner, () => Volatile.Read(ref _hierarchyDirs)?.Invoke(), admitDirs: _dirGate.Value.Admit, paneTail: (herdr, transport, pane) => Mux(_graph.Value, herdr).ReadRecent(transport, pane, 40), log: _log);
 
         // Hooks only append to a team's ledger; this is the one place its new lines go on to the memory adapter.
         jobs.Add("memory-forward", TimeSpan.FromSeconds(30), cancellation => Task.Run(() => forwardCpu.Measure(() =>

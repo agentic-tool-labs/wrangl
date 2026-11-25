@@ -435,7 +435,7 @@ internal static class CheckpointVerb
         ReleaseGate.Git(c, tree, "rev-parse", "--abbrev-ref", "HEAD") is { Ok: true } read ? read.Stdout.Trim() : null;
 
     /// <summary>The ids of the exchanges to or from <paramref name="name"/> that have no response; checkpoint requests are not among them.</summary>
-    private static List<string> OpenRequests(RosterContext c, List<JsonObject> exchanges, string name)
+    internal static List<string> OpenRequests(RosterContext c, List<JsonObject> exchanges, string name)
     {
         var open = new List<string>();
         foreach (var exchange in exchanges)

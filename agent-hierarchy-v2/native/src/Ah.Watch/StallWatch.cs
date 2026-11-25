@@ -25,6 +25,9 @@ public sealed record StallMember(string Name, string? Role, string? PaneId, bool
 /// <summary>A member's verdict, the session id of the registration it rests on, and when that registration last showed the member alive (null when unknown).</summary>
 public sealed record StallJudgement(MemberVerdict Verdict, string RegistrationSession, DateTimeOffset? LastEvidence = null);
 
+/// <summary>A member ahd removed (ah2-592): its work as read before the close, and the ids of the open briefs the close abandoned.</summary>
+public sealed record StallRemoval(JsonObject Capture, IReadOnlyList<string> Abandoned);
+
 /// <summary>A user alarm episode as recorded: what it was told for, when it was first and last told, and whether its first line got through.</summary>
 public sealed record UserAlarm(string Episode, DateTimeOffset FirstToldAt, DateTimeOffset LastToldAt, bool Delivered)
 {
@@ -130,6 +133,13 @@ public interface IStallHost
     /// <summary>Whether the team's checkpoint record lists <paramref name="member"/>, so <c>resume --checkpoint --relaunch</c> applies; false when it cannot be read.</summary>
     bool CheckpointLists(StallTeam team, string member) => false;
 
+    /// <summary>
+    /// ah2-592: removes <paramref name="member"/>, judged dead as <paramref name="judged"/> at <paramref name="decidedAt"/>, as
+    /// <c>ah roster dismiss</c> closes a member that is not running, after reading its work. Its work as read and the briefs the close
+    /// abandoned when it was removed; null when it was not, and then its row stays.
+    /// </summary>
+    StallRemoval? RemoveDead(StallTeam team, StallMember member, StallJudgement judged, DateTimeOffset decidedAt) => null;
+
     /// <summary>A sweep is starting: the host may read once what it needs to judge every member in it.</summary>
     void BeginSweep();
 
@@ -158,6 +168,10 @@ internal sealed class StallWatch
     private readonly Func<DateTimeOffset> _now;
     private readonly DateTimeOffset _started;
     private readonly Dictionary<string, Track> _tracks = new(StringComparer.Ordinal);
+
+    /// <summary>A removed member's member-down mail that could not be sent, by its told key; each sweep tries it again until it goes.</summary>
+    // ponytail: in memory only, a daemon restart drops it; its journal row still carries removed and the capture
+    private readonly Dictionary<string, Func<bool>> _unsentRemoved = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _ownerDownSince = new(StringComparer.Ordinal);
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _alarmRunning = new(StringComparer.Ordinal);
 
@@ -192,6 +206,11 @@ internal sealed class StallWatch
         var warm = now - _started < _settings.WarmUp;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         _host.BeginSweep();
+        foreach (var unsent in _unsentRemoved.Where(static p => p.Value()).Select(static p => p.Key).ToList())
+        {
+            _ = _unsentRemoved.Remove(unsent);
+        }
+
         var listed = _host.AlarmTeams();
         var teams = listed.Where(static t => !t.QueuedOnly).ToList();
         foreach (var team in teams)
@@ -243,11 +262,47 @@ internal sealed class StallWatch
                             var session = _host.IsSessionId(judged.RegistrationSession) ? judged.RegistrationSession : null;
                             var resume = _host.CheckpointLists(team, member.Name) ? Ah.Mesh.MeshModule.MemberResumeCommand(team.Name, member.Name) : null;
                             var respawn = Ah.Mesh.MeshModule.MemberRespawnCommand(roleWord, member.Stream, team.Name);
-                            if (Emit(
-                                team, member, "member-down",
-                                $"ahd alarm: member-down {member.Name} — {(cause is null ? string.Empty : $"its pane shows {cause}; ")}{judged.Verdict.Why}; dead since {since}",
+
+                            // ah2-592: one removal per episode, and only where the mail goes out to tell of it
+                            StallRemoval? removal = null;
+                            if (judged.Verdict.Status == Verdict.Dead && _settings.Mode == StallMode.On && team.OrchestratorAddress is not null && track.RemoveTried != judged.RegistrationSession)
+                            {
+                                track.RemoveTried = judged.RegistrationSession;
+                                removal = _host.RemoveDead(team, member, judged, now);
+                            }
+
+                            var first = $"ahd alarm: member-down {member.Name} — {(cause is null ? string.Empty : $"its pane shows {cause}; ")}{judged.Verdict.Why}; dead since {since}";
+                            var why = cause is null ? judged.Verdict.Why : $"{judged.Verdict.Why}; pane shows {cause}";
+                            if (removal is not null)
+                            {
+                                // the row is gone, so no later sweep lists the member: a mail that fails now is retried from here until it goes
+                                var removedRespawn = RespawnInto(respawn, member.Stream, removal.Capture);
+                                var reported = judged.RegistrationSession;
+                                bool Send() => Emit(team, member, "member-down", first, RemovedText(member.Name, removal, removedRespawn), work, work.Count > 0, deadSince, why, cause, null, removedRespawn, removal.Capture);
+                                if (Send())
+                                {
+                                    track.Reported = reported;
+                                    _host.SetReportedSession(told, reported);
+                                }
+                                else
+                                {
+                                    _unsentRemoved[told] = () =>
+                                    {
+                                        if (!Send())
+                                        {
+                                            return false;
+                                        }
+
+                                        track.Reported = reported;
+                                        _host.SetReportedSession(told, reported);
+                                        return true;
+                                    };
+                                }
+                            }
+                            else if (Emit(
+                                team, member, "member-down", first,
                                 $"{string.Join('\n', Ah.Mesh.MeshModule.MemberHintLines(resume, respawn, session))}\nCheck the member (`ah roster status`). Re-brief, re-spawn or close its requests. If the run is unattended, PushNotification the user.",
-                                work, work.Count > 0, deadSince, cause is null ? judged.Verdict.Why : $"{judged.Verdict.Why}; pane shows {cause}", cause, resume, respawn))
+                                work, work.Count > 0, deadSince, why, cause, resume, respawn))
                             {
                                 track.Reported = judged.RegistrationSession;
                                 _host.SetReportedSession(told, track.Reported);
@@ -621,7 +676,55 @@ internal sealed class StallWatch
         }
     }
 
-    private bool Emit(StallTeam team, StallMember member, string kind, string first, string second, IReadOnlyList<string> work, bool urgent, DateTimeOffset since, string why, string? cause = null, string? resume = null, string? respawn = null)
+    /// <summary>The fresh-spawn command for a removed member: on its stream, else in its recorded work tree when it had one.</summary>
+    private static string RespawnInto(string respawn, string? stream, JsonObject capture) =>
+        stream is null && capture.Get("worktree") is { IsText: true } tree ? $"{respawn} --cwd {ShellWord(tree.AsString())}" : respawn;
+
+    private static string ShellWord(string s) =>
+        s.Length > 0 && s.All(static ch => char.IsAsciiLetterOrDigit(ch) || "_/.:@%+=-".Contains(ch)) ? s : "'" + s.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
+
+    /// <summary>ah2-592 R3: what a removed member's mail says: that it was removed, what was in flight, where its work is, and how to put a new member there.</summary>
+    private static string RemovedText(string name, StallRemoval removal, string respawn)
+    {
+        static int Count(JsonObject o, string key) => o.Get(key) is { IsNumber: true } n ? (int)n.AsNumber() : 0;
+        var capture = removal.Capture;
+        var open = capture.Get("open_requests") is { IsArray: true } ids ? ids.AsArray().Where(static id => id.IsText).Select(static id => id.AsString()).ToList() : [];
+        var abandoned = removal.Abandoned;
+        var stillOpen = open.Where(id => !removal.Abandoned.Contains(id)).ToList();
+        var uncommitted = Count(capture, "uncommitted");
+        var ahead = Count(capture, "ahead");
+        var lines = new List<string> { $"ahd removed {name} from the team and closed its pane." };
+        var inFlight = new List<string>();
+        if (abandoned.Count > 0)
+        {
+            inFlight.Add($"{abandoned.Count} open request(s) to it ({string.Join(", ", abandoned)}), now abandoned and their checklist items back with you");
+        }
+
+        if (stillOpen.Count > 0)
+        {
+            inFlight.Add($"{stillOpen.Count} request(s) still open ({string.Join(", ", stillOpen)})");
+        }
+
+        if (uncommitted > 0)
+        {
+            inFlight.Add($"{uncommitted} uncommitted file(s)");
+        }
+
+        if (ahead > 0)
+        {
+            inFlight.Add($"{ahead} commit(s) ahead of the run's branch");
+        }
+
+        lines.Add(inFlight.Count == 0 ? "Nothing was in flight." : $"Work in flight: {string.Join("; ", inFlight)}.");
+        var tree = capture.Get("worktree") is { IsText: true } t ? t.AsString() : null;
+        var branch = capture.Get("branch") is { IsText: true } b ? b.AsString() : null;
+        lines.Add(tree is null ? "It had no work tree." : $"Its work tree is {tree}{(branch is null ? string.Empty : $" on branch {branch}")}, left as it was.");
+        lines.Add($"A new member in that work tree: `{respawn}`");
+        lines.Add("If the run is unattended, PushNotification the user.");
+        return string.Join('\n', lines);
+    }
+
+    private bool Emit(StallTeam team, StallMember member, string kind, string first, string second, IReadOnlyList<string> work, bool urgent, DateTimeOffset since, string why, string? cause = null, string? resume = null, string? respawn = null, JsonObject? capture = null)
     {
         var text = new System.Text.StringBuilder().Append(first).Append('\n').Append(second);
         if (work.Count > 0)
@@ -659,6 +762,12 @@ internal sealed class StallWatch
             data["respawn"] = respawn;
         }
 
+        if (capture is not null)
+        {
+            data["removed"] = true;
+            data["capture"] = capture;
+        }
+
         var delivered = "none";
         var exit = 0;
         if (_settings.Mode == StallMode.On && team.OrchestratorAddress is { } to)
@@ -675,7 +784,7 @@ internal sealed class StallWatch
             }
         }
 
-        _host.Journal(new JsonObject
+        var row = new JsonObject
         {
             ["at"] = Timestamps.ToIsoString(_now()),
             ["team"] = team.Name,
@@ -684,7 +793,14 @@ internal sealed class StallWatch
             ["evidence"] = why,
             ["delivered_to"] = delivered,
             ["exit"] = exit,
-        });
+        };
+        if (capture is not null)
+        {
+            row["removed"] = true;
+            row["capture"] = capture;
+        }
+
+        _host.Journal(row);
         return exit == 0;
     }
 
@@ -692,5 +808,8 @@ internal sealed class StallWatch
     {
         public DateTimeOffset? DeadSince;
         public string? Reported;
+
+        /// <summary>The registration session ahd last tried to remove the member for: one try per episode.</summary>
+        public string? RemoveTried;
     }
 }

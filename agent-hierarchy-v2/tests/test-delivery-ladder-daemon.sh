@@ -54,7 +54,9 @@ sqlite3 "$DB" "INSERT INTO mail_adapters(box, session, at_ms, raw) VALUES ('${CD
 printf '{"single_carrier":false}\n' > "$HIER/agent-hierarchy.json"  # the ladder this suite walks is the one an entry with no carrier claim follows
 ah_test_prove_self orchestrator tm "$TF" "$ODIR" orch > /dev/null  # this suite runs no hook, so its own shell is the Orchestrator session
 # A question: a peer's plain note to a member waits for the member's next turn in the digest, and the ladder leaves it alone.
-mx send cd@tm --from orchestrator@tm --session orch --kind note --text "QUESTION: for cd" --json
+# Sent with no daemon: one started here can read the entry before the backdating below, and the mailbox holds the rows it has read,
+# so it never sees the update and waits out the full pull timeout, past this suite's 30 s wait (ah2-620).
+AH_DAEMON=off mx send cd@tm --from orchestrator@tm --session orch --kind note --text "QUESTION: for cd" --json
 ID=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).entry.id)' "$OUT")
 # The entry and its routing row are two minutes old, so the ladder's first tick finds its rung-2 wait already over.
 AGO_MS=$(node -e 'process.stdout.write(String(Date.now() - 120000))'); AGO=$(node -e 'process.stdout.write(new Date(Number(process.argv[1])).toISOString())' "$AGO_MS")
