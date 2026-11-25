@@ -574,6 +574,9 @@ internal sealed class DaemonServer : IAsyncDisposable
 
     // ---------------------------------------------------------------- jobs
 
+    /// <summary>The job whose synchronous part the job thread is running, null when it runs none.</summary>
+    private string? _jobOnThread;
+
     private void StartJobs()
     {
         // The fence and idle job: the one place the daemon checks that ahd.json and the socket still belong to it, and
@@ -594,21 +597,67 @@ internal sealed class DaemonServer : IAsyncDisposable
 
             var running = 0;
             var period = job.Period;
+            long queuedAt = 0;
+            long startedAt = 0;
+            string? skipped = null;
+            // one line per change of reason, keyed by the reason alone so the times in the text do not make each skip a change
+            void Skip(string reason, Func<string> text)
+            {
+                if (Interlocked.Exchange(ref skipped, reason) != reason)
+                {
+                    Log($"job {job.Name} skipped: {text()}");
+                }
+            }
+
             void Tick(object? _)
             {
                 if (Draining && job.Name != "fence-idle")
                 {
+                    Skip("draining", static () => "the daemon is draining");
                     return;
                 }
 
                 if (Interlocked.Exchange(ref running, 1) != 0)
                 {
+                    var started = Interlocked.Read(ref startedAt);
+                    if (started == 0)
+                    {
+                        Skip("queued", () => $"its previous run, queued {Stopwatch.GetElapsedTime(Interlocked.Read(ref queuedAt)).TotalMilliseconds:F0} ms ago, has not started (the job thread is running {Volatile.Read(ref _jobOnThread) ?? "nothing"})");
+                    }
+                    else
+                    {
+                        Skip("running", () => $"its previous run, started {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F0} ms ago, is still running");
+                    }
+
                     return;
                 }
 
                 var queued = Stopwatch.GetTimestamp();
-                _ = _jobExecutor.Run(() => RunJob(job, stat, queued)).Unwrap().ContinueWith(
-                    _ => Interlocked.Exchange(ref running, 0),
+                _ = Interlocked.Exchange(ref queuedAt, queued);
+                _ = Interlocked.Exchange(ref startedAt, 0);
+                _ = _jobExecutor.Run(() =>
+                {
+                    _ = Interlocked.Exchange(ref startedAt, Stopwatch.GetTimestamp());
+                    Volatile.Write(ref _jobOnThread, job.Name);
+                    try
+                    {
+                        return RunJob(job, stat, queued);
+                    }
+                    finally
+                    {
+                        Volatile.Write(ref _jobOnThread, null);
+                    }
+                }).Unwrap().ContinueWith(
+                    ran =>
+                    {
+                        // a run that fits its period ends a skip episode, so the next one is logged; a job overlapping every period logs once
+                        if (Stopwatch.GetElapsedTime(queued) < period)
+                        {
+                            _ = Interlocked.Exchange(ref skipped, null);
+                        }
+
+                        _ = Interlocked.Exchange(ref running, 0);
+                    },
                     CancellationToken.None,
                     TaskContinuationOptions.ExecuteSynchronously,
                     TaskScheduler.Default);

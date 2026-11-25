@@ -372,6 +372,7 @@ internal sealed class WatchTick
     private readonly HashSet<string> _tracedDecisions = new(StringComparer.Ordinal);
     private JsonObject _ladder = LadderZero();
     private int _ladderRunning;
+    private int _ladderSkipTold;
 
     internal WatchTick(WatchDependencies dependencies)
     {
@@ -1493,9 +1494,15 @@ internal sealed class WatchTick
     {
         if (Interlocked.Exchange(ref _ladderRunning, 1) != 0)
         {
+            if (Interlocked.Exchange(ref _ladderSkipTold, 1) == 0)
+            {
+                _d.Log?.Invoke("delivery ladder pass skipped: the previous pass is still running");
+            }
+
             return;
         }
 
+        _ = Interlocked.Exchange(ref _ladderSkipTold, 0);
         try
         {
             _ladder = await _d.Host.RunLadderAsync(now, _pollMs, cancellation).ConfigureAwait(false);

@@ -130,7 +130,7 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
     }
 
     /// <summary>The mailbox send behind roster verbs that announce an event.</summary>
-    public IRosterEventMail? EventMail => new EventMailComposition(graph.Mailbox);
+    public IRosterEventMail? EventMail => new EventMailComposition(graph.Mailbox, graph.Io.HookErrors);
 
     /// <summary>The mesh client's caller registration: resolves who the session is and records its registration.</summary>
     public IRosterCallerRegistry? Callers => new CallerRegistry(graph.Callers, graph.Mailbox, PlatformModule.CreateProcessTable(graph.Runner));
@@ -333,21 +333,30 @@ internal sealed class RosterComposition(ServiceGraph graph, IClock clock, IAhEnv
         private string? CommandOf(int pid) => _sessions.Table.Command(pid);
     }
 
-    private sealed class EventMailComposition(IMailbox mailbox) : IRosterEventMail
+    internal sealed class EventMailComposition(IMailbox mailbox, IHookErrorLog errors) : IRosterEventMail
     {
+        /// <summary><paramref name="id"/> with every character outside <c>[A-Za-z0-9._-]</c>, the mailbox's id charset, as <c>-</c>.</summary>
+        internal static string EntryId(string id) => string.Concat(id.Select(static ch => char.IsAsciiLetterOrDigit(ch) || ch is '.' or '_' or '-' ? ch : '-'));
+
         public IReadOnlyList<string> SendEvent(string cwd, string hierarchyDir, string id, string eventName, string text, JsonObject data, IReadOnlyList<string> recipients)
         {
             var reached = new List<string>();
+            var entryId = EntryId(id);
             foreach (var address in recipients.Distinct(StringComparer.Ordinal))
             {
                 var request = MeshModule.EventRequest(address, "ah", cwd, hierarchyDir, eventName, text);
                 request["data"] = data;
-                request["id"] = id;
+                request["id"] = entryId;
                 try
                 {
-                    if (mailbox.Send(request).Ok)
+                    var sent = mailbox.Send(request);
+                    if (sent.Ok)
                     {
                         reached.Add(address);
+                    }
+                    else
+                    {
+                        errors.Log("event-mail", $"{eventName} {entryId} to {address} refused: {sent.Failure?.Code}: {sent.Failure?.Message}");
                     }
                 }
                 catch (Exception e) when (e is not OutOfMemoryException)

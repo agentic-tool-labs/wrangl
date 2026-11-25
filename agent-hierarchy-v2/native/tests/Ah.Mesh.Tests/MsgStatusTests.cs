@@ -298,4 +298,53 @@ public sealed class MsgStatusTests
         var after = Directory.GetFiles(rig.Member, "*", SearchOption.AllDirectories).Select(f => (f, File.GetLastWriteTimeUtc(f), new FileInfo(f).Length)).OrderBy(static t => t.f, StringComparer.Ordinal).ToList();
         Assert.Equal(before, after);
     }
+
+    private static void Claim(Rig rig, string json)
+    {
+        Directory.CreateDirectory(rig.Member + "/claims");
+        File.WriteAllText(rig.Member + "/claims/e1.json", json);
+    }
+
+    [Fact]
+    public void AnEntryTheLadderEscalatedAtRung5IsDeliveryFailedAndTheGateLetsItsRelayThrough()
+    {
+        var rig = new Rig();
+        rig.Ladder("pending", 4);
+        Claim(rig, "{\"state\":\"released\",\"carrier\":\"prompt\",\"at\":\"2026-10-12T00:00:30.000Z\"}");
+        var onRung4 = rig.Status(rig.Orchestrator);
+        var bouncedOnRung4 = rig.Gate(out _);
+        rig.Ladder("escalated", 5, reason: "no poller");
+        var claimBefore = File.ReadAllText(rig.Member + "/claims/e1.json");
+
+        var failed = rig.Status(rig.Orchestrator);
+
+        Assert.Equal("pending", onRung4["state"].AsString());
+        Assert.NotNull(bouncedOnRung4);
+        Assert.Equal("delivery-failed", failed["state"].AsString());
+        Assert.Null(rig.Gate(out _));
+        Assert.Equal(claimBefore, File.ReadAllText(rig.Member + "/claims/e1.json"));
+    }
+
+    [Fact]
+    public void AnEscalatedEntryOverAFallbackClaimIsDeliveryFailedButOneWithoutTheEscalationReadsDelivered()
+    {
+        var rig = new Rig();
+        rig.Ladder("pending", 4);
+        Claim(rig, "{\"state\":\"fallback-claimed\",\"carrier\":\"prompt\",\"at\":\"2026-10-12T00:00:30.000Z\",\"lease_until\":\"2099-01-01T00:00:00.000Z\"}");
+        var pasted = rig.Status(rig.Orchestrator)["state"].AsString();
+        rig.Ladder("escalated", 5);
+
+        Assert.Equal("delivered", pasted);
+        Assert.Equal("delivery-failed", rig.Status(rig.Orchestrator)["state"].AsString());
+    }
+
+    [Fact]
+    public void NegativeAnEscalatedEntryTheRecipientAckedIsStillBounced()
+    {
+        var rig = new Rig();
+        rig.Ladder("escalated", 5);
+        _ = rig.Fx.Mailbox.AckIds(rig.Member, ["e1"], "prompt-hook", "s2");
+
+        Assert.StartsWith("ah: entry e1 was already read (acked)", rig.Gate(out _), StringComparison.Ordinal);
+    }
 }

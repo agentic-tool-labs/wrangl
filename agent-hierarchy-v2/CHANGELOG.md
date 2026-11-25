@@ -4,6 +4,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.59] - 2026-11-25
+
+### Changed
+
+- **A member proven dead is removed.** When ahd proves a member's process gone it now removes the member, closes its
+  pane and abandons the briefs sent to it, handing their checklist items back to the Orchestrator. The `member-down`
+  mail says so (`removed: true`) and carries what was in flight: branch, work tree, head, uncommitted files, commits
+  ahead and open requests, with the command that puts a new member in that work tree. The work tree is never deleted
+  or cleaned. A held team, a lane lead, the deputy on duty and a member whose pane could not be closed are left in
+  place, and the mail goes out as before.
+
+### Fixed
+
+- **A spawned member that never checks in raises an alarm.** The `member-unconfirmed` mail was never delivered: its
+  id held characters the mailbox refuses, and the failed send was dropped. Ids of event mail are now mapped to the
+  mailbox's character set, which also delivers `parent-action`, `member-launched-bare`, member pause and
+  `lane-question-parked` mail for the first time. A send that is still refused goes to the hook-error log. The alarm
+  now waits 60 seconds after the spawn, and names the pane and `ah roster checkin`.
+- **A brief ah could not deliver can be relayed.** An entry the delivery ladder gave up on reads `delivery-failed`
+  instead of `pending`, and a SendMessage relay of it is no longer refused.
+- **The daemon says why a tick or job was skipped.** A job that is skipped because its previous run has not finished,
+  a ladder pass that overlaps the last one, and a daemon that is no longer the owner of `run/ahd.json` each log the
+  reason once. The ladder-daemon test's intermittent failure was a race in the test and is fixed there.
+
 ## [2.0.58] - 2026-11-24
 
 ### Fixed
