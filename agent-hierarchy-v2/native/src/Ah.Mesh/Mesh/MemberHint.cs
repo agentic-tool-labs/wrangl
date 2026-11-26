@@ -11,9 +11,30 @@ internal static partial class MemberHint
     [System.Text.RegularExpressions.GeneratedRegex("^" + Ah.Config.ConfigModule.RoleNamePattern + "\\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
     private static partial System.Text.RegularExpressions.Regex RoleRe();
 
-    /// <summary>Whether a checkpoint <paramref name="record"/> lists <paramref name="member"/>, so the resume command applies to it.</summary>
-    internal static bool Lists(JsonValue? record, string member) =>
-        record?.Member("members") is { IsArray: true } members
+    /// <summary>
+    /// Whether a checkpoint <paramref name="record"/> lists <paramref name="member"/> and so does the snapshot it names (read through
+    /// <paramref name="roster"/>), which the resume relaunches from: only then does the resume command apply to it (ah2-613). A snapshot
+    /// that cannot be read lists no one.
+    /// </summary>
+    internal static bool Lists(JsonValue? record, string member, Ah.Roster.IRosterCore roster)
+    {
+        if (!Names(record, member) || record?.Member("snapshot") is not { IsText: true } snapshot)
+        {
+            return false;
+        }
+
+        try
+        {
+            return Names(roster.ReadSnapshot(snapshot.AsString()), member);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
+    private static bool Names(JsonValue? doc, string member) =>
+        doc?.Member("members") is { IsArray: true } members
         && members.AsArray().Any(m => m.Member("name") is { IsText: true } n && n.AsString() == member);
 
     /// <summary>The member back on its old session from the team's checkpoint; it only plans until the user agrees to <c>--yes</c>.</summary>

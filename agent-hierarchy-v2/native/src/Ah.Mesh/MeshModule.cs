@@ -142,7 +142,8 @@ public static partial class MeshModule
         IAhEnvironment environment,
         IProcessTable processes,
         string? ahVersion = null,
-        IClock? clock = null) =>
+        IClock? clock = null,
+        IHookErrorLog? errors = null) =>
         new MailCallers(
             mailbox as Mailbox ?? throw new ArgumentException("not a mailbox made by CreateMailbox", nameof(mailbox)),
             config,
@@ -152,7 +153,8 @@ public static partial class MeshModule
             environment,
             processes,
             ahVersion,
-            clock);
+            clock,
+            errors);
 
     /// <summary>Decides whether a registration's claimed pid is its registrant's own or an ancestor's, reading ancestry and start time from <paramref name="processes"/>.</summary>
     public static IRegistrationBinder CreateRegistrationBinder(Func<int, bool> alive, IProcessTable processes) => new RegistrationBinder(alive, processes);

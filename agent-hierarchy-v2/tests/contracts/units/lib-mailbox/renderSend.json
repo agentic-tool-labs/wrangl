@@ -121,7 +121,20 @@
           "receiver_unregistered": true
         }
       ],
-      "expect": "entry e1 → a@tm\ndelivery: plugin prompt — nothing more to do\nno single registered receiver for a@tm; SendMessage the member its brief pointer; its next hook registers it and queued mail follows"
+      "expect": "entry e1 → a@tm\ndelivery: queued — a@tm has not registered; ah delivers it when it registers, or by its fallback after the pull timeout; nothing to send now, and if ah asks for a relay, send that relay as printed"
+    },
+    {
+      "id": "prompt-receiver-registered",
+      "args": [
+        {
+          "entry": {
+            "id": "e1"
+          },
+          "address": "a@tm",
+          "carrier": "prompt"
+        }
+      ],
+      "expect": "entry e1 → a@tm\ndelivery: plugin prompt — nothing more to do"
     }
   ]
 }

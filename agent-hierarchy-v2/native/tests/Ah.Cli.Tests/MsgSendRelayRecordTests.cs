@@ -131,8 +131,11 @@ public sealed class MsgSendRelayRecordTests : IDisposable
         var exit = MsgVerb.Run(rig.Context, ["send", "tm-implementor@tm", "--text", "hello", "--id", "e-relay", "--session", "s-orch", "--cwd", _sandbox.Root], stdout, new StringWriter());
 
         Assert.Equal(0, exit);
-        // ah2-317 E4: a delivery with nothing for the sender to do ends in the same words
-        Assert.Contains("delivery: plugin prompt — nothing more to do\n", stdout.ToString(), StringComparison.Ordinal);
+        // ah2-683 P3': an unregistered receiver gets one instruction and no SendMessage request
+        var lines = stdout.ToString().TrimEnd('\n').Split('\n');
+        Assert.Equal(2, lines.Length);
+        Assert.Equal("delivery: queued — tm-implementor@tm has not registered; ah delivers it when it registers, or by its fallback after the pull timeout; nothing to send now, and if ah asks for a relay, send that relay as printed", lines[1]);
+        Assert.DoesNotContain("SendMessage", stdout.ToString(), StringComparison.Ordinal);
         Assert.Empty(Rows(rig, "e-relay"));
     }
 

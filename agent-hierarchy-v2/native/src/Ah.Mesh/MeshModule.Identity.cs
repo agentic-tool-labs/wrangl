@@ -30,8 +30,8 @@ public static partial class MeshModule
     /// <summary>The command that spawns a fresh member of <paramref name="role"/>, on <paramref name="stream"/> when it is a valid stream name.</summary>
     public static string MemberRespawnCommand(string role, string? stream, string team) => MemberHint.Respawn(role, stream, team);
 
-    /// <summary>Whether a checkpoint <paramref name="record"/> lists <paramref name="member"/>, so <see cref="MemberResumeCommand"/> applies to it.</summary>
-    public static bool RecordListsMember(JsonValue? record, string member) => MemberHint.Lists(record, member);
+    /// <summary>Whether a checkpoint <paramref name="record"/> and the snapshot it names both list <paramref name="member"/>, so <see cref="MemberResumeCommand"/> applies to it.</summary>
+    public static bool RecordListsMember(JsonValue? record, string member, Ah.Roster.IRosterCore roster) => MemberHint.Lists(record, member, roster);
 
     /// <summary>A down member's hint lines: each command on its own line, and the old session id as information.</summary>
     public static IReadOnlyList<string> MemberHintLines(string? resume, string respawn, string? session) => MemberHint.Lines(resume, respawn, session);

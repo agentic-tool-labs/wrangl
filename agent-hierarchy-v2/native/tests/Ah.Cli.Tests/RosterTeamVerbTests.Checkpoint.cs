@@ -718,4 +718,31 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal(firstPath, result.Member("teams")!.Value.AsArray().Single().Member("record")!.Value.AsString());
         Assert.NotEqual(0, Roster("checkpoint", "--status", "relative/path.json", "--team", "proj").Code);
     }
+
+    /// <summary>ah2-613: the stall watch's resume line needs the member in the checkpoint record and in the snapshot it relaunches from.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheStallHostListsACheckpointedMemberOnlyWhenItsSnapshotHasIt(bool snapshotHasIt)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        ArrangeCheckpoint();
+        var record = RecordOf(Take());
+        Assert.Equal(Impl, MemberRecord(record).Member("name")!.Value.AsString());
+        if (!snapshotHasIt)
+        {
+            var snapshot = record.Member("snapshot")!.Value.AsString();
+            var doc = JsonText.Parse(SnapshotText(snapshot));
+            doc.AsObject()["members"] = new JsonArray();
+            PutSnapshot(snapshot, JsonText.Stringify(doc, 2));
+        }
+
+        var host = new Ah.Cli.Composition.StallHost(JobGraph(), _sandbox.AhHome, () => true, () => null);
+
+        Assert.Equal(snapshotHasIt, host.CheckpointLists(new Ah.Watch.StallTeam("proj", Hierarchy, Project, "orchestrator@proj", "sess-orch"), Impl));
+    }
 }

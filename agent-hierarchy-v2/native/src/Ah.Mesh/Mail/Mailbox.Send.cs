@@ -1054,13 +1054,14 @@ internal sealed partial class Mailbox
         {
             lines.Add($"delivery: relay — ah delivers it another way if you do not; make this one SendMessage now: SendMessage \"{Js(relay.Member("text"))}\" to {Js(relay.Member("to"))}");
         }
+        else if (Js(result.Get("carrier")) == "prompt" && result.Get("receiver_unregistered") is { IsTruthy: true })
+        {
+            // ah2-683 P3': one instruction, and no SendMessage: the gate refuses a pointer for this entry.
+            lines.Add($"delivery: queued — {Js(result.Get("address"))} has not registered; ah delivers it when it registers, or by its fallback after the pull timeout; nothing to send now, and if ah asks for a relay, send that relay as printed");
+        }
         else if (Js(result.Get("carrier")) == "prompt")
         {
             lines.Add($"delivery: plugin prompt — {NothingToDo}");
-            if (result.Get("receiver_unregistered") is { IsTruthy: true })
-            {
-                lines.Add($"no single registered receiver for {Js(result.Get("address"))}; SendMessage the member its brief pointer; its next hook registers it and queued mail follows");
-            }
         }
         else if (Js(result.Get("delivery")) == "pull")
         {

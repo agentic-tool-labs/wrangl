@@ -283,6 +283,22 @@ public sealed partial class RosterTeamVerbTests
     }
 
     [Fact]
+    public void NegativeInALocalOnlyRunATreeThatCannotBeToldShippedStillHolds()
+    {
+        _localOnly = true;
+        ArrangeCleanImplementor(withOrigin: false);
+        var main = RealGit("rev-parse", "--abbrev-ref", "HEAD");
+        RealGit("checkout", "-q", "--detach");
+        RealGit("branch", "-q", "-D", main);
+
+        var (_, plan, _) = PlanOne();
+
+        Assert.False(Minted(plan));
+        Assert.Contains("no origin remote and no local main line: cannot tell if shipped", CleanReasons(plan), StringComparison.Ordinal);
+        Assert.Null(plan.Member("clean_close")!.Value.Member("notes"));
+    }
+
+    [Fact]
     public void CT6ACommitNotOnOriginGivesAnOrdinaryTokenNamingTheUnshippedCommits()
     {
         ArrangeCleanImplementor();

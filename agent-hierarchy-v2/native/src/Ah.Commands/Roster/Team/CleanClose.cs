@@ -188,18 +188,23 @@ internal static partial class CleanClose
         }
 
         var unshipped = Unshipped(c, tree);
-        if (unshipped is not null && unshipped.StartsWith(UnshippedCommits, StringComparison.Ordinal)
+        if (unshipped is { Kind: UnshippedKind.Commits } commits
             && c.Services.LocalOnly(c.Cwd, MemberPlanning.Text(subject.Team.Member("team")) ?? c.TeamFile))
         {
             // L3a: in a local-only run the commits are reported, and hold no one
-            entry[LocalOnlyNote] = $"{unshipped}, kept: the run is local-only";
+            entry[LocalOnlyNote] = $"{commits.Text}, kept: the run is local-only";
             return (null, entry);
         }
 
-        return (unshipped, entry);
+        return (unshipped?.Text, entry);
     }
 
-    private const string UnshippedCommits = "unshipped commits (";
+    /// <summary>Why <see cref="Unshipped"/> finds a tree not shipped: commits past every shipped ref, or a state it cannot tell.</summary>
+    private enum UnshippedKind
+    {
+        Commits,
+        Unknown,
+    }
 
     /// <summary>The entry key that carries a local-only member's unshipped-commits note into <see cref="Reading.Notes"/> and the token's digest.</summary>
     private const string LocalOnlyNote = "local_only_unshipped";
@@ -280,31 +285,31 @@ internal static partial class CleanClose
     /// shipped is judged against the local main line (<see cref="MainLine"/>). Reads the refs as they are, never fetches; a git error or
     /// anything unreadable is not clean.
     /// </summary>
-    private static string? Unshipped(RosterContext c, string tree)
+    private static (string Text, UnshippedKind Kind)? Unshipped(RosterContext c, string tree)
     {
         if (!ReleaseGate.Git(c, tree, "config", "--get", "remote.origin.url").Ok)
         {
             if (MainLine(c, tree) is not { } branch)
             {
-                return "no origin remote and no local main line: cannot tell if shipped";
+                return ("no origin remote and no local main line: cannot tell if shipped", UnshippedKind.Unknown);
             }
 
             var local = ReleaseGate.Git(c, tree, "rev-list", "--count", "HEAD", "--not", "refs/heads/" + branch);
             if (!local.Ok || !int.TryParse(local.Stdout.Trim(), out var k))
             {
-                return $"cannot tell if shipped: {local.Detail}";
+                return ($"cannot tell if shipped: {local.Detail}", UnshippedKind.Unknown);
             }
 
-            return k == 0 ? null : $"unshipped commits ({k} not on {branch})";
+            return k == 0 ? null : ($"unshipped commits ({k} not on {branch})", UnshippedKind.Commits);
         }
 
         var count = ReleaseGate.Git(c, tree, "rev-list", "--count", "HEAD", "--not", "--exclude=origin/ah/wip/*", "--remotes=origin");
         if (!count.Ok || !int.TryParse(count.Stdout.Trim(), out var n))
         {
-            return $"cannot tell if shipped: {count.Detail}";
+            return ($"cannot tell if shipped: {count.Detail}", UnshippedKind.Unknown);
         }
 
-        return n == 0 ? null : $"unshipped commits ({n} not on origin)";
+        return n == 0 ? null : ($"unshipped commits ({n} not on origin)", UnshippedKind.Commits);
     }
 
     /// <summary>

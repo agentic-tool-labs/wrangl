@@ -359,7 +359,7 @@ internal sealed class ServiceGraph
             PooledReader = pooled?.OpenReader,
             EngineReadsMessageModes = true,
             EngineReadsMsgsMode = true,
-            Callers = MeshModule.CreateMailCallers(mailbox, config, roster, hierarchy, relay, environment, processTable, BuildInfo.Version, io.Clock),
+            Callers = MeshModule.CreateMailCallers(mailbox, config, roster, hierarchy, relay, environment, processTable, BuildInfo.Version, io.Clock, io.HookErrors),
             Sender = MeshModule.CreateMeshSender(mailbox, rule, links, hierarchy, io.Clock, writer, io.Files, runFacts: new RunFactsReader(hierarchy, io.Files, roster, config)),
             Inspect = MeshModule.CreateMailInspect(mailbox, io.Files, environment, io.Clock),
             Daemon = daemon,

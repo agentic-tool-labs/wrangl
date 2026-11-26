@@ -319,7 +319,11 @@ internal sealed partial class MsgCommand
         }
 
         var explicitFrom = Str("from");
-        var from = Unwrap(mailbox.ChooseFrom(WriteAddresses(), team, explicitFrom, string.IsNullOrEmpty(explicitFrom) ? AdminOrchestratorAddresses() : null, Str("team"), mailbox.TeamAncestors(team, mailbox.TeamLookup(ctx))));
+        var addresses = WriteAddresses();
+
+        // ah2-476: the ancestor chain only decides an ambiguous sender, so the team lookup is built only then
+        var ancestors = string.IsNullOrEmpty(explicitFrom) && addresses.Count > 1 ? mailbox.TeamAncestors(team, mailbox.TeamLookup(ctx)) : null;
+        var from = Unwrap(mailbox.ChooseFrom(addresses, team, explicitFrom, string.IsNullOrEmpty(explicitFrom) ? AdminOrchestratorAddresses() : null, Str("team"), ancestors));
         var request = new JsonObject
         {
             ["to"] = to,
