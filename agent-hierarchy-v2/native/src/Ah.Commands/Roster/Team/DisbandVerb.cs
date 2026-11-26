@@ -199,7 +199,18 @@ internal static class DisbandVerb
         summary["pruned"] = TeardownSupport.Strings(reconciled.Pruned);
         foreach (var pruned in reconciled.Pruned)
         {
-            if (WorkTreeAssignment.Release(c, pruned) is { } releaseWarning)
+            // the row is already gone: a store that cannot answer is a warning, so the rest of the teardown still runs
+            string? releaseWarning;
+            try
+            {
+                releaseWarning = WorkTreeAssignment.Release(c, pruned);
+            }
+            catch (Ah.Core.Json.StoreUnavailableException e)
+            {
+                releaseWarning = $"the grants of {pruned} were not released: {e.Message}";
+            }
+
+            if (releaseWarning is not null)
             {
                 warnings.Add(releaseWarning);
                 summary["warnings"] = TeardownSupport.Strings(warnings);

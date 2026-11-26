@@ -785,7 +785,21 @@ internal sealed class WatchTick
 
         var candidates = DispatchesOf(timer, sid, now);
         var peerRecords = host.PeerRecords();
-        var dispatch = DispatchClock.Evaluate(sid, now, _pollMs, candidates, peerRecords, host.Gates, host.ThresholdSeconds, OverdueTargetMemo.Wrap(c => OverdueTargetOf(owned, home, c, now, peerRecords)), _awake.Of);
+
+        // ah2-639: each team's jobs are reconciled once per tick, for the dispatch clock's job hold and the job alarms alike
+        var reconciled = new Dictionary<string, IReadOnlyList<JobFact>>(StringComparer.Ordinal);
+        IReadOnlyList<JobFact> JobsOf(string? team)
+        {
+            if (!reconciled.TryGetValue(team ?? string.Empty, out var list))
+            {
+                list = host.ReconcileJobs(sid, home, team, host.Jobs(sid, home, team));
+                reconciled[team ?? string.Empty] = list;
+            }
+
+            return list;
+        }
+
+        var dispatch = DispatchClock.Evaluate(sid, now, _pollMs, candidates, peerRecords, host.Gates, host.ThresholdSeconds, OverdueTargetMemo.Wrap(c => OverdueTargetOf(owned, home, c, now, peerRecords, JobsOf)), _awake.Of);
         host.AppendGates(dispatch.Gates);
         host.AppendPeerRows(dispatch.PeerRows);
 
@@ -845,7 +859,7 @@ internal sealed class WatchTick
             _capMarked = _capMarked || host.EnsureCapWatchMark();
             // the journal is read and parsed once per tick, for every team
             var caps = new Lazy<IReadOnlyList<JobCap>>(host.CapKills);
-            jobs = JobEvents.Evaluate(sid, now, _pollMs, [.. owned.Select(static t => t.Name)], team => WatchModule.JobsCapped(host.ReconcileJobs(sid, home, team, host.Jobs(sid, home, team)), () => caps.Value), host.ThresholdSeconds, _jobTold, out jobKeys);
+            jobs = JobEvents.Evaluate(sid, now, _pollMs, [.. owned.Select(static t => t.Name)], team => WatchModule.JobsCapped(JobsOf(team), () => caps.Value), host.ThresholdSeconds, _jobTold, out jobKeys);
         }
 
         events.AddRange(jobs.Events);
@@ -1244,7 +1258,7 @@ internal sealed class WatchTick
     private const double StallDebounceMs = 5 * 60 * 1000;
 
     /// <summary>The member an overdue dispatch is for, found among the teams the session owns; null when none of them has it.</summary>
-    private OverdueTarget? OverdueTargetOf(IReadOnlyList<OwnedTeam> owned, string home, DispatchCandidate c, double now, IReadOnlyList<JsonObject> peerRecords)
+    private OverdueTarget? OverdueTargetOf(IReadOnlyList<OwnedTeam> owned, string home, DispatchCandidate c, double now, IReadOnlyList<JsonObject> peerRecords, Func<string?, IReadOnlyList<JobFact>> jobsOf)
     {
         var name = DispatchClock.NameOf(c.ToName, c.ToAddr);
         var addressTeam = c.ToAddr is { } to && to.Contains('@', StringComparison.Ordinal) ? to[(to.IndexOf('@', StringComparison.Ordinal) + 1)..] : c.Team;
@@ -1290,7 +1304,8 @@ internal sealed class WatchTick
                 Instant("working_at"),
                 !string.IsNullOrEmpty(member.SessionId) && Ah.Roster.RosterModule.ChainDownActive(peerRecords.Select(static r => (JsonValue)r), member.SessionId),
                 busySeen,
-                bgWaiting);
+                bgWaiting,
+                !string.IsNullOrEmpty(member.SessionId) && jobsOf(team.Name).Any(j => !j.Ended && j.Alive && j.Session == member.SessionId));
         }
 
         return null;

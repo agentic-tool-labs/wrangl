@@ -47,8 +47,8 @@ internal sealed partial class HierLib
 
             // ah2-627 S1: the UI lane's ah2-74 B3 rule (TreeComposers.Members), mirrored and narrowed to a peer's permission block: one whose
             // screen the watcher read and found no prompt on (screen_clear_at, no screen_prompt_at) is working. A question block is never cleared.
-            if (route == "peer" && activity == "blocked" && TextOf(Member(rec, "blocked_by")) == "permission" && TextOf(Member(rec, "question")) is null
-                && TextOf(Member(rec, "screen_clear_at")) is { Length: > 0 } && TextOf(Member(rec, "screen_prompt_at")) is not { Length: > 0 })
+            var permissionBlock = route == "peer" && activity == "blocked" && TextOf(Member(rec, "blocked_by")) == "permission" && TextOf(Member(rec, "question")) is null;
+            if (permissionBlock && HasScreenMark(rec, "screen_clear_at") && !HasScreenMark(rec, "screen_prompt_at"))
             {
                 activity = "working";
             }
@@ -74,6 +74,12 @@ internal sealed partial class HierLib
                 ["last_tool_at"] = rec.Member("tool_at") is { IsText: true } toolAt ? StrOrNull(CleanTo(toolAt, int.MaxValue)) : JsonValue.Null,
                 ["blocked_note"] = route == "pane" && activity == "blocked" ? CleanOrNull(rec.Member("note"), NoteCap) : JsonValue.Null,
             };
+            // ah2-636 U1/U3: a permission block still blocked says whether the watcher saw its prompt on screen; unseen stays blocked
+            if (permissionBlock && activity == "blocked")
+            {
+                row["blocked_confirmed"] = HasScreenMark(rec, "screen_prompt_at");
+            }
+
             if (CleanContext(rec.Member("context")) is { IsNull: false } ctx)
             {
                 row["context_used"] = ctx.Member("used")!.Value;
@@ -107,6 +113,14 @@ internal sealed partial class HierLib
 
         return result;
     }
+
+    /// <summary>
+    /// ah2-636 U4: the watcher's screen mark <paramref name="field"/> on <paramref name="rec"/>, counted only when it is not older than the
+    /// record's <c>at</c>: a mark the watcher wrote from a read taken before the hook's latest write belongs to an earlier block.
+    /// </summary>
+    private static bool HasScreenMark(JsonValue rec, string field) =>
+        TextOf(Member(rec, field)) is { Length: > 0 } mark
+        && !(TextOf(Member(rec, "at")) is { } at && ParseInstantLoose(mark, out var markMs) && ParseInstantLoose(at, out var atMs) && markMs < atMs);
 
     // ponytail: at most 8 rows per agent, the oldest; raise it if an agent routinely runs more
     private const int SubagentRowsCap = 8;

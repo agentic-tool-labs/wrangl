@@ -98,6 +98,15 @@ public static partial class WatchModule
             && members.Any(n => n.Started is { } started && started.ToUnixTimeMilliseconds() + 1000 >= job.SentAtMs && JobPids.RunsJobsProgram(job, n));
     }
 
+    /// <summary>Whether the job's own process is provably running: its pid alive with the start time recorded beside it (ah2-639). False with no pid or no recorded start.</summary>
+    public static bool JobPidLive(JobFact job, IProcessTable table, Func<int, bool> pidAlive)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(pidAlive);
+        return job.Pid is { } pid && pidAlive(pid) && Ah.Core.Time.ProcessIdentity.Same(table, pid, job.PidStart);
+    }
+
     /// <summary>The alarm steps ahd owes for each of <paramref name="openJobs"/>, with when each was owed: what the failsafe checks the Orchestrator's box for.</summary>
     public static IReadOnlyList<OverdueJobItem> OverdueJobItems(IReadOnlyList<JobFact> openJobs, Func<string, double> thresholdSeconds, double nowMs, IAhEnvironment env)
     {

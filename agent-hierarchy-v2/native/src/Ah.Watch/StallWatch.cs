@@ -140,6 +140,11 @@ public interface IStallHost
     /// </summary>
     StallRemoval? RemoveDead(StallTeam team, StallMember member, StallJudgement judged, DateTimeOffset decidedAt) => null;
 
+    /// <summary>Writes one line to the daemon log; a host that keeps no log drops it.</summary>
+    void Log(string line)
+    {
+    }
+
     /// <summary>A sweep is starting: the host may read once what it needs to judge every member in it.</summary>
     void BeginSweep();
 
@@ -295,7 +300,13 @@ internal sealed class StallWatch
                                         if (!Send())
                                         {
                                             // given up after the cap: the journal's member-remove row still holds the capture
-                                            return ++retries >= MaxRemovedMailRetries;
+                                            if (++retries < MaxRemovedMailRetries)
+                                            {
+                                                return false;
+                                            }
+
+                                            _host.Log($"stall-watch: {team.Name}/{member.Name} member-down mail dropped after {MaxRemovedMailRetries} retries");
+                                            return true;
                                         }
 
                                         track.Reported = reported;

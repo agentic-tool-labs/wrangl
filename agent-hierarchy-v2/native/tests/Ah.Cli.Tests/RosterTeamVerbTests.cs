@@ -1612,6 +1612,29 @@ public sealed partial class RosterTeamVerbTests : IDisposable
         Assert.True(named is { IsText: true }, stdout);
         Assert.EndsWith(".json", named!.Value.AsString(), StringComparison.Ordinal);
         Assert.Contains("\"members\"", SnapshotText(named.Value.AsString()), StringComparison.Ordinal);
+        Assert.DoesNotContain("were not released", stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DisbandCloseWhoseGrantsStoreIsUnavailableWarnsForEachPrunedMemberAndStillFinishes()
+    {
+        WriteTeam("proj", LiveTeamJson("tmux", TwoPeers));
+        var token = TokenOf(Roster("disband", "--ignore-release", "--team", "proj").Stdout);
+        _wrapStateCalls = inner =>
+        {
+            var proxy = System.Reflection.DispatchProxy.Create<Ah.Hierarchy.StateCalls.IHierarchyStateCalls, FailingUnassign>();
+            ((FailingUnassign)(object)proxy).Inner = inner;
+            return proxy;
+        };
+
+        var (code, stdout, stderr) = Roster("disband", "--close", "--confirm", "--ignore-release", "--plan-token", token, "--team", "proj");
+
+        Assert.True(code == 0, stderr);
+        var result = JsonText.Parse(stdout);
+        var warnings = result.Member("warnings")!.Value.AsArray().Select(static w => w.AsString()).ToList();
+        Assert.Contains(warnings, w => w.StartsWith("the grants of proj-implementor were not released", StringComparison.Ordinal));
+        Assert.Contains(warnings, w => w.StartsWith("the grants of proj-reviewer were not released", StringComparison.Ordinal));
+        Assert.True(result.Member("team_removed") is { IsTruthy: true }, stdout);
     }
 
     [Fact]

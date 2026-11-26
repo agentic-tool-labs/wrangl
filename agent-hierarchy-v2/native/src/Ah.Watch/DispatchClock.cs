@@ -174,7 +174,8 @@ internal sealed record DispatchOutcome(
 /// <param name="ChainDown">Whether the member's session has an active <c>chain-down</c> row: it is winding down, so no resume is sent to it.</param>
 /// <param name="BgWaiting">Whether the member is idle on its own background work launched within 2 x the eta threshold: no check-in or resume is due.</param>
 /// <param name="BusySeenMs">When the roster last saw the member busy, in epoch milliseconds, or null when it never has.</param>
-internal sealed record OverdueTarget(string? Address, string Session, bool Idle, bool Known = true, bool Working = false, double? StateSinceMs = null, bool Busy = false, bool Blocked = false, bool Stalled = false, string? CompactedAt = null, SlotState? Slot = null, double? WorkingSinceMs = null, double? WorkingAtMs = null, bool ChainDown = false, double? BusySeenMs = null, bool BgWaiting = false);
+/// <param name="LiveJob">Whether the member's session has an open job record whose own process is proven running (ah2-639).</param>
+internal sealed record OverdueTarget(string? Address, string Session, bool Idle, bool Known = true, bool Working = false, double? StateSinceMs = null, bool Busy = false, bool Blocked = false, bool Stalled = false, string? CompactedAt = null, SlotState? Slot = null, double? WorkingSinceMs = null, double? WorkingAtMs = null, bool ChainDown = false, double? BusySeenMs = null, bool BgWaiting = false, bool LiveJob = false);
 
 /// <summary>A resume entry for a member whose brief is overdue, and the words its event carries when the entry is or is not written.</summary>
 /// <param name="EventIndex">Where the CHECK-IN or SILENT event it is reported in sits in <see cref="DispatchOutcome.Events"/>.</param>
@@ -409,6 +410,12 @@ internal static class DispatchClock
                 return true;
             }
 
+            // ah2-639 J1: a member whose own job process runs is working, up to the busy ceiling from the clock base, for both alarms
+            if (targetOf?.Invoke(c) is { Blocked: false, LiveJob: true } && AwakeSince(baseMs) <= HierarchyModule.BusyCeilingSeconds * 1000)
+            {
+                return true;
+            }
+
             if (checkIn && slot is null && targetOf?.Invoke(c) is { Known: true, Working: true, Blocked: false, Busy: false, WorkingAtMs: { } workedAt } fresh)
             {
                 // The base of the clock is the dispatch or the latest word or check-in: the due instant less one threshold.
@@ -581,8 +588,9 @@ internal static class DispatchClock
             var eventsBefore = events.Count;
             void IdleWithoutReport()
             {
+                // ah2-639 J2: background-waiting, a held or awaited slot, or a live job of its own is not idle without a report
                 if (events.Count != eventsBefore || c.BriefUnread || c.LaneDelegating || c.ReviewOpen
-                    || targetOf?.Invoke(c) is not { Known: true, Idle: true, Busy: false, Working: false, StateSinceMs: { } idleStart })
+                    || targetOf?.Invoke(c) is not { Known: true, Idle: true, Busy: false, Working: false, BgWaiting: false, Slot: null, LiveJob: false, StateSinceMs: { } idleStart })
                 {
                     return;
                 }

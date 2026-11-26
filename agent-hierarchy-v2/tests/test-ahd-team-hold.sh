@@ -229,6 +229,7 @@ team_js "$HIER/teams/tm2.json" 't.orchestrator = o.orchestrator; t.members.forEa
 QPID=$!
 # wait (deadline 30 s) until the quit has written its winding-down hold, so the stop lands during the wind-down
 END=$((SECONDS + 30)); until hold_of tm2 | grep -q '"phase": "winding-down"' || [ "$SECONDS" -ge "$END" ]; do sleep 0.2; done
+hold_of tm2 | grep -q '"phase": "winding-down"' || echo "note: the 30 s wait for the quit's winding-down hold ran out; the stop lands without it"
 # the quit, past its owner check, still holds session orch live, and the store registers a session to one live process: its
 # registration is dropped so the stop can prove the same Orchestrator session
 ah_forget_sessions orch

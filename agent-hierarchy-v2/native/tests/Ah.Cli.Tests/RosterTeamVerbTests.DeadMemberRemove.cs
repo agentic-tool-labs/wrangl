@@ -219,6 +219,42 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal("the close was not verified", rows[1]["why"].AsString());
     }
 
+    [Fact]
+    public void ACloseWhoseOnlyFailureIsTheReReadAfterItWritesNoRemoveFailedRowAndLogsTheThrow()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        ArrangeProvenDeadImplementor();
+        var registered = DateTimeOffset.UtcNow.AddHours(-1);
+        _registrations![Impl + "@proj"] = _registrations[Impl + "@proj"] with { At = registered };
+        var graph = JobGraph();
+        graph.Hierarchy.Core.Liveness = new ScriptedRows(_registrations, _registrationsLater, PlatformModule.CreateIo(null).Processes);
+        var logged = new List<string>();
+        var host = new StallHost(graph, _sandbox.AhHome, () => true, () => null, memberRemoval: new CaptureThenUnreadableTeam(), log: logged.Add);
+        var dead = new StallJudgement(new MemberVerdict(Verdict.Dead, "registration pid 4242 is another process now"), ImplSession, registered);
+
+        var removal = host.RemoveDead(new StallTeam("proj", Hierarchy, Project, "orchestrator@proj", "sess-orch"), new StallMember(Impl, "implementor", "%1", false), dead, DateTimeOffset.UtcNow);
+
+        Assert.Null(removal);
+        var rows = StallStore.JournalRows(_sandbox.AhHome).Select(static r => JsonText.Parse(r).AsObject()).Where(static r => r["kind"].AsString().StartsWith("member-remove", StringComparison.Ordinal)).ToList();
+        Assert.Equal(["member-remove"], rows.Select(static r => r["kind"].AsString()));
+        Assert.Contains(logged, l => l.Contains("the team could not be read after the close: disk gone", StringComparison.Ordinal));
+    }
+
+    /// <summary>A removal whose close returned, then whose re-read of the team threw.</summary>
+    private sealed class CaptureThenUnreadableTeam : IMemberRemoval
+    {
+        public MemberRemovalResult Remove(string hierarchyDir, string projectRoot, string team, string member, Action<JsonObject>? captured = null)
+        {
+            var capture = new JsonObject { ["name"] = member };
+            captured?.Invoke(capture);
+            return new MemberRemovalResult(false, capture, "the team could not be read after the close: disk gone") { Unverified = true };
+        }
+    }
+
     /// <summary>A removal that hands over its capture, then reports the close as failed with the row still there.</summary>
     private sealed class CaptureThenFailedClose : IMemberRemoval
     {
