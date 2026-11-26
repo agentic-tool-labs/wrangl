@@ -12,12 +12,12 @@ internal static class RoleVerbs
 {
     private static readonly string[] Flags =
     [
-        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold", "from", "pin",
+        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold", "from", "pin", "slot",
         "dry-run", "json", "cwd",
     ];
 
     private const string Usage =
-        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] (--dry-run | --pin sha256:…) | role trust <name> [--level L] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] [--slot design] (--dry-run | --pin sha256:…) | role trust <name> [--level L] [--slot design] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
 
     [Verb("roster:role")]
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
@@ -216,6 +216,15 @@ internal static class RoleVerbs
                 {
                     row["from"] = from;
                     row["pin_state"] = PackVerbs.PinState(entry.Member("pack"));
+                    if (_config.DesignOptInHolds(role, entry))
+                    {
+                        row["design_opt_in"] = true;
+                    }
+                    else if (entry.Member("slots") is not null)
+                    {
+                        row["slots_ignored"] = true;
+                    }
+
                     if (builtin)
                     {
                         row["pack_override"] = true;
@@ -261,8 +270,9 @@ internal static class RoleVerbs
                     : string.Empty;
                 var adopted = from ? $" — from {T(r.Member("from"))} ({T(r.Member("pin_state"))})" : string.Empty;
                 var declared = r.Member("params") is { IsArray: true } p ? $" — params: {string.Join(", ", p.AsArray().Select(x => T(x)))}" : string.Empty;
+                var slotsIgnored = r.Member("slots_ignored") is { IsTruthy: true } ? " — slots ignored (not given at trust)" : string.Empty;
                 lines.Add(
-                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}{declared}");
+                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}{slotsIgnored}{declared}");
             }
 
             foreach (var e in excluded)
@@ -348,6 +358,11 @@ internal static class RoleVerbs
             if (opts.Has("pin"))
             {
                 throw new RosterFailure($"role set {name}: --pin goes with --from; to re-trust an adopted role, use `role trust {name}`");
+            }
+
+            if (opts.Has("slot"))
+            {
+                throw new RosterFailure($"role set {name}: --slot goes with --from; to give an adopted role the opt-in, use `role trust {name} --slot design`");
             }
 
             var builtin = _config.IsBuiltinRole(name);
@@ -612,7 +627,7 @@ internal static class RoleVerbs
 
                 var file = scaffoldFlag == "repo"
                     ? NodePath.Join(root!, ".claude", "agents", $"{agent}.md")
-                    : NodePath.Join(c.Services.Environment.HomeDirectory, ".claude", "agents", $"{agent}.md");
+                    : NodePath.Join(LifecyclePermissions.ClaudeDir(c.Services.Environment), "agents", $"{agent}.md");
                 if (c.Services.Files.Exists(file))
                 {
                     throw new RosterFailure($"role set {name}: --scaffold refuses to overwrite {file}");
@@ -948,7 +963,7 @@ internal static class RoleVerbs
             {
                 // A model, dispatch or peer stored beside the old custom keys is a legitimate built-in override and stays.
                 var kept = RowAt(layerNext, name)!.Clone();
-                foreach (var key in new[] { "class", "label", "description", "routes", "agent", "from", "pin" })
+                foreach (var key in new[] { "class", "label", "description", "routes", "agent", "from", "pin", "slots" })
                 {
                     kept.Remove(key);
                 }
@@ -978,6 +993,7 @@ internal static class RoleVerbs
                 {
                     row.Remove("from");
                     row.Remove("pin");
+                    row.Remove("slots");
                 }
 
                 // An empty row would still shadow a wider level's row for this role under whole-row precedence.
@@ -993,6 +1009,11 @@ internal static class RoleVerbs
             else
             {
                 layerNext.Remove(name);
+            }
+
+            if (RowAt(layer, name)?.Get("pin") is { IsText: true } removedPin)
+            {
+                DropStoredOptIn(removedPin.AsString(), name);
             }
 
             var write = data.Clone();
@@ -1174,7 +1195,11 @@ internal static class RoleVerbs
 
         private void RefuseTrustCommitHere(string label) => RoleVerbs.RefuseTrustCommitHere(c, label);
 
-        private void WriteStoredCopy(string pin, JsonObject row, string agentText, JsonValue files)
+        /// <summary>
+        /// The stored copy for <paramref name="pin"/>, with <paramref name="name"/>'s design-slot opt-in recorded when <paramref name="slot"/>
+        /// and dropped otherwise; other roles' opt-ins on the same pin are kept. <c>slots</c> sits outside <c>row</c>, so the pin is unchanged.
+        /// </summary>
+        private void WriteStoredCopy(string pin, JsonObject row, string agentText, JsonValue files, string name, bool slot)
         {
             var hex = pin["sha256:".Length..];
             var path = AhPaths.TrustedPackFile(c.Services.Environment.HomeDirectory, hex);
@@ -1187,7 +1212,80 @@ internal static class RoleVerbs
             }
 
             var doc = new JsonObject { ["row"] = sorted, ["agentText"] = agentText, ["files"] = files };
+            var slots = _config.StoredCopy(pin) is { IsMap: true } old && old.Member("slots") is { IsMap: true } os ? os.AsObject().Clone() : new JsonObject();
+            slots.Remove(name);
+            if (slot)
+            {
+                slots[name] = new JsonArray { "design" };
+            }
+
+            if (slots.Keys.Any())
+            {
+                doc["slots"] = slots;
+            }
+
             LevelFiles.WriteAtomically(path, JsonText.Stringify(doc, 0) + "\n");
+        }
+
+        /// <summary>Removes <paramref name="name"/>'s design-slot opt-in from the stored copy for <paramref name="pin"/>, when it records one.</summary>
+        private void DropStoredOptIn(string pin, string name)
+        {
+            if (_config.StoredCopy(pin) is not { IsMap: true } copy || copy.Member("slots") is not { IsMap: true } slots || slots.AsObject().Get(name) is null)
+            {
+                return;
+            }
+
+            var next = copy.AsObject().Clone();
+            var kept = slots.AsObject().Clone();
+            kept.Remove(name);
+            if (kept.Keys.Any())
+            {
+                next["slots"] = kept;
+            }
+            else
+            {
+                next.Remove("slots");
+            }
+
+            var path = AhPaths.TrustedPackFile(c.Services.Environment.HomeDirectory, pin["sha256:".Length..]);
+            LevelFiles.WriteAtomically(path, JsonText.Stringify(next, 0) + "\n");
+        }
+
+        /// <summary><c>--slot</c>: false when absent, true for <c>design</c>; any other value is a usage error (adr-42: review slots stay first-party).</summary>
+        private bool SlotFlag(string label)
+        {
+            if (!c.Opts.Has("slot"))
+            {
+                return false;
+            }
+
+            if (OptText("slot") != "design")
+            {
+                throw new RosterFailure($"{label}: --slot accepts only design — review slots stay first-party");
+            }
+
+            return true;
+        }
+
+        /// <summary><c>--slot design</c> needs a design-class role with routes: the opt-in holds only for items in those routes.</summary>
+        private static void CheckSlot(string label, Review review)
+        {
+            if (review.Cls != "design")
+            {
+                throw new RosterFailure($"{label}: --slot design needs a design-class role, and this one is {review.Cls}-class");
+            }
+
+            if (review.Raw.Get("routes") is not { IsText: true } routes || routes.AsString().Trim().Length == 0)
+            {
+                throw new RosterFailure($"{label}: --slot design needs routes — the opt-in holds only for items in the role's routes");
+            }
+        }
+
+        private void WriteOptInLine(string name, JsonObject state, Review review)
+        {
+            var plugin = state.Get("from") is { IsMap: true } f ? T(f.Member("plugin")) : string.Empty;
+            c.Stderr.Write(
+                $"ah roster: ⚠ opt-in: {name} ({Esc(plugin)}) may design items in pipeline runs, for its routes \"{Esc(review.Raw.Get("routes"))}\"; its specs are what the first-party reviewer checks against\n");
         }
 
         private JsonObject ReadyState(string who, JsonValue from)
@@ -1222,6 +1320,7 @@ internal static class RoleVerbs
                 }
             }
 
+            var slot = SlotFlag($"role set {name} --from");
             if (!dry)
             {
                 RefuseTrustCommitHere($"role set {name} --from");
@@ -1312,7 +1411,7 @@ internal static class RoleVerbs
             {
                 foreach (var k in atLevel.Keys)
                 {
-                    if (k is not ("from" or "pin"))
+                    if (k is not ("from" or "pin" or "slots"))
                     {
                         row[k] = atLevel[k];
                     }
@@ -1336,8 +1435,22 @@ internal static class RoleVerbs
             var review = PackReview(name, state, row);
             var agent = T(review.Raw.Get("agent"));
             CheckOwner(name, agent);
+            if (slot)
+            {
+                CheckSlot($"role set {name} --from", review);
+                row["slots"] = new JsonArray { "design" };
+            }
 
             WriteToolLines(review);
+            if (slot && dry)
+            {
+                WriteOptInLine(name, state, review);
+            }
+            else if (dry && atLevel?.Get("slots") is not null)
+            {
+                c.Stderr.Write("ah roster: design opt-in will be dropped; add --slot design to keep it\n");
+            }
+
             if (review.Findings.Count > 0)
             {
                 c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");
@@ -1393,7 +1506,7 @@ internal static class RoleVerbs
             }
 
             var manifestRaw = state.Get("manifestRole")!.Value.Member("raw") is { IsMap: true } mraw ? mraw.AsObject() : new JsonObject();
-            WriteStoredCopy(pin, manifestRaw, T(state.Get("agentText")), state.Get("files") ?? new JsonArray());
+            WriteStoredCopy(pin, manifestRaw, T(state.Get("agentText")), state.Get("files") ?? new JsonArray(), name, slot);
             var stored = row.Clone();
             stored["pin"] = pin;
             WriteRoles(path, data, With(layer, name, stored));
@@ -1526,6 +1639,7 @@ internal static class RoleVerbs
                 throw new RosterFailure("role trust: --pin needs a value");
             }
 
+            var slot = SlotFlag($"role trust {name}");
             if (!dry)
             {
                 RefuseTrustCommitHere($"role trust {name}");
@@ -1566,6 +1680,11 @@ internal static class RoleVerbs
 
             var state = ReadyState($"role trust {name}", row.Get("from") ?? JsonValue.Null);
             var review = PackReview(name, state, row);
+            if (slot)
+            {
+                CheckSlot($"role trust {name}", review);
+            }
+
             var stored = _config.StoredCopy(row.Get("pin"));
             JsonObject changes;
             var now = state.Get("manifestRole")!.Value.Member("raw") is { IsMap: true } nr ? nr.AsObject() : new JsonObject();
@@ -1622,6 +1741,15 @@ internal static class RoleVerbs
             }
 
             WriteToolLines(review);
+            if (dry && slot)
+            {
+                WriteOptInLine(name, state, review);
+            }
+            else if (dry && row.Get("slots") is not null)
+            {
+                c.Stderr.Write("ah roster: design opt-in will be dropped; add --slot design to keep it\n");
+            }
+
             if (review.Findings.Count > 0)
             {
                 c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");
@@ -1658,9 +1786,17 @@ internal static class RoleVerbs
                 throw new RosterFailure($"role trust {name}: errors stand (above) — nothing was written");
             }
 
-            WriteStoredCopy(pin, now, T(state.Get("agentText")), state.Get("files") ?? new JsonArray());
+            WriteStoredCopy(pin, now, T(state.Get("agentText")), state.Get("files") ?? new JsonArray(), name, slot);
             var pinned = row.Clone();
             pinned["pin"] = pin;
+            if (slot)
+            {
+                pinned["slots"] = new JsonArray { "design" };
+            }
+            else
+            {
+                pinned.Remove("slots");
+            }
             WriteRoles(path, data, With(layer, name, pinned));
             var written = new JsonObject { ["written"] = true };
             RosterJson.Spread(written, result);

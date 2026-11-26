@@ -707,6 +707,11 @@ internal sealed partial class ConfigCore
                     withPack["pin"] = pin;
                 }
 
+                if (info.Raw.AsObject().Get("slots") is { } slots)
+                {
+                    withPack["slots"] = slots;
+                }
+
                 withPack["pack"] = expanded["pack"];
                 row = withPack;
             }

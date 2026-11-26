@@ -586,6 +586,64 @@ check "P16 with a live run: an implement-class pack role spawns" '[ $RC = 0 ]'
 rm_ spawn-one pimpl --dry-run --orchestrator-pid $$
 check "P16 with a live run: spawn-one of an implement-class pack role spawns" '[ $RC = 0 ]'
 
+# ================================================================ P16b the design-slot opt-in (adr-42)
+fresh
+copyslots() { node -e 'try{const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(JSON.stringify(d.slots||null))}catch{process.stdout.write("none")}' "$TRUSTED/${1#sha256:}.json"; }
+rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run --slot review
+check "P16b --slot review is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"--slot accepts only design"* ]]'
+rm_ role set pdes --from pk@mk:pk-des --dry-run --slot design
+check "P16b --slot design with no routes is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"needs routes"* ]]'
+rm_ role set prv --from pk@mk:pk-rev --routes "pack scenes" --dry-run --slot design
+check "P16b --slot design on a review-class role is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"design-class"* ]]'
+rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run --slot design
+PIN=$(jget o.pin)
+check "P16b the dry run prints the flagged opt-in line with the routes" '[ $RC = 0 ] && [[ "$ERR" == *"⚠ opt-in: pdes (pk) may design items in pipeline runs, for its routes \"pack scenes\""* ]]'
+rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run
+check "P16b ... and without --slot it prints no opt-in line" '[ $RC = 0 ] && [[ "$ERR" != *"opt-in"* ]]'
+WRANGL_TEAM_FILE="$PROJ/.claude/ah2/teams/t.json" rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --pin "$PIN" --slot design
+check "P16b --slot design from a team member is refused by the trust-commit guard" '[ $RC != 0 ] && [[ "$ERR" == *"team member"* ]] && [ ! -f "$GLOBAL_CFG" ]'
+adopt pdes pk@mk:pk-des --routes "pack scenes" --slot design
+check "P16b the commit writes slots into the row and the stored copy" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "JSON.stringify(d.roles.pdes.slots) === \"[\\\"design\\\"]\"" && [ "$(copyslots "$PIN")" = "{\"pdes\":[\"design\"]}" ]'
+adopt prv pk@mk:pk-rev
+rolerow pdes
+check "P16b role list shows the opt-in as held" '[ "$(jget o.design_opt_in)" = true ] && [ "$(jget o.slots_ignored)" != true ]'
+rm_ role trust pdes --dry-run
+check "P16b a re-trust dry run without --slot says the opt-in will be dropped" '[ $RC = 0 ] && [[ "$ERR" == *"design opt-in will be dropped; add --slot design to keep it"* ]]'
+mutate "$REPO_CFG" 'd.roster = {route: "peer", members: []}'
+anchor
+rm_ spawn-ad-hoc pdes --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
+check "P16b with a live run: an opted-in design-class pack role spawns" '[ $RC = 0 ]'
+rm_ spawn-ad-hoc prv --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
+check "P16b with a live run: a review-class pack role is still refused" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]]'
+fresh
+adopt pdes pk@mk:pk-des --routes "pack scenes" --slot design
+rm_ role trust pdes --pin "$PIN"
+check "P16b role trust --pin without --slot drops the opt-in from the row and the copy" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.pdes.slots === undefined" && [ "$(copyslots "$PIN")" = null ]'
+rm_ role trust pdes --pin "$PIN" --slot design
+check "P16b ... and role trust --slot design gives it back" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.pdes.slots[0] === \"design\"" && [ "$(copyslots "$PIN")" = "{\"pdes\":[\"design\"]}" ]'
+rm_ role remove pdes
+mutate "$GLOBAL_CFG" "d.roles.pdes = {from: \"pk@mk:pk-des\", pin: \"$PIN\", routes: \"pack scenes\", slots: [\"design\"]}"
+rolerow pdes
+check "P16b role remove drops the opt-in from the stored copy: a hand re-added row with slots does not hold it" '[ "$(copyslots "$PIN")" = null ] && [ "$(jget o.slots_ignored)" = true ] && [ "$(jget o.design_opt_in)" != true ]'
+rm_ role trust pdes --pin "$PIN"
+mutate "$GLOBAL_CFG" 'd.roles.pdes.slots = ["design"]'
+rolerow pdes
+check "P16b role list: a hand-edited slots the stored copy does not record is ignored" '[ "$(jget o.slots_ignored)" = true ] && [ "$(jget o.design_opt_in)" != true ]'
+rm_ role list
+check "P16b ... the text list says so" '[[ "$OUT" == *"slots ignored (not given at trust)"* ]]'
+mutate "$REPO_CFG" 'd.roster = {route: "peer", members: []}'
+anchor
+rm_ spawn-ad-hoc pdes --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
+check "P16b with a live run: that hand-edited role is still refused" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]]'
+fresh
+bad "$PACKS/slotted" 'm.roles["pk-des"].slots = ["design"]'
+showpath "$PACKS/slotted"
+check "P16b a manifest that declares slots gets the unknown-key warning" '[[ "$(jget "o.roles.find(r => r.name === \"pk-des\").warnings.join()")" == *"unknown key \"slots\""* ]]'
+installed "{\"pk@mk\":[\"$PACKS/slotted\"]}"
+adopt psl pk@mk:pk-des --routes "pack scenes"
+rolerow psl
+check "P16b ... and the slots it declares are ignored: an adopted role has neither the row field nor the opt-in" '[ "$(jget o.name)" = psl ] && filejs "$GLOBAL_CFG" "d.roles.psl.slots === undefined" && [ "$(jget o.design_opt_in)" != true ]'
+
 # ================================================================ P17 no bypassPermissions
 fresh
 adopt pimpl pk@mk:pk-impl

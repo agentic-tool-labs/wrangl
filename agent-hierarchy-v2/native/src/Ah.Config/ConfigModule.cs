@@ -518,6 +518,9 @@ public interface IConfigCore
     /// <summary><c>readStoredCopy</c>: this machine's stored copy for a pin, or JSON null.</summary>
     JsonValue StoredCopy(JsonValue? pin);
 
+    /// <summary>Whether a pack row's design-slot opt-in holds: its <c>slots</c> and this machine's stored copy for its pin agree (adr-42).</summary>
+    bool DesignOptInHolds(string role, JsonValue? entry);
+
     /// <summary><c>packNameClaims</c>: <c>{error, byRole, files}</c>, the two maps as objects in the order their entries were found.</summary>
     JsonObject PackNameClaimsJson(string dir, JsonValue? manifest);
 

@@ -642,11 +642,11 @@ public sealed record MemberLauncher(
         if (transport == "herdr" && Herdr.Flavour != Ah.Core.Mux.HerdrFlavour.Core && ClaudeConfigOf(spawn) is { Count: > 0 } claudeConfig
             && transportId is { IsText: true } paneId && paneId.AsString() != placeholderText)
         {
-            // The line is for the pane's shell: a pane whose agent still runs (or the caller's own) would take it as a prompt. A pane whose
-            // processes cannot be read is typed into as before.
-            if (PaneHostsLiveAgent(paneId.AsString()))
+            // The line is for the pane's shell: a pane running anything but its shell (or the caller's own) would take it as input. A pane
+            // whose processes cannot be read is typed into as before.
+            if (paneId.AsString() == Ah.Core.Mux.HerdrFlavour.SessionPaneId(Environment.GetVariable) || PaneRunsOnlyItsShell(paneId.AsString()) == false)
             {
-                var busy = $"pane {paneId.AsString()} is busy: an agent still runs in it, so the Claude environment line was not typed and nothing was launched";
+                var busy = $"pane {paneId.AsString()} is busy: something other than its shell runs in it, so the Claude environment line was not typed and nothing was launched";
                 return With(member, ("launch_status", "failed"), ("launch_result", new JsonObject { ["reason"] = "pane-busy", ["detail"] = busy }), ("retried", false), ("error", busy));
             }
 
@@ -1105,21 +1105,7 @@ public sealed record MemberLauncher(
                 return;
             }
 
-            var info = Herdr.InvokeAllowFailure(["pane", "process-info", "--pane", pane]);
-            if (!info.Ok
-                || !JsonText.TryParse(Utf8Text.Encode(info.Stdout), out var detail)
-                || detail.Member("result")?.Member("process_info") is not { IsMap: true } processInfo
-                || processInfo.Member("shell_pid") is not { Kind: JsonKind.Number } shell
-                || processInfo.Member("foreground_processes") is not { IsArray: true } foreground)
-            {
-                return;
-            }
-
-            // The same reading the bare detector uses: a pane is clear of an agent only when no foreground process is a harness command.
-            if (BareDetector.ProcessesOf(detail) is not { } processes
-                || processes.Count != foreground.AsArray().Count
-                || processes.Any(p => Ah.Mesh.MeshModule.IsHarnessCommand(string.Join(' ', p.Argv)))
-                || processes.Any(p => p.Pid != (int)shell.AsNumber()))
+            if (PaneRunsOnlyItsShell(pane) != true)
             {
                 return;
             }
@@ -1129,6 +1115,45 @@ public sealed record MemberLauncher(
         catch (InvalidOperationException)
         {
             // an unreadable herdr changes nothing; the launch is retried and refused as before
+        }
+    }
+
+    /// <summary>
+    /// True when every foreground process of <paramref name="pane"/> is its shell and none is a harness command; false when anything else
+    /// runs in its foreground (a listed process that cannot be read included); null when its processes cannot be read.
+    /// </summary>
+    private bool? PaneRunsOnlyItsShell(string pane)
+    {
+        try
+        {
+            var info = Herdr.InvokeAllowFailure(["pane", "process-info", "--pane", pane]);
+            if (!info.Ok
+                || !JsonText.TryParse(Utf8Text.Encode(info.Stdout), out var detail)
+                || BareDetector.ProcessesOf(detail) is not { } processes)
+            {
+                return null;
+            }
+
+            // a harness in the foreground blocks even when the shell's pid cannot be read
+            if (processes.Any(p => Ah.Mesh.MeshModule.IsHarnessCommand(string.Join(' ', p.Argv))))
+            {
+                return false;
+            }
+
+            if (detail.Member("result")?.Member("process_info") is not { IsMap: true } processInfo
+                || processInfo.Member("shell_pid") is not { Kind: JsonKind.Number } shell
+                || processInfo.Member("foreground_processes") is not { IsArray: true } foreground)
+            {
+                return null;
+            }
+
+            return processes.Count == foreground.AsArray().Count
+                && !processes.Any(p => Ah.Mesh.MeshModule.IsHarnessCommand(string.Join(' ', p.Argv)))
+                && processes.All(p => p.Pid == (int)shell.AsNumber());
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
         }
     }
 

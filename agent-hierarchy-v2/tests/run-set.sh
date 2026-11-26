@@ -2,12 +2,12 @@
 # agent-hierarchy — run a named test set at a commit and keep the result by (commit, set), so a pass is reused instead of run again.
 # The one implementation of "run set S at SHA X": the QA agent, the reviewer and the pipeline all go through it.
 #
-#   bash tests/run-set.sh <repo> <sha> <set> [--fresh] [--base <base-sha> [--fresh-base]]
+#   bash tests/run-set.sh <repo> <sha> <set> [--fresh] [--base <base-sha> [--fresh-base]] [--tests <name>[,<name>...]]
 #   bash tests/run-set.sh --list-sets      print the set names, one per line, and exit 0 (it must be the first argument)
 #
 #   repo   a checkout that contains the commit (any work tree of the repository)
 #   sha    the full 40-hex commit; the work tree is not looked at, so uncommitted work is never tested
-#   set    dotnet | shell | full | affected (full is dotnet alongside shell, dotnet in a clone of its own and its lines printed whole when it ends;
+#   set    dotnet | shell | full | affected | list (full is dotnet alongside shell, dotnet in a clone of its own and its lines printed whole when it ends;
 #          both run even after a red one)
 #          affected needs --base: it builds the solution, tests the test projects and runs the shell suites the diff from the base reaches
 #          (test projects by tests/contract-tools/gate-select.mjs; suites changed or covering a changed path), then tests/keep-set.sh, dotnet and
@@ -46,6 +46,9 @@
 # The sets (the only place they are named; adding one is a new case in run_set_body and a name in SETS):
 #   dotnet   the clone's scripts/dotnet-test.sh --logger trx, which builds and tests the whole solution inside one machine-wide slot
 #   shell    the clone's tests/run-all.sh, with AHD_NATIVE_BIN the ahd published from the clone
+#   list     shell narrowed to the suites --tests names (test-<name>, with or without tests/ and .sh; each must exist at the sha, else
+#            a usage error before anything runs), stored per list in <sha>/list-<hash of the sorted names>/, so it never answers
+#            a request for shell or full. With --base the base runs the same list.
 # Every command is the clone's own copy, so the tests match the commit; this script never takes a slot itself (each command takes its
 # own, so two runs cannot hold one slot each while waiting for another) and never calls dotnet itself.
 #
@@ -87,7 +90,7 @@ DEFAULT_STORE=1; [ -z "${AH_RESULTS_DIR:-}" ] || DEFAULT_STORE=0
 STORE="${AH_RESULTS_DIR:-$STORE_ROOT}"
 LEGACY_STORE="${AH_LEGACY_RESULTS_DIR:-/private/tmp/ahprobe.results}"
 WAIT="${AH_TEST_SLOT_WAIT:-3600}"
-SETS="dotnet shell full affected"
+SETS="dotnet shell full affected list"
 # the set names, one per line, for callers that must not keep their own copy of the list
 if [ "${1:-}" = "--list-sets" ]; then printf '%s\n' $SETS; exit 0; fi
 numvar() { local v; eval "v=\${$1:-}"; case "$v" in ''|*[!0-9]*) echo "$2";; *) echo "$v";; esac; }
@@ -97,7 +100,7 @@ RERUN_MAX=$(numvar AH_RERUN_MAX 10); RERUN_TMO=$(numvar AH_RERUN_TIMEOUT 60)
 RERUN_J=$(( $(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4) / 2 )); [ "$RERUN_J" -gt 8 ] && RERUN_J=8
 RERUN_J=$(numvar AH_RERUN_JOBS "$RERUN_J"); [ "$RERUN_J" -lt 1 ] && RERUN_J=1
 
-usage() { echo "run-set: $1" >&2; echo "usage: run-set.sh <repo> <sha> <set> [--fresh] [--base <sha> [--fresh-base]]   (set: dotnet|shell|full|affected)   or: run-set.sh --list-sets" >&2; exit 2; }
+usage() { echo "run-set: $1" >&2; echo "usage: run-set.sh <repo> <sha> <set> [--fresh] [--base <sha> [--fresh-base]] [--tests <name>[,<name>...]]   (set: dotnet|shell|full|affected|list)   or: run-set.sh --list-sets" >&2; exit 2; }
 
 case "$STORE" in */..|*/../*) usage "AH_RESULTS_DIR must not contain ..: $STORE";; esac
 if [ -d "$STORE" ]; then STORE="$(cd "$STORE" && pwd -P)"; fi
@@ -108,7 +111,7 @@ case "$STORE" in
   *) usage "AH_RESULTS_DIR must be under $STORE_ROOT or /private/tmp/ahprobe.*: $STORE";;
 esac
 case "$WAIT" in ''|*[!0-9]*) WAIT=3600;; esac
-FRESH=0; ARGS=(); BASE=""; FRESHBASE=0
+FRESH=0; ARGS=(); BASE=""; FRESHBASE=0; TESTS=""; HAVE_TESTS=0; LIST=""; LKEY=""
 # set only by resolve_base on the base run it starts: that run makes again any stored result that was not made where this run is
 BASERUN="${AH_RUN_SET_BASERUN:-0}"; unset AH_RUN_SET_BASERUN
 # set only by resolve_base with it: how much of shell the run being judged needs from this base
@@ -118,6 +121,7 @@ while [ $# -gt 0 ]; do
     --fresh) FRESH=1;;
     --fresh-base) FRESHBASE=1;;
     --base) [ $# -ge 2 ] || usage "--base needs a commit"; BASE="$2"; shift;;
+    --tests) [ $# -ge 2 ] || usage "--tests needs <name>[,<name>...]"; TESTS="$2"; HAVE_TESTS=1; shift;;
     -h|--help) sed -n '2,/^set -u/p' "$0" | sed '$d'; exit 0;;
     -*) usage "unknown option $1";;
     *) ARGS+=("$1");;
@@ -142,6 +146,24 @@ fi
 [ "$SET" != affected ] || [ -n "$BASE" ] || usage "affected needs --base: the diff from it decides what runs"
 # where the plugin sits inside the repository ("agent-hierarchy-v2/", or empty at the root)
 PREFIXREL="$(git -C "$PLUGIN" rev-parse --show-prefix 2>/dev/null)"
+# list: the named suites, checked against the sha's tree before anything runs; LIST one name per line, sorted; LKEY its store key
+if [ "$SET" = list ]; then
+  IFS=, read -r -a NAMES <<< "$TESTS"
+  for n in ${NAMES[@]+"${NAMES[@]}"}; do
+    n="${n#tests/}"; n="${n%.sh}"
+    [ -n "$n" ] || continue
+    case "$n" in test-*) ;; *) usage "unknown suite '$n': a suite is a test-<name>";; esac
+    case "$n" in */*|*[!A-Za-z0-9._-]*) usage "unknown suite '$n'";; esac
+    git -C "$REPO" cat-file -e "$SHA:${PREFIXREL}tests/$n.sh" 2>/dev/null || usage "unknown suite '$n': no tests/$n.sh at $SHA"
+    LIST="$LIST$n"$'\n'
+  done
+  [ -n "$LIST" ] || usage "list needs --tests <name>[,<name>...]"
+  LIST="$(printf '%s' "$LIST" | sort -u)"
+  TESTS="$(printf '%s\n' "$LIST" | paste -sd, -)"
+  LKEY="list-$(printf '%s\n' "$LIST" | git hash-object --stdin | cut -c1-12)"
+elif [ "$HAVE_TESTS" = 1 ]; then
+  usage "--tests needs the list set"
+fi
 
 now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 CLONE=""; BINDIR=""; MYLOCKS=(); DOTNET_JOB=""
@@ -450,6 +472,21 @@ run_shell() {
 # the contract shards alone, under a key of their own so that they never answer a request for shell; their result reads as part of shell
 run_contracts() { SHELL_PREFIX=contracts-s; run_shell; }
 rerun_contracts() { rerun_shell "$@"; }
+# the list set: shell narrowed to the named suites, under its own key per list
+# A name the clone's run-all would not run (pruned) is refused before the run; after it, the suites that ran must be the list.
+# A clone's run-all from before --runnable (exit 2) is answered by run-set's own, as --limit is.
+run_list() {
+  local n rc
+  for n in $LIST; do
+    AH_TEST_SLOT_HELD=1 bash "$CLONE/${PREFIXREL}tests/run-all.sh" --runnable "$n" > /dev/null 2>&1; rc=$?
+    [ "$rc" -le 1 ] || { AH_TEST_SLOT_HELD=1 AH_RUN_ALL_TESTS="$CLONE/${PREFIXREL}tests" bash "$HERE/run-all.sh" --runnable "$n" > /dev/null 2>&1; rc=$?; }
+    [ "$rc" = 0 ] || { ERRMSG="unknown suite '$n': run-all at $SHA would not run it (pruned)"; return 1; }
+  done
+  SHELL_ONLY="$KD/list.only"; printf '%s\n' "$LIST" > "$SHELL_ONLY"
+  run_shell || return 1
+  [ "$(sort -u "$KD/suites.txt")" = "$LIST" ] || { ERRMSG="the suites that ran ($(sort -u "$KD/suites.txt" | paste -sd, -)) are not the list ($TESTS)"; return 1; }
+}
+rerun_list() { rerun_shell "$@"; }
 
 # ---- the parts of the affected set, under keys of their own per base so that they never answer a request for another set or base
 # What every test depends on, so a narrowed run could not stand for it: Ah.Core and the three other projects most projects reference, the test
@@ -543,7 +580,7 @@ base_comps() {
   if [ "$DIFF_MODE" = none ]; then echo dotnet
   elif [ "$DIFF_MODE" = shards ] && [ -f "$STORE/$BASE/contracts/result.json" ]; then echo dotnet contracts full
   elif [ "$SET" = full ]; then echo dotnet shell full
-  else echo "$SET"; fi
+  else echo "${LKEY:-$SET}"; fi
 }
 # base_state: ok when every component result of the base exists, has a status that can be compared and was made where this run is;
 # missing when one is absent or unusable; incomparable otherwise
@@ -573,7 +610,7 @@ resolve_base() {
     echo "run-set: the base $BASE: $( [ "$st" = missing ] && echo 'no stored result, running it' || echo 'not comparable, running it again here')" >&2
     # the early abort stays off in a base run, so its failure list is complete
     # a base is run to the end and stored whole: no systemic limit, no rerun cap, no early abort; its isolated reruns stay on
-    AH_SYSTEMIC_MAX=999999999 AH_SYSTEMIC_PCT=100 AH_RERUN_MAX=999999999 AH_RUN_SET_BASERUN=1 AH_RUN_SET_BASEMODE="$DIFF_MODE" AH_RUN_ALL_NOABORT=1 bash "$0" "$REPO" "$BASE" "$( [ "$DIFF_MODE" = none ] && echo dotnet || echo "$SET" )" >&2
+    AH_SYSTEMIC_MAX=999999999 AH_SYSTEMIC_PCT=100 AH_RERUN_MAX=999999999 AH_RUN_SET_BASERUN=1 AH_RUN_SET_BASEMODE="$DIFF_MODE" AH_RUN_ALL_NOABORT=1 bash "$0" "$REPO" "$BASE" "$( [ "$DIFF_MODE" = none ] && echo dotnet || echo "$SET" )" ${LKEY:+--tests "$TESTS"} >&2
     rc=$?
     [ "$rc" = 75 ] && exit 75
     st="$(base_state)"
@@ -592,6 +629,7 @@ resolve_one() {
     affdotnet) rset=dotnet; key="$set-$BASE";;
     affshell) rset=shell; key="$set-$BASE";;
     affkeep) rset=keep; key="$set-$BASE";;
+    list) bset=$LKEY; key=$LKEY;;
   esac
   KD="$STORE/$SHA/$key"
   deadline=$((SECONDS + WAIT))
@@ -633,7 +671,7 @@ resolve_one() {
 if [ "$BASERUN" = 0 ]; then mkdir -p "$STORE" 2>/dev/null; adopt_legacy; prune_store; fi
 [ -z "$BASE" ] || [ "$SET" = affected ] || resolve_base
 case "$SET" in
-  dotnet|shell|native)
+  dotnet|shell|native|list)
     resolve_one "$SET"
     ;;
   full|affected)
@@ -749,7 +787,7 @@ if [ -n "$BASE" ] && [ "$SET" != affected ] && [ "$R_STATUS" != ERROR ] && [ -f 
   VF="$R_PATH.verdict.$$"
   WHY="$(base_why)"
   # a run with no shell at all may have a base with no full result: its dotnet result is all that run is judged against
-  BASE_RESULT="$STORE/$BASE/$SET/result.json"
+  BASE_RESULT="$STORE/$BASE/${LKEY:-$SET}/result.json"
   [ "$DIFF_MODE" = none ] && [ ! -f "$BASE_RESULT" ] && BASE_RESULT="$STORE/$BASE/dotnet/result.json"
   node "$TOOLS" compare --head "$R_PATH" --base "$BASE_RESULT" --basesha "$BASE" ${WHY:+--incomparable "the base: $WHY"} > "$VF"
   VRC=$?

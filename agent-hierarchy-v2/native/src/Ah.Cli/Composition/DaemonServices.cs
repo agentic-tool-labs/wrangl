@@ -740,7 +740,7 @@ internal sealed class DaemonServices
                     TranscriptFiles = g.Io.Files,
                     Usage = HierarchyModule.CreateUsage(g.Io.Files, g.Environment, Ah.StateDb.StateDbModule.CreateUsageRows(g.Environment.AhHome)),
                     ValidTranscriptPath = raw => recovery.TranscriptPathOk(JsonValue.FromString(raw)),
-                    TranscriptProjects = Path.Combine(_environment.HomeDirectory, ".claude", "projects"),
+                    TranscriptProjects = Path.Combine(Ah.Core.CoreModule.ClaudeConfigDir(_environment.GetVariable("CLAUDE_CONFIG_DIR"), _environment.HomeDirectory), "projects"),
                     GitProcess = g.Runner,
                     NewPlanFold = Ah.Hierarchy.HierarchyModule.CreatePlanFold,
                     QueueProbe = (dir, team, nowMs) => QueueRows.Of(g, dir, team, nowMs),

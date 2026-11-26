@@ -18,7 +18,7 @@ internal sealed class MsgOptions
     // json is a switch everywhere except `decision add` and `decision ui-answer`, where it carries the decision or answer object
     private static readonly HashSet<string> BoolFlags = new(StringComparer.Ordinal)
     {
-        "plain", "json", "open", "closed", "all", "summary", "overdue", "line", "force", "request", "count", "hold", "waiting", "part", "questions", "answered", "unanswered", "full",
+        "plain", "json", "open", "closed", "all", "summary", "overdue", "line", "force", "request", "count", "hold", "waiting", "part", "review", "questions", "answered", "unanswered", "full",
     };
 
     private readonly Dictionary<string, string?> _values = new(StringComparer.Ordinal);

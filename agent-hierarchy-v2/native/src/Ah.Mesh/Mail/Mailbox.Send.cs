@@ -215,6 +215,12 @@ internal sealed partial class Mailbox
                     throw new MailboxError("bad_request", $"response {responseId} is still the template — fill it with `ah msg fill --id {responseId} --from <your role> --body-file -`, then send again.");
                 }
 
+                // a verdict filed with `fill --review` names its request and first line beside the ref (ah2-530)
+                if (req.Get("verdict") is { IsText: true } verdict && verdict.AsString().Length is > 0 and <= MaxNoteChars)
+                {
+                    entry["verdict"] = verdict;
+                }
+
                 SealRef(file);
                 entry["ref_sha256"] = Convert.ToHexStringLower(SHA256.HashData(hierarchy.Core.MsgBytes(file) ?? throw new MailboxError("bad_request", $"--ref {reference} has no body")));
                 if (RepeatOf(to.Dir, entry, file, now) is { } delivered)
@@ -1035,7 +1041,7 @@ internal sealed partial class Mailbox
             lines.Add($"delivery: plugin prompt — {NothingToDo}");
             if (result.Get("receiver_unregistered") is { IsTruthy: true })
             {
-                lines.Add($"no single registered receiver for {Js(result.Get("address"))}; the ladder delivers it; {NothingToDo}");
+                lines.Add($"no single registered receiver for {Js(result.Get("address"))}; SendMessage the member its brief pointer; its next hook registers it and queued mail follows");
             }
         }
         else if (Js(result.Get("delivery")) == "pull")

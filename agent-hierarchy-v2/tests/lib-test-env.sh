@@ -181,6 +181,9 @@ ah_forget_usage() {
   sqlite3 "$AH_HOME/state/ah.db" "DELETE FROM usage_rows"
 }
 
+# ah_claude_dir <home>: the Claude directory the binary resolves for that home (CLAUDE_CONFIG_DIR when set, as run-all.sh sets it).
+ah_claude_dir() { printf '%s' "${CLAUDE_CONFIG_DIR:-$1/.claude}"; }
+
 # ah_seed_home_doc <key> <json>: stores a home document (home.session-roles, home.ultra-gate, home.permissions) as given.
 ah_seed_home_doc() { printf '%s' "$2" | AH_DAEMON=off sh "$PLUGIN/bin/ah" db test-seed home-docs --key "$1" >/dev/null; }
 

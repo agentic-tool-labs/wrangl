@@ -82,6 +82,11 @@ internal sealed partial class HierLib
     {
         var dir = ArgText(args, "dir");
         var path = ArgText(args, "path");
+        if (args.Member("review") is { IsTruthy: true })
+        {
+            return ReviewFillDb(tx, dir, path, args);
+        }
+
         var fillArgs = FillArgsOf(args, path);
         var id = fillArgs.Get("id") is { IsText: true } idText ? idText.AsString() : string.Empty;
         RefuseIfExchangeClosed(tx, dir, id, path);
@@ -114,6 +119,40 @@ internal sealed partial class HierLib
         }
 
         return new JsonObject { ["ok"] = true };
+    }
+
+    /// <summary>The path of the verdict <paramref name="role"/> files on request <paramref name="requestPath"/>: its note record beside it (ah2-530).</summary>
+    internal static string? ReviewPath(string requestPath, string role) =>
+        MessageText.ParseFilename(requestPath) is { Type: "request" } r && MessageText.ParseFilename($"{r.Id}--{role}--{r.Slug}--note.md") is not null
+            ? NodePath.Join(NodePath.Dirname(requestPath), $"{r.Id}--{role}--{r.Slug}--note.md")
+            : null;
+
+    /// <summary>
+    /// <c>fill --review</c>: writes the verdict as the request's note record, or replaces it with a new revision. The response and its slot are
+    /// not touched, so the exchange still closes on the response.
+    /// </summary>
+    private JsonObject ReviewFillDb(IDbOpTransaction tx, string dir, string path, JsonValue args)
+    {
+        var req = ArgText(args, "req");
+        var from = ArgText(args, "from");
+        if (ReviewPath(req, from) is not { } expected || MsgRows.PathKey(expected) != MsgRows.PathKey(path)
+            || MsgRows.PoolKey(NodePath.Dirname(NodePath.Dirname(path))) != MsgRows.PoolKey(dir))
+        {
+            throw new InvalidOperationException($"fill --review: {path} is not the review of {req} by {from}");
+        }
+
+        NotInMsgs(path, dir);
+        var parts = MessageText.ParseFilename(path)!;
+        var text = ArgText(args, "body");
+        if (JsText.Trim(text).Length == 0 || text.Split('\n').Contains("---"))
+        {
+            throw new InvalidOperationException("fill --review: the verdict is empty or has a line that is exactly ---");
+        }
+
+        var content = $"---\nid: {parts.Id}\ntype: note\nto: {from}\nfrom: {from}\nslug: {parts.Slug}\nparent: {parts.Id}\nreview: true\ncreated: {LocalIso()}\n---\n\n{(text.EndsWith('\n') ? text : text + "\n")}";
+        var bytes = Utf8Text.Encode(content);
+        var (rev, _) = SealNewBytes(tx, dir, path, bytes);
+        return new JsonObject { ["ok"] = true, ["bytes"] = bytes.Length, ["rev"] = rev };
     }
 
     /// <summary>Seals the message at <c>path</c>: a draft's newest revision becomes sealed. A message already sealed changes nothing.</summary>

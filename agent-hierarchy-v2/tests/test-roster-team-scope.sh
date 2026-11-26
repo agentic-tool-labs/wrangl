@@ -29,8 +29,8 @@ PROJ="$SANDBOX/myrepo"
 mkdir -p "$FAKEHOME/.claude/ah2" "$PROJ/.claude/ah2" "$SANDBOX/bin"
 # A non-claude member's standing instructions carry its role's agent body, found through
 # installed_plugins.json as role validation finds it; this plugin is the one installed.
-mkdir -p "$FAKEHOME/.claude/plugins"
-echo "{\"version\":2,\"plugins\":{\"wrangl@local\":[{\"installPath\":\"$PLUGIN\"}]}}" > "$FAKEHOME/.claude/plugins/installed_plugins.json"
+mkdir -p "$(ah_claude_dir "$FAKEHOME")/plugins"
+echo "{\"version\":2,\"plugins\":{\"wrangl@local\":[{\"installPath\":\"$PLUGIN\"}]}}" > "$(ah_claude_dir "$FAKEHOME")/plugins/installed_plugins.json"
 (cd "$PROJ" && git init -q)
 NODE_DIR="$(dirname "$(command -v node)")"
 HIER="$PROJ/.claude/ah2"

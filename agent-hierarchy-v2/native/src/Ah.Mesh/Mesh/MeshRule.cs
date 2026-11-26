@@ -583,7 +583,9 @@ internal sealed partial class MeshRule(ILinks links, IAhEnvironment environment)
                         return OnAssignment(off.AsObject());
                     }
 
-                    if (requested.Count > 0 && !OpensByAssignment())
+                    // an entry on the sender's current task goes on to rule 10, which opens a link for that task as for the first (ah2-530)
+                    var onCurrent = p.Task is { Id.Length: > 0 } current && p.Facts.ChainReachesTask(p.Ref, current.Id!, dir, sender.Team ?? string.Empty);
+                    if (requested.Count > 0 && !OpensByAssignment() && !onCurrent)
                     {
                         var linked = requested[0].AsObject().Get("task") is { IsText: true } lt ? lt.AsString() : "<task>";
                         return Refuse("9", "link_off_task", 403, OffTaskText(linked, orchestrator));

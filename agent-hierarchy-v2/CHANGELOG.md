@@ -4,6 +4,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.63] - 2026-11-26
+
+### Added
+
+- A trusted pack role can fill a design slot in a pipeline run. Pass `--slot design` to `ah roster role set --from` or `ah roster role trust`; the dry run says what the opt-in gives up. Review slots and gate sign-off stay first-party, and `role remove` or a re-trust without the flag drops the opt-in.
+- A reviewer that got work over a hand-off link files its verdict with `ah msg fill --id <id> --from <role> --review`. The Orchestrator gets one report naming the verdict, and `ah msg show <id> review` prints it.
+- `tests/run-set.sh` takes a `list` set with `--tests <name>,...` for a targeted retest of named shell suites, with its own stored result.
+
+### Changed
+
+- A member's later task from the Orchestrator gets its hand-off link the same way its first task did, instead of `link_off_task`.
+- A member whose start hook was skipped registers on its next hook. The `member-unconfirmed` mail and the "no single registered receiver" line now say to SendMessage the member its brief pointer.
+- Six places that read `~/.claude` by fixed path now honour `CLAUDE_CONFIG_DIR`.
+
+### Fixed
+
+- A launch no longer types its environment line into a TUI pane where something other than the shell is running.
+- `test-ahd-team-hold` F4 no longer races the quit's own registration under load.
+
 ## [2.0.62] - 2026-11-26
 
 ### Added

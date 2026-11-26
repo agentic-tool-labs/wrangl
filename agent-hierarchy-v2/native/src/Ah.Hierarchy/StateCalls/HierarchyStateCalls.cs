@@ -43,6 +43,9 @@ public interface IHierarchyStateCalls
     /// <summary>Replaces the body of the response to <paramref name="requestPath"/>, or with <paramref name="amend"/> of the request itself; every check runs first and nothing is written when one fails. Returns <c>{id, path, bytes, rev?}</c>.</summary>
     JsonObject FillResponse(string id, string from, string requestPath, string body, StateCallOptions? options = null, bool amend = false, bool part = false);
 
+    /// <summary>Writes <paramref name="text"/> as <paramref name="from"/>'s verdict on <paramref name="requestPath"/>, its note record, replacing an earlier one (ah2-530). Returns <c>{id, path, bytes, rev}</c>.</summary>
+    JsonObject FillReview(string id, string from, string requestPath, string text, StateCallOptions? options = null);
+
     /// <summary>Moves the message files <paramref name="files"/> (all in the pool's <c>msgs/</c>) into <c>msgs/archive/</c>.</summary>
     void ArchiveMessages(string dir, IReadOnlyList<string> files, StateCallOptions? options = null);
 
@@ -292,6 +295,15 @@ internal sealed class HierarchyStateCalls(HierLib lib, IStateWriter? writer, IRo
         }
 
         return filled;
+    }
+
+    public JsonObject FillReview(string id, string from, string requestPath, string text, StateCallOptions? options = null)
+    {
+        var path = HierLib.ReviewPath(requestPath, from) ?? throw new InvalidOperationException($"fill --review: {requestPath} is not a request a {from} can review");
+        var dir = NodePath.Dirname(NodePath.Dirname(path));
+        var args = new JsonObject { ["dir"] = dir, ["path"] = path, ["req"] = requestPath, ["id"] = id, ["from"] = from, ["body"] = text, ["review"] = true };
+        var result = Run("msgs", "fill", args, lib.PoolContext(dir), options);
+        return new JsonObject { ["id"] = id, ["path"] = path, ["bytes"] = result.Member("bytes") ?? JsonValue.Null, ["rev"] = result.Member("rev") ?? JsonValue.Null };
     }
 
     public void ArchiveMessages(string dir, IReadOnlyList<string> files, StateCallOptions? options = null)

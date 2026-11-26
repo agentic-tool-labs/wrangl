@@ -750,6 +750,11 @@ internal sealed partial class MsgCommand
             throw _out.Fail($"fill: --req: request id {Quote(reqId)} does not match --id {Quote(id)}");
         }
 
+        if (_opts.Has("review"))
+        {
+            return FillReview(id, req, reqKnown);
+        }
+
         // The file holds the report as plain text; the plan wants it as one JSON string, as --body gives it.
         var body = _opts.Has("body-file") ? System.Text.Encoding.UTF8.GetString(JsonText.ToUtf8(JsonValue.FromString(ReadBodyFile(HierarchyModule.FillBodyMax)), 0)) : _opts.Text("body");
         var evidence = PlanEvidence(id, ref body);
@@ -793,7 +798,7 @@ internal sealed partial class MsgCommand
         JsonObject res;
         try
         {
-            _ = Hier.Messages.FillPlan(args);
+            _ = WithReviewHint(id, req, () => Hier.Messages.FillPlan(args));
             StoreEvidence(id, evidence);
             try
             {

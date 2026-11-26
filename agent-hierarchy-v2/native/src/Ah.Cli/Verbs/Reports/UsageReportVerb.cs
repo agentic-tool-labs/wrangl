@@ -32,7 +32,7 @@ internal static class UsageReportVerb
                 Environment.ProcessId)
             {
                 TeamRecord = team => TeamRecord(g, dir, team),
-                ProjectsDir = Path.Combine(g.Environment.HomeDirectory, ".claude", "projects"),
+                ProjectsDir = Path.Combine(Ah.Core.CoreModule.ClaudeConfigDir(g.Environment.GetVariable("CLAUDE_CONFIG_DIR"), g.Environment.HomeDirectory), "projects"),
                 ProgressDir = Path.Combine(HierarchyModule.ProgressPoolOf(g.Hierarchy.Messages.PoolContext(dir).MainHierarchyDirectory, dir), "progress"),
                 SessionHistory = () => Ah.StateDb.StateDbModule.OpenSessionAuthority(g.Environment.AhHome).ListHistory(dir),
                 TeamNames = () => g.Roster.ListTeamNames(dir),

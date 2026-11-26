@@ -46,6 +46,11 @@ internal static class ActivityRecorder
         var userPrompt = hookEvent == "UserPromptSubmit";
         var stop = hookEvent == "Stop";
         var context = stop ? advisory.Context.ReadContext(c.Input.Member("transcript_path")) : JsonValue.Null;
+        if (hookEvent != "SessionStart")
+        {
+            Ah.Hooks.Lifecycle.SessionStart.RetryMemberRegistration(c, advisory, cwd, sessionText, ppid);
+        }
+
         // A prompt registers the session with its Claude process in the pool and in the main checkout, before the refresh below.
         if (userPrompt)
         {

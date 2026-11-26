@@ -66,7 +66,7 @@ internal sealed partial class ConfigCore
     internal List<InstallRecord> InstallRecords()
     {
         var records = new List<InstallRecord>();
-        var data = TryReadJsonStrict(NodePath.Join(Home, ".claude", "plugins", "installed_plugins.json"));
+        var data = TryReadJsonStrict(NodePath.Join(ClaudeDirOr(environment.GetVariable("CLAUDE_CONFIG_DIR")), "plugins", "installed_plugins.json"));
         if (data is null)
         {
             return records;
@@ -571,6 +571,27 @@ internal sealed partial class ConfigCore
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="role"/>'s pack row holds its design-slot opt-in (adr-42): the row's <c>slots</c> names <c>design</c>, its
+    /// pack is as pinned, and this machine's stored copy for the pin records the same opt-in for this role, written only by a trust commit.
+    /// </summary>
+    public bool DesignOptInHolds(string role, JsonValue? entry)
+    {
+        static bool NamesDesign(JsonValue? v) => v is { IsArray: true } a && a.AsArray().Any(x => x is { IsText: true } t && t.AsString() == "design");
+
+        if (entry is not { IsMap: true } e || e.Member("from") is not { IsText: true } || !NamesDesign(e.Member("slots")))
+        {
+            return false;
+        }
+
+        if (!(e.Member("pack") is { IsMap: true } pack && pack.Member("status") is { IsText: true } status && status.AsString() == "ok"))
+        {
+            return false;
+        }
+
+        return ReadStoredCopy(e.Member("pin"))?.Get("slots") is { IsMap: true } recorded && NamesDesign(recorded.AsObject().Get(role));
     }
 
     [GeneratedRegex("^sha256:[0-9a-f]{64}\\z", RegexOptions.CultureInvariant)]

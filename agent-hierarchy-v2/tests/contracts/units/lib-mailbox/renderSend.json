@@ -121,7 +121,7 @@
           "receiver_unregistered": true
         }
       ],
-      "expect": "entry e1 → a@tm\ndelivery: plugin prompt — nothing more to do\nno single registered receiver for a@tm; the ladder delivers it; nothing more to do"
+      "expect": "entry e1 → a@tm\ndelivery: plugin prompt — nothing more to do\nno single registered receiver for a@tm; SendMessage the member its brief pointer; its next hook registers it and queued mail follows"
     }
   ]
 }

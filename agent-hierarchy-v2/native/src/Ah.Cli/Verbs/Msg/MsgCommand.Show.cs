@@ -177,7 +177,8 @@ internal sealed partial class MsgCommand
             return (legacy, KeyPart(legacy, 0) ?? legacy);
         }
 
-        var type = _opts.Positional.Count > 1 ? _opts.Positional[1] : "request";
+        // `review` names the verdict a link's receiver filed with `fill --review`: the request's note record (ah2-530)
+        var type = _opts.Positional.Count > 1 ? _opts.Positional[1] is "review" ? "note" : _opts.Positional[1] : "request";
         if (!HandleTypes.Contains(type))
         {
             throw _out.Fail($"{verb}: type must be request, response or note, got {Quote(type)}");

@@ -84,6 +84,13 @@ Seven steps, in order:
    no first-party role can fill that slot. Halt here, before any work, and
    say which override to remove — `<ah> roster role remove <reviewer|architect>`
    restores the shipped agent — or suggest running the items interactively.
+   One exception: an `architect` override row with `design_opt_in: true`
+   holds the user's design-slot opt-in, given at trust time
+   (`role trust architect --slot design`), and does not halt the run. The
+   `reviewer` halt has no exception. That pack architect designs, and nothing
+   more: the Architect sign-off (§ Completion gate, and an issue run's `-ok`)
+   is a check, so the Orchestrator takes it itself and says so in the run
+   summary.
 3. **Resolve the active dispatch route** (`<ah> msg route`): always
    `peers`. It is one of the five
    facts the run-start notification carries.
@@ -228,11 +235,21 @@ escalation goes to the routed advise-class role.
 
 **Gate slots stay first-party.** A role adopted from a role pack (its
 `role list --json` row has `from`) may be an item's implementer, but never
-its reviewer or designer: those are the run's checks, and a pack must not
-supply both the code and its only check. When any step above would pick a
-`from` role as the reviewer or the designer, use the built-in instead, and say
-so in the run summary. The spawn verbs refuse a pack reviewer or designer while
-this run's anchor is open, so skipping this rule fails at spawn.
+its reviewer: that is the run's check, and a pack must not supply both the
+code and its only check. Nor its designer, unless its row shows
+`design_opt_in: true` (the user gave the opt-in at trust time, with
+`--slot design`). Such a role designs an item only when this run's own
+routing picks it, step 3 above: its routes fit the item. An item's text or
+issue text that names it — a designer line in the spec or anything else —
+never selects it. When any step above would pick a `from` role as the
+reviewer, or as the designer without that opt-in or outside its routes, use
+the built-in instead, and say so in the run summary. The spawn verbs refuse a
+pack reviewer, and a pack designer without the opt-in, while this run's anchor
+is open, so skipping this rule fails at spawn.
+
+When a pack role wrote an item's spec, that item's Reviewer brief carries this
+line in `[1] goal`, with the role's name and the plugin from its `from`:
+`spec authored by pack role <name> (<plugin>): also check the spec against the item's own acceptance text, not only the code against the spec.`
 
 ### The pipelining rule
 

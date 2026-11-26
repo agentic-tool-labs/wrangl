@@ -225,34 +225,7 @@ internal static class SessionStart
                 span = PhaseTrace.Begin();
                 s.Hierarchy.StateCalls.AppendRosterRecord(dir, record, new StateCallOptions(Hook: true));
                 PhaseTrace.End("sessionstart.roster-record", span);
-                span = PhaseTrace.Begin();
-                var boxes = advisory.Callers.RegisterCaller(
-                    new CallerRequest(cwd, sessionId.Length > 0 ? sessionId : null, ppid, paneId, HerdrFlavour: Ah.Core.Mux.HerdrFlavour.SessionFlavour(s.Environment.GetVariable)));
-                PhaseTrace.End("sessionstart.register", span);
-                registered = boxes.Count > 0;
-                if (registered)
-                {
-                    span = PhaseTrace.Begin();
-                    StampMemberRow(s, advisory, dir, lookup, paneId, ppid, record.Get("pid_start") is { IsText: true } started ? started.AsString() : null, sessionId);
-                    PhaseTrace.End("sessionstart.stamp", span);
-                }
-
-                if (registered && attributed.Member("teamName") is { IsText: true } sessionTeam && sessionTeam.AsString().Length > 0)
-                {
-                    var row = member.IsMap ? member : (JsonValue?)null;
-                    span = PhaseTrace.Begin();
-                    RecordSession(
-                        c,
-                        cwd,
-                        sessionTeam.AsString(),
-                        row?.Member("name") is { IsText: true } memberName ? memberName.AsString() : role,
-                        role,
-                        row?.Member("kind") is { IsText: true } memberKind ? memberKind.AsString() : "claude",
-                        row?.Member("model") is { IsText: true } memberModel ? memberModel.AsString() : null,
-                        sessionId,
-                        "register");
-                    PhaseTrace.End("sessionstart.record-session", span);
-                }
+                registered = RegisterMember(c, advisory, dir, cwd, role, lookup, paneId, ppid, record.Get("pid_start") is { IsText: true } started ? started.AsString() : null, sessionId);
 
                 if (attributed.Member("teamName") is { IsText: true } downTeam && member.Member("name") is { IsText: true } downMember)
                 {
@@ -612,6 +585,86 @@ internal static class SessionStart
         }
 
         return new MemberRowLookup(attributed, team, viaEnv, marker, member);
+    }
+
+    /// <summary>
+    /// A role session's registration, the stamp of its process on its member row, and its line in the session inventory: run by the
+    /// start hook, and by <see cref="RetryMemberRegistration"/> when the start hook was cut off before it. Returns whether it registered.
+    /// </summary>
+    private static bool RegisterMember(GateContext c, AdvisoryServices advisory, string dir, string cwd, string role, MemberRowLookup lookup, string? paneId, int ppid, string? pidStart, string sessionId)
+    {
+        var s = c.Services;
+        var span = PhaseTrace.Begin();
+        var boxes = advisory.Callers.RegisterCaller(
+            new CallerRequest(cwd, sessionId.Length > 0 ? sessionId : null, ppid, paneId, HerdrFlavour: Ah.Core.Mux.HerdrFlavour.SessionFlavour(s.Environment.GetVariable)));
+        PhaseTrace.End("sessionstart.register", span);
+        if (boxes.Count == 0)
+        {
+            return false;
+        }
+
+        span = PhaseTrace.Begin();
+        StampMemberRow(s, advisory, dir, lookup, paneId, ppid, pidStart, sessionId);
+        PhaseTrace.End("sessionstart.stamp", span);
+        if (lookup.Attributed.Member("teamName") is { IsText: true } sessionTeam && sessionTeam.AsString().Length > 0)
+        {
+            var row = lookup.Member.IsMap ? lookup.Member : (JsonValue?)null;
+            span = PhaseTrace.Begin();
+            RecordSession(
+                c,
+                cwd,
+                sessionTeam.AsString(),
+                row?.Member("name") is { IsText: true } memberName ? memberName.AsString() : role,
+                role,
+                row?.Member("kind") is { IsText: true } memberKind ? memberKind.AsString() : "claude",
+                row?.Member("model") is { IsText: true } memberModel ? memberModel.AsString() : null,
+                sessionId,
+                "register");
+            PhaseTrace.End("sessionstart.record-session", span);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The registration and stamp a launched member's start hook was cut off before (ah2-662), done by a later hook of the session
+    /// through <see cref="RegisterMember"/>. Only a session launched into a team (<c>WRANGL_TEAM_FILE</c>) whose member row it finds
+    /// has no session stamp; a row stamped with any session is left alone, and so is one whose stamp cannot land (no parent pid or
+    /// start time, or a live other process holds the row), which would otherwise register again on every hook.
+    /// </summary>
+    internal static void RetryMemberRegistration(GateContext c, AdvisoryServices advisory, string cwd, string sessionId, int ppid)
+    {
+        var s = c.Services;
+        if (!s.Config.IsMemberSession || sessionId.Length == 0 || ppid <= 1)
+        {
+            return;
+        }
+
+        try
+        {
+            if (s.Sessions?.Table.StartTime(ppid) is not { Length: > 0 } pidStart)
+            {
+                return;
+            }
+
+            var dir = s.Config.HierarchyDir(cwd);
+            var paneId = PaneOf(s);
+            var lookup = ResolveMemberRow(s, dir, cwd, string.Empty, paneId, ppid, sessionId, logUnclaimable: false);
+            var row = lookup.Member;
+            if (!row.IsMap || row.Member("session_id") is { IsText: true } stamped && stamped.AsString().Length > 0
+                || row.Member("role") is not { IsText: true } role || role.AsString().Length == 0
+                || row.Member("pid") is { IsNumber: true } held && held.AsNumber() != ppid
+                    && !advisory.Callers.OrchestratorProcessIsGone(held.AsNumber(), row.Member("pid_start") is { IsText: true } heldStart ? heldStart.AsString() : null))
+            {
+                return;
+            }
+
+            _ = RegisterMember(c, advisory, dir, cwd, role.AsString(), lookup, paneId, ppid, pidStart, sessionId);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            c.LogError(e);
+        }
     }
 
     /// <summary>Records this session's process on the member row <paramref name="row"/> found, when it found one.</summary>
