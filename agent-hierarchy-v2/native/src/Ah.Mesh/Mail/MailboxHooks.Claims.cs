@@ -326,6 +326,47 @@ internal sealed partial class MailboxHooks
         return null;
     }
 
+    public string? PrintedRelayDone(string? message, string? sessionId, RequestContext context)
+    {
+        if (string.IsNullOrEmpty(message) || !mailbox.CarrierSettingsFor(context).SingleCarrier)
+        {
+            return null;
+        }
+
+        var ids = core.EntryMarkers(message).SelectMany(m => m.Ids).Distinct(StringComparer.Ordinal).ToList();
+        if (ids.Count != 1 || MsgStatus.Locate(mailbox, ids[0]) is not { } at
+            || mailbox.RelayLine(JsonValue.FromObject(at.Entry), at.Address) != RelayInstruction.WithoutRelayedPrefix(message.Trim()))
+        {
+            return null;
+        }
+
+        string state;
+        try
+        {
+            state = Text(MsgStatus.Of(mailbox, at), "state");
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+
+        // Amendment 1: an entry that ended otherwise, or that the ladder gave up on, keeps its old answer.
+        if (state is "superseded" or "withdrawn" or "declined" or DrainedState.State or MsgStatus.DeliveryFailed)
+        {
+            return null;
+        }
+
+        var claim = mailbox.ReadClaim(at.Dir, ids[0]);
+        var claimState = claim is null ? string.Empty : ClaimState(claim);
+        var holder = claim?.Get("holder") is { IsMap: true } h ? Text(h.AsObject(), "session_id") : string.Empty;
+        var done = state is "acked" or "delivered"
+            || (claimState is ClaimStates.FallbackClaimed or ClaimStates.RelaySent or ClaimStates.RelayUnconfirmed
+                or ClaimStates.RelayFailed or ClaimStates.Released or ClaimStates.Delivered)
+            || (claimState == ClaimStates.Pending && Text(claim!, "carrier") != "relay")
+            || (claimState == ClaimStates.RelayClaimed && holder != (sessionId ?? string.Empty));
+        return done ? $"ah: entry {ids[0]} already delivered; nothing to send. Done: this call sent nothing, and nothing more is owed for it." : null;
+    }
+
     /// <summary>Who delivers an entry and in which mode: its claim's carrier when it has a claim, else the route it was recorded with.</summary>
     private (string By, string Mode) DeliveryOf(string dir, JsonObject entry, string id)
     {

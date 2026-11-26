@@ -27,6 +27,7 @@ internal static class RelayInstruction
         "declined" => $"ah: relay of {entry} no longer needed: declined by {RelayVoid.Field(marker, "by")} ({RelayVoid.Field(marker, "reason")})",
         "claimed" => $"ah: relay of {entry} no longer needed: its relay already holds it (claim {RelayVoid.Field(marker, "state")})",
         "released" => $"ah: relay of {entry} no longer needed: released to the delivery ladder (no poller): it pastes it or escalates",
+        "sibling" => $"ah: relay of {entry} no longer needed: entry {RelayVoid.Field(marker, "by")} for the same request was delivered to {address}",
         _ => $"ah: relay of {entry} no longer needed: the delivery ladder recorded it delivered",
     };
 

@@ -533,7 +533,7 @@ internal sealed partial class Mailbox
 
     public JsonValue MarkRelayVoid(JsonValue entry) => RelayVoid.Mark(this, entry);
 
-    public string? RelayVoidNote(string dir, string entry) => RelayVoid.Check(this, dir, entry) is { } marker ? RelayVoid.Note(marker) : null;
+    public string? RelayVoidNote(string dir, string entry) => RelayVoid.CheckOwed(this, dir, entry) is { } marker ? RelayVoid.Note(marker) : null;
 
     public JsonObject? EntryStatus(string id, IReadOnlyList<CallerBox> callers) =>
         MsgStatus.Locate(this, id) is { } at && MsgStatus.InScope(this, at, callers.Select(static b => b.Address).ToHashSet(StringComparer.Ordinal)) ? MsgStatus.Of(this, at) : null;

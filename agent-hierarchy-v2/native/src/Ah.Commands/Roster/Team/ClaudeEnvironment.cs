@@ -28,7 +28,7 @@ internal static class ClaudeEnvironment
     /// <summary>
     /// The values a launch uses, each variable on its own, in order: the member's existing <paramref name="row"/>'s; the caller's when it is proved to
     /// be the team's own Orchestrator or the lane's lead (<see cref="Resolved.TeamTakesCaller"/> then says the team record must take it); the team
-    /// record's; the caller's.
+    /// record's; the caller's, which the member row does not record (<see cref="Resolved.Record"/> is false).
     /// </summary>
     internal static IReadOnlyList<Resolved> Resolve(RosterContext c, JsonValue? row, JsonValue team)
     {

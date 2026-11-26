@@ -60,6 +60,43 @@ internal static class RelayVoid
     }
 
     /// <summary>
+    /// <see cref="Check"/>, then, for an entry it finds still owed, another entry of the same box (the same member) with the same
+    /// request <c>ref</c>, kind and sender, created at or after it, that was delivered: kind <c>sibling</c>, <c>by</c> that entry. The owed-relay reminders read this one (ah2-483 R3).
+    /// </summary>
+    internal static JsonObject? CheckOwed(IMailbox mailbox, string dir, string entry)
+    {
+        if (Check(mailbox, dir, entry) is { } marker)
+        {
+            return marker;
+        }
+
+        var entries = mailbox.ReadEntries(dir).Entries.Where(static e => e.IsMap).Select(static e => e.AsObject()).ToList();
+        var self = entries.FirstOrDefault(e => Field(e, "id") == entry);
+        var reference = self is null ? string.Empty : Field(self, "ref");
+        if (reference.Length == 0)
+        {
+            return null;
+        }
+
+        foreach (var other in entries)
+        {
+            var id = Field(other, "id");
+            // R5: same ref, kind and sender, created at or after the owed entry; an older delivered entry never covers a newer one.
+            if (id.Length > 0 && id != entry && Field(other, "ref") == reference && Field(other, "kind") == Field(self!, "kind")
+                && Field(other, "from") == Field(self!, "from") && string.CompareOrdinal(Field(other, "created"), Field(self!, "created")) >= 0
+                && Delivered(Check(mailbox, dir, id)))
+            {
+                return new JsonObject { ["kind"] = "sibling", ["by"] = id };
+            }
+        }
+
+        return null;
+    }
+
+    private static bool Delivered(JsonObject? marker) => marker is not null && (Kind(marker) is "acked" or "delivered"
+        || (Kind(marker) == "claimed" && Field(marker, "state") is ClaimStates.RelaySent or ClaimStates.RelayUnconfirmed or ClaimStates.FallbackClaimed or ClaimStates.Delivered));
+
+    /// <summary>
     /// <paramref name="entry"/> as it is when it is not a trusted <c>relay-needed</c> event whose entry is void; else a copy that carries
     /// the marker under <c>void</c>, so the prompt builder can print the "no longer needed" line without reading anything.
     /// </summary>
@@ -70,7 +107,7 @@ internal static class RelayVoid
             return entry;
         }
 
-        var marker = Check(mailbox, relay.Dir, relay.Entry);
+        var marker = CheckOwed(mailbox, relay.Dir, relay.Entry);
         if (marker is null)
         {
             return entry;
@@ -95,6 +132,7 @@ internal static class RelayVoid
         "declined" => $"declined {Field(marker, "reason")}",
         "claimed" => $"claimed {Field(marker, "state")}",
         "released" => "released",
+        "sibling" => $"sibling {Field(marker, "by")}",
         _ => "delivered",
     };
 

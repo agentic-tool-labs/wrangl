@@ -149,6 +149,17 @@ check "...the rerun limit was asked of the clone's run-all first" '[ "$(cat "$ST
 mkcommit shell-limit-nan; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"; printf '12x\n' > "$ST/shell.limit"
 rs "$SHA" shell
 check "a clone limit that is not a number never reaches timeout (the guard; not the fallback): the rerun runs and passes (FLAKY-PASS)" '[ $RC = 0 ] && [ "$(rjson shell status)" = FLAKY-PASS ] && [ "$(grep -c -- "--exact" "$ST/shell.calls")" = 1 ]'
+# the fallback: a clone run-all that gives no limit leaves run-set's own (300 s here); the outer timeout of the rerun is that limit
+# plus the kill grace (10), the settle wait and 30 s. A timeout on PATH that records its arguments shows the outer one.
+TSHIM="$SB/timeout-shim"; mkdir -p "$TSHIM"; RTMO="$(command -v timeout)"
+printf '#!/bin/bash\necho "$*" >> "$TIMEOUT_CALLS"\nexec "%s" "$@"\n' "$RTMO" > "$TSHIM/timeout"; chmod +x "$TSHIM/timeout"
+OWNLIM="$(bash "$(dirname "$0")/run-all.sh" --limit test-s2)"
+mkcommit shell-limit-fallback; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"
+TIMEOUT_CALLS="$ST/timeout.calls" AH_RUN_ALL_SETTLE=7 PATH="$TSHIM:$PATH" rs "$SHA" shell
+check "a clone with no limit: the rerun's outer timeout is run-set's own limit + 10 + the settle wait + 30" '[ $RC = 0 ] && grep -q -- "--exact s2 " "$ST/timeout.calls" && [ "$(grep -- "--exact s2 " "$ST/timeout.calls" | awk "{print \$3}")" = "$((OWNLIM + 10 + 7 + 30))" ]'
+mkcommit shell-limit-clone; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"; printf '450\n' > "$ST/shell.limit"
+TIMEOUT_CALLS="$ST/timeout.calls" AH_RUN_ALL_SETTLE=7 PATH="$TSHIM:$PATH" rs "$SHA" shell
+check "...a clone that gives a number is used, not the fallback (nearest non-match): 450 + 10 + 7 + 30" '[ $RC = 0 ] && [ "$(grep -- "--exact s2 " "$ST/timeout.calls" | awk "{print \$3}")" = 497 ]'
 mkcommit shell-rerun-refused; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"; : > "$ST/shell.refuse-rerun"
 rs "$SHA" shell
 check "a rerun run-all refused (exit 2) is an ERROR (exit 3), not a test that failed twice" '[ $RC = 3 ] && printf %s "$OUT" | grep -q "refused the rerun" && [ ! -e "$AH_RESULTS_DIR/$SHA/shell/result.json" ]'

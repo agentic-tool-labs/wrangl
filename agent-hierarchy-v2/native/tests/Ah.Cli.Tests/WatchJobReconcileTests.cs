@@ -393,6 +393,21 @@ public sealed class WatchJobReconcileTests : IDisposable
     }
 
     [Fact]
+    public void AReconciledJobIsAliveWhenItsPidRunsWithItsRecordedStartAndNotWithNoRecordedStart()
+    {
+        var (host, graph) = Make();
+        var pid = Environment.ProcessId;
+        var samePath = Put(graph, "same", pid);
+        Store(graph, samePath, WatchModule.JobMerged(Rec(samePath)!, null, null, "Wed Oct 21 08:00:05 2026"));
+        _ = Put(graph, "unstarted", pid);
+
+        var kept = host.ReconcileJobs("s-a", Hier, "tm", Read(graph)).ToDictionary(static j => j.Id);
+
+        Assert.True(kept["same"].Alive);
+        Assert.False(kept["unstarted"].Alive);
+    }
+
+    [Fact]
     public void ARecordAHookEndedDuringTheSweepKeepsItsOwnEndAndExitAndAnUnracedOneIsEndedBySweep()
     {
         var (host, graph) = Make();

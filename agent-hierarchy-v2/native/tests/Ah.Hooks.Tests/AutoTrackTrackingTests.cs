@@ -49,6 +49,8 @@ public sealed class AutoTrackTrackingTests
 
         public string? SendDenial(string? message, string? sessionId, RequestContext context, out string? warning) => throw new NotSupportedException();
 
+        public string? PrintedRelayDone(string? message, string? sessionId, RequestContext context) => throw new NotSupportedException();
+
         public List<(string? Recipient, string? ToolUseId)> Withdraws { get; } = [];
 
         public Action? OnClaim { get; set; }

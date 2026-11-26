@@ -97,6 +97,13 @@ public interface IMailboxHooks
     string? SendDenial(string? message, string? sessionId, RequestContext context, out string? warning);
 
     /// <summary>
+    /// The "done" answer for a <paramref name="message"/> that is exactly the relay text ah printed for one entry when that entry is
+    /// already delivered or being delivered another way (ah2-483 R2): the call sends nothing and is not a refusal. Null for any other
+    /// message, an entry that does not exist, a relay still owed, an entry the ladder gave up on, and with single-carrier delivery off.
+    /// </summary>
+    string? PrintedRelayDone(string? message, string? sessionId, RequestContext context);
+
+    /// <summary>
     /// The sender's SendMessage ran: moves the entries the message names, held by <paramref name="sessionId"/>, to <c>relay-sent</c>
     /// or <c>relay-failed</c> by <paramref name="result"/>. <see cref="RelayResult.Unknown"/> moves nothing. Returns the entry ids moved.
     /// </summary>

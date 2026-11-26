@@ -587,6 +587,30 @@ public sealed class BranchHygieneTests : IDisposable
         Assert.Contains("; branch fresh in ", stderr, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void AnUndoStepThatThrowsIsNamedAndTheOriginalErrorStillReports()
+    {
+        WriteTeam(string.Empty);
+        var tree = Path.Combine(Project, ".claude", "worktrees", "fresh");
+        RefuseRecordAfterAdd();
+        var refuse = _afterGit!;
+        _afterGit = argv =>
+        {
+            refuse(argv);
+            if (argv.Contains("worktree") && argv.Contains("remove"))
+            {
+                throw new IOException("undo threw");
+            }
+        };
+
+        var (code, stdout, stderr) = Roster("stream-open", "fresh", "--base", "main");
+
+        Assert.NotEqual(0, code);
+        // the original refusal, not the undo's own "the stream was not recorded, and undoing it left behind" line
+        Assert.Contains("was not recorded", (stdout + stderr).Replace("the stream was not recorded, and undoing it", string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
+        Assert.Contains($"left behind: work tree {tree} (undo threw); branch fresh in ", stderr, StringComparison.Ordinal);
+    }
+
     // ---------------------------------------------------------------- the unshipped count (§3.2, §7 must-fail)
 
     [Fact]

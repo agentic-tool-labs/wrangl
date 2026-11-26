@@ -4,6 +4,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.64] - 2026-11-26
+
+### Changed
+
+- A relay sent exactly as `ah msg send` or the reminder printed it is answered "already delivered; nothing to send" when the entry was delivered meanwhile, instead of a NOT DONE refusal. The owed-relay reminder clears once a newer entry of the same kind from the same sender for the same request was delivered, and a repeat send after ah took the delivery over asks for no SendMessage.
+- `ah roster doctor` shows the off row with `AH_DAEMON=off` even when a daemon is still running, and reads the daemon's health once per run.
+- A stream-open that fails names every undo step it could not finish, still reports the original error, and removes the deleted branch's tracking config.
+
+### Fixed
+
+- `tests/run-set.sh`: a rerun's outer timeout covers the kill grace and the settle time, so the inner TIMEOUT is recorded first.
+- Tests that failed only under full-run load: two `Ah.Cli` tests, the drain-grace health test and `test-ahd-team-hold` F4 now wait on the state they assert.
+
 ## [2.0.63] - 2026-11-26
 
 ### Added

@@ -126,6 +126,15 @@ public sealed class TestModeDirGateTests : IDisposable
         Assert.Equal([inside], dirs);
         Assert.Single(_log, l => l.Contains("outside the probe root dropped: " + outside, StringComparison.Ordinal));
         Assert.Single(_log, l => l == $"test mode: HOME={_sandbox.Home}, hierarchy dirs kept 1, dropped 1");
+
+        // the background files import takes the admitted dir into ah.db under state/; the sandbox is deleted only once it has
+        var until = DateTime.UtcNow.AddSeconds(30);
+        while (!Logged("files import " + inside) && DateTime.UtcNow < until)
+        {
+            Thread.Sleep(10);
+        }
+
+        Assert.True(Logged("files import " + inside));
     }
 
     [Fact]
@@ -202,6 +211,15 @@ public sealed class TestModeDirGateTests : IDisposable
         Assert.Equal(["probeteam"], codex.Select(t => t.Team));
         Assert.Equal([inside], live);
         Assert.Equal(["probe-session"], watch.LiveRegistrations().Select(r => r.SessionId));
+
+        // the background files import takes the admitted dir into ah.db under state/; the sandbox is deleted only once it has
+        var until = DateTime.UtcNow.AddSeconds(30);
+        while (!Logged("files import " + inside) && DateTime.UtcNow < until)
+        {
+            Thread.Sleep(10);
+        }
+
+        Assert.True(Logged("files import " + inside));
     }
 
     [Fact]

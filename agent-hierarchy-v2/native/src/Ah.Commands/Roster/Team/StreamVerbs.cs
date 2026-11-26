@@ -464,28 +464,55 @@ internal static class StreamVerbs
 
     /// <summary>
     /// ah2-523: removes what a failed stream-open made before its record was written: the tab it created, the work tree it added
-    /// (never forced) and the branch that add created (only while it still points where it was cut). Names on stderr each one left.
+    /// (never forced) and the branch that add created (only while it still points where it was cut), with its <c>branch.&lt;name&gt;.*</c> config.
+    /// Names on stderr each one left. Never throws: a step that throws is left behind and the rest still run.
     /// </summary>
     private static void UndoOpen(RosterContext c, string? root, WorktreePlan? added, string branch, string? tabId)
     {
         var left = new List<string>();
-        if (tabId is not null && !c.Services.Launch!.Herdr.InvokeAllowFailure(["tab", "close", tabId]).Ok)
+        void Step(string target, Func<string?> undo)
         {
-            left.Add($"herdr tab {tabId}");
+            try
+            {
+                if (undo() is { } leftBehind)
+                {
+                    left.Add(leftBehind);
+                }
+            }
+            catch (Exception error) when (error is not OutOfMemoryException)
+            {
+                left.Add($"{target} ({error.Message})");
+            }
+        }
+
+        if (tabId is not null)
+        {
+            Step($"herdr tab {tabId}", () => c.Services.Launch!.Herdr.InvokeAllowFailure(["tab", "close", tabId]).Ok ? null : $"herdr tab {tabId}");
         }
 
         if (added is not null && root is not null)
         {
-            var removed = Git(c, ["-C", root, "worktree", "remove", added.Path]);
-            if (!removed.Ok)
+            var removedOk = false;
+            Step($"work tree {added.Path}", () =>
             {
-                left.Add($"work tree {added.Path} ({removed.Detail})");
-            }
+                var removed = Git(c, ["-C", root, "worktree", "remove", added.Path]);
+                removedOk = removed.Ok;
+                return removed.Ok ? null : $"work tree {added.Path} ({removed.Detail})";
+            });
 
-            if (added.BranchCreated
-                && !(removed.Ok && added.BaseSha is { Length: > 0 } sha && Git(c, ["-C", root, "update-ref", "-d", $"refs/heads/{branch}", sha]).Ok))
+            if (added.BranchCreated)
             {
-                left.Add($"branch {branch} in {root}");
+                Step($"branch {branch} in {root}", () =>
+                {
+                    if (!(removedOk && added.BaseSha is { Length: > 0 } sha && Git(c, ["-C", root, "update-ref", "-d", $"refs/heads/{branch}", sha]).Ok))
+                    {
+                        return $"branch {branch} in {root}";
+                    }
+
+                    // A branch with no config section has nothing to remove; that failure leaves nothing behind.
+                    Git(c, ["-C", root, "config", "--remove-section", $"branch.{branch}"]);
+                    return null;
+                });
             }
         }
 

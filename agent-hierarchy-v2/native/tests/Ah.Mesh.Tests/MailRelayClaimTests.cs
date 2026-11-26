@@ -111,6 +111,127 @@ public sealed class MailRelayClaimTests
         Assert.Equal("fallback-claimed", State(rig, "e1"));
     }
 
+    private static string Printed(JsonObject? sent) => sent!.Get("sendmessage")!.Value.Member("text")!.Value.AsString();
+
+    /// <summary>ah2-483 A1: the relay ah printed, sent after the fallback delivered the entry, is answered done and takes no claim.</summary>
+    [Fact]
+    public void ThePrintedRelayOfAnEntryDeliveredMeanwhileIsAnsweredDoneAndSendsNothing()
+    {
+        var rig = MailClaimTests.Create();
+        var line = Printed(rig.Send("e1"));
+        Elapse(rig, TimeSpan.FromSeconds(181));
+        rig.Fx.Mailbox.Claim(rig.BoxB, "e1", ClaimActions.Advance);
+
+        var done = rig.Fx.Hooks.PrintedRelayDone(line, "s-a", ContextOf(rig));
+
+        Assert.Equal("ah: entry e1 already delivered; nothing to send. Done: this call sent nothing, and nothing more is owed for it.", done);
+        Assert.DoesNotContain("NOT DONE", done, StringComparison.Ordinal);
+        Assert.Equal("fallback-claimed", State(rig, "e1"));
+    }
+
+    /// <summary>The same line as the owed-relay reminder prints it, led by its "(relayed: …)" prefix, is answered done too.</summary>
+    [Fact]
+    public void TheRemindersPrefixedRelayOfAnEntryDeliveredMeanwhileIsAnsweredDone()
+    {
+        var rig = MailClaimTests.Create();
+        var line = RelayInstruction.Relayed("e1", "2026-01-01T12:00:00.000Z", Printed(rig.Send("e1")));
+        Elapse(rig, TimeSpan.FromSeconds(181));
+        rig.Fx.Mailbox.Claim(rig.BoxB, "e1", ClaimActions.Advance);
+
+        Assert.NotNull(rig.Fx.Hooks.PrintedRelayDone(line, "s-a", ContextOf(rig)));
+    }
+
+    /// <summary>Negative (Amendment 1): a superseded entry whose claim is past pending keeps its old answer, never "already delivered".</summary>
+    [Fact]
+    public void ThePrintedRelayOfASupersededEntryIsNotAnsweredDone()
+    {
+        var rig = MailClaimTests.Create();
+        var line = Printed(rig.Send("e1"));
+        Elapse(rig, TimeSpan.FromSeconds(181));
+        rig.Fx.Mailbox.Claim(rig.BoxB, "e1", ClaimActions.Advance);
+        var row = new JsonObject { ["id"] = "e1", ["rung"] = 3, ["state"] = "superseded", ["by"] = "e9" };
+        Assert.True(rig.Fx.Mailbox.AppendLadderRow(rig.BoxB, row, rig.Fx.Mailbox.LadderRowsOf(rig.BoxB, "e1").Count + 1L));
+
+        Assert.Null(rig.Fx.Hooks.PrintedRelayDone(line, "s-a", ContextOf(rig)));
+        Assert.StartsWith("ah: entry e1 was superseded by e9", rig.Fx.Hooks.SendDenial(line, "s-a", ContextOf(rig), out _), StringComparison.Ordinal);
+    }
+
+    /// <summary>Negative: a relay still owed is not answered done; it goes on to the claim, which it takes.</summary>
+    [Fact]
+    public void ThePrintedRelayOfAnEntryStillOwedIsNotAnsweredDone()
+    {
+        var rig = MailClaimTests.Create();
+        var line = Printed(rig.Send("e1"));
+
+        Assert.Null(rig.Fx.Hooks.PrintedRelayDone(line, "s-a", ContextOf(rig)));
+        Assert.False(rig.Fx.Hooks.ClaimRelay("s-a", "b@tm", line, ContextOf(rig)).Deny);
+    }
+
+    /// <summary>Negative: a message that is not exactly the printed relay is not answered done, so the existing refusal stands.</summary>
+    [Fact]
+    public void AnEditedRelayOfADeliveredEntryIsNotAnsweredDone()
+    {
+        var rig = MailClaimTests.Create();
+        var line = Printed(rig.Send("e1"));
+        Elapse(rig, TimeSpan.FromSeconds(181));
+        rig.Fx.Mailbox.Claim(rig.BoxB, "e1", ClaimActions.Advance);
+
+        Assert.Null(rig.Fx.Hooks.PrintedRelayDone("again: " + line, "s-a", ContextOf(rig)));
+    }
+
+    /// <summary>Negative: a marker for an entry that was never created is not answered done.</summary>
+    [Fact]
+    public void ARelayForAnEntryThatWasNeverCreatedIsNotAnsweredDone()
+    {
+        var rig = MailClaimTests.Create();
+
+        Assert.Null(rig.Fx.Hooks.PrintedRelayDone(Relay("nope"), "s-a", ContextOf(rig)));
+    }
+
+    /// <summary>ah2-483 R4: a send that prints after the relay lease ran out asks for no SendMessage and says ah delivers it.</summary>
+    [Fact]
+    public void ARepeatSendPastTheRelayLeaseAsksForNoSendMessage()
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1");
+        Elapse(rig, TimeSpan.FromSeconds(181));
+
+        var again = rig.Send("e1", text: "hello e1, again");
+
+        Assert.Null(again!.Get("sendmessage"));
+        Assert.Contains("delivery: ah delivers it itself — no SendMessage; nothing more to do", rig.Fx.Mailbox.RenderSend(again), StringComparison.Ordinal);
+    }
+
+    /// <summary>R8: a repeat send of an entry the receiver already acked says no SendMessage is needed, not that ah delivers it.</summary>
+    [Fact]
+    public void ARepeatSendOfAnAckedEntrySaysNoSendMessageNeeded()
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1");
+        _ = rig.Fx.Mailbox.AckIds(rig.BoxB, ["e1"], "prompt-hook");
+
+        var again = rig.Send("e1", text: "hello e1, again");
+        var text = rig.Fx.Mailbox.RenderSend(again!);
+
+        Assert.Null(again!.Get("sendmessage"));
+        Assert.Contains("delivery: no SendMessage needed — nothing more to do", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("ah delivers it itself", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>Negative: the same repeat inside the relay lease still asks for the relay.</summary>
+    [Fact]
+    public void ARepeatSendInsideTheRelayLeaseStillAsksForTheRelay()
+    {
+        var rig = MailClaimTests.Create();
+        rig.Send("e1");
+        Elapse(rig, TimeSpan.FromSeconds(60));
+
+        var again = rig.Send("e1", text: "hello e1, again");
+
+        Assert.NotNull(again!.Get("sendmessage"));
+        Assert.StartsWith("delivery: relay", rig.Fx.Mailbox.RenderSend(again).Split('\n')[1], StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ARelayOfADeliveredEntryIsDeniedWithTheSameText()
     {

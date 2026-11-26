@@ -532,6 +532,19 @@ internal sealed partial class Mailbox
             described["receiver_unregistered"] = true;
         }
 
+        // ah2-483 R4: an entry ah delivers itself by the time the line prints (no relay owed, or the relay lease is over) asks for no SendMessage.
+        if (carrier.AsString() == "relay" && RelayVoid.Check(this, to.Dir, id.AsString()) is not null)
+        {
+            described["self_delivery"] = "void";
+            return described;
+        }
+
+        if (carrier.AsString() == "relay" && ClaimMachine.RelayLeaseOver(claim, clock.UtcNow))
+        {
+            described["self_delivery"] = "lease";
+            return described;
+        }
+
         if (carrier.AsString() == "relay")
         {
             var member = to.Member is { IsMap: true } m ? m.AsObject() : null;
@@ -1027,6 +1040,11 @@ internal sealed partial class Mailbox
         else if (result.Get("claim_state") is { IsText: true } past)
         {
             lines.Add($"delivery: already {past.AsString()} — {NothingToDo}");
+        }
+        else if (result.Get("self_delivery") is { IsTruthy: true } self)
+        {
+            // R8: an own-entry void needs no relay; only an expired relay lease means ah delivers it itself.
+            lines.Add(Js(self) == "void" ? $"delivery: no SendMessage needed — {NothingToDo}" : $"delivery: ah delivers it itself — no SendMessage; {NothingToDo}");
         }
         else if (result.Get("queued") is { IsTruthy: true })
         {
