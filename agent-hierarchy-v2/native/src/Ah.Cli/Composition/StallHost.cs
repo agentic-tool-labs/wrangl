@@ -100,7 +100,7 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         try
         {
             var read = g.Hierarchy.StateCalls.Checkpoint("read", new JsonObject { ["dir"] = team.HierarchyDir, ["team"] = team.Name });
-            return read.Member("found") is { IsTruthy: true } && Ah.Mesh.MeshModule.RecordListsMember(read.Member("record"), member);
+            return read.Member("found") is { IsTruthy: true } && Ah.Mesh.MeshModule.RecordListsMember(read.Member("record"), member, g.Roster);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

@@ -81,9 +81,12 @@ internal static class RelayVoid
         foreach (var other in entries)
         {
             var id = Field(other, "id");
-            // R5: same ref, kind and sender, created at or after the owed entry; an older delivered entry never covers a newer one.
+            // R5: same ref, kind and sender, created at or after the owed entry; an older delivered entry never covers a newer one,
+            // and with no `created` on either side the order is unknown, so it covers nothing (ah2-681).
             if (id.Length > 0 && id != entry && Field(other, "ref") == reference && Field(other, "kind") == Field(self!, "kind")
-                && Field(other, "from") == Field(self!, "from") && string.CompareOrdinal(Field(other, "created"), Field(self!, "created")) >= 0
+                && Field(other, "from") == Field(self!, "from")
+                && Field(self!, "created").Length > 0 && Field(other, "created").Length > 0
+                && string.CompareOrdinal(Field(other, "created"), Field(self!, "created")) >= 0
                 && Delivered(Check(mailbox, dir, id)))
             {
                 return new JsonObject { ["kind"] = "sibling", ["by"] = id };

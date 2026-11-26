@@ -69,7 +69,7 @@ internal static class ConfirmRegistrationVerb
             c.Dir,
             $"member-unconfirmed:{c.ProgressTeam}:{member}:{paneId}",
             "member-unconfirmed",
-            $"{member} has not registered — {reason}. SendMessage {member} (pane {paneId}) its brief pointer; its next hook registers it and queued mail follows.",
+            $"{member} has not registered — {reason}. Nothing to send now; when ah asks for a relay for {member}, send it as printed; if nothing arrives and {member} (pane {paneId}) stays idle, dismiss and respawn it.",
             new JsonObject { ["member"] = member, ["team"] = c.ProgressTeam, ["pane"] = launched.Get("transport_id") ?? JsonValue.Null, ["reason"] = reason },
             [to]);
         return 0;

@@ -114,7 +114,7 @@ internal static class TeamRecover
             else
             {
                 checkpoint ??= CheckpointRecord(c, team);
-                var resume = Ah.Mesh.MeshModule.RecordListsMember(checkpoint, name) ? Ah.Mesh.MeshModule.MemberResumeCommand(team, name) : null;
+                var resume = Ah.Mesh.MeshModule.RecordListsMember(checkpoint, name, c.Services.Roster) ? Ah.Mesh.MeshModule.MemberResumeCommand(team, name) : null;
                 var lines = Ah.Mesh.MeshModule.MemberHintLines(resume, Ah.Mesh.MeshModule.MemberRespawnCommand(role, stream, team), recorded);
                 down.Add($"{name}: down\n  {string.Join("\n  ", lines)}");
             }

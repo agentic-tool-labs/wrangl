@@ -29,7 +29,7 @@ public sealed class RelayVoidTests
     /// <summary>The carrier's session <c>s1</c> with its box, and the box of <c>m1</c> where entry <c>e1</c> waits.</summary>
     private sealed class Rig
     {
-        internal Rig(string? reference = null)
+        internal Rig(string? reference = null, string? created = "2026-10-12T00:00:00.000Z")
         {
             var sandbox = UnitSandbox.Create();
             var home = sandbox.Root + "/ah";
@@ -47,7 +47,7 @@ public sealed class RelayVoidTests
                 home + "/registrations/s1.json",
                 "{\"session_id\":\"s1\",\"address\":\"orchestrator@tm\",\"addresses\":[\"orchestrator@tm\"],\"boxes\":{\"orchestrator@tm\":\"" + Carrier + "\"},\"pid\":"
                 + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"pid_start\":\"" + Fx.OwnStart + "\",\"bound\":true}");
-            File.AppendAllText(Member + "/entries.jsonl", "{\"id\":\"e1\",\"kind\":\"note\",\"from\":\"orchestrator@tm\",\"created\":\"2026-10-12T00:00:00.000Z\",\"text\":\"hi\",\"route\":\"pull\"" + (reference is null ? string.Empty : ",\"ref\":\"" + reference + "\"") + "}\n");
+            File.AppendAllText(Member + "/entries.jsonl", "{\"id\":\"e1\",\"kind\":\"note\",\"from\":\"orchestrator@tm\"," + (created is null ? string.Empty : "\"created\":\"" + created + "\",") + "\"text\":\"hi\",\"route\":\"pull\"" + (reference is null ? string.Empty : ",\"ref\":\"" + reference + "\"") + "}\n");
             var relay = new JsonObject { ["entry"] = "e1", ["address"] = "m1@tm", ["dir"] = Member, ["to"] = "m1@tm", ["line"] = Line };
             var evt = new JsonObject
             {
@@ -138,12 +138,25 @@ public sealed class RelayVoidTests
     [InlineData("/m/r2--request.md", true, "note", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
     [InlineData("/m/r1--request.md", false, "note", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
     [InlineData("/m/r1--request.md", true, "brief", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
+    [InlineData("/m/r1--request.md", true, "report", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
     [InlineData("/m/r1--request.md", true, "note", "other@tm", "2026-10-12T00:00:10.000Z")]
     [InlineData("/m/r1--request.md", true, "note", "orchestrator@tm", "2026-10-11T23:59:50.000Z")]
     public async Task ASiblingThatIsNotADeliveredEntryOfTheSameRequestLeavesTheRelayOwed(string reference, bool acked, string kind, string from, string created)
     {
         var rig = new Rig("/m/r1--request.md");
         Sibling(rig, "e2", reference, acked, kind, from, created);
+
+        var prompt = (await rig.Due())["prompt"].AsString();
+
+        Assert.Equal("owe", Owe(prompt));
+    }
+
+    /// <summary>ah2-681: an owed entry with no <c>created</c> has no order, so a delivered sibling that otherwise matches does not void it.</summary>
+    [Fact]
+    public async Task NegativeAnOwedEntryWithNoCreatedIsCoveredByNoSibling()
+    {
+        var rig = new Rig("/m/r1--request.md", created: null);
+        Sibling(rig, "e2", "/m/r1--request.md", acked: true);
 
         var prompt = (await rig.Due())["prompt"].AsString();
 

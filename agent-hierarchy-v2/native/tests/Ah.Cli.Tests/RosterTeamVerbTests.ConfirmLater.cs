@@ -54,7 +54,8 @@ public sealed partial class RosterTeamVerbTests
         var sent = mail.Sent.Where(s => s.Event == "member-unconfirmed").ToList();
         Assert.Single(sent.Select(s => s.Id).Distinct());
         Assert.Contains(pane, sent[0].Text, StringComparison.Ordinal);
-        Assert.Contains("its brief pointer; its next hook registers it and queued mail follows", sent[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Nothing to send now; when ah asks for a relay for " + name + ", send it as printed; if nothing arrives and " + name + " (pane " + pane + ") stays idle, dismiss and respawn it.", sent[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("brief pointer", sent[0].Text, StringComparison.Ordinal);
         Assert.DoesNotContain("ah roster checkin", sent[0].Text, StringComparison.Ordinal);
     }
 

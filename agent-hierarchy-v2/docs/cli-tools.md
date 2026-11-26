@@ -1106,7 +1106,8 @@ The close summary adds `tabs_closed` (tab ids) and `tabs_kept` (`[{stream, tab, 
 - `--names-in-use` renames as `create` does, across the role's roster members: each first takes its team record (one renamed away from its derived name, then one under it), a record found not live whose name is in use is renamed in place, and `--member` matches the final names.
 - Not skill-gated.
 - `--allow-global` is an accepted no-op — under Herdr the member name must be `[a-z][a-z0-9_-]`, at most 32 characters.
-- A longer one is refused before any pane opens `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
+- A longer one is refused before any pane opens.
+- `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
 - It is refused (exit 2, `refused: live-member`) otherwise. The refusal names why the liveness could not be checked.
 - Exception: a member of unknown liveness does not refuse when ahd's stall watch reported it down (`stall.reported`) under the team's current Orchestrator session, for the member's current registration session, at a time later than every sign of life its registration records. A live member always refuses.
 
@@ -1118,7 +1119,8 @@ The close summary adds `tabs_closed` (tab ids) and `tabs_kept` (`[{stream, tab, 
 - Not skill-gated.
 - Global roster ignored (`--allow-global` accepted, no-op).
 - `--kind custom --harness <name>` admits an agent runtime ah has no adapter for as a `route: mail` member (see `docs/participation.md`), and `--command` also starts it in a new tmux window with `AH_HOME` and `AH_ADDRESS` set — on herdr or a plain terminal `--command` is refused and the user starts the harness themselves — under Herdr the member name must be `[a-z][a-z0-9_-]`, at most 32 characters.
-- A longer one is refused before any pane opens `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
+- A longer one is refused before any pane opens.
+- `--replace-live` spawns into a work root whose recorded member is live or of unknown liveness.
 - It is refused (exit 2, `refused: live-member`) otherwise, with the same exception as `spawn-one`.
 
 Under herdr, `spawn-one` and `spawn-ad-hoc` take `--here` (split the caller's own pane: right when it is at least twice as wide as tall, else down) or `--tab <t>` (split that tab's first pane), each with an optional `--split right|down`, and every spawn prints `next: {name, terminal, tab, brief}` where `brief` is the `ah msg new --to-name` line to brief it, so spawning and placing a member is one call. When the spawn went past dead members holding its work tree, the output also carries `superseded`: one `{name, session_id, work_root, branch, evidence}` per such member, `evidence` being `proven-dead` or `stall-reported`. The dead member's row stays in the team record.
@@ -1374,6 +1376,8 @@ What `ah-hook stream-label` runs; harmless by hand. `{rendered: true, label, pre
 One call: `<ah> roster dismiss <name> [--team <t>]` closes a clean member at once and refuses one that is not clean (exit 2, `refused: not-clean`, its `reasons` and the `--close` command in `next`), where an untracked file last written before the member was spawned does not count as its dirt · plan: `… dismiss <name> --plan [--team <t>]` · close: `… dismiss <name> --close [--also-config] [--level <L>] [--team <t>]` (`--confirm`, `--plan-token <tok>` and `--allow-global` are accepted no-ops).
 
 Plans and close results carry the same `sources` block as `disband`, and a plan carries the same `next` close command.
+
+A plan also carries `clean_close: {minted, reasons, notes?}`: whether it minted the clean-close token, and each member's first failed condition when it did not. In a local-only run (a `local-only` rule applies to the team, as for `stream-done` above), unshipped commits do not hold a member that is otherwise clean: they stay in its tree and are listed in `notes` as `<name>: unshipped commits (<n> not on <ref>), kept: the run is local-only`.
 
 With no team file (for instance right after `disband --close` removed it): exit 0 with `dismissed: false, reason: "no active team and no live peers"` when the peer registry offers no closable session; exit 2, listing the live untracked sessions and the name / pane_id / session_id values `dismiss` accepts, when it does.
 

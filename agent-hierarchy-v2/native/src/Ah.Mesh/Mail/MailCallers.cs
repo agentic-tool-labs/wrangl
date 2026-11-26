@@ -152,7 +152,8 @@ internal sealed class MailCallers(
     IAhEnvironment environment,
     IProcessTable processes,
     string? ahVersion = null,
-    IClock? clock = null) : IMailCallers
+    IClock? clock = null,
+    IHookErrorLog? errors = null) : IMailCallers
 {
     private readonly RegistrationBinder _binder = new(pid => hierarchy.Core.PidAlive(JsonValue.FromNumber(pid)), processes);
 
@@ -202,7 +203,8 @@ internal sealed class MailCallers(
     /// <summary>
     /// ah2-470 D2: clears the record of each empty implicit team that yielded to another owned team, unless it has an open exchange
     /// or a checklist row not done. Compare-and-set: only a record still yielding and still owned by <paramref name="invoker"/> is
-    /// cleared. It never throws; a skipped or failed clear leaves the record, which stays hidden.
+    /// cleared. It never throws; a skipped or failed clear leaves the record, which stays hidden, and a failed one is logged to
+    /// <c>errors</c> (ah2-476).
     /// </summary>
     private void RetireYieldedImplicit(IEnumerable<OwnedTeam> yielded, TeamInvoker invoker)
     {
@@ -225,7 +227,8 @@ internal sealed class MailCallers(
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                // no error log is in reach here; the record stays and D1 keeps it hidden, and the next registration retries
+                // the record stays and D1 keeps it hidden, and the next registration retries
+                errors?.Log("mail-callers", $"clearing empty implicit team {t.Team} ({t.TeamFile}) failed: {e.Message}");
             }
         }
     }

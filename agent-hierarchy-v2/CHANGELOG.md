@@ -4,6 +4,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.65] - 2026-11-26
+
+### Changed
+
+- For a member that has not registered, `ah msg send` and the `member-unconfirmed` mail no longer ask for a SendMessage of the brief pointer, which the send gate refused. The send line says the entry is queued and that ah delivers it when the member registers or by its fallback; if ah asks for a relay, that printed relay is the one to send.
+- A checkpoint lists a member for resume only when both the record and its snapshot have it, in `ah roster recover` and in the stall host alike.
+
+### Fixed
+
+- A failed clear of an empty implicit team is logged instead of swallowed.
+- A local-only clean close is decided by the kind of its unshipped finding, not by a message prefix.
+- An owed-relay reminder is cleared by a sibling entry only when both carry a creation time.
+
 ## [2.0.64] - 2026-11-26
 
 ### Changed

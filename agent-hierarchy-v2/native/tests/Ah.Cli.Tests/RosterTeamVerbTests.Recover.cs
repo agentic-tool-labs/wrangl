@@ -125,6 +125,24 @@ public sealed partial class RosterTeamVerbTests
         Assert.DoesNotContain("resume --checkpoint", stdout, StringComparison.Ordinal);
     }
 
+    /// <summary>ah2-613 T4': the record lists the member but the snapshot it relaunches from does not, so recover names no resume.</summary>
+    [Fact]
+    public void ACheckpointWhoseSnapshotLacksTheMemberGivesNoResumeLine()
+    {
+        ArrangeCheckpoint();
+        var snapshot = RecordOf(Take()).Member("snapshot")!.Value.AsString();
+        var doc = JsonText.Parse(SnapshotText(snapshot));
+        doc.AsObject()["members"] = new JsonArray();
+        PutSnapshot(snapshot, JsonText.Stringify(doc, 2));
+        RecoverTeam(Environment.ProcessId, MemberRow(Impl, "implementor", GonePid(), "p1", "old-session"));
+        _liveSessions = [];
+
+        var (_, stdout, _) = Recover();
+
+        Assert.Contains("Or a fresh member: `ah roster spawn-one implementor --team proj`", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("resume --checkpoint", stdout, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ARowWhoseLiveSessionIsClaimedByTwoRowsGetsNoCommand()
     {
