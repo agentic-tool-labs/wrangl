@@ -23,31 +23,45 @@ public sealed class StatusLaneOwnersTests
         Assert.Equal(["gone"], owners.Single(o => o.Sessions.Contains("o-so2")).Teams);
     }
 
-    // ah2-367 L7; the negative: off duty, the deputy's session is no owner session
+    // ah2-367 L7, deputy-pane D1: on duty, the deputy owns an entry of its own listing its team and that team's lane, not the chief's
+    // other team, and a chief group past the sessions cap does not cut it; the chief's entry keeps the whole group.
+    // The negative: off duty, the deputy's session is in no owner entry.
     [Theory]
     [InlineData(",\"duty\":{\"deputy\":\"dep\"}", true)]
     [InlineData("", false)]
-    public void TheDeputyOnDutyIsAnOwnerSessionOfItsTeam(string duty, bool listed)
+    public void TheDeputyOnDutyOwnsOnlyItsTeamAndItsLanes(string duty, bool listed)
     {
-        var src = new Source(new()
-        {
-            ["top"] = """{"orchestrator":{"pid":1,"session_id":"o-top"},"members":[{"name":"dep","role":"deputy-chief"}]""" + duty + "}",
-        });
+        var rows = Enumerable.Range(0, 40).Select(static i => (JsonValue)new JsonObject { ["pid"] = 1, ["session_id"] = "o-row" + i }).ToList();
+        var src = new Source(
+            new()
+            {
+                ["top"] = """{"orchestrator":{"pid":1,"session_id":"o-top"},"members":[{"name":"dep","role":"deputy-chief"}],"streams":{"s1":{"state":"open"}}""" + duty + "}",
+                ["other"] = """{"orchestrator":{"pid":1,"session_id":"o-top"},"members":[]}""",
+                ["lane"] = """{"orchestrator":{"pid":2,"session_id":"o-so1"},"members":[],"parent":{"team":"top","stream":"s1"}}""",
+            },
+            sessionRows: rows);
 
         var status = HierLib.ComputeStatusFrom(src, "/d", 1_780_000_000_000, "/d");
-        var sessions = status["owners"].AsArray().Single().Member("sessions")!.Value.AsArray().Select(static s => s.AsString()).ToList();
+        var owners = status["owners"].AsArray().Select(static o => (Sessions: o.Member("sessions")!.Value.AsArray().Select(static s => s.AsString()).ToList(), Teams: o.Member("teams")!.Value.AsArray().Select(static t => t.AsString()).ToList())).ToList();
 
-        Assert.Contains("o-top", sessions);
-        Assert.Equal(listed, sessions.Contains("s-dep"));
+        var chief = owners.Single(o => o.Sessions.Contains("o-row39"));
+        Assert.Equal(["top", "other", "lane"], chief.Teams);
+        Assert.DoesNotContain("s-dep", chief.Sessions);
+        var deputy = owners.Where(o => o.Sessions.Contains("s-dep")).ToList();
+        Assert.Equal(listed ? 1 : 0, deputy.Count);
+        if (listed)
+        {
+            Assert.Equal(["top", "lane"], deputy[0].Teams);
+        }
     }
 
-    internal sealed class Source(Dictionary<string, string> teams, Func<JsonArray>? resources = null) : IStatusSource
+    internal sealed class Source(Dictionary<string, string> teams, Func<JsonArray>? resources = null, IReadOnlyList<JsonValue>? sessionRows = null) : IStatusSource
     {
         public IReadOnlyList<string> TeamNames(string dir) => [.. teams.Keys];
         public JsonValue TeamRecord(string dir, string? team) => team is not null && teams.TryGetValue(team, out var doc) ? JsonText.Parse(doc) : JsonValue.Null;
         public bool Orphaned(JsonValue team) => false;
         public JsonArray Roster(string dir) => [];
-        public IReadOnlyList<JsonValue> SessionRows(string dir) => [];
+        public IReadOnlyList<JsonValue> SessionRows(string dir) => sessionRows ?? [];
         public JsonArray Exchanges(string dir) => [];
         public JsonArray Gates(string dir) => [];
         public JsonValue RequestFm(JsonValue exchange) => new JsonObject();

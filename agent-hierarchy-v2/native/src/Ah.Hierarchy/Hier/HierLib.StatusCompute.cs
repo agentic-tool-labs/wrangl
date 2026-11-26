@@ -554,8 +554,11 @@ internal sealed partial class HierLib
         var allMembers = new List<JsonValue>();
         var allDispatches = new List<JsonValue>();
         var owners = new List<(JsonValue Pid, List<string> Sessions, JsonArray Teams, List<JsonValue> Members, List<JsonValue> Dispatches, bool AnyPipeline)>();
-        var kept = new List<(string? Key, JsonValue Record, int Owner, JsonArray Members, JsonArray Dispatches)>();
+        var kept = new List<(string? Key, JsonValue Record, int Owner, int Deputy, JsonArray Members, JsonArray Dispatches)>();
         var deputies = new HashSet<string>(StringComparer.Ordinal);
+
+        // deputy-pane D1: one owner entry per on-duty deputy session, after the chiefs' entries; Pid holds the session
+        var deputyOwners = new List<(JsonValue Pid, List<string> Sessions, JsonArray Teams, List<JsonValue> Members, List<JsonValue> Dispatches, bool AnyPipeline)>();
         if (!string.IsNullOrEmpty(dir) && src.HasDir(dir))
         {
             var rosterStart = Ah.Core.Time.PhaseTrace.Begin();
@@ -662,13 +665,26 @@ internal sealed partial class HierLib
                     g.Sessions.Add(sid.AsString());
                 }
 
-                // ah2-367 L7: the deputy on duty is acting lead, so its session is an owner session of the team
+                // ah2-367 L7, deputy-pane D1: the deputy on duty is acting lead of this team only, so its session owns an entry of its own
+                // listing this team (and, below, its lanes), never the chief's whole group, and no sessions cap can drop it
+                var deputyIdx = -1;
                 if (Ah.Roster.RosterModule.DutyOf(t) is { } duty
                     && members.FirstOrDefault(m => TextOf(Member(m, "name")) == duty["deputy"].AsString()) is { } deputy
                     && TextOf(Member(deputy, "session_id")) is { Length: > 0 } deputySession && !g.Sessions.Contains(deputySession))
                 {
-                    g.Sessions.Add(deputySession);
                     deputies.Add(deputySession);
+                    deputyIdx = deputyOwners.FindIndex(o => o.Pid.AsString() == deputySession);
+                    if (deputyIdx < 0)
+                    {
+                        deputyOwners.Add((deputySession, [deputySession], new JsonArray(), [], [], false));
+                        deputyIdx = deputyOwners.Count - 1;
+                    }
+
+                    var d = deputyOwners[deputyIdx];
+                    d.Teams.Add(keyValue);
+                    d.Members.AddRange(members);
+                    d.Dispatches.AddRange(dispatches);
+                    deputyOwners[deputyIdx] = team["pipeline"].IsNull ? d : d with { AnyPipeline = true };
                 }
 
                 g.Teams.Add(keyValue);
@@ -680,12 +696,12 @@ internal sealed partial class HierLib
                 }
 
                 owners[idx] = g;
-                kept.Add((key, t, idx, members, dispatches));
+                kept.Add((key, t, idx, deputyIdx, members, dispatches));
             }
 
             // ah2-367 L3: an open lane is listed with its parent team's owner too, so the parent's Orchestrator sees its dispatches.
-            // One level: a lane of a lane is listed with its own parent only.
-            foreach (var (key, t, _, members, dispatches) in kept)
+            // One level: a lane of a lane is listed with its own parent only. deputy-pane D1: and with the parent's on-duty deputy.
+            foreach (var (key, t, _, _, members, dispatches) in kept)
             {
                 var parent = Member(t, "parent");
                 var parentTeam = TextOf(Member(parent, "team"));
@@ -703,6 +719,13 @@ internal sealed partial class HierLib
                     g.Members.AddRange(members);
                     g.Dispatches.AddRange(dispatches);
                 }
+
+                if (kept[host].Deputy >= 0 && deputyOwners[kept[host].Deputy] is var d && !d.Teams.Any(x => x.IsText && x.AsString() == key))
+                {
+                    d.Teams.Add(key);
+                    d.Members.AddRange(members);
+                    d.Dispatches.AddRange(dispatches);
+                }
             }
         }
 
@@ -718,7 +741,7 @@ internal sealed partial class HierLib
 
         var anyPipeline = teams.Any(t => !t.Prop("pipeline").IsNull);
         var ownerArray = new JsonArray();
-        foreach (var g in owners)
+        foreach (var g in owners.Concat(deputyOwners))
         {
             var owner = new JsonObject
             {

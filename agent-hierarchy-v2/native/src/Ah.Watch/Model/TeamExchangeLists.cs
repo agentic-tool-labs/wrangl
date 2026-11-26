@@ -39,6 +39,8 @@ internal static class ExchangeFiling
 
     private const string SubOrchestratorRole = "sub-orchestrator";
 
+    private const string ChiefRole = "chief";
+
     private static string? Party(LaneRecord record, string roleField, string nameField, TeamEntry team)
     {
         var role = LaneParts.Text(record.Value, roleField);
@@ -48,9 +50,10 @@ internal static class ExchangeFiling
         var named = role == TreeIds.ReservedName && name is not null && name != TreeIds.Orchestrator && name != TreeIds.ReservedName && team.MemberNames.Contains(name);
 
         // ah2-367 L1: in a lane team its sub-orchestrator is that team's orchestrator, not one of its members
+        // deputy-pane D3': an end addressed to chief@<team> is the team's recorded owner, on or off duty
         var party = named
             ? name
-            : role == TreeIds.ReservedName || (role == SubOrchestratorRole && team.Value.Member("parent") is { IsMap: true })
+            : role == TreeIds.ReservedName || role == ChiefRole || (role == SubOrchestratorRole && team.Value.Member("parent") is { IsMap: true })
             ? TreeIds.Orchestrator
             : name ?? (role is null ? null : SoleHolder(team, role));
         return party is not null && team.MemberNames.Contains(party) ? party : null;
