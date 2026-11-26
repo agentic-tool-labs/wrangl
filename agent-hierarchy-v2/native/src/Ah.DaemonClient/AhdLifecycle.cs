@@ -151,7 +151,7 @@ internal sealed class AhdLifecycle(AhdClient client, Func<string, CancellationTo
             return Ok(("source", "daemon"), ("status", "draining"), ("pid", info.Pid));
         }
 
-        var reply = await client.PostDrainAsync(info.Socket, "daemon drain", 2000, ct).ConfigureAwait(false);
+        var reply = await client.PostDrainAsync(info.Socket, "daemon drain", 2000, ct: ct).ConfigureAwait(false);
         if (AhdClient.DrainRefusal(reply) is { } refusal)
         {
             return Fail(1, "drain_refused", $"the daemon refused to drain: {refusal}", ("source", "daemon"), ("pid", info.Pid));

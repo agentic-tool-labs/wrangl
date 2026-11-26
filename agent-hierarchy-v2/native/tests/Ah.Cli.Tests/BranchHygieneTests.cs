@@ -27,6 +27,12 @@ public sealed class BranchHygieneTests : IDisposable
     private readonly Sandbox _sandbox = new();
     private readonly List<string[]> _calls = [];
 
+    /// <summary>Runs after each real git command; a test uses it to change the store mid-verb.</summary>
+    private Action<string[]>? _afterGit;
+
+    /// <summary>When set, the session is on herdr and <c>herdr tab</c> list, create and close are faked.</summary>
+    private bool _herdr;
+
     public BranchHygieneTests()
     {
         Directory.CreateDirectory(Path.Combine(Hier, "teams"));
@@ -69,17 +75,31 @@ public sealed class BranchHygieneTests : IDisposable
     /// Real git for every <c>git</c> (or <c>env … git</c>) argv; <c>ps -o lstart=</c> of this process answers <see cref="SelfStart"/>;
     /// anything else fails as an absent tool would.
     /// </summary>
-    private sealed class RealGit(List<string[]> calls, string sandboxRoot) : IProcessRunner
+    private sealed class RealGit(List<string[]> calls, string sandboxRoot, Action<string[]>? afterGit = null, bool herdr = false) : IProcessRunner
     {
         private readonly IProcessRunner _real = PlatformModule.CreateProcessRunner();
 
         /// <summary>The <c>sh -c</c> script that makes this runner throw, as a runner that fails would.</summary>
         internal const string ThrowingScript = "the runner throws";
 
+        /// <summary>The tab a faked <c>herdr tab create</c> answers.</summary>
+        internal const string CreatedTab = "t-new";
+
         public ProcessResult Run(ProcessRequest request)
         {
             var argv = request.Argv.ToArray();
             calls.Add(argv);
+            if (herdr && argv is ["herdr", "tab", var op, ..])
+            {
+                var answer = op switch
+                {
+                    "list" => "{\"result\":{\"tabs\":[]}}",
+                    "create" => $"{{\"result\":{{\"tab\":{{\"tab_id\":\"{CreatedTab}\"}},\"root_pane\":{{\"pane_id\":\"p-new\"}}}}}}",
+                    _ => "{}",
+                };
+                return new ProcessResult(0, null, false, false, Encoding.UTF8.GetBytes(answer), default);
+            }
+
             if (argv.Contains("lstart=") && argv.Contains(Environment.ProcessId.ToString(CultureInfo.InvariantCulture)))
             {
                 return new ProcessResult(0, null, false, false, Encoding.UTF8.GetBytes(SelfStart + "\n"), default);
@@ -93,9 +113,14 @@ public sealed class BranchHygieneTests : IDisposable
             }
 
             var isGit = argv.Length > 0 && (argv[0] == "git" || (argv[0] == "env" && argv.Contains("git")));
-            return isGit
-                ? _real.Run(request with { Environment = GitEnvironment() })
-                : new ProcessResult(1, null, false, false, default, Encoding.UTF8.GetBytes("not available in this test"));
+            if (!isGit)
+            {
+                return new ProcessResult(1, null, false, false, default, Encoding.UTF8.GetBytes("not available in this test"));
+            }
+
+            var result = _real.Run(request with { Environment = GitEnvironment() });
+            afterGit?.Invoke(argv);
+            return result;
         }
     }
 
@@ -149,9 +174,14 @@ public sealed class BranchHygieneTests : IDisposable
             ["PATH"] = _sandbox.Bin,
             ["WRANGL_HIERARCHY_DIR"] = Hier,
         };
+        if (_herdr)
+        {
+            variables["HERDR_ENV"] = "1";
+        }
+
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.2.3", "1"));
         var io = PlatformModule.CreateIo(null);
-        return (ServiceGraph.Build(io, env, new RealGit(_calls, _sandbox.Root), new FakeDaemonClient()), io, env);
+        return (ServiceGraph.Build(io, env, new RealGit(_calls, _sandbox.Root, _afterGit, _herdr), new FakeDaemonClient()), io, env);
     }
 
     /// <summary>Writes a <c>local-only</c> rule row at <paramref name="level"/>/<paramref name="scope"/> into the sandbox's state database.</summary>
@@ -481,6 +511,80 @@ public sealed class BranchHygieneTests : IDisposable
             var (_, openOut, openErr) = Roster("stream-open", "other");
             Assert.Equal("release-ref-invalid", Refused(openOut, openErr));
         });
+    }
+
+    // ---------------------------------------------------------------- a failed stream-open leaves nothing behind (ah2-523)
+
+    /// <summary>Clears the team record right after <c>git worktree add</c>, so the record write that follows is refused; runs <paramref name="also"/> then too.</summary>
+    private void RefuseRecordAfterAdd(Action<string[]>? also = null) =>
+        _afterGit = argv =>
+        {
+            if (argv.Contains("worktree") && argv.Contains("add"))
+            {
+                _sandbox.ClearTeam(TeamFile);
+                also?.Invoke(argv);
+            }
+        };
+
+    [Fact]
+    public void ARefusedRecordWriteLeavesNoWorkTreeBranchOrTab()
+    {
+        // a done stream whose tree, branch and tab are gone: the reopen makes all three before it writes the record
+        var tree = Path.Combine(Project, ".claude", "worktrees", "feat");
+        _sandbox.PlantTeam(
+            TeamFile,
+            "{\"version\":1,\"team_id\":\"t-proj\",\"transport\":\"herdr\",\"orchestrator\":{\"session_id\":null,\"pid\":" + Environment.ProcessId + ",\"pid_start\":\"" + SelfStart + "\"},"
+            + "\"members\":[],\"streams\":{\"feat\":{\"state\":\"done\",\"branch\":\"feat\",\"base\":\"main\",\"worktree\":" + Js(tree) + ",\"tab_id\":\"t-gone\",\"opened\":\"2026-10-29T10:00:00-04:00\"}}}");
+        _herdr = true;
+        RefuseRecordAfterAdd();
+        var refs = Refs();
+
+        var (code, stdout, stderr) = Roster("stream-open", "feat");
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("was not recorded", stdout + stderr, StringComparison.Ordinal);
+        Assert.Contains(_calls, a => a is ["git", .., "worktree", "add", "-b", "feat", _, _]);
+        Assert.Contains(_calls, a => a is ["herdr", "tab", "create", ..]);
+        Assert.Contains(_calls, a => a is ["herdr", "tab", "close", RealGit.CreatedTab]);
+        Assert.False(Directory.Exists(tree));
+        Assert.False(HasRef("refs/heads/feat"));
+        Assert.Equal(refs, Refs());
+        Assert.DoesNotContain("left behind", stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARefusedRecordWriteKeepsABranchThatExistedBefore()
+    {
+        WriteTeam(string.Empty);
+        Git(Project, "branch", "adopted");
+        var tip = Git(Project, "rev-parse", "refs/heads/adopted");
+        RefuseRecordAfterAdd();
+
+        var (code, stdout, stderr) = Roster("stream-open", "fresh", "--branch", "adopted", "--base", "main");
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("was not recorded", stdout + stderr, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(Project, ".claude", "worktrees", "fresh")));
+        Assert.Equal(tip, Git(Project, "rev-parse", "refs/heads/adopted"));
+        Assert.DoesNotContain(_calls, a => a.Contains("update-ref") || a.Contains("tab"));
+        Assert.DoesNotContain("left behind", stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ADirtyNewWorkTreeIsNotForcedAndIsNamedWithItsBranch()
+    {
+        WriteTeam(string.Empty);
+        var tree = Path.Combine(Project, ".claude", "worktrees", "fresh");
+        RefuseRecordAfterAdd(_ => File.WriteAllText(Path.Combine(tree, "stray.txt"), "untracked\n"));
+
+        var (code, _, stderr) = Roster("stream-open", "fresh", "--base", "main");
+
+        Assert.NotEqual(0, code);
+        Assert.DoesNotContain(_calls, a => a.Contains("--force") || a.Contains("-f"));
+        Assert.True(File.Exists(Path.Combine(tree, "stray.txt")));
+        Assert.True(HasRef("refs/heads/fresh"));
+        Assert.Contains($"left behind: work tree {tree} (", stderr, StringComparison.Ordinal);
+        Assert.Contains("; branch fresh in ", stderr, StringComparison.Ordinal);
     }
 
     // ---------------------------------------------------------------- the unshipped count (§3.2, §7 must-fail)

@@ -36,7 +36,9 @@ public sealed class MemberDownCauseTests
 
         public IReadOnlyList<StallMember> Members(StallTeam team) => [new StallMember("impl", Role, "w1:p1", false, Stream)];
 
-        public StallJudgement Judge(StallTeam team, StallMember member) => new(new MemberVerdict(Status, "its process is not running"), RegistrationSession);
+        public DateTimeOffset? LastEvidence { get; set; }
+
+        public StallJudgement Judge(StallTeam team, StallMember member) => new(new MemberVerdict(Status, "its process is not running"), RegistrationSession, LastEvidence);
 
         public string? PaneTail(StallTeam team, StallMember member)
         {
@@ -128,6 +130,29 @@ public sealed class MemberDownCauseTests
         Assert.Contains("member-down impl — its process is not running; dead since", mail.Text, StringComparison.Ordinal);
         Assert.Contains("Its old session id: " + Session, mail.Text, StringComparison.Ordinal);
         Assert.Null(JsonValue.FromObject(mail.Data).Member("cause"));
+    }
+
+    // ah2-595: first dead sighting at minute 0, alarm at minute 10; activity at minute 6 is the time shown, earlier evidence stays, none keeps minute 0
+    [Theory]
+    [InlineData(6, 6)]
+    [InlineData(-1, -1)]
+    [InlineData(null, 0)]
+    public void DeadSinceIsNeverEarlierThanTheLastActivity(int? activityMinute, int shownMinute)
+    {
+        var host = new Host();
+        var now = DateTimeOffset.UnixEpoch;
+        var watch = new StallWatch(host, StallSettings.Defaults with { Down = TimeSpan.FromMinutes(5), WarmUp = TimeSpan.Zero }, () => now);
+        watch.Sweep();
+        Assert.Empty(host.Mails);
+
+        host.LastEvidence = activityMinute is { } m ? DateTimeOffset.UnixEpoch.AddMinutes(m) : null;
+        now = DateTimeOffset.UnixEpoch.AddMinutes(10);
+        watch.Sweep();
+
+        var mail = Assert.Single(host.Mails);
+        var shown = Ah.Core.Time.Timestamps.ToIsoString(DateTimeOffset.UnixEpoch.AddMinutes(shownMinute));
+        Assert.Contains("; dead since " + shown, mail.Text, StringComparison.Ordinal);
+        Assert.Equal(shown, JsonValue.FromObject(mail.Data).Member("since")!.Value.AsString());
     }
 
     [Fact]

@@ -328,7 +328,10 @@ internal static class PackVerbs
             if (r.Member("tools") is { IsMap: true } tools)
             {
                 var effective = tools.Member("effective") is { IsArray: true } ef ? string.Join(", ", ef.AsArray().Select(x => MemberPlanning.JsConvertText(x))) : string.Empty;
-                var flagged = tools.Member("flagged") is { IsArray: true } fl ? fl.AsArray().Select(x => MemberPlanning.JsConvertText(x)).ToList() : [];
+                var flagged = tools.Member("flagged") is { IsArray: true } fl
+                    ? fl.AsArray().Select(x => MemberPlanning.JsConvertText(x)).Where(x => !x.StartsWith(config.McpToolPrefix, StringComparison.Ordinal)).ToList()
+                    : [];
+                lines.AddRange(config.PackToolLines(tools, dir).Select(l => "  " + Esc(c, l)));
                 lines.Add($"  tools: {(effective.Length == 0 ? "(none)" : effective)}{(flagged.Count > 0 ? " — flagged: " + string.Join(", ", flagged) : string.Empty)}");
             }
 
@@ -490,7 +493,7 @@ internal static class PackVerbs
                     }
                 }
 
-                shown["tools"] = config.PackToolReport(parsed.Get("fm"));
+                shown["tools"] = config.PackToolReport(parsed.Get("fm"), dir);
             }
         }
 

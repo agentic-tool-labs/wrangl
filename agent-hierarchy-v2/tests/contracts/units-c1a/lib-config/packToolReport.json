@@ -51,7 +51,12 @@
           "mcp__srv__tool",
           "Agent",
           "Edit"
-        ]
+        ],
+        "mcp": {
+          "mcp__srv": [
+            "mcp__srv__tool"
+          ]
+        }
       }
     },
     {

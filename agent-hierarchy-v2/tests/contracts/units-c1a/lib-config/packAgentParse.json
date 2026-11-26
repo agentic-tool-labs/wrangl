@@ -1527,7 +1527,21 @@
         "p"
       ],
       "expect": {
-        "findings": [],
+        "findings": [
+          {
+            "level": "warn",
+            "code": "pack-agent-tools",
+            "path": "p",
+            "field": "tools",
+            "message": "tools entry \"mcp__x-y\" matches no tools in Claude Code's tools field; write mcp__x-y__*",
+            "fix": [
+              {
+                "kind": "edit-frontmatter",
+                "detail": "write mcp__x-y__*"
+              }
+            ]
+          }
+        ],
         "fm": {
           "frontmatter": true,
           "name": "pk",

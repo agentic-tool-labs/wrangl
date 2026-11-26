@@ -189,8 +189,102 @@ internal sealed partial class ConfigCore
 
     public JsonArray PackAgentFindings(string text, string? path = null) => PackAgentText.PackAgentParse(text, path).Findings;
 
-    /// <summary><c>{effective, flagged}</c>: a pack agent's tools less <c>disallowedTools</c>, and the ones worth flagging.</summary>
-    public JsonObject PackToolReport(JsonValue? fm)
+    /// <summary>
+    /// <c>{effective, flagged}</c>: a pack agent's tools less <c>disallowedTools</c>, and the ones worth flagging. When the
+    /// effective tools name MCP tools, <c>mcp</c> maps each server to its listed tools; when they hold an
+    /// <c>mcp__&lt;server&gt;__*</c> grant, <c>server_grants</c> lists <c>{server, source, pinned}</c>. A server is the plugin's own
+    /// when <paramref name="pluginDir"/>'s <c>.mcp.json</c> defines it.
+    /// </summary>
+    public JsonObject PackToolReport(JsonValue? fm, string? pluginDir = null)
+    {
+        var report = PackToolBasics(fm);
+        var own = pluginDir is null ? [] : PluginServerPrefixes(pluginDir);
+        var mcp = new JsonObject();
+        var grants = new JsonArray();
+        foreach (var t in report["effective"].AsArray())
+        {
+            if (!t.IsText || !t.AsString().StartsWith(PackAgentText.McpToolPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var name = t.AsString();
+            if (PackAgentText.IsServerGrant(name))
+            {
+                var server = name[..^3];
+                var pinned = own.Contains(server);
+                grants.Add(new JsonObject { ["server"] = server, ["source"] = pinned ? "plugin" : "user", ["pinned"] = pinned });
+                continue;
+            }
+
+            var cut = name.LastIndexOf("__", StringComparison.Ordinal);
+            var key = cut > PackAgentText.McpToolPrefix.Length - 2 ? name[..cut] : name;
+            var list = mcp.Get(key) is { IsArray: true } l ? l.AsArray() : new JsonArray();
+            list.Add(name);
+            mcp[key] = list;
+        }
+
+        if (mcp.Count > 0)
+        {
+            report["mcp"] = mcp;
+        }
+
+        if (grants.Count > 0)
+        {
+            report["server_grants"] = grants;
+        }
+
+        return report;
+    }
+
+    /// <summary>
+    /// The text lines for a <see cref="PackToolReport"/>: one ⚠ line per server grant first, then one flagged line per MCP server
+    /// whose tools are listed by name.
+    /// </summary>
+    public IReadOnlyList<string> PackToolLines(JsonValue? report, string? pluginDir = null)
+    {
+        var lines = new List<string>();
+        var own = pluginDir is null ? [] : PluginServerPrefixes(pluginDir);
+        if (report?.Member("server_grants") is { IsArray: true } grants)
+        {
+            foreach (var g in grants.AsArray())
+            {
+                var source = g.Member("pinned") is { IsTruthy: true } ? "plugin's own .mcp.json (pinned)" : "a server you configure (not pinned)";
+                lines.Add($"⚠ grants EVERY tool of MCP server {JsConvert.ToJsString(g.Member("server"))}, including tools it adds later; Ahd cannot see or pin that list — source: {source}");
+            }
+        }
+
+        if (report?.Member("mcp") is { IsMap: true } mcp)
+        {
+            foreach (var key in mcp.AsObject().Keys)
+            {
+                var names = mcp.AsObject()[key].AsArray().Select(x => x.AsString()).ToList();
+                var shown = string.Join(", ", names.Take(3)) + (names.Count > 3 ? ", …" : string.Empty);
+                var source = own.Contains(key) ? "plugin's own .mcp.json" : "not in this plugin";
+                lines.Add($"MCP server {key}: {names.Count} tools listed ({shown}) — source: {source}");
+            }
+        }
+
+        return lines;
+    }
+
+    /// <summary>The <c>mcp__plugin_&lt;plugin&gt;_&lt;server&gt;</c> prefixes of the servers the plugin's own <c>.mcp.json</c> defines.</summary>
+    private HashSet<string> PluginServerPrefixes(string pluginDir)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        if (TryReadJsonStrict(NodePath.Join(pluginDir, ".mcp.json"))?.Member("mcpServers") is { IsMap: true } servers)
+        {
+            var plugin = PluginNameAt(pluginDir);
+            foreach (var key in servers.AsObject().Keys)
+            {
+                set.Add($"{PackAgentText.McpToolPrefix}plugin_{plugin}_{key}");
+            }
+        }
+
+        return set;
+    }
+
+    private static JsonObject PackToolBasics(JsonValue? fm)
     {
         var disallowed = fm?.Member("disallowedTools") is { IsArray: true } d ? d.AsArray().Select(x => x).ToList() : [];
         var effective = new JsonArray();
@@ -355,6 +449,17 @@ internal sealed partial class ConfigCore
                 PackAgentText.Fixes(
                     PackAgentText.Fix("edit-frontmatter", "remove model: from the agent file (the row's model then governs)"),
                     PackAgentText.Fix("edit-frontmatter", $"set model: to one of {string.Join(", ", allowed)}"))));
+        }
+
+        // adr-41: a server-wide grant only for implement and legwork, whether or not the class has a contract map.
+        if (cls is not ("implement" or "legwork") && !parseErrors.Contains("tools") && file.Get("tools") is { IsArray: true } grantTools)
+        {
+            foreach (var entry in grantTools.AsArray().Select(x => x.AsString()).Where(PackAgentText.IsServerGrant))
+            {
+                findings.Add(PackAgentText.Finding("error", "pack-agent-tools", path, "tools",
+                    $"tools entry {JsonText.Stringify(entry, 0)}: a server-wide grant cannot be checked against the {cls} contract (it may include write tools)",
+                    PackAgentText.Fixes(PackAgentText.Fix("edit-frontmatter", $"list the {entry[..^3]} tools this agent needs by name"))));
+            }
         }
 
         var contract = ConfigRegistry.ClassesJson().Get(cls)!.Value.AsObject().Get("contract");

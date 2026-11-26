@@ -582,6 +582,29 @@ public sealed class RosterKitVerbTests : IDisposable
     }
 
     [Fact]
+    public void M6AKitAgentsServerGrantPrintsItsWarningLineBeforeTheFlatList()
+    {
+        ExportScaffoldedThenForget(kit =>
+        {
+            var agent = kit["roles"].AsObject()["lint"].AsObject()["agent"].AsObject();
+            agent["text"] = agent["text"].AsString().Replace("\n---\n", "\ntools: Read, SendMessage, mcp__srv__*\n---\n", StringComparison.Ordinal);
+        });
+
+        var dry = DryRun();
+
+        const string line = "    ⚠ grants EVERY tool of MCP server mcp__srv, including tools it adds later; Ahd cannot see or pin that list — source: a server you configure (not pinned)\n    flagged tools: mcp__srv__*\n";
+        Assert.Contains(line, dry.Stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void M6NegativeAKitWithNoGrantPrintsNoWarningLine()
+    {
+        ExportScaffoldedThenForget();
+
+        Assert.DoesNotContain("⚠ grants EVERY tool", DryRun().Stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AKitAgentWithNoToolsAndHooksIsStillRefused()
     {
         ExportScaffoldedThenForget(kit =>

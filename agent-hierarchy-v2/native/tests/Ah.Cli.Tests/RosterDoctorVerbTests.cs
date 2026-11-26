@@ -73,6 +73,8 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
 
         public string? DaemonUnansweredNote() => unanswered;
 
+        public bool DaemonDown() => false;
+
         public string? DaemonReadModelNote() => readModel;
     }
 
@@ -166,7 +168,32 @@ public sealed partial class RosterDoctorVerbTests : IDisposable
 
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_rootUnderTest ?? _pluginRoot, "wrangl", "1.2.3", "1"));
         var io = PlatformModule.CreateIo(null);
-        return (ServiceGraph.Build(io, env, _runner ?? new FakeRunner(), new FakeDaemonClient()), io, env);
+        return (ServiceGraph.Build(io, env, _runner ?? new FakeRunner(), _daemon ?? new FakeDaemonClient()), io, env);
+    }
+
+    private FakeDaemonClient? _daemon;
+
+    [Fact]
+    public void DoctorWithNoDaemonLaunchesNoneWhileTheClaimsPathStillDoes()
+    {
+        var baseline = Roster(null, "doctor", "--check");
+        _daemon = new FakeDaemonClient { Reply = _ => new DaemonReply(0, default, "down") };
+        var result = Roster(null, "doctor", "--check");
+        var parsed = Parse(result.Stdout);
+
+        Assert.Equal(baseline.Code, result.Code);
+        Assert.DoesNotContain(Parse(baseline.Stdout)["rows"].AsArray(), r => r.Member("name")!.Value.AsString() == "daemon");
+        var row = Row(parsed, "daemon");
+        Assert.Equal("ok", row["status"].AsString());
+        Assert.Equal("not running; doctor did not start one (start it with ahd start)", row["detail"].AsString());
+        Assert.DoesNotContain("daemon", parsed["red"].AsArray().Select(r => r.AsString()));
+        Assert.Equal("off (AH_DAEMON=off)", Row(Parse(Roster(new() { ["AH_DAEMON"] = "off" }, "doctor", "--check").Stdout), "daemon")["detail"].AsString());
+        Assert.NotEmpty(_daemon.Requests);
+        Assert.All(_daemon.Requests, r => Assert.False(r.LaunchIfDown));
+
+        _daemon.Requests.Clear();
+        _ = DaemonClaims.SupportOf(_daemon);
+        Assert.True(Assert.Single(_daemon.Requests).LaunchIfDown);
     }
 
     private static JsonObject Parse(string text) => JsonText.Parse(Encoding.UTF8.GetBytes(text)).AsObject();

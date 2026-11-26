@@ -848,12 +848,13 @@ internal static partial class RosterKitVerb
                 agentFindings.AddRange(cf.AsArray());
             }
 
-            var flagged = config.PackToolReport(parsed.Get("fm")).Get("flagged") is { IsArray: true } fl ? fl.AsArray().Select(x => Esc(T(x))).ToList() : [];
-            var section = new List<string>
-            {
-                $"  {file} (the kit names it {Show(agentEntry.Get("file"))}; that name is not used for the path)",
-                $"    flagged tools: {everyTool ?? (flagged.Count == 0 ? "none" : string.Join(", ", flagged))}",
-            };
+            var toolReport = config.PackToolReport(parsed.Get("fm"));
+            var flagged = toolReport.Get("flagged") is { IsArray: true } fl ? fl.AsArray().Select(x => Esc(T(x))).ToList() : [];
+            var section = new List<string> { $"  {file} (the kit names it {Show(agentEntry.Get("file"))}; that name is not used for the path)" };
+
+            // M6: the server-grant ⚠ lines role trust prints, before the flat list; a kit has no .mcp.json, so none is pinned.
+            section.AddRange(config.PackToolLines(toolReport).Where(l => l.StartsWith('⚠')).Select(l => $"    {Esc(l)}"));
+            section.Add($"    flagged tools: {everyTool ?? (flagged.Count == 0 ? "none" : string.Join(", ", flagged))}");
             foreach (var f in agentFindings)
             {
                 var line = $"{T(f.Member("level"))} {T(f.Member("code"))}: {Esc(T(f.Member("message")))}";

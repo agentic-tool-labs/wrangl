@@ -581,16 +581,26 @@ public sealed partial class HooksHostTests
 
     /// <summary>
     /// ah2-561 A1: a member whose team row carries no session id (the up row names no member) but whose pane is
-    /// <paramref name="rowPane"/>; this session's up row is on pane p1.
+    /// <paramref name="rowPane"/> (and, for ah2-608 P1, session id <paramref name="rowSession"/>; for P4, pid 4242 started at
+    /// <paramref name="rowStart"/>); this session's up row is on pane p1, pid 4242 started at start-a.
     /// </summary>
-    private static Rig UnstampedMemberRig(string rowPane)
+    private static Rig UnstampedMemberRig(string rowPane, string? rowSession = null, string? rowStart = null)
     {
         var rig = SoftRig(new() { ["WRANGL_TEAM_FILE"] = "/x/team.json" });
-        AutoTrackTests.WriteTeam(rig, new JsonObject
+        var row = new JsonObject { ["name"] = "qa-1", ["role"] = "qa", ["transport_id"] = rowPane };
+        if (rowSession is not null)
         {
-            ["members"] = new JsonArray { new JsonObject { ["name"] = "qa-1", ["role"] = "qa", ["transport_id"] = rowPane } },
-        });
-        rig.PutPeers(HierDir(rig), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"pane_id\":\"p1\",\"role\":\"qa\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
+            row["session_id"] = rowSession;
+        }
+
+        if (rowStart is not null)
+        {
+            row["pid"] = 4242;
+            row["pid_start"] = rowStart;
+        }
+
+        AutoTrackTests.WriteTeam(rig, new JsonObject { ["members"] = new JsonArray { row } });
+        rig.PutPeers(HierDir(rig), "{\"type\":\"peer\",\"status\":\"up\",\"session_id\":\"sess-1\",\"team\":\"tm\",\"pane_id\":\"p1\",\"pid\":4242,\"pid_start\":\"start-a\",\"role\":\"qa\",\"ts\":\"" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\"}\n");
         return rig;
     }
 
@@ -619,6 +629,31 @@ public sealed partial class HooksHostTests
 
         Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
         Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    [Fact]
+    public void NegativeARowOnThisPaneStampedWithAnotherSessionIsNotThisSessionsAndItsApprovalLiftsNothing()
+    {
+        // ah2-608 P1: pane p1 reused; the row still carries the old session's id.
+        var rig = UnstampedMemberRig("p1", "sess-old");
+        var sw = BashAs(string.Empty, "git switch -c b abc123");
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.Null(Assert.Single(SoftRows(rig, "bounce")).Member("member"));
+        Approve(rig, "qa-1");
+
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", sw)));
+        Assert.Empty(SoftRows(rig, "approved"));
+    }
+
+    [Theory]
+    [InlineData("start-a", "qa-1")]
+    [InlineData("start-b", null)]
+    public void ARowOnThisPaneFromTheSameProcessIsThisSessionsWhateverItsSessionIdButNotFromAnotherStart(string rowStart, string? expected)
+    {
+        // ah2-608 P4: /clear in the same process (pid 4242) with SessionStart skipped; start-b is a new process on a reused pid.
+        var rig = UnstampedMemberRig("p1", "sess-old", rowStart);
+        Assert.True(IsDenied(rig.Run("pretooluse-chain", BashAs(string.Empty, "git switch -c b abc123"))));
+        Assert.Equal(expected, Assert.Single(SoftRows(rig, "bounce")).Member("member")?.AsString());
     }
 
     /// <summary>ah2-561 A3: a QA session (cwd checkout <c>proj</c>) and a run-set clone, <c>/private/tmp/ahprobe.&lt;hex&gt;</c>.</summary>

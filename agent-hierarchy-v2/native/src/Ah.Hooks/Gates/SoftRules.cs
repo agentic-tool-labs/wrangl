@@ -399,7 +399,9 @@ internal static partial class SoftRules
 
             var record = c.Services.Roster.ReadTeamRecord(home, team.AsString());
             // ah2-561 A1: a row whose session id was never stamped (seen 2026-11-23: no member on the bounce, so no approval could match)
-            // is found by the up row's pane, the lookup SessionStart claims the row by.
+            // is found by the up row's pane, the lookup SessionStart claims the row by. ah2-608 P1: only when that row carries no
+            // session id; one stamped with another session's id is a stale row on a reused pane. P4: or when the row's pid and pid start
+            // equal this session's up row's (the same process after /clear or compaction whose SessionStart was skipped).
             return (record.Member("members") is { IsArray: true } members
                     ? members.AsArray()
                         .Where(m => m.Member("session_id") is { IsText: true } s && s.AsString() == session)
@@ -407,7 +409,12 @@ internal static partial class SoftRules
                         .FirstOrDefault(n => n is not null)
                     : null)
                 ?? (up.Member("pane_id") is { IsText: true } pane && pane.AsString().Length > 0
-                    && c.Services.Roster.SessionMemberRow(record, pane.AsString()).Member("name") is { IsText: true } byPane
+                    && c.Services.Roster.SessionMemberRow(record, pane.AsString()) is var paneRow
+                    && (paneRow.Member("session_id") is not { IsText: true } rowSession || rowSession.AsString().Length == 0 || rowSession.AsString() == session
+                        || (paneRow.Member("pid") is { IsNumber: true } rowPid && up.Member("pid") is { IsNumber: true } upPid && rowPid.AsNumber() == upPid.AsNumber()
+                            && paneRow.Member("pid_start") is { IsText: true } rowStart && rowStart.AsString().Length > 0
+                            && up.Member("pid_start") is { IsText: true } upStart && rowStart.AsString() == upStart.AsString()))
+                    && paneRow.Member("name") is { IsText: true } byPane
                     ? byPane.AsString()
                     : null);
         }

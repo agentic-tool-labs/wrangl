@@ -42,8 +42,9 @@ internal static class DaemonClaims
         try
         {
             // b459 step 11: doctor is the on-demand rebuild; a daemon without the route answers 404 and the counters are read as before
-            _ = daemon.RequestAsync(new DaemonRequest("POST", "/v1/read-model/rebuild", default, Budget, StartIfDown: false)).GetAwaiter().GetResult();
-            var reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/read-model", default, Budget, StartIfDown: false)).GetAwaiter().GetResult();
+            // ah2-616: only doctor reads this, and a diagnostic read launches no daemon
+            _ = daemon.RequestAsync(new DaemonRequest("POST", "/v1/read-model/rebuild", default, Budget, StartIfDown: false, LaunchIfDown: false)).GetAwaiter().GetResult();
+            var reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/read-model", default, Budget, StartIfDown: false, LaunchIfDown: false)).GetAwaiter().GetResult();
             if (reply.Status != 200 || reply.Body.IsEmpty || JsonText.Parse(reply.Body.Span) is not { IsMap: true } body
                 || body.Member("counters") is not { IsMap: true } model)
             {
@@ -58,11 +59,13 @@ internal static class DaemonClaims
         }
     }
 
-    internal static ClaimSupport SupportOf(IDaemonClient daemon)
+    /// <param name="daemon">The client to ask.</param>
+    /// <param name="launch">False for doctor's diagnostic read: no detached start when no daemon lives (ah2-616). The claims path keeps launching.</param>
+    internal static ClaimSupport SupportOf(IDaemonClient daemon, bool launch = true)
     {
         try
         {
-            var reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/health", default, Budget, StartIfDown: false)).GetAwaiter().GetResult();
+            var reply = daemon.RequestAsync(new DaemonRequest("GET", "/v1/health", default, Budget, StartIfDown: false, LaunchIfDown: launch)).GetAwaiter().GetResult();
             if (reply.Status == 0)
             {
                 return reply.SentAt is null && !daemon.DaemonPresent() ? ClaimSupport.NoDaemon : ClaimSupport.Unanswered;

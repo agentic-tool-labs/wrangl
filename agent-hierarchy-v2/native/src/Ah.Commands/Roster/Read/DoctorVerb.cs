@@ -366,6 +366,12 @@ internal static partial class DoctorVerb
         {
             rows.Add(new JsonObject { ["name"] = "daemon-contract", ["status"] = "warn", ["detail"] = unansweredNote });
         }
+        else if (c.Services.Doctor is { } down && down.DaemonDown())
+        {
+            // ah2-616 D4: the lowest severity, so a stopped daemon never changes the exit code; D5: AH_DAEMON=off gets no start hint
+            var detail = c.Services.Environment.GetVariable("AH_DAEMON") == "off" ? "off (AH_DAEMON=off)" : "not running; doctor did not start one (start it with ahd start)";
+            rows.Add(new JsonObject { ["name"] = "daemon", ["status"] = "ok", ["detail"] = detail });
+        }
 
         if (c.Services.Doctor is { } readModel && readModel.DaemonReadModelNote() is { } readModelNote)
         {

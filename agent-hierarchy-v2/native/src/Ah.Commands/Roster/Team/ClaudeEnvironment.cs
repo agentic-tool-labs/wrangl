@@ -50,9 +50,13 @@ internal static class ClaudeEnvironment
             return new Resolved(field, own, team.Member(field) is not { IsText: true } held || held.AsString() != own);
         }
 
-        return team.Member(field) is { IsText: true } teamValue ? new Resolved(field, teamValue.AsString(), false) : new Resolved(field, Caller(c, variable), false);
+        // ah2-578 E1: a caller that is not the lead (the daemon's relaunch) launches with its own value but never records it
+        return team.Member(field) is { IsText: true } teamValue ? new Resolved(field, teamValue.AsString(), false) : new Resolved(field, Caller(c, variable), false, Record: false);
     }
 
-    /// <summary>A resolved value of one variable's <paramref name="Field"/>, and whether the team record is updated to it.</summary>
-    internal readonly record struct Resolved(string Field, string Value, bool TeamTakesCaller);
+    /// <summary>
+    /// A resolved value of one variable's <paramref name="Field"/>, whether the team record is updated to it, and whether the member row
+    /// <paramref name="Record"/>s it (false only for a non-lead caller's own value).
+    /// </summary>
+    internal readonly record struct Resolved(string Field, string Value, bool TeamTakesCaller, bool Record = true);
 }
