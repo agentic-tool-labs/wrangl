@@ -346,7 +346,7 @@ internal sealed partial class HierLib : IHierarchyStatus
     /// The record a write of <paramref name="fields"/> over <paramref name="current"/> (null: none) leaves, as JSON text, or null when the
     /// write changes nothing that is kept.
     /// </summary>
-    private string? NextActivityText(JsonValue current, JsonValue fields)
+    private string? NextActivityText(JsonValue current, JsonValue fields, bool peerSubject)
     {
         var activity = fields.Member("activity");
         var blockedBy = fields.Member("blocked_by") ?? JsonValue.Null;
@@ -413,7 +413,10 @@ internal sealed partial class HierLib : IHierarchyStatus
         // An idle write that is the compaction itself is not a Stop, and a compaction with no later Stop keeps the earlier state_since.
         var stoppedAfterCompaction = !compacting && hasCurrent && activity is { IsText: true } written && written.AsString() == "idle"
             && StrictEqualsU(current.Member("activity"), activity) && CompactedAfterWorking(current) && CompactedAfterStateSince(current);
-        if (sameState && sameFields && !(name is not null && toolStale) && !fillChanged && !compactedSinceWorking && !stoppedAfterCompaction)
+        // ah2-636 U5: a session's permission write (the hook's permission Notification; pane records are written by other writers) onto a
+        // record already blocked on permission is a new block: never skipped, it restamps `at` and drops the watcher's screen marks
+        var newBlock = peerSubject && sameState && TextOf(activity) == "blocked" && TextOf(blockedBy) == "permission";
+        if (sameState && sameFields && !newBlock && !(name is not null && toolStale) && !fillChanged && !compactedSinceWorking && !stoppedAfterCompaction)
         {
             return null;
         }
@@ -429,7 +432,7 @@ internal sealed partial class HierLib : IHierarchyStatus
         }
 
         {
-            var unchanged = sameState && sameFields;
+            var unchanged = sameState && sameFields && !newBlock;
             var at = unchanged && current.Member("at") is { IsText: true } cat ? cat : (JsonValue)IsoNowOf(nowMs);
             var toolAt = IsoNowOf(nowMs);
             var heldFill = !fill.IsNull ? fill : (hasCurrent ? CleanContext(current.Member("context")) : JsonValue.Null);
@@ -535,7 +538,7 @@ internal sealed partial class HierLib : IHierarchyStatus
         }
 
         var subject = args.Member("subject")!.Value.AsString();
-        if (NextActivityText(ParseActivity(ActivityBody(tx, dir, subject)), args) is not { } text)
+        if (NextActivityText(ParseActivity(ActivityBody(tx, dir, subject)), args, !subject.StartsWith("pane-", StringComparison.Ordinal)) is not { } text)
         {
             return new JsonObject { ["written"] = false };
         }

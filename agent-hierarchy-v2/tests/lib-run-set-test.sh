@@ -97,6 +97,8 @@ PUBLISH
   cat > "$d/tests/run-all.sh" <<'RUNALL'
 #!/bin/bash
 ST="@ST@"
+# --limit NAME, as the real one: prints the seconds (here the content of shell.limit, none by default) and runs nothing
+if [ "${1:-}" = --limit ]; then echo "${2:-}" >> "$ST/shell.limit-calls"; cat "$ST/shell.limit" 2>/dev/null; exit 0; fi
 echo "WAIT=${AH_RUN_ALL_LOCK_WAIT:-} LOCK=${AH_RUN_ALL_LOCK:-} AHD_NATIVE_BIN=${AHD_NATIVE_BIN:-} exe=$([ -x "${AHD_NATIVE_BIN:-/nonexistent}" ] && echo yes || echo no) $*" >> "$ST/shell.calls"
 exact=""; out=""; only=""; prev=""
 for a in "$@"; do case "$prev" in --exact) exact=$a;; -o) out=$a;; --only) only=$a;; esac; prev=$a; done

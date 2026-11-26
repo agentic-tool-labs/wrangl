@@ -51,7 +51,8 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
             return new StallRemoval(capture, removed.Abandoned);
         }
 
-        if (removed.Capture is not null)
+        // a close that returned but whose re-read of the team threw may have removed the row: only the R7 log line below says so
+        if (removed.Capture is not null && !removed.Unverified)
         {
             // the member-remove row is written: record that the close then failed, so the journal does not read as a removal
             try
@@ -87,6 +88,8 @@ internal sealed class StallHost(ServiceGraph g, string ahHome, Func<bool> owner,
         var record = g.Roster.ReadTeamRecord(team.HierarchyDir, team.Name);
         return record.Member("transport") is { IsText: true } transport ? read(g.Launch.HerdrFor(record, member.Name), transport.AsString(), pane) : null;
     }
+
+    public void Log(string line) => log?.Invoke(line);
 
     public bool IsSessionId(string session) => g.Launch.SnapshotRules.IsSessionId(session);
 

@@ -4,6 +4,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.61] - 2026-11-25
+
+### Changed
+
+- **Alarms hold while a member's job is still running.** `check-in-due` and `peer-silent` are held while the member
+  has an open job whose process is alive, for up to 120 minutes. `idle-without-report` is not raised while the member
+  waits on background work, holds or waits for the test slot, or has a live job. `job-overdue` for a job whose process
+  is still alive fires at twice its eta plus the margin, and its text names the pid. Each alarm still fires once when
+  its hold ends.
+- **`ah roster status` says when a permission block was not seen on screen.** A peer blocked on permission carries
+  `blocked_confirmed`: `true` once the watcher read the prompt on its screen, `false` when no screen read exists
+  (a tmux member, or the first seconds of a block). The member still reads `blocked`.
+
+### Fixed
+
+- **An old screen read no longer clears a new permission block.** A screen mark older than the current block is
+  ignored, and a second permission prompt on a member already marked blocked restamps the block and drops old marks.
+- A removed member's mail that is dropped after 5 retries is logged once.
+- `ah roster disband` finishes its teardown, with a warning, when the store fails while releasing a work tree.
+- No `member-remove-failed` row is written when a removal worked and only the re-read after it failed.
+- Tests: `run-set` reads the rerun limit from the clone under test and gives a rerun 30 s more than its inner limit;
+  three `test-with-slot` checks wait on the state they assert instead of on elapsed time.
+
 ## [2.0.60] - 2026-11-25
 
 ### Fixed

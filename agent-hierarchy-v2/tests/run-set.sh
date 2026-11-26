@@ -73,7 +73,8 @@
 #              says; a rerun that waits longer than AH_TEST_SLOT_WAIT for its token makes the set ERROR (exit 3), not FAIL.
 #   timeout    each single-test shell or .NET rerun gets AH_RERUN_TIMEOUT seconds (default 60) once it holds its test slot (the
 #              wait for a slot is not timed); one that runs out failed again. A shell rerun gets at least the suite's own limit
-#              in run-all (`run-all.sh --limit NAME`: 300 s, or its LONG_TESTS floor).
+#              in run-all (`run-all.sh --limit NAME`: 300 s, or its LONG_TESTS floor; the clone's first, run-set's own when that
+#              gives no number), plus 30 s so run-all records its own TIMEOUT first.
 #   aborted    a run-all inside the shell set that stopped early ("aborted: systemic") makes the set SYSTEMIC whatever the limits.
 #   SYSTEMIC exits 1, is never stored for reuse, and runs no rerun: report the failure groups it printed.
 
@@ -304,12 +305,16 @@ rerun_shell() { # <name> <project>
   local name=$2 stem set rc tmo lim
   stem="${name#test-}"
   set="$KD/rerun-$RERUN_N.set"; RERUN_N=$((RERUN_N + 1))
-  # at least the suite's own limit in run-all: a suite that needs more than AH_RERUN_TIMEOUT alone could never pass a rerun
-  tmo=$RERUN_TMO; lim=$(bash "$HERE/run-all.sh" --limit "$name" 2>/dev/null)
+  # at least the suite's own limit in run-all: a suite that needs more than AH_RERUN_TIMEOUT alone could never pass a rerun.
+  # The clone's run-all first (it is the one that runs the rerun); run-set's own only when that gives no number.
+  # AH_TEST_SLOT_HELD=1: a clone's run-all from before --limit would otherwise queue for a heavy grant, then refuse the option
+  tmo=$RERUN_TMO; lim=$(AH_TEST_SLOT_HELD=1 bash "$CLONE/${PREFIXREL}tests/run-all.sh" --limit "$name" 2>/dev/null)
+  case "$lim" in ''|*[!0-9]*) lim=$(bash "$HERE/run-all.sh" --limit "$name" 2>/dev/null);; esac
   case "$lim" in ''|*[!0-9]*) ;; *) [ "$lim" -gt "$tmo" ] && tmo=$lim;; esac
+  # the outer timeout is the inner limit plus 30 s, so run-all records the TIMEOUT before the outer kill.
   # a lock of its own: the machine lock would make concurrent reruns wait for one another. Under BINDIR, since run-all refuses a lock outside ahprobe.
   ( cd "$CLONE/$PREFIXREL" && AH_RUN_ALL_LOCK="$BINDIR/rerun-lock-$RERUN_N" AH_RUN_ALL_LOCK_WAIT=1 AHD_NATIVE_BIN="$BINDIR/bin/ahd" \
-      bash "$HERE/with-slot.sh" --eta "$tmo" --tokens 1 timeout -k 5 "$tmo" bash tests/run-all.sh -j 1 --exact "$stem" -o "$set" ) >> "$LOG" 2>&1
+      bash "$HERE/with-slot.sh" --eta "$((tmo + 30))" --tokens 1 timeout -k 5 "$((tmo + 30))" bash tests/run-all.sh -j 1 --exact "$stem" -o "$set" ) >> "$LOG" 2>&1
   rc=$?
   [ "$rc" = 75 ] && { ERRMSG="the wait for a test slot ran out (exit 75) before the rerun of $name"; return 3; }
   [ "$rc" = 2 ] && { ERRMSG="run-all refused the rerun of $name (exit 2), so the test never ran"; return 3; }

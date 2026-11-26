@@ -79,9 +79,17 @@ public sealed class ClaudeEnvironmentLaunchTests
         return output;
     }
 
-    /// <summary>What a shell running <paramref name="line"/> gives <c>claude</c> as CLAUDE_CONFIG_DIR: the words before <paramref name="claude"/>, then printenv.</summary>
-    private static string SeenByClaude(string line, string claude = " claude ") =>
-        Sh(line[..line.IndexOf(claude, StringComparison.Ordinal)] + " printenv CLAUDE_CONFIG_DIR").TrimEnd('\n');
+    /// <summary>What a shell running <paramref name="line"/> gives <c>claude</c>: the words before <paramref name="claude"/>, then a shell
+    /// printing CLAUDE_CONFIG_DIR and <c>${CLAUDE_SECURESTORAGE_CONFIG_DIR-unset}</c>, with CLAUDE_SECURESTORAGE_CONFIG_DIR=/caller set in the caller.</summary>
+    private static (string Config, string SecureStorage) SeenByClaude(string line, string claude = " claude ")
+    {
+        var seen = Sh("CLAUDE_SECURESTORAGE_CONFIG_DIR=/caller; export CLAUDE_SECURESTORAGE_CONFIG_DIR; " + line[..line.IndexOf(claude, StringComparison.Ordinal)]
+            + " /bin/sh -c 'printf \"%s\\n\" \"$CLAUDE_CONFIG_DIR\" \"${CLAUDE_SECURESTORAGE_CONFIG_DIR-unset}\"'");
+        Assert.EndsWith("\n", seen, StringComparison.Ordinal);
+        var lines = seen[..^1].Split('\n');
+        Assert.Equal(2, lines.Length);
+        return (lines[0], lines[1]);
+    }
 
     private static JsonObject Shaped(ScenarioRig rig, string? claudeConfig, string transport, string? secureStorage = null)
     {
@@ -121,13 +129,17 @@ public sealed class ClaudeEnvironmentLaunchTests
         Assert.StartsWith("export CLAUDE_CONFIG_DIR='/cfg/a b'\\''c/$x/$(id)/`id`'; claude --agent ", typed, StringComparison.Ordinal);
         Assert.Equal(TmuxTyped(rig, Expandable), typed);
         // and the pane's shell, running what tmux typed, hands claude the value unexpanded
-        Assert.Equal(Expandable, SeenByClaude(typed));
+        Assert.Equal(Expandable, SeenByClaude(typed).Config);
     }
 
     [Fact]
     public void TheBackgroundLineHandsClaudeTheValueUnexpanded()
     {
-        Assert.Equal(Expandable, SeenByClaude(Launch(Rig(), Expandable, "terminal")));
+        var seen = SeenByClaude(Launch(Rig(), Expandable, "terminal"));
+
+        Assert.Equal(Expandable, seen.Config);
+        // a line that names no secure storage leaves the caller's value alone: the probe sees a set value
+        Assert.Equal("/caller", seen.SecureStorage);
     }
 
     [Fact]
@@ -169,7 +181,9 @@ public sealed class ClaudeEnvironmentLaunchTests
 
         // env reads options only before its first assignment: `env A=x -u B claude` runs a command named -u
         Assert.StartsWith("env -u CLAUDE_SECURESTORAGE_CONFIG_DIR CLAUDE_CONFIG_DIR='/cfg/a b'\\''c' claude ", line, StringComparison.Ordinal);
-        Assert.Equal(Odd, SeenByClaude(line));
+        var seen = SeenByClaude(line);
+        Assert.Equal(Odd, seen.Config);
+        Assert.Equal("unset", seen.SecureStorage);
     }
 
     [Fact]
@@ -386,7 +400,7 @@ public sealed class ClaudeEnvironmentLaunchTests
     {
         var typed = CoreCall(Expandable, "t5", out var root);
 
-        Assert.Equal(Expandable, SeenByClaude(typed, " " + root + "/bin/claude "));
+        Assert.Equal(Expandable, SeenByClaude(typed, " " + root + "/bin/claude ").Config);
     }
 
     [Fact]

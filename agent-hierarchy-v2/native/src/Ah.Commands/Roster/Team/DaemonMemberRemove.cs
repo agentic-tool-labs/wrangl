@@ -20,6 +20,9 @@ public sealed record MemberRemovalResult(bool Removed, JsonObject? Capture, stri
 {
     /// <summary>The ids of the open briefs the close abandoned, their checklist items left waiting on the Orchestrator.</summary>
     public IReadOnlyList<string> Abandoned { get; init; } = [];
+
+    /// <summary>The close returned 0 without throwing and only the re-read of the team after it threw, so the row may be gone.</summary>
+    public bool Unverified { get; init; }
 }
 
 internal sealed class DaemonMemberRemove(IRosterCliServices services) : IMemberRemoval
@@ -59,11 +62,12 @@ internal sealed class DaemonMemberRemove(IRosterCliServices services) : IMemberR
         }
 
         string? failed = null;
+        var code = -1;
         try
         {
             // this is the daemon: any mail the close sends must go to the mailbox files, its daemon client refuses to call itself
             using var direct = Ah.Mesh.MeshModule.BeginHoldExempt();
-            _ = DismissVerb.Run(c);
+            code = DismissVerb.Run(c);
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
@@ -80,7 +84,7 @@ internal sealed class DaemonMemberRemove(IRosterCliServices services) : IMemberR
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
-            return new MemberRemovalResult(false, capture, $"the team could not be read after the close: {e.Message}");
+            return new MemberRemovalResult(false, capture, $"the team could not be read after the close: {e.Message}") { Unverified = failed is null && code == 0 };
         }
 
         return stillListed

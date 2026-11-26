@@ -145,6 +145,10 @@ check "...the run got an executable AHD_NATIVE_BIN published from the clone, onc
 check "...and the rerun selected the one script exactly, with -j 1 before it" 'grep -q -- "-j 1 --exact s2 -o " "$ST/shell.calls" && [ "$(grep -c -- "--exact" "$ST/shell.calls")" = 1 ]'
 check "...run-all was asked to wait for its lock, in the run and in the rerun" '[ "$(grep -c "^WAIT=1 " "$ST/shell.calls")" = "$(wc -l < "$ST/shell.calls" | tr -d " ")" ]'
 check "...the rerun's own lock is one run-all accepts, under an ahprobe directory" 'grep -- "--exact" "$ST/shell.calls" | grep -qE "LOCK=/private/tmp/ahprobe\.[^/ ]+/rerun-lock-"'
+check "...the rerun limit was asked of the clone's run-all first" '[ "$(cat "$ST/shell.limit-calls" 2>/dev/null)" = test-s2 ]'
+mkcommit shell-limit-nan; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"; printf '12x\n' > "$ST/shell.limit"
+rs "$SHA" shell
+check "a clone limit that is not a number never reaches timeout (the guard; not the fallback): the rerun runs and passes (FLAKY-PASS)" '[ $RC = 0 ] && [ "$(rjson shell status)" = FLAKY-PASS ] && [ "$(grep -c -- "--exact" "$ST/shell.calls")" = 1 ]'
 mkcommit shell-rerun-refused; printf 'test-s2\n' > "$ST/shell.fails"; printf 'test-s2\n' > "$ST/shell.passes-alone"; : > "$ST/shell.refuse-rerun"
 rs "$SHA" shell
 check "a rerun run-all refused (exit 2) is an ERROR (exit 3), not a test that failed twice" '[ $RC = 3 ] && printf %s "$OUT" | grep -q "refused the rerun" && [ ! -e "$AH_RESULTS_DIR/$SHA/shell/result.json" ]'

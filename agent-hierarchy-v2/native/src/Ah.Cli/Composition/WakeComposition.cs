@@ -415,7 +415,7 @@ internal sealed class WakeComposition(ServiceGraph g, IAhEnvironment environment
     }
 
     public IReadOnlyList<OverdueJobItem> JobStalls(string hierarchyDir, string team, double nowMs) =>
-        WatchModule.OverdueJobItems([.. Jobs(hierarchyDir, team).Where(JobOpen)], eta => g.Hierarchy.Messages.ThresholdFor(JsonValue.FromString(eta)), nowMs, environment);
+        WatchModule.OverdueJobItems([.. Jobs(hierarchyDir, team).Where(JobOpen).Select(j => j with { Alive = WatchModule.JobPidLive(j, _table, g.Io.Processes.PidAlive) })],eta => g.Hierarchy.Messages.ThresholdFor(JsonValue.FromString(eta)), nowMs, environment);
 
     public IReadOnlyList<OverdueLaneItem> LaneStalls(string hierarchyDir, string team, string sessionId)
     {

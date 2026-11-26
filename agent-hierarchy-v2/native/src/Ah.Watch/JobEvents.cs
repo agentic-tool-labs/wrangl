@@ -25,6 +25,7 @@ namespace Ah.Watch;
 /// <param name="Slot">Where the job stands in the test-slot queue, or null when it has no slot record.</param>
 /// <param name="Capped">The cap kill <c>with-slot.sh</c>'s journal records for this ended job, or null when it ended by itself.</param>
 /// <param name="CapTold">Whether ahd has told the cap kill already (the record's <c>cap_told</c>), which outlives an ahd restart.</param>
+/// <param name="Alive">Whether the job's own process was proven running this tick (its pid alive with its recorded start); false when it is gone or could not be read.</param>
 public sealed record JobFact(
     string Id,
     string Team,
@@ -45,7 +46,8 @@ public sealed record JobFact(
     int? Pgid = null,
     JobSlot? Slot = null,
     JobCap? Capped = null,
-    bool CapTold = false);
+    bool CapTold = false,
+    bool Alive = false);
 
 /// <summary>A cap kill as a <c>capped</c> line of the with-slot journal records it.</summary>
 /// <param name="AtMs">When the kill was journaled, in epoch milliseconds.</param>
@@ -98,7 +100,9 @@ internal static class JobEvents
     /// <summary>The alarm steps an open job owes and when ahd owes each: shared by the daemon's evaluation and the failsafe that checks ahd kept its word.</summary>
     internal static List<(string Step, double AtMs)> StepsOf(JobFact job, Func<string, double> thresholdSeconds, double now, double pollMs)
     {
-        var steps = new List<(string Step, double AtMs)> { (OverdueStep, DueMs(job, thresholdSeconds, now, pollMs) + MarginMs) };
+        // ah2-639 J3: a job whose process is proven running is told at twice its eta; a queued job keeps its give-up
+        var grace = job.Alive && job.Slot is not { Phase: QueuedPhase } ? thresholdSeconds(job.Eta) * 1000 : 0;
+        var steps = new List<(string Step, double AtMs)> { (OverdueStep, DueMs(job, thresholdSeconds, now, pollMs) + grace + MarginMs) };
         if (job.CapAtMs is { } cap && job.Slot is not { Phase: QueuedPhase })
         {
             var from = ClockStartMs(job);
@@ -361,7 +365,9 @@ internal static class JobEvents
 
         var lead = step == CapNearStep
             ? $"ahd alarm: job-overdue — {job.Owner}'s {job.Kind} job {job.Id} is near its hard cap"
-            : $"ahd alarm: job-overdue — {job.Owner}'s {job.Kind} job {job.Id} has run past its eta {job.Eta}";
+            : job.Alive && job.Pid is { } running
+                ? $"ahd alarm: job-overdue — {job.Owner}'s {job.Kind} job {job.Id} has run past twice its eta {job.Eta} and its process is still running (pid {running.ToString(CultureInfo.InvariantCulture)})"
+                : $"ahd alarm: job-overdue — {job.Owner}'s {job.Kind} job {job.Id} has run past its eta {job.Eta}";
         return $"{lead} ({job.Label}; {where}running {age})\n"
             + OperationalCall(job);
     }

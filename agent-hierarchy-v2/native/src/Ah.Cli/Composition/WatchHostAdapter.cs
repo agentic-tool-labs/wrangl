@@ -1468,7 +1468,8 @@ internal class WatchHostAdapter(
                     _ = taken.Add(mine.Pid);
                     var start = ProcessTree.StartTime(mine.Pid);
                     Hs.StateCalls.PutJob(hier, file.Team, file.Id, WatchModule.JobPatch(file.Record, WatchModule.JobMerged(file.Record, mine.Pid, null, start, mine.Group > 1 ? mine.Group : null)), ifOpen: true);
-                    live.Add(job with { Pid = mine.Pid, PidStart = start, Pgid = mine.Group > 1 ? mine.Group : null, Descendants = ProcessTree.Descendants(mine.Pid)?.Select(static n => n.Pid).ToList() ?? [] });
+                    var found = job with { Pid = mine.Pid, PidStart = start, Pgid = mine.Group > 1 ? mine.Group : null, Descendants = ProcessTree.Descendants(mine.Pid)?.Select(static n => n.Pid).ToList() ?? [] };
+                    live.Add(found with { Alive = WatchModule.JobPidLive(found, ProcessTree, graph.Io.Processes.PidAlive) });
                     continue;
                 }
 
@@ -1489,7 +1490,7 @@ internal class WatchHostAdapter(
                     Hs.StateCalls.PutJob(hier, file.Team, file.Id, WatchModule.JobPatch(file.Record, WatchModule.JobSlotted(file.Record, slot)), ifOpen: true);
                 }
 
-                live.Add((job.Pid is { } known ? job with { Descendants = ProcessTree.Descendants(known)?.Select(static n => n.Pid).ToList() ?? [] } : job) with { Slot = slot });
+                live.Add((job.Pid is { } known ? job with { Descendants = ProcessTree.Descendants(known)?.Select(static n => n.Pid).ToList() ?? [] } : job) with { Slot = slot, Alive = WatchModule.JobPidLive(job, ProcessTree, graph.Io.Processes.PidAlive) });
             }
 
             return live;

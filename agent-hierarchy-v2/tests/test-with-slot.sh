@@ -199,7 +199,8 @@ if command -v node >/dev/null 2>&1; then
   check "ui-e4 acquires the slot once (the re-run does not take a second) and the run sees it held" 'echo "$OUT" | grep -q "^slot ok: held [0-9][0-9]*-[0-9][0-9]*$"'
   check "...and releases it when the run ends" '[ -z "$(ls -A "$PU/pool-e4/held")" ]'
   AH_SLOTS_DIR="$PU" node "$E4" --fixture small --check-slot 8 >/dev/null 2>&1 & U1=$!
-  sleep 3
+  # wait for the labelled lease, as long as the holder lives
+  while kill -0 "$U1" 2>/dev/null && ! grep -q '"label": "ui-e4 small ' "$PU"/pool-e4/held/*/holder 2>/dev/null; do sleep 0.2; done
   OUT=$(cat "$PU"/pool-e4/held/*/holder 2>/dev/null)
   check "...labelled with the fixture and the working directory" 'echo "$OUT" | grep -q "\"label\": \"ui-e4 small '"$(basename "$PWD")"'\""'
   OUT=$(AH_SLOTS_DIR="$PU" AH_TEST_SLOT_WAIT=2 node "$E4" --check-slot 2>&1); RC=$?
@@ -225,14 +226,15 @@ fi
 TB="$SB/bucket"
 AH_SLOTS_DIR="$TB" AH_TEST_TOKENS=4 bash "$WS" --eta 600 --tokens 2 sleep 8 >/dev/null 2>&1 & HA=$!
 AH_SLOTS_DIR="$TB" AH_TEST_TOKENS=4 bash "$WS" --eta 600 --tokens 2 sleep 3 >/dev/null 2>&1 & HB=$!
-sleep 1.5
+# wait for both leases, as long as the 3 s holder lives; then for W1's place in the queue, as long as W1 lives
+until [ "$(ls "$TB/held" 2>/dev/null | wc -l | tr -d " ")" = 2 ] || ! kill -0 "$HB" 2>/dev/null; do sleep 0.1; done
 RUNLOG="$SB/b1.log"; : >"$RUNLOG"
-T0=$SECONDS
 AH_SLOTS_DIR="$TB" AH_TEST_TOKENS=4 AH_TEST_SLOT_WAIT=30 bash "$WS" --eta 600 --tokens 1 sh -c 'echo ran >>"$1"' _ "$RUNLOG" >/dev/null 2>&1 & W1=$!
-sleep 1
+until ls "$TB"/q/*/waiter >/dev/null 2>&1 || ! kill -0 "$W1" 2>/dev/null; do sleep 0.1; done
 check "B1: B = 4 held as 2 + 2 by two runs: a request of 1 queues (it has not run)" '[ ! -s "$RUNLOG" ] && [ "$(ls "$TB/held" | wc -l | tr -d " ")" = 2 ]'
-wait "$W1"; DT=$((SECONDS - T0))
-check "...and runs once one holder exits (the 3 s one), while the 8 s holder still holds" '[ "$(cat "$RUNLOG")" = ran ] && [ "$DT" -ge 1 ] && [ "$DT" -le 6 ] && kill -0 "$HA" 2>/dev/null'
+wait "$W1"
+# the state, not the elapsed time: once W1 has run, the 3 s holder has exited and the 8 s holder is still alive
+check "...and runs once one holder exits (the 3 s one), while the 8 s holder still holds" '[ "$(cat "$RUNLOG")" = ran ] && ! kill -0 "$HB" 2>/dev/null && kill -0 "$HA" 2>/dev/null'
 ah_signal_child TERM "$HA"; wait "$HA" "$HB" 2>/dev/null
 
 # the head asks for all 4 while 2 are free: a later request of 1 (which would fit) waits behind it
@@ -435,7 +437,8 @@ OUT=$(AH_TEST_ADAPT=1 PATH="$RT:$PATH" AH_SLOTS_DIR="$SB/rt7" AH_TEST_TOKENS=8 b
 check "...without the ah binary the command still runs, with half the bucket and no adapter" '[ "$OUT" = "workers=none grant=4 args=v" ]'
 mv "$RT/bin/ah.off" "$RT/bin/ah"
 AH_SLOTS_DIR="$SB/rt8" AH_TEST_TOKENS=8 bash "$RUN" --label "my label" sleep 3 >/dev/null 2>&1 & LB=$!
-sleep 1.5
+# wait for the labelled lease, as long as the holder lives
+while kill -0 "$LB" 2>/dev/null && ! grep -q '"label": "my label"' "$SB"/rt8/held/*/holder 2>/dev/null; do sleep 0.2; done
 check "--label names the holder in its lease" 'grep -q "\"label\": \"my label\"" "$SB"/rt8/held/*/holder'
 ah_signal_child TERM "$LB"; wait "$LB" 2>/dev/null
 OUT=$(AH_SLOTS_DIR="$SB/rt9" AH_TEST_TOKENS=8 bash "$RUN" echo noeta 2>&1); RC=$?

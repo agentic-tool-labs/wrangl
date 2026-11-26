@@ -1,4 +1,6 @@
+using Ah.Abstractions;
 using Ah.Core.Json;
+using Ah.TestKit;
 
 namespace Ah.Hierarchy.Tests;
 
@@ -33,6 +35,17 @@ public sealed class StatusScreenClearTests
         var dispatch = objects.FirstOrDefault(o => o.Get("id") is { IsText: true } id && id.AsString() == "20260528-000002-impl" && o.Get("states") is { IsArray: true });
         var stored = JsonText.Stringify(services.Status.ReadActivityRecord(dir, JsonValue.FromString(subject)), 0);
         return (member, dispatch, stored);
+    }
+
+    /// <summary>The fixture's services with an in-process state writer, so a routed write (<c>activity.record</c>) lands.</summary>
+    private static HierarchyServices Writing(StatusEntriesFixture fixture)
+    {
+        var env = new FakeEnvironment(new Dictionary<string, string> { ["HOME"] = fixture.Home, ["TZ"] = "UTC" }, new PluginInfo(HierarchyTableFns.AhRoot, "wrangl", "0.0.0", "1"));
+        var writer = new InProcessStateWriter { AhHome = env.AhHome };
+        var services = fixture.Services(writer: writer);
+        writer.Domains = services.StateDomains;
+        services.Core.Liveness = new Live();
+        return services;
     }
 
     private static void Walk(JsonValue v, List<JsonObject> into)
@@ -90,6 +103,103 @@ public sealed class StatusScreenClearTests
         Assert.Equal("blocked", member["activity"].AsString());
         Assert.Equal(blockedBy, member["blocked_by"].AsString());
         Assert.Equal("blocked", dispatch!["states"].AsArray()[0].Prop("state").AsString());
+    }
+
+    // ah2-636 A1: a permission block with no screen mark is blocked and not confirmed; with a prompt mark it is confirmed.
+    // negative: a prompt mark older than the record's `at` (an earlier block's) does not confirm (U4).
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData(-39_000L, true)]
+    [InlineData(-41_000L, false)]
+    public void APermissionBlockSaysWhetherTheWatcherSawItsPrompt(long? promptOffset, bool confirmed)
+    {
+        var fixture = StatusEntriesFixture.Create();
+        var mark = promptOffset is { } p ? $",\"screen_prompt_at\":\"{At(T0 + p)}\"" : string.Empty;
+        var record = $$"""{"activity":"blocked","blocked_by":"permission","at":"{{At(T0 - 40_000)}}"{{mark}}}""";
+
+        var (member, _, _) = Read(fixture, "t-implementor", "s-impl", record);
+
+        Assert.Equal("blocked", member["activity"].AsString());
+        Assert.Equal("permission", member["blocked_by"].AsString());
+        Assert.Equal(confirmed, member["blocked_confirmed"].AsBool());
+    }
+
+    // ah2-636 A2 (U4): a screen_clear_at written before the hook's latest write is an earlier block's and does not read the new block as working.
+    [Fact]
+    public void AScreenClearMarkOlderThanTheBlockDoesNotReadItWorking()
+    {
+        var fixture = StatusEntriesFixture.Create();
+        var record = $$"""{"activity":"blocked","blocked_by":"permission","at":"{{At(T0 - 40_000)}}","screen_clear_at":"{{At(T0 - 41_000)}}"}""";
+
+        var (member, dispatch, _) = Read(fixture, "t-implementor", "s-impl", record);
+
+        Assert.Equal("blocked", member["activity"].AsString());
+        Assert.Equal("permission", member["blocked_by"].AsString());
+        Assert.False(member["blocked_confirmed"].AsBool());
+        Assert.Equal("blocked", dispatch!["states"].AsArray()[0].Prop("state").AsString());
+    }
+
+    // ah2-636 A4 (U5): a second permission Notification onto a record still carrying the first block's screen_clear_at is a new block.
+    [Fact]
+    public void ASecondPermissionNotificationRestampsTheBlockAndDropsTheOldScreenMark()
+    {
+        var fixture = StatusEntriesFixture.Create();
+        var dir = fixture.StatusDirs[0];
+        fixture.Activity(dir, "s-impl", $$"""{"activity":"blocked","blocked_by":"permission","at":"{{At(T0 - 40_000)}}","screen_clear_at":"{{At(T0 - 39_000)}}"}""");
+        var services = Writing(fixture);
+
+        Assert.True(services.Status.RecordActivityRouted(dir, JsonValue.FromString("s-impl"), new JsonObject { ["activity"] = "blocked", ["blocked_by"] = "permission" }, hook: true));
+
+        var stored = services.Status.ReadActivityRecord(dir, JsonValue.FromString("s-impl"));
+        Assert.Equal(At(T0), stored.Member("at")!.Value.AsString());
+        Assert.Null(stored.Member("screen_clear_at"));
+        var objects = new List<JsonObject>();
+        Walk(((HierLib)services.Status).ReadStatus(dir, T0 + 60_000, dir), objects);
+        var member = objects.First(o => o.Get("name") is { IsText: true } n && n.AsString() == "t-implementor" && o.Get("route") is { IsText: true });
+        Assert.Equal("blocked", member["activity"].AsString());
+        Assert.False(member["blocked_confirmed"].AsBool());
+    }
+
+    // negative (U5): an identical write that is not a session's permission write is still skipped: the record keeps its at and marks.
+    [Theory]
+    [InlineData("pane-p-codex", "permission", null)]
+    [InlineData("s-impl", "question", "which?")]
+    public void NegativeAnIdenticalNonPermissionNotificationWriteIsStillSkipped(string subject, string blockedBy, string? note)
+    {
+        var fixture = StatusEntriesFixture.Create();
+        var dir = fixture.StatusDirs[0];
+        var noteJson = note is null ? "null" : $"\"{note}\"";
+        fixture.Activity(dir, subject, $$"""{"activity":"blocked","blocked_by":"{{blockedBy}}","note":{{noteJson}},"at":"{{At(T0 - 40_000)}}","screen_clear_at":"{{At(T0 - 39_000)}}"}""");
+        var services = Writing(fixture);
+        var fields = new JsonObject { ["activity"] = "blocked", ["blocked_by"] = blockedBy };
+        if (note is not null)
+        {
+            fields["note"] = note;
+        }
+
+        Assert.False(services.Status.RecordActivityRouted(dir, JsonValue.FromString(subject), fields, hook: true));
+
+        var stored = services.Status.ReadActivityRecord(dir, JsonValue.FromString(subject));
+        Assert.Equal(At(T0 - 40_000), stored.Member("at")!.Value.AsString());
+        Assert.NotNull(stored.Member("screen_clear_at"));
+        // the route itself writes: a changed state lands
+        Assert.True(services.Status.RecordActivityRouted(dir, JsonValue.FromString(subject), new JsonObject { ["activity"] = "working" }, hook: true));
+    }
+
+    // negative (U1): the field is absent on a question block, a pane member and a permission block read working.
+    [Theory]
+    [InlineData("t-implementor", "s-impl", """{"activity":"blocked","blocked_by":"question","question":"which?"}""")]
+    [InlineData("t-implementor", "s-impl", """{"activity":"blocked","blocked_by":"permission","question":"which?"}""")]
+    [InlineData("t-implementor", "s-impl", """{"activity":"blocked","blocked_by":"permission","at":"2026-05-28T00:00:00.000Z","screen_clear_at":"2026-05-28T00:00:00.000Z"}""")]
+    [InlineData("p-codex", "pane-p-codex", """{"activity":"blocked","blocked_by":"permission"}""")]
+    public void NegativeNoBlockedConfirmedOffAnUnclearedPeerPermissionBlock(string name, string subject, string record)
+    {
+        var fixture = StatusEntriesFixture.Create();
+        File.WriteAllText(Path.Combine(fixture.StatusDirs[0], "teams", "p.json"), """{"team_id":"t-p","team":"p","members":[{"name":"p-codex","role":"implementor","kind":"codex","route":"pane"}]}""" + "\n");
+
+        var (member, _, _) = Read(fixture, name, subject, record);
+
+        Assert.Null(member.Get("blocked_confirmed"));
     }
 
     [Fact]
