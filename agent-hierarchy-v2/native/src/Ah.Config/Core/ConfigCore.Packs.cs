@@ -948,12 +948,18 @@ internal sealed partial class ConfigCore
     /// else from this machine's stored copy for the row's pin), with the row's own label, description, routes, model and
     /// dispatch laid over them. <c>{raw, pack}</c>, or <c>{error}</c>.
     /// </summary>
-    public JsonObject ExpandFromRow(JsonObject entry)
+    public JsonObject ExpandFromRow(JsonObject entry) => ExpandFromRow(entry, pinIgnored: false);
+
+    /// <summary>
+    /// <see cref="ExpandFromRow(JsonObject)"/>; with <paramref name="pinIgnored"/> (a row a roster's packs supply, ah2-698 D3) the row's
+    /// pin is not checked and no stored copy is read.
+    /// </summary>
+    internal JsonObject ExpandFromRow(JsonObject entry, bool pinIgnored)
     {
         var from = entry["from"].AsString();
-        var state = PackRoleState(from, entry.Get("pin") is { IsText: true } pinText ? pinText.AsString() : string.Empty);
+        var state = PackRoleState(from, pinIgnored ? null : entry.Get("pin") is { IsText: true } pinText ? pinText.AsString() : string.Empty);
         JsonObject? source = state.ManifestRole is { } mr && mr.Get("error") is not { IsMap: true } && mr["raw"].IsMap ? mr["raw"].AsObject() : null;
-        if (source is null)
+        if (source is null && !pinIgnored)
         {
             var copy = ReadStoredCopy(entry.Get("pin"));
             if (copy is not null)
@@ -1025,9 +1031,9 @@ internal sealed partial class ConfigCore
     }
 
     /// <summary>A built-in's <c>from</c> row: the pack supplies only its agent; its class must be the built-in's.</summary>
-    internal JsonObject BuiltinFromRow(string role, JsonObject entry)
+    internal JsonObject BuiltinFromRow(string role, JsonObject entry, bool pinIgnored = false)
     {
-        var expanded = ExpandFromRow(entry);
+        var expanded = ExpandFromRow(entry, pinIgnored);
         var f = PackText.ParseFrom(entry["from"].AsString());
         var guess = f is null ? Qualified(role) : $"{f.Value.Plugin}:{f.Value.Role}";
         var result = entry.Clone();

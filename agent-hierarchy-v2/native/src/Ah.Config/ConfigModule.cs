@@ -491,6 +491,9 @@ public interface IConfigCore
     /// <summary><c>parseFrom</c>: <c>{plugin, marketplace, role}</c> of a <c>&lt;plugin&gt;[@&lt;marketplace&gt;]:&lt;role&gt;</c>, or JSON null.</summary>
     JsonValue ParseFrom(JsonValue? from);
 
+    /// <summary>A roster <c>packs</c> entry <c>&lt;plugin&gt;@&lt;marketplace&gt;</c> as written back, or null when it is not one (ah2-698 D1).</summary>
+    string? ParsePack(string? pack);
+
     /// <summary><c>isFromRow</c>: whether a config row adopts a pack role.</summary>
     bool IsFromRow(JsonValue? raw);
 

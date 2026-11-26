@@ -29,12 +29,12 @@ internal static partial class RosterKitVerb
     // K1 and K1a: every key a kit may hold. Any other key is a finding.
     private static readonly string[] TopKeys = ["kit", "roster", "roles", "rules"];
     private static readonly string[] RosterKeys = ["name", "block"];
-    private static readonly string[] BlockKeys = ["route", "members", "max_lanes", "orchestrator_model"];
+    private static readonly string[] BlockKeys = ["route", "members", "max_lanes", "orchestrator_model", "packs"];
     private static readonly string[] MemberKeys = ["role", "model", "effort", "route", "onMissing"];
     private static readonly string[] EntryKeys = ["row", "agent"];
     private static readonly string[] AgentKeys = ["file", "text"];
     private static readonly string[] RowKeys = ["class", "agent", "label", "description", "routes", "model", "dispatch", "shell"];
-    private static readonly string[] FromRowKeys = ["from", "pin", "label", "description", "routes", "model", "dispatch"];
+    private static readonly string[] FromRowKeys = ["from", "pin", "slots", "label", "description", "routes", "model", "dispatch"];
     private static readonly string[] RuleKeys = ["key", "text"];
     private static readonly string[] FromParts = ["plugin", "marketplace", "role"];
 
@@ -439,6 +439,10 @@ internal static partial class RosterKitVerb
         // ---- the roster block
         var memberRoles = new List<string>();
         var memberRows = new List<(string Where, JsonObject Member)>();
+        var blockPackRoles = new HashSet<string>(StringComparer.Ordinal);
+        var blockPackMissing = false;
+        var blockPackSet = new HashSet<string>(StringComparer.Ordinal);
+        string? kitRosterName = null;
         if (Obj(kit.Get("roster")) is not { } roster)
         {
             findings.Add("kit: \"roster\" must be an object {name, block}");
@@ -447,6 +451,7 @@ internal static partial class RosterKitVerb
         {
             Keys(roster, RosterKeys, "roster");
             var name = asName ?? (roster.Get("name") is { IsText: true } n ? n.AsString() : null);
+            kitRosterName = name;
             var nameOk = false;
             if (name is null)
             {
@@ -472,6 +477,28 @@ internal static partial class RosterKitVerb
             else
             {
                 Keys(block, BlockKeys, "roster block");
+
+                // ah2-698 D8: the block's packs are written with it; one that is not installed here is an info line, not a finding.
+                if (block.Get("packs") is { IsArray: true } blockPacks)
+                {
+                    var records = config.InstallRecordList();
+                    foreach (var pack in blockPacks.AsArray().Select(p => p.IsText ? config.ParsePack(p.AsString()) : null).OfType<string>().Distinct(StringComparer.Ordinal))
+                    {
+                        blockPackSet.Add(pack);
+                        if (records.FirstOrDefault(r => T(r.Member("key")) == pack) is not { IsMap: true } record)
+                        {
+                            blockPackMissing = true;
+                            notes.Add(PackNotInstalledInfo(c, pack));
+                            continue;
+                        }
+
+                        var manifest = config.ReadPackManifest(T(record.Member("installPath")), T(record.Member("plugin")));
+                        if (manifest.Get("roles") is { IsMap: true } packRoles)
+                        {
+                            blockPackRoles.UnionWith(packRoles.AsObject().Keys);
+                        }
+                    }
+                }
 
                 // C1: the block's values pass the checks their own readers and verbs apply.
                 if (block.Get("orchestrator_model") is { IsNull: false } om && !(om.IsText && om.AsString().Length == 0))
@@ -603,27 +630,33 @@ internal static partial class RosterKitVerb
                     continue;
                 }
 
+                // ah2-698 D8: a kit's pin and slots on a pack row are read and ignored.
                 var from = $"{T(parsedFrom.Member("plugin"))}@{T(parsedFrom.Member("marketplace"))}:{T(parsedFrom.Member("role"))}";
-                var state = config.PackRoleStateJson(JsonValue.FromString(from), row.Get("pin"));
+                var state = config.PackRoleStateJson(JsonValue.FromString(from), null);
                 var stateText = T(state.Get("status"));
                 var shown = stateText switch
                 {
-                    "ok" => row.Get("pin") is { IsText: true } ? "trusted here" : "installed",
-                    "pack-untrusted-here" => "installed",
-                    "pack-changed" => "pin differs",
+                    "ok" => "installed",
                     "pack-missing" => "not installed",
-                    _ => $"pack role unavailable ({stateText})",
+                    _ => $"unavailable ({stateText})",
                 };
-                var adopt = $"ah roster role set {role} --from {from} --dry-run";
                 var localStatus = local is null || !config.IsFromRow(local)
                     ? (local is null ? "not defined here" : "conflict")
-                    : Same(Without(local, "pin"), Without(row, "pin")) ? "identical" : "conflict";
-                packSections.Add($"  {Esc(role)} · from {Esc(from)} · {shown} · local row: {localStatus}\n    adopt: {Esc(adopt)}");
-                if (local is null)
+                    : Same(Without(Without(local, "pin"), "slots"), Without(Without(row, "pin"), "slots")) ? "identical" : "conflict";
+                packSections.Add($"  {Esc(role)} · from {Esc(from)} · {shown} · local row: {localStatus}");
+                var rowPack = $"{T(parsedFrom.Member("plugin"))}@{T(parsedFrom.Member("marketplace"))}";
+                if (stateText == "pack-missing")
                 {
-                    findings.Add($"{who}: pack role not adopted here — adopt it first: {Esc(adopt)}");
+                    notes.Add(PackNotInstalledInfo(c, rowPack));
                 }
-                else if (localStatus == "conflict")
+
+                // Amendment 1 F3: a member role from a pack the block's packs don't name is not written; say how to name it.
+                if (memberRoles.Contains(role) && !blockPackSet.Contains(rowPack))
+                {
+                    notes.Add($"role {Esc(role)} comes from {Esc(rowPack)}: ah roster roster pack {Esc(kitRosterName ?? "<roster>")} --add {Esc(rowPack)}");
+                }
+
+                if (localStatus == "conflict")
                 {
                     conflicts.Add($"roles.{Esc(role)} is already defined here by a different row");
                 }
@@ -870,11 +903,12 @@ internal static partial class RosterKitVerb
             agentSections.Add(string.Join("\n", section));
         }
 
-        // K5: a member's role must come with the kit, be a built-in, or already be defined here.
+        // K5: a member's role must come with the kit, be a built-in, already be defined here, or come from the block's packs; while one
+        // of those packs is not installed, which roles it offers can't be known, so no member role is a finding (ah2-698 D8).
         var defined = config.RegistryRoles(c.Registry);
         foreach (var r in memberRoles.Distinct(StringComparer.Ordinal))
         {
-            if (!kitRoles.ContainsKey(r) && !config.IsBuiltinRole(r) && !defined.Contains(r))
+            if (!blockPackMissing && !blockPackRoles.Contains(r) && !kitRoles.ContainsKey(r) && !config.IsBuiltinRole(r) && !defined.Contains(r))
             {
                 findings.Add($"member role {Esc(r)} is neither in the kit nor defined here");
             }
@@ -944,7 +978,7 @@ internal static partial class RosterKitVerb
 
         lines.Add("writes:");
         lines.AddRange(writes.Select(w => "  " + w));
-        lines.AddRange(notes.Select(n => "note: " + n));
+        lines.AddRange(notes.Distinct(StringComparer.Ordinal).Select(n => "note: " + n));
         if (agentSections.Count > 0)
         {
             lines.Add("agent files:");
@@ -995,7 +1029,8 @@ internal static partial class RosterKitVerb
             return null;
         }
 
-        var entry = new JsonObject { ["row"] = raw.Clone() };
+        // ah2-698 D8: a pack row travels without its pin and slots.
+        var entry = new JsonObject { ["row"] = config.IsFromRow(raw) ? Without(Without(raw, "pin"), "slots") : raw.Clone() };
         if (config.IsFromRow(raw) || config.IsBuiltinRole(role))
         {
             return entry;
@@ -1015,11 +1050,16 @@ internal static partial class RosterKitVerb
         return entry;
     }
 
+    /// <summary>The dry run's info line for a pack a kit names that is not installed on this machine (ah2-698 D8).</summary>
+    private static string PackNotInstalledInfo(RosterContext c, string pack) =>
+        $"pack {c.Services.Config.EscapeTerminal(JsonValue.FromString(pack))} is not installed here: /{c.Services.Config.PluginName}:agent-role install <source>";
+
     /// <summary>Role <paramref name="role"/>'s row as written in the level file that defines it; null when only the shipped defaults do.</summary>
     internal static JsonObject? RawRow(RosterContext c, LevelFiles files, string role)
     {
         var sources = c.Registry.Get("sources") is { IsMap: true } s ? s.AsObject() : new JsonObject();
-        if (PackVerbs.LevelOfScope(sources.Get(role)) is not { IsText: true } level || level.AsString() == "shipped")
+        // A role a roster's packs supply (source roster:<name>) has no row: the block's packs carry it (ah2-698 D8).
+        if (PackVerbs.LevelOfScope(sources.Get(role)) is not { IsText: true } level || !c.Services.Config.RosterLevels.Contains(level.AsString()))
         {
             return null;
         }

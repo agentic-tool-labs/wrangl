@@ -52,6 +52,11 @@ internal static class MemberTemplateVerbs
                     shown["route"] = route;
                 }
 
+                if (container.Get("packs") is { IsArray: true } packs)
+                {
+                    shown["packs"] = packs;
+                }
+
                 shown["members"] = files.NamedMembers(members.AsArray());
                 if (container.Get("orchestrator_model") is { } orchestratorModel)
                 {

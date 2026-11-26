@@ -186,6 +186,40 @@ internal sealed partial class ConfigCore
     /// <summary>The <c>--level</c> name of a config layer's scope, as the role verbs take it.</summary>
     private static string LevelOfScope(string scope) => scope switch { "user" => "global", "project" => "repo", _ => scope };
 
+    /// <summary>A copy of <paramref name="row"/> whose <c>pack</c> records where the pack role came from (ah2-698 D3): <c>roster:&lt;name&gt;</c> or <c>row:&lt;level&gt;</c>.</summary>
+    private static JsonObject WithVia(JsonObject row, string via)
+    {
+        if (row.Get("pack") is not { IsMap: true } pack)
+        {
+            return row;
+        }
+
+        var withVia = row.Clone();
+        var packCopy = pack.AsObject().Clone();
+        packCopy["via"] = via;
+        withVia["pack"] = packCopy;
+        return withVia;
+    }
+
+    /// <summary>Built-in <paramref name="role"/>'s defaults with <paramref name="row"/>'s keys laid over them, less <paramref name="drop"/> (ah2-698 Amendment 1 F1, F2).</summary>
+    private static JsonObject OverDefaults(string role, JsonObject? row, params string[] drop)
+    {
+        var result = TableFixedKeys(role, ConfigRegistry.RoleDefaults(role));
+        foreach (var key in row?.Keys ?? [])
+        {
+            if (!drop.Contains(key))
+            {
+                result[key] = row![key];
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Whether a row's <c>from</c> names the same pack role as <paramref name="from"/>, part by part.</summary>
+    private static bool SameFrom(JsonValue? rowFrom, string from) =>
+        rowFrom is { IsText: true } text && PackText.ParseFrom(text.AsString()) is { Marketplace: not null } a && a == PackText.ParseFrom(from);
+
     private string? BuiltinAgentError(string role, JsonValue agent)
     {
         var why = ConfigRegistry.AgentRefError(agent);
@@ -560,6 +594,7 @@ internal sealed partial class ConfigCore
 
         var definedBy = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var customRaw = new Dictionary<string, (JsonValue Raw, string Scope, string Path)>(StringComparer.Ordinal);
+        var builtinRaw = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
         foreach (var layer in layers)
         {
             var scope = layer["scope"].AsString();
@@ -592,11 +627,98 @@ internal sealed partial class ConfigCore
                 }
                 else
                 {
-                    roles[role] = row.Get("from") is { IsText: true } ? BuiltinFromRow(role, row) : row.Clone();
+                    roles[role] = row.Get("from") is { IsText: true } ? WithVia(BuiltinFromRow(role, row), $"row:{LevelOfScope(scope)}") : row.Clone();
                 }
 
+                builtinRaw[role] = row;
                 sources[role] = scope;
                 (definedBy.TryGetValue(role, out var l2) ? l2 : definedBy[role] = []).Add(scope);
+            }
+        }
+
+        var selection = ScopedRosterSelection(resolvedCwd, options, team, teamHome);
+        var selectionProblem = RosterSelectionProblemText(resolvedCwd, selection);
+        var rosterKey = selectionProblem is not null ? null : selection["key"].IsText ? selection["key"].AsString() : null;
+
+        // ah2-698 D3: the selected roster's packs are the top layer of roles, each role a `from` row through the paths a config row takes.
+        var rosterName = rosterKey ?? ConfigRegistry.DefaultRoster;
+        var rosterScope = $"roster:{rosterName}";
+        var suppliedAs = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (RosterPacksTuple(resolvedCwd, rosterKey) is { Packs: { } rosterPacks, Path: var packsPath })
+        {
+            var records = InstallRecords();
+            var listed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var entry in rosterPacks)
+            {
+                if ((entry.IsText ? PackText.ParsePack(entry.AsString()) : null) is not { } pack)
+                {
+                    warnings.Add($"ah: roster {rosterName}: packs entry {JsonText.Stringify(entry, 0)} is not <plugin>@<marketplace> — ignoring it");
+                    continue;
+                }
+
+                if (!listed.Add(pack))
+                {
+                    continue;
+                }
+
+                if (records.FirstOrDefault(r => r.Key == pack) is not { } record)
+                {
+                    warnings.Add($"ah: roster {rosterName}: pack {pack} is not installed on this machine; its roles resolve once it is (/{PluginName}:agent-role install <source>)");
+                    continue;
+                }
+
+                var manifest = ReadPackManifest(record.InstallPath, record.Plugin);
+                if (manifest.Get("error") is { IsMap: true } manifestError)
+                {
+                    warnings.Add($"ah: roster {rosterName}: pack {pack}: {manifestError.Member("message")!.Value.AsString()} — its roles are absent");
+                    continue;
+                }
+
+                foreach (var role in manifest["roles"].AsObject().Keys)
+                {
+                    var by = definedBy.TryGetValue(role, out var had) ? had : definedBy[role] = [];
+                    by.Add(rosterScope);
+                    var from = $"{pack}:{role}";
+                    if (suppliedAs.ContainsValue(role))
+                    {
+                        continue;
+                    }
+
+                    suppliedAs[from] = role;
+                    JsonObject? configRow = ConfigRegistry.IsBuiltinRole(role)
+                        ? builtinRaw.GetValueOrDefault(role)
+                        : customRaw.TryGetValue(role, out var info) && info.Raw.IsMap ? info.Raw.AsObject() : null;
+                    var legacy = configRow is not null && SameFrom(configRow.Get("from"), from);
+                    if (legacy)
+                    {
+                        by.Remove(rosterScope);
+                    }
+
+                    if (ConfigRegistry.IsBuiltinRole(role))
+                    {
+                        // Amendment 1 F1: `from` laid over the built-in's config row (or its defaults), so model, dispatch and peer stay.
+                        var over = OverDefaults(role, configRow, "pin", "slots", "pack");
+                        over["from"] = from;
+                        roles[role] = WithVia(BuiltinFromRow(role, over, pinIgnored: true), rosterScope);
+                        sources[role] = rosterScope;
+                        continue;
+                    }
+
+                    var row = legacy ? configRow! : new JsonObject { ["from"] = from };
+                    customRaw[role] = (row, rosterScope, legacy ? customRaw[role].Path : packsPath);
+                }
+            }
+
+            // Amendment 1 F2: a built-in's legacy row into a pack role this roster supplies under its own name reverts to the built-in agent here.
+            foreach (var (role, raw) in builtinRaw)
+            {
+                if (sources[role].AsString() == rosterScope || suppliedAs.FirstOrDefault(s => SameFrom(raw.Get("from"), s.Key)) is not { Value: { } suppliedName } supplied)
+                {
+                    continue;
+                }
+
+                roles[role] = OverDefaults(role, raw, "from", "pin", "slots", "agent", "pack");
+                warnings.Add($"ah: roles.{role}.from {JsonText.Stringify(supplied.Key, 0)} is supplied by roster {rosterName} as {suppliedName} — using {Qualified(role)} for {role} under that roster.");
             }
         }
 
@@ -674,10 +796,18 @@ internal sealed partial class ConfigCore
         foreach (var name in customNames)
         {
             var info = customRaw[name];
+            var fromRoster = info.Scope == rosterScope;
+            if (!fromRoster && info.Raw.IsMap && suppliedAs.FirstOrDefault(s => SameFrom(info.Raw.AsObject().Get("from"), s.Key)).Value is { } suppliedName
+                && suppliedName != name)
+            {
+                Exclude(name, info, $"its pack role is supplied by roster {rosterName} as {suppliedName}");
+                continue;
+            }
+
             JsonObject? expanded = null;
             if (info.Raw.IsMap && info.Raw.AsObject().Get("from") is { IsText: true })
             {
-                expanded = ExpandFromRow(info.Raw.AsObject());
+                expanded = ExpandFromRow(info.Raw.AsObject(), pinIgnored: fromRoster);
                 if (expanded.Get("error") is { } fromError)
                 {
                     Exclude(name, info, fromError.AsString());
@@ -702,18 +832,18 @@ internal sealed partial class ConfigCore
             {
                 var withPack = row.Clone();
                 withPack["from"] = info.Raw.AsObject().Get("from") ?? JsonValue.Null;
-                if (info.Raw.AsObject().Get("pin") is { } pin)
+                if (!fromRoster && info.Raw.AsObject().Get("pin") is { } pin)
                 {
                     withPack["pin"] = pin;
                 }
 
-                if (info.Raw.AsObject().Get("slots") is { } slots)
+                if (!fromRoster && info.Raw.AsObject().Get("slots") is { } slots)
                 {
                     withPack["slots"] = slots;
                 }
 
                 withPack["pack"] = expanded["pack"];
-                row = withPack;
+                row = WithVia(withPack, fromRoster ? rosterScope : $"row:{LevelOfScope(info.Scope)}");
             }
 
             customRows.Add((name, row));
@@ -755,14 +885,11 @@ internal sealed partial class ConfigCore
             }
         }
 
-        var selection = ScopedRosterSelection(resolvedCwd, options, team, teamHome);
-        var selectionProblem = RosterSelectionProblemText(resolvedCwd, selection);
         if (selectionProblem is not null)
         {
             warnings.Add($"ah: {selectionProblem} Using the default roster block until then.");
         }
 
-        var rosterKey = selectionProblem is not null ? null : selection["key"].IsText ? selection["key"].AsString() : null;
         var registry = new JsonObject { ["roles"] = roles };
         var rosterResult = ResolveRosterObject(cwd, rosterKey, TeamPrefix(resolvedCwd, team), registry);
         return Result(

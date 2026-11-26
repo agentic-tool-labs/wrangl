@@ -57,6 +57,8 @@ internal sealed partial class ConfigCore
         return array;
     }
 
+    public string? ParsePack(string? pack) => PackText.ParsePack(pack);
+
     public JsonValue ParseFrom(JsonValue? from)
     {
         if (from is not { IsText: true } t || PackText.ParseFrom(t.AsString()) is not { } f)

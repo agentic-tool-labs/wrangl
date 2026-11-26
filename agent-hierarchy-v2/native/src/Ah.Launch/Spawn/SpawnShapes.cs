@@ -855,12 +855,6 @@ public sealed record SpawnShapes(
     /// </summary>
     private JsonObject? SpawnValidation(JsonValue member, LaunchContext context)
     {
-        var refusal = PackSpawnRefusal(member, context);
-        if (refusal is not null)
-        {
-            return new JsonObject { ["refuse"] = refusal, ["findings"] = new JsonArray() };
-        }
-
         if (KindOf(member) != Registry.KindDefault)
         {
             return null;
@@ -916,39 +910,6 @@ public sealed record SpawnShapes(
         }
 
         return new JsonObject { ["agent"] = e.Member("agent") ?? JsonValue.Null, ["findings"] = findings, ["notice"] = JsonValue.Null };
-    }
-
-    private string? PackSpawnRefusal(JsonValue member, LaunchContext context)
-    {
-        var role = Field(member, "role");
-        var entry = context.Registry.Get("roles") is { IsMap: true } roles ? roles.Member(role) : null;
-        if (entry is not { IsTruthy: true } e || e.Member("from") is not { IsTruthy: true } from)
-        {
-            return null;
-        }
-
-        var mode = member.Member("autoMode");
-        var unset = mode is null || mode.Value.IsNull || (mode.Value.IsText && mode.Value.AsString().Length == 0);
-        var name = Field(member, "name");
-        if ((mode is { IsText: true } m && m.AsString() == "bypassPermissions") || unset)
-        {
-            var whyText = unset
-                ? "has no auto-mode, so it would run in the default mode of the user's settings, which can be bypassPermissions"
-                : "has auto-mode bypassPermissions";
-            var tail = context.Command == "spawn-ad-hoc" ? ", or pass --auto-mode auto" : string.Empty;
-            return $"role {role} is adopted from a pack ({JsConvert.ToJsString(from)}) and a pack role never runs with permission checks off, but {name} {whyText} — it was not launched. Give it a mode with `ah roster edit --member {name} --auto-mode <mode>` (auto is the hands-off one){tail}.";
-        }
-
-        var slot = Config.RoleClass(role, context.Registry);
-        var optedIn = slot == "design" && Config.DesignOptInHolds(role, e);
-        if ((context.Command is "spawn-one" or "spawn-ad-hoc") && slot is "review" or "design" && !optedIn && Messages.PipelineRunLive(context.Cwd))
-        {
-            var builtin = Config.ClassBuiltin(slot);
-            var label = builtin is not null ? JsConvert.ToJsString(Config.RoleLabel(builtin, context.Registry)) : "undefined";
-            return $"role {role} is adopted from a pack ({JsConvert.ToJsString(from)}) and is {slot}-class, and a pipeline run is live in this checkout — its reviewer and designer are always first-party, so {name} was not launched. Use the built-in {label} for the run.";
-        }
-
-        return null;
     }
 
     /// <summary>

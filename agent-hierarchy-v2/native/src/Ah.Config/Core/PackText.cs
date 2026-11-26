@@ -71,6 +71,10 @@ internal static partial class PackText
         return m.Success ? (m.Groups[1].Value, m.Groups[2].Success ? m.Groups[2].Value : null, m.Groups[3].Value) : null;
     }
 
+    /// <summary>A roster <c>packs</c> entry <c>&lt;plugin&gt;@&lt;marketplace&gt;</c> as <c>"plugin@marketplace"</c>, the parts <see cref="ParseFrom"/> accepts, or null.</summary>
+    internal static string? ParsePack(string? pack) =>
+        pack is not null && ParseFrom(pack + ":r") is { Marketplace: { } marketplace } f ? $"{f.Plugin}@{marketplace}" : null;
+
     private static bool IsHidden(int cp) =>
         cp is (>= 0x00 and <= 0x08) or (>= 0x0B and <= 0x1F) or (>= 0x7F and <= 0x9F)
             or (>= 0xE0000 and <= 0xE007F) or (>= 0xFE00 and <= 0xFE0F) or (>= 0xE0100 and <= 0xE01EF)

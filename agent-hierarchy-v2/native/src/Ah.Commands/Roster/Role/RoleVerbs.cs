@@ -13,11 +13,11 @@ internal static class RoleVerbs
     private static readonly string[] Flags =
     [
         "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold", "from", "pin", "slot",
-        "dry-run", "json", "cwd",
+        "dry-run", "json", "roster", "cwd",
     ];
 
     private const string Usage =
-        "usage: ah roster role list [--json] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] [--slot design] (--dry-run | --pin sha256:…) | role trust <name> [--level L] [--slot design] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+        "usage: ah roster role list [--json] [--roster <r>] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] [--slot design] (--dry-run | --pin sha256:…) | role trust <name> [--level L] [--slot design] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
 
     [Verb("roster:role")]
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
@@ -65,7 +65,7 @@ internal static class RoleVerbs
             if (!Flags.Contains(key))
             {
                 throw new RosterFailure(
-                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --writes, --level, --scaffold, --from, --pin, --dry-run, --json, --team, --cwd)");
+                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --writes, --level, --scaffold, --from, --pin, --dry-run, --json, --roster, --team, --cwd)");
             }
         }
 
@@ -229,6 +229,12 @@ internal static class RoleVerbs
                     {
                         row["pack_override"] = true;
                     }
+                }
+
+                // ah2-698 D3: roster:<name> for a role a roster's packs supply, row:<level> for a config row with `from`.
+                if (entry.Member("pack")?.Member("via") is { IsText: true } via)
+                {
+                    row["pack"] = new JsonObject { ["via"] = via };
                 }
 
                 rows.Add(row);

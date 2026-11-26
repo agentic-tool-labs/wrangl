@@ -51,7 +51,7 @@ The reserved classes, every one dangerous (the lists are examples, not limits):
   your approval) is not a decision: the plan answers it, so it is never
   classified, decided, or logged as a `decided` line.
 - **D3 Security and trust:** permissions and settings, CLAUDE.md, hooks,
-  agent definitions; role-pack adoption, trust and pins; credentials and
+  agent definitions; a roster's packs (`roster roster pack`); credentials and
   secrets, auth logic, network egress; CI config and protected paths
   (`settings.protected_paths` and the pipeline-conventions baseline); the
   repo's build, test, dependency and tool configuration; git config and the

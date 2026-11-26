@@ -58,6 +58,26 @@ internal static class TemplateVerbs
         }
 
         var fresh = LevelFiles.FreshBlock(route);
+
+        // ah2-698 D2: --pack p@m, repeatable or a comma list, is written as the block's packs in the given order.
+        if (c.Opts.Has("pack"))
+        {
+            if (c.Opts.IsTrue("pack"))
+            {
+                throw new RosterFailure("init: --pack needs a value: --pack <plugin>@<marketplace>");
+            }
+
+            var givenPacks = c.Opts.All("pack").SelectMany(v => v.Split(',')).Select(v => NamedRostersVerb.RequirePack(c, "init --pack", v)).Distinct(StringComparer.Ordinal).ToList();
+            var packs = new JsonArray();
+            foreach (var pack in givenPacks)
+            {
+                packs.Add(pack);
+                NamedRostersVerb.NoteIfNotInstalled(c, pack);
+            }
+
+            fresh["packs"] = packs;
+        }
+
         files.Install(data, c.RosterArg, fresh);
         files.Write(path, data);
         c.Out(JsonValue.FromObject(new JsonObject

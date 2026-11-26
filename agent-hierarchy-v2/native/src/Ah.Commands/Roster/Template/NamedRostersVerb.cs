@@ -15,6 +15,7 @@ internal static class NamedRostersVerb
         ["copy"] = ["level", "dry-run", "cwd"],
         ["delete"] = ["level", "dry-run", "cwd"],
         ["use"] = ["level", "clear", "cwd"],
+        ["pack"] = ["add", "remove", "level", "dry-run", "cwd"],
     };
 
     [Verb("roster:roster")]
@@ -30,7 +31,7 @@ internal static class NamedRostersVerb
         if (sub is null || !SubFlags.TryGetValue(sub, out var allowed))
         {
             throw new RosterFailure(
-                "usage: ah roster roster list [--json] | roster copy <src> <dst> [--level L] [--dry-run] | roster delete <name> [--level L] [--dry-run] | roster use <name>|default [--level L] | roster use --clear [--level L]  (all with --cwd <abs cwd>)");
+                "usage: ah roster roster list [--json] | roster copy <src> <dst> [--level L] [--dry-run] | roster delete <name> [--level L] [--dry-run] | roster use <name>|default [--level L] | roster use --clear [--level L] | roster pack <name>|default (--add <plugin>@<marketplace> | --remove <plugin>@<marketplace>)… [--level L] [--dry-run]  (all with --cwd <abs cwd>)");
         }
 
         foreach (var key in c.Opts.Keys)
@@ -52,6 +53,8 @@ internal static class NamedRostersVerb
                 return Copy(c, files, first, second);
             case "delete":
                 return Delete(c, files, first);
+            case "pack":
+                return Pack(c, files, first);
             default:
                 return Use(c, files, first);
         }
@@ -222,6 +225,11 @@ internal static class NamedRostersVerb
                 ["selected"] = key != defaultName && (key is null ? selectionKey is null : selectionKey == key),
                 ["teams"] = entryTeams,
             };
+            if (win is not null && win.Block.IsMap && win.Block.AsObject().Get("packs") is { IsArray: true } packs)
+            {
+                entry["packs"] = packs;
+            }
+
             if (key == defaultName)
             {
                 entry["note"] = LegacyDefaultNote;
@@ -270,6 +278,11 @@ internal static class NamedRostersVerb
                 $"{count} member{(count == 1 ? string.Empty : "s")}",
                 $"route {route}",
             };
+            if (r.Get("packs") is { IsArray: true } packs && packs.AsArray().Count > 0)
+            {
+                parts.Add("packs " + string.Join(", ", packs.AsArray().Select(p => c.Services.Config.EscapeTerminal(p))));
+            }
+
             var shadowed = r["shadowed"].AsArray();
             if (shadowed.Count > 0)
             {
@@ -360,6 +373,13 @@ internal static class NamedRostersVerb
         }
 
         block["members"] = copied;
+
+        // ah2-698 Amendment 1 F7: a copied roster keeps its packs.
+        if (win.Block.IsMap && win.Block.AsObject().Get("packs") is { IsArray: true } packs)
+        {
+            block["packs"] = Clone(packs);
+        }
+
         var dryRun = c.Opts.IsTrue("dry-run");
         if (!dryRun)
         {
@@ -525,6 +545,89 @@ internal static class NamedRostersVerb
         }
 
         c.Out(JsonValue.FromObject(result));
+        return 0;
+    }
+
+    // ---------------------------------------------------------------- pack (ah2-698 D2)
+
+    /// <summary><paramref name="value"/> as a <c>packs</c> entry; one that is not <c>&lt;plugin&gt;@&lt;marketplace&gt;</c> is a usage error.</summary>
+    internal static string RequirePack(RosterContext c, string where, string value) =>
+        c.Services.Config.ParsePack(value) ?? throw new RosterFailure($"{where}: {LevelFiles.Quote(value)} is not <plugin>@<marketplace>");
+
+    /// <summary>A note on stderr when <paramref name="pack"/> is not installed here; a roster is usable on other machines, so it is written anyway.</summary>
+    internal static void NoteIfNotInstalled(RosterContext c, string pack)
+    {
+        var config = c.Services.Config;
+        if (!config.InstallRecordList().Any(r => r.Member("key") is { IsText: true } k && k.AsString() == pack))
+        {
+            c.Stderr.Write($"ah roster: pack {config.EscapeTerminal(JsonValue.FromString(pack))} is not installed on this machine; its roles resolve once it is (/{config.PluginName}:agent-role install <source>)\n");
+        }
+    }
+
+    private static int Pack(RosterContext c, LevelFiles files, string? name)
+    {
+        var config = c.Services.Config;
+        const string usage = "usage: ah roster roster pack <name>|default (--add <plugin>@<marketplace> | --remove <plugin>@<marketplace>)… [--level L] [--dry-run]";
+        if (string.IsNullOrEmpty(name) || (c.Opts.All("add").Count == 0 && c.Opts.All("remove").Count == 0) || c.Opts.IsTrue("add") || c.Opts.IsTrue("remove"))
+        {
+            throw new RosterFailure(usage);
+        }
+
+        var key = name == config.DefaultRoster ? null : name;
+        if (key is not null && config.ValidateTeamAlias(JsonValue.FromString(key)) is var check && !(check.Get("ok") is { IsTruthy: true }))
+        {
+            throw new RosterFailure($"roster pack: {LevelFiles.Quote(name)}: {Text(check, "why")}");
+        }
+
+        var adds = c.Opts.All("add").Select(v => RequirePack(c, "roster pack --add", v)).ToList();
+        var removes = c.Opts.All("remove").Select(v => RequirePack(c, "roster pack --remove", v)).ToList();
+        var level = LevelOpt(c, files) ?? Winning(Definitions(c, key))?.Level
+            ?? throw new RosterFailure($"roster pack {name}: no level defines {LevelFiles.ContainerLabel(key)} — make it with `ah roster init{(key is null ? string.Empty : $" --roster {key}")} --pack <plugin>@<marketplace>`");
+        var path = files.PathOf(level);
+        var data = files.Read(path);
+        var block = LevelFiles.Container(data, key)
+            ?? throw new RosterFailure($"roster pack {name}: no {LevelFiles.ContainerLabel(key)} at level \"{level}\" ({path})");
+
+        // Members and every other key of the block are left as they are; only `packs` changes.
+        var packs = block.Get("packs") is { IsArray: true } existing ? existing.AsArray().Select(p => p).ToList() : [];
+        bool Listed(string pack) => packs.Any(p => p.IsText && p.AsString() == pack);
+        foreach (var pack in adds.Where(p => !Listed(p)))
+        {
+            packs.Add(pack);
+        }
+
+        foreach (var pack in removes)
+        {
+            if (!Listed(pack))
+            {
+                c.Stderr.Write($"ah roster: roster {name} names no pack {config.EscapeTerminal(JsonValue.FromString(pack))} — nothing to remove\n");
+                continue;
+            }
+
+            packs.RemoveAll(p => p.IsText && p.AsString() == pack);
+        }
+
+        var result = new JsonArray();
+        foreach (var p in packs)
+        {
+            result.Add(p);
+        }
+
+        if (result.Count > 0)
+        {
+            block["packs"] = result;
+        }
+        else
+        {
+            block.Remove("packs");
+        }
+
+        if (!c.Opts.IsTrue("dry-run"))
+        {
+            files.Write(path, data);
+        }
+
+        c.Out(JsonValue.FromObject(new JsonObject { ["level"] = level, ["path"] = path, ["roster"] = key ?? config.DefaultRoster, ["packs"] = result }));
         return 0;
     }
 
