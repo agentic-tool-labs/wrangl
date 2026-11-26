@@ -181,6 +181,19 @@ public sealed partial class TreeLanesTests
         Assert.Equal((expected, "dev"), ExchangeFiling.Resolve(back, team));
     }
 
+    // deputy-pane D3': a to: chief end is the recorded owner while a deputy is on duty; the negative: to: orchestrator naming the deputy is the deputy
+    [Theory]
+    [InlineData("chief", "null", TreeIds.Orchestrator)]
+    [InlineData("orchestrator", "\"dep\"", "dep")]
+    public void AChiefEndIsTheOwnerWhileADeputyIsOnDuty(string to, string name, string expected)
+    {
+        var doc = "{\"orchestrator\":{\"session_id\":\"chief\"},\"members\":[{\"name\":\"dep\",\"role\":\"deputy-chief\"},{\"name\":\"dev\",\"role\":\"implementor\"}],\"duty\":{\"deputy\":\"dep\"}}";
+        var team = new TeamEntry(Canon, "teams/top.json", "top", JsonText.Parse(doc), 1);
+        var back = new LaneRecord(JsonText.Parse("{\"to\":\"" + to + "\",\"from\":\"implementor\",\"to_name\":" + name + ",\"from_name\":\"dev\",\"open\":true}"), 1);
+
+        Assert.Equal((expected, "dev"), ExchangeFiling.Resolve(back, team));
+    }
+
     [Fact]
     public void AnEndThatResolvesToNobodyIsNull()
     {

@@ -4,6 +4,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.66] - 2026-11-26
+
+### Added
+
+- The evidence route `GET /ui/v1/evidence/<msg>/e<k>` serves a single byte range (206, 416, `Accept-Ranges: bytes`), so video evidence can play inline in Safari.
+
+### Changed
+
+- An on-duty deputy's pane lists only its duty team and that team's lanes, not every team of its chief's owner group, and the owner sessions cap can no longer cut the deputy out.
+- An exchange addressed to `chief@<team>` is filed on the team owner's card. Before, it was on no card.
+
 ## [2.0.65] - 2026-11-26
 
 ### Changed

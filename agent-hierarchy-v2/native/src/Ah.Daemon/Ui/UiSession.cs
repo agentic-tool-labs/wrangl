@@ -450,13 +450,49 @@ internal sealed class UiSession : IDisposable
         }
 
         var type = Ah.Hierarchy.HierarchyModule.EvidenceType(stored);
-        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["Content-Disposition"] = "inline" };
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["Content-Disposition"] = "inline", ["Accept-Ranges"] = "bytes" };
         if (type.Contains("svg", StringComparison.Ordinal) || type.Contains("html", StringComparison.Ordinal) || type.EndsWith("+xml", StringComparison.Ordinal))
         {
             headers["Content-Security-Policy"] = ctx.Response.Headers.ContentSecurityPolicy + "; sandbox";
         }
 
-        await WriteAsync(ctx, 200, type, read.Bytes, headers).ConfigureAwait(false);
+        // ponytail: a range request reads the whole file (capped at 20 MiB) and slices it; a no-follow positioned read if the cap ever grows
+        var size = read.Bytes.Length;
+        switch (EvidenceRange(ctx.Request.GetTypedHeaders().Range, size))
+        {
+            case null:
+                await WriteAsync(ctx, 200, type, read.Bytes, headers).ConfigureAwait(false);
+                return;
+            case { Start: < 0 }:
+                headers["Content-Range"] = $"bytes */{size.ToString(CultureInfo.InvariantCulture)}";
+                await WriteAsync(ctx, 416, type, ReadOnlyMemory<byte>.Empty, headers).ConfigureAwait(false);
+                return;
+            case (int start, int end):
+                headers["Content-Range"] = string.Create(CultureInfo.InvariantCulture, $"bytes {start}-{end}/{size}");
+                await WriteAsync(ctx, 206, type, read.Bytes.AsMemory(start, end - start + 1), headers).ConfigureAwait(false);
+                return;
+        }
+    }
+
+    /// <summary>
+    /// The inclusive byte span one <c>Range: bytes=</c> item asks of a file of <paramref name="size"/> bytes; null for the whole file
+    /// (no header, another unit, or more than one range); <c>(-1, -1)</c> when the range cannot be satisfied.
+    /// </summary>
+    internal static (int Start, int End)? EvidenceRange(Microsoft.Net.Http.Headers.RangeHeaderValue? range, int size)
+    {
+        if (range is null || !string.Equals(range.Unit.Value, "bytes", StringComparison.OrdinalIgnoreCase) || range.Ranges.Count != 1)
+        {
+            return null;
+        }
+
+        var item = range.Ranges.First();
+        if (item.From is not { } from)
+        {
+            // a suffix range: the last n bytes
+            return item.To is > 0 && size > 0 ? ((int)Math.Max(0, size - item.To.Value), size - 1) : (-1, -1);
+        }
+
+        return from >= size ? (-1, -1) : ((int)from, (int)Math.Min(item.To ?? (size - 1), size - 1));
     }
 
     /// <summary>
