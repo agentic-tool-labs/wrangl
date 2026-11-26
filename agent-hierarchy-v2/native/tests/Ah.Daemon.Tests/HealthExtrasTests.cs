@@ -180,6 +180,70 @@ public sealed class HealthExtrasTests
     }
 
     [Fact]
+    public async Task ADrainedDaemonAnswers503UntilTheGraceAndThenItsSocketIsGone()
+    {
+        // ah2-645 G1: the default grace, a floor, so a loaded machine only makes the wait longer.
+        await using var h = await Harness.StartAsync(Sandbox.Create());
+        var started = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.Equal(200, (await h.PostAsync("/v1/drain", "{}")).Status);
+        await Task.Delay(TimeSpan.FromMilliseconds(300), TestContext.Current.CancellationToken);
+        Assert.Equal(503, (await h.GetAsync("/v1/health")).Status);
+        Assert.Equal(503, (await h.PostAsync("/v1/drain", "{}")).Status);
+        Assert.True(File.Exists(h.Box.Sock));
+
+        await h.Exit.WaitAsync(TimeSpan.FromSeconds(20), TestContext.Current.CancellationToken);
+
+        Assert.True(started.Elapsed >= DaemonTimings.Default.DrainGrace, $"exited after {started.Elapsed}");
+        Assert.False(File.Exists(h.Box.Sock));
+    }
+
+    [Fact]
+    public async Task AShutdownThatIsNotADrainDoesNotWaitForTheGrace()
+    {
+        // ah2-645 G2: the idle and signal paths call RequestShutdown directly; a grace far above the wait proves none applies.
+        await using var h = await Harness.StartAsync(Sandbox.Create(), o => o.Timings = DaemonTimings.Default with { DrainGrace = TimeSpan.FromSeconds(60) });
+
+        h.Server.RequestShutdown(0);
+
+        Assert.True(await h.ExitsWithinAsync(TimeSpan.FromSeconds(20)), h.Log.ToString());
+        Assert.False(File.Exists(h.Box.Sock));
+    }
+
+    [Fact]
+    public async Task ADrainAskingForNoGraceExitsWithoutWaitingForIt()
+    {
+        // ah2-645 G4: the stop hook holds the drain so the no-grace drain is seen refusing new work before it exits.
+        using var release = new ManualResetEventSlim();
+        await using var h = await Harness.StartAsync(Sandbox.Create(), o =>
+        {
+            o.Timings = DaemonTimings.Default with { DrainGrace = TimeSpan.FromSeconds(60) };
+            o.OnStop = () => release.Wait();
+        });
+
+        Assert.Equal(200, (await h.PostAsync("/v1/drain", "{\"reason\":\"test\",\"no_grace\":true}")).Status);
+        Assert.Equal(503, (await h.GetAsync("/v1/health")).Status);
+        release.Set();
+
+        Assert.True(await h.ExitsWithinAsync(TimeSpan.FromSeconds(20)), h.Log.ToString());
+        Assert.False(File.Exists(h.Box.Sock));
+    }
+
+    [Fact]
+    public async Task ANoGraceFlagThatIsNotAJsonTrueStillGetsTheFullGrace()
+    {
+        // ah2-645 G4 negative: only a JSON true opts out; the string "true" is the nearest input that must not.
+        var grace = TimeSpan.FromSeconds(3);
+        await using var h = await Harness.StartAsync(Sandbox.Create(), o => o.Timings = DaemonTimings.Default with { DrainGrace = grace });
+        var started = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.Equal(200, (await h.PostAsync("/v1/drain", "{\"no_grace\":\"true\"}")).Status);
+        await h.Exit.WaitAsync(TimeSpan.FromSeconds(20), TestContext.Current.CancellationToken);
+
+        Assert.True(started.Elapsed >= grace, $"exited after {started.Elapsed}");
+    }
+
+    [Fact]
     public async Task TheStopHookRunsOnceDuringShutdownAndAFailingHookDoesNotStopTheExit()
     {
         var stops = 0;

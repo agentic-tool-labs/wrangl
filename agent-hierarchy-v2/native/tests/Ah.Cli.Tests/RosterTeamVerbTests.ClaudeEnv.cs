@@ -139,6 +139,20 @@ public sealed partial class RosterTeamVerbTests
         Assert.Equal("/team/cfg", Recorded(JsonText.Parse(_sandbox.TeamText(ProjectTeamFile))));
     }
 
+    [Fact]
+    public void ADaemonRelaunchWithNothingRecordedLaunchesWithTheDaemonsValueAndRecordsNothing()
+    {
+        // ah2-578 E1: the daemon is not the lead, so its own value is used for this launch only
+        var calls = DaemonRelaunchWith(null, null, otherOwner: true);
+
+        ExportedBeforeTheStart(calls, "/daemon/cfg");
+        var team = JsonText.Parse(_sandbox.TeamText(ProjectTeamFile));
+        var row = team.Member("members")!.Value.AsArray().Single(m => m.Member("name")?.AsString() == Impl);
+        Assert.Null(Recorded(row));
+        Assert.Null(row.Member("claude_securestorage_config_dir"));
+        Assert.Null(Recorded(team));
+    }
+
     // ---------------------------------------------------------------- E5: the doctor names a live member in another environment
 
     /// <summary>The <c>claude-env</c> doctor row for a team whose lead records <c>/lead/cfg</c> and whose one member records <paramref name="memberValue"/>; null when there is none.</summary>

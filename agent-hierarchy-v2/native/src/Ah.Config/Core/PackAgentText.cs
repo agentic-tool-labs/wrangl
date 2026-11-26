@@ -23,6 +23,9 @@ internal static partial class PackAgentText
     [GeneratedRegex("^[A-Za-z][A-Za-z0-9_-]*\\z", RegexOptions.CultureInvariant)]
     private static partial Regex PackToolNameRegex();
 
+    [GeneratedRegex("^mcp__[A-Za-z0-9_-]+__\\*\\z", RegexOptions.CultureInvariant)]
+    private static partial Regex ServerGrantRegex();
+
     [GeneratedRegex("^(\\*|[A-Za-z_][A-Za-z0-9_.-]*(\\([^()]*\\))?)\\z", RegexOptions.CultureInvariant)]
     private static partial Regex ToolTokenRegex();
 
@@ -44,7 +47,14 @@ internal static partial class PackAgentText
     internal static bool IsYamlNullBool(string v) =>
         v.All(c => c < 128) && Array.IndexOf(YamlNullBool, ConfigRegistry.LowerForAsciiPatterns(v)) >= 0;
 
-    internal static bool IsPackToolName(string e) => PackToolNameRegex().IsMatch(e) && !IsYamlNullBool(e);
+    internal static bool IsPackToolName(string e) => (PackToolNameRegex().IsMatch(e) && !IsYamlNullBool(e)) || IsServerGrant(e);
+
+    /// <summary><c>mcp__&lt;server&gt;__*</c>: every tool of one MCP server.</summary>
+    internal static bool IsServerGrant(string e) => ServerGrantRegex().IsMatch(e);
+
+    /// <summary><c>mcp__&lt;server&gt;</c> with no tool part: Claude Code's <c>tools</c> field matches nothing by it.</summary>
+    internal static bool IsBareServerName(string e) =>
+        e.StartsWith(McpToolPrefix, StringComparison.Ordinal) && e.Length > McpToolPrefix.Length && !e[McpToolPrefix.Length..].Contains("__", StringComparison.Ordinal);
 
     /// <summary>The number of leading characters <c>trimStart</c> would remove.</summary>
     internal static int IndentOf(string line)
@@ -389,7 +399,19 @@ internal static partial class PackAgentText
             var list = entries.ToList();
             foreach (var e in list.Where(e => !IsPackToolName(e)))
             {
-                Err("pack-agent-tools", $"{key} entry {JsonText.Stringify(e, 0)} isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean)");
+                var wildcard = e.StartsWith(McpToolPrefix, StringComparison.Ordinal) && e.Contains('*', StringComparison.Ordinal)
+                    ? "; the only wildcard accepted is mcp__<server>__*"
+                    : string.Empty;
+                Err("pack-agent-tools", $"{key} entry {JsonText.Stringify(e, 0)} isn't a plain tool name (letters, digits, _ and -, and not a word YAML reads as null or a boolean){wildcard}");
+            }
+
+            if (key == "tools")
+            {
+                foreach (var e in list.Where(e => IsPackToolName(e) && IsBareServerName(e)))
+                {
+                    findings.Add(Finding("warn", "pack-agent-tools", path, key,
+                        $"tools entry {JsonText.Stringify(e, 0)} matches no tools in Claude Code's tools field; write {e}__*", Fixes(Fix("edit-frontmatter", $"write {e}__*"))));
+                }
             }
 
             fm[key] = ConfigRegistry.StringArray(list.Where(IsPackToolName));

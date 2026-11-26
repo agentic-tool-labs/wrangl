@@ -462,6 +462,39 @@ internal static class StreamVerbs
 
     // ---------------------------------------------------------------- stream-open
 
+    /// <summary>
+    /// ah2-523: removes what a failed stream-open made before its record was written: the tab it created, the work tree it added
+    /// (never forced) and the branch that add created (only while it still points where it was cut). Names on stderr each one left.
+    /// </summary>
+    private static void UndoOpen(RosterContext c, string? root, WorktreePlan? added, string branch, string? tabId)
+    {
+        var left = new List<string>();
+        if (tabId is not null && !c.Services.Launch!.Herdr.InvokeAllowFailure(["tab", "close", tabId]).Ok)
+        {
+            left.Add($"herdr tab {tabId}");
+        }
+
+        if (added is not null && root is not null)
+        {
+            var removed = Git(c, ["-C", root, "worktree", "remove", added.Path]);
+            if (!removed.Ok)
+            {
+                left.Add($"work tree {added.Path} ({removed.Detail})");
+            }
+
+            if (added.BranchCreated
+                && !(removed.Ok && added.BaseSha is { Length: > 0 } sha && Git(c, ["-C", root, "update-ref", "-d", $"refs/heads/{branch}", sha]).Ok))
+            {
+                left.Add($"branch {branch} in {root}");
+            }
+        }
+
+        if (left.Count > 0)
+        {
+            c.Stderr.WriteLine($"stream-open: the stream was not recorded, and undoing it left behind: {string.Join("; ", left)}");
+        }
+    }
+
     internal static int Open(RosterContext c)
     {
         if (c.Services.Launch is null)
@@ -539,9 +572,10 @@ internal static class StreamVerbs
         }
 
         WorktreePlan? wt = null;
+        string? root = null;
         if (wantWorktree)
         {
-            var root = services.Config.CheckoutRoot(c.Cwd);
+            root = services.Config.CheckoutRoot(c.Cwd);
             if (string.IsNullOrEmpty(root))
             {
                 var message =
@@ -714,59 +748,70 @@ internal static class StreamVerbs
 
         var snap = new StreamSupport.Snapshot(null, null);
         var tabCreated = false;
-        if (transport == "herdr" && record.Get("tab_id") is { IsTruthy: true })
-        {
-            snap = StreamSupport.HerdrSnapshot(c, warnings);
-            var made = StreamSupport.EnsureStreamTab(c, record, openLabel, rootCwd, snap.Tabs);
-            if (made.TabId is not null)
-            {
-                record["tab_id"] = made.TabId;
-                if (made.Created && made.RootPane is not null)
-                {
-                    record["root_pane_id"] = made.RootPane;
-                }
+        JsonValue written;
+        JsonObject? fresh = null;
 
-                tabCreated = made.Created;
+        // ah2-523: until the record is written, a failure removes what this call made (its work tree, branch and tab)
+        try
+        {
+            if (transport == "herdr" && record.Get("tab_id") is { IsTruthy: true })
+            {
+                snap = StreamSupport.HerdrSnapshot(c, warnings);
+                var made = StreamSupport.EnsureStreamTab(c, record, openLabel, rootCwd, snap.Tabs);
+                if (made.TabId is not null)
+                {
+                    record["tab_id"] = made.TabId;
+                    if (made.Created && made.RootPane is not null)
+                    {
+                        record["root_pane_id"] = made.RootPane;
+                    }
+
+                    tabCreated = made.Created;
+                }
+                else
+                {
+                    record["tab_id"] = JsonValue.Null;
+                    warnings.Add($"stream {name}: herdr tab create failed ({made.Error}); the worktree is kept, and the next spawn --stream {name} creates the tab");
+                }
             }
             else
             {
                 record["tab_id"] = JsonValue.Null;
-                warnings.Add($"stream {name}: herdr tab create failed ({made.Error}); the worktree is kept, and the next spawn --stream {name} creates the tab");
+            }
+
+            if (!team.IsNull)
+            {
+                written = StreamSupport.WriteStreamRecord(c, dir, name, record);
+            }
+            else
+            {
+                var found = services.Config.ResolveRoster(c.Cwd, services.Roster.TeamRosterKey(dir, c.TeamFile), c.RepoBasename, c.Registry);
+                var layout = CreatePlanning.CreateLayout(c);
+                var newTeam = TeamRecords.NewTeamRecord(
+                    c, TeamScopes.AdHocRoster(found), transport, ownerPid ?? double.NaN, MemberPlanning.Text(layout, "mode") ?? "auto");
+                newTeam["streams"] = new JsonObject { [name] = record };
+                services.Hierarchy.StateCalls.UpdateTeam(
+                    dir,
+                    c.TeamFile,
+                    doc =>
+                    {
+                        if (!doc.IsNull && services.Roster.TeamIsLive(doc, c.Invoker(), services.Clock.UtcNow))
+                        {
+                            throw TeamScopes.RefuseLiveTeam(c, dir, doc);
+                        }
+
+                        return TeamFileOutcome.Write(newTeam);
+                    });
+                written = fresh = newTeam;
             }
         }
-        else
+        catch (Exception error) when (error is not OutOfMemoryException)
         {
-            record["tab_id"] = JsonValue.Null;
+            UndoOpen(c, root, wt?.Argv is not null ? wt : null, branch, tabCreated ? MemberPlanning.Text(record, "tab_id") : null);
+            throw;
         }
 
-        JsonValue written;
-        IReadOnlyList<string> registered = [];
-        if (!team.IsNull)
-        {
-            written = StreamSupport.WriteStreamRecord(c, dir, name, record);
-        }
-        else
-        {
-            var found = services.Config.ResolveRoster(c.Cwd, services.Roster.TeamRosterKey(dir, c.TeamFile), c.RepoBasename, c.Registry);
-            var layout = CreatePlanning.CreateLayout(c);
-            var fresh = TeamRecords.NewTeamRecord(
-                c, TeamScopes.AdHocRoster(found), transport, ownerPid ?? double.NaN, MemberPlanning.Text(layout, "mode") ?? "auto");
-            fresh["streams"] = new JsonObject { [name] = record };
-            written = fresh;
-            services.Hierarchy.StateCalls.UpdateTeam(
-                dir,
-                c.TeamFile,
-                doc =>
-                {
-                    if (!doc.IsNull && services.Roster.TeamIsLive(doc, c.Invoker(), services.Clock.UtcNow))
-                    {
-                        throw TeamScopes.RefuseLiveTeam(c, dir, doc);
-                    }
-
-                    return TeamFileOutcome.Write(fresh);
-                });
-            registered = TeamRegistration.RegisterTeam(c, dir, fresh);
-        }
+        IReadOnlyList<string> registered = fresh is not null ? TeamRegistration.RegisterTeam(c, dir, fresh) : [];
 
         try
         {

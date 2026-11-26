@@ -965,7 +965,7 @@ internal static class SpawnOne
         Copy(newRecord, "model", member, "model");
         Copy(newRecord, "effort", member, "effort");
         Copy(newRecord, "autoMode", member, "autoMode");
-        foreach (var (_, field) in ClaudeEnvironment.Variables)
+        foreach (var (_, field) in ClaudeEnvironment.Variables.Where(v => !claudeEnv.Any(r => r.Field == v.Field && !r.Record)))
         {
             Copy(newRecord, field, member, field);
         }

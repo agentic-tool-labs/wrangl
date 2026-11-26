@@ -1152,7 +1152,7 @@ internal static class RoleVerbs
                 ["install_path"] = installPath,
                 ["fields"] = Shown(state.Get("manifestRole")?.Member("raw")),
                 ["agent_file"] = agentPath,
-                ["tools"] = _config.PackToolReport(parsed.Get("fm")),
+                ["tools"] = _config.PackToolReport(parsed.Get("fm"), installPath),
                 ["also_in_plugin"] = extras,
             };
             if (cls == "implement" && !builtin && raw.Get("routes") is { IsTruthy: true })
@@ -1161,6 +1161,15 @@ internal static class RoleVerbs
             }
 
             return new Review(raw, cls, findings, warnings, details);
+        }
+
+        /// <summary>The tool lines of a pack review on stderr, the ⚠ server-grant lines first: they go above every other line.</summary>
+        private void WriteToolLines(Review review)
+        {
+            foreach (var line in _config.PackToolLines(review.Details.Get("tools"), T(review.Details.Get("install_path"))))
+            {
+                c.Stderr.Write($"ah roster: {Esc(line)}\n");
+            }
         }
 
         private void RefuseTrustCommitHere(string label) => RoleVerbs.RefuseTrustCommitHere(c, label);
@@ -1328,6 +1337,7 @@ internal static class RoleVerbs
             var agent = T(review.Raw.Get("agent"));
             CheckOwner(name, agent);
 
+            WriteToolLines(review);
             if (review.Findings.Count > 0)
             {
                 c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");
@@ -1611,6 +1621,7 @@ internal static class RoleVerbs
                 };
             }
 
+            WriteToolLines(review);
             if (review.Findings.Count > 0)
             {
                 c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");

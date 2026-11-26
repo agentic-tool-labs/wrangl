@@ -165,6 +165,7 @@ for e in low medium high xhigh max; do ah_forget_team "$PROJ/.claude/ah2/teams/l
 
 # ---- history on a project with a live team -> active:true; kill the pid -> active:false
 forget_history; ah_forget_team "$TEAM_FILE"
+check "live team: no history row before the commit (the wait below cannot pass early)" '[ -z "$(history_text)" ]'
 # Commit ONCE and then end the owner's process. A second commit under a different pid would be
 # refused by spec 0044 §1.11, and it only ever tested this by side effect anyway — killing the
 # owner exercises `teamIsLive`'s actual predicate, which is what "active" is derived from.
@@ -172,7 +173,8 @@ forget_history; ah_forget_team "$TEAM_FILE"
   run create --commit --verified "$CONFIG_A" --transport terminal --roster-level repo --orchestrator-pid "$BASHPID"
   exec sleep 30 ) > /dev/null 2>&1 &
 OWNER_PID=$!
-for _ in $(seq 100); do ah_team_stored "$TEAM_FILE" && break; sleep 0.1; done
+# create --commit stores the team row before it writes the history row, so wait on both.
+for _ in $(seq 300); do ah_team_stored "$TEAM_FILE" && [ -n "$(history_text)" ] && break; sleep 0.1; done
 run history
 check "live team: active:true" '[ "$(json_field "o.teams[0].active")" = "true" ]'
 ah_signal_child TERM "$OWNER_PID"; wait "$OWNER_PID" 2>/dev/null

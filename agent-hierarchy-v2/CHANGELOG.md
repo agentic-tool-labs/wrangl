@@ -4,6 +4,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.62] - 2026-11-26
+
+### Added
+
+- **A pack agent can be granted one MCP server's tools.** An agent in a role pack may list `mcp__<server>__*` in
+  `tools`. Only implement and legwork class agents may; every other class is refused. `role trust`, `role set --from`,
+  `pack show` and the roster kit preview print each grant first, flagged as not pinned, with where the server comes
+  from. Named MCP tools are grouped into one line per server.
+- **`ah roster doctor` reports a daemon that is not running.** With no daemon it adds a `daemon` row that says so,
+  or `off (AH_DAEMON=off)` when the daemon was turned off.
+
+### Changed
+
+- **The daemon keeps its socket for 2 seconds after a drain.** After it accepts a drain it answers every request
+  `503` for at least 2 seconds before it closes its socket, so the request right after a drain is answered, not
+  refused. A hook that replaces an older daemon sends `no_grace` and is not delayed. Other shutdowns are unchanged.
+- **`ah roster doctor` never starts a daemon.** Its reads no longer launch one when none is running.
+- **A failed `stream-open` leaves nothing behind.** When the stream cannot be recorded, the work tree, branch and
+  tab that the call created are removed. Anything that could not be removed is named in the error. A work tree with
+  changes is never force-removed.
+
+### Fixed
+
+- **`member-down` no longer says a member died before its last activity.** "dead since" is the later of the first
+  dead sighting and the member's last recorded activity.
+- **An approval is not applied to another session in a reused pane.** A team row is taken for the caller's pane only
+  when it has no session id, has the caller's, or belongs to the same process.
+- **A daemon relaunch no longer records its own Claude login on a member.** A value taken from a caller that is not
+  the team's lead is used for that launch and not recorded.
+- `test-team-history` waits for the history row before it reads it.
+
 ## [2.0.61] - 2026-11-25
 
 ### Changed

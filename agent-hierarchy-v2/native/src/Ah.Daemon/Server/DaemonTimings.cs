@@ -20,6 +20,9 @@ internal sealed record DaemonTimings(
     /// <summary>The longest the whole shutdown takes before the process exits regardless. Below the client's wait (<c>ahd stop</c> gives a signalled daemon 60 s), so a stop reports success.</summary>
     internal TimeSpan DrainDeadline { get; init; } = TimeSpan.FromSeconds(45);
 
+    /// <summary>ah2-645 G1: after a <c>/v1/drain</c> is accepted the socket stays and answers 503 until at least this long after it; a floor, not added to a longer drain.</summary>
+    internal TimeSpan DrainGrace { get; init; } = TimeSpan.FromSeconds(2);
+
     /// <summary>Node's observed bounds (59.6 s, 89.6 s, 6.0 s), the 5 s drain bound and the 1 MiB / 2 s discard.</summary>
     internal static DaemonTimings Default { get; } = new(
         RequestHeaders: TimeSpan.FromSeconds(60),

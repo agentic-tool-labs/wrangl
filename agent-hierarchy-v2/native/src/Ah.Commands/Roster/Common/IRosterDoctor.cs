@@ -43,6 +43,9 @@ public interface IRosterDoctor
     /// </summary>
     string? DaemonUnansweredNote();
 
+    /// <summary>Whether no daemon lives: the health read never went out and no daemon process or socket exists. Starts none (ah2-616).</summary>
+    bool DaemonDown();
+
     /// <summary>
     /// The read model's counters as one line (<c>name=value</c> pairs) when the daemon is up and keeps a read model, else null: a daemon
     /// that is down, does not answer, or reports none yields no row.

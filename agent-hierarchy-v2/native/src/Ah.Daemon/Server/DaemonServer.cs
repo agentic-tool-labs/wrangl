@@ -72,6 +72,7 @@ internal sealed class DaemonServer : IAsyncDisposable
     private int _draining;
     private int _shutdownStarted;
     private int _drainWatched;
+    private long _drainAcceptedMs = long.MinValue;
     private string _drainStep = "starting";
     private long _active;
     private long _handled;
@@ -520,6 +521,14 @@ internal sealed class DaemonServer : IAsyncDisposable
             Log($"stop hook still running after {StopHookLimit.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s (its last \"stop:\" line names the step); exiting without it");
         }
 
+        // ah2-645 G1/G2: a drain route's shutdown keeps the socket answering 503 until DrainGrace after the drain was accepted.
+        if (Interlocked.Read(ref _drainAcceptedMs) is var accepted && accepted != long.MinValue
+            && accepted + (long)_settings.Timings.DrainGrace.TotalMilliseconds - MonotonicMs() is var left && left > 0)
+        {
+            Volatile.Write(ref _drainStep, "drain grace");
+            await Task.Delay(TimeSpan.FromMilliseconds(left)).ConfigureAwait(false);
+        }
+
         Cleanup();
         _ = _exit.TrySetResult(code);
     }
@@ -950,7 +959,11 @@ internal sealed class DaemonServer : IAsyncDisposable
                     return;
                 }
 
-                var reason = JsonText.Parse(drainBody.Value.Span).AsObject()?.Str("reason");
+                var drainArgs = JsonText.Parse(drainBody.Value.Span).AsObject();
+                var reason = drainArgs?.Str("reason");
+
+                // ah2-645 G4: the hook upgrade path asks for no grace; only a JSON true counts.
+                var noGrace = drainArgs is not null && drainArgs.TryGetValue("no_grace", out var ng) && ng.Kind == JsonKind.Bool && ng.AsBool();
                 reason = reason is null ? null : string.Concat(reason.Where(static c => !char.IsControl(c)));
                 var caller = CallerOf(ctx);
                 var peer = PeerPidOf(ctx) is { } p ? p.ToString(System.Globalization.CultureInfo.InvariantCulture) : "unknown";
@@ -972,6 +985,13 @@ internal sealed class DaemonServer : IAsyncDisposable
                 // ah2-136 D1: draining before the reply, so no request after it is answered as a live daemon; the shutdown follows even
                 // when the reply fails, or the daemon would answer 503 and never exit.
                 Volatile.Write(ref _draining, 1);
+
+                // The first accepted drain starts the grace; a later one does not extend it.
+                if (!noGrace)
+                {
+                    _ = Interlocked.CompareExchange(ref _drainAcceptedMs, MonotonicMs(), long.MinValue);
+                }
+
                 try
                 {
                     await ReplyJsonAsync(ctx, false, 200, Jx.Ok()).ConfigureAwait(false);

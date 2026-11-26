@@ -282,11 +282,12 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
     }
 
     /// <summary>Sends the drain request. The daemon's reply, or null when it gave none (gone, unreachable, timed out).</summary>
-    internal async Task<HttpJsonReply?> PostDrainAsync(string socket, string reason, int timeoutMs, CancellationToken ct = default)
+    internal async Task<HttpJsonReply?> PostDrainAsync(string socket, string reason, int timeoutMs, bool noGrace = false, CancellationToken ct = default)
     {
         try
         {
-            return await HttpJsonAsync(socket, "POST", "/v1/drain", Jx.Obj(("reason", reason)), timeoutMs, ct).ConfigureAwait(false);
+            var body = noGrace ? Jx.Obj(("reason", reason), ("no_grace", true)) : Jx.Obj(("reason", reason));
+            return await HttpJsonAsync(socket, "POST", "/v1/drain", body, timeoutMs, ct).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
         {
@@ -331,7 +332,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
 
     public async Task DrainAsync(DaemonInfo daemon, string reason, CancellationToken cancellationToken = default)
     {
-        var reply = await PostDrainAsync(daemon.Socket, reason, timeoutMs: 2000, cancellationToken).ConfigureAwait(false);
+        var reply = await PostDrainAsync(daemon.Socket, reason, timeoutMs: 2000, ct: cancellationToken).ConfigureAwait(false);
         if (ActualRefusal(reply) is null)
         {
             _ = await WaitForPidExitAsync(daemon.Pid, DrainWaitMs, cancellationToken).ConfigureAwait(false);
@@ -425,7 +426,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
         }
         else if (info is not null)
         {
-            var reply = await PostDrainAsync(info.Socket, "daemon stop", timeoutMs: 2000, ct).ConfigureAwait(false);
+            var reply = await PostDrainAsync(info.Socket, "daemon stop", timeoutMs: 2000, ct: ct).ConfigureAwait(false);
 
             // the daemon answered no: that is its decision, and a signal must not overrule it
             if (ActualRefusal(reply) is { } refusal)
@@ -942,7 +943,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
             if (options.Hook)
             {
                 // ah2-100: whoever drains to replace starts the replacement; the next round waits for the exit and starts it within the budget.
-                var hookReply = await PostDrainAsync(info.Socket, "client upgrade", (int)Math.Max(50, Math.Min(Remaining(), HookDrainTimeoutMs)), ct).ConfigureAwait(false);
+                var hookReply = await PostDrainAsync(info.Socket, "client upgrade", (int)Math.Max(50, Math.Min(Remaining(), HookDrainTimeoutMs)), noGrace: true, ct: ct).ConfigureAwait(false);
                 if (ActualRefusal(hookReply) is { } hookRefusal)
                 {
                     Warn($"the daemon is older ({version}) and refused to drain: {hookRefusal}; using files for now");
@@ -954,7 +955,7 @@ internal sealed class AhdClient(DaemonClientDependencies deps) : IDaemonClient
                 continue;
             }
 
-            var drainReply = await PostDrainAsync(info.Socket, "client upgrade", 2000, ct).ConfigureAwait(false);
+            var drainReply = await PostDrainAsync(info.Socket, "client upgrade", 2000, ct: ct).ConfigureAwait(false);
             if (ActualRefusal(drainReply) is { } drainRefusal)
             {
                 Warn($"the old daemon refused to drain: {drainRefusal}");

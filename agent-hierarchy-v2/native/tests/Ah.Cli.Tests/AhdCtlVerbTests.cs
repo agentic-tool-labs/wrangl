@@ -150,6 +150,7 @@ public sealed class AhdCtlVerbTests : IDisposable
         var request = Assert.Single(client.Requests);
         Assert.Equal("/v1/contract", request.PathAndQuery);
         Assert.False(request.StartIfDown);
+        Assert.False(request.LaunchIfDown);
     }
 
     [Fact]

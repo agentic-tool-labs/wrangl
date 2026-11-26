@@ -262,7 +262,8 @@ internal sealed class StallWatch
                         if (!warm && team.OrchestratorSession.Length > 0 && now - track.DeadSince.Value >= _settings.Down && track.Reported != judged.RegistrationSession)
                         {
                             var work = _host.OpenWork(team, member);
-                            var deadSince = judged.LastEvidence is { } evidence && evidence < track.DeadSince.Value ? evidence : track.DeadSince.Value;
+                            // ah2-595: the later of the death time (the earlier of evidence and first dead sighting) and the last sign of life, which is the evidence itself
+                            var deadSince = judged.LastEvidence ?? track.DeadSince.Value;
                             var since = Timestamps.ToIsoString(deadSince);
                             var cause = PaneCrash.Cause(PaneTail(team, member));
                             // spawn-one has no --resume: name the checkpoint resume where the team has one, and a fresh spawn, as two commands

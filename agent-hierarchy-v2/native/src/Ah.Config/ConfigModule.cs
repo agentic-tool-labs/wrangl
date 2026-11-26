@@ -291,8 +291,11 @@ public interface IConfigCore
 
     JsonArray PackAgentFindings(string text, string? path = null);
 
-    /// <summary><c>{effective, flagged}</c> from a pack agent's frontmatter.</summary>
-    JsonObject PackToolReport(JsonValue? fm);
+    /// <summary><c>{effective, flagged}</c> from a pack agent's frontmatter, plus <c>mcp</c> and <c>server_grants</c> when it names MCP tools.</summary>
+    JsonObject PackToolReport(JsonValue? fm, string? pluginDir = null);
+
+    /// <summary>The dry run's tool lines for a <see cref="PackToolReport"/>: the ⚠ server-grant lines first, then one line per MCP server.</summary>
+    IReadOnlyList<string> PackToolLines(JsonValue? report, string? pluginDir = null);
 
     /// <summary>A description as one directive-safe line, or null.</summary>
     JsonValue NormalizeDescription(JsonValue? text);
