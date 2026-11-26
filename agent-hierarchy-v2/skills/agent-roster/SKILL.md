@@ -1,7 +1,7 @@
 ---
 name: agent-roster
 description: Defines, edits, or inspects the agent-hierarchy ROSTER — the template of which roles exist and their model/effort/route/kind. Use for /agent-roster, for "add a reviewer peer", "add a peer to the roster", "change the architect's model", "remove a role from the roster", "what's in my roster", "set up a roster", or listing, copying, deleting or switching named rosters. Standing up, reshaping, or tearing down a LIVE Team is the agent-team skill, not this one.
-argument-hint: "[show|init|add|edit|remove|list|copy|delete|use]"
+argument-hint: "[show|init|add|edit|remove|list|copy|delete|use|pack]"
 ---
 
 # agent-roster
@@ -63,7 +63,7 @@ relay them. A Team's name is not a roster selector: these verbs refuse the team
 flag and point at `--roster`.
 
 - `show [--level global|repo|repo-user] [--roster <r>]` — resolved roster, or one level's raw file.
-- `init --level <L> --route peer [--roster <r>]` — replaces that level's block wholesale. `--route subagent` is refused: only legwork roles run as subagents.
+- `init --level <L> --route peer [--roster <r>] [--pack <plugin>@<marketplace>]…` — replaces that level's block wholesale. `--route subagent` is refused: only legwork roles run as subagents. `--pack` (repeatable, or a comma list) names the role packs whose roles every team built from this roster gets; a pack not installed here is written anyway, with a note. Change them later with `roster pack` (`reference/named-rosters.md`).
 - `add --role <R> [--level L] [--roster <r>] [--model M] [--effort E] [--route peer|subagent|pane] [--kind K] [--args '<json>'] [--auto-mode A]` — writes the template row and spawns nothing; `--route subagent` only for a legwork role.
 - `edit --member <NAME> [--level L] [--roster <r>] [--role R] [--model M] [--effort E] [--route ...] [--auto-mode A]` — `--model ""` and `--effort ""` clear the field, leaving the model to be chosen at each spawn.
 - `edit --orchestrator-model M [--level L] [--roster <r>]` — sets the roster block's `orchestrator_model`, the model `ahd new` starts an orchestrator with (`opus`, `sonnet`, `fable` or `inherit`); `--orchestrator-model ""` removes it. Not combinable with `--member`.
@@ -82,7 +82,7 @@ Run `show` and print its output, naming the selected roster and its source.
 
 ## Named rosters: `list`, `copy`, `delete`, `use`
 
-These are `<ah> roster roster list|copy|delete|use …`. Read
+These are `<ah> roster roster list|copy|delete|use|pack …`. Read
 `reference/named-rosters.md` before running one. `delete` asks the user to
 confirm first.
 

@@ -4,6 +4,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.67] - 2026-11-26
+
+### Added
+
+- A named roster names its role packs: `ah roster init --pack <plugin>@<marketplace>`, and `ah roster roster pack <name> --add/--remove` to change them later. The roles of a roster's packs are available to teams built from that roster with no adopt step and no pin. `roster list`, `roster show` and `role list --roster <name>` show them; a roster kit and `roster copy` carry them.
+
+### Changed
+
+- A pack role spawns in any slot its class allows, in a pipeline run too. The spawn refusals for pack roles are gone (the design and review slot limit, and the refusal for a member with auto mode unset or in bypass mode), and the pipeline skill no longer halts on a pack reviewer or architect or keeps gate slots first-party.
+- A roster kit naming a pack that is not installed imports with an info line instead of being refused.
+
+### Notes
+
+- This is the first part of a larger change: installing a role pack is the trust decision. The `role set --from`, `role trust` and `--slot` commands still work in this release and go in a later one.
+
 ## [2.0.66] - 2026-11-26
 
 ### Added

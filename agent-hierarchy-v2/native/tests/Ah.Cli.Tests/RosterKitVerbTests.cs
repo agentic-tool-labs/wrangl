@@ -194,8 +194,8 @@ public sealed class RosterKitVerbTests : IDisposable
         Assert.Contains(" · rosters.kitted · identical", dry.Stdout, StringComparison.Ordinal);
         Assert.Contains(" · roles.scout · identical", dry.Stdout, StringComparison.Ordinal);
         Assert.Contains(" · agent scout · identical", dry.Stdout, StringComparison.Ordinal);
-        Assert.Contains("qc · from demo@market:qc · trusted here · local row: identical", dry.Stdout, StringComparison.Ordinal);
-        Assert.Contains("adopt: ah roster role set qc --from demo@market:qc --dry-run", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("qc · from demo@market:qc · installed · local row: identical", dry.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("adopt: ", dry.Stdout, StringComparison.Ordinal);
         Assert.False(dry.Stdout.Contains("findings (", StringComparison.Ordinal), dry.Stdout);
         Assert.DoesNotContain("flags (", dry.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain("conflicts (", dry.Stdout, StringComparison.Ordinal);
@@ -280,26 +280,49 @@ public sealed class RosterKitVerbTests : IDisposable
         Assert.Equal(before, Snapshot());
     }
 
+    /// <summary>T8 (ah2-698 D8, replaces K5): a block naming a pack that is not installed here is imported with its packs and one info line.</summary>
     [Fact]
-    public void K5APackRoleNotAdoptedHereIsAFindingWithItsAdoptCommand()
+    public void T8ABlockNamingAPackNotInstalledHereIsWrittenWithItsPacksAndAnInfoLine()
     {
-        ExportAndEdit(kit =>
-        {
-            kit["roles"].AsObject()["qc2"] = Parse("{\"row\":{\"from\":\"demo@market:qc\"}}");
-            kit["roster"].AsObject()["block"].AsObject()["members"].AsArray().Add(Parse("{\"role\":\"qc2\"}"));
-        });
+        ExportForAFreshMachine();
+        var kit = Parse(File.ReadAllText(KitFile));
+        var block = kit["roster"].AsObject()["block"].AsObject();
+        block["packs"] = Parse("{\"p\":[\"game-factory@bear-poppa\"]}")["p"];
+        block["members"].AsArray().Add(Parse("{\"role\":\"playtester\"}"));
+        File.WriteAllText(KitFile, JsonText.Stringify(JsonValue.FromObject(kit), 2));
 
-        var dry = DryRun();
+        var dry = Roster("kit", "import", KitFile, "--level", "repo", "--agents", "repo", "--dry-run");
 
-        Assert.Equal(0, dry.Code);
-        Assert.Contains("qc2 · from demo@market:qc · installed · local row: not defined here", dry.Stdout, StringComparison.Ordinal);
-        Assert.Contains("role qc2: pack role not adopted here — adopt it first: ah roster role set qc2 --from demo@market:qc --dry-run", dry.Stdout, StringComparison.Ordinal);
-        Assert.DoesNotContain("role qc: pack role not adopted", dry.Stdout, StringComparison.Ordinal);
-        var before = Snapshot();
+        Assert.True(dry.Code == 0, dry.Stderr);
+        Assert.Contains("note: pack game-factory@bear-poppa is not installed here: /wrangl:agent-role install <source>\n", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("note: role qc comes from demo@market: ah roster roster pack kitted --add demo@market\n", dry.Stdout, StringComparison.Ordinal);
+        Assert.False(dry.Stdout.Contains("findings (", StringComparison.Ordinal), dry.Stdout);
         var commit = CommitWith(PinIn(dry.Stdout));
-        Assert.Equal(2, commit.Code);
-        Assert.Contains("adopt it first: ah roster role set qc2 --from demo@market:qc --dry-run", commit.Stdout, StringComparison.Ordinal);
-        Assert.Equal(before, Snapshot());
+        Assert.True(commit.Code == 0, commit.Stdout + commit.Stderr);
+        var written = Parse(File.ReadAllText(RepoFile))["rosters"].AsObject()["kitted"].AsObject();
+        Assert.Equal("[\"game-factory@bear-poppa\"]", JsonText.Stringify(written["packs"], 0));
+    }
+
+    /// <summary>
+    /// T8's negative: a block naming only an installed pack prints no info line, and a member role neither the pack nor the kit offers is
+    /// still a finding.
+    /// </summary>
+    [Fact]
+    public void T8ABlockNamingAnInstalledPackPrintsNoInfoLineAndAnUnknownMemberRoleIsStillAFinding()
+    {
+        ExportForAFreshMachine();
+        var kit = Parse(File.ReadAllText(KitFile));
+        var block = kit["roster"].AsObject()["block"].AsObject();
+        block["packs"] = Parse("{\"p\":[\"demo@market\"]}")["p"];
+        block["members"].AsArray().Add(Parse("{\"role\":\"ghost\"}"));
+        File.WriteAllText(KitFile, JsonText.Stringify(JsonValue.FromObject(kit), 2));
+
+        var dry = Roster("kit", "import", KitFile, "--level", "repo", "--agents", "repo", "--dry-run");
+
+        Assert.True(dry.Code == 0, dry.Stderr);
+        Assert.DoesNotContain("is not installed here", dry.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("role qc comes from", dry.Stdout, StringComparison.Ordinal);
+        Assert.Contains("member role ghost is neither in the kit nor defined here", dry.Stdout, StringComparison.Ordinal);
     }
 
     // ---------------------------------------------------------------- slice 3: the commit

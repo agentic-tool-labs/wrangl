@@ -557,7 +557,7 @@ NEW_PIN=$(jget o.pin)
 WRANGL_TEAM_FILE= rm_ role trust gd --pin "$NEW_PIN"
 check "P15b WRANGL_TEAM_FILE=\"\" counts as unset" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.gd.pin === \"$NEW_PIN\""'
 
-# ================================================================ P16 pipeline spawn backstop
+# ================================================================ T1 a pack role spawns in any slot, live run or not (adr-46)
 fresh
 adopt prv pk@mk:pk-rev
 adopt pdes pk@mk:pk-des
@@ -566,25 +566,15 @@ adopt pimpl pk@mk:pk-impl
 mkpack "$PACKS/c" pk2
 installed "{\"pk@mk\":[\"$PACKS/a\"],\"pk2@mk\":[\"$PACKS/c\"]}"
 adopt reviewer pk2@mk:pk-rev --level repo
-check "P16 (setup) the built-in reviewer is overridden by a pack role" 'filejs "$REPO_CFG" "d.roles.reviewer.from === \"pk2@mk:pk-rev\""'
-mutate "$REPO_CFG" 'd.roster = {route: "peer", members: [{role: "reviewer", model: "opus", autoMode: "auto"}, {role: "pimpl", model: "opus", autoMode: "auto"}]}'
-spawnall() { # <expect: refused|spawned> <label>
-  for r in prv pdes reviewer; do
-    rm_ spawn-ad-hoc $r --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-    if [ "$1" = refused ]; then check "P16 $2: spawn-ad-hoc $r is refused" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]]'
-    else check "P16 $2: spawn-ad-hoc $r spawns" '[ $RC = 0 ]'; fi
-  done
-  rm_ spawn-one reviewer --dry-run --orchestrator-pid $$
-  if [ "$1" = refused ]; then check "P16 $2: spawn-one reviewer (overridden by a pack) is refused" '[ $RC != 0 ] && [[ "$ERR$OUT" == *"pipeline run is live"* ]]'
-  else check "P16 $2: spawn-one reviewer spawns" '[ $RC = 0 ]'; fi
-}
-spawnall spawned "without a live run"
+check "T1 (setup) the built-in reviewer is overridden by a pack role" 'filejs "$REPO_CFG" "d.roles.reviewer.from === \"pk2@mk:pk-rev\""'
+mutate "$REPO_CFG" 'd.roster = {route: "peer", members: [{role: "reviewer", model: "opus"}]}'
 anchor
-spawnall refused "with a live run"
-rm_ spawn-ad-hoc pimpl --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-check "P16 with a live run: an implement-class pack role spawns" '[ $RC = 0 ]'
-rm_ spawn-one pimpl --dry-run --orchestrator-pid $$
-check "P16 with a live run: spawn-one of an implement-class pack role spawns" '[ $RC = 0 ]'
+for r in prv pdes; do
+  rm_ spawn-ad-hoc $r --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
+  check "T1 with a live run: spawn-ad-hoc of pack role $r spawns" '[ $RC = 0 ]'
+done
+rm_ spawn-one reviewer --dry-run --orchestrator-pid $$
+check "T1 with a live run: spawn-one of the pack-overridden reviewer, auto mode unset, spawns" '[ $RC = 0 ] && [[ "$OUT" == *"pk2:pk-rev"* ]]'
 
 # ================================================================ P16b the design-slot opt-in (adr-42)
 fresh
@@ -613,8 +603,6 @@ mutate "$REPO_CFG" 'd.roster = {route: "peer", members: []}'
 anchor
 rm_ spawn-ad-hoc pdes --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
 check "P16b with a live run: an opted-in design-class pack role spawns" '[ $RC = 0 ]'
-rm_ spawn-ad-hoc prv --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-check "P16b with a live run: a review-class pack role is still refused" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]]'
 fresh
 adopt pdes pk@mk:pk-des --routes "pack scenes" --slot design
 rm_ role trust pdes --pin "$PIN"
@@ -631,10 +619,6 @@ rolerow pdes
 check "P16b role list: a hand-edited slots the stored copy does not record is ignored" '[ "$(jget o.slots_ignored)" = true ] && [ "$(jget o.design_opt_in)" != true ]'
 rm_ role list
 check "P16b ... the text list says so" '[[ "$OUT" == *"slots ignored (not given at trust)"* ]]'
-mutate "$REPO_CFG" 'd.roster = {route: "peer", members: []}'
-anchor
-rm_ spawn-ad-hoc pdes --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-check "P16b with a live run: that hand-edited role is still refused" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]]'
 fresh
 bad "$PACKS/slotted" 'm.roles["pk-des"].slots = ["design"]'
 showpath "$PACKS/slotted"
@@ -643,29 +627,6 @@ installed "{\"pk@mk\":[\"$PACKS/slotted\"]}"
 adopt psl pk@mk:pk-des --routes "pack scenes"
 rolerow psl
 check "P16b ... and the slots it declares are ignored: an adopted role has neither the row field nor the opt-in" '[ "$(jget o.name)" = psl ] && filejs "$GLOBAL_CFG" "d.roles.psl.slots === undefined" && [ "$(jget o.design_opt_in)" != true ]'
-
-# ================================================================ P17 no bypassPermissions
-fresh
-adopt pimpl pk@mk:pk-impl
-mkdir -p "$FAKEHOME/.claude/agents"; printf -- '---\nname: own-impl\ndescription: mine\ntools: Read, Edit, Write, Bash, SendMessage\n---\nMine.\n' > "$FAKEHOME/.claude/agents/own-impl.md"
-rm_ role set own-impl --class implement --level global
-refused() { [[ "$ERR$OUT" == *"never runs with permission checks off"* ]] && [[ "$ERR$OUT" == *"edit --member"*"--auto-mode"* ]]; }
-for mode in bypassPermissions unset; do
-  if [ $mode = unset ]; then pm='{role: "pimpl", model: "opus"}'; om='{role: "own-impl", model: "opus"}'; flag=""
-  else pm='{role: "pimpl", model: "opus", autoMode: "bypassPermissions"}'; om='{role: "own-impl", model: "opus", autoMode: "bypassPermissions"}'; flag="--auto-mode bypassPermissions"; fi
-  mutate "$REPO_CFG" "d.roster = {route: \"peer\", members: [$pm, $om]}"
-  rm_ spawn-ad-hoc pimpl --model opus --route peer $flag --dry-run --orchestrator-pid $$
-  check "P17 ($mode) spawn-ad-hoc refuses a pack role, with the fix" '[ $RC != 0 ] && refused'
-  rm_ spawn-one pimpl --dry-run --orchestrator-pid $$
-  check "P17 ($mode) spawn-one refuses it" '[ $RC != 0 ] && refused'
-  rm_ create --plan --orchestrator-pid $$
-  check "P17 ($mode) create refuses it" 'refused'
-  rm_ spawn-one own-impl --dry-run --orchestrator-pid $$
-  check "P17 ($mode) a non-pack member behaves as today" '[ $RC = 0 ] && ! refused'
-done
-mutate "$REPO_CFG" 'd.roster = {route: "peer", members: [{role: "pimpl", model: "opus", autoMode: "auto"}]}'
-rm_ spawn-one pimpl --dry-run --orchestrator-pid $$
-check "P17 a pack member with auto spawns with --permission-mode auto" '[ $RC = 0 ] && [[ "$OUT" == *"--permission-mode auto"* ]]'
 
 # ================================================================ P18 the content digest
 fresh

@@ -198,6 +198,11 @@ internal sealed partial class ConfigCore
                         result["route"] = route;
                     }
 
+                    if (rv.AsObject().Get("packs") is { IsArray: true } packs)
+                    {
+                        result["packs"] = packs;
+                    }
+
                     result["members"] = RosterMemberNamesCore(block["members"].AsArray(), prefix);
                     result["path"] = path;
                     result["teamKey"] = teamKey is null ? JsonValue.Null : teamKey;
@@ -218,6 +223,34 @@ internal sealed partial class ConfigCore
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The <c>packs</c> of roster block <paramref name="rosterKey"/> (null: the default block) and the level file it is read from: the
+    /// most specific level whose block has members, else the most specific that defines the block (ah2-698 D1). Null when no level defines it.
+    /// </summary>
+    internal (JsonArray? Packs, string Path)? RosterPacksTuple(string? cwd, string? rosterKey)
+    {
+        (JsonArray? Packs, string Path)? first = null;
+        foreach (var (_, path, data) in ExistingLevelFiles(cwd))
+        {
+            DropNonObjectMembersCore(data);
+            var block = rosterKey is not null ? PickTeamRoster(data, rosterKey) : data.Get("roster");
+            if (block is not { IsMap: true } bv)
+            {
+                continue;
+            }
+
+            var packs = bv.AsObject().Get("packs") is { IsArray: true } p ? p.AsArray() : null;
+            if (bv.AsObject().Get("members") is { IsArray: true } m && m.AsArray().Count > 0)
+            {
+                return (packs, path);
+            }
+
+            first ??= (packs, path);
+        }
+
+        return first;
     }
 
     private IEnumerable<(string Level, string Path, JsonObject Data)> ExistingLevelFiles(string? cwd)

@@ -304,16 +304,12 @@ In order:
 2. **Reviewer:** an adversarial review of the whole
    `<base>..ah/issue-<N>` range, slug `<tag>-i<N>-gate`. Its brief fills
    `[1] goal` (what the issue must deliver, with its source) and `[5]
-   acceptance`: a Reviewer dispatch without them is held. When a pack role
-   wrote the item's spec, `[1] goal` also carries the `spec authored by pack
-   role` line from SKILL.md's "Gate slots stay first-party" rule. Findings feed the
+   acceptance`: a Reviewer dispatch without them is held. Findings feed the
    item's rework; gate rounds are capped at 3.
 3. **Architect:** sign-off on that review, slug `<tag>-i<N>-ok` — on the
    review and the reported evidence, never on the builds (§ Completion
    gate's rule). The Architect's response must carry content: a skeleton
-   `-ok` response is not a sign-off. When the `architect` is a pack override
-   with `design_opt_in`, it never gives this sign-off: the Orchestrator takes
-   it itself and says so in the run summary.
+   `-ok` response is not a sign-off.
 4. **Unattended mode:** the final push (§ Per-item execution), then § PR
    creation, then § on_item_done.
 5. **Degraded mode:** the item stays `signed-off` until § Degraded

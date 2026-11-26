@@ -2,7 +2,7 @@
 
 `<ah>` = the `ah` command in your context's `ah CLI root` line (newest wins).
 
-Read this for `roster list`, `roster copy`, `roster delete` and `roster use`.
+Read this for `roster list`, `roster copy`, `roster delete`, `roster use` and `roster pack`.
 
 Contents
 
@@ -10,14 +10,15 @@ Contents
 - Copy
 - Delete
 - Use or clear
+- Packs
 
-These are `<ah> roster roster list|copy|delete|use …`.
+These are `<ah> roster roster list|copy|delete|use|pack …`.
 
 ## List
 
 `roster list`: print its text — each roster with its level, what
-it shadows, member count, route and the teams using it, the selected one
-starred.
+it shadows, member count, route, its packs and the teams using it, the
+selected one starred.
 
 ## Copy
 
@@ -39,6 +40,17 @@ own file for this repo (`repo-user`) unless they ask for `repo` (shared,
 committed) or `global`. Say the resulting selection back in one line, with
 any warning that others reading that level can't see the roster. A live Team
 keeps the roster it was built from.
+
+## Packs
+
+`roster pack <name>|default (--add <plugin>@<marketplace> | --remove
+<plugin>@<marketplace>)… [--level L] [--dry-run]`: changes which role packs
+the roster names; members and every other key stay as they are. Every role of
+a named pack is a role of any team built from that roster, in any repo, named
+by its plain role name (`add --roster <name> --role <pack role>`). With no
+`--level` it changes the level that defines the block. Adding a listed pack or
+removing an absent one changes nothing. Say the resulting `packs` back in one
+line.
 
 ## Question tag
 

@@ -407,6 +407,69 @@ public sealed class RosterRoleVerbTests : IDisposable
 
     private string GlobalFile => Path.Combine(_sandbox.Home, ".claude", "ah2", "agent-hierarchy.json");
 
+    // ---------------------------------------------------------------- a roster's packs (ah2-698)
+
+    /// <summary>T2 (D1/D2): init writes a roster's packs, a member names a pack role by its own name, and roster pack changes only packs.</summary>
+    [Fact]
+    public void T2InitPackWritesPacksAndRosterPackAddThenRemoveLeavesMembersByteIdentical()
+    {
+        InstallPack();
+        JsonObject Block() => Parse(File.ReadAllText(RepoFile))["rosters"].AsObject()["r"].AsObject();
+        string Packs() => JsonText.Stringify(Block()["packs"], 0);
+        string Members() => JsonText.Stringify(Block()["members"], 0);
+
+        var init = Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market,other@market");
+        Assert.True(init.Code == 0, init.Stderr);
+        Assert.Equal("[\"demo@market\",\"other@market\"]", Packs());
+        Assert.Contains("ah roster: pack other@market is not installed on this machine; its roles resolve once it is (/wrangl:agent-role install <source>)", init.Stderr, StringComparison.Ordinal);
+        Assert.DoesNotContain("pack demo@market is not installed", init.Stderr, StringComparison.Ordinal);
+        var add = Roster("add", "--level", "repo", "--roster", "r", "--role", "qc");
+        Assert.True(add.Code == 0, add.Stdout + add.Stderr);
+        var members = Members();
+
+        var added = Roster("roster", "pack", "r", "--add", "q@m");
+        var removed = Roster("roster", "pack", "r", "--remove", "demo@market");
+
+        Assert.True(added.Code == 0, added.Stderr);
+        Assert.True(removed.Code == 0, removed.Stderr);
+        Assert.Equal(members, Members());
+        Assert.Equal("[\"other@market\",\"q@m\"]", Packs());
+        var shown = Parse(removed.Stdout);
+        Assert.Equal("repo", shown["level"].AsString());
+        Assert.Equal("r", shown["roster"].AsString());
+        Assert.Equal("[\"other@market\",\"q@m\"]", JsonText.Stringify(shown["packs"], 0));
+
+        // Amendment 1 F7: a copied roster keeps its packs.
+        Assert.Equal(0, Roster("roster", "copy", "r", "r2").Code);
+        Assert.Equal("[\"other@market\",\"q@m\"]", JsonText.Stringify(Parse(File.ReadAllText(RepoFile))["rosters"].AsObject()["r2"].AsObject()["packs"], 0));
+    }
+
+    /// <summary>T2's negatives: an entry that is not plugin@marketplace is exit 2 with nothing written; a repeat add and an absent remove are no-ops.</summary>
+    [Fact]
+    public void T2AMalformedPackIsExitTwoAndARepeatAddOrAbsentRemoveIsANoOp()
+    {
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        var before = File.ReadAllText(RepoFile);
+
+        var badInit = Roster("init", "--level", "repo", "--route", "peer", "--roster", "s", "--pack", "game-factory");
+        var badAdd = Roster("roster", "pack", "r", "--add", "game-factory");
+        var badRole = Roster("roster", "pack", "r", "--add", "demo@market:qc");
+
+        Assert.Equal(2, badInit.Code);
+        Assert.Contains("init --pack: \"game-factory\" is not <plugin>@<marketplace>", badInit.Stderr, StringComparison.Ordinal);
+        Assert.Equal(2, badAdd.Code);
+        Assert.Equal(2, badRole.Code);
+        Assert.Equal(before, File.ReadAllText(RepoFile));
+
+        var again = Roster("roster", "pack", "r", "--add", "demo@market");
+        var absent = Roster("roster", "pack", "r", "--remove", "q@m");
+
+        Assert.True(again.Code == 0, again.Stderr);
+        Assert.True(absent.Code == 0, absent.Stderr);
+        Assert.Contains("roster r names no pack q@m — nothing to remove", absent.Stderr, StringComparison.Ordinal);
+        Assert.Equal("[\"demo@market\"]", JsonText.Stringify(Parse(File.ReadAllText(RepoFile))["rosters"].AsObject()["r"].AsObject()["packs"], 0));
+    }
+
     private static void WriteRoles(string file, string roles)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);

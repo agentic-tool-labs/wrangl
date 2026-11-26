@@ -34,7 +34,10 @@ the pack, so edit can't change them (remove it and define your own instead).
    `R pack show <plugin>@<marketplace> --json` and compare its `digest` with
    step 2's. If they differ, tell the user that what got installed isn't what
    they reviewed, offer to uninstall it, and adopt nothing.
-5. Offer its roles for adoption (multiSelect), then run **adopt** for each.
+5. Offer to add the pack to a roster (`R roster roster pack <name> --add
+   <plugin>@<marketplace>`), or to create one with it (`R roster init --level
+   <L> --route peer --roster <name> --pack <plugin>@<marketplace>`). Every
+   role of the pack is then a role of any team built from that roster.
 6. Say that sessions already running need a restart to dispatch the new
    agents as subagents; peers spawned from now on are fine.
 

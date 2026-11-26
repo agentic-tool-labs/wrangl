@@ -259,9 +259,11 @@ internal sealed partial class RosterContext
     {
         try
         {
+            // ah2-698: --roster picks the roster whose packs join the registry.
+            var roster = Opts.Text("roster") is { } r ? JsonValue.FromString(r) : (JsonValue?)null;
             return Services.Config.ResolveConfig(
                 Cwd,
-                TeamDefaultExplicit ? new ResolveOptions(DefaultTeam: true) : new ResolveOptions(Team: TeamArg));
+                TeamDefaultExplicit ? new ResolveOptions(DefaultTeam: true, Roster: roster) : new ResolveOptions(Team: TeamArg, Roster: roster));
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
