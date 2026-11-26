@@ -115,6 +115,21 @@ public sealed class AlarmHoldTests
         Assert.Equal(1, rig.Count("check-in-due"));
     }
 
+    [Fact]
+    public async Task ALiveJobHoldsNoSilentPastTheBusyCeiling()
+    {
+        var rig = new Rig(Start.AddSeconds(-(HierarchyModule.BusyCeilingSeconds + 60)));
+        rig.Jobs.Add(Job());
+        var tick = rig.Tick();
+
+        await rig.PassAsync(tick);
+        Assert.Equal(1, rig.Count("check-in-due"));
+
+        // the silent step is due five minutes after the check-in
+        await rig.PassAsync(tick, polls: 3, stepMs: 180_000);
+        Assert.Equal(1, rig.Count("peer-silent"));
+    }
+
     private static double Ms(double minutesAfterStart) => Start.AddMinutes(minutesAfterStart).ToUnixTimeMilliseconds();
 
     private static JobOutcome RunJobs(double nowMinutes, JobFact job) =>

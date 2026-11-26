@@ -91,12 +91,13 @@ public sealed class HookBoundTests
     [Fact]
     public void StandardInputThatNeverClosesIsReadForItsBoundAndYieldsWhatArrived()
     {
+        // The product's own bound: the reader is a thread-pool task, and a pool starved under load can start it after a 300 ms bound.
         var clock = Stopwatch.StartNew();
-        var read = HookVerb.ReadBounded(new NeverCloses("{\"a\":1}"u8.ToArray()), Short, out var timedOut);
+        var read = HookVerb.ReadBounded(new NeverCloses("{\"a\":1}"u8.ToArray()), HookVerb.StdinBound, out var timedOut);
 
         Assert.True(timedOut);
         Assert.Equal("{\"a\":1}", System.Text.Encoding.UTF8.GetString(read.Span));
-        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
+        Assert.True(clock.Elapsed < HookVerb.StdinBound + TimeSpan.FromSeconds(5), $"took {clock.Elapsed}");
     }
 
     [Fact]

@@ -4,6 +4,8 @@
 // so they land where the home's store is. The start time comes from lib-case.mjs, the one formatter the contract runner uses for <PIDSTART:runner>.
 //   prove-self.mjs <name> <team> <pid> <ah home> <team file or ""> <box dir> [<session id>]
 // Prints the session id the registration is under (proof-<pid> unless one is given).
+// AH_TEST_PROVE_BOUND=1 writes the registration bound, so a bound registration of the same session by another live process
+// cannot refuse it (an unbound write over a live bound one is refused).
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -76,6 +78,6 @@ seed(["sessions"], {
   pid,
   pane_id: null,
   pid_start: pidStart,
-  bound: false,
+  bound: process.env.AH_TEST_PROVE_BOUND === "1",
 });
 process.stdout.write(session);

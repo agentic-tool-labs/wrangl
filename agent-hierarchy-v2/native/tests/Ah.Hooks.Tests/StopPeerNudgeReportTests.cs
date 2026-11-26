@@ -26,6 +26,8 @@ public sealed class StopPeerNudgeReportTests
 
         public string? SendDenial(string? message, string? sessionId, Ah.Abstractions.RequestContext context, out string? warning) => throw new NotSupportedException();
 
+        public string? PrintedRelayDone(string? message, string? sessionId, Ah.Abstractions.RequestContext context) => throw new NotSupportedException();
+
         public IReadOnlyList<string> ConfirmRelay(string? sessionId, string? recipient, string? message, Ah.Mesh.RelayResult result, string? reason, Ah.Abstractions.RequestContext context, string? msgId = null) =>
             throw new NotSupportedException();
 

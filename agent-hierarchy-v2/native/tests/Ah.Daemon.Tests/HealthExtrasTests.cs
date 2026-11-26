@@ -182,8 +182,9 @@ public sealed class HealthExtrasTests
     [Fact]
     public async Task ADrainedDaemonAnswers503UntilTheGraceAndThenItsSocketIsGone()
     {
-        // ah2-645 G1: the default grace, a floor, so a loaded machine only makes the wait longer.
-        await using var h = await Harness.StartAsync(Sandbox.Create());
+        // ah2-645 G1: the grace is a floor, so a loaded machine only makes the wait longer; a grace well above the 300 ms wait keeps the 503 check off the load.
+        var grace = TimeSpan.FromSeconds(6);
+        await using var h = await Harness.StartAsync(Sandbox.Create(), o => o.Timings = DaemonTimings.Default with { DrainGrace = grace });
         var started = System.Diagnostics.Stopwatch.StartNew();
 
         Assert.Equal(200, (await h.PostAsync("/v1/drain", "{}")).Status);
@@ -194,7 +195,7 @@ public sealed class HealthExtrasTests
 
         await h.Exit.WaitAsync(TimeSpan.FromSeconds(20), TestContext.Current.CancellationToken);
 
-        Assert.True(started.Elapsed >= DaemonTimings.Default.DrainGrace, $"exited after {started.Elapsed}");
+        Assert.True(started.Elapsed >= grace, $"exited after {started.Elapsed}");
         Assert.False(File.Exists(h.Box.Sock));
     }
 

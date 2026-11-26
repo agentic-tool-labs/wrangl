@@ -37,6 +37,12 @@ internal static class MailClaimGate
                 return Bounce(c, duplicate);
             }
 
+            // ah2-483 R2: the relay ah printed, for an entry delivered meanwhile, is answered as done: nothing is sent, no NOT DONE, no retry.
+            if (advisory.MailboxHooks.PrintedRelayDone(message, c.Input.Text("session_id"), advisory.Callers.RequestContext(c.Cwd())) is { } done)
+            {
+                return HookEmit.Deny(done, "ah: a printed relay of an entry already delivered was answered as done; nothing was sent.");
+            }
+
             var refused = advisory.MailboxHooks.SendDenial(message, c.Input.Text("session_id"), advisory.Callers.RequestContext(c.Cwd()), out var warning);
             if (refused is not null)
             {

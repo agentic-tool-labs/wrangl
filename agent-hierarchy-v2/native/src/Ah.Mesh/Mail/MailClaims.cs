@@ -408,19 +408,22 @@ internal static class ClaimMachine
 
         static string? Reason(JsonObject a) => a.Get("reason") is { IsText: true } r && r.AsString().Length > 0 ? r.AsString() : null;
 
-        static bool Elapsed(JsonObject o, string from, string lease, DateTimeOffset at, long extraMs = 0)
-        {
-            if (o.Get(from) is not { IsText: true } start || !Timestamps.TryParseMs(start.AsString(), out var startMs)
-                || o.Get(lease) is not { IsNumber: true } ms)
-            {
-                return false;
-            }
-
-            return at.ToUnixTimeMilliseconds() >= startMs + ms.AsNumber() + extraMs;
-        }
-
         static Step Lost(string state, string reason, JsonObject? record) =>
             new(new ClaimResult(false, state, reason, record), null, []);
+    }
+
+    /// <summary>Whether the relay lease of a claim record has run out at <paramref name="at"/>: past it the daemon delivers a pending relay itself.</summary>
+    internal static bool RelayLeaseOver(JsonObject record, DateTimeOffset at) => Elapsed(record, "created", "l0_ms", at);
+
+    private static bool Elapsed(JsonObject o, string from, string lease, DateTimeOffset at, long extraMs = 0)
+    {
+        if (o.Get(from) is not { IsText: true } start || !Timestamps.TryParseMs(start.AsString(), out var startMs)
+            || o.Get(lease) is not { IsNumber: true } ms)
+        {
+            return false;
+        }
+
+        return at.ToUnixTimeMilliseconds() >= startMs + ms.AsNumber() + extraMs;
     }
 
     /// <summary>The wire form of a result, as the <c>claim</c> op returns it: small, since a write op's result is capped.</summary>

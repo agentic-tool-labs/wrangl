@@ -605,6 +605,9 @@ public static partial class ConfigModule
     /// <summary>The key of a resolved registry naming the Claude configuration directory a launch reads agent files and install records from.</summary>
     public const string ClaudeDirKey = "claudeDir";
 
+    /// <summary>The built-in deputy role's name: the one source for the registry row, <c>roster duty</c> and the lane-lead spawn test.</summary>
+    public const string DeputyChiefRole = ConfigRegistry.DeputyChiefRole;
+
     public static ModuleRegistry Registry => GeneratedRegistry.Instance;
 
     /// <summary>The one line a session or brief gets when its role parameters cannot be read (RP-D7). The session always starts.</summary>

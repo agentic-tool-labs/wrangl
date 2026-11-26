@@ -645,15 +645,23 @@ public sealed class ClientTests
         }
     }
 
-    /// <summary>The real transport, with the drain request answered by <paramref name="onDrain"/>.</summary>
+    /// <summary>The real transport, with the drain request answered by <paramref name="onDrain"/>; the last drain body is kept.</summary>
     private sealed class DrainAnswering(Func<HttpReply> onDrain) : IUnixHttpTransport
     {
         private readonly UnixTransport _real = new();
 
-        public Task<HttpReply> SendAsync(string socketPath, string method, string pathAndQuery, ReadOnlyMemory<byte> body, TimeSpan timeout, CancellationToken cancellationToken = default) =>
-            pathAndQuery == "/v1/drain"
-                ? Task.FromResult(onDrain())
-                : _real.SendAsync(socketPath, method, pathAndQuery, body, timeout, cancellationToken);
+        public string? DrainBody { get; private set; }
+
+        public Task<HttpReply> SendAsync(string socketPath, string method, string pathAndQuery, ReadOnlyMemory<byte> body, TimeSpan timeout, CancellationToken cancellationToken = default)
+        {
+            if (pathAndQuery != "/v1/drain")
+            {
+                return _real.SendAsync(socketPath, method, pathAndQuery, body, timeout, cancellationToken);
+            }
+
+            DrainBody = System.Text.Encoding.UTF8.GetString(body.Span);
+            return Task.FromResult(onDrain());
+        }
     }
 
     private static HttpReply DrainError(int status, string code, string message) =>
@@ -1301,6 +1309,27 @@ public sealed class ClientTests
             Assert.Null(hook);
             Assert.False(old.Exited);
             Assert.Single(rig.Spawner.Requests);
+        }
+        finally
+        {
+            await rig.StopAllAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AHooksUpgradeDrainAsksForNoGrace()
+    {
+        var rig = new ClientRig(new Dictionary<string, string?> { ["DAEMON_VERSION"] = "1.0.0", ["AHD_VERSION_OVERRIDE"] = "1.0.0" });
+        try
+        {
+            _ = await ClientRig.RunAsync("start");
+            rig.Vars["AHD_VERSION_OVERRIDE"] = "2.0.0";
+            var transport = new DrainAnswering(DrainRefused);
+            var client = DaemonClientModule.Compose(DepsWith(rig, rig.Spawner, rig.Inspector) with { Transport = transport });
+
+            _ = await client.EnsureDaemonForHookAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Contains("\"no_grace\":true", transport.DrainBody, StringComparison.Ordinal);
         }
         finally
         {

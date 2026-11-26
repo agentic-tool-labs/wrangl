@@ -12,8 +12,6 @@ namespace Ah.Commands;
 /// </summary>
 internal static class DutyVerb
 {
-    private const string DeputyRole = "deputy-chief";
-
     private static readonly string[] Flags = ["team", "cwd", "orchestrator-pid", "cause"];
 
     [Verb("roster:duty")]
@@ -60,9 +58,9 @@ internal static class DutyVerb
 
         var name = args[1];
         var row = DismissVerb.Members(team).FirstOrDefault(m => MemberPlanning.Text(m.Member("name")) == name);
-        if (!row.IsMap || MemberPlanning.Text(row.Member("role")) != DeputyRole)
+        if (!row.IsMap || MemberPlanning.Text(row.Member("role")) != Ah.Config.ConfigModule.DeputyChiefRole)
         {
-            var notDeputy = $"ah roster duty: {name} is not a {DeputyRole} member of {teamName}; nothing was changed";
+            var notDeputy = $"ah roster duty: {name} is not a {Ah.Config.ConfigModule.DeputyChiefRole} member of {teamName}; nothing was changed";
             throw c.Refuse(new JsonObject { ["refused"] = "duty-not-deputy", ["message"] = notDeputy }, notDeputy);
         }
 

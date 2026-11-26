@@ -41,17 +41,22 @@ internal sealed class DoctorComposition(ServiceGraph graph, IAhEnvironment envir
         ];
     }
 
+    private ClaimSupport? _support;
+
+    /// <summary>The daemon's claim support, asked once per doctor run.</summary>
+    private ClaimSupport Support() => _support ??= DaemonClaims.SupportOf(graph.Daemon, launch: false);
+
     public string? DaemonRestartNote() =>
-        DaemonClaims.SupportOf(graph.Daemon, launch: false) == ClaimSupport.Older
+        Support() == ClaimSupport.Older
             ? "the running ah daemon is older than this install: it would deliver relayed mail a second time as a plugin prompt, so new mail is sent without claim records until it is restarted; restart it with `ahd restart`"
             : null;
 
     public string? DaemonUnansweredNote() =>
-        DaemonClaims.SupportOf(graph.Daemon, launch: false) == ClaimSupport.Unanswered
+        Support() == ClaimSupport.Unanswered
             ? "the running ah daemon did not answer the mail protocol check in time (it may be busy); new mail is sent without claim records until it does"
             : null;
 
-    public bool DaemonDown() => DaemonClaims.SupportOf(graph.Daemon, launch: false) == ClaimSupport.NoDaemon;
+    public bool DaemonDown() => Support() == ClaimSupport.NoDaemon;
 
     public string? DaemonReadModelNote() => DaemonClaims.ReadModelOf(graph.Daemon);
 

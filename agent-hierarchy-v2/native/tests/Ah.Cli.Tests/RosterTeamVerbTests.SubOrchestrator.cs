@@ -52,7 +52,7 @@ public sealed partial class RosterTeamVerbTests
         WriteTeam("proj", SoTeam(OpenStreamJson("s1")));
 
         var (code, stdout, stderr) = Roster(["spawn-ad-hoc", "deputy-chief", "--team", "proj", "--orchestrator-pid", Self, "--dry-run"]);
-        var (soCode, _) = SpawnSo();
+        var (soCode, soOut) = SpawnSo();
 
         Assert.True(code == 0, stderr);
         var plan = JsonText.Parse(stdout).AsObject();
@@ -60,6 +60,7 @@ public sealed partial class RosterTeamVerbTests
         Assert.DoesNotContain("-so-", plan["name"].AsString(), StringComparison.Ordinal);
         Assert.False(plan.TryGetValue("stream", out var ws) && ws.IsTruthy, stdout);
         Assert.NotEqual(0, soCode);
+        Assert.Equal("stream-required", soOut["refused"].AsString());
     }
 
     private string QaRow(bool live)

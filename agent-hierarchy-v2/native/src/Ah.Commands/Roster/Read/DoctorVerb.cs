@@ -357,7 +357,13 @@ internal static partial class DoctorVerb
             });
         }
 
-        if (c.Services.Doctor is { } restart && restart.DaemonRestartNote() is { } restartNote)
+        // ah2-616 D5: AH_DAEMON=off shows the off row whether or not a daemon is living, and gets no start hint
+        var daemonOff = c.Services.Environment.GetVariable("AH_DAEMON") == "off";
+        if (daemonOff && c.Services.Doctor is not null)
+        {
+            rows.Add(new JsonObject { ["name"] = "daemon", ["status"] = "ok", ["detail"] = "off (AH_DAEMON=off)" });
+        }
+        else if (c.Services.Doctor is { } restart && restart.DaemonRestartNote() is { } restartNote)
         {
             rows.Add(new JsonObject { ["name"] = "daemon-contract", ["status"] = "red", ["detail"] = restartNote });
             red.Add("daemon-contract");
@@ -368,9 +374,8 @@ internal static partial class DoctorVerb
         }
         else if (c.Services.Doctor is { } down && down.DaemonDown())
         {
-            // ah2-616 D4: the lowest severity, so a stopped daemon never changes the exit code; D5: AH_DAEMON=off gets no start hint
-            var detail = c.Services.Environment.GetVariable("AH_DAEMON") == "off" ? "off (AH_DAEMON=off)" : "not running; doctor did not start one (start it with ahd start)";
-            rows.Add(new JsonObject { ["name"] = "daemon", ["status"] = "ok", ["detail"] = detail });
+            // ah2-616 D4: the lowest severity, so a stopped daemon never changes the exit code
+            rows.Add(new JsonObject { ["name"] = "daemon", ["status"] = "ok", ["detail"] = "not running; doctor did not start one (start it with ahd start)" });
         }
 
         if (c.Services.Doctor is { } readModel && readModel.DaemonReadModelNote() is { } readModelNote)

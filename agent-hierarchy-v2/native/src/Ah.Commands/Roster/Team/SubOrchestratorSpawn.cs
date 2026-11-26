@@ -24,9 +24,7 @@ internal static partial class SubOrchestratorSpawn
 
     /// <summary>Whether <paramref name="role"/> spawns as a lane lead. The deputy-chief is of the orchestrate class but works the top team, so it spawns as an ordinary member.</summary>
     internal static bool Is(RosterContext c, string? role) =>
-        role is not null and not DeputyChiefRole && c.Services.Config.RoleClass(role, c.Registry) == OrchestrateClass;
-
-    private const string DeputyChiefRole = "deputy-chief";
+        role is not null and not Ah.Config.ConfigModule.DeputyChiefRole && c.Services.Config.RoleClass(role, c.Registry) == OrchestrateClass;
 
     /// <summary>The name of the team the spawn goes into: its team file's name.</summary>
     private static string TeamName(RosterContext c, string dir) =>

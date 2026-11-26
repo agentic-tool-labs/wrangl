@@ -29,7 +29,7 @@ public sealed class RelayVoidTests
     /// <summary>The carrier's session <c>s1</c> with its box, and the box of <c>m1</c> where entry <c>e1</c> waits.</summary>
     private sealed class Rig
     {
-        internal Rig()
+        internal Rig(string? reference = null)
         {
             var sandbox = UnitSandbox.Create();
             var home = sandbox.Root + "/ah";
@@ -47,7 +47,7 @@ public sealed class RelayVoidTests
                 home + "/registrations/s1.json",
                 "{\"session_id\":\"s1\",\"address\":\"orchestrator@tm\",\"addresses\":[\"orchestrator@tm\"],\"boxes\":{\"orchestrator@tm\":\"" + Carrier + "\"},\"pid\":"
                 + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"pid_start\":\"" + Fx.OwnStart + "\",\"bound\":true}");
-            File.AppendAllText(Member + "/entries.jsonl", "{\"id\":\"e1\",\"kind\":\"note\",\"from\":\"orchestrator@tm\",\"created\":\"2026-10-12T00:00:00.000Z\",\"text\":\"hi\",\"route\":\"pull\"}\n");
+            File.AppendAllText(Member + "/entries.jsonl", "{\"id\":\"e1\",\"kind\":\"note\",\"from\":\"orchestrator@tm\",\"created\":\"2026-10-12T00:00:00.000Z\",\"text\":\"hi\",\"route\":\"pull\"" + (reference is null ? string.Empty : ",\"ref\":\"" + reference + "\"") + "}\n");
             var relay = new JsonObject { ["entry"] = "e1", ["address"] = "m1@tm", ["dir"] = Member, ["to"] = "m1@tm", ["line"] = Line };
             var evt = new JsonObject
             {
@@ -99,6 +99,55 @@ public sealed class RelayVoidTests
 
         internal JsonObject? Record() =>
             Fx.Hierarchy.Core.ReadPeerRecords().Select(static r => r.AsObject()).LastOrDefault(r => r.Get("task") is { IsText: true } t && t.AsString() == "relay:e1");
+    }
+
+    /// <summary>
+    /// Entry <paramref name="id"/> in m1's box with request ref <paramref name="reference"/>, acked when <paramref name="acked"/>. The defaults
+    /// match e1's kind and sender and are 10 s newer than it.
+    /// </summary>
+    private static void Sibling(Rig rig, string id, string reference, bool acked, string kind = "note", string from = "orchestrator@tm", string created = "2026-10-12T00:00:10.000Z")
+    {
+        File.AppendAllText(rig.Member + "/entries.jsonl", "{\"id\":\"" + id + "\",\"kind\":\"" + kind + "\",\"from\":\"" + from + "\",\"created\":\"" + created + "\",\"ref\":\"" + reference + "\",\"route\":\"pull\"}\n");
+        if (acked)
+        {
+            _ = rig.Fx.Mailbox.AckIds(rig.Member, [id], "prompt-hook");
+        }
+    }
+
+    /// <summary>ah2-483 A2: once another entry for the same request and member was delivered, no relay reminder is raised.</summary>
+    [Fact]
+    public async Task AnotherEntryForTheSameRequestDeliveredVoidsTheReminder()
+    {
+        var rig = new Rig("/m/r1--request.md");
+        Sibling(rig, "e2", "/m/r1--request.md", acked: true);
+
+        var prompt = (await rig.Due())["prompt"].AsString();
+        _ = rig.Fx.Hooks.AckFromPrompt("s1", prompt);
+
+        Assert.Equal("none", Owe(prompt));
+        Assert.Contains("ah: relay of e1 no longer needed: entry e2 for the same request was delivered to m1@tm", prompt, StringComparison.Ordinal);
+        Assert.Equal("resolved", rig.Record()!["status"].AsString());
+        Assert.Equal("sibling e2", rig.Record()!["void"].AsString());
+    }
+
+    /// <summary>
+    /// Negatives (R5): a delivered entry for another request, an undelivered one for the same request, a delivered one of another kind
+    /// or sender, and an OLDER delivered one of the same kind and sender all leave the relay owed.
+    /// </summary>
+    [Theory]
+    [InlineData("/m/r2--request.md", true, "note", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
+    [InlineData("/m/r1--request.md", false, "note", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
+    [InlineData("/m/r1--request.md", true, "brief", "orchestrator@tm", "2026-10-12T00:00:10.000Z")]
+    [InlineData("/m/r1--request.md", true, "note", "other@tm", "2026-10-12T00:00:10.000Z")]
+    [InlineData("/m/r1--request.md", true, "note", "orchestrator@tm", "2026-10-11T23:59:50.000Z")]
+    public async Task ASiblingThatIsNotADeliveredEntryOfTheSameRequestLeavesTheRelayOwed(string reference, bool acked, string kind, string from, string created)
+    {
+        var rig = new Rig("/m/r1--request.md");
+        Sibling(rig, "e2", reference, acked, kind, from, created);
+
+        var prompt = (await rig.Due())["prompt"].AsString();
+
+        Assert.Equal("owe", Owe(prompt));
     }
 
     private static string Owe(string prompt) => prompt.Contains("You owe one SendMessage", StringComparison.Ordinal) ? "owe" : "none";

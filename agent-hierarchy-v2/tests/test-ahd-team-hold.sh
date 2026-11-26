@@ -239,7 +239,8 @@ check "(F4) the bound-registration wait does not accept an unbound registration"
 END=$((SECONDS + 30)); until bound_doc "$(ah_session_doc orch)" || [ "$SECONDS" -ge "$END" ]; do sleep 0.2; done
 bound_doc "$(ah_session_doc orch)" || echo "note: the 30 s wait for the quit's bound registration of orch ran out; the stop proves without it"
 ah_forget_sessions orch
-ah_run roster stop --now --team tm2 --confirm --grace 0 --cwd "$PROJ"
+# the stop's proof is seeded bound, so a bound registration the quit writes after the forget cannot refuse it
+AH_TEST_PROVE_BOUND=1 ah_run roster stop --now --team tm2 --confirm --grace 0 --cwd "$PROJ"
 wait "$QPID"
 OUT="stop: rc=$RC $OUT $(head -c 600 "$T/err") :: quit: rc=$(cat "$T/q.rc") $(cat "$T/q.out") :: hold: $(hold_of tm2)"
 check "(F4) a stop that lands during the wind-down is not overwritten by the quit's seal" 'hold_of tm2 | grep -q "\"kind\": \"stop\"" &&[ "$(cat "$T/q.rc")" != 0 ] && grep -q team_stopped "$T/q.out"'
