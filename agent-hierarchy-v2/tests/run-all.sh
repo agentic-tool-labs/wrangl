@@ -8,6 +8,7 @@
 #   -t SECONDS  per-test timeout (default 300)
 #   --limit NAME  print the seconds a worker gives test NAME (the -t default, or AH_RUN_ALL_TMO, raised to its LONG_TESTS
 #               floor) and exit; tests/run-set.sh reads it for an isolated rerun
+#   --runnable NAME  exit 0 when a run would run NAME (test-*, present, not pruned), else 1; tests/run-set.sh's list set asks it
 #   -k          keep the run directory (logs and sandboxes) even when everything passed
 #   -o FILE     write the result set there, one "<name> ok|FAIL|TIMEOUT" line per test, sorted by name; two runs
 #               of the same tree agree exactly when their files are identical
@@ -129,6 +130,19 @@ serial_names() { printf '%s\n' "$SERIAL_LANE" | sed -e 's/#.*//' | awk 'NF {prin
 if [ "${1:-}" = "--serial-lane" ]; then serial_names; exit 0; fi
 if [ "${1:-}" = "--long-tests" ]; then printf '%s\n' "$LONG_TESTS" | sed -e 's/#.*//' | awk 'NF { print $1, $2 }'; exit 0; fi
 if [ "${1:-}" = "--limit" ]; then AH_RUN_ALL_TMO=$TMO suite_limit "${2:-}"; exit 0; fi  # a run with no -t, as a rerun is
+# Pruned 2026-11-14 (handoff/test-prune.md): suites that are skipped, kept on disk for later removal.
+is_pruned() {
+  case "$(basename "$1" .sh)" in
+    test-skill-content-defects|test-skill-disband-search|test-lib-wait|test-run-set-list|test-path-independence|test-review-scenario|test-codex-appserver-spawn-kill|test-lib-hermetic-exit) return 0;;
+  esac
+  return 1
+}
+# --runnable NAME: exit 0 when a run would run NAME as a suite (a tests/test-*.sh that is not pruned), 1 otherwise; run-set's list set asks it
+if [ "${1:-}" = "--runnable" ]; then
+  case "${2:-}" in test-*) ;; *) exit 1;; esac
+  case "$2" in */*) exit 1;; esac
+  [ -f "$TESTS/$2.sh" ] && ! is_pruned "$2"; exit
+fi
 
 # Worker mode: run one test and write its result. Called through xargs as: run-all.sh --one <run> <idx> <test file>
 if [ "${1:-}" = "--one" ]; then
@@ -240,14 +254,6 @@ if [ "${AH_TEST_SLOT_HELD:-}" = 1 ]; then
     *) if [ "$J" -gt "$AH_TEST_TOKENS_GRANTED" ]; then echo "run-all: -j $J capped to $AH_TEST_TOKENS_GRANTED (the test tokens granted)" >&2; J=$AH_TEST_TOKENS_GRANTED; fi ;;
   esac
 fi
-# Pruned 2026-11-14 (handoff/test-prune.md): suites that are skipped, kept on disk for later removal.
-is_pruned() {
-  case "$(basename "$1" .sh)" in
-    test-skill-content-defects|test-skill-disband-search|test-lib-wait|test-run-set-list|test-path-independence|test-review-scenario|test-codex-appserver-spawn-kill|test-lib-hermetic-exit) return 0;;
-  esac
-  return 1
-}
-
 case "$IMPL" in native) export AH_IMPL=native;; *) echo "run-all: --impl needs native (node and manifest no longer exist)" >&2; exit 2;; esac
 case "$LANE" in fast|full|all) ;; *) echo "run-all: --lane needs fast, full or all" >&2; exit 2;; esac
 if [ "$IMPL" = native ]; then

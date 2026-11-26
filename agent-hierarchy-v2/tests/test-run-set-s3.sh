@@ -241,5 +241,28 @@ change native/src/Ah.Fake/F.cs
 rs "$SHA" affected --base "$AFFB"
 check "a selector that asks for full gets full, even with exit 0" 'echo "$OUT" | grep -q "affected becomes full: the selector asks for full native/src/Ah.Fake/x.props" && [ -f "$AH_RESULTS_DIR/$SHA/full/result.json" ]'
 
+# ---- the list set: only the named suites, stored per list
+NEXT=$((NEXT + 1)); ST="$SB/st-list"; stubs "$ST" yes
+for t in test-s1 test-s2 test-s3; do : > "$REPO/${PFX}tests/$t.sh"; done
+GIT add -A >/dev/null; GIT commit -q -m "list $NEXT"; SHA="$(GIT rev-parse HEAD)"
+lkeys() { ls -d "$AH_RESULTS_DIR/$SHA"/list-* 2>/dev/null | wc -l | tr -d ' '; }
+rs "$SHA" list --tests test-s1,tests/test-s2.sh
+LK="$(basename "$(ls -d "$AH_RESULTS_DIR/$SHA"/list-* 2>/dev/null | head -1)")"
+check "list: two names run those two only, one result under list-<hash>, no shell or full key" '[ $RC = 0 ] && [ "$(calls shell.calls)" = 1 ] && [ "$(lkeys)" = 1 ] && [ "$(rjson "$LK" suites)" = "[\"test-s1\",\"test-s2\"]" ] && [ ! -e "$AH_RESULTS_DIR/$SHA/shell" ] && [ ! -e "$AH_RESULTS_DIR/$SHA/full" ]'
+rs "$SHA" list --tests test-s2,test-s1
+check "...the same list in another order is reused" '[ $RC = 0 ] && echo "$OUT" | grep -q "cached=yes" && [ "$(calls shell.calls)" = 1 ] && [ "$(lkeys)" = 1 ]'
+rs "$SHA" list --tests test-s1
+check "...a different list is not reused (nearest non-match)" '[ $RC = 0 ] && [ "$(calls shell.calls)" = 2 ] && [ "$(lkeys)" = 2 ]'
+rs "$SHA" shell
+check "...a list result never answers shell" '[ $RC = 0 ] && echo "$OUT" | grep -q "cached=no" && [ "$(calls shell.calls)" = 3 ]'
+rs "$SHA" list --tests test-s1,test-nope
+check "list: an unknown name is a usage error naming it, before anything runs" '[ $RC = 2 ] && echo "$OUT" | grep -q "test-nope" && [ "$(calls shell.calls)" = 3 ] && [ "$(lkeys)" = 2 ]'
+echo test-s3 > "$ST/shell.pruned"; rs "$SHA" list --tests test-s3; rm -f "$ST/shell.pruned"
+check "list: a name run-all would not run (pruned) is refused before the run, naming it" '[ $RC = 3 ] && echo "$OUT" | grep -q "unknown suite .test-s3." && [ "$(calls shell.calls)" = 3 ] && [ "$(lkeys)" = 2 ]'
+rs "$SHA" list --tests ,
+check "list: an empty list is a usage error" '[ $RC = 2 ] && [ "$(calls shell.calls)" = 3 ]'
+rs "$SHA" shell --tests test-s1
+check "--tests with another set is a usage error (nearest non-match)" '[ $RC = 2 ]'
+
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" = 0 ]

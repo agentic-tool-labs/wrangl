@@ -940,7 +940,8 @@ public sealed record SpawnShapes(
         }
 
         var slot = Config.RoleClass(role, context.Registry);
-        if ((context.Command is "spawn-one" or "spawn-ad-hoc") && slot is "review" or "design" && Messages.PipelineRunLive(context.Cwd))
+        var optedIn = slot == "design" && Config.DesignOptInHolds(role, e);
+        if ((context.Command is "spawn-one" or "spawn-ad-hoc") && slot is "review" or "design" && !optedIn && Messages.PipelineRunLive(context.Cwd))
         {
             var builtin = Config.ClassBuiltin(slot);
             var label = builtin is not null ? JsConvert.ToJsString(Config.RoleLabel(builtin, context.Registry)) : "undefined";

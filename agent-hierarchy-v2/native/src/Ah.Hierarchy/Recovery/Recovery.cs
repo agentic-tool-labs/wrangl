@@ -217,7 +217,7 @@ internal sealed partial class RecoveryLib(IFileReader files, IAhEnvironment envi
 
         try
         {
-            var root = files.RealPath(NodePath.Join(environment.HomeDirectory, ".claude", "projects"));
+            var root = files.RealPath(NodePath.Join(Ah.Core.CoreModule.ClaudeConfigDir(environment.GetVariable("CLAUDE_CONFIG_DIR"), environment.HomeDirectory), "projects"));
             var real = files.RealPath(path);
             return real.StartsWith(root + "/", StringComparison.Ordinal) ? real : null;
         }

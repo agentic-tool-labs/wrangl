@@ -45,6 +45,7 @@ naming these fields:
 | repo | yes | absolute path of a checkout that contains the SHA |
 | sha | yes | the full 40-hex commit |
 | set | yes | a set name that `tests/run-set.sh` knows; not needed when the repo has no `tests/run-set.sh` |
+| tests | with `list` | the shell suites the `list` set runs, comma-separated (`test-<name>`, with or without `tests/` and `.sh`); passed as `--tests` |
 | command | no | the test command to run when the repo has no `tests/run-set.sh`; ignored when it has one |
 | base | no | the commit the change started from, for triage; passed to run-set as `--base`. Absent: every failure is reported "range unknown" |
 | fresh | no | `true` re-runs a stored FAIL. A stored PASS or FLAKY-PASS is always reused |
@@ -53,7 +54,11 @@ A missing required field: stop and report it. Do not guess a SHA or a set.
 
 ## Running a set
 
-Run `tests/run-set.sh <repo> <sha> <set> [--fresh] [--base <base> [--fresh-base]]` from the `repo` checkout. Pass `--base <base>` whenever the request has a `base`.
+Run `tests/run-set.sh <repo> <sha> <set> [--fresh] [--base <base> [--fresh-base]] [--tests <names>]` from the `repo` checkout. Pass `--base <base>` whenever the request has a `base`.
+The `list` set is for a targeted retest of named shell suites: it runs only the suites `--tests` names, as the `shell` set
+would, and stores its result under `<sha>/list-<hash>/`, so it never stands for a `shell` or `full` result. An unknown
+name is a usage error before anything runs, and a pruned one is refused before the run. Run `list` with
+`tests/run-set.sh` directly; it is never queued with `ah qa submit`.
 Its exit code is 0 for PASS or FLAKY-PASS, 1 for FAIL or SYSTEMIC, 2 for a usage
 error, 75 for a slot or lock timeout, and 3 for any other ERROR. It writes
 `result.json` under `$HOME/.claude/ah2/qa-results/<sha>/<set>/` and prints its path.

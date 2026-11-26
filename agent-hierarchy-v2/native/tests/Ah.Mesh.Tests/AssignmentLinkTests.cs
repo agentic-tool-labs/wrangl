@@ -458,6 +458,23 @@ public sealed class AssignmentLinkTests
     }
 
     [Fact]
+    public void ASecondDispatchedTaskHandsOffOverItsOwnLinkAndAnEntryOnNoTaskIsStillRefused()
+    {
+        // ah2-530: d already holds an ahd-auto link to b on dd11; the Orchestrator then gives d dd21
+        var mesh = Briefed(Filed("20260101-000000-dd21", "d", "feat-d2"), Message("20260101-000000-dd22", "feat-d2", "20260101-000000-dd21"));
+        Assert.True(mesh.Send("d", "b@tm", kind: "note", refFile: "msgs/20260101-000000-dd12--reviewer--feat-d--request.md").Ok);
+        Assert.True(mesh.Send("orchestrator", "d@tm", kind: "brief", refFile: "msgs/20260101-000000-dd21--implementor--feat-d2--request.md").Ok);
+
+        var second = mesh.Send("d", "b@tm", kind: "note", refFile: "msgs/20260101-000000-dd22--reviewer--feat-d2--request.md");
+        // negative: an entry whose chain reaches no task of d is still off the link's task
+        var off = mesh.Send("d", "b@tm", kind: "note", refFile: "msgs/20260101-000000-dd13--reviewer--other--request.md");
+
+        Assert.True(second.Ok, second.Failure?.Message);
+        Assert.Equal(["20260101-000000-dd11", "20260101-000000-dd21"], mesh.Links().Where(l => Text(l, "granted_by") == "ahd-auto").Select(l => Text(l, "task")).Order());
+        Assert.Equal("link_off_task", off.Failure?.Code);
+    }
+
+    [Fact]
     public void NegativeAPairOutsideAutoGrantIsRefusedWithTheReason()
     {
         // b (reviewer, dispatched bb11) to c (architect): not a default auto_grant pair

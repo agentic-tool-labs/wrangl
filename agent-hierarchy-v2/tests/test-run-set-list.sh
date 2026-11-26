@@ -12,7 +12,7 @@ check() { local n=$1; shift; if eval "$@"; then PASS=$((PASS+1)); echo "PASS: $n
 
 OUT=$(bash "$RUNSET" --list-sets 2>/dev/null); RC=$?
 check "--list-sets exits 0" '[ "$RC" = 0 ]'
-check "--list-sets prints exactly dotnet shell full affected, one per line" '[ "$OUT" = "$(printf "dotnet\nshell\nfull\naffected")" ]'
+check "--list-sets prints exactly dotnet shell full affected list, one per line" '[ "$OUT" = "$(printf "dotnet\nshell\nfull\naffected\nlist")" ]'
 
 DECLARED=$(sed -n 's/^SETS="\(.*\)"$/\1/p' "$RUNSET" | tr ' ' '\n')
 OUT=$(bash "$RUNSET" --list-sets 2>/dev/null)

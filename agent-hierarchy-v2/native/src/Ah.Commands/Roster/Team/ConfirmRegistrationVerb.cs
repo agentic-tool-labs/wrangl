@@ -69,8 +69,8 @@ internal static class ConfirmRegistrationVerb
             c.Dir,
             $"member-unconfirmed:{c.ProgressTeam}:{member}:{paneId}",
             "member-unconfirmed",
-            $"{member} has not registered — {reason}. Run `ah roster checkin` in its pane {paneId}; a brief already sent to it is still queued.",
-            new JsonObject { ["member"] = member, ["team"] = c.ProgressTeam, ["pane"] = launched.Get("transport_id") ?? JsonValue.Null, ["reason"] = reason, ["command"] = "ah roster checkin" },
+            $"{member} has not registered — {reason}. SendMessage {member} (pane {paneId}) its brief pointer; its next hook registers it and queued mail follows.",
+            new JsonObject { ["member"] = member, ["team"] = c.ProgressTeam, ["pane"] = launched.Get("transport_id") ?? JsonValue.Null, ["reason"] = reason },
             [to]);
         return 0;
     }

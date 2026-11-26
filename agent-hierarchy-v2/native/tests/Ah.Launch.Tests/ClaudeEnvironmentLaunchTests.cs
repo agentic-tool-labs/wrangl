@@ -263,6 +263,56 @@ public sealed class ClaudeEnvironmentLaunchTests
     }
 
     [Fact]
+    public void ATuiPaneRunningANonClaudeProgramIsNotTypedInto()
+    {
+        var calls = TuiLaunch(Odd, [(FakeMux.ShellPid, ["-zsh"]), (4321, ["vim", "notes.txt"])], out var result);
+
+        Assert.Equal("pane-busy", result.Get("launch_result")?.Member("reason")?.AsString());
+        Assert.DoesNotContain(calls, c => c.StartsWith("herdr pane run", StringComparison.Ordinal) || c.Contains("agent start", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ATuiPaneWhoseProcessesCannotBeReadIsTypedIntoAsBefore()
+    {
+        var rig = Rig();
+        rig.Mux.Panes.Add("1-2");
+        rig.Mux.Rects["1-2"] = (100, 0, 100, 50);
+        rig.Mux.Override = request => request.Argv switch
+        {
+            ["herdr", "pane", "run", ..] => FakeMux.Out("{}"),
+            ["herdr", "pane", "process-info", ..] => FakeMux.Out("not json"),
+            _ => null,
+        };
+        var member = Shaped(rig, Odd, "herdr");
+        member["transport_id"] = "1-2";
+
+        _ = rig.Launcher.LaunchMemberCore(member, "herdr", rig.Context);
+
+        Assert.Contains(rig.Mux.Calls, c => c.StartsWith("herdr pane run 1-2 export CLAUDE_CONFIG_DIR", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ATuiPaneRunningAnAgentWithNoShellPidIsNotTypedInto()
+    {
+        var rig = Rig();
+        rig.Mux.Panes.Add("1-2");
+        rig.Mux.Rects["1-2"] = (100, 0, 100, 50);
+        rig.Mux.Override = request => request.Argv switch
+        {
+            ["herdr", "pane", "run", ..] => FakeMux.Out("{}"),
+            ["herdr", "pane", "process-info", ..] => FakeMux.Out("{\"result\":{\"process_info\":{\"pane_id\":\"1-2\",\"foreground_processes\":[{\"pid\":4321,\"argv\":[\"claude\"]}]}}}"),
+            _ => null,
+        };
+        var member = Shaped(rig, Odd, "herdr");
+        member["transport_id"] = "1-2";
+
+        var result = rig.Launcher.LaunchMemberCore(member, "herdr", rig.Context);
+
+        Assert.Equal("pane-busy", result.Get("launch_result")?.Member("reason")?.AsString());
+        Assert.DoesNotContain(rig.Mux.Calls, c => c.StartsWith("herdr pane run", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void TheCallersOwnPaneIsNeverTypedInto()
     {
         var rig = Rig();

@@ -506,7 +506,8 @@ internal sealed partial class MailCore(IClock clock) : IMailCore
             }
             else if (kindIs == "report" && hasRef)
             {
-                lines.Add(compact ? $"- report from {from}" : $"- report from {from}: {MsgPointer.ShowLine(Neutral(refValue))}");
+                var said = e.Member("verdict") is { IsTruthy: true } verdict ? $" ({Neutral(verdict)})" : string.Empty;
+                lines.Add(compact ? $"- report from {from}" : $"- report from {from}: {MsgPointer.ShowLine(Neutral(refValue))}{said}");
             }
             else if (kindIs == "event" && RelayNeededSentence(e) is { } relaySentence)
             {

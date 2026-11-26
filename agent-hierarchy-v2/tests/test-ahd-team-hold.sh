@@ -232,6 +232,12 @@ END=$((SECONDS + 30)); until hold_of tm2 | grep -q '"phase": "winding-down"' || 
 hold_of tm2 | grep -q '"phase": "winding-down"' || echo "note: the 30 s wait for the quit's winding-down hold ran out; the stop lands without it"
 # the quit, past its owner check, still holds session orch live, and the store registers a session to one live process: its
 # registration is dropped so the stop can prove the same Orchestrator session
+# The quit's member mail runs `ah msg send` as session orch, which re-registers orch bound to the quit's live pid; a bound registration
+# refuses the stop's unbound proof (exit 97). So wait (deadline 30 s) until that bound registration is written, then drop it.
+bound_doc() { node -e 'try{process.exit(JSON.parse(process.argv[1]).bound===true?0:1)}catch{process.exit(1)}' "$1"; }
+check "(F4) the bound-registration wait does not accept an unbound registration" '! bound_doc "{\"session_id\":\"orch\",\"bound\":false}"'
+END=$((SECONDS + 30)); until bound_doc "$(ah_session_doc orch)" || [ "$SECONDS" -ge "$END" ]; do sleep 0.2; done
+bound_doc "$(ah_session_doc orch)" || echo "note: the 30 s wait for the quit's bound registration of orch ran out; the stop proves without it"
 ah_forget_sessions orch
 ah_run roster stop --now --team tm2 --confirm --grace 0 --cwd "$PROJ"
 wait "$QPID"

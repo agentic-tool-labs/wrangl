@@ -54,8 +54,8 @@ public sealed partial class RosterTeamVerbTests
         var sent = mail.Sent.Where(s => s.Event == "member-unconfirmed").ToList();
         Assert.Single(sent.Select(s => s.Id).Distinct());
         Assert.Contains(pane, sent[0].Text, StringComparison.Ordinal);
-        Assert.Contains("`ah roster checkin`", sent[0].Text, StringComparison.Ordinal);
-        Assert.Contains("still queued", sent[0].Text, StringComparison.Ordinal);
+        Assert.Contains("its brief pointer; its next hook registers it and queued mail follows", sent[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("ah roster checkin", sent[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]

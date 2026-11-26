@@ -558,7 +558,7 @@ internal static partial class RosterKitVerb
         }
         else
         {
-            agentsDir = Path.Join(c.Services.Environment.HomeDirectory, ".claude", "agents");
+            agentsDir = Path.Join(LifecyclePermissions.ClaudeDir(c.Services.Environment), "agents");
         }
 
         var kitAgents = new Dictionary<string, string>(StringComparer.Ordinal);

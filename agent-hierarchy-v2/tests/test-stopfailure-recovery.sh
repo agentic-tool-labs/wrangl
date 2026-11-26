@@ -18,7 +18,8 @@ hermetic_on_exit 'ah_signal_child TERM "$OTHER"; rm -rf "$SB"'
 unset WRANGL_TEAM_FILE CLAUDE_PID CLAUDE_CODE_SESSION_ID WRANGL_HIERARCHY_DIR
 export HOME="$SB/home" CLAUDE_PID=$$
 PROJ="$SB/proj"; HD="$PROJ/.claude/ah2"
-mkdir -p "$HOME/.claude/projects/p" "$PROJ"
+CP="$(ah_claude_dir "$HOME")/projects"  # the transcript root the hook keeps paths under
+mkdir -p "$CP/p" "$PROJ"
 (cd "$PROJ" && git init -q)
 mkdir -p "$HD/activity"
 PASS=0; FAIL=0
@@ -92,17 +93,17 @@ check "...but the next failure still counts the resumes already emitted: streak 
 
 # a role session's own hooks: Stop clears, UserPromptSubmit and PostToolUse carry, the transcript path is kept
 reset
-node -e 'const [f, sid, role] = process.argv.slice(1); require("fs").writeFileSync(f, JSON.stringify({ version: 1, sessions: { [sid]: { role, at: new Date().toISOString() } } }) + "\n")' "$HOME/.claude/ah2/agent-hierarchy.session-roles.json" s8 architect
-printf '{}\n' > "$HOME/.claude/projects/p/s8.jsonl"
+ah_seed_home_doc home.session-roles "{\"version\":1,\"sessions\":{\"s8\":{\"role\":\"architect\",\"at\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\"}}}"
+printf '{}\n' > "$CP/p/s8.jsonl"
 sf s8 '"error":"overloaded"'
-act UserPromptSubmit s8 "\"transcript_path\":\"$HOME/.claude/projects/p/s8.jsonl\""
-check "activity hook: a prompt after a failure carries the streak and keeps the transcript path" '[ "$(rec s8 activity)" = working ] && [ "$(rec s8 streak)" = 1 ] && [ "$(rec s8 transcript_path)" = "$HOME/.claude/projects/p/s8.jsonl" ]'
+act UserPromptSubmit s8 "\"transcript_path\":\"$CP/p/s8.jsonl\""
+check "activity hook: a prompt after a failure carries the streak and keeps the transcript path" '[ "$(rec s8 activity)" = working ] && [ "$(rec s8 streak)" = 1 ] && [ "$(rec s8 transcript_path)" = "$CP/p/s8.jsonl" ]'
 act PostToolUse s8 '"tool_name":"Read"'
 check "activity hook: PostToolUse leaves the streak alone" '[ "$(rec s8 streak)" = 1 ]'
 act Stop s8
 check "activity hook: Stop clears the streak" '[ "$(rec s8 activity)" = idle ] && [ "$(rec s8 streak)" = "(absent)" ]'
 act UserPromptSubmit s8 '"transcript_path":"/etc/passwd"'
-check "activity hook: a transcript path outside ~/.claude/projects is not kept" '[ "$(rec s8 transcript_path)" = "$HOME/.claude/projects/p/s8.jsonl" ]'
+check "activity hook: a transcript path outside ~/.claude/projects is not kept" '[ "$(rec s8 transcript_path)" = "$CP/p/s8.jsonl" ]'
 
 # ---- one failure seen twice
 reset
@@ -138,9 +139,9 @@ act PostToolUse s11 '"tool_name":"Read"'
 check "a role-less session with no activity record stays unrecorded" '[ "$(rec s11 activity)" = "(none)" ]'
 preset
 sf s12 '"error":"overloaded"'
-printf '{}\n' > "$HOME/.claude/projects/p/s12.jsonl"
-act UserPromptSubmit s12 "\"transcript_path\":\"$HOME/.claude/projects/p/s12.jsonl\""
-check "role-less: the transcript path is kept from the prompt event" '[ "$(rec s12 transcript_path)" = "$HOME/.claude/projects/p/s12.jsonl" ]'
+printf '{}\n' > "$CP/p/s12.jsonl"
+act UserPromptSubmit s12 "\"transcript_path\":\"$CP/p/s12.jsonl\""
+check "role-less: the transcript path is kept from the prompt event" '[ "$(rec s12 transcript_path)" = "$CP/p/s12.jsonl" ]'
 sf subx '"error":"overloaded"'
 OUT=$(printf '{"hook_event_name":"UserPromptSubmit","session_id":"subx","agent_id":"a1","agent_type":"x","cwd":"%s"}' "$PROJ" | sh "$PLUGIN/bin/ah-hook" activity 2>&1)
 check "a subagent's event does not move its parent's failed record" '[ "$(rec subx activity)" = failed ]'
