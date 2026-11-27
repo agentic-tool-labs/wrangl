@@ -197,10 +197,9 @@ internal static partial class RosterKitVerb
             throw new RosterFailure("kit import: run it with --dry-run first, then commit with --pin <the pin the dry run printed>; nothing was written");
         }
 
-        // K3: a commit is refused where a trust commit is, and by the owner guard, before anything is read or written.
+        // K3: a commit is refused by the owner guard, before anything is read or written.
         if (!dry)
         {
-            RoleVerbs.RefuseTrustCommitHere(c, "kit import");
             OwnerGuard.RefuseAgentRoleWrite(c, "import", "kit");
         }
 
@@ -632,7 +631,7 @@ internal static partial class RosterKitVerb
 
                 // ah2-698 D8: a kit's pin and slots on a pack row are read and ignored.
                 var from = $"{T(parsedFrom.Member("plugin"))}@{T(parsedFrom.Member("marketplace"))}:{T(parsedFrom.Member("role"))}";
-                var state = config.PackRoleStateJson(JsonValue.FromString(from), null);
+                var state = config.PackRoleStateJson(JsonValue.FromString(from));
                 var stateText = T(state.Get("status"));
                 var shown = stateText switch
                 {
@@ -993,7 +992,7 @@ internal static partial class RosterKitVerb
 
         if (packSections.Count > 0)
         {
-            lines.Add("pack roles (never adopted by an import):");
+            lines.Add("pack roles (an import writes no row for them; a roster's packs supply them):");
             lines.AddRange(packSections);
         }
 

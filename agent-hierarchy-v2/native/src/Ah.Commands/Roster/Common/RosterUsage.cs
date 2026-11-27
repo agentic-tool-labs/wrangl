@@ -14,7 +14,8 @@ polling, actually spawning sessions) is the SKILL.md's job; this CLI does
 validation and reads/writes only, so validation lives in one place.
 
   ah roster show   [global|repo|repo-user] [--level L] [--roster <r>] [--cwd <path>]
-  ah roster init    [level] [--level L] --route <peer|subagent> [--roster <r>] [--cwd <path>]
+  ah roster init    [level] [--level L] --route <peer|subagent> [--roster <r>]
+                      [--pack <plugin>@<marketplace>]… [--cwd <path>]
   ah roster add     [level] [--level L] [--roster <r>] --role <R> [--model M] [--effort E]
                       [--route peer|subagent|pane] [--kind K] [--args '<json>'] [--auto-mode A]
                       [--on-missing auto|prompt|never] [--cwd <path>]
@@ -29,6 +30,8 @@ validation and reads/writes only, so validation lives in one place.
   ah roster roster delete <name> [--level L] [--dry-run] [--cwd <path>]
   ah roster roster use <name>|default [--level L] [--cwd <path>]
   ah roster roster use --clear [--level L] [--cwd <path>]
+  ah roster roster pack <name>|default (--add <plugin>@<marketplace> | --remove <plugin>@<marketplace>)…
+                      [--level L] [--dry-run] [--cwd <path>]
                       Named rosters are `rosters.<name>` blocks. show/init/add/edit/remove and
                       create use --roster <r>, else WRANGL_ROSTER, else the most specific
                       activeRoster, else the default `roster` block; `default` names that block.
@@ -247,12 +250,6 @@ validation and reads/writes only, so validation lives in one place.
                       [--dispatch peer|model] [--shell self-care] [--params a,b] [--level L] [--scaffold repo|user]
                       [--dry-run] [--cwd <path>]
                       Defines or changes a role; --params names the params it declares ("" clears them).
-  ah roster role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D]
-                      [--routes R] [--model M] [--dispatch D] [--level L] (--dry-run | --pin sha256:…)
-                      Adopts one role from an installed role pack (a plugin carrying ah-roles.json).
-                      The dry run shows what is trusted and prints the pin; the commit needs that pin.
-  ah roster role trust <name> [--level L] (--dry-run | --pin sha256:…) [--cwd <path>]
-                      Shows what changed in an adopted role's pack since it was trusted, and re-pins it.
   ah roster pack list [--json] [--cwd <path>]
   ah roster pack show <plugin>[@<marketplace>] | --path <dir> [--json] [--cwd <path>]
                       Read-only: installed role packs; one pack's roles, findings, what else the

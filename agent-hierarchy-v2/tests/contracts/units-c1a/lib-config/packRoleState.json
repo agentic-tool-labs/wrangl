@@ -160,220 +160,6 @@
       }
     },
     {
-      "id": "ok-pin-with-stored-copy",
-      "args": [
-        "demo@mkt:qc",
-        "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
-      ],
-      "files": {
-        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
-        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
-        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}",
-        "home/.claude/agent-hierarchy/trusted/927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0.json": "{\"row\":{\"class\":\"review\",\"description\":\"Checks things\",\"label\":\"QC\",\"model\":\"sonnet\",\"routes\":\"qc work\"},\"agentText\":\"---\\nname: qc\\ndescription: Checks things\\ntools: Read, Grep\\n---\\nYou are QC.\\n\",\"files\":[[\".claude-plugin/plugin.json\",\"68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af\"],[\"agents/qc.md\",\"d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da\"],[\"ah-roles.json\",\"9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa\"]]}\n"
-      },
-      "expect": {
-        "record": {
-          "key": "demo@mkt",
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "installPath": "$ROOT/plug/demo",
-          "version": "1.0.0",
-          "scope": "user"
-        },
-        "status": "ok",
-        "message": null,
-        "subcode": null,
-        "manifestRole": {
-          "raw": {
-            "class": "review",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "agent": "qc",
-          "row": {
-            "class": "review",
-            "agent": "demo:qc",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "error": null,
-          "warnings": []
-        },
-        "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": [
-          [
-            ".claude-plugin/plugin.json",
-            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
-          ],
-          [
-            "agents/qc.md",
-            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
-          ],
-          [
-            "ah-roles.json",
-            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
-          ]
-        ],
-        "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0",
-        "from": {
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "role": "qc"
-        },
-        "records": [
-          "demo@mkt ($ROOT/plug/demo)"
-        ]
-      }
-    },
-    {
-      "id": "pin-without-stored-copy",
-      "args": [
-        "demo@mkt:qc",
-        "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0"
-      ],
-      "files": {
-        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
-        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
-        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
-      },
-      "expect": {
-        "record": {
-          "key": "demo@mkt",
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "installPath": "$ROOT/plug/demo",
-          "version": "1.0.0",
-          "scope": "user"
-        },
-        "status": "pack-untrusted-here",
-        "message": "this machine holds no stored copy of what sha256:927e4c1f6dee… pinned, so nobody here has trusted it",
-        "subcode": null,
-        "manifestRole": {
-          "raw": {
-            "class": "review",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "agent": "qc",
-          "row": {
-            "class": "review",
-            "agent": "demo:qc",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "error": null,
-          "warnings": []
-        },
-        "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": [
-          [
-            ".claude-plugin/plugin.json",
-            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
-          ],
-          [
-            "agents/qc.md",
-            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
-          ],
-          [
-            "ah-roles.json",
-            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
-          ]
-        ],
-        "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0",
-        "from": {
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "role": "qc"
-        },
-        "records": [
-          "demo@mkt ($ROOT/plug/demo)"
-        ]
-      }
-    },
-    {
-      "id": "pin-mismatch",
-      "args": [
-        "demo@mkt:qc",
-        "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-      ],
-      "files": {
-        "home/.claude/plugins/installed_plugins.json": "{\"version\":2,\"plugins\":{\"demo@mkt\":[{\"scope\":\"user\",\"installPath\":\"$ROOT/plug/demo\",\"version\":\"1.0.0\"}]}}",
-        "plug/demo/ah-roles.json": "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}",
-        "plug/demo/agents/qc.md": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "plug/demo/.claude-plugin/plugin.json": "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
-      },
-      "expect": {
-        "record": {
-          "key": "demo@mkt",
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "installPath": "$ROOT/plug/demo",
-          "version": "1.0.0",
-          "scope": "user"
-        },
-        "status": "pack-changed",
-        "message": "demo changed since this role was trusted (pinned sha256:cccccccccccc…, now sha256:927e4c1f6dee…)",
-        "subcode": null,
-        "manifestRole": {
-          "raw": {
-            "class": "review",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "agent": "qc",
-          "row": {
-            "class": "review",
-            "agent": "demo:qc",
-            "label": "QC",
-            "description": "Checks things",
-            "routes": "qc work",
-            "model": "sonnet"
-          },
-          "error": null,
-          "warnings": []
-        },
-        "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
-        "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": [
-          [
-            ".claude-plugin/plugin.json",
-            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
-          ],
-          [
-            "agents/qc.md",
-            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
-          ],
-          [
-            "ah-roles.json",
-            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
-          ]
-        ],
-        "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0",
-        "from": {
-          "plugin": "demo",
-          "marketplace": "mkt",
-          "role": "qc"
-        },
-        "records": [
-          "demo@mkt ($ROOT/plug/demo)"
-        ]
-      }
-    },
-    {
       "id": "role-not-offered",
       "args": [
         "demo@mkt:nope",
@@ -657,8 +443,8 @@
           "version": "1.0.0",
           "scope": "user"
         },
-        "status": "pack-invalid",
-        "message": "$ROOT/plug/demo/agents/qc.md is not valid UTF-8",
+        "status": "ok",
+        "message": null,
         "subcode": null,
         "manifestRole": {
           "raw": {
@@ -682,8 +468,24 @@
         },
         "agentText": null,
         "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": null,
-        "pin": null,
+        "files": [
+          [
+            ".claude-plugin/plugin.json",
+            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
+          ],
+          [
+            "agents/qc.md",
+            "8ca9f8c269c0a4b1d8bf0efc67d97df8ad5e0ea93630fd9099860d36c0fe75ea"
+          ],
+          [
+            "ah-roles.json",
+            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
+          ]
+        ],
+        "pin": "sha256:d20af89fcf3f69461f540e7e38e6c41e6d6714613e420459c2d743c8e4a18fed",
+        "warnings": [
+          "$ROOT/plug/demo/agents/qc.md is not valid UTF-8"
+        ],
         "from": {
           "plugin": "demo",
           "marketplace": "mkt",
@@ -715,9 +517,9 @@
           "version": "1.0.0",
           "scope": "user"
         },
-        "status": "pack-invalid",
-        "message": "$ROOT/plug/demo/agents/qc.md holds a hidden character (U+200B at line 3, column 17)",
-        "subcode": "pack-hidden-chars",
+        "status": "ok",
+        "message": null,
+        "subcode": null,
         "manifestRole": {
           "raw": {
             "class": "review",
@@ -738,10 +540,26 @@
           "error": null,
           "warnings": []
         },
-        "agentText": null,
+        "agentText": "---\nname: qc\ndescription: Che​cks things\ntools: Read, Grep\n---\nYou are QC.\n",
         "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": null,
-        "pin": null,
+        "files": [
+          [
+            ".claude-plugin/plugin.json",
+            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
+          ],
+          [
+            "agents/qc.md",
+            "55f9f4c0424fefb52a6af1a4fbdb6ca1e4825eaa5a7d2de35be716f0876e55f2"
+          ],
+          [
+            "ah-roles.json",
+            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
+          ]
+        ],
+        "pin": "sha256:7d37ccb84a351bbed5e06b2fdd629ecc9a101885fc163cf8c0b5e8676417e38d",
+        "warnings": [
+          "$ROOT/plug/demo/agents/qc.md holds a hidden character (U+200B at line 3, column 17)"
+        ],
         "from": {
           "plugin": "demo",
           "marketplace": "mkt",
@@ -774,8 +592,8 @@
           "version": "1.0.0",
           "scope": "user"
         },
-        "status": "pack-invalid",
-        "message": "agents/other.md also takes the agent name qc, so Claude Code might launch it as demo:qc instead of agents/qc.md",
+        "status": "ok",
+        "message": null,
         "subcode": null,
         "manifestRole": {
           "raw": {
@@ -799,8 +617,28 @@
         },
         "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
         "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": null,
-        "pin": null,
+        "files": [
+          [
+            ".claude-plugin/plugin.json",
+            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
+          ],
+          [
+            "agents/other.md",
+            "b1433824166e45459f2d1848751c9249d4d5b7035ec6f13ff00292b6e3f6b37c"
+          ],
+          [
+            "agents/qc.md",
+            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
+          ],
+          [
+            "ah-roles.json",
+            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
+          ]
+        ],
+        "pin": "sha256:0a3535903e7a6064d64a90f8398f5d7410285ca1563d1fefdf5f7ead693e2f4b",
+        "warnings": [
+          "agents/other.md also takes the agent name qc, so Claude Code might launch it as demo:qc instead of agents/qc.md"
+        ],
         "from": {
           "plugin": "demo",
           "marketplace": "mkt",
@@ -832,8 +670,8 @@
           "version": "1.0.0",
           "scope": "user"
         },
-        "status": "pack-invalid",
-        "message": "demo@mkt: plugin.json's agents must be a path or a list of paths",
+        "status": "ok",
+        "message": null,
         "subcode": null,
         "manifestRole": {
           "raw": {
@@ -857,8 +695,24 @@
         },
         "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
         "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": null,
-        "pin": null,
+        "files": [
+          [
+            ".claude-plugin/plugin.json",
+            "576d8b7204689e230b3ec7760e76bcc0e7af7f490e89ba6f38a790ed04859108"
+          ],
+          [
+            "agents/qc.md",
+            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
+          ],
+          [
+            "ah-roles.json",
+            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
+          ]
+        ],
+        "pin": "sha256:83b4835412a9687c7644fc0bd54e1f7b845f9763012c8707a338260817222ba4",
+        "warnings": [
+          "demo@mkt: plugin.json's agents must be a path or a list of paths"
+        ],
         "from": {
           "plugin": "demo",
           "marketplace": "mkt",
@@ -893,8 +747,8 @@
           "version": "1.0.0",
           "scope": "user"
         },
-        "status": "pack-symlink",
-        "message": "$ROOT/plug/demo holds a symbolic link, lnk, and what it points at isn't pinned",
+        "status": "ok",
+        "message": null,
         "subcode": null,
         "manifestRole": {
           "raw": {
@@ -918,8 +772,21 @@
         },
         "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
         "agentPath": "$ROOT/plug/demo/agents/qc.md",
-        "files": null,
-        "pin": null,
+        "files": [
+          [
+            ".claude-plugin/plugin.json",
+            "68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af"
+          ],
+          [
+            "agents/qc.md",
+            "d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da"
+          ],
+          [
+            "ah-roles.json",
+            "9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa"
+          ]
+        ],
+        "pin": "sha256:927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0",
         "from": {
           "plugin": "demo",
           "marketplace": "mkt",

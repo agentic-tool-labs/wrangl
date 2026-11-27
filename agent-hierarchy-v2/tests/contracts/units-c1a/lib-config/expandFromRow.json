@@ -26,8 +26,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -100,8 +100,8 @@
           "dispatch": "peer"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -133,8 +133,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -166,8 +166,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -200,8 +200,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -234,8 +234,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -245,7 +245,7 @@
       }
     },
     {
-      "id": "not-installed-uses-stored-copy",
+      "id": "not-installed-reads-no-stored-copy",
       "args": [
         {
           "from": "demo@mkt:qc",
@@ -256,20 +256,7 @@
         "home/.claude/agent-hierarchy/trusted/927e4c1f6dee7f589bb91a4c77f46c8ded0a81330306e24e42982e42bb9346a0.json": "{\"row\":{\"class\":\"review\",\"description\":\"Checks things\",\"label\":\"QC\",\"model\":\"sonnet\",\"routes\":\"qc work\"},\"agentText\":\"---\\nname: qc\\ndescription: Checks things\\ntools: Read, Grep\\n---\\nYou are QC.\\n\",\"files\":[[\".claude-plugin/plugin.json\",\"68fa83dd5799ee4c5690bbef16b4204c16944a04a99d3f926f891fcfe08835af\"],[\"agents/qc.md\",\"d820e61ae1db42dd833aefff92ab07aca428b3ee18a6668d9bd23a0a7c8f91da\"],[\"ah-roles.json\",\"9c0be97dc38f13e95571e1fa19963df76552ec31d6114e1c99f17aa0902273fa\"]]}\n"
       },
       "expect": {
-        "raw": {
-          "class": "review",
-          "label": "QC",
-          "description": "Checks things",
-          "routes": "qc work",
-          "model": "sonnet",
-          "agent": "demo:qc"
-        },
-        "pack": {
-          "status": "pack-missing",
-          "message": "plugin demo is not installed",
-          "subcode": null,
-          "from": "demo@mkt:qc"
-        }
+        "error": "pack-missing: plugin demo is not installed"
       }
     },
     {
@@ -285,7 +272,7 @@
       }
     },
     {
-      "id": "pin-changed-installed-still-expands",
+      "id": "pin-matching-nothing-without-a-stored-copy-is-ok",
       "args": [
         {
           "from": "demo@mkt:qc",
@@ -308,8 +295,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned sha256:dddddddddddd…, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -342,8 +329,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -386,8 +373,8 @@
           "model": "sonnet"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:f07d1dbd1be8…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",
@@ -437,8 +424,8 @@
           "agent": "demo:qc"
         },
         "pack": {
-          "status": "pack-changed",
-          "message": "demo changed since this role was trusted (pinned …, now sha256:927e4c1f6dee…)",
+          "status": "ok",
+          "message": null,
           "subcode": null,
           "from": "demo@mkt:qc",
           "agentText": "---\nname: qc\ndescription: Checks things\ntools: Read, Grep\n---\nYou are QC.\n",

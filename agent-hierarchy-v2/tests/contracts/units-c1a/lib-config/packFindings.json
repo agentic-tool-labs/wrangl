@@ -15,58 +15,55 @@
       "expect": []
     },
     {
-      "id": "changed",
+      "id": "missing-via-roster",
       "args": [
         "r",
         {
-          "status": "pack-changed",
+          "status": "pack-missing",
           "from": "p@m:r",
-          "message": "changed",
-          "agentPath": "/x/a.md"
+          "message": "gone",
+          "via": "roster:gf"
         },
         null
       ],
       "expect": [
         {
           "level": "error",
-          "code": "pack-changed",
-          "path": "/x/a.md",
+          "code": "pack-missing",
+          "path": null,
           "field": null,
-          "message": "r (from p@m:r): changed",
+          "message": "r (from p@m:r): gone",
           "fix": [
             {
-              "kind": "trust",
-              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
+              "kind": "remove",
+              "detail": "remove it from roster gf's packs, or reinstall the pack"
             }
           ]
         }
       ]
     },
     {
-      "id": "untrusted",
+      "id": "ok-with-warnings",
       "args": [
         "r",
         {
-          "status": "pack-untrusted-here",
+          "status": "ok",
           "from": "p@m:r",
-          "message": "no copy",
-          "subcode": "no-stored-copy"
+          "agentPath": "/x/a.md",
+          "warnings": [
+            "/x/a.md holds a hidden character (U+200B at line 1, column 2)"
+          ]
         },
         null
       ],
       "expect": [
         {
-          "level": "error",
-          "code": "pack-untrusted-here",
-          "path": null,
+          "level": "warn",
+          "code": "pack-warning",
+          "path": "/x/a.md",
           "field": null,
-          "message": "r (from p@m:r): no copy [no-stored-copy]",
-          "fix": [
-            {
-              "kind": "trust",
-              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
-            }
-          ]
+          "message": "r (from p@m:r): /x/a.md holds a hidden character (U+200B at line 1, column 2)",
+          "fix": []
         }
       ]
     },
@@ -182,35 +179,6 @@
           "field": null,
           "message": "m",
           "fix": []
-        }
-      ]
-    },
-    {
-      "id": "changed-with-text",
-      "args": [
-        "r",
-        {
-          "status": "pack-changed",
-          "from": "p@m:r",
-          "message": "changed",
-          "agentText": "---\nname: a\ntools: Read\n---\nbody\n",
-          "agentPath": "/x"
-        },
-        null
-      ],
-      "expect": [
-        {
-          "level": "error",
-          "code": "pack-changed",
-          "path": "/x",
-          "field": null,
-          "message": "r (from p@m:r): changed",
-          "fix": [
-            {
-              "kind": "trust",
-              "detail": "review it with `roster.mjs role trust r --dry-run`, then commit with the pin it prints"
-            }
-          ]
         }
       ]
     }

@@ -849,6 +849,8 @@ arriving as one word from an unquoted zsh variable, is split the way a shell wou
 <ah> roster show [global|repo|repo-user] [--level <L>] [--roster <r>]
 ```
 
+The result carries `packs` when the roster block names role packs.
+
 Members are shown under the default team name; when a team could not use that name, a `team_name_note` says so.
 
 #### Show a team's record
@@ -894,8 +896,10 @@ Computes the status document ([status-file.md](status-file.md)), writes `<hier>/
 #### Init roster level
 
 ```
-<ah> roster init [level] [--level <L>] --route peer|pane [--roster <r>]
+<ah> roster init [level] [--level <L>] --route peer|pane [--roster <r>] [--pack <plugin>@<marketplace>]…
 ```
+
+Replaces the block at that level. `--pack` (repeatable, or a comma list) writes the block's `packs` in the order given; see [role packs](custom-roles.md#6-role-packs). A malformed value is exit 2. A pack not installed on this machine is written anyway, with a note on stderr.
 
 `--route subagent` exits 2: only legwork roles run as subagents, so route an individual legwork member instead.
 
@@ -927,7 +931,7 @@ Computes the status document ([status-file.md](status-file.md)), writes `<hier>/
 <ah> roster roster list [--json]
 ```
 
-Read-only. The `selection`, then the default block and every `rosters.<name>` key visible from cwd, each with the level and path that win (the first with members, else the most specific), the levels it is `shadowed` at, its member count and route, whether it is `selected`, and the `teams` whose file records it (this checkout's hierarchy dir and, from a worktree, the main checkout's).
+Read-only. The `selection`, then the default block and every `rosters.<name>` key visible from cwd, each with the level and path that win (the first with members, else the most specific), the levels it is `shadowed` at, its member count, route and `packs`, whether it is `selected`, and the `teams` whose file records it (this checkout's hierarchy dir and, from a worktree, the main checkout's).
 
 A legacy `rosters.default` block is listed with a `note`: it can't be selected or copied. Human text without `--json`.
 
@@ -937,7 +941,7 @@ A legacy `rosters.default` block is listed with a `note`: it can't be selected o
 <ah> roster roster copy <src> <dst> [--level <L>] [--dry-run]
 ```
 
-Copies `src` (`default` = the unnamed block) to `rosters.<dst>`, `route` and `members` as stored, at `--level` (default: the level `src` resolves at). Refuses an undefined `src`, a `dst` that is `default` or not a valid name, and a `dst` already defined at that level — in any file at that level, so from a worktree the main checkout's counts too; the refusal names that file.
+Copies `src` (`default` = the unnamed block) to `rosters.<dst>`, `route`, `members` and `packs` as stored, at `--level` (default: the level `src` resolves at). Refuses an undefined `src`, a `dst` that is `default` or not a valid name, and a `dst` already defined at that level — in any file at that level, so from a worktree the main checkout's counts too; the refusal names that file.
 
 This is how a roster is made from another; `init --roster` makes an empty one.
 
@@ -962,13 +966,21 @@ Writes (or removes) `activeRoster`, at `repo-user` by default inside a git repo,
 
 `--clear` deletes a file left with no keys. Prints the resulting `selection`.
 
+#### Change a roster's packs
+
+```
+<ah> roster roster pack <name>|default (--add <plugin>@<marketplace> | --remove <plugin>@<marketplace>)… [--level <L>] [--dry-run]
+```
+
+Edits the block's `packs` and nothing else, at `--level` (default: the most specific level that defines the block). `--add` and `--remove` may be repeated. Adding a listed pack changes nothing; removing an unlisted one prints a note. Neither is an error. Removing the last pack removes the key. A malformed value, or a roster no level defines, is exit 2. Prints `{level, path, roster, packs}`; `--dry-run` prints it and writes nothing.
+
 #### Export a roster kit
 
 ```
 <ah> roster kit export <roster> --out <path> [--level <L>] [--force]
 ```
 
-Packs `<roster>` into one JSON file: the roster block, the rows and agent file text of its custom roles, a reference for each pack role, and the row of any built-in role you overrode. Reads the effective config, or only `--level` when given. Writes only `<path>` and refuses an existing file without `--force`. Refuses a kit over 1 MiB. Prints the same listing as an import dry run. Param values, roster rules, pack agent text and per-team lane limits are not carried.
+Packs `<roster>` into one JSON file: the roster block, the rows and agent file text of its custom roles, a `from` reference for each old-style pack row (without `pin` and `slots`), and the row of any built-in role you overrode. Reads the effective config, or only `--level` when given. Writes only `<path>` and refuses an existing file without `--force`. Refuses a kit over 1 MiB. Prints the same listing as an import dry run. Param values, roster rules, pack agent text and per-team lane limits are not carried.
 
 #### Import a roster kit
 
@@ -977,9 +989,9 @@ Packs `<roster>` into one JSON file: the roster block, the rows and agent file t
 <ah> roster kit import <file> --pin sha256:<hash> [--level …] [--agents …] [--as <roster>]
 ```
 
-`--dry-run` writes nothing. It lists each write as `path · key · new|identical|conflict`, every agent file in full with its findings and flagged tools, every pack reference with its adopt command, the findings and conflicts, and the kit's `sha256` pin last. It exits 0 even when findings stand. Defaults: `--level global`, `--agents user` (`~/.claude/agents`; `repo` is `<repo>/.claude/agents`).
+`--dry-run` writes nothing. It lists each write as `path · key · new|identical|conflict`, every agent file in full with its findings and flagged tools, every pack reference with its install state, notes (a pack not installed here, with the install command; the `roster pack --add` command for a member role whose pack the block doesn't name), the findings and conflicts, and the kit's `sha256` pin last. It exits 0 even when findings stand. Defaults: `--level global`, `--agents user` (`~/.claude/agents`; `repo` is `<repo>/.claude/agents`).
 
-`--pin` commits. It is refused, with nothing written, when the pin differs from the file, when any finding or conflict stands, when a member names a pack role not adopted here, from a team member session, and while a pipeline run is live. Agent files are written first (never replacing one), then the level file once; if the level file cannot be written, the agent files this run created are removed. Rows are written as the kit gives them. An import never writes a permission rule, hook, setting, param value, `activeRoster`, pack adoption or team file, and runs nothing. An agent file with no `tools:` list is not refused but flagged: the dry run lists it under `flags (<n>)` above the writes as `role <r> agent <a>: inherits every tool, MCP servers included`, with ` (except: <disallowedTools>)` when the file has them, and the commit prints the flags again; the pin is the approval. A role made with `--scaffold` imports flagged this way. Such an agent can use every tool and MCP server the importing machine has: read the preview of a kit you did not make. Refused are `hooks`, MCP server settings, `permissionMode`, hidden characters, and the member keys `command`, `args`, `kind`, `harness`, `adapter` and `autoMode`. Importing an unchanged kit again writes nothing and exits 0.
+`--pin` commits. It is refused, with nothing written, when the pin differs from the file, when any finding or conflict stands, and from a team member session. Agent files are written first (never replacing one), then the level file once; if the level file cannot be written, the agent files this run created are removed. Custom and built-in rows are written as the kit gives them, and the block with its `packs`; pack role rows are never written, and a pack that is not installed refuses nothing. An import never writes a permission rule, hook, setting, param value, `activeRoster`, pack role row or team file, installs no plugin, and runs nothing. An agent file with no `tools:` list is not refused but flagged: the dry run lists it under `flags (<n>)` above the writes as `role <r> agent <a>: inherits every tool, MCP servers included`, with ` (except: <disallowedTools>)` when the file has them, and the commit prints the flags again; the pin is the approval. A role made with `--scaffold` imports flagged this way. Such an agent can use every tool and MCP server the importing machine has: read the preview of a kit you did not make. Refused are `hooks`, MCP server settings, `permissionMode`, hidden characters, and the member keys `command`, `args`, `kind`, `harness`, `adapter` and `autoMode`. Importing an unchanged kit again writes nothing and exits 0.
 
 #### Create a team
 
@@ -1284,10 +1296,10 @@ The hook refuses a declared sub-orchestrator that names an owner verb outside th
 #### Write a role definition
 
 ```
-<ah> roster role set|remove|trust …
+<ah> roster role set|remove …
 ```
 
-Refused to an agent session in the hook (a member marker, a subagent, a restricted role) and in the CLI to a caller whose nearest registered session is a member (`member-cannot-role-set|remove|trust`). A plain session outside any team still runs them, and `role list` is open to everyone.
+Refused to an agent session in the hook (a member marker, a subagent, a restricted role) and in the CLI to a caller whose nearest registered session is a member (`member-cannot-role-set|remove`). A plain session outside any team still runs them, and `role list` is open to everyone.
 
 #### Approve a sub-orchestrator's close
 
@@ -1742,12 +1754,14 @@ How that model compares with Claude's tiers, stored only in the global config's 
 #### List roles
 
 ```
-<ah> roster role list [--json]
+<ah> roster role list [--json] [--roster <r>]
 ```
 
 Every built-in and custom role: class, agent, model, level, chain placement (`alt. to <Builtin>: <routes>`, `side`, `legwork`), effective description, and contract status (`shipped`, `ok`, `n warnings`, `UNAVAILABLE: n errors`, or `UNAVAILABLE → reverted to wrangl:<role>` for a failing built-in override). Invalid rows are listed as `excluded` with their reasons.
 
-`--json` adds each role's findings, and `path` names the agent-file copy that was checked. A role adopted from a role pack also shows `from` and its `pin_state` (`trusted`, or its pack reason: `pack-missing`, `pack-invalid`, `pack-ambiguous`, `pack-symlink`, `pack-changed`, `pack-untrusted-here`), and a built-in whose agent a pack overrides has `pack_override: true`; rows without either are unchanged.
+`--roster` lists the roles that roster sees, including [its packs' roles](custom-roles.md#give-a-roster-its-packs); without it the selected roster applies.
+
+`--json` adds each role's findings, and `path` names the agent-file copy that was checked. A pack role also shows `from` and `pack: {via, updated}`: `via` is `roster:<name>` or, for an old-style row, `row:<level>` (such a row also shows `legacy: true`), and `updated` is `null` or `{at, from_version, to_version, files: {added, removed, changed}, roles: {added, removed, changed}}` as counts. A built-in whose agent a pack overrides has `pack_override: true`. An unavailable pack role's finding is `pack-missing`, `pack-invalid` or `pack-ambiguous`; other pack findings are warnings. Listing also checks the listed packs for [updates](custom-roles.md#pack-updates).
 
 #### Define or change a role
 
@@ -1787,31 +1801,13 @@ A missing value never stops anything. `create`, `spawn-one` and `spawn-ad-hoc` s
 <ah> roster role remove <name> [--level <L>]
 ```
 
-Refused while any roster member uses the role; never deletes an agent file. For a built-in, removes only its `agent` override (a pack override's `from` and `pin` too).
+Refused while any roster member uses the role; never deletes an agent file. For a built-in, removes only its `agent` override (an old-style pack row's `from`, `pin` and `slots` too).
 
-#### Adopt a role from a pack
+#### Pack roles
 
-```
-<ah> roster role set <name> --from <plugin>@<marketplace>:<role> [--label <l>] [--description <d>] [--routes <r>] [--model <M>] [--dispatch …] [--level <L>] (--dry-run | --pin sha256:…)
-```
+There is no verb that adopts or trusts a pack role. A roster [names its packs](#change-a-rosters-packs), and their roles resolve under it. `role trust` and `role set <name> --from …` exit 2 with a message saying so; `--pin` and `--slot` are unknown flags.
 
-`<plugin>:<role>` works when exactly one marketplace offers the plugin. The dry run prints `pack.fields` (verbatim, hidden characters escaped), the findings (contract, pack-agent frontmatter allowlist, pack reasons), `pack.tools` (`effective`, and `flagged`: Bash, Agent, MCP tools, Write, Edit), `pack.also_in_plugin`, `pack.unattended` for an implement-class role with routes, and `pin`.
-
-The commit needs `--pin` equal to the pin computed now, refuses while errors stand, writes only `from`, `pin` and the flags passed, and stores a copy of what was pinned in `~/.claude/ah2/trusted/`. `--class`, `--agent` and `--scaffold` are refused with `--from` and on any adopted row; a name already defined at the level by another row is refused.
-
-A built-in name takes the pack role's agent only, and only from a role of its class.
-
-A commit is asked of the user in a top-level session and denied in subagent, role and peer sessions, with `WRANGL_TEAM_FILE` set, and while a pipeline run is live; a Bash command that isn't one plain ah command is judged as a commit when its text names `ah roster`, then `role`, then `trust` or `--from`, even with `--dry-run`. ah roster itself refuses a commit (exit 2, nothing written) when `WRANGL_TEAM_FILE` is set, or while a pipeline run is live for `--cwd` or its own working directory.
-
-The spawn verbs refuse a member of a pack role whose auto mode is `bypassPermissions` or unset.
-
-#### Re-trust a pack role
-
-```
-<ah> roster role trust <name> [--level <L>] (--dry-run | --pin sha256:…)
-```
-
-For a row set with `--from`. The dry run shows `fields_changed`, `agent_diff` and `files` (`added`, `removed`, `changed`) against this machine's stored copy — or, with none (`stored_copy: false`), the whole `agent_text` and `files.all` — plus the findings and `pin`. The commit needs that pin, refuses while errors stand, re-pins, keeps the user's own fields, and is gated like adoption.
+A config row with `from` made by an earlier version still resolves ([moving to the roster form](custom-roles.md#roles-adopted-before-rosters-named-packs)), and its `pin` and `slots` are ignored. `role set` on such a row changes only `--label`, `--description`, `--routes`, `--model` and `--dispatch`; `--class`, `--agent`, `--scaffold` and `--shell` are refused.
 
 #### List role packs
 
@@ -1819,13 +1815,13 @@ For a row set with `--from`. The dry run shows `fields_changed`, `agent_diff` an
 <ah> roster pack list [--json]
 ```
 
-Read-only: every installed plugin with `ah-roles.json`, its version and path, its roles (name, class, agent, routes), each role's adoptions (`name`, `level`, `state`), and a count of what else the plugin carries.
+Read-only: every installed plugin with `ah-roles.json`, its version and path, its roles (name, class, agent, routes), where each role is used (`adopted` in JSON: `{roster, level}` for each roster block that names the pack, and `{role, level}` for each old-style row), and a count of what else the plugin carries.
 
 #### Show one role pack
 
 `<ah> roster pack show <plugin>[@<marketplace>] [--json]` · `… pack show --path <dir> [--json]` (not installed)
 
-Read-only: the manifest's findings, each role's fields verbatim with its findings and tools, its adoptions (installed only), `also_in_plugin` (root entries other than `ah-roles.json`, `agents/`, `.claude-plugin/` and README/LICENSE/CHANGELOG files; plugin.json keys beyond the descriptive ones; agent files the manifest doesn't name; any agent file that takes a role's agent name, marked `claims: [<role>…]`), and `digest`, the sha256 of the file list, which is the same for the same tree installed or not.
+Read-only: the manifest's findings, each role's fields verbatim with its findings and tools, where it is used (installed only), `also_in_plugin` (root entries other than `ah-roles.json`, `agents/`, `.claude-plugin/` and README/LICENSE/CHANGELOG files; plugin.json keys beyond the descriptive ones; agent files the manifest doesn't name; any agent file that takes a role's agent name, marked `claims: [<role>…]`), `updated` (the last recorded [pack update](custom-roles.md#pack-updates), or `null`), a `symlink` warning when the tree holds one, and `digest`, the sha256 of the file list, which is the same for the same tree installed or not. Problems in an agent file are warnings.
 
 #### Lifecycle allow rules
 
@@ -1848,6 +1844,8 @@ An `ahd-build` row compares `install.json`'s version and contract with the plugi
 `--fix` also starts that rebuild the way session start does, even with `auto_rebuild` off, after a failure or under `AH_SPAWN_DEPTH`; it adds an `ahd-build` entry to `fix` (none when current or not installed), starts nothing when in progress or without a plugin root or installer, and never changes the exit code.
 
 `teams` adds `gate: {mode, members, would_refuse_24h, deny_24h}` per team, `null` without a document. A `progress` row is `ok`, `off`, or `warn` (never red). The rows `version`, `team`, `peers`, `registrations`, `rejected-requests`, `hooks-syntax` and `marketplace` each print what they checked in their detail.
+
+Each role pack that has changed since ah first saw it adds an `ok` row, `pack-updated` ([Pack updates](custom-roles.md#pack-updates)).
 
 #### Split decision (tests)
 

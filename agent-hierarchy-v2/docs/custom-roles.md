@@ -347,8 +347,9 @@ Orchestrator vets a runtime that asks to join are in
 
 A role pack is how you share roles with someone else. It is an ordinary
 Claude Code plugin that also has an `ah-roles.json` at its root. Claude Code
-installs, updates and removes it; ah finds it and lets you adopt its roles
-one at a time. Roles only you use can stay where they are, in
+installs, updates and removes it. Installing it is how you say you trust it:
+ah asks for no second approval. You then name the pack on a roster, and every
+team built from that roster can use its roles. Roles only you use can stay where they are, in
 `~/.claude/agents/` or a repo's `.claude/agents/`.
 
 ### The format
@@ -371,50 +372,61 @@ one at a time. Roles only you use can stay where they are, in
 
 - `version` must be 1, or the whole pack is unreadable.
 - Each role takes the custom-role fields: `class` (required), `agent`,
-  `label`, `description`, `routes`, `model` and `dispatch`. They follow the
-  same rules as your own rows, and built-in names are refused. `peer` isn't
-  allowed, because it is a local setting. Unknown keys are warned about and
-  ignored.
+  `label`, `description`, `routes`, `model`, `dispatch` and `params`. `peer`
+  isn't allowed, because it is a local setting, and a role that has it is
+  unavailable. Unknown keys are warned about and ignored.
+- A `label`, `description`, `routes`, `model` or `dispatch` that breaks the
+  rules for your own rows (one line, at most 160 characters, no backticks, and
+  so on) is dropped with a warning, and the role stays.
+- A role may be named after a built-in (`reviewer`, `architect`, …). Under a
+  roster that names the pack, it [replaces that built-in's agent](#which-role-wins).
+  Its `class` must be the built-in's class.
 - `agent` names a file in the plugin, `agents/<agent>.md`, and defaults to the
   role's name. It can't point at another plugin's agent or at a path.
 - No hidden text: control characters other than newline and tab, invisible
   formatting characters (bidirectional controls, zero-width characters),
   Unicode tag characters, variation selectors, the line and paragraph
-  separators, and invisible filler characters are refused, in the fields and
-  in the agent file; the finding names the character, its line and column.
-  That refuses an emoji written with a variation selector (⚠️, say): write
-  the plain character instead. The agent file must be valid UTF-8.
-- A pack agent's frontmatter may hold only `name`, `description`, `model`,
-  `tools`, `disallowedTools`, `color`, `effort` and `maxTurns`, each once, as a
-  plain unquoted key. `tools` is required, and every tool entry is a plain
-  name (no quotes, `[…]` list, or `Tool(scope)` form). A value continues onto
-  more lines only as `- item` lines under an empty `tools` or
-  `disallowedTools`, all at the first item's indentation, or as a `|` or `>`
-  block under `description`, whose lines are indented at least as far as its
-  first. A value holding `: `, or starting with a YAML indicator such as `@`,
-  `!`, `[` or `- `, must be quoted, and a quoted value can't hold an escape
-  (`\` or `''`). A value or tool entry that YAML reads as null or a boolean
-  (`null`, `~`, `true`, `false`, `yes`, `no`, `on`, `off`, `y`, `n`, in any
-  case) is refused: `tools: null` would mean every tool. `maxTurns` must be a
-  plain decimal integer. Outside the description's text the frontmatter is
-  printable ASCII: no tab, no other kind of space, no accented letter in a
-  name. The description may hold other characters, but not a space other
-  than the ordinary one, a private-use character, U+FFFE or U+FFFF. Tabs in the indentation, `#` comments, and anything else —
-  `permissionMode`, `hooks`, MCP server settings, `skills`, `memory`, a YAML
-  anchor — are errors. ah reads the file this strictly so that it sees exactly
-  what YAML would, tools included. Your own agent files aren't held to this.
-- No other agent file in the plugin may take the role's agent name, because
-  Claude Code registers a plugin agent under its frontmatter `name`, not its
-  file name. Every `.md` under `agents/` (at any depth) and under the paths in
-  `plugin.json`'s `agents` is checked. One that declares the role's agent
-  name, or declares none and is named `<agent>.md` (either ignoring case), or
-  whose name ah can't be
-  sure of (a quoted key with an escape, a YAML tag, anchor, alias or merge
-  key, more than one `name`), makes the role unavailable (`pack-invalid`), and
-  `pack show` marks it as claiming the role. An `agents` path outside the
-  plugin, or an `agents` value that isn't a path or a list of paths, does the
-  same for every role. Only these files' names are read; they aren't held to
-  the rules above.
+  separators, and invisible filler characters. In `class` or `agent` they make
+  the role unavailable; in another manifest field the field is dropped. In the
+  agent file ah warns, naming the character, its line and column, and warns too
+  when the file isn't valid UTF-8. An emoji written with a variation selector
+  (⚠️, say) counts: write the plain character instead.
+
+#### What ah warns about in a pack agent
+
+Claude Code runs a pack's agent file exactly as installed, so ah's checks on it
+are warnings. The role stays available. `ah roster pack show` and
+`ah roster role list --json` list them.
+
+- Frontmatter that goes beyond `name`, `description`, `model`, `tools`,
+  `disallowedTools`, `color`, `effort` and `maxTurns`, each once, as a plain
+  unquoted key. That includes `permissionMode`, `hooks`, MCP server settings,
+  `skills`, `memory` and YAML anchors.
+- No `tools` list, or a tool entry that isn't a plain name (quotes, a `[…]`
+  list, a `Tool(scope)` form, `*`).
+- Text ah can't be sure YAML reads the same way. A value continues onto more
+  lines only as `- item` lines under an empty `tools` or `disallowedTools`, all
+  at the first item's indentation, or as a `|` or `>` block under
+  `description`, indented at least as far as its first line. A value holding
+  `: `, or starting with a YAML indicator such as `@`, `!`, `[` or `- `, needs
+  quotes, and a quoted value can't hold an escape (`\` or `''`). A value or tool
+  entry that YAML reads as null or a boolean (`null`, `~`, `true`, `false`,
+  `yes`, `no`, `on`, `off`, `y`, `n`, in any case) is flagged: `tools: null`
+  would mean every tool. `maxTurns` is a plain decimal integer. Tabs in the
+  indentation and `#` comments are flagged. Outside the description's text the
+  frontmatter is printable ASCII; the description may hold other characters, but
+  not a space other than the ordinary one, a private-use character, U+FFFE or
+  U+FFFF.
+- Tools the role's class shouldn't hold, such as `Edit` on a review role, or a
+  grant of tools from an MCP server.
+- Another agent file in the plugin that takes the role's agent name. Claude Code
+  registers a plugin agent under its frontmatter `name`, not its file name, so
+  it might launch that file instead. ah checks every `.md` under `agents/` and
+  under the paths in `plugin.json`'s `agents`.
+
+Your own agent files aren't held to the frontmatter rules. Agent files carried
+in a [roster kit](rosters.md#share-a-roster) are, and there they refuse the
+import.
 
 ### Writing a pack
 
@@ -427,10 +439,10 @@ A pack is a plugin directory with this shape:
 
 ah finds a pack through `~/.claude/plugins/installed_plugins.json`, so a pack is whatever
 Claude Code has installed that holds an `ah-roles.json`; a plugin directory that isn't installed
-can be checked, not adopted (`ah roster pack show --path <dir>`). The agent ref at run time is
+can be checked, but its roles aren't available (`ah roster pack show --path <dir>`). The agent ref at run time is
 `<plugin>:<agent>`, with the plugin name from the install record.
 
-An agent file that passes:
+An agent file with no warnings:
 
 ```markdown
 ---
@@ -442,114 +454,153 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 You build Godot 4 features …
 ```
 
-- `name` is the agent's name, equal to `agent` in the manifest (the class contract checks it).
-- `tools` is required and is a plain list (`Read, Grep` on one line, or `- item` lines). There is
-  no `*`, no `Bash(git:*)` scope, and no quoting. Leaving it out would give the agent every
-  tool, MCP tools included, so it is an error. A review-class agent can't hold `Edit`, `Write`
-  or `NotebookEdit`.
-- `permissionMode`, `hooks`, MCP server settings, `skills`, `memory` and every other
-  frontmatter key Claude Code knows are refused in a pack agent. Put what you need in the prompt body.
-- Check it before you publish: `ah roster pack show --path <dir>` runs the manifest, the class
-  contract and the frontmatter rules for every role and prints each finding with the line.
+- `name` is the agent's name, equal to `agent` in the manifest.
+- List the tools in `tools`, on one line or as `- item` lines. Leaving it out
+  gives the agent every tool, MCP tools included.
+- Check it before you publish: `ah roster pack show --path <dir>` runs the
+  manifest, the class contract and the frontmatter checks for every role and
+  prints each finding.
 
-Every change to any file in the plugin, yours or a version bump, makes every adopted role
-`pack-changed` for the people who have it, so they have to look at the change and trust it
-again. Keep packs small, and keep hooks and MCP servers out of them: users see everything the
-plugin carries before they install it, under "also in this plugin". What each `pack-…` reason
-means, and what the user does about it, is in
-[troubleshooting.md](./troubleshooting.md#role-packs).
+When you update a pack, people who have it get the change at each member's next
+start, with [a report of what changed](#pack-updates). Keep packs small, and keep
+hooks and MCP servers out of them: users see everything the plugin carries before
+they install it, under "also in this plugin".
 
-### Installing, adopting and trusting
+### Installing a pack
 
-`/wrangl:agent-role install <source>` takes a git URL, `owner/repo` or a local
-directory. It shows you the pack's roles and everything else the plugin
-carries before anything is installed, installs it, checks that what got
-installed is what you reviewed, and offers its roles.
+Run this in Claude Code. `<source>` is a git URL, `owner/repo` or a local
+directory:
 
-Nothing from a pack routes work, dispatches or spawns until you adopt it:
+    /wrangl:agent-role install <source>
 
-    ah roster role set <name> --from <plugin>@<marketplace>:<role> --dry-run
+It shows you the pack's roles and everything else the plugin carries before
+anything is installed, installs it, checks that what got installed is what you
+reviewed, and offers to put the pack on a roster. Sessions that were already
+running need a restart before they can use the new agents as subagents.
 
-The dry run prints the pack's fields exactly as they will reach your
-sessions, the agent's tools with the risky ones flagged, what else the plugin
-carries, and a pin. You commit with that pin (`--pin sha256:…`), and approve
-it in Claude Code's own prompt. The row keeps only `from`, `pin` and your own
-fields; everything else is read from the pack each time. You pick the local
-name, so two packs can offer the same one. A built-in's name replaces that
-built-in's agent, if the pack role has the built-in's class.
+`/wrangl:agent-role update <plugin>` and `uninstall <plugin>` drive Claude Code's
+own plugin commands. Uninstalling also offers to take the pack off the rosters
+that name it.
 
-The pin covers the whole plugin, not just the agent file: its hooks,
-scripts and skills too. If anything in the plugin changes, even after a
-plain `claude plugin update`, every role adopted from it becomes unavailable
-(`pack-changed`) until you look at the change:
+To look at packs at any time:
 
-    ah roster role trust <name> --dry-run
+    ah roster pack list
+    ah roster pack show <plugin>@<marketplace>
 
-shows the field changes, a diff of the agent file, and every file added,
-removed or changed since you trusted it. Commit it with the pin it prints.
-ah keeps a copy of what you trusted in `~/.claude/ah2/trusted/`,
-and a role is available only when this machine has one. So a repo-level row
-committed by someone else stays unavailable (`pack-untrusted-here`) until you
-trust it yourself.
+### Give a roster its packs
 
-`/wrangl:agent-role update <plugin>` and `uninstall <plugin>` drive Claude
-Code's own plugin commands and walk you through re-trusting or removing the
-adopted roles. `ah roster pack list` and `pack show` inspect packs at any
-time.
+A [named roster](rosters.md#named-rosters) lists the packs it uses. Create one
+with its pack, add a member for a pack role, and check the result:
+
+    ah roster init --level global --route peer --roster game-factory --pack game-factory@bear-poppa
+    ah roster add --level global --roster game-factory --role playtester --model opus
+    ah roster role list --roster game-factory
+
+`role list` shows the pack's roles for that roster. `playtester` here stands for
+any role the pack offers; you use the pack's own role name.
+
+`init` replaces that level's roster block, so use it only for a new roster. To
+change the packs of one you already have, leaving its members alone:
+
+    ah roster roster pack game-factory --add <plugin>@<marketplace>
+    ah roster roster pack game-factory --remove <plugin>@<marketplace>
+
+Things to know:
+
+- A pack role needs no row, approval or setup of its own. A roster in your global
+  config works in every repository.
+- The roles exist only under that roster. Select it with `--roster`,
+  `WRANGL_ROSTER` or `ah roster roster use`; see
+  [Named rosters](rosters.md#named-rosters). A team uses the roster it was built
+  from.
+- ah reads the pack list from the roster's config each time, so a change also
+  reaches teams already built from that roster.
+- A roster may name several packs. The default roster can name packs too:
+  `ah roster roster pack default --add <plugin>@<marketplace>`.
+- A pack that isn't installed on this machine stays listed. Its roles are absent,
+  with a warning, until you install it.
+
+### Which role wins
+
+Under a roster that names packs, a name resolves in this order:
+
+1. a role from the roster's packs (when two packs offer the same name, the one
+   listed first);
+2. a row in your config;
+3. the built-in.
+
+One exception: an [old-style row](#roles-adopted-before-rosters-named-packs) that
+points at that same pack role is used as it is, with your own settings on it.
+
+A pack role named after a built-in replaces that built-in's agent, if its class is
+the built-in's class. Your model, dispatch and peer settings for the built-in
+stay. With any other class the role is unavailable and the shipped agent is used.
+
+### Pack updates
+
+A changed pack takes effect at each member's next start. Nothing is paused and
+there is nothing to approve. ah compares the installed files with what it saw last
+when you run `ah roster role list` or `ah roster doctor`, and when it starts a
+single member. After a change:
+
+- `role list` shows `updated <date>: files +a −r ~c, roles ~z` beside the role
+  (files added, removed and changed, and roles changed);
+- `ah roster doctor` has an `ok` row named `pack-updated`;
+- if the change was first noticed on behalf of a team, its Orchestrator gets one
+  `pack-updated` mail. Noticed outside a team, no mail is sent.
+
+The line stays until the next change replaces it. The first time ah sees a pack it
+only records it. `plugin.json`'s version doesn't matter: any file change counts,
+except inside the plugin's `.git` directory.
 
 ### Pipeline runs
 
-`/wrangl:pipeline` pushes branches and opens pull requests (drafts by default),
-and a merge into `main` waits for a person unless you approved it at the start
-of the run; either way the merge rests on the Reviewer's verdict. So a pack role can
-implement work in an unattended run (its dry run says so), but it never fills
-the reviewer or designer slot there: those stay first-party, and while a run
-is live the spawn verbs refuse a pack reviewer or designer. If the built-in
-Reviewer or Architect itself is overridden by a pack role, the run halts
-before it starts.
+A pack role fills any slot its class allows in `/wrangl:pipeline` too: it can
+design, implement or review, give a gate its sign-off, and replace the built-in
+Reviewer or Architect. A run doesn't change a roster's packs on its own.
 
-ah never launches or dispatches a pack role with permission checks off. The
-spawn verbs refuse a pack role's member whose auto mode is
-`bypassPermissions`, or unset (it would take your settings' default mode,
-which can be bypass); give it one with `ah roster edit --member <name>
---auto-mode auto`. And a session in bypass mode can't dispatch a pack role's
-agent as a subagent. What remains: you can switch a running pane into bypass
-yourself, or launch `claude --agent <plugin>:<agent>` in bypass outside ah;
-and every agent in an installed plugin is a subagent type in every session,
-adopted or not, which is Claude Code's side.
+A run pushes branches and opens pull requests (drafts by default), and a merge
+into `main` waits for a person unless you approved it at the start of the run.
+Either way the merge rests on the reviewing role's verdict. If a pack supplies
+your designer, builder and reviewer, their independence is whatever the pack's
+author built.
+
+### Roles adopted before rosters named packs
+
+A config row with `from` (made with the old `role set --from`) still works. Its
+`pin` and `slots` are ignored, and `~/.claude/ah2/trusted/` is no longer read;
+you may delete it. You don't have to move. To move to the roster form:
+
+    ah roster roster pack <roster> --add <plugin>@<marketplace>
+    ah roster role remove <name>
+
+Run the second line for each old row with the same name as a pack role.
+`role remove` refuses while any roster member uses the name: take those members
+off with `ah roster remove`, remove the row, then add them again.
+
+If an old row gave the pack role a different name, it is left out under a roster
+that supplies the same pack role, and the pack's own name is used there. (An old
+row for a built-in gives way too: under that roster the built-in goes back to its
+shipped agent.) Rename the roster's members with `ah roster edit --member <name>
+--role <role>`; ah doesn't do it for you.
 
 ### What this does and doesn't protect
 
-- Installing a plugin is Claude Code's trust decision. Once installed, its
-  agents are available in every session and its hooks and MCP servers run in
-  every session, whatever ah does. That's why ah shows all of it before
-  install, and why packs that carry only roles are best.
-- Nothing runs in the hierarchy until you adopt it, one role at a time.
-- The pin is a tripwire, not a gate: it makes a changed role unavailable
-  until you review it, but it can't stop the plugin's own hooks or MCP
-  servers from running the new content. It covers the plugin's files as they
-  sit on disk, and nothing the role reaches while it runs: not the network
-  (for a role with Bash or WebFetch), not other files, and not a `.git`
-  directory inside the plugin, which the pin skips because a fetch rewrites
-  it; a role could read other versions out of it. `pack show` lists a `.git`
-  directory, so you see it before install.
-- Adopting and trusting need the exact pin, and your approval in your own
-  session; role, peer and subagent sessions and pipeline runs are refused.
-  A command that isn't one plain ah command is treated as a trust commit
-  when the gate can read the words, and `ah roster` itself refuses a commit
-  from a team member or during a pipeline run, unless the command clears
-  `WRANGL_TEAM_FILE` or runs from outside the checkout. What remains: any
-  session in a mode that runs commands without asking could hide the words
-  from the gate — a top-level session, a subagent, a team member that also
-  clears `WRANGL_TEAM_FILE`, a pipeline run that also leaves the checkout — and
-  a session with Bash could still edit the config or the stored copies by
-  hand.
-- Tool limits are role discipline, not a sandbox: a reviewer with Bash can
-  still write files. The real boundary is the session's permission mode,
-  which is why a pack role never runs with permission checks off.
-- The fields that reach every session's context keep the one-line,
-  160-character, no-backtick limits, and you see them verbatim before you
-  trust them.
+- Installing a plugin is the trust decision. Its agents are then available in
+  every session as subagent types, and its hooks and MCP servers run in every
+  session, whatever ah does. That's why ah shows all of it before install, and why
+  packs that carry only roles are best.
+- Permissions are Claude Code's: your settings and each member's permission mode
+  decide what a pack agent may do. ah doesn't refuse a pack member for its
+  permission mode, `bypassPermissions` included.
+- An update reaches your teams without a review step. The report tells you what
+  changed after the fact.
+- Only roles of packs on the selected roster (and old `from` rows) are used by the
+  hierarchy.
+- Tool limits are role discipline, not a sandbox: a reviewer with Bash can still
+  write files, and a pack's review role may be given `Edit`, with only a warning.
+- The fields that reach every session's context keep the one-line, 160-character,
+  no-backtick limits.
 
 ## Where to go next
 

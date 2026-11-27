@@ -5,74 +5,56 @@ using Ah.Core.Text;
 namespace Ah.Commands;
 
 /// <summary>
-/// <c>role list|set|remove|trust</c>: the custom roles of a level file, and the built-ins' agent overrides, with a role pack's
-/// roles adopted only on the user's own pin.
+/// <c>role list|set|remove</c>: the custom roles of a level file, and the built-ins' agent overrides. A role pack's roles come from a
+/// roster's packs (adr-46); <c>role trust</c> and <c>role set --from</c> only point there.
 /// </summary>
 internal static class RoleVerbs
 {
     private static readonly string[] Flags =
     [
-        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold", "from", "pin", "slot",
+        "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "level", "scaffold",
         "dry-run", "json", "roster", "cwd",
     ];
 
     private const string Usage =
-        "usage: ah roster role list [--json] [--roster <r>] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role set <name> --from <plugin>@<marketplace>:<role> [--label L] [--description D] [--routes R] [--model M] [--dispatch …] [--level L] [--slot design] (--dry-run | --pin sha256:…) | role trust <name> [--level L] [--slot design] (--dry-run | --pin sha256:…) | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+        "usage: ah roster role list [--json] [--roster <r>] | role set <name> [--class C] [--agent A] [--label L] [--description D] [--routes R] [--model M] [--dispatch peer|model] [--shell self-care] [--params a,b] [--writes glob,…] [--level L] [--scaffold repo|user] [--dry-run] | role remove <name> [--level L]  (all with --cwd <abs cwd>)";
+
+    private const string TrustRemoved =
+        "role trust was removed: an installed role pack is trusted, and its updates are reported in role list (adr-46)";
+
+    private const string FromRemoved =
+        "pack roles come from a roster's packs: ah roster roster pack <roster> --add <plugin>@<marketplace> (or init --pack)";
 
     [Verb("roster:role")]
     internal static int Role(string[] rest, TextWriter stdout, TextWriter stderr) =>
         RosterCli.Execute(rest, stdout, stderr, Run);
 
-    /// <summary>
-    /// A trust commit (<c>role set --from</c>, <c>role trust</c>, <c>kit import --pin</c>; never a dry run) is refused here, before any
-    /// write, from a team member or while a pipeline run is live at <c>--cwd</c> or at this process's own cwd. An error while checking refuses.
-    /// </summary>
-    internal static void RefuseTrustCommitHere(RosterContext c, string label)
-    {
-        string? why = null;
-        try
-        {
-            if (c.EnvText("WRANGL_TEAM_FILE") is not null)
-            {
-                why = "this session is a team member (WRANGL_TEAM_FILE is set)";
-            }
-            else
-            {
-                var own = c.Services.CurrentDirectory;
-                var dirs = new[] { c.Cwd, own }.Distinct(StringComparer.Ordinal);
-                if (dirs.Any(d => c.Services.Hierarchy.Messages.PipelineRunLive(d)))
-                {
-                    why = "a pipeline run is live in this checkout";
-                }
-            }
-        }
-        catch (Exception e) when (e is not OutOfMemoryException)
-        {
-            why = $"the check couldn't run ({e.Message})";
-        }
-
-        if (why is not null)
-        {
-            throw new RosterFailure(
-                $"{label}: refused — {why}. Trust is committed only from the user's own top-level session, outside a pipeline run; nothing was written.");
-        }
-    }
-
     private static int Run(RosterContext c)
     {
+        var sub = c.Opts.Positionals.Count > 0 ? c.Opts.Positionals[0] : null;
+        var name = c.Opts.Positionals.Count > 1 ? c.Opts.Positionals[1] : null;
+
+        // ah2-698 D5: the removed trust verbs answer with the command that replaces them, whatever else was passed.
+        if (sub == "trust")
+        {
+            throw new RosterFailure(TrustRemoved);
+        }
+
+        if (sub == "set" && c.Opts.Has("from"))
+        {
+            throw new RosterFailure(FromRemoved);
+        }
+
         foreach (var key in c.Opts.Keys)
         {
             if (!Flags.Contains(key))
             {
                 throw new RosterFailure(
-                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --writes, --level, --scaffold, --from, --pin, --dry-run, --json, --roster, --team, --cwd)");
+                    $"role: unrecognized flag --{key} (use --class, --agent, --label, --description, --routes, --model, --dispatch, --shell, --params, --writes, --level, --scaffold, --dry-run, --json, --roster, --team, --cwd)");
             }
         }
 
-        var sub = c.Opts.Positionals.Count > 0 ? c.Opts.Positionals[0] : null;
-        var name = c.Opts.Positionals.Count > 1 ? c.Opts.Positionals[1] : null;
-
-        if (sub is "set" or "remove" or "trust")
+        if (sub is "set" or "remove")
         {
             OwnerGuard.RefuseAgentRoleWrite(c, sub);
         }
@@ -87,9 +69,6 @@ internal static class RoleVerbs
                 return 0;
             case "remove":
                 c.Out(ctx.Remove(name));
-                return 0;
-            case "trust":
-                c.Out(ctx.Trust(name));
                 return 0;
             default:
                 throw new RosterFailure(Usage);
@@ -124,6 +103,7 @@ internal static class RoleVerbs
         {
             var rows = new JsonArray();
             var classes = _config.Classes;
+            var updates = PackUpdates.Check(c, Reg);
             foreach (var role in _config.RegistryRoles(Reg))
             {
                 var entry = Roles.Get(role) ?? new JsonObject();
@@ -215,14 +195,9 @@ internal static class RoleVerbs
                 if (entry.Member("from") is { IsTruthy: true } from)
                 {
                     row["from"] = from;
-                    row["pin_state"] = PackVerbs.PinState(entry.Member("pack"));
-                    if (_config.DesignOptInHolds(role, entry))
+                    if (entry.Member("pack")?.Member("via") is { IsText: true } rowVia && rowVia.AsString().StartsWith("row:", StringComparison.Ordinal))
                     {
-                        row["design_opt_in"] = true;
-                    }
-                    else if (entry.Member("slots") is not null)
-                    {
-                        row["slots_ignored"] = true;
+                        row["legacy"] = true;
                     }
 
                     if (builtin)
@@ -234,7 +209,9 @@ internal static class RoleVerbs
                 // ah2-698 D3: roster:<name> for a role a roster's packs supply, row:<level> for a config row with `from`.
                 if (entry.Member("pack")?.Member("via") is { IsText: true } via)
                 {
-                    row["pack"] = new JsonObject { ["via"] = via };
+                    // ah2-698 D6: the pack's last reported update, or null.
+                    var updated = PackUpdates.PackKeyOf(entry) is { } key && updates.TryGetValue(key, out var u) ? u : JsonValue.Null;
+                    row["pack"] = new JsonObject { ["via"] = via, ["updated"] = updated };
                 }
 
                 rows.Add(row);
@@ -274,11 +251,11 @@ internal static class RoleVerbs
                 var description = r.Member("description") is { IsTruthy: true } d
                     ? $" — \"{(from ? Esc(d) : T(d))}\" ({T(r.Member("description_source"))})"
                     : string.Empty;
-                var adopted = from ? $" — from {T(r.Member("from"))} ({T(r.Member("pin_state"))})" : string.Empty;
+                var adopted = from ? $" — from {T(r.Member("from"))}" : string.Empty;
                 var declared = r.Member("params") is { IsArray: true } p ? $" — params: {string.Join(", ", p.AsArray().Select(x => T(x)))}" : string.Empty;
-                var slotsIgnored = r.Member("slots_ignored") is { IsTruthy: true } ? " — slots ignored (not given at trust)" : string.Empty;
+                declared += r.Member("pack")?.Member("updated") is { IsMap: true } up ? $" — {PackUpdates.Line(up)}" : string.Empty;
                 lines.Add(
-                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}{slotsIgnored}{declared}");
+                    $"{T(r.Member("name")),-20} {(r.Member("builtin") is { IsBool: true } b && b.AsBool() ? "built-in" : "custom  ")} {T(r.Member("class")),-9} {T(r.Member("agent")),-26} {T(r.Member("model")),-8} {T(r.Member("level")),-9} {T(r.Member("placement"))} — {T(r.Member("status"))}{description}{adopted}{declared}");
             }
 
             foreach (var e in excluded)
@@ -338,14 +315,6 @@ internal static class RoleVerbs
             }
         }
 
-        private static string FailPackState(string who, JsonObject state)
-        {
-            var subcode = state.Get("subcode") is { IsTruthy: true } sc && !IsText(sc, T(state.Get("status")))
-                ? $" [{T(sc)}]"
-                : string.Empty;
-            return $"{who}: {T(state.Get("status"))}: {T(state.Get("message"))}{subcode}";
-        }
-
         // ---------------------------------------------------------------- set
 
         internal JsonValue Set(string? name)
@@ -356,21 +325,6 @@ internal static class RoleVerbs
             }
 
             var opts = c.Opts;
-            if (opts.Has("from"))
-            {
-                return SetFrom(name);
-            }
-
-            if (opts.Has("pin"))
-            {
-                throw new RosterFailure($"role set {name}: --pin goes with --from; to re-trust an adopted role, use `role trust {name}`");
-            }
-
-            if (opts.Has("slot"))
-            {
-                throw new RosterFailure($"role set {name}: --slot goes with --from; to give an adopted role the opt-in, use `role trust {name} --slot design`");
-            }
-
             var builtin = _config.IsBuiltinRole(name);
             var dry = opts.IsTrue("dry-run");
             foreach (var k in new[] { "class", "agent", "label", "description", "routes", "model", "dispatch", "shell", "params", "writes", "scaffold", "level" })
@@ -421,15 +375,21 @@ internal static class RoleVerbs
             }
 
             var defined = PackVerbs.LevelOfScope(Sources.Get(name));
+            var packSupplied = RosterOf(name) is not null;
             var scaffoldFlag = OptText("scaffold");
             string level;
             if (OptText("level") is { } given)
             {
                 level = RequireLevel(given);
             }
-            else if (defined is { IsText: true } dl && dl.AsString() != "shipped")
+            else if (!packSupplied && defined is { IsText: true } dl && dl.AsString() != "shipped")
             {
                 level = dl.AsString();
+            }
+            else if (packSupplied && LevelWithRow(name) is { } held)
+            {
+                // ah2-698 Y11: the level that already holds the user's row, as role remove picks it.
+                level = held;
             }
             else
             {
@@ -442,7 +402,13 @@ internal static class RoleVerbs
             var atLevel = RowAt(layer, name);
             if (atLevel is not null && _config.IsFromRow(atLevel))
             {
-                return SetAdoptedFields(name, level, path, data, layer, atLevel, dry, builtin);
+                return SetAdoptedFields(name, level, path, data, layer, atLevel, T(atLevel.Get("from")), dry, builtin);
+            }
+
+            // ah2-698 Y1: a role a roster's pack supplies gets an ordinary row of the user's own fields; the pack still supplies agent and class.
+            if (packSupplied)
+            {
+                return SetAdoptedFields(name, level, path, data, layer, atLevel, T(Roles.Get(name)?.Member("from")), dry, builtin);
             }
 
             if (atLevel is null && Roles.Get(name) is { IsMap: true } existing && existing.Member("from") is { IsTruthy: true } adopted)
@@ -906,6 +872,11 @@ internal static class RoleVerbs
                 : default;
             var scope = Sources.Get(name) is { IsTruthy: true } s ? s : excluded.IsMap ? excluded.Member("scope") : null;
             var defined = PackVerbs.LevelOfScope(scope);
+            if (RosterOf(name) is { } roster)
+            {
+                return RemovePackSupplied(name, roster);
+            }
+
             string level;
             if (OptText("level") is { } given)
             {
@@ -1017,524 +988,86 @@ internal static class RoleVerbs
                 layerNext.Remove(name);
             }
 
-            if (RowAt(layer, name)?.Get("pin") is { IsText: true } removedPin)
-            {
-                DropStoredOptIn(removedPin.AsString(), name);
-            }
-
             var write = data.Clone();
             write["roles"] = layerNext;
             _files.Write(path, write);
             return new JsonObject { ["removed"] = name, ["level"] = level, ["path"] = path, ["override_only"] = builtin && !formerCustom };
         }
 
-        // ---------------------------------------------------------------- adopting a pack role
-
-        /// <summary>The row an adopted role resolves to: the pack's fields with the user's <paramref name="overlay"/> laid over them.</summary>
-        private static JsonObject AdoptedRaw(JsonObject state, JsonObject overlay)
+        /// <summary>The most specific level whose file holds a row for <paramref name="name"/> (the one in effect), or null.</summary>
+        private string? LevelWithRow(string name)
         {
-            var manifestRole = state.Get("manifestRole") is { IsMap: true } mr ? mr : (JsonValue?)null;
-            var raw = new JsonObject();
-            var source = manifestRole?.Member("raw") is { IsMap: true } r ? r.AsObject() : new JsonObject();
-            foreach (var k in new[] { "class", "label", "description", "routes", "model", "dispatch" })
-            {
-                if (source.Get(k) is { } v)
-                {
-                    raw[k] = v;
-                }
-            }
-
-            var from = state.Get("from") is { IsMap: true } f ? f : (JsonValue?)null;
-            raw["agent"] = $"{T(from?.Member("plugin"))}:{T(manifestRole?.Member("agent"))}";
-            foreach (var k in new[] { "label", "description", "routes", "model", "dispatch" })
-            {
-                if (overlay.Get(k) is not { } v)
-                {
-                    continue;
-                }
-
-                if (IsText(v, string.Empty) && k is "routes" or "description")
-                {
-                    raw.Remove(k);
-                }
-                else
-                {
-                    raw[k] = v;
-                }
-            }
-
-            return raw;
+            // ponytail: reads every level file; a narrower row elsewhere needs --level.
+            var paths = _config.RosterLevelPaths(c.Cwd);
+            return paths.Keys.LastOrDefault(l => RowAt(Layer(_files.Read(T(paths[l]))), name) is not null);
         }
-
-        private static JsonObject PackStateFinding(JsonObject state)
-        {
-            var subcode = state.Get("subcode") is { IsTruthy: true } sc && !IsText(sc, T(state.Get("status"))) ? $" [{T(sc)}]" : string.Empty;
-            return new JsonObject
-            {
-                ["level"] = "error",
-                ["code"] = state.Get("status") ?? JsonValue.Null,
-                ["path"] = state.Get("agentPath") is { IsTruthy: true } ap ? ap : JsonValue.Null,
-                ["field"] = JsonValue.Null,
-                ["message"] = $"{T(state.Get("message"))}{subcode}",
-                ["fix"] = new JsonArray(),
-            };
-        }
-
-        private JsonObject Shown(JsonValue? raw)
-        {
-            var o = new JsonObject();
-            if (raw is { IsMap: true } m)
-            {
-                foreach (var k in m.AsObject().Keys)
-                {
-                    var v = m.AsObject()[k];
-                    o[k] = v.IsText ? Esc(v) : v;
-                }
-            }
-
-            return o;
-        }
-
-        private sealed record Review(JsonObject Raw, string Cls, JsonArray Findings, List<string> Warnings, JsonObject Details);
 
         /// <summary>
-        /// Everything a person reviews before trusting pack role <paramref name="state"/> as <paramref name="name"/>: the effective
-        /// row, the contract and pack-agent findings, the tools, what else the plugin carries, and whether it takes unattended
-        /// pipeline work.
+        /// <c>role remove</c> on a role roster <paramref name="roster"/>'s pack supplies (ah2-698 Y2, Y3): the user's row goes, at
+        /// <c>--level</c> or else at the most specific level that has one; members keep the role, since the pack still supplies it.
         /// </summary>
-        private Review PackReview(string name, JsonObject state, JsonObject overlay)
+        private JsonObject RemovePackSupplied(string name, string roster)
         {
-            var builtin = _config.IsBuiltinRole(name);
-            var findings = new JsonArray();
-            var warnings = new List<string>();
-            if (!IsText(state.Get("status"), "ok"))
+            var level = OptText("level") is { } given ? RequireLevel(given) : LevelWithRow(name);
+            var path = level is null ? null : _files.PathOf(level);
+            var data = path is null ? null : _files.Read(path);
+            if (data is null || Layer(data) is not { } layer || RowAt(layer, name) is null)
             {
-                findings.Add(PackStateFinding(state));
-            }
-
-            var raw = AdoptedRaw(state, overlay);
-            var cls = T(raw.Get("class"));
-            if (builtin)
-            {
-                cls = _config.RoleClass(name, null) ?? string.Empty;
-                if (!IsText(raw.Get("class"), cls))
-                {
-                    throw new RosterFailure(
-                        $"role set {name}: the pack role's class is {T(raw.Get("class"))}, but {name} is a {cls} role — a pack role can override a built-in only of its own class");
-                }
-            }
-            else
-            {
-                var check = _config.CheckCustomRow(name, raw);
-                if (check.Get("error") is { IsTruthy: true } error)
-                {
-                    throw new RosterFailure($"role set {name}: {T(error)}");
-                }
-
-                if (check.Get("warnings") is { IsArray: true } cw)
-                {
-                    warnings.AddRange(cw.AsArray().Select(x => T(x)));
-                }
-            }
-
-            var agentText = state.Get("agentText") is { IsText: true } at ? at.AsString() : string.Empty;
-            var agentPath = state.Get("agentPath") is { IsTruthy: true } ap ? ap : JsonValue.Null;
-            var parsed = _config.PackAgentParse(agentText, agentPath.IsText ? agentPath.AsString() : null);
-            var spec = new JsonObject
-            {
-                ["role"] = name,
-                ["cls"] = cls,
-                ["agent"] = raw.Get("agent") ?? JsonValue.Null,
-                ["description"] = builtin ? JsonValue.Null : raw.Get("description") is { IsTruthy: true } d ? d : JsonValue.Null,
-                ["builtin"] = builtin,
-                ["cwd"] = c.Cwd,
-                ["inMemory"] = new JsonObject { ["path"] = agentPath, ["text"] = agentText, ["fm"] = parsed.Get("fm") ?? JsonValue.Null },
-            };
-            var v = _config.ValidateAgentContract(spec);
-            if (parsed.Get("findings") is { IsArray: true } pf)
-            {
-                findings.AddRange(pf.AsArray());
-            }
-
-            if (v.Get("findings") is { IsArray: true } vf)
-            {
-                findings.AddRange(vf.AsArray());
-            }
-
-            var record = state.Get("record") is { IsMap: true } rec ? rec : (JsonValue?)null;
-            var installPath = T(record?.Member("installPath"));
-            var manifest = _config.ReadPackManifest(installPath, T((state.Get("from") is { IsMap: true } ff ? ff : (JsonValue?)null)?.Member("plugin")));
-            var from = state.Get("from") is { IsMap: true } fr ? fr : (JsonValue?)null;
-            var extras = new JsonArray();
-            foreach (var e in _config.PackExtras(installPath, manifest))
-            {
-                var copy = e.IsMap ? e.AsObject().Clone() : new JsonObject();
-                copy["name"] = Esc(e.Member("name"));
-                extras.Add(copy);
-            }
-
-            var details = new JsonObject
-            {
-                ["from"] = $"{T(from?.Member("plugin"))}@{T(from?.Member("marketplace"))}:{T(from?.Member("role"))}",
-                ["install_path"] = installPath,
-                ["fields"] = Shown(state.Get("manifestRole")?.Member("raw")),
-                ["agent_file"] = agentPath,
-                ["tools"] = _config.PackToolReport(parsed.Get("fm"), installPath),
-                ["also_in_plugin"] = extras,
-            };
-            if (cls == "implement" && !builtin && raw.Get("routes") is { IsTruthy: true })
-            {
-                details["unattended"] = _config.UnattendedLine;
-            }
-
-            return new Review(raw, cls, findings, warnings, details);
-        }
-
-        /// <summary>The tool lines of a pack review on stderr, the ⚠ server-grant lines first: they go above every other line.</summary>
-        private void WriteToolLines(Review review)
-        {
-            foreach (var line in _config.PackToolLines(review.Details.Get("tools"), T(review.Details.Get("install_path"))))
-            {
-                c.Stderr.Write($"ah roster: {Esc(line)}\n");
-            }
-        }
-
-        private void RefuseTrustCommitHere(string label) => RoleVerbs.RefuseTrustCommitHere(c, label);
-
-        /// <summary>
-        /// The stored copy for <paramref name="pin"/>, with <paramref name="name"/>'s design-slot opt-in recorded when <paramref name="slot"/>
-        /// and dropped otherwise; other roles' opt-ins on the same pin are kept. <c>slots</c> sits outside <c>row</c>, so the pin is unchanged.
-        /// </summary>
-        private void WriteStoredCopy(string pin, JsonObject row, string agentText, JsonValue files, string name, bool slot)
-        {
-            var hex = pin["sha256:".Length..];
-            var path = AhPaths.TrustedPackFile(c.Services.Environment.HomeDirectory, hex);
-            var keys = row.Keys.ToList();
-            keys.Sort(StringComparer.Ordinal);
-            var sorted = new JsonObject();
-            foreach (var k in keys)
-            {
-                sorted[k] = row[k];
-            }
-
-            var doc = new JsonObject { ["row"] = sorted, ["agentText"] = agentText, ["files"] = files };
-            var slots = _config.StoredCopy(pin) is { IsMap: true } old && old.Member("slots") is { IsMap: true } os ? os.AsObject().Clone() : new JsonObject();
-            slots.Remove(name);
-            if (slot)
-            {
-                slots[name] = new JsonArray { "design" };
-            }
-
-            if (slots.Keys.Any())
-            {
-                doc["slots"] = slots;
-            }
-
-            LevelFiles.WriteAtomically(path, JsonText.Stringify(doc, 0) + "\n");
-        }
-
-        /// <summary>Removes <paramref name="name"/>'s design-slot opt-in from the stored copy for <paramref name="pin"/>, when it records one.</summary>
-        private void DropStoredOptIn(string pin, string name)
-        {
-            if (_config.StoredCopy(pin) is not { IsMap: true } copy || copy.Member("slots") is not { IsMap: true } slots || slots.AsObject().Get(name) is null)
-            {
-                return;
-            }
-
-            var next = copy.AsObject().Clone();
-            var kept = slots.AsObject().Clone();
-            kept.Remove(name);
-            if (kept.Keys.Any())
-            {
-                next["slots"] = kept;
-            }
-            else
-            {
-                next.Remove("slots");
-            }
-
-            var path = AhPaths.TrustedPackFile(c.Services.Environment.HomeDirectory, pin["sha256:".Length..]);
-            LevelFiles.WriteAtomically(path, JsonText.Stringify(next, 0) + "\n");
-        }
-
-        /// <summary><c>--slot</c>: false when absent, true for <c>design</c>; any other value is a usage error (adr-42: review slots stay first-party).</summary>
-        private bool SlotFlag(string label)
-        {
-            if (!c.Opts.Has("slot"))
-            {
-                return false;
-            }
-
-            if (OptText("slot") != "design")
-            {
-                throw new RosterFailure($"{label}: --slot accepts only design — review slots stay first-party");
-            }
-
-            return true;
-        }
-
-        /// <summary><c>--slot design</c> needs a design-class role with routes: the opt-in holds only for items in those routes.</summary>
-        private static void CheckSlot(string label, Review review)
-        {
-            if (review.Cls != "design")
-            {
-                throw new RosterFailure($"{label}: --slot design needs a design-class role, and this one is {review.Cls}-class");
-            }
-
-            if (review.Raw.Get("routes") is not { IsText: true } routes || routes.AsString().Trim().Length == 0)
-            {
-                throw new RosterFailure($"{label}: --slot design needs routes — the opt-in holds only for items in the role's routes");
-            }
-        }
-
-        private void WriteOptInLine(string name, JsonObject state, Review review)
-        {
-            var plugin = state.Get("from") is { IsMap: true } f ? T(f.Member("plugin")) : string.Empty;
-            c.Stderr.Write(
-                $"ah roster: ⚠ opt-in: {name} ({Esc(plugin)}) may design items in pipeline runs, for its routes \"{Esc(review.Raw.Get("routes"))}\"; its specs are what the first-party reviewer checks against\n");
-        }
-
-        private JsonObject ReadyState(string who, JsonValue from)
-        {
-            var state = _config.PackRoleStateJson(from, JsonValue.Null);
-            if (!(state.Get("manifestRole") is { IsMap: true } mr) || mr.Member("error") is { IsTruthy: true } || !(state.Get("agentText") is { IsText: true }))
-            {
-                throw new RosterFailure(FailPackState(who, state));
-            }
-
-            return state;
-        }
-
-        private JsonValue SetFrom(string name)
-        {
-            var opts = c.Opts;
-            var dry = opts.IsTrue("dry-run");
-            foreach (var k in new[] { "class", "agent", "scaffold", "shell" })
-            {
-                if (opts.Has(k))
-                {
-                    throw new RosterFailure(
-                        $"role set {name}: --{k} can't be used with --from — a pack role's {(k == "scaffold" ? "agent file" : k)} comes from the pack. To change it, remove the role and define your own");
-                }
-            }
-
-            foreach (var k in new[] { "from", "pin", "label", "description", "routes", "model", "dispatch", "level" })
-            {
-                if (Valueless(k))
-                {
-                    throw new RosterFailure($"role set: --{k} needs a value");
-                }
-            }
-
-            var slot = SlotFlag($"role set {name} --from");
-            if (!dry)
-            {
-                RefuseTrustCommitHere($"role set {name} --from");
-            }
-
-            if (!dry && OptText("pin") is null)
-            {
-                throw new RosterFailure($"role set {name} --from: committing needs --pin <the pin the dry run printed> — run it with --dry-run first");
-            }
-
-            var builtin = _config.IsBuiltinRole(name);
-            if (builtin)
-            {
-                foreach (var k in new[] { "label", "description", "routes" })
-                {
-                    if (opts.Has(k))
-                    {
-                        throw new RosterFailure($"role set {name}: --{k} does not apply to a built-in role — only --model and --dispatch");
-                    }
-                }
-            }
-            else if (_config.RoleNameError(JsonValue.FromString(name)) is { IsTruthy: true } nameError)
-            {
-                throw new RosterFailure($"role set {name}: {T(nameError)}");
-            }
-
-            var fromFlag = OptText("from");
-            var parsed = _config.ParseFrom(fromFlag is null ? JsonValue.Null : JsonValue.FromString(fromFlag));
-            if (!parsed.IsMap)
-            {
-                var shown = fromFlag is null ? "undefined" : JsonText.Quote(fromFlag);
-                throw new RosterFailure($"role set {name}: --from must be <plugin>@<marketplace>:<role>, got {shown}");
-            }
-
-            var plugin = T(parsed.Member("plugin"));
-            var role = T(parsed.Member("role"));
-            string marketplace;
-            if (parsed.Member("marketplace") is { IsTruthy: true } given)
-            {
-                marketplace = T(given);
-            }
-            else
-            {
-                var offering = _config.InstallRecordList()
-                    .Where(r => IsText(r.Member("plugin"), plugin))
-                    .Select(r => T(r.Member("marketplace")))
-                    .Distinct(StringComparer.Ordinal)
-                    .ToList();
-                if (offering.Count == 0)
-                {
-                    throw new RosterFailure($"role set {name}: plugin {plugin} is not installed");
-                }
-
-                if (offering.Count > 1)
-                {
-                    throw new RosterFailure(
-                        $"role set {name}: plugin {plugin} is offered by {offering.Count} marketplaces ({string.Join(", ", offering)}) — name one: --from {plugin}@<marketplace>:{role}");
-                }
-
-                marketplace = offering[0];
-            }
-
-            var from = $"{plugin}@{marketplace}:{role}";
-            var state = ReadyState($"role set {name} --from {from}", from);
-            var defined = PackVerbs.LevelOfScope(Sources.Get(name));
-            string level;
-            if (OptText("level") is { } lg)
-            {
-                level = RequireLevel(lg);
-            }
-            else
-            {
-                level = defined is { IsText: true } dl && dl.AsString() != "shipped" ? dl.AsString() : "global";
-            }
-
-            var path = _files.PathOf(level);
-            var data = _files.Read(path);
-            var layer = Layer(data);
-            var atLevel = RowAt(layer, name);
-            if (atLevel is not null && !(_config.IsFromRow(atLevel) && IsText(atLevel.Get("from"), from)))
-            {
-                var by = _config.IsFromRow(atLevel) ? $"from {T(atLevel.Get("from"))}" : "by a row of its own";
-                throw new RosterFailure($"role set {name}: {name} is already defined at level \"{level}\" ({path}) {by} — pick another name or remove it first");
-            }
-
-            var row = new JsonObject { ["from"] = from };
-            if (atLevel is not null)
-            {
-                foreach (var k in atLevel.Keys)
-                {
-                    if (k is not ("from" or "pin" or "slots"))
-                    {
-                        row[k] = atLevel[k];
-                    }
-                }
-            }
-
-            foreach (var k in new[] { "label", "description", "routes", "model", "dispatch" })
-            {
-                if (OptText(k) is { } v)
-                {
-                    row[k] = v;
-                }
-            }
-
-            CheckDispatch(name, row);
-            if (builtin && row.Get("model") is { } bm)
-            {
-                CheckModelAllowed(name, _config.RoleClass(name, null) ?? string.Empty, bm);
-            }
-
-            var review = PackReview(name, state, row);
-            var agent = T(review.Raw.Get("agent"));
-            CheckOwner(name, agent);
-            if (slot)
-            {
-                CheckSlot($"role set {name} --from", review);
-                row["slots"] = new JsonArray { "design" };
-            }
-
-            WriteToolLines(review);
-            if (slot && dry)
-            {
-                WriteOptInLine(name, state, review);
-            }
-            else if (dry && atLevel?.Get("slots") is not null)
-            {
-                c.Stderr.Write("ah roster: design opt-in will be dropped; add --slot design to keep it\n");
-            }
-
-            if (review.Findings.Count > 0)
-            {
-                c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");
-            }
-
-            if (review.Details.Get("unattended") is { IsTruthy: true } unattended)
-            {
-                c.Stderr.Write($"ah roster: {name} {T(unattended)}\n");
-            }
-
-            foreach (var w in review.Warnings)
-            {
-                c.Warn(w);
-            }
-
-            var pin = T(state.Get("pin"));
-            var shownRow = row.Clone();
-            shownRow["pin"] = pin;
-            var warningArray = new JsonArray();
-            foreach (var w in review.Warnings)
-            {
-                warningArray.Add(w);
-            }
-
-            var result = new JsonObject
-            {
-                ["level"] = level,
-                ["path"] = path,
-                ["role"] = name,
-                ["from"] = from,
-                ["row"] = shownRow,
-                ["pack"] = review.Details,
-                ["findings"] = review.Findings,
-                ["warnings"] = warningArray,
-                ["pin"] = pin,
-            };
-            if (dry)
-            {
-                var dryResult = new JsonObject { ["dry_run"] = true };
-                RosterJson.Spread(dryResult, result);
-                return dryResult;
-            }
-
-            if (OptText("pin") != pin)
-            {
+                var pack = PackUpdates.PackKeyOf(Roles.Get(name)) ?? "<plugin>@<marketplace>";
                 throw new RosterFailure(
-                    $"role set {name} --from: --pin {OptText("pin")} doesn't match what is installed now ({pin}) — nothing was written. Run --dry-run again and review what changed");
+                    $"role remove {name}: no config row for it{(level is null ? string.Empty : $" at level \"{level}\" ({path})")} to remove — roster {roster}'s pack supplies it; to drop the pack: ah roster roster pack {roster} --remove {pack}");
             }
 
-            if (_config.HasContractErrors(review.Findings))
+            var layerNext = layer.Clone();
+            var kept = RowAt(layerNext, name)!.Clone();
+            var legacyBuiltin = _config.IsBuiltinRole(name) && _config.IsFromRow(kept);
+            if (legacyBuiltin)
             {
-                throw new RosterFailure($"role set {name} --from: errors stand (above) — nothing was written");
+                // A legacy built-in row's model, dispatch and peer still apply under the pack (OverDefaults), so only its pack keys go.
+                foreach (var key in new[] { "agent", "from", "pin", "slots" })
+                {
+                    kept.Remove(key);
+                }
             }
 
-            var manifestRaw = state.Get("manifestRole")!.Value.Member("raw") is { IsMap: true } mraw ? mraw.AsObject() : new JsonObject();
-            WriteStoredCopy(pin, manifestRaw, T(state.Get("agentText")), state.Get("files") ?? new JsonArray(), name, slot);
-            var stored = row.Clone();
-            stored["pin"] = pin;
-            WriteRoles(path, data, With(layer, name, stored));
-            var written = new JsonObject { ["written"] = true };
-            RosterJson.Spread(written, result);
-            return written;
+            // An empty row would still shadow a wider level's row for this role under whole-row precedence.
+            if (!legacyBuiltin || kept.Count == 0)
+            {
+                layerNext.Remove(name);
+            }
+            else
+            {
+                layerNext[name] = kept;
+            }
+
+            var write = data.Clone();
+            write["roles"] = layerNext;
+            _files.Write(path!, write);
+            return new JsonObject { ["removed"] = name, ["level"] = level!, ["path"] = path!, ["override_only"] = false };
         }
 
-        /// <summary><c>role set</c> on a row already adopted from a pack: only the user's own fields change; the pin stays.</summary>
-        private JsonValue SetAdoptedFields(string name, string level, string path, JsonObject data, JsonObject? layer, JsonObject atLevel, bool dry, bool builtin)
+        /// <summary>The roster whose packs supply <paramref name="name"/> (ah2-698 D3: its source is <c>roster:&lt;name&gt;</c>), or null.</summary>
+        private string? RosterOf(string name) =>
+            Sources.Get(name) is { IsText: true } s && s.AsString().StartsWith("roster:", StringComparison.Ordinal) ? s.AsString()["roster:".Length..] : null;
+
+        /// <summary>
+        /// <c>role set</c> on a row already adopted from a pack, or on a role a roster's pack supplies (<paramref name="atLevel"/> then
+        /// the user's plain row or null): only the user's own fields change; a pin stays, and none is added.
+        /// </summary>
+        private JsonValue SetAdoptedFields(string name, string level, string path, JsonObject data, JsonObject? layer, JsonObject? atLevel, string from, bool dry, bool builtin)
         {
             var opts = c.Opts;
             foreach (var k in new[] { "class", "agent", "scaffold", "shell" })
             {
                 if (opts.Has(k))
                 {
-                    throw new RosterFailure(
-                        $"role set {name}: --{k} can't change a role adopted from a pack ({T(atLevel.Get("from"))}) — remove it and define your own role to change that");
+                    throw new RosterFailure(RosterOf(name) is { } roster
+                        ? $"role set {name}: --{k} can't change a role supplied by a pack ({from}) — to drop the pack: ah roster roster pack {roster} --remove {(from.LastIndexOf(':') is > 0 and var cut ? from[..cut] : "<plugin>@<marketplace>")}"
+                        : $"role set {name}: --{k} can't change a role adopted from a pack ({from}) — remove it and define your own role to change that");
                 }
             }
 
-            var row = atLevel.Clone();
+            var row = atLevel?.Clone() ?? new JsonObject();
             foreach (var k in new[] { "label", "description", "routes", "model", "dispatch" })
             {
                 if (OptText(k) is { } v)
@@ -1544,7 +1077,8 @@ internal static class RoleVerbs
             }
 
             CheckDispatch(name, row);
-            var expanded = _config.ExpandFromRow(row);
+            var fromRow = _config.IsFromRow(row);
+            var expanded = fromRow ? _config.ExpandFromRow(row) : new JsonObject();
             if (expanded.Get("error") is { IsTruthy: true } error)
             {
                 throw new RosterFailure($"role set {name}: {T(error)}");
@@ -1557,7 +1091,7 @@ internal static class RoleVerbs
                     CheckModelAllowed(name, _config.RoleClass(name, null) ?? string.Empty, model);
                 }
             }
-            else
+            else if (fromRow)
             {
                 var check = _config.CheckCustomRow(name, expanded.Get("raw") ?? new JsonObject());
                 if (check.Get("error") is { IsTruthy: true } ce)
@@ -1580,264 +1114,11 @@ internal static class RoleVerbs
             return written;
         }
 
-        /// <summary>
-        /// A line diff of two texts: the system <c>diff -u</c> of two files named <c>trusted</c> and <c>installed</c>, else both
-        /// texts in full when there is no process runner, no <c>diff</c>, or it fails.
-        /// </summary>
-        private string TextDiff(string before, string after)
-        {
-            if (before == after)
-            {
-                return string.Empty;
-            }
-
-            var full = $"--- trusted\n{before}\n+++ installed\n{after}";
-            if (c.Services.Launch?.Processes is not { } runner)
-            {
-                return full;
-            }
-
-            DirectoryInfo? dir = null;
-            try
-            {
-                dir = Directory.CreateTempSubdirectory("ah-trust-");
-                var trusted = Path.Combine(dir.FullName, "trusted");
-                var installed = Path.Combine(dir.FullName, "installed");
-                var utf8 = new System.Text.UTF8Encoding(false);
-                File.WriteAllText(trusted, before, utf8);
-                File.WriteAllText(installed, after, utf8);
-                var result = runner.Run(new ProcessRequest(["diff", "-u", trusted, installed]));
-                return result.ExitCode switch
-                {
-                    0 => string.Empty,
-                    1 => utf8.GetString(result.Stdout.Span),
-                    _ => full,
-                };
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return full;
-            }
-            finally
-            {
-                try
-                {
-                    dir?.Delete(recursive: true);
-                }
-                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-                {
-                    // the directory is under the temp dir and holds only the two copies
-                }
-            }
-        }
-
-        internal JsonValue Trust(string? name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new RosterFailure("role trust needs a role name: role trust <name> (--dry-run | --pin sha256:…)");
-            }
-
-            var opts = c.Opts;
-            var dry = opts.IsTrue("dry-run");
-            if (Valueless("pin"))
-            {
-                throw new RosterFailure("role trust: --pin needs a value");
-            }
-
-            var slot = SlotFlag($"role trust {name}");
-            if (!dry)
-            {
-                RefuseTrustCommitHere($"role trust {name}");
-            }
-
-            if (!dry && OptText("pin") is null)
-            {
-                throw new RosterFailure($"role trust {name}: committing needs --pin <the pin the dry run printed> — run it with --dry-run first");
-            }
-
-            var excluded = Reg.Get("excludedRoles") is { IsArray: true } ex
-                ? ex.AsArray().FirstOrDefault(e => IsText(e.Member("name"), name))
-                : default;
-            var scope = Sources.Get(name) is { IsTruthy: true } s ? s : excluded.IsMap ? excluded.Member("scope") : null;
-            var defined = PackVerbs.LevelOfScope(scope);
-            string level;
-            if (OptText("level") is { } given)
-            {
-                level = RequireLevel(given);
-            }
-            else if (defined is { IsText: true } dl && dl.AsString() != "shipped")
-            {
-                level = dl.AsString();
-            }
-            else
-            {
-                throw new RosterFailure($"role trust {name}: it is not defined at any level");
-            }
-
-            var path = _files.PathOf(level);
-            var data = _files.Read(path);
-            var layer = Layer(data);
-            var row = RowAt(layer, name);
-            if (row is null || !_config.IsFromRow(row))
-            {
-                throw new RosterFailure($"role trust {name}: it isn't adopted from a pack at level \"{level}\" ({path}) — role trust works only on a row set with --from");
-            }
-
-            var state = ReadyState($"role trust {name}", row.Get("from") ?? JsonValue.Null);
-            var review = PackReview(name, state, row);
-            if (slot)
-            {
-                CheckSlot($"role trust {name}", review);
-            }
-
-            var stored = _config.StoredCopy(row.Get("pin"));
-            JsonObject changes;
-            var now = state.Get("manifestRole")!.Value.Member("raw") is { IsMap: true } nr ? nr.AsObject() : new JsonObject();
-            var nowFiles = state.Get("files") is { IsArray: true } nf ? nf.AsArray() : new JsonArray();
-            if (stored.IsMap)
-            {
-                var storedRow = stored.Member("row") is { IsMap: true } sr ? sr.AsObject() : new JsonObject();
-                var keys = storedRow.Keys.Concat(now.Keys).Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal).ToList();
-                var fields = new JsonArray();
-                foreach (var k in keys)
-                {
-                    var a = storedRow.Get(k);
-                    var b = now.Get(k);
-                    var sa = a is { } av ? JsonText.Stringify(av, 0) : "undefined";
-                    var sb = b is { } bv ? JsonText.Stringify(bv, 0) : "undefined";
-                    if (sa == sb)
-                    {
-                        continue;
-                    }
-
-                    JsonValue Show(JsonValue? v) => v is { IsText: true } t ? Esc(t) : v ?? JsonValue.Null;
-                    fields.Add(new JsonObject { ["field"] = k, ["trusted"] = Show(a), ["installed"] = Show(b) });
-                }
-
-                var before = Pairs(stored.Member("files"));
-                var after = Pairs(nowFiles);
-                var added = after.Keys.Where(p => !before.ContainsKey(p)).Select(p => (JsonValue)Esc(p)).ToList();
-                var removed = before.Keys.Where(p => !after.ContainsKey(p)).Select(p => (JsonValue)Esc(p)).ToList();
-                var changed = after.Keys.Where(p => before.TryGetValue(p, out var h) && h != after[p]).Select(p => (JsonValue)Esc(p)).ToList();
-                changes = new JsonObject
-                {
-                    ["stored_copy"] = true,
-                    ["fields_changed"] = fields,
-                    ["agent_diff"] = Esc(TextDiff(T(stored.Member("agentText")), T(state.Get("agentText")))),
-                    ["files"] = new JsonObject { ["added"] = ToArray(added), ["removed"] = ToArray(removed), ["changed"] = ToArray(changed) },
-                };
-            }
-            else
-            {
-                var all = new JsonArray();
-                foreach (var f in nowFiles)
-                {
-                    all.Add(Esc(f.IsArray && f.AsArray().Count > 0 ? f.AsArray()[0] : f));
-                }
-
-                changes = new JsonObject
-                {
-                    ["stored_copy"] = false,
-                    ["note"] = "no stored copy of what was trusted is on this machine, so the whole agent file and every file are shown",
-                    ["fields"] = Shown(state.Get("manifestRole")!.Value.Member("raw")),
-                    ["agent_text"] = Esc(state.Get("agentText")),
-                    ["files"] = new JsonObject { ["all"] = all },
-                };
-            }
-
-            WriteToolLines(review);
-            if (dry && slot)
-            {
-                WriteOptInLine(name, state, review);
-            }
-            else if (dry && row.Get("slots") is not null)
-            {
-                c.Stderr.Write("ah roster: design opt-in will be dropped; add --slot design to keep it\n");
-            }
-
-            if (review.Findings.Count > 0)
-            {
-                c.Stderr.Write($"{Esc(_config.FormatFindings(review.Findings))}\n");
-            }
-
-            var pin = T(state.Get("pin"));
-            var result = new JsonObject
-            {
-                ["level"] = level,
-                ["path"] = path,
-                ["role"] = name,
-                ["from"] = row.Get("from") ?? JsonValue.Null,
-                ["pinned"] = row.Get("pin") is { IsTruthy: true } rp ? rp : JsonValue.Null,
-            };
-            RosterJson.Spread(result, changes);
-            result["pack"] = review.Details;
-            result["findings"] = review.Findings;
-            result["pin"] = pin;
-            if (dry)
-            {
-                var dryResult = new JsonObject { ["dry_run"] = true };
-                RosterJson.Spread(dryResult, result);
-                return dryResult;
-            }
-
-            if (OptText("pin") != pin)
-            {
-                throw new RosterFailure(
-                    $"role trust {name}: --pin {OptText("pin")} doesn't match what is installed now ({pin}) — nothing was written. Run --dry-run again and review what changed");
-            }
-
-            if (_config.HasContractErrors(review.Findings))
-            {
-                throw new RosterFailure($"role trust {name}: errors stand (above) — nothing was written");
-            }
-
-            WriteStoredCopy(pin, now, T(state.Get("agentText")), state.Get("files") ?? new JsonArray(), name, slot);
-            var pinned = row.Clone();
-            pinned["pin"] = pin;
-            if (slot)
-            {
-                pinned["slots"] = new JsonArray { "design" };
-            }
-            else
-            {
-                pinned.Remove("slots");
-            }
-            WriteRoles(path, data, With(layer, name, pinned));
-            var written = new JsonObject { ["written"] = true };
-            RosterJson.Spread(written, result);
-            return written;
-        }
-
-        private static Dictionary<string, string> Pairs(JsonValue? files)
-        {
-            var map = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (files is { IsArray: true } list)
-            {
-                foreach (var pair in list.AsArray())
-                {
-                    if (pair.IsArray && pair.AsArray().Count >= 2)
-                    {
-                        map[T(pair.AsArray()[0])] = T(pair.AsArray()[1]);
-                    }
-                }
-            }
-
-            return map;
-        }
-
         private static JsonArray CopyArray(JsonArray source)
         {
             var copy = new JsonArray();
             copy.AddRange(source);
             return copy;
-        }
-
-        private static JsonArray ToArray(IEnumerable<JsonValue> values)
-        {
-            var array = new JsonArray();
-            array.AddRange(values);
-            return array;
         }
     }
 }

@@ -4,6 +4,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.68] - 2026-11-26
+
+Installing a role pack is now the whole trust decision. This release finishes the change 2.0.67 began.
+
+### Removed
+
+- `ah roster role trust`, `ah roster role set --from`, `--pin` and `--slot`. Each answers with a pointer: give a roster its packs with `ah roster init --pack` or `ah roster roster pack <name> --add`.
+- The pin as a gate, the stored trusted copy, the `pack-changed` and `pack-untrusted-here` states, the design-slot opt-in, and the trust refusal on a roster kit import.
+
+### Changed
+
+- ah's checks on a pack's agent file (frontmatter, tools list, an MCP server grant, the class contract) are warnings in `role list` and `pack show`. A pack role is unavailable only when the pack is missing, structurally invalid, or installed twice with differences.
+- A pack manifest may name a role after a built-in, such as `reviewer` or `architect`. Under a roster that names the pack, that role replaces the built-in's agent; the user's model and dispatch settings stay. `orchestrator` stays reserved.
+- A pack update is reported, not blocked: `role list` shows `updated`, doctor shows a `pack-updated` row, and the team's Orchestrator gets one mail.
+- `role set` and `role remove` work on a role a roster's pack supplies: they write or remove a row holding only the user's own fields, at the level that row already lives.
+- A role adopted before 2.0.67 still resolves; its pin is ignored. If its pack is no longer installed it is excluded as `pack-missing`.
+
+### Docs
+
+- The role pack sections of `custom-roles.md`, `rosters.md`, `cli-tools.md` and `troubleshooting.md` are rewritten for packs on rosters.
+
 ## [2.0.67] - 2026-11-26
 
 ### Added

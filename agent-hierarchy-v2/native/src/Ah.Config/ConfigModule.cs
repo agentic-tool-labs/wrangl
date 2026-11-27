@@ -372,6 +372,9 @@ public interface IConfigCore
 
     string UserConfigPath();
 
+    /// <summary><c>~/.claude/ah2/packs-seen.json</c>: the machine-wide record of each role pack as last seen (ah2-698 D6).</summary>
+    string PacksSeenPath();
+
     string? ProjectConfigPath(JsonValue? cwd);
 
     /// <summary>The checkout a cwd is in: a linked worktree's main checkout, else the enclosing git checkout, else null.</summary>
@@ -518,20 +521,14 @@ public interface IConfigCore
     /// <summary><c>packDigest</c>: a tree's content digest.</summary>
     string PackDigest(JsonArray files);
 
-    /// <summary><c>readStoredCopy</c>: this machine's stored copy for a pin, or JSON null.</summary>
-    JsonValue StoredCopy(JsonValue? pin);
-
-    /// <summary>Whether a pack row's design-slot opt-in holds: its <c>slots</c> and this machine's stored copy for its pin agree (adr-42).</summary>
-    bool DesignOptInHolds(string role, JsonValue? entry);
-
     /// <summary><c>packNameClaims</c>: <c>{error, byRole, files}</c>, the two maps as objects in the order their entries were found.</summary>
     JsonObject PackNameClaimsJson(string dir, JsonValue? manifest);
 
     /// <summary><c>packClaimMessage</c>: the finding for agent files that take a pack agent's name.</summary>
     string PackClaimMessage(string plugin, string agent, IReadOnlyList<string> files);
 
-    /// <summary><c>packRoleState</c>: pack role <paramref name="from"/> as installed now, checked against <paramref name="pin"/>.</summary>
-    JsonObject PackRoleStateJson(JsonValue? from, JsonValue? pin);
+    /// <summary><c>packRoleState</c>: pack role <paramref name="from"/> as installed now.</summary>
+    JsonObject PackRoleStateJson(JsonValue? from);
 
     /// <summary><c>expandFromRow</c>: a <c>from</c> row expanded into the full row resolution checks, <c>{raw, pack}</c> or <c>{error}</c>.</summary>
     JsonObject ExpandFromRow(JsonObject entry);

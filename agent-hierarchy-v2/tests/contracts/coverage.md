@@ -90,7 +90,7 @@ Every row has at least one case.
 | roster | adopt | 1 | 0 |  |
 | roster | checkin | 1 | 0 |  |
 | roster | whoami | 1 | 0 |  |
-| roster | role (set|trust) | 1 | 2 | **gap: only refusals recorded** |
+| roster | role (list|set|remove) | 1 | 2 | **gap: only refusals recorded** |
 | roster | pack (list|show) | 1 | 0 |  |
 | roster | doctor | 1 | 0 |  |
 | roster | deliver | 1 | 2 | no success case: its working path needs a real guarded binary |

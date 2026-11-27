@@ -1114,12 +1114,16 @@
   {
     "cli": "roster",
     "verb": "role",
-    "sub_verbs": "set|trust",
+    "sub_verbs": "list|set|remove",
     "family": "roster:config",
     "unit": "roster:config",
     "flags": [
       {
-        "name": "from",
+        "name": "class",
+        "kind": "value"
+      },
+      {
+        "name": "agent",
         "kind": "value"
       },
       {
@@ -1143,16 +1147,36 @@
         "kind": "value"
       },
       {
+        "name": "shell",
+        "kind": "value"
+      },
+      {
+        "name": "params",
+        "kind": "value"
+      },
+      {
+        "name": "writes",
+        "kind": "value"
+      },
+      {
         "name": "level",
         "kind": "value"
       },
       {
-        "name": "pin",
+        "name": "scaffold",
         "kind": "value"
       },
       {
         "name": "dry-run",
         "kind": "bool"
+      },
+      {
+        "name": "json",
+        "kind": "bool"
+      },
+      {
+        "name": "roster",
+        "kind": "value"
       },
       {
         "name": "cwd",

@@ -5,7 +5,7 @@ namespace Ah.Cli.Tests;
 /// <summary>Role-writing verbs are refused to a member session and stay open to a plain one.</summary>
 public sealed partial class RosterOwnerGuardTests
 {
-    public static TheoryData<string> RoleWrites() => ["set", "remove", "trust"];
+    public static TheoryData<string> RoleWrites() => ["set", "remove"];
 
     [Theory]
     [MemberData(nameof(RoleWrites))]

@@ -1,23 +1,22 @@
 # role packs — agent-role reference
 
-Read this to install, update, uninstall, adopt from or trust a role pack, or when a role shows `UNAVAILABLE` with a `pack-*` reason.
+Read this to install, update or uninstall a role pack, or when a role shows `UNAVAILABLE` with a `pack-*` reason.
 
 Contents
 
 - install <source>
-- adopt
 - update <plugin>
-- trust <name>
 - uninstall <plugin>
+- legacy rows
 - `pack-*` reasons
 
 A role pack is a Claude Code plugin that also carries `ah-roles.json`. Claude
-Code installs, updates and removes it; ah adopts its roles one at a time and
-pins each to the exact content the user reviewed. `docs/custom-roles.md`
-§ Role packs has the format. Show every `claude plugin …` command to the user
-before running it; their permission settings govern it. An adopted row holds
-only `from`, `pin` and the user's own fields: its class and agent come from
-the pack, so edit can't change them (remove it and define your own instead).
+Code installs, updates and removes it. Installing it is the trust decision
+(adr-46): ah has no adopt or trust step. A roster names its packs, and every
+role of those packs is a role of any team built from that roster; a pack role
+named after a built-in replaces that built-in's agent there.
+`docs/custom-roles.md` § Role packs has the format. Show every `claude plugin …`
+command to the user before running it; their permission settings govern it.
 
 **install <source>** — a git URL, `owner/repo`, or a local directory:
 1. `claude plugin marketplace add <source>`.
@@ -33,7 +32,7 @@ the pack, so edit can't change them (remove it and define your own instead).
 4. `claude plugin install <plugin>@<marketplace> --scope user`, then
    `R pack show <plugin>@<marketplace> --json` and compare its `digest` with
    step 2's. If they differ, tell the user that what got installed isn't what
-   they reviewed, offer to uninstall it, and adopt nothing.
+   they reviewed, and offer to uninstall it.
 5. Offer to add the pack to a roster (`R roster roster pack <name> --add
    <plugin>@<marketplace>`), or to create one with it (`R roster init --level
    <L> --route peer --roster <name> --pack <plugin>@<marketplace>`). Every
@@ -41,44 +40,37 @@ the pack, so edit can't change them (remove it and define your own instead).
 6. Say that sessions already running need a restart to dispatch the new
    agents as subagents; peers spawned from now on are fine.
 
-**adopt** — one role, `<name>` chosen by the user (it may differ from the
-pack's name; a built-in's name replaces that built-in's agent):
-1. `R role set <name> --from <plugin>@<marketplace>:<role> --dry-run` (add
-   `--level` and the user's own `--label`/`--description`/`--routes`/`--model`
-   if they gave any). Show the fields, the findings, the tools with their
-   flags, "also in this plugin", the unattended-runs line when there is one,
-   and the pin.
-2. Errors → say so and stop; a pack's file is never edited.
-3. Commit with exactly the printed pin: `R role set <name> --from … --pin
-   <pin>`. The user approves it in Claude Code's own prompt; it is refused in
-   role, peer and subagent sessions and while a pipeline run is live.
-
 **update <plugin>**:
 1. `claude plugin marketplace update <marketplace>`, then `claude plugin update
    <plugin>@<marketplace>`.
 2. `R pack show <plugin>@<marketplace>`.
-3. Any change in the plugin makes every role adopted from it `pack-changed`.
-   For each, run **trust**, and ask: trust, leave it unavailable, or remove
-   the role.
-
-**trust <name>**: `R role trust <name> --dry-run` shows the field changes,
-the agent file diff, and the files added, removed and changed since it was
-trusted (the whole file and file list when this machine has no stored copy).
-Show all of it, then commit with the printed pin: `R role trust <name> --pin
-<pin>` (approved like adopt). The user's own fields survive.
+3. Nothing needs re-approving: the update is reported, never blocking. It
+   takes effect at each member's next start.
 
 **uninstall <plugin>**:
-1. List the roles adopted from it (`R role list --json`, rows whose `from`
-   starts with `<plugin>@`).
-2. Ask: remove those roles too (Recommended), or keep them (they become
-   unavailable, `pack-missing`).
-3. `R role remove <name>` for each chosen; if roster members still use one,
-   name the roster and point at `/wrangl:agent-roster`.
+1. List where it is used: `R pack list` shows, for each role, the rosters
+   that name the pack and any legacy rows.
+2. Ask: remove the pack from those rosters too (Recommended), or keep it
+   listed (its roles are then absent from those rosters, with a warning).
+3. `R roster roster pack <roster> --remove <plugin>@<marketplace>` for each
+   roster chosen, and `R role remove <name>` for each legacy row; if roster
+   members still use one of its roles, name the roster and point at
+   `/wrangl:agent-roster`.
 4. `claude plugin uninstall <plugin>@<marketplace>`, and optionally `claude
    plugin marketplace remove <marketplace>`.
 
-An adopted role shows `UNAVAILABLE` in `role list` with one of these reasons:
-`pack-missing` (not installed, or the role is gone), `pack-invalid`,
-`pack-ambiguous` (two installs of the plugin differ), `pack-symlink`,
-`pack-changed` (run trust), or `pack-untrusted-here` (nobody on this machine
-trusted it yet; run trust).
+**legacy rows** — a roles row with `from` (adopted before adr-46) keeps
+working; its `pin` and `slots` are ignored. Moving to the roster form is
+optional: `R roster roster pack <roster> --add <plugin>@<marketplace>`, then
+`R role remove <name>` for each legacy row of the same name. A renamed legacy
+row (its name isn't the pack role's) needs its roster members renamed with
+`roster edit`; ah does not do it. `~/.claude/ah2/trusted/` is no longer read
+and may be deleted.
+
+A pack role shows `UNAVAILABLE` in `role list` with one of these reasons:
+`pack-missing` (not installed, or the role is gone), `pack-invalid` (the
+manifest or the role's class is unusable, or its agent file is missing), or
+`pack-ambiguous` (two installs of the plugin differ: uninstall all but one).
+Anything else wrong with a pack agent (its frontmatter, its `tools` list, an
+MCP server grant, its class contract) is a warning in `role list` and
+`pack show`, and the role stays.

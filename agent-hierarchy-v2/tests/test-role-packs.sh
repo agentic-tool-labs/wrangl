@@ -1,7 +1,6 @@
 #!/bin/bash
-# agent-hierarchy — role packs: plugins that carry ah-roles.json, adopted one role at a time with
-# `role set --from`, pinned over the whole plugin tree, re-trusted with `role trust`, inspected with
-# `pack list|show`, gated at commit, and kept out of pipeline gate slots and bypassPermissions.
+# agent-hierarchy — role packs: plugins that carry ah-roles.json, inspected with `pack list|show`, their roles
+# reached through legacy `from` rows (the pin ignored, adr-46) and spawned in any slot.
 # HOME-redirected with a fake installed_plugins.json pointing at sandbox plugin dirs.
 # Usage: bash tests/test-role-packs.sh   (exits 0 iff all cases pass)
 
@@ -18,7 +17,7 @@ SANDBOX="$(mktemp -d "${TMPDIR:-/tmp}/agent-hierarchy-role-packs-test.XXXXXX")"
 [ -n "$SANDBOX" ] && [ -d "$SANDBOX" ] || { echo "mktemp failed"; exit 1; }
 hermetic_on_exit 'rm -rf "$SANDBOX"'
 SANDBOX="$(cd "$SANDBOX" && pwd -P)"
-# A trust commit also checks the process's own cwd for a live pipeline run; the checkout this runs from may have a real one.
+# Run from the sandbox, so nothing reads the state of the checkout this runs from.
 cd "$SANDBOX" || exit 1
 # No test may reach the real herdr or tmux: a stub that fails every call sits first on PATH (a failing herdr or tmux is what a
 # machine without a running multiplexer gives), and the guard in lib-hermetic.sh is told it is a fake.
@@ -102,29 +101,22 @@ fresh() {
   installed "{\"pk@mk\":[\"$PACKS/a\"]}"
 }
 
-# <name> <from> [flags…]: adopt through the dry run's pin; the pin lands in PIN.
+# <name> <from> [--level repo] [--<field> <value>…]: a legacy `from` row written into the level file (adr-46: no adopt verb).
 adopt() {
-  local name=$1 from=$2; shift 2
-  rm_ role set "$name" --from "$from" --dry-run "$@"
-  PIN=$(jget o.pin)
-  rm_ role set "$name" --from "$from" --pin "$PIN" "$@"
+  local name=$1 from=$2 cfg=$GLOBAL_CFG fields=""; shift 2
+  while [ $# -gt 0 ]; do
+    if [ "$1" = --level ] && [ "$2" = repo ]; then cfg=$REPO_CFG; else fields="$fields, ${1#--}: \"$2\""; fi
+    shift 2
+  done
+  mutate "$cfg" "d.roles = d.roles || {}; d.roles[\"$name\"] = {from: \"$from\"$fields}"
+  RC=0
 }
 
 # The role list row of <name> as JSON, in OUT.
 rolerow() { rm_ role list --json; OUT=$(node -e 'const o=JSON.parse(process.argv[1]);process.stdout.write(JSON.stringify(o.roles.find(r=>r.name===process.argv[2])||o.excluded.find(r=>r.name===process.argv[2])||null))' "$OUT" "$1"); }
 
-# Where the Orchestrator's routing reaches it at session start: the session-directive output's resident routing
-# line (ROUTED_LINE) and, in that session, `ah rules show routing` naming pk-impl's route (ROUTED_RULE), each yes or no.
-# The resident line is not per role: the shipped implement alternatives keep it with gd untrusted, so only ROUTED_RULE tells gd apart.
-routing() {
-  ah_test_always_on "$PROJ"
-  local out rules
-  out=$(printf '%s' '{"session_id":"rp","cwd":"'"$PROJ"'","hook_event_name":"SessionStart","source":"startup"}' | ah_test_in_harness env HOME="$FAKEHOME" sh "$PLUGIN/bin/ah-hook" session-directive 2>&1)
-  rules=$(CLAUDE_CODE_SESSION_ID=rp HOME="$FAKEHOME" "$PLUGIN/bin/ah" rules show routing --cwd "$PROJ" 2>&1)
-  ROUTED_LINE=no; [[ "$out" == *'`ah rules show routing` before choosing who builds'* ]] && ROUTED_LINE=yes
-  ROUTED_RULE=no; [[ "$rules" == *'for "pack scenes and scripts"'* ]] && ROUTED_RULE=yes
-  OUT="$out"$'\n'"$rules"
-}
+# The finding codes of the role list row in OUT, or the reason it was excluded.
+rowstate() { jget "o.reason || o.findings.filter(f => f.level === \"error\").map(f => f.code).join() || \"ok\""; }
 
 decision() { node -e 'try{const o=JSON.parse(process.argv[1]);process.stdout.write(o.hookSpecificOutput.permissionDecision)}catch{process.stdout.write("none")}' "$OUT"; }
 
@@ -154,50 +146,53 @@ bad() { # <dir> <js edit of the manifest object m>: a copy of pack a with its ma
 }
 showpath() { rm_ pack show --path "$1" --json; }
 roleerr() { jget "(o.roles.find(r => r.name === \"$1\") || {findings: []}).findings.map(f => f.code).join()"; }
+rolewarn() { jget "(o.roles.find(r => r.name === \"$1\") || {warnings: []}).warnings.join()"; }
 fresh
 bad "$PACKS/v2" 'm.version = 2'
 showpath "$PACKS/v2"
 check "P2 version other than 1 makes the whole pack unreadable (pack-version)" '[ $RC = 0 ] && [ "$(jget o.manifest.error.code)" = pack-version ] && [ "$(jget o.roles.length)" = 0 ]'
 bad "$PACKS/names" 'm.roles["Bad Name"] = {class: "implement"}; m.roles["reviewer"] = {class: "review"}'
 showpath "$PACKS/names"
-check "P2 a bad role name and a built-in role name are refused" '[ "$(roleerr "Bad Name")" = pack-invalid ] && [ "$(roleerr reviewer)" = pack-invalid ]'
+check "P2 a bad role name is refused, and a built-in's name is allowed (ah2-698 N1)" '[ "$(roleerr "Bad Name")" = pack-invalid ] && [ "$(jget "o.roles.find(r => r.name === \"reviewer\").agent")" = reviewer ] && [[ "$OUT" != *"is reserved"* ]]'
 bad "$PACKS/agents" 'm.roles["pk-impl"].agent = "other:pk-impl"; m.roles["pk-rev"].agent = "../pk-rev"; m.roles["pk-des"].agent = "sub/pk-des"'
 showpath "$PACKS/agents"
 check "P2 an agent containing :, .. or / is refused" '[ "$(roleerr pk-impl)" = pack-invalid ] && [ "$(roleerr pk-rev)" = pack-invalid ] && [ "$(roleerr pk-des)" = pack-invalid ]'
 bad "$PACKS/fields" 'm.roles["pk-impl"].description = "x".repeat(161); m.roles["pk-rev"].description = "two\nlines"; m.roles["pk-des"].routes = "has `tick`"'
 showpath "$PACKS/fields"
-check "P2 a field over 160 characters, with a newline or with a backtick is refused" '[ "$(roleerr pk-impl)" = pack-invalid ] && [ "$(roleerr pk-rev)" = pack-invalid ] && [ "$(roleerr pk-des)" = pack-invalid ]'
+check "P2 a field over 160 characters, with a newline or with a backtick is dropped with a warning, the role kept" \
+  '[ "$(roleerr pk-impl)" != pack-invalid ] && [[ "$(rolewarn pk-impl)" == *"description is dropped"* ]] && [[ "$(rolewarn pk-rev)" == *"description is dropped"* ]] && [[ "$(rolewarn pk-des)" == *"routes is dropped"* ]] && [ "$(jget "\"routes\" in o.roles.find(r => r.name === \"pk-des\").fields")" = false ]'
 bad "$PACKS/unknown" 'm.roles["pk-impl"].color = "red"; m.extra = 1'
 showpath "$PACKS/unknown"
 check "P2 an unknown key warns" '[ "$(roleerr pk-impl)" != pack-invalid ] && [[ "$(jget "o.roles[0].warnings.join()")" == *"unknown key \"color\""* ]] && [[ "$(jget "o.manifest.warnings.join()")" == *"unknown key \"extra\""* ]]'
 bad "$PACKS/hidden" 'm.roles["pk-impl"].description = "safe\u202Eevil"; m.roles["pk-rev"].routes = "tag\u{E0041}char"'
 printf -- '---\nname: pk-des\ndescription: Designs\xe2\x80\x8b things\nmodel: opus\ntools: Read, Grep, Write, SendMessage\n---\nBody.\n' > "$PACKS/hidden/agents/pk-des.md"
 showpath "$PACKS/hidden"
-check "P2 pack-hidden-chars: a bidi control and a tag character in a field, a zero-width character in the agent file" \
-  '[ "$(roleerr pk-impl)" = pack-hidden-chars ] && [ "$(roleerr pk-rev)" = pack-hidden-chars ] && [[ "$(roleerr pk-des)" == *pack-hidden-chars* ]]'
+check "P2 hidden characters: a bidi control and a tag character in a field drop it, a zero-width character in the agent file warns" \
+  '[[ "$(rolewarn pk-impl)" == *"description is dropped"* ]] && [[ "$(rolewarn pk-rev)" == *"routes is dropped"* ]] && [[ "$(roleerr pk-des)" == *pack-hidden-chars* ]] && [[ "$(roleerr pk-des)" != *pack-invalid* ]]'
 bad "$PACKS/hidden2" 'm.roles["pk-impl"].description = "sel\uFE00\uFE01\uFE0Fend"; m.roles["pk-rev"].routes = "line\u2028sep"; m.roles["pk-des"].description = "fill\u3164er"; m.roles["pk-leg"].description = "warn ⚠\uFE0F sign"'
 node -e 'const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace("You review pack changes.","abc\u{E0100}def"))' "$PACKS/hidden2/agents/pk-extra.md"
 node -e 'const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f,"---\nname: pk-extra\ndescription: not a role\ntools: Read\n---\nabc\u{E0100}def\n")' "$PACKS/hidden2/agents/pk-extra.md"
 showpath "$PACKS/hidden2"
-check "P2 pack-hidden-chars: variation selectors, U+2028, the U+3164 filler and an emoji written with U+FE0F in fields" \
-  '[ "$(roleerr pk-impl)" = pack-hidden-chars ] && [ "$(roleerr pk-rev)" = pack-hidden-chars ] && [ "$(roleerr pk-des)" = pack-hidden-chars ] && [ "$(roleerr pk-leg)" = pack-hidden-chars ]'
-check "P2 ... and the finding names the code point, line and column" '[[ "$(jget "o.roles.find(r => r.name === \"pk-impl\").findings[0].message")" == *"U+FE00 at line 1, column 4"* ]]'
+check "P2 hidden characters: variation selectors, U+2028, the U+3164 filler and an emoji written with U+FE0F drop their field" \
+  '[[ "$(rolewarn pk-impl)" == *"hidden character"* ]] && [[ "$(rolewarn pk-rev)" == *"hidden character"* ]] && [[ "$(rolewarn pk-des)" == *"hidden character"* ]] && [[ "$(rolewarn pk-leg)" == *"hidden character"* ]]'
+check "P2 ... and the warning names the code point, line and column" '[[ "$(rolewarn pk-impl)" == *"U+FE00 at line 1, column 4"* ]]'
 bad "$PACKS/hidden4" 'm.roles["pk-impl"].description = "braille\u2800blank"'
 showpath "$PACKS/hidden4"
-check "P2 pack-hidden-chars: the U+2800 braille blank in a field" '[ "$(roleerr pk-impl)" = pack-hidden-chars ]'
+check "P2 hidden characters: the U+2800 braille blank drops its field" '[[ "$(rolewarn pk-impl)" == *"hidden character"* ]]'
 rm -rf "$PACKS/hidden3"; cp -R "$PACKS/a" "$PACKS/hidden3"
 node -e 'const fs=require("fs");fs.writeFileSync(process.argv[1],"---\nname: pk-rev\ndescription: Reviews\nmodel: opus\ntools: Read, Grep, SendMessage\n---\nabc\u{E0100}def\n")' "$PACKS/hidden3/agents/pk-rev.md"
 showpath "$PACKS/hidden3"
-check "P2 a U+E0100 variation selector in the agent file is refused, at line 7, column 4" \
+check "P2 a U+E0100 variation selector in the agent file warns, at line 7, column 4" \
   '[[ "$(roleerr pk-rev)" == *pack-hidden-chars* ]] && [[ "$(jget "o.roles.find(r => r.name === \"pk-rev\").findings.map(f => f.message).join()")" == *"U+E0100 at line 7, column 4"* ]]'
 rm -rf "$PACKS/utf"; cp -R "$PACKS/a" "$PACKS/utf"; printf -- '---\nname: pk-impl\ndescription: bad \xff byte\nmodel: opus\ntools: Read, Edit, Write, Bash, SendMessage\n---\nBody.\n' > "$PACKS/utf/agents/pk-impl.md"
 installed "{\"pk@mk\":[\"$PACKS/utf\"]}"
-rm_ role set u1 --from pk@mk:pk-impl --dry-run
-check "P2 a non-UTF-8 agent file is refused" '[ $RC = 2 ] && [[ "$ERR" == *"not valid UTF-8"* ]]'
+adopt u1 pk@mk:pk-impl
+rolerow u1
+check "P2 a non-UTF-8 agent file warns, and the role stays available" '[ "$(rowstate)" = ok ] && [[ "$(jget "o.findings.map(f => f.message).join()")" == *"not valid UTF-8"* ]]'
 installed "{\"pk@mk\":[\"$PACKS/a\"]}"
 bad "$PACKS/ansi" 'm.roles["pk-impl"].description = "red \u001b[31mALERT\u001b[0m end"'
 rm_ pack show --path "$PACKS/ansi"
-check "P2 an ANSI sequence in a field prints escaped" '[ $RC = 0 ] && [[ "$OUT" == *"\\u{1b}[31mALERT"* ]] && ! printf "%s" "$OUT" | grep -q $'"'"'\x1b'"'"''
+check "P2 an ANSI sequence in a field drops it with a warning, and nothing raw reaches the terminal" '[ $RC = 0 ] && [[ "$OUT" == *"description is dropped"* ]] && ! printf "%s" "$OUT" | grep -q $'"'"'\x1b'"'"''
 rawctl() { printf "%s" "$OUT" | LC_ALL=C grep -q $'"'"'\x1b\|\xc2\x9b'"'"'; } # a raw ESC or C1 CSI in OUT
 rm -rf "$PACKS/pj"; cp -R "$PACKS/a" "$PACKS/pj"
 node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({name: "pk\u009b31m", version: "1.0\u001b[31m\u009b0m"}))' "$PACKS/pj/.claude-plugin/plugin.json"
@@ -212,114 +207,29 @@ rm_ pack list --json
 check "P2 ... and in pack list --json" '[ $RC = 0 ] && ! rawctl && [ "$(jget "o.packs[0].version")" = "1.0\\u{1b}[31m\\u{9b}0m" ]'
 installed "{\"pk@mk\":[\"$PACKS/a\"]}"
 
-# ================================================================ P3 role set --from
+# ================================================================ P3 a legacy from row
 fresh
-rm_ role set impl --from pk@mk:pk-impl --dry-run
-DRY_PIN=$(jget o.pin)
-check "P3 the dry run prints the pack's fields verbatim, and the pin" \
-  '[ $RC = 0 ] && [ "$(jget o.pack.fields.description)" = "Builds pack features" ] && [ "$(jget o.pack.fields.routes)" = "pack scenes and scripts" ] && [[ "$DRY_PIN" =~ ^sha256:[0-9a-f]{64}$ ]]'
-check "P3 an implement-class role with routes: the dry run prints the unattended-runs line" '[ "$(jget o.pack.unattended)" = "$LINE" ] && [[ "$ERR" == *"$LINE"* ]]'
-rm_ role set rev --from pk@mk:pk-rev --dry-run
-check "P3 ... and a role without that shape doesn't" '[ $RC = 0 ] && [ "$(jget "\"unattended\" in o.pack")" = false ]'
-rm_ role set impl --from pk@mk:pk-impl
-check "P3 a commit with no --pin is refused" '[ $RC = 2 ] && [[ "$ERR" == *"needs --pin"* ]] && [ ! -e "$GLOBAL_CFG" ]'
-rm_ role set impl --from pk@mk:pk-impl --pin "sha256:$(printf '0%.0s' {1..64})"
-check "P3 a commit with a stale pin is refused" '[ $RC = 2 ] && [[ "$ERR" == *"doesn'"'"'t match"* ]] && [ ! -e "$GLOBAL_CFG" ]'
-rm_ role set impl --from pk@mk:pk-impl --pin "$DRY_PIN" --model sonnet
-check "P3 a commit with the printed pin writes only from, pin and the flags passed" \
-  '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "JSON.stringify(Object.keys(d.roles.impl).sort()) === JSON.stringify([\"from\",\"model\",\"pin\"]) && d.roles.impl.from === \"pk@mk:pk-impl\" && d.roles.impl.pin === \"$DRY_PIN\""'
+adopt impl pk@mk:pk-impl --model sonnet --pin "sha256:$(printf '0%.0s' {1..64})"
 rolerow impl
-check "P3 resolution yields the manifest's class and <plugin>:<agent>, and the role is trusted" \
-  '[ "$(jget "o.class + \"/\" + o.agent + \"/\" + o.model + \"/\" + o.pin_state + \"/\" + o.from")" = "implement/pk:pk-impl/sonnet/trusted/pk@mk:pk-impl" ]'
-rm_ role set impl2 --from pk:pk-rev --dry-run
-check "P3 <plugin>:<role> expands when exactly one marketplace offers the plugin" '[ $RC = 0 ] && [ "$(jget o.from)" = "pk@mk:pk-rev" ]'
-installed "{\"pk@mk\":[\"$PACKS/a\"],\"pk@mk2\":[\"$PACKS/a\"]}"
-rm_ role set impl2 --from pk:pk-rev --dry-run
-check "P3 ... and is refused when two do" '[ $RC = 2 ] && [[ "$ERR" == *"2 marketplaces"* ]]'
+check "P3 a legacy row resolves to the manifest's class and <plugin>:<agent>, its stale pin ignored" \
+  '[ "$(jget "o.class + \"/\" + o.agent + \"/\" + o.model + \"/\" + o.from + \"/\" + o.legacy")" = "implement/pk:pk-impl/sonnet/pk@mk:pk-impl/true" ] && [[ "$(jget o.status)" != UNAVAILABLE* ]]'
 
 # ================================================================ P4 names and flags
 fresh
 adopt localname pk@mk:pk-rev
-check "P4 a local name different from the pack's works" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.localname.from === \"pk@mk:pk-rev\""'
-mkdir -p "$FAKEHOME/.claude/agents"; printf -- '---\nname: taken\ndescription: mine\ntools: Read, Grep, SendMessage\n---\nMine.\n' > "$FAKEHOME/.claude/agents/taken.md"
-rm_ role set taken --class review --description "my own" --level global
-rm_ role set taken --from pk@mk:pk-rev --dry-run
-check "P4 a name already defined at the target level is refused" '[ $RC = 2 ] && [[ "$ERR" == *"pick another name or remove it first"* ]]'
-for flag in "--class review" "--agent x" "--scaffold user"; do
-  rm_ role set other --from pk@mk:pk-rev --dry-run $flag
-  check "P4 $flag with --from is refused" '[ $RC = 2 ] && [[ "$ERR" == *"can'"'"'t be used with --from"* ]]'
-done
+rolerow localname
+check "P4 a local name different from the pack's works" '[ "$(jget o.agent)" = pk:pk-rev ] && [[ "$(jget o.status)" != UNAVAILABLE* ]]'
 rm_ role set localname --class review
 check "P4 --class on a row that has from is refused" '[ $RC = 2 ] && [[ "$ERR" == *"adopted from a pack"* ]]'
 
-# ================================================================ P5 a built-in via --from
+# ================================================================ P5 a built-in via a from row
 fresh
-rm_ role set reviewer --from pk@mk:pk-impl --dry-run
-check "P5 a built-in adopted from a pack role of another class is refused" '[ $RC = 2 ] && [[ "$ERR" == *"only of its own class"* ]]'
 adopt reviewer pk@mk:pk-rev
-check "P5 a matching class overrides the built-in's agent, and is pinned" \
-  '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.reviewer.from === \"pk@mk:pk-rev\" && /^sha256:/.test(d.roles.reviewer.pin) && !(\"agent\" in d.roles.reviewer)"'
 rolerow reviewer
-check "P5 role list shows the override, pinned and trusted" '[ "$(jget "o.agent + \"/\" + o.pack_override + \"/\" + o.pin_state")" = "pk:pk-rev/true/trusted" ]'
+check "P5 a matching class overrides the built-in's agent, and role list shows it" \
+  '[ "$(jget "o.agent + \"/\" + o.pack_override")" = "pk:pk-rev/true" ] && [[ "$(jget o.status)" != UNAVAILABLE* ]]'
 rm_ role remove reviewer
 check "P5 role remove restores the shipped agent" '[ $RC = 0 ] && ! filejs "$GLOBAL_CFG" "\"reviewer\" in (d.roles || {})"'
-
-# ================================================================ P6 the pin covers the tree
-fresh
-cp -R "$PACKS/a" "$PACKS/pristine"
-adopt gd pk@mk:pk-impl
-AGENT_SUM=$(shasum "$PACKS/a/agents/pk-impl.md" | cut -d' ' -f1)
-routing
-check "P6 (baseline) a trusted role routes at SessionStart (resident routing line, and ah rules show routing names its route)" '[ $ROUTED_LINE = yes ] && [ $ROUTED_RULE = yes ]'
-restore() { rm -rf "$PACKS/a"; cp -R "$PACKS/pristine" "$PACKS/a"; }
-p6() { # <label> <shell edit of $PACKS/a>
-  restore; eval "$2"
-  rolerow gd
-  local state; state=$(jget o.pin_state)
-  routing
-  rm_ spawn-ad-hoc gd --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-  local spawnrc=$RC
-  check "P6 $1: pack-changed in role list, out of SessionStart's routing, spawn refused, agent file untouched" \
-    '[ "$state" = pack-changed ] && [ $ROUTED_RULE = no ] && [ $spawnrc != 0 ] && [ "$(shasum "$PACKS/a/agents/pk-impl.md" | cut -d" " -f1)" = "$AGENT_SUM" ]'
-}
-p6 "one byte of a hook file" 'printf "{ }\n" > "$PACKS/a/hooks/hooks.json"'
-p6 "a script under bin/" 'printf "#!/bin/sh\necho bye\n" > "$PACKS/a/bin/tool.sh"'
-p6 "an added file" 'echo new > "$PACKS/a/NOTES.txt"'
-p6 "ah-roles.json reformatted" 'node -e "const f=process.argv[1];const fs=require(\"fs\");fs.writeFileSync(f,JSON.stringify(JSON.parse(fs.readFileSync(f,\"utf8\"))))" "$PACKS/a/ah-roles.json"'
-p6 "another role's row changed" 'node -e "const f=process.argv[1];const fs=require(\"fs\");const m=JSON.parse(fs.readFileSync(f,\"utf8\"));m.roles[\"pk-rev\"].description=\"changed\";fs.writeFileSync(f,JSON.stringify(m,null,2))" "$PACKS/a/ah-roles.json"'
-restore; mkdir -p "$PACKS/a/.git"; echo "ref" > "$PACKS/a/.git/HEAD"
-rolerow gd
-check "P6 changing only a file under .git/ keeps the role trusted" '[ "$(jget o.pin_state)" = trusted ]'
-
-# ================================================================ P7 role trust
-fresh
-adopt gd pk@mk:pk-impl --model sonnet
-node -e 'const f=process.argv[1];const fs=require("fs");const m=JSON.parse(fs.readFileSync(f,"utf8"));m.roles["pk-impl"].description="Builds better pack features";fs.writeFileSync(f,JSON.stringify(m,null,2))' "$PACKS/a/ah-roles.json"
-printf -- '---\nname: pk-impl\ndescription: Builds pack things\nmodel: opus\ntools: Read, Grep, Edit, Write, Bash, SendMessage\n---\nYou build pack features, carefully.\n' > "$PACKS/a/agents/pk-impl.md"
-rm "$PACKS/a/bin/tool.sh"; echo added > "$PACKS/a/hooks/new.json"; echo '{"x":1}' > "$PACKS/a/hooks/hooks.json"
-rm_ role trust gd --dry-run
-TRUST_PIN=$(jget o.pin)
-check "P7 the dry run shows the field changes against the stored copy" \
-  '[ $RC = 0 ] && [ "$(jget o.stored_copy)" = true ] && [ "$(jget "o.fields_changed.map(c => c.field + \"=\" + c.installed).join()")" = "description=Builds better pack features" ]'
-check "P7 ... the agent file diff" '[[ "$(jget o.agent_diff)" == *"-You build pack features."* ]] && [[ "$(jget o.agent_diff)" == *"+You build pack features, carefully."* ]]'
-check "P7 ... and the files added, removed and changed" \
-  '[ "$(jget "o.files.added.join()")" = hooks/new.json ] && [ "$(jget "o.files.removed.join()")" = bin/tool.sh ] && [ "$(jget "o.files.changed.join()")" = "agents/pk-impl.md,ah-roles.json,hooks/hooks.json" ]'
-rm_ role trust gd --pin "sha256:$(printf '1%.0s' {1..64})"
-check "P7 a stale --pin is refused" '[ $RC = 2 ] && [[ "$ERR" == *"doesn'"'"'t match"* ]]'
-rm_ role trust gd --pin "$TRUST_PIN"
-check "P7 the commit re-pins and writes a stored copy" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.gd.pin === \"$TRUST_PIN\"" && [ -e "$TRUSTED/${TRUST_PIN#sha256:}.json" ]'
-check "P7 the user's own fields survive" 'filejs "$GLOBAL_CFG" "d.roles.gd.model === \"sonnet\" && JSON.stringify(Object.keys(d.roles.gd).sort()) === JSON.stringify([\"from\",\"model\",\"pin\"])"'
-rolerow gd
-check "P7 ... and the role is trusted again" '[ "$(jget o.pin_state)" = trusted ]'
-rm -rf "$TRUSTED"
-rm_ role trust gd --dry-run
-check "P7 with no stored copy, it shows the whole agent file and the file list, and says so" \
-  '[ $RC = 0 ] && [ "$(jget o.stored_copy)" = false ] && [[ "$(jget o.agent_text)" == *"carefully"* ]] && [[ "$(jget "o.files.all.join()")" == *"ah-roles.json"* ]] && [[ "$(jget o.note)" == *"no stored copy"* ]]'
-printf -- '---\nname: pk-impl\ndescription: Builds pack things\nmodel: opus\ntools: Read, Grep, Edit, Write, Bash\n---\nNo SendMessage.\n' > "$PACKS/a/agents/pk-impl.md"
-rm_ role trust gd --dry-run
-ERR_PIN=$(jget o.pin)
-rm_ role trust gd --pin "$ERR_PIN"
-check "P7 it refuses while errors stand" '[ $RC = 2 ] && [[ "$ERR" == *"errors stand"* ]]'
 
 # ================================================================ P8 frontmatter allowlist (pack agents)
 fresh
@@ -427,20 +337,12 @@ check "P8 a | block scalar is allowed, and the tools shown are the ones the cont
   '[[ "$(roleerr pk-rev)" != *pack-agent* ]] && [ "$(jget "o.roles.find(r => r.name === \"pk-rev\").tools.effective.join()")" = "Read,Grep" ] && [[ "$(roleerr pk-rev)" == *"missing-tool:SendMessage"* ]]'
 printf -- '---\nname: pk-rev\ndescription: Reviews\nmodel: opus\ntools:\n  - Read\n  - Grep\n  # - Bash\n  - SendMessage\n---\nBody.\n' > "$PACKS/fm/agents/pk-rev.md"
 showpath "$PACKS/fm"
-check "P8 a refused file shows the tools the strict read found, the list the contract judged" \
+check "P8 a file with warnings shows the tools the strict read found, the list the contract judged" \
   '[[ "$(roleerr pk-rev)" == *pack-agent-line* ]] && [ "$(jget "o.roles.find(r => r.name === \"pk-rev\").tools.effective.join()")" = "Read,Grep,SendMessage" ]'
-installed "{\"pk@mk\":[\"$PACKS/fm\"]}"
-rm_ role set fc --from pk@mk:pk-rev --dry-run
-check "P8 ... and so does the adoption dry run" '[ "$(jget "o.pack.tools.effective.join()")" = "Read,Grep,SendMessage" ]'
-installed "{\"pk@mk\":[\"$PACKS/a\"]}"
 rm -rf "$PACKS/fm"; cp -R "$PACKS/a" "$PACKS/fm"
 printf -- '---\nname: pk-impl\ndescription: Builds\nmodel: opus\ntools: Read, Edit, Write, Bash, Agent, mcp__srv__run, SendMessage\n---\nBody.\n' > "$PACKS/fm/agents/pk-impl.md"
 showpath "$PACKS/fm"
 check "P8 the tools shown flag Bash, Agent, mcp__*, Write and Edit" '[ "$(jget "o.roles.find(r => r.name === \"pk-impl\").tools.flagged.join()")" = "Edit,Write,Bash,Agent,mcp__srv__run" ]'
-installed "{\"pk@mk\":[\"$PACKS/fm\"]}"
-rm_ role set fl --from pk@mk:pk-impl --dry-run
-check "P8 ... and so does the adoption dry run" '[ $RC = 0 ] && [ "$(jget "o.pack.tools.flagged.join()")" = "Edit,Write,Bash,Agent,mcp__srv__run" ]'
-installed "{\"pk@mk\":[\"$PACKS/a\"]}"
 mkdir -p "$FAKEHOME/.claude/agents"
 printf -- '---\nname: own-rev\ndescription: my own reviewer\npermissionMode: acceptEdits\n"hooks": x\ntools: Read, Grep, SendMessage\n---\nMine.\n' > "$FAKEHOME/.claude/agents/own-rev.md"
 rm_ role set own-rev --class review --level global
@@ -453,14 +355,14 @@ fresh
 adopt gd pk@mk:pk-impl
 installed '{}'
 rolerow gd
-check "P9 with its record removed, the role is pack-missing" '[ "$(jget o.pin_state)" = pack-missing ] && [[ "$(jget o.status)" == UNAVAILABLE* ]]'
+check "P9 with its record removed, the row is excluded as pack-missing" '[[ "$(rowstate)" == pack-missing* ]]'
 rm_ role remove gd
 check "P9 ... and role remove still works" '[ $RC = 0 ] && ! filejs "$GLOBAL_CFG" "\"gd\" in (d.roles || {})"'
 fresh
 adopt gd pk@mk:pk-impl
 installed "{\"pk@other\":[\"$PACKS/a\"]}"
 rolerow gd
-check "P9 the plugin installed only from another marketplace is pack-missing, never a stand-in" '[ "$(jget o.pin_state)" = pack-missing ]'
+check "P9 the plugin installed only from another marketplace is pack-missing, never a stand-in" '[[ "$(rowstate)" == pack-missing* ]]'
 
 # ================================================================ P10 pack show --path
 fresh
@@ -476,7 +378,9 @@ fresh
 adopt gd pk@mk:pk-impl
 ln -s /etc/hosts "$PACKS/a/bin/link"
 rolerow gd
-check "P12 a symbolic link anywhere in the pack tree gives pack-symlink" '[ "$(jget o.pin_state)" = pack-symlink ]'
+check "P12 a symbolic link anywhere in the pack tree leaves the role available" '[ "$(rowstate)" = ok ]'
+rm_ pack show pk
+check "P12 ... and pack show warns of it" '[ $RC = 0 ] && [[ "$OUT" == *"warning: symbolic link: bin/link"* ]]'
 
 # ================================================================ P13 ambiguous installs
 fresh
@@ -484,78 +388,13 @@ adopt gd pk@mk:pk-impl
 cp -R "$PACKS/a" "$PACKS/b"
 installed "{\"pk@mk\":[\"$PACKS/a\"],\"pk@other\":[\"$PACKS/b\"]}"
 rolerow gd
-check "P13 two install records with identical content stay available" '[ "$(jget o.pin_state)" = trusted ]'
+check "P13 two install records with identical content stay available" '[ "$(rowstate)" = ok ]'
 echo changed > "$PACKS/b/bin/tool.sh"
 rolerow gd
-check "P13 two marketplaces with different content give pack-ambiguous" '[ "$(jget o.pin_state)" = pack-ambiguous ]'
+check "P13 two marketplaces with different content give pack-ambiguous" '[[ "$(rowstate)" == *pack-ambiguous* ]]'
 installed "{\"pk@mk\":[\"$PACKS/a\",\"$PACKS/b\"]}"
 rolerow gd
-check "P13 ... and so do two versions" '[ "$(jget o.pin_state)" = pack-ambiguous ]'
-
-# ================================================================ P14 stored copies
-fresh
-adopt gd pk@mk:pk-impl
-GD_PIN=$PIN
-rm -rf "$TRUSTED"
-rolerow gd
-check "P14 a row whose pin matches the installed content but with no stored copy is pack-untrusted-here" '[ "$(jget o.pin_state)" = pack-untrusted-here ]'
-adopt gd pk@mk:pk-impl
-COPY="$TRUSTED/${GD_PIN#sha256:}.json"
-mutate "$COPY" 'd.agentText = d.agentText + "tampered"'
-rolerow gd
-check "P14 so does a stored copy edited so it no longer re-hashes to its name" '[ "$(jget o.pin_state)" = pack-untrusted-here ]'
-mutate "$REPO_CFG" "d.roles = {rp: {from: \"pk@mk:pk-impl\", pin: \"$GD_PIN\"}}"
-rm -rf "$FAKEHOME/.claude/ah2" "$GLOBAL_CFG"
-rolerow rp
-check "P14 a committed repo-level row on a fresh HOME is pack-untrusted-here too" '[ "$(jget o.pin_state)" = pack-untrusted-here ] && [ "$(jget o.level)" = repo ]'
-
-# ================================================================ P15 the commit gate
-fresh
-ROSTER=""$PLUGIN/bin/ah" roster"
-SET="$ROSTER role set gd --from pk@mk:pk-impl --pin sha256:abc --cwd $PROJ"
-TRUST="$ROSTER role trust gd --pin sha256:abc --cwd $PROJ"
-# Commands the ah grammar can't parse whose text names a commit are judged as one, --dry-run or not.
-ahcli() { OUT=$(node -e 'process.stdout.write(JSON.stringify({session_id:"g1",cwd:process.argv[1],tool_name:"Bash",tool_input:{command:process.argv[2]}}))' "$PROJ" "$1" | HOME="$FAKEHOME" sh "$PLUGIN/bin/ah-hook" pretooluse-ah-cli 2>&1); }
-for verb in "role trust gd --pin sha256:abc" "role set gd --from pk@mk:pk-impl --pin sha256:abc"; do
-  label=${verb%% --*}
-  names=("a trailing # --dry-run" "cd … &&" "an env prefix" "a relative script path" "\$ROOT" "bash -c" "a heredoc")
-  for i in "${!forms[@]}"; do
-    c=${forms[$i]}; short=${names[$i]}
-    ahcli "$c"
-    check "P15 unparsed $label [$short…]: the allow hook stays silent" '[ -z "$OUT" ]'
-  done
-done
-
-# ================================================================ P15b the in-process refusal
-fresh
-adopt gd pk@mk:pk-impl
-TRUST_CFG=$(cat "$GLOBAL_CFG")
-echo "more" >> "$PACKS/a/bin/tool.sh"
-rm_ role trust gd --dry-run
-NEW_PIN=$(jget o.pin)
-WRANGL_TEAM_FILE="$PROJ/.claude/ah2/teams/t.json" rm_ role trust gd --pin "$NEW_PIN"
-check "P15b role trust with WRANGL_TEAM_FILE set is refused, and nothing is written" '[ $RC != 0 ] && [[ "$ERR" == *"team member"* ]] && [ "$(cat "$GLOBAL_CFG")" = "$TRUST_CFG" ]'
-rm_ role set g2 --from pk@mk:pk-rev --dry-run
-G2_PIN=$(jget o.pin)
-WRANGL_TEAM_FILE="$PROJ/.claude/ah2/teams/t.json" rm_ role set g2 --from pk@mk:pk-rev --pin "$G2_PIN"
-check "P15b role set --from with WRANGL_TEAM_FILE set is refused, and nothing is written" '[ $RC != 0 ] && [[ "$ERR" == *"team member"* ]] && [ "$(cat "$GLOBAL_CFG")" = "$TRUST_CFG" ]'
-WRANGL_TEAM_FILE="$PROJ/.claude/ah2/teams/t.json" rm_ role trust gd --dry-run
-check "P15b ... the dry run still works with WRANGL_TEAM_FILE set" '[ $RC = 0 ] && [ "$(jget o.pin)" = "$NEW_PIN" ]'
-anchor
-rm_ role trust gd --pin "$NEW_PIN"
-check "P15b a live anchor for the --cwd checkout refuses the commit" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]] && [ "$(cat "$GLOBAL_CFG")" = "$TRUST_CFG" ]'
-rm_ role trust gd --dry-run
-check "P15b ... the dry run still works during the run" '[ $RC = 0 ]'
-mkdir -p "$SANDBOX/other"; git -C "$SANDBOX/other" init -q
-OUT=$(cd "$PROJ" && HOME="$FAKEHOME" "$PLUGIN/bin/ah" roster role trust gd --pin "$NEW_PIN" --cwd "$SANDBOX/other" 2>"$SANDBOX/err"); RC=$?; ERR=$(cat "$SANDBOX/err")
-check "P15b a live anchor at the process's own cwd refuses too, when --cwd names another checkout" '[ $RC != 0 ] && [[ "$ERR" == *"pipeline run is live"* ]] && [ "$(cat "$GLOBAL_CFG")" = "$TRUST_CFG" ]'
-fresh
-adopt gd pk@mk:pk-impl
-echo "more" >> "$PACKS/a/bin/tool.sh"
-rm_ role trust gd --dry-run
-NEW_PIN=$(jget o.pin)
-WRANGL_TEAM_FILE= rm_ role trust gd --pin "$NEW_PIN"
-check "P15b WRANGL_TEAM_FILE=\"\" counts as unset" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.gd.pin === \"$NEW_PIN\""'
+check "P13 ... and so do two versions" '[[ "$(rowstate)" == *pack-ambiguous* ]]'
 
 # ================================================================ T1 a pack role spawns in any slot, live run or not (adr-46)
 fresh
@@ -575,58 +414,6 @@ for r in prv pdes; do
 done
 rm_ spawn-one reviewer --dry-run --orchestrator-pid $$
 check "T1 with a live run: spawn-one of the pack-overridden reviewer, auto mode unset, spawns" '[ $RC = 0 ] && [[ "$OUT" == *"pk2:pk-rev"* ]]'
-
-# ================================================================ P16b the design-slot opt-in (adr-42)
-fresh
-copyslots() { node -e 'try{const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(JSON.stringify(d.slots||null))}catch{process.stdout.write("none")}' "$TRUSTED/${1#sha256:}.json"; }
-rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run --slot review
-check "P16b --slot review is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"--slot accepts only design"* ]]'
-rm_ role set pdes --from pk@mk:pk-des --dry-run --slot design
-check "P16b --slot design with no routes is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"needs routes"* ]]'
-rm_ role set prv --from pk@mk:pk-rev --routes "pack scenes" --dry-run --slot design
-check "P16b --slot design on a review-class role is a usage error" '[ $RC = 2 ] && [[ "$ERR" == *"design-class"* ]]'
-rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run --slot design
-PIN=$(jget o.pin)
-check "P16b the dry run prints the flagged opt-in line with the routes" '[ $RC = 0 ] && [[ "$ERR" == *"⚠ opt-in: pdes (pk) may design items in pipeline runs, for its routes \"pack scenes\""* ]]'
-rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --dry-run
-check "P16b ... and without --slot it prints no opt-in line" '[ $RC = 0 ] && [[ "$ERR" != *"opt-in"* ]]'
-WRANGL_TEAM_FILE="$PROJ/.claude/ah2/teams/t.json" rm_ role set pdes --from pk@mk:pk-des --routes "pack scenes" --pin "$PIN" --slot design
-check "P16b --slot design from a team member is refused by the trust-commit guard" '[ $RC != 0 ] && [[ "$ERR" == *"team member"* ]] && [ ! -f "$GLOBAL_CFG" ]'
-adopt pdes pk@mk:pk-des --routes "pack scenes" --slot design
-check "P16b the commit writes slots into the row and the stored copy" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "JSON.stringify(d.roles.pdes.slots) === \"[\\\"design\\\"]\"" && [ "$(copyslots "$PIN")" = "{\"pdes\":[\"design\"]}" ]'
-adopt prv pk@mk:pk-rev
-rolerow pdes
-check "P16b role list shows the opt-in as held" '[ "$(jget o.design_opt_in)" = true ] && [ "$(jget o.slots_ignored)" != true ]'
-rm_ role trust pdes --dry-run
-check "P16b a re-trust dry run without --slot says the opt-in will be dropped" '[ $RC = 0 ] && [[ "$ERR" == *"design opt-in will be dropped; add --slot design to keep it"* ]]'
-mutate "$REPO_CFG" 'd.roster = {route: "peer", members: []}'
-anchor
-rm_ spawn-ad-hoc pdes --model opus --route peer --auto-mode auto --dry-run --orchestrator-pid $$
-check "P16b with a live run: an opted-in design-class pack role spawns" '[ $RC = 0 ]'
-fresh
-adopt pdes pk@mk:pk-des --routes "pack scenes" --slot design
-rm_ role trust pdes --pin "$PIN"
-check "P16b role trust --pin without --slot drops the opt-in from the row and the copy" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.pdes.slots === undefined" && [ "$(copyslots "$PIN")" = null ]'
-rm_ role trust pdes --pin "$PIN" --slot design
-check "P16b ... and role trust --slot design gives it back" '[ $RC = 0 ] && filejs "$GLOBAL_CFG" "d.roles.pdes.slots[0] === \"design\"" && [ "$(copyslots "$PIN")" = "{\"pdes\":[\"design\"]}" ]'
-rm_ role remove pdes
-mutate "$GLOBAL_CFG" "d.roles.pdes = {from: \"pk@mk:pk-des\", pin: \"$PIN\", routes: \"pack scenes\", slots: [\"design\"]}"
-rolerow pdes
-check "P16b role remove drops the opt-in from the stored copy: a hand re-added row with slots does not hold it" '[ "$(copyslots "$PIN")" = null ] && [ "$(jget o.slots_ignored)" = true ] && [ "$(jget o.design_opt_in)" != true ]'
-rm_ role trust pdes --pin "$PIN"
-mutate "$GLOBAL_CFG" 'd.roles.pdes.slots = ["design"]'
-rolerow pdes
-check "P16b role list: a hand-edited slots the stored copy does not record is ignored" '[ "$(jget o.slots_ignored)" = true ] && [ "$(jget o.design_opt_in)" != true ]'
-rm_ role list
-check "P16b ... the text list says so" '[[ "$OUT" == *"slots ignored (not given at trust)"* ]]'
-fresh
-bad "$PACKS/slotted" 'm.roles["pk-des"].slots = ["design"]'
-showpath "$PACKS/slotted"
-check "P16b a manifest that declares slots gets the unknown-key warning" '[[ "$(jget "o.roles.find(r => r.name === \"pk-des\").warnings.join()")" == *"unknown key \"slots\""* ]]'
-installed "{\"pk@mk\":[\"$PACKS/slotted\"]}"
-adopt psl pk@mk:pk-des --routes "pack scenes"
-rolerow psl
-check "P16b ... and the slots it declares are ignored: an adopted role has neither the row field nor the opt-in" '[ "$(jget o.name)" = psl ] && filejs "$GLOBAL_CFG" "d.roles.psl.slots === undefined" && [ "$(jget o.design_opt_in)" != true ]'
 
 # ================================================================ P18 the content digest
 fresh
@@ -687,18 +474,18 @@ mkhelper
 installed "{\"hp@mk\":[\"$PACKS/h\"]}"
 adopt hl hp@mk:helper
 rolerow hl
-check "P20 (baseline) the helper role adopts and is trusted" '[ "$(jget o.pin_state)" = trusted ]'
+check "P20 (baseline) the helper role is available" '[ "$(rowstate)" = ok ]'
 p20() { # <label> <path the finding names> <shell edit of $PACKS/h> [claims marked in pack show, as JSON]
   mkhelper; eval "$3"
   showpath "$PACKS/h"
   local codes msg marked
   codes=$(roleerr helper)
-  msg=$(jget '(o.roles.find(r => r.name === "helper").findings.find(f => f.code === "pack-invalid") || {}).message')
+  msg=$(jget '(o.roles.find(r => r.name === "helper").findings.find(f => f.code === "pack-warning") || {}).message')
   marked=$(jget "(o.also_in_plugin.find(e => e.name === \"$2\") || {}).claims || null")
   local want=${4-'["helper"]'} where=$2
   rolerow hl
-  check "P20 $1: pack-invalid naming $2, marked in pack show, and the adopted role unavailable" \
-    '[[ "$codes" == *pack-invalid* ]] && [[ "$msg" == *"$where"* ]] && [ "$marked" = "$want" ] && [ "$(jget o.pin_state)" = pack-invalid ]'
+  check "P20 $1: a warning naming $2, marked in pack show, and the role still available" \
+    '[[ "$codes" == *pack-warning* ]] && [[ "$codes" != *pack-invalid* ]] && [[ "$msg" == *"$where"* ]] && [ "$marked" = "$want" ] && [ "$(rowstate)" = ok ]'
 }
 p20 "another file declaring name: helper, with no tools" agents/zz.md 'printf -- "---\nname: helper\ndescription: sneaky\n---\nSneaky.\n" > "$PACKS/h/agents/zz.md"'
 p20 "a file in a subdirectory of agents/ declaring it" agents/sub/zz.md 'mkdir -p "$PACKS/h/agents/sub"; printf -- "---\nname: helper\n---\nx\n" > "$PACKS/h/agents/sub/zz.md"'
@@ -720,8 +507,8 @@ mkdir -p "$PACKS/h/skills/helper"; printf -- '---\nname: helper\ndescription: a 
 showpath "$PACKS/h"
 C20=$(roleerr helper)
 rolerow hl
-check "P20 an unrestricted agent named other and a skill named helper leave the role valid (only the tree changed)" \
-  '[[ "$C20" != *pack-invalid* ]] && [ "$(jget o.pin_state)" = pack-changed ]'
+check "P20 an unrestricted agent named other and a skill named helper leave the role valid" \
+  '[[ "$C20" != *pack-invalid* ]] && [[ "$C20" != *pack-warning* ]] && [ "$(rowstate)" = ok ]'
 
 echo
 echo "SUMMARY: $PASS passed, $FAIL failed"

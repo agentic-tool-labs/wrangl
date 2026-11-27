@@ -255,6 +255,12 @@ internal static partial class DoctorVerb
         Add("lifecycle-permissions", () => LifecyclePermissions.DoctorRow(c));
         Add("runtime-dir", () => RuntimeDir(c));
         Add("config", () => ConfigRow(c));
+
+        // ah2-698 D6: one ok row per role pack updated since it was first seen; it reports and blocks nothing.
+        foreach (var (pack, updated) in PackUpdates.Check(c, c.Registry).Where(static u => u.Value.IsMap))
+        {
+            Add("pack-updated", () => new Check("ok", $"role pack {pack} {PackUpdates.Line(updated)}"));
+        }
         Add("team", () => Team(c));
         Add("progress", () => ProgressRow(c));
         Add("jobs-unseen", () => JobsUnseenRow(c));
@@ -815,8 +821,10 @@ internal static partial class DoctorVerb
             var v = config.ValidateRole(role, resolved);
             if (v.IsMap && config.HasContractErrors(v.Member("findings")))
             {
-                problems.Add(
-                    $"role {role} is unavailable: its agent fails the {config.RoleClass(role, resolved)} contract (ah roster role list)");
+                // adr-47: a pack role is unavailable only through its pack status, so name that status.
+                problems.Add(roles.Get(role)?.Member("pack")?.Member("status") is { IsText: true } ps && ps.AsString() != "ok"
+                    ? $"role {role} is unavailable: its pack status is {ps.AsString()} (ah roster role list)"
+                    : $"role {role} is unavailable: its agent fails the {config.RoleClass(role, resolved)} contract (ah roster role list)");
             }
         }
 

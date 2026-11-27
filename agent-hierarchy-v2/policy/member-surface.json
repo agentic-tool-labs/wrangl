@@ -167,7 +167,7 @@
     { "id": "ah-roster-init", "kind": "routed", "match": { "prefix": ["ah", "roster", "init"] }, "route": "Orchestrator", "note": "writes the roster" },
     { "id": "ah-roster-roster", "kind": "routed", "match": { "prefix": ["ah", "roster", "roster"] }, "route": "Orchestrator", "note": "named-roster management" },
     { "id": "ah-roster-role-remove", "kind": "routed", "match": { "prefix": ["ah", "roster", "role", "remove"] }, "route": "Orchestrator", "note": "removes a role" },
-    { "id": "ah-roster-role-set", "kind": "routed", "match": { "prefix": ["ah", "roster", "role", "set"] }, "route": "Orchestrator", "note": "adopts a role" },
+    { "id": "ah-roster-role-set", "kind": "routed", "match": { "prefix": ["ah", "roster", "role", "set"] }, "route": "Orchestrator", "note": "defines or changes a role" },
     { "id": "ah-roster-codex-trust", "kind": "routed", "match": { "prefix": ["ah", "roster", "codex-trust"] }, "route": "user", "note": "pre-approves a Codex root" },
     { "id": "ah-msg-new-request", "kind": "routed", "match": { "prefix": ["ah", "msg", "new", "--to"] }, "route": "Orchestrator", "note": "starts a request to another role" },
     { "id": "ah-msg-sweep", "kind": "routed", "match": { "prefix": ["ah", "msg", "sweep"] }, "route": "Orchestrator", "note": "removes old message files" },

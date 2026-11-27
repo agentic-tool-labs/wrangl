@@ -518,6 +518,13 @@ internal static class SpawnOne
         OrchestratorSession.Rebind(c);
         TeamScopes.ResolveWritableTeamScope(c, dir);
         HoldRefusal.RefuseIfHeld(c);
+
+        // ah2-698 D6: member start reports a role pack updated since it was last seen; it blocks nothing.
+        if (!c.Opts.IsTrue("dry-run"))
+        {
+            _ = PackUpdates.Check(c, c.Registry);
+        }
+
         if (roster.ReadTeamRecord(dir, c.TeamFile).IsNull)
         {
             TeamScopes.CheckNewTeamName(c, dir);
