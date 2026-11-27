@@ -474,7 +474,35 @@
       }
     },
     {
-      "id": "builtin-role-name",
+      "id": "reserved-role-name-still-refused",
+      "args": [
+        "$ROOT/pk",
+        "demo"
+      ],
+      "files": {
+        "pk/ah-roles.json": "{\"version\":1,\"roles\":{\"orchestrator\":{\"class\":\"review\"}}}"
+      },
+      "expect": {
+        "error": null,
+        "warnings": [],
+        "roles": {
+          "orchestrator": {
+            "raw": {
+              "class": "review"
+            },
+            "agent": null,
+            "row": null,
+            "error": {
+              "code": "pack-invalid",
+              "message": "role \"orchestrator\": name \"orchestrator\" is reserved"
+            },
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "id": "builtin-role-name-allowed",
       "args": [
         "$ROOT/pk",
         "demo"
@@ -494,12 +522,16 @@
               "routes": "qc work",
               "model": "sonnet"
             },
-            "agent": null,
-            "row": null,
-            "error": {
-              "code": "pack-invalid",
-              "message": "role \"architect\": name \"architect\" is reserved"
+            "agent": "architect",
+            "row": {
+              "class": "review",
+              "agent": "demo:architect",
+              "label": "QC",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
             },
+            "error": null,
             "warnings": []
           }
         }
@@ -521,18 +553,23 @@
           "qc": {
             "raw": {
               "class": "review",
-              "label": "Q​A",
               "description": "Checks things",
               "routes": "qc work",
               "model": "sonnet"
             },
-            "agent": null,
-            "row": null,
-            "error": {
-              "code": "pack-hidden-chars",
-              "message": "role qc: label holds a hidden character (U+200B at line 1, column 2)"
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "Qc",
+              "description": "Checks things",
+              "routes": "qc work",
+              "model": "sonnet"
             },
-            "warnings": []
+            "error": null,
+            "warnings": [
+              "role qc: label is dropped (label holds a hidden character (U+200B at line 1, column 2))"
+            ]
           }
         }
       }
@@ -555,16 +592,20 @@
               "class": "review",
               "label": "QC",
               "description": "Checks things",
-              "routes": "a‮b",
               "model": "sonnet"
             },
-            "agent": null,
-            "row": null,
-            "error": {
-              "code": "pack-hidden-chars",
-              "message": "role qc: routes holds a hidden character (U+202E at line 1, column 2)"
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
+              "model": "sonnet"
             },
-            "warnings": []
+            "error": null,
+            "warnings": [
+              "role qc: routes is dropped (routes holds a hidden character (U+202E at line 1, column 2))"
+            ]
           }
         }
       }
@@ -890,16 +931,21 @@
               "class": "review",
               "label": "QC",
               "description": "Checks things",
+              "routes": "qc work"
+            },
+            "agent": "qc",
+            "row": {
+              "class": "review",
+              "agent": "demo:qc",
+              "label": "QC",
+              "description": "Checks things",
               "routes": "qc work",
-              "model": "gpt-9"
+              "model": "inherit"
             },
-            "agent": null,
-            "row": null,
-            "error": {
-              "code": "pack-invalid",
-              "message": "role qc: model \"gpt-9\" is not allowed for class review (allowed: opus, sonnet, fable, inherit)"
-            },
-            "warnings": []
+            "error": null,
+            "warnings": [
+              "role qc: model is dropped (model \"gpt-9\" is not allowed for class review (allowed: opus, sonnet, fable, inherit))"
+            ]
           }
         }
       }

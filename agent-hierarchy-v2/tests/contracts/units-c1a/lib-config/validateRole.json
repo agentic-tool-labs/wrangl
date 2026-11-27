@@ -662,7 +662,7 @@
       "expect": {
         "findings": [
           {
-            "level": "error",
+            "level": "warn",
             "code": "missing-tool:Write|Bash",
             "path": "$ROOT/p/agents/ui.md",
             "field": "tools",
@@ -723,7 +723,7 @@
       }
     },
     {
-      "id": "pack-changed",
+      "id": "pack-hidden-char-and-review-holding-edit-only-warn",
       "args": [
         "ui-implementor",
         {
@@ -747,15 +747,18 @@
             },
             "ui-implementor": {
               "model": "inherit",
-              "class": "implement",
+              "class": "review",
               "agent": "plug:ui",
               "pack": {
-                "status": "pack-changed",
-                "subcode": "digest",
+                "status": "ok",
+                "subcode": null,
                 "from": "plug@mkt:ui",
-                "message": "the pack changed",
+                "message": null,
                 "agentPath": "$ROOT/p/agents/ui.md",
-                "agentText": "---\nname: ui\ntools: Read, SendMessage, Edit\n---\nbody\n"
+                "agentText": "---\nname: ui\ndescription: Reviews UI\ntools: Read, Grep, SendMessage, Edit\n---\nbo​dy\n",
+                "warnings": [
+                  "$ROOT/p/agents/ui.md holds a hidden character (U+200B at line 6, column 3)"
+                ]
               }
             },
             "doc-reviewer": {
@@ -786,32 +789,27 @@
       "expect": {
         "findings": [
           {
-            "level": "error",
-            "code": "pack-changed",
+            "level": "warn",
+            "code": "pack-warning",
             "path": "$ROOT/p/agents/ui.md",
             "field": null,
-            "message": "ui-implementor (from plug@mkt:ui): the pack changed [digest]",
-            "fix": [
-              {
-                "kind": "trust",
-                "detail": "review it with `roster.mjs role trust ui-implementor --dry-run`, then commit with the pin it prints"
-              }
-            ]
+            "message": "ui-implementor (from plug@mkt:ui): $ROOT/p/agents/ui.md holds a hidden character (U+200B at line 6, column 3)",
+            "fix": []
           },
           {
-            "level": "error",
-            "code": "missing-tool:Write|Bash",
+            "level": "warn",
+            "code": "forbidden-tool:Edit",
             "path": "$ROOT/p/agents/ui.md",
             "field": "tools",
-            "message": "The implement contract needs Write or Bash, and this agent's effective tools lack all of them.",
+            "message": "A review-class agent must not have Edit: a reviewer that can edit ends up validating its own fixes.",
             "fix": [
               {
                 "kind": "edit-frontmatter",
-                "detail": "add Write to tools (you use an allowlist)"
+                "detail": "remove Edit from tools"
               },
               {
-                "kind": "edit-frontmatter",
-                "detail": "add Bash to tools (you use an allowlist)"
+                "kind": "change-class",
+                "detail": "implement"
               }
             ]
           },
@@ -820,24 +818,11 @@
             "code": "missing-recommended:Bash",
             "path": "$ROOT/p/agents/ui.md",
             "field": "tools",
-            "message": "A implement-class agent is expected to have Bash.",
+            "message": "A review-class agent is expected to have Bash.",
             "fix": [
               {
                 "kind": "edit-frontmatter",
                 "detail": "add Bash to tools (you use an allowlist)"
-              }
-            ]
-          },
-          {
-            "level": "warn",
-            "code": "no-description",
-            "path": "$ROOT/p/agents/ui.md",
-            "field": "description",
-            "message": "No config description and no frontmatter description: a side role's directive line would be empty.",
-            "fix": [
-              {
-                "kind": "set-description",
-                "detail": "roster.mjs role set ui-implementor --description \"<one line>\""
               }
             ]
           }
@@ -845,10 +830,11 @@
         "file": {
           "frontmatter": true,
           "name": "ui",
-          "description": null,
+          "description": "Reviews UI",
           "model": null,
           "tools": [
             "Read",
+            "Grep",
             "SendMessage",
             "Edit"
           ],
@@ -867,8 +853,8 @@
           }
         },
         "description": {
-          "text": null,
-          "source": null
+          "text": "Reviews UI",
+          "source": "frontmatter"
         }
       }
     },
@@ -935,7 +921,7 @@
       "expect": {
         "findings": [
           {
-            "level": "error",
+            "level": "warn",
             "code": "pack-agent-key",
             "path": "p",
             "field": null,
@@ -948,7 +934,7 @@
             ]
           },
           {
-            "level": "error",
+            "level": "warn",
             "code": "missing-tool:Write|Bash",
             "path": "p",
             "field": "tools",

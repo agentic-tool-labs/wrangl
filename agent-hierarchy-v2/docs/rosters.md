@@ -132,8 +132,23 @@ A role in a roster can declare values its members need, such as an engine-profil
 If the selection names a roster no level defines, commands exit 2 with the
 roster's source and the fixes; hooks fall back to the default block and warn;
 `doctor` shows a red `roster-selection` row. See
-[troubleshooting.md](troubleshooting.md#named-rosters). Roles other people
-publish come separately, as [role packs](custom-roles.md#6-role-packs).
+[troubleshooting.md](troubleshooting.md#named-rosters).
+
+### Role packs on a roster
+
+Roles other people publish come as [role packs](custom-roles.md#6-role-packs): Claude Code plugins. A roster names
+the ones it uses in its `packs` key, a list of `<plugin>@<marketplace>`, and every role in them is a role of any team
+built from that roster.
+
+```
+ah roster init --level global --route peer --roster game-factory --pack game-factory@bear-poppa
+ah roster roster pack game-factory --add <plugin>@<marketplace>
+ah roster roster pack game-factory --remove <plugin>@<marketplace>
+```
+
+`--pack` on `init` may be repeated. `init` replaces that level's block, packs included. `roster pack` changes only
+`packs`, at the most specific level that defines the roster unless you pass `--level`. `copy` carries the packs to the
+new roster, and `ah roster roster list` shows them. See [Give a roster its packs](custom-roles.md#give-a-roster-its-packs).
 
 
 ## Share a roster
@@ -144,8 +159,8 @@ reads a dry run before anything is written.
 
 **What a kit carries:** the roster block (`route`, `members`, `max_lanes`,
 `orchestrator_model`); the row of each custom role a member uses, with the text
-of its agent file; a reference (`from` and `pin`) for each pack role; the row of
-a built-in role only if you changed it. Per-team lane limits are not part of a
+of its agent file; the block's `packs`; the `from` reference of an old-style pack
+row; the row of a built-in role only if you changed it. Per-team lane limits are not part of a
 roster and are not carried.
 
 **What a kit never carries:** param values, roster rules in this version, pack
@@ -162,24 +177,26 @@ prints the same listing a dry run would.
 
 **The dry run writes nothing.** It lists each file and key an import would
 write, marked `new`, `identical` or `conflict`. It prints every agent file in
-full, with findings and flagged tools, every pack reference with the command to
-adopt it, and the kit's pin last. Read the agent text: it becomes a file a
+full, with findings and flagged tools, every old-style pack reference with
+whether it is installed, notes about missing packs, and the kit's pin last. Read the agent text: it becomes a file a
 session will run as.
 
 **An import writes nothing unless the dry run is clean and the pin matches.**
 Any finding or conflict refuses the whole import, and nothing is written. Fix
 the kit or the clash, run the dry run again, and use the new pin.
 
-- **Pack roles come first.** An import never adopts a pack. If a member uses a
-  pack role you have not adopted, the import is refused and the dry run prints
-  `ah roster role set <role> --from <plugin>@<marketplace>:<role> --dry-run`.
-  Run that, adopt the pack, then import.
+- **Packs.** The block's packs are written with the roster. A pack that isn't
+  installed here doesn't refuse the import: the dry run prints
+  `pack <plugin>@<marketplace> is not installed here: /wrangl:agent-role install <source>`.
+  An import never writes a pack role row. If a member's role comes from an
+  old-style row in the kit and the roster's packs don't include that pack, the
+  dry run prints the `ah roster roster pack … --add …` command to run.
 - **Conflicts.** A roster or role name that exists with a different row, or an
   agent file that exists with different text, is a conflict. `--as <name>`
   renames the imported roster. Roles are not renamed: remove or rename the
   local one, or edit the kit. Importing the same kit twice is safe: the second
   time everything reads `identical` and nothing is written.
-- **Agent files** are checked by the same rules as plugin agents. A file with
+- **Agent files** carried in a kit are checked strictly. A file with
   `hooks`, MCP server settings or `permissionMode`, or with hidden characters, is
   refused. A file with no `tools:` list is not refused but **flagged**: the dry
   run prints `inherits every tool, MCP servers included` for it, plus
@@ -187,8 +204,8 @@ the kit or the clash, run the dry run again, and use the new pin.
   writes, and the commit prints the flags again. Committing with `--pin` is the
   approval. Roles made with `--scaffold` write no `tools:` list, so they import
   flagged. Such an agent can use every tool and MCP server the importing machine
-  has, so read the preview of a kit you did not make. (A pack agent with no
-  `tools:` list is still refused at adopt and trust.)
+  has, so read the preview of a kit you did not make. (Installed pack agents are
+  different: ah only [warns about them](custom-roles.md#what-ah-warns-about-in-a-pack-agent).)
 - **Members** with `command`, `args`, `kind`, `harness`, `adapter` or `autoMode`
   are refused, and so is any key a kit does not list.
 - **Where it writes.** Config rows go to the `--level` file (default `global`);
@@ -198,14 +215,13 @@ the kit or the clash, run the dry run again, and use the new pin.
   the config write fails, the agent files this import created are removed again.
 
 **It never writes** a permission rule, hook or setting, a param value, an
-`activeRoster` choice (run `ah roster roster use <name>` yourself), a pack
-adoption, or a team. It runs nothing.
+`activeRoster` choice (run `ah roster roster use <name>` yourself), a pack role
+row, or a team. It installs no plugin and runs nothing.
 
-**Who can commit.** A team member session, or any session while a pipeline run
-is live in the checkout, cannot commit an import; run it from your own
-top-level session. The dry run works anywhere. The pin only proves the file did
-not change after you read the dry run: nothing else asks you to confirm, so
-read the listing before you pass it. See
+**Who can commit.** A team member session cannot commit an import; run it from
+your own top-level session. The dry run works anywhere. The pin only proves the
+file did not change after you read the dry run: nothing else asks you to confirm,
+so read the listing before you pass it. See
 [`ah roster kit` in the CLI reference](cli-tools.md#export-a-roster-kit).
 
 ## Starting a team, or several

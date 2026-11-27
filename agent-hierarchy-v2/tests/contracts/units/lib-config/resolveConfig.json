@@ -12043,8 +12043,8 @@
             "model": "sonnet",
             "from": "acme@market:helper",
             "pack": {
-              "status": "pack-changed",
-              "message": "acme changed since this role was trusted (pinned …, now sha256:c7794716679f…)",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
@@ -12092,6 +12092,132 @@
         "team": null,
         "teamVia": null,
         "ownedTeams": []
+      }
+    },
+    {
+      "id": "roster-packs-custom-role-keeps-the-users-model",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "r"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"gf@bp\":[{\"installPath\":\"$ROOT/plug/gf\",\"version\":\"1.0.0\",\"scope\":\"user\"}]}}",
+        "plug/gf/ah-roles.json": "{\"version\":1,\"roles\":{\"playtester\":{\"class\":\"review\",\"agent\":\"playtester\",\"label\":\"Playtester\",\"description\":\"plays builds\"}}}",
+        "plug/gf/agents/playtester.md": "---\nname: playtester\ndescription: x\n---\nBody text.\n",
+        "plug/gf/.claude-plugin/plugin.json": "{\"name\":\"gf\"}",
+        "home/.claude/agent-hierarchy.json": "{\"roles\":{\"playtester\":{\"model\":\"opus\"}},\"rosters\":{\"r\":{\"route\":\"peer\",\"packs\":[\"gf@bp\"],\"members\":[{\"role\":\"playtester\"}]}}}"
+      },
+      "expectWild": true,
+      "expect": {
+        "configured": "$any",
+        "enabled": "$any",
+        "handoffs": "$any",
+        "handoffsSource": "$any",
+        "msgs": "$any",
+        "route": "$any",
+        "routeSource": "$any",
+        "roles": {
+          "ultra-advisor": "$any",
+          "architect": "$any",
+          "reviewer": "$any",
+          "implementor": "$any",
+          "docs-writer": "$any",
+          "qa": "$any",
+          "ux-engineer": "$any",
+          "task-runner": "$any",
+          "backlog-groomer": "$any",
+          "sub-orchestrator": "$any",
+          "deputy-chief": "$any",
+          "playtester": {
+            "class": "review",
+            "agent": "gf:playtester",
+            "label": "Playtester",
+            "description": "plays builds",
+            "model": "opus",
+            "from": "gf@bp:playtester",
+            "pack": "$any",
+            "dispatch": "peer",
+            "peer": "auto"
+          }
+        },
+        "sources": "$any",
+        "shadowed": "$any",
+        "excludedRoles": [],
+        "layers": "$any",
+        "warnings": [],
+        "cwd": "$any",
+        "roster": "$any",
+        "rosterLevel": "$any",
+        "team": "$any",
+        "teamVia": "$any",
+        "ownedTeams": "$any"
+      }
+    },
+    {
+      "id": "roster-packs-custom-role-ignores-the-rows-class-with-a-warning",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "r"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"gf@bp\":[{\"installPath\":\"$ROOT/plug/gf\",\"version\":\"1.0.0\",\"scope\":\"user\"}]}}",
+        "plug/gf/ah-roles.json": "{\"version\":1,\"roles\":{\"playtester\":{\"class\":\"review\",\"agent\":\"playtester\",\"label\":\"Playtester\",\"description\":\"plays builds\"}}}",
+        "plug/gf/agents/playtester.md": "---\nname: playtester\ndescription: x\n---\nBody text.\n",
+        "plug/gf/.claude-plugin/plugin.json": "{\"name\":\"gf\"}",
+        "home/.claude/agent-hierarchy.json": "{\"roles\":{\"playtester\":{\"model\":\"opus\",\"class\":\"implement\"}},\"rosters\":{\"r\":{\"route\":\"peer\",\"packs\":[\"gf@bp\"],\"members\":[{\"role\":\"playtester\"}]}}}"
+      },
+      "expectWild": true,
+      "expect": {
+        "configured": "$any",
+        "enabled": "$any",
+        "handoffs": "$any",
+        "handoffsSource": "$any",
+        "msgs": "$any",
+        "route": "$any",
+        "routeSource": "$any",
+        "roles": {
+          "ultra-advisor": "$any",
+          "architect": "$any",
+          "reviewer": "$any",
+          "implementor": "$any",
+          "docs-writer": "$any",
+          "qa": "$any",
+          "ux-engineer": "$any",
+          "task-runner": "$any",
+          "backlog-groomer": "$any",
+          "sub-orchestrator": "$any",
+          "deputy-chief": "$any",
+          "playtester": {
+            "class": "review",
+            "agent": "gf:playtester",
+            "label": "Playtester",
+            "description": "plays builds",
+            "model": "opus",
+            "from": "gf@bp:playtester",
+            "pack": "$any",
+            "dispatch": "peer",
+            "peer": "auto"
+          }
+        },
+        "sources": "$any",
+        "shadowed": "$any",
+        "excludedRoles": [],
+        "layers": "$any",
+        "warnings": [
+          "ah: roles.playtester: class ignored — roster r's pack gf@bp supplies playtester's class and agent."
+        ],
+        "cwd": "$any",
+        "roster": "$any",
+        "rosterLevel": "$any",
+        "team": "$any",
+        "teamVia": "$any",
+        "ownedTeams": "$any"
       }
     },
     {
@@ -12410,6 +12536,128 @@
       }
     },
     {
+      "id": "roster-pack-manifest-naming-reviewer-resolves-to-the-pack-agent",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "r"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"gf@bp\":[{\"installPath\":\"$ROOT/plug/gf\",\"version\":\"1.0.0\",\"scope\":\"user\"}]}}",
+        "plug/gf/ah-roles.json": "{\"version\":1,\"roles\":{\"reviewer\":{\"class\":\"review\",\"agent\":\"reviewer\"}}}",
+        "plug/gf/agents/reviewer.md": "---\nname: reviewer\ndescription: x\ntools: Read, Grep, SendMessage\n---\nBody text.\n",
+        "plug/gf/.claude-plugin/plugin.json": "{\"name\":\"gf\"}",
+        "home/.claude/agent-hierarchy.json": "{\"rosters\":{\"r\":{\"route\":\"peer\",\"packs\":[\"gf@bp\"],\"members\":[{\"role\":\"reviewer\"}]}}}"
+      },
+      "expectWild": true,
+      "expect": {
+        "configured": true,
+        "enabled": true,
+        "handoffs": "auto",
+        "handoffsSource": "default",
+        "msgs": "required",
+        "route": null,
+        "routeSource": null,
+        "roles": {
+          "ultra-advisor": "$any",
+          "architect": "$any",
+          "reviewer": {
+            "model": "opus",
+            "from": "gf@bp:reviewer",
+            "agent": "gf:reviewer",
+            "pack": {
+              "status": "ok",
+              "message": null,
+              "subcode": null,
+              "from": "gf@bp:reviewer",
+              "agentText": "$any",
+              "agentPath": "$ROOT/plug/gf/agents/reviewer.md",
+              "pinNow": "$any",
+              "via": "roster:r"
+            },
+            "dispatch": "peer",
+            "peer": "auto"
+          },
+          "implementor": "$any",
+          "docs-writer": "$any",
+          "qa": "$any",
+          "ux-engineer": "$any",
+          "task-runner": "$any",
+          "backlog-groomer": "$any",
+          "sub-orchestrator": "$any",
+          "deputy-chief": "$any"
+        },
+        "sources": "$any",
+        "shadowed": [],
+        "excludedRoles": [],
+        "layers": "$any",
+        "warnings": [],
+        "cwd": "$ROOT/repo",
+        "roster": "$any",
+        "rosterLevel": "global",
+        "team": null,
+        "teamVia": null,
+        "ownedTeams": []
+      }
+    },
+    {
+      "id": "roster-pack-manifest-naming-reviewer-leaves-other-roster-built-in",
+      "args": [
+        "$ROOT/repo",
+        {
+          "roster": "default"
+        }
+      ],
+      "files": {
+        "repo/.git/HEAD": "ref: refs/heads/main\n",
+        "home/.claude/plugins/installed_plugins.json": "{\"plugins\":{\"gf@bp\":[{\"installPath\":\"$ROOT/plug/gf\",\"version\":\"1.0.0\",\"scope\":\"user\"}]}}",
+        "plug/gf/ah-roles.json": "{\"version\":1,\"roles\":{\"reviewer\":{\"class\":\"review\",\"agent\":\"reviewer\"}}}",
+        "plug/gf/agents/reviewer.md": "---\nname: reviewer\ndescription: x\ntools: Read, Grep, SendMessage\n---\nBody text.\n",
+        "plug/gf/.claude-plugin/plugin.json": "{\"name\":\"gf\"}",
+        "home/.claude/agent-hierarchy.json": "{\"rosters\":{\"r\":{\"route\":\"peer\",\"packs\":[\"gf@bp\"],\"members\":[{\"role\":\"reviewer\"}]}}}"
+      },
+      "expectWild": true,
+      "expect": {
+        "configured": true,
+        "enabled": true,
+        "handoffs": "auto",
+        "handoffsSource": "default",
+        "msgs": "required",
+        "route": null,
+        "routeSource": null,
+        "roles": {
+          "ultra-advisor": "$any",
+          "architect": "$any",
+          "reviewer": {
+            "model": "opus",
+            "dispatch": "peer",
+            "peer": "auto"
+          },
+          "implementor": "$any",
+          "docs-writer": "$any",
+          "qa": "$any",
+          "ux-engineer": "$any",
+          "task-runner": "$any",
+          "backlog-groomer": "$any",
+          "sub-orchestrator": "$any",
+          "deputy-chief": "$any"
+        },
+        "sources": "$any",
+        "shadowed": [],
+        "excludedRoles": [],
+        "layers": "$any",
+        "warnings": [],
+        "cwd": "$ROOT/repo",
+        "roster": null,
+        "rosterLevel": null,
+        "team": null,
+        "teamVia": null,
+        "ownedTeams": []
+      }
+    },
+    {
       "id": "roster-packs-builtin-name-keeps-config-model",
       "args": [
         "$ROOT/repo",
@@ -12669,7 +12917,7 @@
       }
     },
     {
-      "id": "packs-from-row-pinned-untrusted-here",
+      "id": "packs-from-row-pin-without-stored-copy-is-ignored",
       "args": [
         "$ROOT/repo"
       ],
@@ -12754,8 +13002,8 @@
             "from": "acme@market:helper",
             "pin": "sha256:c7794716679f8a80004889b8b8e77cb9e3aef24272d88863a6587a49d4510276",
             "pack": {
-              "status": "pack-untrusted-here",
-              "message": "this machine holds no stored copy of what sha256:c7794716679f… pinned, so nobody here has trusted it",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
@@ -12807,7 +13055,7 @@
       }
     },
     {
-      "id": "packs-from-row-changed-since-pin",
+      "id": "packs-from-row-stale-pin-is-ignored",
       "args": [
         "$ROOT/repo"
       ],
@@ -12894,8 +13142,8 @@
             "from": "acme@market:helper",
             "pin": "sha256:c7794716679f8a80004889b8b8e77cb9e3aef24272d88863a6587a49d4510276",
             "pack": {
-              "status": "pack-changed",
-              "message": "acme changed since this role was trusted (pinned sha256:c7794716679f…, now sha256:c8c69dd0372a…)",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
@@ -12947,7 +13195,7 @@
       }
     },
     {
-      "id": "packs-plugin-not-installed-uses-stored-copy",
+      "id": "packs-plugin-not-installed-reads-no-stored-copy",
       "args": [
         "$ROOT/repo"
       ],
@@ -13022,24 +13270,6 @@
             "model": "sonnet",
             "dispatch": "peer",
             "peer": "auto"
-          },
-          "helper": {
-            "class": "implement",
-            "agent": "acme:helper",
-            "label": "Helper",
-            "description": "does things",
-            "model": "sonnet",
-            "from": "acme@market:helper",
-            "pin": "sha256:c7794716679f8a80004889b8b8e77cb9e3aef24272d88863a6587a49d4510276",
-            "pack": {
-              "status": "pack-missing",
-              "message": "plugin acme is not installed",
-              "subcode": null,
-              "from": "acme@market:helper",
-              "via": "row:global"
-            },
-            "dispatch": "peer",
-            "peer": "auto"
           }
         },
         "sources": {
@@ -13053,11 +13283,17 @@
           "task-runner": "default",
           "backlog-groomer": "default",
           "sub-orchestrator": "default",
-          "deputy-chief": "default",
-          "helper": "user"
+          "deputy-chief": "default"
         },
         "shadowed": [],
-        "excludedRoles": [],
+        "excludedRoles": [
+          {
+            "name": "helper",
+            "scope": "user",
+            "path": "$ROOT/home/.claude/ah2/agent-hierarchy.json",
+            "reason": "pack-missing: plugin acme is not installed"
+          }
+        ],
         "layers": [
           {
             "scope": "user",
@@ -13072,7 +13308,9 @@
             }
           }
         ],
-        "warnings": [],
+        "warnings": [
+          "ah: custom role \"helper\" at user-scope config ($ROOT/home/.claude/ah2/agent-hierarchy.json) is invalid (pack-missing: plugin acme is not installed) — ignoring it."
+        ],
         "cwd": "$ROOT/repo",
         "roster": null,
         "rosterLevel": null,
@@ -13535,13 +13773,16 @@
             "model": "sonnet",
             "from": "acme@market:helper",
             "pack": {
-              "status": "pack-invalid",
-              "message": "$ROOT/plug/acme/agents/helper.md holds a hidden character (U+202E at line 4, column 5)",
-              "subcode": "pack-hidden-chars",
+              "status": "ok",
+              "message": null,
+              "subcode": null,
               "from": "acme@market:helper",
-              "agentText": null,
+              "agentText": "---\nname: helper\n---\nBody‮hidden\n",
               "agentPath": "$ROOT/plug/acme/agents/helper.md",
-              "pinNow": null,
+              "warnings": [
+                "$ROOT/plug/acme/agents/helper.md holds a hidden character (U+202E at line 4, column 5)"
+              ],
+              "pinNow": "sha256:1e6aab731f945907470ebad572da3812d071a00ca6bba5877ea2a64011c22818",
               "via": "row:global"
             },
             "dispatch": "peer",
@@ -13806,13 +14047,16 @@
             "model": "sonnet",
             "from": "acme@market:helper",
             "pack": {
-              "status": "pack-invalid",
-              "message": "agents/other.md also takes the agent name helper, so Claude Code might launch it as acme:helper instead of agents/helper.md",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
               "agentPath": "$ROOT/plug/acme/agents/helper.md",
-              "pinNow": null,
+              "warnings": [
+                "agents/other.md also takes the agent name helper, so Claude Code might launch it as acme:helper instead of agents/helper.md"
+              ],
+              "pinNow": "sha256:6add7d727443fb0ac1b9455ed2935ae4e2f54a15fcd895b360aa411fb0dcf651",
               "via": "row:global"
             },
             "dispatch": "peer",
@@ -13943,13 +14187,16 @@
             "model": "sonnet",
             "from": "acme@market:helper",
             "pack": {
-              "status": "pack-invalid",
-              "message": "agents/weird.md also takes the agent name helper, so Claude Code might launch it as acme:helper instead of agents/helper.md",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
               "agentPath": "$ROOT/plug/acme/agents/helper.md",
-              "pinNow": null,
+              "warnings": [
+                "agents/weird.md also takes the agent name helper, so Claude Code might launch it as acme:helper instead of agents/helper.md"
+              ],
+              "pinNow": "sha256:0b962f1d0d536106ed6a05ba29b73676168cb1ea209b9ef43d75beed20e1f14e",
               "via": "row:global"
             },
             "dispatch": "peer",
@@ -14450,8 +14697,8 @@
             "model": "inherit",
             "from": "acme@market:helper",
             "pack": {
-              "status": "pack-changed",
-              "message": "acme changed since this role was trusted (pinned …, now sha256:b960c1fcd14c…)",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",
@@ -14786,8 +15033,8 @@
             "model": "sonnet",
             "agent": "acme:helper",
             "pack": {
-              "status": "pack-changed",
-              "message": "acme changed since this role was trusted (pinned …, now sha256:7d3ede93a468…)",
+              "status": "ok",
+              "message": null,
               "subcode": null,
               "from": "acme@market:helper",
               "agentText": "---\nname: helper\ndescription: x\n---\nBody text.\n",

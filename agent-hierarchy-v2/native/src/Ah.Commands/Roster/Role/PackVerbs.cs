@@ -40,7 +40,7 @@ internal static class PackVerbs
     private static string Esc(RosterContext c, JsonValue? text) => c.Services.Config.EscapeTerminal(text);
 
     /// <summary>The version a plugin at <paramref name="dir"/> declares in its plugin.json, else <paramref name="fallback"/>, escaped for printing.</summary>
-    private static JsonValue PluginVersionAt(RosterContext c, string dir, JsonValue? fallback)
+    internal static JsonValue PluginVersionAt(RosterContext c, string dir, JsonValue? fallback)
     {
         var version = fallback ?? JsonValue.Null;
         try
@@ -58,10 +58,6 @@ internal static class PackVerbs
 
         return version.IsText ? Esc(c, version) : version;
     }
-
-    /// <summary><c>trusted</c> for an adopted role whose pack checks pass, else its pack reason.</summary>
-    internal static string PinState(JsonValue? pack) =>
-        pack is { IsMap: true } p && p.Member("status") is { } s && !(s.IsText && s.AsString() == "ok") ? JsConvert.ToJsString(s) : "trusted";
 
     /// <summary>The roster level names of resolveConfig's scopes.</summary>
     internal static JsonValue LevelOfScope(JsonValue? scope)
@@ -81,29 +77,46 @@ internal static class PackVerbs
         };
     }
 
-    /// <summary>The registry rows adopted from <paramref name="from"/>, as <c>{name, level, state}</c>.</summary>
+    /// <summary>
+    /// Where pack role <paramref name="from"/> is used (ah2-698 D5): each roster block that names its pack, as <c>{roster, level}</c>
+    /// across the visible levels, then each legacy config row with that <c>from</c>, as <c>{role, level}</c>.
+    /// </summary>
     private static JsonArray AdoptionsOf(RosterContext c, string from)
     {
         var config = c.Services.Config;
         var reg = c.Registry;
         var result = new JsonArray();
+        var pack = from[..from.LastIndexOf(':')];
+        var keys = new List<string?> { null };
+        keys.AddRange(config.NamedRosterKeys(c.Cwd).Select(k => (string?)k.AsString()));
+        foreach (var key in keys)
+        {
+            foreach (var def in NamedRostersVerb.Definitions(c, key))
+            {
+                if (def.Block.IsMap && def.Block.AsObject().Get("packs") is { IsArray: true } packs && packs.AsArray().Any(p => p.IsText && p.AsString() == pack))
+                {
+                    result.Add(new JsonObject { ["roster"] = key ?? config.DefaultRoster, ["level"] = def.Level });
+                }
+            }
+        }
+
         var roles = reg.Get("roles") is { IsMap: true } r ? r.AsObject() : new JsonObject();
         var sources = reg.Get("sources") is { IsMap: true } s ? s.AsObject() : new JsonObject();
         foreach (var role in config.RegistryRoles(reg))
         {
-            if (roles.Get(role) is { IsMap: true } entry && entry.Member("from") is { IsText: true } f && f.AsString() == from)
+            if (roles.Get(role) is { IsMap: true } entry && entry.Member("from") is { IsText: true } f && f.AsString() == from
+                && entry.Member("pack")?.Member("via") is { IsText: true } via && via.AsString().StartsWith("row:", StringComparison.Ordinal))
             {
-                result.Add(new JsonObject
-                {
-                    ["name"] = role,
-                    ["level"] = LevelOfScope(sources.Get(role)),
-                    ["state"] = PinState(entry.Member("pack")),
-                });
+                result.Add(new JsonObject { ["role"] = role, ["level"] = LevelOfScope(sources.Get(role)) });
             }
         }
 
         return result;
     }
+
+    private static string UsedBy(JsonValue a) => a.Member("roster") is { IsText: true } roster
+        ? $"roster {roster.AsString()} at {MemberPlanning.JsConvertText(a.Member("level"))}"
+        : $"row {MemberPlanning.JsConvertText(a.Member("role"))} at {MemberPlanning.JsConvertText(a.Member("level"))}";
 
     private static JsonObject RoleSummary(RosterContext c, string role, JsonValue m)
     {
@@ -182,15 +195,12 @@ internal static class PackVerbs
                 + (also > 0 ? $" — also carries {also} other thing{(also > 1 ? "s" : string.Empty)} (pack show)" : string.Empty));
             foreach (var role in p.Member("roles")!.Value.AsArray())
             {
-                var adopted = string.Join(
-                    "; ",
-                    role.Member("adopted")!.Value.AsArray().Select(a =>
-                        $"{MemberPlanning.JsConvertText(a.Member("name"))} at {MemberPlanning.JsConvertText(a.Member("level"))}, {MemberPlanning.JsConvertText(a.Member("state"))}"));
+                var adopted = string.Join("; ", role.Member("adopted")!.Value.AsArray().Select(UsedBy));
                 var routes = role.Member("routes") is { IsTruthy: true } rt ? $" · routes \"{MemberPlanning.JsConvertText(rt)}\"" : string.Empty;
                 var err = role.Member("error") is { IsTruthy: true } re ? $" · {MemberPlanning.JsConvertText(re)}" : string.Empty;
                 lines.Add(
                     $"  {MemberPlanning.JsConvertText(role.Member("name"))} · {(role.Member("class") is { IsNull: false } cl ? MemberPlanning.JsConvertText(cl) : "?")} · {(role.Member("agent") is { IsTruthy: true } ag ? MemberPlanning.JsConvertText(ag) : "?")}{routes}{err}"
-                    + (adopted.Length > 0 ? $" — adopted as {adopted}" : string.Empty));
+                    + (adopted.Length > 0 ? $" — used by {adopted}" : string.Empty));
             }
         }
 
@@ -301,6 +311,11 @@ internal static class PackVerbs
             result["symlink"] = Esc(c, link);
         }
 
+        // ah2-698 D6: the update role list, doctor and member start last recorded for this install.
+        result["updated"] = record is { } seenRec && seenRec.Member("marketplace") is { IsText: true } seenMarket
+            ? PackUpdates.Updated(PackUpdates.RecordOf(c, $"{plugin}@{seenMarket.AsString()}"))
+            : JsonValue.Null;
+
         if (c.Opts.IsTrue("json"))
         {
             c.Out(result);
@@ -312,6 +327,10 @@ internal static class PackVerbs
             $"{MemberPlanning.JsConvertText(result.Get("plugin"))}{(markets is null ? string.Empty : "@" + markets)} {(result.Get("version") is { IsTruthy: true } v ? MemberPlanning.JsConvertText(v) : "?")} — {dir}{(record is null ? " (not installed)" : string.Empty)}",
             $"digest {MemberPlanning.JsConvertText(result.Get("digest"))}",
         };
+        if (result.Get("updated") is { IsMap: true } updatedBlock)
+        {
+            lines.Add(PackUpdates.Line(updatedBlock));
+        }
         if (manifestError.IsMap)
         {
             lines.Add($"manifest: {MemberPlanning.JsConvertText(manifestError.Member("code"))}: {MemberPlanning.JsConvertText(manifestError.Member("message"))}");
@@ -347,11 +366,7 @@ internal static class PackVerbs
 
             if (r.Member("adopted") is { IsArray: true } adopted && adopted.AsArray().Count > 0)
             {
-                lines.Add(
-                    "  adopted as " + string.Join(
-                        "; ",
-                        adopted.AsArray().Select(a =>
-                            $"{MemberPlanning.JsConvertText(a.Member("name"))} at {MemberPlanning.JsConvertText(a.Member("level"))}, {MemberPlanning.JsConvertText(a.Member("state"))}")));
+                lines.Add("  used by " + string.Join("; ", adopted.AsArray().Select(UsedBy)));
             }
         }
 
@@ -366,7 +381,7 @@ internal static class PackVerbs
 
         if (result.Get("symlink") is { IsTruthy: true } sym)
         {
-            lines.Add($"symbolic link: {MemberPlanning.JsConvertText(sym)}");
+            lines.Add($"warning: symbolic link: {MemberPlanning.JsConvertText(sym)}");
         }
 
         c.Stdout.Write(string.Join('\n', lines) + "\n");
@@ -378,6 +393,12 @@ internal static class PackVerbs
         var o = source.IsMap ? source.AsObject().Clone() : new JsonObject();
         o[key] = value;
         return o;
+    }
+
+    private static JsonObject AsWarning(JsonObject finding)
+    {
+        finding["level"] = "warn";
+        return finding;
     }
 
     private static JsonObject Finding(string level, string code, JsonValue path, string message) => new()
@@ -420,11 +441,12 @@ internal static class PackVerbs
             findings.Add(Finding("error", MemberPlanning.JsConvertText(error.Member("code")), JsonValue.Null, Esc(c, error.Member("message"))));
         }
 
+        // ah2-698 D4: name claims, a non-UTF-8 agent file and hidden characters warn; the role stays available.
         if (m.Member("row") is { IsTruthy: true } row)
         {
             if (claims.Get("error") is { IsTruthy: true } claimError)
             {
-                findings.Add(Finding("error", "pack-invalid", JsonValue.Null, MemberPlanning.JsConvertText(claimError)));
+                findings.Add(Finding("warn", "pack-warning", JsonValue.Null, MemberPlanning.JsConvertText(claimError)));
             }
 
             if (claims.Get("byRole") is { IsMap: true } byRole && byRole.AsObject().Get(role) is { IsArray: true } claimedBy && claimedBy.AsArray().Count > 0)
@@ -432,8 +454,8 @@ internal static class PackVerbs
                 var files = claimedBy.AsArray().Select(x => MemberPlanning.JsConvertText(x)).ToList();
                 findings.Add(
                     Finding(
-                        "error",
-                        "pack-invalid",
+                        "warn",
+                        "pack-warning",
                         NodePath.Join(dir, files[0]),
                         config.PackClaimMessage(plugin.Length > 0 ? plugin : "?", MemberPlanning.JsConvertText(agent), files)));
             }
@@ -447,26 +469,25 @@ internal static class PackVerbs
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.DecoderFallbackException)
             {
                 findings.Add(
-                    Finding(
-                        "error",
-                        "pack-invalid",
-                        agentPath,
-                        File.Exists(agentPath) ? $"{agentPath} is not valid UTF-8" : $"no agents/{MemberPlanning.JsConvertText(agent)}.md"));
+                    File.Exists(agentPath)
+                        ? Finding("warn", "pack-warning", agentPath, $"{agentPath} is not valid UTF-8")
+                        : Finding("error", "pack-invalid", agentPath, $"no agents/{MemberPlanning.JsConvertText(agent)}.md"));
             }
 
             if (text is not null)
             {
                 if (config.HiddenCharAt(text) is { IsTruthy: true } hidden)
                 {
-                    findings.Add(Finding("error", "pack-hidden-chars", agentPath, $"{agentPath} holds a hidden character ({MemberPlanning.JsConvertText(hidden)})"));
+                    findings.Add(Finding("warn", "pack-hidden-chars", agentPath, $"{agentPath} holds a hidden character ({MemberPlanning.JsConvertText(hidden)})"));
                 }
 
+                // adr-47: an installed pack's agent file is taken as written, so its parse and contract findings are warnings.
                 var parsed = config.PackAgentParse(text, agentPath);
                 if (parsed.Get("findings") is { IsArray: true } pf)
                 {
                     foreach (var x in pf.AsArray())
                     {
-                        findings.Add(Clone(x, "message", Esc(c, x.Member("message"))));
+                        findings.Add(AsWarning(Clone(x, "message", Esc(c, x.Member("message")))));
                     }
                 }
 
@@ -489,7 +510,7 @@ internal static class PackVerbs
                 {
                     foreach (var x in vf.AsArray())
                     {
-                        findings.Add(Clone(x, "message", Esc(c, x.Member("message"))));
+                        findings.Add(AsWarning(Clone(x, "message", Esc(c, x.Member("message")))));
                     }
                 }
 

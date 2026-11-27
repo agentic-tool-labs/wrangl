@@ -85,7 +85,7 @@ of `ah roster doctor`.
 |---|---|---|
 | The roster looks stale, or the wrong members appear | a roster at a more specific level replaces the broader one entirely; levels do not merge | `ah roster show --level <level>` to inspect each level (see [Rosters](rosters.md)); `ah roster resync` to re-read the live layout |
 | `… selects roster "<name>", but there is no rosters.<name> block at any level` | `--roster`, `WRANGL_ROSTER` or `activeRoster` names a roster that no level defines | [Named rosters](#named-rosters) |
-| A custom or pack role is missing, or `ah roster role list` shows `UNAVAILABLE` with a `pack-…` reason | the role pack changed, went missing, or was never trusted on this machine | [Role packs](#role-packs) |
+| A custom or pack role is missing, or `ah roster role list` shows `UNAVAILABLE` with a `pack-…` reason | the pack is missing or broken, two installs of it differ, or the selected roster doesn't name it | [Role packs](#role-packs) |
 
 ## The daemon
 
@@ -251,42 +251,51 @@ that level (from a work tree, in either checkout's file). Delete it first, or pi
 
 ## Role packs
 
-How packs work: [Custom roles](custom-roles.md#6-role-packs). When a role adopted from a pack is unavailable, it is
-left out of routing (a built-in role whose agent a pack overrides goes back to its shipped agent), and the session's
-start-up note lists it. `ah roster role list` shows the reason as a `pack-…` code, and `ah roster doctor` shows a
-`warn` row for the configuration that says the role is unavailable. A pack role already running as a member is not
-touched.
+How packs work: [Custom roles](custom-roles.md#6-role-packs). Start with the roster you mean:
+
+```
+ah roster role list --roster <name>
+```
+
+**A pack role is not listed at all.**
+
+- The roster doesn't name the pack. Add it:
+  `ah roster roster pack <name> --add <plugin>@<marketplace>`. Check which roster is selected
+  ([Named rosters](#named-rosters)).
+The warnings quoted below appear in the session's start-up note and in `/wrangl:hierarchy status`.
+
+- A warning says `pack <plugin>@<marketplace> is not installed on this machine`: run
+  `/wrangl:agent-role install <source>`.
+- A warning says `… its roles are absent`: the pack's `ah-roles.json` can't be read. Fix the pack and update it.
+- It is listed under `EXCLUDED` with a reason. A `pack-invalid` reason is explained below.
+  `its pack role is supplied by roster <name> as <role>` means an old row gave the pack role another name: use
+  `<role>` under that roster, or see
+  [the move to the roster form](custom-roles.md#roles-adopted-before-rosters-named-packs).
+
+**A pack role is `UNAVAILABLE` or `EXCLUDED` with a `pack-…` reason.** It is left out of routing (a built-in whose agent a pack replaces goes back to its
+shipped agent), the session's start-up note lists it, and `ah roster doctor` shows a `warn` row. A pack role already
+running as a member is not touched. There are three reasons:
 
 | Reason | Cause | Fix |
 |---|---|---|
-| `pack-changed` | something in the plugin changed since you trusted the role. The trust covers every file in the plugin, so a plain `claude plugin update`, even a version bump, trips it for every role adopted from that plugin | `ah roster role trust <role> --dry-run` to review, then run it again with the pin it prints |
-| `pack-untrusted-here` | the pin matches the installed plugin, but this machine has no stored copy of what was pinned: someone else committed the row, or this is a new machine | the same `role trust` |
-| `pack-missing` | the plugin is not installed from that marketplace, or its `ah-roles.json` does not offer the role. A plugin of the same name from another marketplace never stands in | reinstall the pack, or `ah roster role remove <role>` |
-| `pack-invalid` | the pack's manifest or the role's entry is unreadable or breaks the custom-role rules; the agent file is missing, not UTF-8, or holds a hidden character; or another agent file in the plugin takes the role's agent name | fix the pack and update it, or `ah roster role remove <role>` |
+| `pack-missing` | the plugin is not installed from that marketplace, or its `ah-roles.json` does not offer the role. A plugin of the same name from another marketplace never stands in | reinstall the pack, or `ah roster role remove <role>` for an old `from` row |
+| `pack-invalid` | the manifest is unreadable or its `version` isn't 1; the role has no known `class`, sets `peer`, or breaks the naming rules; `agents/<agent>.md` is missing; or a role named after a built-in has another class | fix the pack and update it, or take it off the roster |
 | `pack-ambiguous` | two installs of the plugin differ (two marketplaces, or user and project scope), so which one Claude Code loads cannot be known | uninstall all but one |
-| `pack-symlink` | the plugin holds a symbolic link, which the trust cannot cover | reinstall a pack without one, or `ah roster role remove <role>` |
 
-`role trust` only works when the pack itself reads cleanly; for `pack-missing`, `pack-invalid`, `pack-ambiguous` and
-`pack-symlink` the fix is on the install side. To see what is wrong with a pack, `ah roster pack show
-<plugin>@<marketplace>` lists every finding, and `ah roster pack show --path <dir>` checks a pack that is not
-installed.
+To see what is wrong with a pack, `ah roster pack show <plugin>@<marketplace>` lists every finding, and
+`ah roster pack show --path <dir>` checks a pack that is not installed.
 
-Problems in a pack's agent files are separate findings with `pack-agent-…` codes: `pack-agent-key` for a frontmatter
-key that is not allowed, `pack-agent-tools` for a missing or non-plain `tools` entry, `pack-agent-line` for a line YAML
-would read differently, and so on. `name-mismatch` means the frontmatter `name` is not the agent's name. Each finding
-names the line and says how to fix it; the allowed frontmatter is in [Custom roles](custom-roles.md#writing-a-pack). A
-hidden character is reported as `pack-hidden-chars` with its code point, line and column.
+**A pack role shows warnings.** It still works. Findings such as `pack-agent-key`, `pack-agent-tools`,
+`pack-agent-line`, `pack-hidden-chars`, `name-mismatch` (the frontmatter `name` is not the agent's name) or a second
+file taking the agent's name are for the pack's author. See
+[What ah warns about](custom-roles.md#what-ah-warns-about-in-a-pack-agent).
 
-**"`ah roster role set … --from` or `role trust` was denied, or asked me to approve."** That is by design: adopting or
-trusting pack content is your decision, made in your own top-level session and approved at Claude Code's own prompt.
-It is refused in subagent, role and member sessions, and while a pipeline run is live in the checkout. In a permission
-mode where Wrangl cannot tell that the prompt reaches you, it is refused too, and the message names the mode. Run the
-command on its own, with the full path and no `cd`, environment prefix, `$VAR` or pipe.
+**`role list` says `updated <date>`.** The pack changed since ah last saw it. There is nothing to approve; members use
+the new files from their next start. The line stays until the next change. See [Pack updates](custom-roles.md#pack-updates).
 
-**"A pack role `was not launched`."** One of two refusals. Either the member's auto mode is `bypassPermissions` or
-unset, so it would take your settings' default, which may be bypass; give it one with
-`ah roster edit --member <name> --auto-mode auto`. Or a pipeline run is live and the role is a pack's reviewer or
-designer, which stay first-party during a run; use the built-in role for the run.
+**`role trust` or `role set --from` stopped working.** Both were removed and exit 2. An installed pack is trusted; put
+it on a roster with `ah roster roster pack <roster> --add <plugin>@<marketplace>`. `--pin` and `--slot` are no longer
+accepted. Rows made the old way keep working.
 
 ## Response pointers
 

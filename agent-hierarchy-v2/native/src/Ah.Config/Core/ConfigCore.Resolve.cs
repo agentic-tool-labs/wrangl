@@ -8,6 +8,11 @@ internal sealed partial class ConfigCore
 {
     private const string AlwaysOrchestratorKey = "alwaysOrchestrator";
 
+    /// <summary>ah2-698 Y8: keys a roster's pack supplies for a custom role, ignored on the user's row, and the pack-only keys dropped with them.</summary>
+    private static readonly string[] PackSuppliedKeys = ["class", "agent"];
+
+    private static readonly string[] PackOnlyKeys = ["pin", "slots", "pack"];
+
     private static readonly string[] PreferenceOnlyKeys = ["version", "teamLayout", "modelTiers", "activeRoster", ParamsKey, ITestingOrders.Key, AlwaysOrchestratorKey];
 
     /// <summary>The top-level <c>teamLayout</c> of the global config file when it is a layout; warnings for an invalid one.</summary>
@@ -699,13 +704,38 @@ internal sealed partial class ConfigCore
                         // Amendment 1 F1: `from` laid over the built-in's config row (or its defaults), so model, dispatch and peer stay.
                         var over = OverDefaults(role, configRow, "pin", "slots", "pack");
                         over["from"] = from;
-                        roles[role] = WithVia(BuiltinFromRow(role, over, pinIgnored: true), rosterScope);
+                        roles[role] = WithVia(BuiltinFromRow(role, over), rosterScope);
                         sources[role] = rosterScope;
                         continue;
                     }
 
-                    var row = legacy ? configRow! : new JsonObject { ["from"] = from };
-                    customRaw[role] = (row, rosterScope, legacy ? customRaw[role].Path : packsPath);
+                    if (legacy)
+                    {
+                        customRaw[role] = (configRow!, rosterScope, customRaw[role].Path);
+                        continue;
+                    }
+
+                    if (configRow is null)
+                    {
+                        customRaw[role] = (new JsonObject { ["from"] = from }, rosterScope, packsPath);
+                        continue;
+                    }
+
+                    // ah2-698 Y8: `from` laid over the user's own row, as for a built-in name; the pack supplies class and agent.
+                    var laid = configRow.Clone();
+                    var dropped = PackSuppliedKeys.Where(laid.ContainsKey).ToList();
+                    if (dropped.Count > 0)
+                    {
+                        warnings.Add($"ah: roles.{role}: {string.Join(" and ", dropped)} ignored — roster {rosterName}'s pack {pack} supplies {role}'s class and agent.");
+                    }
+
+                    foreach (var key in PackSuppliedKeys.Concat(PackOnlyKeys))
+                    {
+                        laid.Remove(key);
+                    }
+
+                    laid["from"] = from;
+                    customRaw[role] = (laid, rosterScope, customRaw[role].Path);
                 }
             }
 
@@ -807,7 +837,7 @@ internal sealed partial class ConfigCore
             JsonObject? expanded = null;
             if (info.Raw.IsMap && info.Raw.AsObject().Get("from") is { IsText: true })
             {
-                expanded = ExpandFromRow(info.Raw.AsObject(), pinIgnored: fromRoster);
+                expanded = ExpandFromRow(info.Raw.AsObject());
                 if (expanded.Get("error") is { } fromError)
                 {
                     Exclude(name, info, fromError.AsString());

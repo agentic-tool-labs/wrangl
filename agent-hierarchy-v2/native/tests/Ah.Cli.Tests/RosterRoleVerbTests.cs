@@ -21,7 +21,6 @@ namespace Ah.Cli.Tests;
 public sealed class RosterRoleVerbTests : IDisposable
 {
     private readonly Sandbox _sandbox = new();
-    private bool _launchless;
 
     public RosterRoleVerbTests()
     {
@@ -66,7 +65,22 @@ public sealed class RosterRoleVerbTests : IDisposable
         public IRosterLaunch? Launch => launchless ? null : graph.Launch;
 
         public IRosterCallerRegistry? Callers => null;
+
+        public IRosterEventMail? EventMail { get; init; }
     }
+
+    private sealed class RecordingMail : IRosterEventMail
+    {
+        public List<(string Id, string Event, string Text, JsonObject Data, IReadOnlyList<string> Recipients)> Sent { get; } = [];
+
+        public IReadOnlyList<string> SendEvent(string cwd, string hierarchyDir, string id, string eventName, string text, JsonObject data, IReadOnlyList<string> recipients)
+        {
+            Sent.Add((id, eventName, text, data, recipients));
+            return recipients;
+        }
+    }
+
+    private readonly RecordingMail _mail = new();
 
     private (int Code, string Stdout, string Stderr) Roster(params string[] args) => RosterWith(new FakeRunner(), args);
 
@@ -88,7 +102,7 @@ public sealed class RosterRoleVerbTests : IDisposable
         var env = new FakeEnv(_sandbox.Home, _sandbox.AhHome, variables, new PluginInfo(_sandbox.PluginRoot, "wrangl", "1.2.3", "1"));
         var io = PlatformModule.CreateIo(null);
         var graph = ServiceGraph.Build(io, env, runner, new FakeDaemonClient());
-        var services = new Services(graph, io.Files, io.Clock, env, Project, _launchless);
+        var services = new Services(graph, io.Files, io.Clock, env, Project, false) { EventMail = _mail };
         CommandsModule.ComposeRoster(() => services);
         var verb = CommandsModule.Registry.Verbs.Single(v => v.Name == "roster");
         var stdout = new StringWriter(CultureInfo.InvariantCulture);
@@ -99,17 +113,17 @@ public sealed class RosterRoleVerbTests : IDisposable
 
     private static JsonObject Parse(string text) => JsonText.Parse(Encoding.UTF8.GetBytes(text)).AsObject();
 
-    private void InstallPack()
+    private void InstallPack(string toolsLine = "tools: Read, Grep, Glob, Bash, SendMessage\n", string role = "qc")
     {
         Directory.CreateDirectory(Path.Combine(PackDir, "agents"));
         Directory.CreateDirectory(Path.Combine(PackDir, ".claude-plugin"));
         File.WriteAllText(Path.Combine(PackDir, ".claude-plugin", "plugin.json"), "{\"name\":\"demo\",\"version\":\"2.0.0\"}");
         File.WriteAllText(
             Path.Combine(PackDir, "ah-roles.json"),
-            "{\"version\":1,\"roles\":{\"qc\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}");
+            "{\"version\":1,\"roles\":{\"" + role + "\":{\"class\":\"review\",\"label\":\"QC\",\"description\":\"Checks things\",\"routes\":\"qc work\",\"model\":\"sonnet\"}}}");
         File.WriteAllText(
-            Path.Combine(PackDir, "agents", "qc.md"),
-            "---\nname: qc\ndescription: Checks things\ntools: Read, Grep, Glob, Bash, SendMessage\n---\n\nYou check things.\n");
+            Path.Combine(PackDir, "agents", role + ".md"),
+            "---\nname: " + role + "\ndescription: Checks things\n" + toolsLine + "---\n\nYou check things.\n");
         var plugins = Path.Combine(_sandbox.Home, ".claude", "plugins");
         Directory.CreateDirectory(plugins);
         File.WriteAllText(
@@ -175,6 +189,156 @@ public sealed class RosterRoleVerbTests : IDisposable
         Assert.Contains("does not exist", missingPath.Stderr, StringComparison.Ordinal);
         Assert.Equal(2, noSub.Code);
         Assert.Contains("usage: ah roster pack list", noSub.Stderr, StringComparison.Ordinal);
+    }
+
+    /// <summary>The qc row of <c>role list --json --roster r</c>, with roster r naming the demo pack.</summary>
+    private JsonObject QcUnderRosterR()
+    {
+        var init = Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market");
+        Assert.True(init.Code == 0, init.Stderr);
+        var list = Roster("role", "list", "--json", "--roster", "r");
+        Assert.True(list.Code == 0, list.Stderr);
+        return Parse(list.Stdout)["roles"].AsArray().Single(r => r.Member("name")!.Value.AsString() == "qc").AsObject();
+    }
+
+    private static List<string> CodesAt(JsonObject row, string level) =>
+        row["findings"].AsArray().Where(f => f.Member("level")!.Value.AsString() == level).Select(f => f.Member("code")!.Value.AsString()).ToList();
+
+    /// <summary>T7 (D9, adr-47): a review-class pack agent with a server grant is available, and pack show prints the ⚠ grant line as a warning.</summary>
+    [Fact]
+    public void T7AReviewPackAgentWithAServerGrantIsAvailableAndPackShowPrintsTheGrantLine()
+    {
+        InstallPack("tools: Read, Grep, SendMessage, mcp__x__*\n");
+
+        var qc = QcUnderRosterR();
+        var shown = Roster("pack", "show", "demo");
+
+        Assert.DoesNotContain("UNAVAILABLE", qc["status"].AsString(), StringComparison.Ordinal);
+        Assert.Empty(CodesAt(qc, "error"));
+        Assert.Contains("pack-agent-tools", CodesAt(qc, "warn"));
+        Assert.Equal(0, shown.Code);
+        Assert.Contains("  ⚠ grants EVERY tool of MCP server mcp__x,", shown.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  WARN pack-agent-tools: tools entry \"mcp__x__*\": a server-wide grant", shown.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("  ERROR ", shown.Stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>W1: a pack agent with no tools list is available with a warning; W2: pack show shows it as a warning.</summary>
+    [Fact]
+    public void W1APackAgentWithNoToolsListIsAvailableWithAWarning()
+    {
+        InstallPack(string.Empty);
+
+        var qc = QcUnderRosterR();
+        var shown = Roster("pack", "show", "demo");
+
+        Assert.DoesNotContain("UNAVAILABLE", qc["status"].AsString(), StringComparison.Ordinal);
+        Assert.Empty(CodesAt(qc, "error"));
+        Assert.Contains(qc["findings"].AsArray(), f => f.Member("code")!.Value.AsString() == "pack-agent-tools"
+            && f.Member("message")!.Value.AsString().StartsWith("tools is required", StringComparison.Ordinal));
+        Assert.Contains("  WARN pack-agent-tools: tools is required", shown.Stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>Negative for W1/W2: a missing agent file is still pack-invalid, an error in role list and in pack show.</summary>
+    [Fact]
+    public void APackAgentWithNoAgentFileStaysUnavailableAndAnErrorInPackShow()
+    {
+        InstallPack();
+        File.Delete(Path.Combine(PackDir, "agents", "qc.md"));
+
+        var qc = QcUnderRosterR();
+        var shown = Roster("pack", "show", "demo");
+
+        Assert.StartsWith("UNAVAILABLE", qc["status"].AsString(), StringComparison.Ordinal);
+        Assert.Contains("pack-invalid", CodesAt(qc, "error"));
+        Assert.Contains("  ERROR pack-invalid: no agents/qc.md", shown.Stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>Negative: a first-party custom role keeps its contract errors (a review class holding Edit is still refused).</summary>
+    [Fact]
+    public void ACustomReviewRoleHoldingEditKeepsItsError()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(AgentFile("own"))!);
+        File.WriteAllText(AgentFile("own"), "---\nname: own\ndescription: Own role\ntools: Read, Grep, Edit, SendMessage\n---\n\nbody\n");
+        var set = Roster("role", "set", "own", "--class", "review", "--description", "Own role", "--level", "repo");
+
+        Assert.Equal(2, set.Code);
+        Assert.Contains("ERROR forbidden-tool:Edit", set.Stdout + set.Stderr, StringComparison.Ordinal);
+    }
+
+    private string PacksSeen => Path.Combine(_sandbox.Home, ".claude", "ah2", "packs-seen.json");
+
+    private JsonValue QcUpdated() =>
+        Parse(Roster("role", "list", "--json", "--roster", "r").Stdout)["roles"].AsArray().Single(r => r.Member("name")!.Value.AsString() == "qc").Member("pack")!.Value.Member("updated")!.Value;
+
+    /// <summary>T10 (D6): first sight writes the record and mails nothing; one changed file sends one pack-updated mail; the next run sends nothing.</summary>
+    [Fact]
+    public void T10AChangedPackFileIsReportedOnceToTheTeamsOrchestrator()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        Directory.CreateDirectory(Path.Combine(Project, ".claude", "ah2", "teams"));
+        File.WriteAllText(Path.Combine(Project, ".claude", "ah2", "teams", "proj.json"), "{\"version\":1,\"members\":[]}");
+
+        var first = QcUpdated();
+        Assert.True(first.IsNull);
+        Assert.True(File.Exists(PacksSeen));
+        Assert.Empty(_mail.Sent); // negative: first sight sends nothing
+
+        var unchanged = File.ReadAllText(PacksSeen);
+        Assert.True(QcUpdated().IsNull);
+        Assert.Equal(unchanged, File.ReadAllText(PacksSeen)); // negative: an unchanged digest writes nothing
+        Assert.Empty(_mail.Sent);
+
+        File.AppendAllText(Path.Combine(PackDir, "agents", "qc.md"), "More.\n");
+        var updated = QcUpdated();
+        var again = QcUpdated();
+        var text = Roster("role", "list", "--roster", "r").Stdout;
+
+        Assert.Equal(1, (int)updated.Member("files")!.Value.Member("changed")!.Value.AsNumber());
+        Assert.Equal(0, (int)updated.Member("files")!.Value.Member("added")!.Value.AsNumber());
+        Assert.Equal("2.0.0", updated.Member("to_version")!.Value.AsString());
+        Assert.Equal(JsonText.Stringify(updated, 0), JsonText.Stringify(again, 0));
+        var sent = Assert.Single(_mail.Sent); // the second and third runs send nothing
+        Assert.Equal("pack-updated", sent.Event);
+        Assert.Matches("^pack-updated:demo@market:[0-9a-f]{12}$", sent.Id);
+        Assert.Equal(["orchestrator@proj"], sent.Recipients);
+        Assert.Equal(
+            "role pack demo@market updated 2.0.0→2.0.0: files +0 −0 ~1; roles +0 −0 ~0. It takes effect at each member's next start; nothing was paused.",
+            sent.Text);
+        Assert.Equal("[\"agents/qc.md\"]", JsonText.Stringify(sent.Data["files"].Member("changed")!.Value, 0));
+        Assert.Contains("— updated ", text, StringComparison.Ordinal);
+        Assert.Contains(": files +0 −0 ~1, roles ~0", text, StringComparison.Ordinal);
+        Assert.Contains("updated ", Roster("pack", "show", "demo").Stdout, StringComparison.Ordinal);
+    }
+
+    /// <summary>D6 "blocks nothing": a packs-seen record that parses but has the wrong shape leaves role list working, the pack unreported.</summary>
+    [Fact]
+    public void AMalformedPacksSeenRecordBlocksNothing()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        Directory.CreateDirectory(Path.GetDirectoryName(PacksSeen)!);
+        File.WriteAllText(PacksSeen, "{\"demo@market\":{\"digest\":\"x\",\"files\":[[1,\"x\"]],\"previous\":{\"files\":[[1,\"y\"]]}}}");
+
+        var list = Roster("role", "list", "--json", "--roster", "r");
+
+        Assert.True(list.Code == 0, list.Stderr);
+        Assert.True(QcUpdated().IsNull);
+        Assert.Empty(_mail.Sent);
+    }
+
+    /// <summary>Negative for T10: with no team record the change is recorded and shown, and no mail is sent.</summary>
+    [Fact]
+    public void APackChangeOutsideATeamIsShownAndNotMailed()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        Assert.True(QcUpdated().IsNull);
+
+        File.AppendAllText(Path.Combine(PackDir, "agents", "qc.md"), "More.\n");
+
+        Assert.Equal(1, (int)QcUpdated().Member("files")!.Value.Member("changed")!.Value.AsNumber());
+        Assert.Empty(_mail.Sent);
     }
 
     // ---------------------------------------------------------------- role list / set / remove
@@ -431,6 +595,7 @@ public sealed class RosterRoleVerbTests : IDisposable
         var removed = Roster("roster", "pack", "r", "--remove", "demo@market");
 
         Assert.True(added.Code == 0, added.Stderr);
+        Assert.Contains("ah roster: pack q@m is not installed on this machine", added.Stderr, StringComparison.Ordinal);
         Assert.True(removed.Code == 0, removed.Stderr);
         Assert.Equal(members, Members());
         Assert.Equal("[\"other@market\",\"q@m\"]", Packs());
@@ -474,6 +639,161 @@ public sealed class RosterRoleVerbTests : IDisposable
     {
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
         File.WriteAllText(file, "{\"version\":1,\"enabled\":true,\"roles\":" + roles + "}\n");
+    }
+
+    private JsonObject RoleRow(string name, params string[] roster)
+    {
+        var list = Roster(["role", "list", "--json", .. roster]);
+        Assert.True(list.Code == 0, list.Stderr);
+        return Parse(list.Stdout)["roles"].AsArray().Single(r => r.Member("name")!.Value.AsString() == name).AsObject();
+    }
+
+    /// <summary>Y1 (ah2-698): role set on a pack-supplied reviewer writes only the user's model; the pack agent runs with it.</summary>
+    [Fact]
+    public void Y1RoleSetOnAPackSuppliedReviewerWritesAPlainRowAndTheListShowsThePackAgentWithThatModel()
+    {
+        InstallPack(role: "reviewer");
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+
+        var set = Roster("role", "set", "reviewer", "--model", "opus", "--roster", "r");
+
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.Equal("{\"model\":\"opus\"}", JsonText.Stringify(Parse(File.ReadAllText(GlobalFile))["roles"].AsObject()["reviewer"], 0));
+        var row = RoleRow("reviewer", "--roster", "r");
+        Assert.Equal("opus", row["model"].AsString());
+        Assert.Equal("demo@market:reviewer", row["from"].AsString());
+        Assert.Equal("roster:r", row["pack"].AsObject()["via"].AsString());
+    }
+
+    /// <summary>Y8/Y9 (Amendment 1): a pack custom role keeps the user's model and the pack's class, and --agent says "supplied by a pack".</summary>
+    [Fact]
+    public void Y8APackCustomRoleKeepsTheUsersModelAndThePacksClass()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"qc\":{\"model\":\"opus\",\"class\":\"implement\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+
+        var list = Roster("role", "list", "--json", "--roster", "r");
+        var agent = Roster("role", "set", "qc", "--agent", "mine", "--roster", "r");
+
+        var qc = Parse(list.Stdout)["roles"].AsArray().Single(r => r.Member("name")!.Value.AsString() == "qc").AsObject();
+        Assert.Equal("opus", qc["model"].AsString());
+        Assert.Equal("review", qc["class"].AsString());
+        Assert.Equal(2, agent.Code);
+        Assert.Contains("role set qc: --agent can't change a role supplied by a pack (demo@market:qc) — to drop the pack: ah roster roster pack r --remove demo@market", agent.Stderr, StringComparison.Ordinal);
+        Assert.DoesNotContain("define your own role", agent.Stderr, StringComparison.Ordinal);
+    }
+
+    /// <summary>Y11 (Amendment 2): role set without --level on a pack-supplied role edits the level that already holds the user's row.</summary>
+    [Fact]
+    public void Y11RoleSetOnAPackSuppliedRoleEditsTheLevelHoldingTheUsersRow()
+    {
+        InstallPack(role: "reviewer");
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"reviewer\":{\"model\":\"sonnet\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+
+        var set = Roster("role", "set", "reviewer", "--model", "opus", "--roster", "r");
+
+        Assert.True(set.Code == 0, set.Stderr);
+        Assert.Equal("{\"model\":\"opus\"}", JsonText.Stringify(Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["reviewer"], 0));
+        Assert.False(File.Exists(GlobalFile) && Parse(File.ReadAllText(GlobalFile)).Get("roles") is { IsMap: true } g && g.AsObject().ContainsKey("reviewer"));
+        Assert.Equal("opus", RoleRow("reviewer", "--roster", "r")["model"].AsString());
+    }
+
+    /// <summary>Negative for Y1: under a roster that names no pack, reviewer is the shipped agent and role set keeps today's path.</summary>
+    [Fact]
+    public void Y1RoleSetOnReviewerUnderARosterWithoutThePackKeepsTheShippedAgent()
+    {
+        InstallPack(role: "reviewer");
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+
+        var set = Roster("role", "set", "reviewer", "--model", "opus");
+
+        Assert.True(set.Code == 0, set.Stderr);
+        var row = RoleRow("reviewer");
+        Assert.Equal("opus", row["model"].AsString());
+        Assert.False(row.ContainsKey("from"));
+    }
+
+    /// <summary>Y3/Y2 (ah2-698): a legacy row the selected roster's pack supplies is removed though members use it; a second remove names roster pack --remove.</summary>
+    [Fact]
+    public void Y3RoleRemoveDropsALegacyRowThatTheRostersPackSuppliesThoughMembersUseIt()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        Assert.Equal(0, Roster("add", "--level", "repo", "--roster", "r", "--role", "qc").Code);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"qc\":{\"from\":\"demo@market:qc\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+
+        var removed = Roster("role", "remove", "qc", "--roster", "r");
+        var again = Roster("role", "remove", "qc", "--roster", "r");
+
+        Assert.True(removed.Code == 0, removed.Stderr);
+        Assert.False(Parse(File.ReadAllText(RepoFile))["roles"].AsObject().ContainsKey("qc"));
+        Assert.Equal(2, again.Code);
+        Assert.Contains("no config row for it to remove — roster r's pack supplies it; to drop the pack: ah roster roster pack r --remove demo@market", again.Stderr, StringComparison.Ordinal);
+    }
+
+    /// <summary>Y6 (ah2-698): doctor names a pack role's failing pack status; its negative, a custom role's failing contract, keeps the contract text.</summary>
+    [Fact]
+    public void Y6DoctorNamesThePackStatusForAnUnavailablePackRole()
+    {
+        InstallPack();
+        File.Delete(Path.Combine(PackDir, "agents", "qc.md"));
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--pack", "demo@market").Code);
+        Directory.CreateDirectory(Path.GetDirectoryName(AgentFile("own"))!);
+        File.WriteAllText(AgentFile("own"), "---\nname: own\ndescription: mine\ntools: Read, Edit, SendMessage\n---\nMine.\n");
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"own\":{\"class\":\"review\",\"agent\":\"own\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+
+        var doctor = Roster("doctor");
+        var text = doctor.Stdout + doctor.Stderr;
+
+        Assert.Contains("role qc is unavailable: its pack status is pack-invalid", text, StringComparison.Ordinal);
+        Assert.Contains("role own is unavailable: its agent fails the review contract", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>Review finding 2: a legacy built-in row the roster's pack supplies loses only its pack keys; the plain row left is then removed whole.</summary>
+    [Fact]
+    public void RoleRemoveOnALegacyBuiltinRowUnderASupplyingRosterKeepsTheUsersModel()
+    {
+        InstallPack(role: "reviewer");
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r", "--pack", "demo@market").Code);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"reviewer\":{\"from\":\"demo@market:reviewer\",\"pin\":\"sha256:x\",\"model\":\"opus\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+
+        var first = Roster("role", "remove", "reviewer", "--roster", "r");
+        var row = JsonText.Stringify(Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["reviewer"], 0);
+        var second = Roster("role", "remove", "reviewer", "--roster", "r");
+
+        Assert.True(first.Code == 0, first.Stderr);
+        Assert.Equal("{\"model\":\"opus\"}", row);
+        Assert.True(second.Code == 0, second.Stderr);
+        Assert.False(Parse(File.ReadAllText(RepoFile))["roles"].AsObject().ContainsKey("reviewer"));
+    }
+
+    /// <summary>Negative for Y3: when the roster names no pack, the legacy row is still refused while members use it.</summary>
+    [Fact]
+    public void Y3RoleRemoveStillRefusesALegacyRowMembersUseWhenNoRosterPackSuppliesIt()
+    {
+        InstallPack();
+        Assert.Equal(0, Roster("init", "--level", "repo", "--route", "peer", "--roster", "r").Code);
+        var data = Parse(File.ReadAllText(RepoFile));
+        data["roles"] = Parse("{\"qc\":{\"from\":\"demo@market:qc\"}}");
+        File.WriteAllText(RepoFile, JsonText.Stringify(JsonValue.FromObject(data), 2));
+        Assert.Equal(0, Roster("add", "--level", "repo", "--roster", "r", "--role", "qc").Code);
+
+        var removed = Roster("role", "remove", "qc", "--roster", "r");
+
+        Assert.Equal(2, removed.Code);
+        Assert.Contains("roster members still use it", removed.Stderr, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -574,175 +894,28 @@ public sealed class RosterRoleVerbTests : IDisposable
         Assert.Contains("alt. to Implementor: Standalone documentation outside of code", list.Stdout, StringComparison.Ordinal);
     }
 
-    // ---------------------------------------------------------------- adopting a pack role
+    // ---------------------------------------------------------------- the removed trust verbs (ah2-698 D5)
 
     [Fact]
-    public void AdoptingAPackRoleNeedsTheExactPinItsDryRunPrintedAndStoresACopy()
+    public void RoleTrustAndRoleSetFromAnswerExitTwoWithThePointerToTheirReplacement()
     {
         InstallPack();
-        var from = "demo@market:qc";
 
-        var dry = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run");
-        Assert.True(dry.Code == 0, dry.Stderr);
-        var dryResult = Parse(dry.Stdout);
-        var pin = dryResult["pin"].AsString();
-        Assert.StartsWith("sha256:", pin, StringComparison.Ordinal);
+        var trust = Roster("role", "trust", "qc", "--pin", "sha256:" + new string('0', 64));
+        var from = Roster("role", "set", "qc", "--from", "demo@market:qc", "--level", "repo");
+        var pin = Roster("role", "set", "qc", "--class", "review", "--pin", "sha256:" + new string('0', 64), "--level", "repo");
+
+        Assert.Equal(2, trust.Code);
+        Assert.Contains("role trust was removed: an installed role pack is trusted, and its updates are reported in role list (adr-46)", trust.Stderr, StringComparison.Ordinal);
+        Assert.Equal(2, from.Code);
+        Assert.Contains("pack roles come from a roster's packs: ah roster roster pack <roster> --add <plugin>@<marketplace> (or init --pack)", from.Stderr, StringComparison.Ordinal);
+        Assert.Equal(2, pin.Code);
+        Assert.Contains("unrecognized flag --pin", pin.Stderr, StringComparison.Ordinal);
         Assert.False(File.Exists(RepoFile));
 
-        var noPin = Roster("role", "set", "qc", "--from", from, "--level", "repo");
-        Assert.Equal(2, noPin.Code);
-        Assert.Contains("committing needs --pin", noPin.Stderr, StringComparison.Ordinal);
-
-        var wrong = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", "sha256:" + new string('0', 64));
-        Assert.Equal(2, wrong.Code);
-        Assert.Contains("doesn't match what is installed now", wrong.Stderr, StringComparison.Ordinal);
-        Assert.False(File.Exists(RepoFile));
-
-        var committed = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin);
-        Assert.True(committed.Code == 0, committed.Stderr);
-        Assert.True(Parse(committed.Stdout)["written"].AsBool());
-        var row = Parse(File.ReadAllText(RepoFile))["roles"].AsObject()["qc"].AsObject();
-        Assert.Equal(from, row["from"].AsString());
-        Assert.Equal(pin, row["pin"].AsString());
-        Assert.True(File.Exists(Path.Combine(_sandbox.Home, ".claude", "ah2", "trusted", pin["sha256:".Length..] + ".json")));
-
-        var trust = Parse(Roster("role", "trust", "qc", "--level", "repo", "--dry-run").Stdout);
-        Assert.True(trust["stored_copy"].AsBool());
-        Assert.Empty(trust["fields_changed"].AsArray());
-        Assert.Equal(pin, trust["pin"].AsString());
-    }
-
-    private string AdoptQa()
-    {
-        InstallPack();
-        var from = "demo@market:qc";
-        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
-        Assert.Equal(0, Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin).Code);
-        File.WriteAllText(
-            Path.Combine(PackDir, "agents", "qc.md"),
-            "---\nname: qc\ndescription: Checks things\ntools: Read, Grep, Glob, Bash, SendMessage\n---\n\nYou check things carefully.\n");
-        return pin;
-    }
-
-    [Fact]
-    public void TrustDryRunShowsTheSystemDiffOfTheStoredCopyAgainstTheInstalledAgentFile()
-    {
-        AdoptQa();
-        var seen = new List<(string Trusted, string Installed)>();
-        var runner = new FakeRunner
-        {
-            Exit = _ => 1,
-            Output = argv =>
-            {
-                seen.Add((File.ReadAllText(argv[2]), File.ReadAllText(argv[3])));
-                return "--- trusted\n+++ installed\n-You check things.\n+You check things carefully.\n";
-            },
-        };
-
-        var trust = Parse(RosterWith(runner, "role", "trust", "qc", "--level", "repo", "--dry-run").Stdout);
-
-        Assert.Equal("--- trusted\n+++ installed\n-You check things.\n+You check things carefully.\n", trust["agent_diff"].AsString());
-        var call = Assert.Single(runner.Calls, argv => argv[0] == "diff");
-        Assert.Equal("-u", call[1]);
-        Assert.Equal("trusted", Path.GetFileName(call[2]));
-        Assert.Equal("installed", Path.GetFileName(call[3]));
-        Assert.Equal(Path.GetDirectoryName(call[2]), Path.GetDirectoryName(call[3]));
-        Assert.False(Directory.Exists(Path.GetDirectoryName(call[2])));
-        var files = Assert.Single(seen);
-        Assert.Contains("You check things.", files.Trusted, StringComparison.Ordinal);
-        Assert.Contains("You check things carefully.", files.Installed, StringComparison.Ordinal);
-    }
-
-    [Theory]
-    [InlineData(2)]
-    [InlineData(127)]
-    public void TrustDryRunShowsBothTextsInFullWhenTheDiffCommandFails(int exit)
-    {
-        AdoptQa();
-        var runner = new FakeRunner { Exit = _ => exit, Output = _ => "ignored" };
-
-        var diff = Parse(RosterWith(runner, "role", "trust", "qc", "--level", "repo", "--dry-run").Stdout)["agent_diff"].AsString();
-
-        Assert.StartsWith("--- trusted\n", diff, StringComparison.Ordinal);
-        Assert.Contains("\n+++ installed\n", diff, StringComparison.Ordinal);
-        Assert.Contains("You check things carefully.", diff, StringComparison.Ordinal);
-        Assert.DoesNotContain("ignored", diff, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void TrustDryRunShowsBothTextsInFullWhenThereIsNoProcessRunner()
-    {
-        AdoptQa();
-        _launchless = true;
-
-        var diff = Parse(Roster("role", "trust", "qc", "--level", "repo", "--dry-run").Stdout)["agent_diff"].AsString();
-
-        Assert.StartsWith("--- trusted\n", diff, StringComparison.Ordinal);
-        Assert.Contains("\n+++ installed\n", diff, StringComparison.Ordinal);
-        Assert.Contains("You check things carefully.", diff, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void TrustDryRunRunsNoDiffWhenTheAgentFileIsUnchanged()
-    {
-        InstallPack();
-        var from = "demo@market:qc";
-        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
-        Assert.Equal(0, Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin).Code);
-        var runner = new FakeRunner { Exit = _ => 1 };
-
-        var trust = Parse(RosterWith(runner, "role", "trust", "qc", "--level", "repo", "--dry-run").Stdout);
-
-        Assert.Equal(string.Empty, trust["agent_diff"].AsString());
-        Assert.DoesNotContain(runner.Calls, argv => argv[0] == "diff");
-    }
-
-    [Fact]
-    public void RoleTrustRefusesARoleThatIsNotAdoptedFromAPack()
-    {
-        Assert.Equal(
-            0,
-            Roster("role", "set", "qc", "--class", "review", "--routes", "qc work", "--description", "Checks things", "--level", "repo", "--scaffold", "repo").Code);
-
-        var refused = Roster("role", "trust", "qc", "--level", "repo", "--dry-run");
-
-        Assert.Equal(2, refused.Code);
-        Assert.Contains("it isn't adopted from a pack at level \"repo\"", refused.Stderr, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void AdoptingRefusesAMalformedFromAnUninstalledPluginAndAFlagTheFromFormTakesNoPartIn()
-    {
-        InstallPack();
-
-        var malformed = Roster("role", "set", "qc", "--from", "nope", "--level", "repo", "--dry-run");
-        var uninstalled = Roster("role", "set", "qc", "--from", "ghost:qc", "--level", "repo", "--dry-run");
-        var withClass = Roster("role", "set", "qc", "--from", "demo@market:qc", "--class", "review", "--level", "repo", "--dry-run");
-
-        Assert.Equal(2, malformed.Code);
-        Assert.Contains("--from must be <plugin>@<marketplace>:<role>, got \"nope\"", malformed.Stderr, StringComparison.Ordinal);
-        Assert.Equal(2, uninstalled.Code);
-        Assert.Contains("plugin ghost is not installed", uninstalled.Stderr, StringComparison.Ordinal);
-        Assert.Equal(2, withClass.Code);
-        Assert.Contains("--class can't be used with --from", withClass.Stderr, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void AdoptingLeavesNoLevelRowAndNoTemporaryFileWhenTheStoredCopyCannotBeReplaced()
-    {
-        InstallPack();
-        var from = "demo@market:qc";
-        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
-        // the stored copy's path is a non-empty directory, so the final rename fails after the temporary file was flushed
-        var stored = Path.Combine(_sandbox.Home, ".claude", "ah2", "trusted", pin["sha256:".Length..] + ".json");
-        Directory.CreateDirectory(stored);
-        File.WriteAllText(Path.Combine(stored, "keep"), "x");
-
-        var committed = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin);
-
-        Assert.NotEqual(0, committed.Code);
-        Assert.False(File.Exists(RepoFile));
-        Assert.True(File.Exists(Path.Combine(stored, "keep")));
-        Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(stored)!, ".*.tmp"));
+        // negative: a role set without --from is not the pointer; it still writes the row
+        var own = Roster("role", "set", "qc", "--class", "review", "--routes", "qc work", "--description", "Checks things", "--level", "repo", "--scaffold", "repo");
+        Assert.True(own.Code == 0, own.Stderr);
+        Assert.DoesNotContain("roster's packs", own.Stderr, StringComparison.Ordinal);
     }
 }

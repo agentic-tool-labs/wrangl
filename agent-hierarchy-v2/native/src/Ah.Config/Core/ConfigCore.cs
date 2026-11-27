@@ -50,6 +50,8 @@ internal sealed partial class ConfigCore(IFileReader files, IAhEnvironment envir
 
     public string UserConfigPath() => AhPaths.UserEntry(Home, ConfigRegistry.ConfigBasename);
 
+    public string PacksSeenPath() => AhPaths.UserEntry(Home, "packs-seen.json");
+
     public string? FindGitRoot(string start)
     {
         var dir = Resolve(start);

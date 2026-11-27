@@ -115,13 +115,12 @@ public sealed class RosterKitVerbTests : IDisposable
             "{\"plugins\":{\"demo@market\":[{\"scope\":\"user\",\"installPath\":" + JsonText.Stringify(JsonValue.FromString(PackDir), 0) + ",\"version\":\"2.0.0\"}]}}");
     }
 
-    /// <summary>Roster <c>kitted</c> at repo level: a custom role (scout, with a repo agent file), an adopted pack role (qc) and a built-in.</summary>
+    /// <summary>Roster <c>kitted</c> at repo level: a custom role (scout, with a repo agent file), a legacy pack row (qc) and a built-in.</summary>
     private void DefineKittedRoster()
     {
         InstallPack();
-        var from = "demo@market:qc";
-        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
-        Assert.Equal(0, Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin).Code);
+        Directory.CreateDirectory(Path.GetDirectoryName(RepoFile)!);
+        File.WriteAllText(RepoFile, "{\"roles\":{\"qc\":{\"from\":\"demo@market:qc\"}}}\n");
         Directory.CreateDirectory(Path.Combine(Project, ".claude", "agents"));
         File.WriteAllText(
             Path.Combine(Project, ".claude", "agents", "scout.md"),
@@ -345,21 +344,32 @@ public sealed class RosterKitVerbTests : IDisposable
     private string UserAgent => Path.Combine(_sandbox.Home, ".claude", "agents", "scout.md");
 
     [Fact]
-    public void K3AWrongPinOrAMemberSessionWritesNothing()
+    public void K3AWrongPinWritesNothing()
     {
         ExportForAFreshMachine();
-        var pin = PinIn(Roster("kit", "import", KitFile, "--dry-run").Stdout);
 
         var wrong = CommitWith("sha256:" + new string('0', 64), "global", "user");
-        _teamFile = Path.Combine(_sandbox.Root, "team.json");
-        var member = CommitWith(pin, "global", "user");
 
         Assert.Equal(2, wrong.Code);
         Assert.Contains("doesn't match this kit", wrong.Stderr, StringComparison.Ordinal);
-        Assert.Equal(2, member.Code);
-        Assert.Contains("kit import: refused — this session is a team member (WRANGL_TEAM_FILE is set)", member.Stderr, StringComparison.Ordinal);
         Assert.False(File.Exists(GlobalFile));
         Assert.False(File.Exists(UserAgent));
+    }
+
+    /// <summary>W3 (adr-47): the trust refusal is gone, so a commit in a team member's context (WRANGL_TEAM_FILE set) imports.</summary>
+    [Fact]
+    public void W3AKitImportsInAMemberSessionsContext()
+    {
+        ExportForAFreshMachine();
+        var pin = PinIn(Roster("kit", "import", KitFile, "--dry-run").Stdout);
+        _teamFile = Path.Combine(_sandbox.Root, "team.json");
+
+        var member = CommitWith(pin, "global", "user");
+
+        Assert.True(member.Code == 0, member.Stderr);
+        Assert.DoesNotContain("refused", member.Stderr, StringComparison.Ordinal);
+        Assert.True(File.Exists(GlobalFile));
+        Assert.True(File.Exists(UserAgent));
     }
 
     [Fact]
@@ -642,28 +652,5 @@ public sealed class RosterKitVerbTests : IDisposable
         Assert.Contains("commit: refused", dry.Stdout, StringComparison.Ordinal);
         Assert.Equal(2, CommitWith(PinIn(dry.Stdout)).Code);
         Assert.False(File.Exists(LintAgentFile));
-    }
-
-    [Fact]
-    public void APackAgentWithNoToolsIsStillRefusedAtAdoptAndAtTrust()
-    {
-        InstallPack();
-        var from = "demo@market:qc";
-        var pin = Parse(Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run").Stdout)["pin"].AsString();
-        Assert.Equal(0, Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", pin).Code);
-        File.WriteAllText(Path.Combine(PackDir, "agents", "qc.md"), "---\nname: qc\ndescription: Checks things\n---\n\nYou check things.\n");
-
-        var trustDry = Roster("role", "trust", "qc", "--level", "repo", "--dry-run");
-        Assert.Contains("tools is required", trustDry.Stdout + trustDry.Stderr, StringComparison.Ordinal);
-        var trust = Roster("role", "trust", "qc", "--level", "repo", "--pin", Parse(trustDry.Stdout)["pin"].AsString());
-        Assert.Equal(2, trust.Code);
-        Assert.Contains("role trust qc: errors stand", trust.Stderr, StringComparison.Ordinal);
-
-        Assert.Equal(0, Roster("role", "remove", "qc", "--level", "repo").Code);
-        var adoptDry = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--dry-run");
-        Assert.Contains("tools is required", adoptDry.Stdout + adoptDry.Stderr, StringComparison.Ordinal);
-        var adopt = Roster("role", "set", "qc", "--from", from, "--level", "repo", "--pin", Parse(adoptDry.Stdout)["pin"].AsString());
-        Assert.Equal(2, adopt.Code);
-        Assert.Contains("role set qc --from: errors stand", adopt.Stderr, StringComparison.Ordinal);
     }
 }

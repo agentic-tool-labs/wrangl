@@ -114,8 +114,6 @@ internal sealed partial class ConfigCore
 
     public string PackDigest(JsonArray files) => "sha256:" + ContentDigest.OfBytes(JsonText.ToUtf8(files, 0));
 
-    public JsonValue StoredCopy(JsonValue? pin) => ReadStoredCopy(pin) is { } copy ? copy : JsonValue.Null;
-
     public JsonObject PackNameClaimsJson(string dir, JsonValue? manifest)
     {
         var claims = PackNameClaims(dir, manifest is { IsMap: true } m ? m.AsObject() : new JsonObject());
@@ -144,7 +142,7 @@ internal sealed partial class ConfigCore
         }
     }
 
-    public JsonObject PackRoleStateJson(JsonValue? from, JsonValue? pin)
+    public JsonObject PackRoleStateJson(JsonValue? from)
     {
         if (from is not { IsText: true } text)
         {
@@ -157,7 +155,7 @@ internal sealed partial class ConfigCore
             };
         }
 
-        return PackStateJson(PackRoleState(text.AsString(), pin is { IsText: true } p ? p.AsString() : null));
+        return PackStateJson(PackRoleState(text.AsString()));
     }
 
     /// <summary>The state as Node's <c>packRoleState</c> returns it: a candidate carries every key, an early answer only the four.</summary>
@@ -175,6 +173,16 @@ internal sealed partial class ConfigCore
             o["agentPath"] = s.AgentPath ?? JsonValue.Null;
             o["files"] = s.Files is null ? JsonValue.Null : s.Files;
             o["pin"] = s.Pin is null ? JsonValue.Null : s.Pin;
+            if (s.Warnings.Count > 0)
+            {
+                var warnings = new JsonArray();
+                foreach (var w in s.Warnings)
+                {
+                    warnings.Add(w);
+                }
+
+                o["warnings"] = warnings;
+            }
         }
         else
         {

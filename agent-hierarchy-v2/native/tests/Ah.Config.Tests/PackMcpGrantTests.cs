@@ -36,9 +36,6 @@ public sealed class PackMcpGrantTests : IDisposable
 
     private JsonObject Parse(string tools) => _config.PackAgentParse($"---\nname: pk\ndescription: d\ntools: {tools}\n---\nbody\n", "p");
 
-    private static List<string> Codes(JsonObject parsed, string level) =>
-        parsed["findings"].AsArray().Where(f => f.Member("level")!.Value.AsString() == level).Select(f => f.Member("code")!.Value.AsString()).ToList();
-
     [Fact]
     public void M1ToolsOfTwoServersPrintTwoGroupedLinesWithTheirSource()
     {
@@ -53,33 +50,6 @@ public sealed class PackMcpGrantTests : IDisposable
             _config.PackToolLines(report, _plugin));
         Assert.False(report.ContainsKey("server_grants")); // negative: named tools are not a server grant
         Assert.Empty(_config.PackToolLines(_config.PackToolReport(Parse("Read, Bash")["fm"], _plugin), _plugin)); // negative: no MCP tool, no line
-    }
-
-    [Theory]
-    [InlineData("mcp__srv__*", true)]
-    [InlineData("mcp__sfx-gen-ctl__*", true)]
-    [InlineData("mcp__*", false)] // negative: no server
-    [InlineData("mcp__a*__*", false)] // negative: a * in the server name
-    [InlineData("mcp__srv__a*", false)] // negative: a * in the tool part
-    [InlineData("mcp__srv__**", false)] // negative: more than the one trailing *
-    [InlineData("*", false)]
-    [InlineData("Bash(git:*)", false)]
-    public void M2OnlyAServerAndATrailingWildcardIsAccepted(string entry, bool accepted)
-    {
-        var parsed = Parse($"Read, {entry}");
-        Assert.Equal(!accepted, Codes(parsed, "error").Contains("pack-agent-tools"));
-    }
-
-    [Fact]
-    public void M2ABareServerNameWarnsAndIsKept()
-    {
-        var parsed = Parse("Read, mcp__srv");
-        Assert.Empty(Codes(parsed, "error"));
-        var warn = parsed["findings"].AsArray().Single();
-        Assert.Equal("warn", warn.Member("level")!.Value.AsString());
-        Assert.Contains("matches no tools in Claude Code's tools field; write mcp__srv__*", warn.Member("message")!.Value.AsString(), StringComparison.Ordinal);
-        Assert.Equal("[\"Read\",\"mcp__srv\"]", JsonText.Stringify(parsed["fm"].Member("tools")!.Value, 0));
-        Assert.Empty(Parse("Read, mcp__srv__tool")["findings"].AsArray()); // negative: a named tool does not warn
     }
 
     [Fact]
@@ -106,6 +76,8 @@ public sealed class PackMcpGrantTests : IDisposable
     [InlineData("implement", "mcp__x__*", false)] // negative: implement may use it
     [InlineData("legwork", "mcp__x__*", false)] // negative: legwork may use it
     [InlineData("review", "mcp__x__tool", false)] // negative: a named MCP tool keeps today's handling
+
+    // adr-47: the contract check keeps adr-41 for first-party and kit-carried agents; an installed pack's role only warns (T7).
     public void M4AServerGrantIsRefusedForReviewDesignAndAdviseOnly(string cls, string entry, bool refused)
     {
         var text = $"---\nname: pk\ndescription: d\ntools: Read, SendMessage, Write, {entry}\n---\nbody\n";

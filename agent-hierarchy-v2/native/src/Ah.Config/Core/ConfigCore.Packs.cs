@@ -53,7 +53,15 @@ internal sealed class PackState
 
     internal List<string> Records { get; set; } = [];
 
-    internal PackState Copy() => (PackState)MemberwiseClone();
+    /// <summary>What is wrong with the pack role that still leaves it available (ah2-698 D4): hidden characters, name claims, an unreadable tree.</summary>
+    internal List<string> Warnings { get; set; } = [];
+
+    internal PackState Copy()
+    {
+        var copy = (PackState)MemberwiseClone();
+        copy.Warnings = [.. Warnings];
+        return copy;
+    }
 }
 
 internal sealed partial class ConfigCore
@@ -134,11 +142,11 @@ internal sealed partial class ConfigCore
 
     // ---------------------------------------------------------------- pack manifest
 
-    internal JsonObject CheckCustomRowCore(string name, JsonValue raw)
+    internal JsonObject CheckCustomRowCore(string name, JsonValue raw, bool builtinName = false)
     {
         static JsonObject Error(string message) => new() { ["error"] = message };
 
-        var nameErr = ConfigRegistry.RoleNameError(name);
+        var nameErr = ConfigRegistry.RoleNameError(name, builtinName);
         if (nameErr is not null)
         {
             return Error(nameErr);
@@ -279,7 +287,7 @@ internal sealed partial class ConfigCore
             ["warnings"] = warnings,
         };
 
-        var nameErr = ConfigRegistry.RoleNameError(name);
+        var nameErr = ConfigRegistry.RoleNameError(name, builtinAllowed: true);
         if (nameErr is not null)
         {
             return Bad("pack-invalid", $"role {JsonText.Stringify(name, 0)}: {nameErr}");
@@ -304,11 +312,41 @@ internal sealed partial class ConfigCore
             }
         }
 
-        foreach (var k in ConfigRegistry.PackRoleFields)
+        foreach (var k in new[] { "class", "agent" })
         {
             if (r.Get(k) is { IsText: true } text && PackText.HiddenCharAt(text.AsString()) is { } at)
             {
                 return Bad("pack-hidden-chars", $"role {name}: {k} holds a hidden character ({at})");
+            }
+        }
+
+        // ah2-698 D4: a field that fails the custom-row rules is dropped with a warning, and the role stays; raw is then the row without it.
+        var cls = ConfigRegistry.Class(r.Get("class") is { IsText: true } ct ? ct.AsString() : null);
+        var cloned = false;
+        foreach (var k in new[] { "label", "description", "routes", "model", "dispatch", "params" })
+        {
+            if (r.Get(k) is not { } v)
+            {
+                continue;
+            }
+
+            var why = v.IsText && PackText.HiddenCharAt(v.AsString()) is { } at ? $"{k} holds a hidden character ({at})"
+                : k == "label" && (!v.IsText || !ConfigRegistry.LabelRegex().IsMatch(v.AsString())) ? "label must match /^[A-Za-z0-9][A-Za-z0-9 -]{0,31}$/"
+                : k is "description" or "routes" ? ConfigRegistry.OneLineError(k, v)
+                : k == "model" && cls is not null && (!v.IsText || !cls.Models.Contains(v.AsString()))
+                    ? $"model {JsonText.Stringify(v, 0)} is not allowed for class {cls.Name} (allowed: {string.Join(", ", cls.Models)})"
+                    : null;
+            if (why is not null)
+            {
+                if (!cloned)
+                {
+                    r = r.Clone();
+                    cloned = true;
+                }
+
+                r.Remove(k);
+                raw = r;
+                warnings.Add($"role {name}: {k} is dropped ({why})");
             }
         }
 
@@ -328,7 +366,7 @@ internal sealed partial class ConfigCore
         }
 
         fields["agent"] = $"{plugin}:{agent.AsString()}";
-        var checkedRow = CheckCustomRowCore(name, fields);
+        var checkedRow = CheckCustomRowCore(name, fields, builtinName: true);
         if (checkedRow.Get("error") is { } error)
         {
             return Bad("pack-invalid", $"role {name}: {error.AsString()}");
@@ -418,7 +456,7 @@ internal sealed partial class ConfigCore
         return new JsonObject { ["error"] = JsonValue.Null, ["warnings"] = warnings, ["roles"] = roles };
     }
 
-    // ---------------------------------------------------------------- pin and stored copy
+    // ---------------------------------------------------------------- pin
 
     /// <summary><c>decodeUtf8</c>: the text of <paramref name="bytes"/> keeping a BOM, or null when they are not valid UTF-8.</summary>
     private static string? DecodeStrictUtf8(byte[] bytes)
@@ -545,53 +583,6 @@ internal sealed partial class ConfigCore
 
         var doc = new JsonArray { 1, sorted, agentText, treeFiles };
         return "sha256:" + ContentDigest.OfBytes(JsonText.ToUtf8(doc, 0));
-    }
-
-    internal JsonObject? ReadStoredCopy(JsonValue? pin)
-    {
-        if (pin is not { IsText: true } p || !PinRegex().IsMatch(p.AsString()))
-        {
-            return null;
-        }
-
-        var pinText = p.AsString();
-        try
-        {
-            var path = AhPaths.TrustedPackFile(Home, pinText["sha256:".Length..]);
-            var c = JsonText.Parse(files.ReadText(path));
-            if (c.Member("row") is { IsMap: true } row && c.Member("agentText") is { IsText: true } text && c.Member("files") is { IsArray: true } list
-                && PackPin(row.AsObject(), text.AsString(), list.AsArray()) == pinText)
-            {
-                return c.AsObject();
-            }
-        }
-        catch (Exception)
-        {
-            // no usable copy
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Whether <paramref name="role"/>'s pack row holds its design-slot opt-in (adr-42): the row's <c>slots</c> names <c>design</c>, its
-    /// pack is as pinned, and this machine's stored copy for the pin records the same opt-in for this role, written only by a trust commit.
-    /// </summary>
-    public bool DesignOptInHolds(string role, JsonValue? entry)
-    {
-        static bool NamesDesign(JsonValue? v) => v is { IsArray: true } a && a.AsArray().Any(x => x is { IsText: true } t && t.AsString() == "design");
-
-        if (entry is not { IsMap: true } e || e.Member("from") is not { IsText: true } || !NamesDesign(e.Member("slots")))
-        {
-            return false;
-        }
-
-        if (!(e.Member("pack") is { IsMap: true } pack && pack.Member("status") is { IsText: true } status && status.AsString() == "ok"))
-        {
-            return false;
-        }
-
-        return ReadStoredCopy(e.Member("pin"))?.Get("slots") is { IsMap: true } recorded && NamesDesign(recorded.AsObject().Get(role));
     }
 
     [GeneratedRegex("^sha256:[0-9a-f]{64}\\z", RegexOptions.CultureInvariant)]
@@ -809,68 +800,48 @@ internal sealed partial class ConfigCore
             return state;
         }
 
+        // ah2-698 D4: from here on nothing makes the role unavailable; what is wrong is a warning.
+        state.ManifestRole = r;
+        state.AgentPath = agentPath;
         var agentText = DecodeStrictUtf8(buf);
         if (agentText is null)
         {
-            state.Status = "pack-invalid";
-            state.Message = $"{agentPath} is not valid UTF-8";
-            state.ManifestRole = r;
-            state.AgentPath = agentPath;
-            return state;
+            state.Warnings.Add($"{agentPath} is not valid UTF-8");
         }
-
-        state.ManifestRole = r;
-        state.AgentPath = agentPath;
-        var hidden = PackText.HiddenCharAt(agentText);
-        if (hidden is not null)
+        else
         {
-            state.Status = "pack-invalid";
-            state.Subcode = "pack-hidden-chars";
-            state.Message = $"{agentPath} holds a hidden character ({hidden})";
-            return state;
+            if (PackText.HiddenCharAt(agentText) is { } hidden)
+            {
+                state.Warnings.Add($"{agentPath} holds a hidden character ({hidden})");
+            }
+
+            state.AgentText = agentText;
         }
 
-        state.AgentText = agentText;
         var claims = PackNameClaims(record.InstallPath, manifest);
         if (claims.Error is not null)
         {
-            state.Status = "pack-invalid";
-            state.Message = $"{record.Key}: {claims.Error}";
-            return state;
+            state.Warnings.Add($"{record.Key}: {claims.Error}");
         }
-
-        if (claims.ByRole.TryGetValue(role, out var claimedBy))
+        else if (claims.ByRole.TryGetValue(role, out var claimedBy))
         {
-            state.Status = "pack-invalid";
-            state.Message = PackClaimMessage(record.Plugin, agent, claimedBy);
-            return state;
+            state.Warnings.Add(PackClaimMessage(record.Plugin, agent, claimedBy));
         }
 
         var tree = PackTreeOf(record.InstallPath);
         if (tree.Error is not null)
         {
-            state.Status = "pack-invalid";
-            state.Message = $"{record.InstallPath} could not be read: {tree.Error}";
-            return state;
-        }
-
-        if (tree.Symlink is not null)
-        {
-            state.Status = "pack-symlink";
-            state.Message = $"{record.InstallPath} holds a symbolic link, {tree.Symlink}, and what it points at isn't pinned";
+            state.Warnings.Add($"{record.InstallPath} could not be read: {tree.Error}");
             return state;
         }
 
         state.Files = TreeFiles(tree.Files);
-        state.Pin = PackPin(r["raw"].IsMap ? r["raw"].AsObject() : new JsonObject(), agentText, state.Files);
+        state.Pin = PackPin(r["raw"].IsMap ? r["raw"].AsObject() : new JsonObject(), agentText ?? string.Empty, state.Files);
         return state;
     }
 
-    /// <summary>
-    /// Pack role <paramref name="from"/> as installed now, checked against <paramref name="pin"/> (null skips the pin and
-    /// stored-copy checks, for a first adoption).
-    /// </summary>
-    internal PackState PackRoleState(string from, string? pin)
+    /// <summary>Pack role <paramref name="from"/> as installed now; its pin serves only to tell two install records apart (ah2-698 D7).</summary>
+    internal PackState PackRoleState(string from)
     {
         var f = PackText.ParseFrom(from);
         if (f is null || f.Value.Marketplace is null)
@@ -919,55 +890,19 @@ internal sealed partial class ConfigCore
             return state;
         }
 
-        if (chosen.Status != "ok" || pin is null)
-        {
-            return state;
-        }
-
-        if (chosen.Pin != pin)
-        {
-            state.Status = "pack-changed";
-            state.Message = $"{fv.Plugin} changed since this role was trusted (pinned {Truncate(pin)}…, now {Truncate(chosen.Pin!)}…)";
-            return state;
-        }
-
-        if (ReadStoredCopy(pin) is null)
-        {
-            state.Status = "pack-untrusted-here";
-            state.Message = $"this machine holds no stored copy of what {Truncate(pin)}… pinned, so nobody here has trusted it";
-            return state;
-        }
-
         return state;
-
-        static string Truncate(string s) => s.Length > 19 ? s[..19] : s;
     }
 
     /// <summary>
-    /// A <c>from</c> row expanded into the full row resolution checks: the pack's own fields (from the installed manifest,
-    /// else from this machine's stored copy for the row's pin), with the row's own label, description, routes, model and
-    /// dispatch laid over them. <c>{raw, pack}</c>, or <c>{error}</c>.
+    /// A <c>from</c> row expanded into the full row resolution checks: the installed pack's own fields, with the row's own label,
+    /// description, routes, model and dispatch laid over them. A legacy row's <c>pin</c> and <c>slots</c> are ignored (ah2-698 D10).
+    /// <c>{raw, pack}</c>, or <c>{error}</c>.
     /// </summary>
-    public JsonObject ExpandFromRow(JsonObject entry) => ExpandFromRow(entry, pinIgnored: false);
-
-    /// <summary>
-    /// <see cref="ExpandFromRow(JsonObject)"/>; with <paramref name="pinIgnored"/> (a row a roster's packs supply, ah2-698 D3) the row's
-    /// pin is not checked and no stored copy is read.
-    /// </summary>
-    internal JsonObject ExpandFromRow(JsonObject entry, bool pinIgnored)
+    public JsonObject ExpandFromRow(JsonObject entry)
     {
         var from = entry["from"].AsString();
-        var state = PackRoleState(from, pinIgnored ? null : entry.Get("pin") is { IsText: true } pinText ? pinText.AsString() : string.Empty);
+        var state = PackRoleState(from);
         JsonObject? source = state.ManifestRole is { } mr && mr.Get("error") is not { IsMap: true } && mr["raw"].IsMap ? mr["raw"].AsObject() : null;
-        if (source is null && !pinIgnored)
-        {
-            var copy = ReadStoredCopy(entry.Get("pin"));
-            if (copy is not null)
-            {
-                source = copy["row"].AsObject();
-            }
-        }
-
         if (state.From is null || source is null)
         {
             return new JsonObject { ["error"] = $"{state.Status}: {state.Message}" };
@@ -1018,6 +953,17 @@ internal sealed partial class ConfigCore
             pack["agentPath"] = agentPath;
         }
 
+        if (state.Warnings.Count > 0)
+        {
+            var list = new JsonArray();
+            foreach (var w in state.Warnings)
+            {
+                list.Add(w);
+            }
+
+            pack["warnings"] = list;
+        }
+
         if (state.Pin is not null)
         {
             pack["pinNow"] = state.Pin;
@@ -1031,9 +977,9 @@ internal sealed partial class ConfigCore
     }
 
     /// <summary>A built-in's <c>from</c> row: the pack supplies only its agent; its class must be the built-in's.</summary>
-    internal JsonObject BuiltinFromRow(string role, JsonObject entry, bool pinIgnored = false)
+    internal JsonObject BuiltinFromRow(string role, JsonObject entry)
     {
-        var expanded = ExpandFromRow(entry, pinIgnored);
+        var expanded = ExpandFromRow(entry);
         var f = PackText.ParseFrom(entry["from"].AsString());
         var guess = f is null ? Qualified(role) : $"{f.Value.Plugin}:{f.Value.Role}";
         var result = entry.Clone();

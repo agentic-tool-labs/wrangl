@@ -579,22 +579,33 @@ internal sealed partial class ConfigCore
 
     // ---------------------------------------------------------------- packs and registry views
 
-    /// <summary>An adopted role's pack findings: its pack reason when it isn't <c>ok</c>, then the pack-agent frontmatter checks.</summary>
+    /// <summary>A pack role's findings: its pack reason when it isn't <c>ok</c>, its pack warnings, then the pack-agent frontmatter checks.</summary>
     public JsonArray PackFindings(string role, JsonObject pack, JsonObject? parsed = null)
     {
         var findings = new JsonArray();
         var status = pack.Get("status") is { IsText: true } s ? s.AsString() : null;
+        var agentFile = pack.Get("agentPath") is { IsText: true } ap ? ap.AsString() : null;
+        var from = JsConvert.ToJsString(pack.Get("from"));
         if (status != "ok")
         {
-            JsonObject fix = status is "pack-changed" or "pack-untrusted-here"
-                ? PackAgentText.Fix("trust", $"review it with `ah roster role trust {role} --dry-run`, then commit with the pin it prints")
-                : status == "pack-ambiguous"
-                    ? PackAgentText.Fix("uninstall", "uninstall all but one install of the plugin")
+            var roster = pack.Get("via") is { IsText: true } via && via.AsString().StartsWith("roster:", StringComparison.Ordinal) ? via.AsString()["roster:".Length..] : null;
+            JsonObject fix = status == "pack-ambiguous"
+                ? PackAgentText.Fix("uninstall", "uninstall all but one install of the plugin")
+                : roster is not null
+                    ? PackAgentText.Fix("remove", $"remove it from roster {roster}'s packs, or reinstall the pack")
                     : PackAgentText.Fix("remove", $"`ah roster role remove {role}`, or reinstall the pack");
             var subcode = pack.Get("subcode") is { IsTruthy: true } sc ? JsConvert.ToJsString(sc) : null;
             var tail = subcode is not null && subcode != status ? $" [{subcode}]" : string.Empty;
-            findings.Add(PackAgentText.Finding("error", status ?? "undefined", pack.Get("agentPath") is { IsText: true } ap ? ap.AsString() : null, null,
-                $"{role} (from {JsConvert.ToJsString(pack.Get("from"))}): {JsConvert.ToJsString(pack.Get("message"))}{tail}", PackAgentText.Fixes(fix)));
+            findings.Add(PackAgentText.Finding("error", status ?? "undefined", agentFile, null,
+                $"{role} (from {from}): {JsConvert.ToJsString(pack.Get("message"))}{tail}", PackAgentText.Fixes(fix)));
+        }
+
+        if (pack.Get("warnings") is { IsArray: true } warnings)
+        {
+            foreach (var w in warnings.AsArray())
+            {
+                findings.Add(PackAgentText.Finding("warn", "pack-warning", agentFile, null, $"{role} (from {from}): {JsConvert.ToJsString(w)}", new JsonArray()));
+            }
         }
 
         if (parsed is not null)
@@ -703,7 +714,18 @@ internal sealed partial class ConfigCore
         var parsedObject = parsed is null ? null : new JsonObject { ["findings"] = parsed.Value.Findings, ["fm"] = parsed.Value.Fm };
         merged.AddRange(PackFindings(role, pack ?? new JsonObject(), parsedObject));
         merged.AddRange(result["findings"].AsArray());
-        return Spread(result, ("findings", merged));
+
+        // adr-47: a pack agent's file is taken as written, so its agent and contract checks only warn; what makes a pack role
+        // unavailable is its pack status (ah2-698 D4). The tools findings and the adr-41 server grant warn too (D9).
+        var leveled = new JsonArray();
+        foreach (var f in merged)
+        {
+            var keep = f.Member("level") is not { IsText: true } l || l.AsString() != "error"
+                || f.Member("code") is { IsText: true } code && code.AsString() is "pack-missing" or "pack-invalid" or "pack-ambiguous";
+            leveled.Add(keep ? f : Spread(f.AsObject(), ("level", "warn")));
+        }
+
+        return Spread(result, ("findings", leveled));
     }
 
     /// <summary>The agents adopted pack roles resolve to — a <c>from</c> row's, or a built-in's agent a pack overrides.</summary>

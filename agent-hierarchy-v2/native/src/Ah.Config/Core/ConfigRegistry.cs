@@ -463,7 +463,10 @@ internal static partial class ConfigRegistry
 
     internal static bool IsValidTeamAlias(JsonValue alias) => ValidateTeamAlias(alias).Get("ok")!.Value.AsBool();
 
-    internal static string? RoleNameError(JsonValue name)
+    /// <summary>Why <paramref name="name"/> can't name a custom role, or null.</summary>
+    /// <param name="name">The role name.</param>
+    /// <param name="builtinAllowed">A pack manifest's role may take a built-in's name and replace its agent (ah2-698 N1).</param>
+    internal static string? RoleNameError(JsonValue name, bool builtinAllowed = false)
     {
         if (!name.IsText || !RoleNameRegex().IsMatch(name.AsString()))
         {
@@ -476,7 +479,7 @@ internal static partial class ConfigRegistry
             return "name must not end in - or -<digits> (that suffix is a peer instance ordinal)";
         }
 
-        if (IsBuiltinRole(s) || ReservedRoleNames.Contains(s))
+        if ((!builtinAllowed && IsBuiltinRole(s)) || ReservedRoleNames.Contains(s))
         {
             return $"name {JsonText.Stringify(s, 0)} is reserved";
         }

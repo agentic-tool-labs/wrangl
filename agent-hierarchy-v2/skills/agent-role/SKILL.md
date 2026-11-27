@@ -1,7 +1,7 @@
 ---
 name: agent-role
-description: Defines, edits, checks, or removes a user-defined (custom) hierarchy ROLE and its agent file, or install, update, adopt from, trust or uninstall a role pack. Use for /wrangl:agent-role, for "add a custom role", "define my own agent/role", "make a ui-implementor", "custom reviewer/implementer/architect", "edit/remove a role", "which roles exist", "why is my role unavailable", or "install/update/trust a role pack". Adding a role to the roster afterwards is the agent-roster skill; standing up a live team is agent-team.
-argument-hint: "[list|add|edit|remove|check|install|update|uninstall|adopt|trust] [name]"
+description: Defines, edits, checks, or removes a user-defined (custom) hierarchy ROLE and its agent file, or install, update or uninstall a role pack that a roster names. Use for /wrangl:agent-role, for "add a custom role", "define my own agent/role", "make a ui-implementor", "custom reviewer/implementer/architect", "edit/remove a role", "which roles exist", "why is my role unavailable", or "install/update a role pack". Adding a role to the roster afterwards, or a pack to a roster, is the agent-roster skill; standing up a live team is agent-team.
+argument-hint: "[list|add|edit|remove|check|install|update|uninstall] [name]"
 ---
 
 # agent-role
@@ -131,7 +131,8 @@ Warnings: list them, then one question — "Fix warnings too?" (all or none) or
 
 ## Role packs
 
-`install`, `update`, `uninstall`, `adopt`, `trust`, or an `UNAVAILABLE` `pack-*`
-reason: read `reference/role-packs.md`.
+`install`, `update`, `uninstall`, or an `UNAVAILABLE` `pack-*` reason: read
+`reference/role-packs.md`. A pack's roles come from a roster's packs:
+`R roster roster pack <roster> --add <plugin>@<marketplace>` (or `init --pack`).
 
 Ask tag: `ah:bootstrap:agent-role:fix`.

@@ -596,6 +596,11 @@ internal static class NamedRostersVerb
             packs.Add(pack);
         }
 
+        foreach (var pack in adds.Distinct())
+        {
+            NoteIfNotInstalled(c, pack);
+        }
+
         foreach (var pack in removes)
         {
             if (!Listed(pack))

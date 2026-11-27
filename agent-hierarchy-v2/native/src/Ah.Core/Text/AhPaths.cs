@@ -143,7 +143,4 @@ public static class AhPaths
     /// <summary>The user-level repo-user layer of the config: <c>~/.claude/ah2/projects/&lt;slug&gt;/agent-hierarchy.json</c>.</summary>
     public static string RepoUserConfig(string userHome, string slug) =>
         NodePath.Join(userHome, Claude, Dir, "projects", slug, ConfigFile);
-
-    /// <summary>The pack trust record of a pin: <c>~/.claude/ah2/trusted/&lt;hex&gt;.json</c>.</summary>
-    public static string TrustedPackFile(string userHome, string hex) => NodePath.Join(userHome, Claude, Dir, "trusted", hex + ".json");
 }

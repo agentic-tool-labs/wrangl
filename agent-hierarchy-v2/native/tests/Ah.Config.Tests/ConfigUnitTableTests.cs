@@ -53,7 +53,7 @@ public sealed class ConfigUnitTableTests
         "recentHookErrors", "isMemberSession", "askDecision", "isTopLevelAgentSession", "hierarchyRoleOf", "lookupRole",
         "PACK_MANIFEST", "PACK_AGENT_KEYS", "UNATTENDED_LINE", "MCP_TOOL_PREFIX", "PIN_RE", "installRecords", "packRecords", "parseFrom",
         "isFromRow", "hiddenCharAt", "escapeTerminal", "pluginNameAt", "readPackManifest", "packTree", "packPin", "packDigest",
-        "readStoredCopy", "packNameClaims", "packClaimMessage", "packRoleState", "expandFromRow", "packExtras",
+        "packNameClaims", "packClaimMessage", "packRoleState", "expandFromRow", "packExtras",
         "findGitRoot", "isTeamAliasShape", "validateTeamAlias", "roleFromName", "teamPrefixInfo", "staleTeamKeys",
         "designRoutingBlock", "contractBlock", "buildNudge", "buildDirective", "buildRoleSessionNotice", "statusReport",
         "CONVENTIONS_PATH", "git", "tryGit", "refExists", "originDefault", "validateConventions",
@@ -503,10 +503,9 @@ public sealed class ConfigUnitTableTests
             case "packTree": return config.PackTreeJson(Req(0));
             case "packPin": return config.PackPinOf(Obj(0)!, Req(1), Arg(2)!.Value.AsArray());
             case "packDigest": return config.PackDigest(Arg(0)!.Value.AsArray());
-            case "readStoredCopy": return config.StoredCopy(Arg(0));
             case "packNameClaims": return AsMaps(config.PackNameClaimsJson(Req(0), Arg(1)));
             case "packClaimMessage": return config.PackClaimMessage(Req(0), Req(1), Arg(2)!.Value.AsArray().Select(a => a.AsString()).ToList());
-            case "packRoleState": return config.PackRoleStateJson(Arg(0), Arg(1));
+            case "packRoleState": return config.PackRoleStateJson(Arg(0));
             case "expandFromRow": return config.ExpandFromRow(Obj(0)!);
             case "packExtras": return config.PackExtras(Req(0), Arg(1));
             case "findGitRoot": return Nullable(config.FindGitRoot(Req(0)));
