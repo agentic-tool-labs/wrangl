@@ -56,6 +56,7 @@ export function fitView(ui) {
   ui.graphScale = 1;
   ui.graphPan = {};
   ui.graphEase = null; // a drill, a mode switch or a new team ends any eased zoom (graph-view.js easeTo)
+  ui.graphPending = null; // and any kept Reduced jump (reducedJump)
   ui.graphDrag = null; // and any drag, whose stage may be gone (graph-view.js grip)
 }
 
@@ -124,6 +125,8 @@ export function drillTo(ui, z) {
 // point. groups: graphModel's, laid out at the old scale. False when the clamp leaves the scale where it was. `at` moves with its box
 // (a box sits centred, so a wider one shifts the point by half the growth), so a run of rescales stays about one point.
 export const LANE_PAD = 14; // a lane's indent per depth (graph-view.js group())
+// How far a box point moves when the scale goes from s to s2: half the box's growth (frameOf). rescaleTo and applyPending.
+const atShift = (f, s, s2, room, pad) => (frameOf(f, s2, room, pad).w - frameOf(f, s, room, pad).w) / 2;
 export function rescaleTo(ui, groups, s2, at = null) {
   const s = ui.graphScale ?? 1;
   const to = clampScale(s2);
@@ -137,7 +140,7 @@ export function rescaleTo(ui, groups, s2, at = null) {
     const [px, py] = at?.id === g.id ? [at.x, at.y] : [b1.w / 2, b1.h / 2];
     const b2 = frameOf(f, to, ui.graphRoom, pad);
     pan[g.id] = panAround(ui.graphPan?.[g.id], f, s, to, px, py, b1, b2);
-    if (at?.id === g.id) at.x += (b2.w - b1.w) / 2;
+    if (at?.id === g.id) at.x += atShift(f, s, to, ui.graphRoom, pad);
   }
   ui.graphScale = to;
   ui.graphPan = pan;
@@ -316,7 +319,8 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
     const at = c[Math.floor(c.length / 2)];
     flights.push({ key: s.id, x: at.at(-2), y: at.at(-1), title: `in flight: ${s.slug} (${shortName(s.from)} → ${shortName(s.to)})${s.review ? ", review" : ""}` });
   }
-  // a mark per report waiting to be read, on the report side of the bundle (a flight's is path(a, b, 0))
+  // a mark per report waiting to be read, on the report side of the bundle (a flight's is path(a, b, 0)). Over MAX_SPARKS (ah2-718):
+  // the team's own reports first, then its lanes', each in their existing order (graphModel's o.reports), and the rest are dropped.
   const reports = [];
   for (const s of (o.reports ?? []).slice(0, MAX_SPARKS)) {
     const a = lookup(s.to);
@@ -474,6 +478,51 @@ export function flowRescale(ui, m, s2, px = null, py = null) {
   ui.graphScale = to;
   ui.graphPan = { flow: flowPanAround(ui.graphPan?.flow, m.size, m.stage, m.k, k2, px ?? m.stage.w / 2, py ?? m.stage.h / 2) };
   return true;
+}
+
+// The drawing laid out at the drawn scale in the shown mode (graph-view.js graphOf's memo, whose key[5] is the scale it was laid out
+// at and key[8] the mode), or null while the redraw is still due. An eased zoom's frame and a Reduced jump (graph-view.js easeTo)
+// rescale only from it: a Flow drawing still memoised after a switch to Map (both at scale 1) is not one (ah2-722).
+export const freshDrawing = (v) => (v.graphMemo?.m && v.graphMemo.key[5] === v.graphScale && v.graphMemo.key[8] === v.graphMode ? v.graphMemo.m : null);
+
+// Reduced motion's zoom (graph-view.js easeTo): the target at once, as an eased zoom's last frame applies it, about `at`. False, and
+// nothing moves, with no fresh drawing to rescale from: a tick before the redraw would zoom about a stale anchor (reducedJump keeps it).
+export function jumpTo(v, target, at = null, fit = false) {
+  const m = freshDrawing(v);
+  if (!m) return false;
+  if (v.graphMode === "flow") flowRescale(v, m, target, at?.x ?? null, at?.y ?? null);
+  else rescaleTo(v, m.groups, target, at);
+  if (fit) v.graphPan = {};
+  v.graphEase = null;
+  return true;
+}
+
+// Reduced motion's one pending jump (ah2-722), v.graphPending {target, at, fit, drawn}: a jump that met a stale drawing is kept, the
+// newest replacing the older, and applied once the drawing is fresh (applyPending). A zoom starts from it (zoomFrom), so ticks in a
+// burst compound and a Fit pending is replaced by the tick after it. drawn: the scale of the drawing the tick arrived on, whose box a
+// Map `at` is in; applied, the point moves with its box as rescaleTo's does (atShift). A drill or mode switch clears it (fitView).
+export const zoomFrom = (v) => v.graphPending?.target ?? v.graphEase?.to ?? v.graphScale;
+export function reducedJump(v, target, at = null, fit = false) {
+  if (jumpTo(v, target, at, fit)) {
+    v.graphPending = null;
+    return true;
+  }
+  v.graphPending = { target, at, fit, drawn: v.graphMemo?.key[5] ?? v.graphScale };
+  return false;
+}
+// graph-view.js graphOf, on a new drawing: the pending jump, true when it moved. Under Full the slot is cleared, never applied.
+export function applyPending(v, reduced) {
+  const p = v.graphPending;
+  if (!p || !reduced) {
+    v.graphPending = null;
+    return false;
+  }
+  const m = freshDrawing(v);
+  if (!m) return false;
+  v.graphPending = null;
+  const g = v.graphMode !== "flow" && p.at ? m.groups?.find((x) => x.id === p.at.id && x.map) : null;
+  const at = g ? { ...p.at, x: p.at.x + atShift(g.map.size / v.graphScale, p.drawn, v.graphScale, v.graphRoom, (g.depth ?? 0) * LANE_PAD) } : p.at;
+  return jumpTo(v, p.target, at, p.fit);
 }
 
 // The shown team as Flow draws it, every position in drawn px (world × k from the layout box's corner). orient: the stored or chosen

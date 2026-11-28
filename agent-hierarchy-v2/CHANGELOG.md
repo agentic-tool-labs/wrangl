@@ -4,6 +4,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.70] - 2026-11-28
+
+Zooming the herdr Graph under Reduced motion keeps the point under the cursor in place.
+
+### Fixed
+
+- Under **Motion: Reduced**, a fast burst of wheel ticks no longer makes the Graph's zoom drift away from the cursor. A tick or a Fit that arrives before the Graph has redrawn is kept and applied after the redraw, so a burst ends at the same zoom as the same ticks spaced out, in both Flow and Map.
+- A zoom made right after switching between Flow and Map no longer rescales from the other view's drawing.
+
+### Notes
+
+- When more reports are in flight than the Map can mark, it keeps the team's own reports first, then its lanes'. The code now states this rule.
+
 ## [2.0.69] - 2026-11-27
 
 The herdr Graph gains a motion setting and report-back marks on the Map, and a quit no longer sits out its window after a stop.
