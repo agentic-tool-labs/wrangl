@@ -28,6 +28,17 @@ window back in time; `graph-two`, `graph-zoom`: a second stream, zoomed; `graph-
 horizontal and vertical; `dock-flow`: Flow docked; `graph-idle`: idle rows with a long task and a 32 character name (ah2-586); `graph-shot`: the team in the 2026-11-17 Herdr-vs-web screenshot, in Flow), `?view=settings` for the settings dialog,
 `?view=menu` for the … menu, `?view=dock` for the Graph docked.
 
+To look at the Graph before a ship, capture it:
+
+```sh
+node preview/capture.mjs [OUT_DIR]   # default OUT_DIR: a new temp dir; prints each PNG's path
+```
+
+It writes 10 PNGs, `<view>-<theme>.png` for `graph-lanes` (the Map with ah2-tm4's lane open, a lane-crossing brief and a
+lane report waiting), `graph-lanes-flow` (the same in Flow), `graph-shot-blocked`, `dock` and `dock-flow`, each dark and light,
+through headless Chrome (`tests/perf/chrome.mjs`). It pictures the preview's HTML mirror of `graph-view.js`, not Herdr's GPUI
+drawing, and needs no Herdr.
+
 - To run the real mod on the fixture, give its layout block the prop
   `"fixture": "<absolute path to fixture/events.json>"`. It reads that one reply and does not poll.
 - `herdr-app check` renders only the first frame, which is the "Loading teams…" state. During a check the mod runs no ah and

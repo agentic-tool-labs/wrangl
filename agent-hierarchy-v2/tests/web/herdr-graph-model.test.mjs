@@ -52,6 +52,24 @@ test("the graph shows a team and its lane as members and links: the busier sende
   assert.ok(graphSubs(slices).includes("flow:a1b2c3d4/lane-herdr"));
 });
 
+test("the Map marks a lane's report waiting in the lane's square and a lane-crossing brief once, in the parent's, at the lead", () => {
+  const laned = new Map(slices);
+  const t = laned.get("team:a1b2c3d4/ah2-tm4");
+  laned.set(t.id, { ...t, body: { ...t.body, streams: [{ state: "open", child_team: "lane-herdr", sub_orchestrator: "architect" }] } });
+  const topo = laned.get("topology:a1b2c3d4/lane-herdr");
+  const rep = "exchange:a1b2c3d4/20261108-170000-r338";
+  laned.set(topo.id, { ...topo, body: { ...topo.body, edges: { ...topo.body.edges, report: [{ id: rep, from_member: "member:a1b2c3d4/lane-herdr/@orchestrator", to_member: "member:a1b2c3d4/lane-herdr/ux-engineer" }] } } });
+  const open = laned.get("list:open:team:a1b2c3d4/lane-herdr");
+  const cross = "exchange:a1b2c3d4/20261108-171700-x338";
+  laned.set(open.id, { ...open, body: { ...open.body, open: [...open.body.open, { id: cross, from_member: "member:a1b2c3d4/lane-herdr/architect", to_member: "member:a1b2c3d4/ah2-tm4/implementor" }] } });
+  const [top, lane] = graphModel(laned, "a1b2c3d4/ah2-tm4").groups;
+  assert.deepEqual(lane.map.reports.map((r) => r.key), [`back|${rep}`]);
+  const flown = top.map.flights.map((f) => f.key);
+  assert.ok(flown.includes(cross) && !flown.includes("exchange:a1b2c3d4/20261108-171400-g191"));
+  const ids = [top, lane].flatMap((g) => [...g.map.flights.map((f) => f.key), ...g.map.reports.map((r) => r.key.replace(/^back\|/, ""))]);
+  assert.equal(new Set(ids).size, ids.length, "no exchange in more than one group");
+});
+
 test("with no team named the first tab shows; a team that stopped running reads closed", () => {
   const first = graphModel(slices);
   assert.equal(first.id, "9f8e7d6c/engram-rc");

@@ -9,7 +9,8 @@
 // `?view=feed|feed-dock|feed-empty|feed-down` the feed window (feed-dock at the side column's 420 px).
 // `?view=graph` the Graph window (graph-view.js) on ah2-tm4 and its lane: the web's Map, then the links, then the scrubber;
 // `graph-30` a 30 min window 90 min back, `graph-two` a second stream, `graph-zoom` zoomed into it; `graph-flow` the same team in Flow
-// (graph-model.js flowModel: cards by role, links, legend), `graph-flow-v` Flow vertical, `dock-flow` Flow in the docked column, `dock-flow-min` a large team there zoomed out to the stop.
+// (graph-model.js flowModel: cards by role, links, legend), `graph-flow-v` Flow vertical, `graph-lanes` the Map with ah2-tm4's lane open,
+// a lane-crossing brief and a lane report waiting, `graph-lanes-flow` that in Flow, `dock-flow` Flow in the docked column, `dock-flow-min` a large team there zoomed out to the stop.
 // `?view=renamed` ah2-tm4 with a display name (ah2-218): the sidebar and the sitrep header show it, the real name in the tooltip;
 // `?view=rename` its Rename dialog (rename.js) with a name too long. `?view=settings` the settings dialog (settings.js) with an update ready and What's new open; the ah2 tab shows its dot.
 // `?view=menu` the strip's … popup (tabs.js) with an update ready; `?view=dock` the desk open on the Graph (dock.js, tabs.js
@@ -394,10 +395,11 @@ function graphMap(g) {
     return `<div class="gm${n.state === "gone" ? " gone" : ""}" style="left:${px(n.x - n.r)};top:${px(n.y - n.r)};width:${px(2 * n.r)};height:${px(2 * n.r)}" title="${esc(full)}" aria-label="${esc(full)}"><svg width="${r1(2 * n.r)}" height="${r1(2 * n.r)}" aria-hidden="true"><path class="trk" d="${ringD(n.r, n.r * 0.86, 1)}" stroke-width="${r1(n.r * 0.1)}"/><path class="busy t-${n.tone}" d="${ringD(n.r, n.r * 0.86, Math.max(0.04, n.share ?? 0))}" stroke-width="${r1(n.r * 0.1)}"/></svg><div class="gls">${tiers}</div></div>`;
   });
   const flights = m.flights.map((f) => `<i class="gfl" style="left:${px(f.x - 4)};top:${px(f.y - 4)}" title="${esc(f.title)}" aria-label="${esc(f.title)}"></i>`);
+  const backs = (m.reports ?? []).map((r) => `<i class="gfl rb" style="left:${px(r.x - 4)};top:${px(r.y - 4)}" title="${esc(r.title)}" aria-label="${esc(r.title)}"></i>`);
   const ulinks = `<svg class="garcs gul" width="${m.size}" height="${m.size}" aria-hidden="true">${(m.unders ?? []).filter((u) => u.link).map((u) => `<path d="M${r1(u.x)},${r1(u.y)}L${r1(u.link.x)},${r1(u.link.y)}"/>`).join("")}</svg>`;
   const unders = (m.unders ?? []).map((u) => `<div class="gu${u.kind === "subagent" ? " sub" : ""}${u.overdue ? " over" : ""}" style="left:${px(u.x - u.r)};top:${px(u.y - u.r)};width:${px(2 * u.r)};height:${px(2 * u.r)}" title="${esc(u.tip)}" aria-label="${esc(u.tip)}"><span>${u.overdue ? "⚠" : u.kind === "subagent" ? "◇" : "◷"}</span>${u.r >= 24 ? `<span class="gus" style="max-width:${Math.round(u.r * 1.7)}px">${esc(u.kind === "subagent" ? "subagent" : u.run)}</span>` : ""}</div>`);
   const labels = m.containers.filter((c) => c.label).map((c) => `<div class="gcl" style="left:${px(c.x - c.r)};top:${px(c.y - c.r - 8)};width:${px(2 * c.r)}"><span style="max-width:${px(c.r * 1.6)}">${esc(c.name)}</span></div>`);
-  return `<div class="gmap-w" style="padding-left:${g.depth * 14}px"><div class="gmap" style="width:${m.size}px;height:${m.size}px">${[...ctrs, arcs, ulinks, ...leaves, ...unders, ...flights, ...labels].join("")}</div></div>`;
+  return `<div class="gmap-w" style="padding-left:${g.depth * 14}px"><div class="gmap" style="width:${m.size}px;height:${m.size}px">${[...ctrs, arcs, ulinks, ...leaves, ...unders, ...flights, ...backs, ...labels].join("")}</div></div>`;
 }
 function graphGroup(g, docked) {
   const pad = g.depth * 14;
@@ -432,11 +434,34 @@ const graphOf = (s, ui, docked) => graphModel(s, team, docked ? (d) => (d === 0 
 const twoStreams = new Map(slices);
 const ARCH = "member:a1b2c3d4/ah2-tm4/architect";
 twoStreams.set(ARCH, { ...twoStreams.get(ARCH), body: { ...twoStreams.get(ARCH).body, placement: { stream: "design" } } });
+// The fixture's member slices carry no column (the daemon serves one); here each takes the column the mock gives its role, so the
+// cards spread over the four columns as they do live.
+const flowSlices = new Map([...slices].map(([id, sl]) => [id, id.startsWith("member:") ? { ...sl, body: { ...sl.body, column: FLOW_COLUMN[sl.body.role] ?? 2 } } : sl]));
+// ah2-696: ah2-tm4 with its lane open (ah2-tm4-so-herdr leads lane-herdr), a lane member briefing the chief across the lane, and a
+// lane report waiting. `?view=graph-lanes` (the Map) and `graph-lanes-flow` (Flow).
+const laneSlices = (() => {
+  const out = new Map(flowSlices);
+  const so = "member:a1b2c3d4/ah2-tm4/ah2-tm4-so-herdr";
+  const tm = out.get("team:a1b2c3d4/ah2-tm4");
+  out.set(tm.id, { ...tm, body: { ...tm.body, members: [...tm.body.members, so],
+    streams: [{ name: "herdr", sub_orchestrator: "ah2-tm4-so-herdr", child_team: "lane-herdr", branch: "herdr", base: "main", state: "open" }] } });
+  out.set(so, { id: so, as_of: NOW, body: { id: so, name: "ah2-tm4-so-herdr", role: "sub-orchestrator", column: FLOW_COLUMN["sub-orchestrator"] ?? 2, placement: { stream: "herdr" } } });
+  const cross = "exchange:a1b2c3d4/20261108-171700-x338";
+  const open = out.get("list:open:team:a1b2c3d4/lane-herdr");
+  out.set(open.id, { ...open, body: { ...open.body, open: [...open.body.open, { id: cross, from_member: "member:a1b2c3d4/lane-herdr/architect", to_member: "member:a1b2c3d4/ah2-tm4/@orchestrator" }] } });
+  out.set(cross, { id: cross, as_of: NOW, body: { slug: "lane-asks-chief", title: "Lane asks the chief", from: "architect", to: "orchestrator" } });
+  const back = "exchange:a1b2c3d4/20261108-170000-r338";
+  const tp = out.get("topology:a1b2c3d4/lane-herdr");
+  out.set(tp.id, { ...tp, body: { ...tp.body, edges: { ...tp.body.edges, report: [{ id: back, from_member: "member:a1b2c3d4/lane-herdr/@orchestrator", to_member: "member:a1b2c3d4/lane-herdr/ux-engineer" }] } } });
+  out.set(back, { id: back, as_of: NOW, body: { slug: "lane-report" } });
+  return out;
+})();
 const GRAPHS = {
   graph: graphOf(slices, {}),
   "graph-30": graphOf(slices, { graphWindow: "30", graphCursor: NOW - 90 * 60000 }),
   "graph-two": graphOf(twoStreams, {}),
   "graph-zoom": graphOf(twoStreams, { graphZoom: { team, node: "stream:main" } }),
+  "graph-lanes": graphOf(laneSlices, {}),
 };
 const gm = GRAPHS.graph;
 const graphBody = (m, docked) => {
@@ -468,7 +493,8 @@ const renameWins = `<div class="ov sit sitn" role="dialog" aria-label="${esc(rep
   <div class="rnft"><button class="sb pri">Save</button>${typed.clear ? '<button class="sb">Clear</button>' : ""}<button class="sb">Cancel</button></div>
  </div>`;
 const drawer = `<aside class="peek" aria-label="Needs you"><div class="pin"><button class="pr"><span class="pt"><b>Needs you</b><small>Open Q&amp;A</small></span><span class="pb">${desk.needsYou}</span></button>${desk.needing.map((tm) => `<button class="pr" title="${esc(tm.name)} · ${tm.n} need you"><span class="pt">${esc(tm.name)}</span><span class="pc"><span class="pb s">${tm.n}</span></span></button>`).join("")}</div></aside>`;
-const graphWin = Object.entries(GRAPHS).map(([v, m]) => `<div class="ov gr" data-v="${v}" role="dialog" aria-label="Graph">
+// graph-lanes stands taller than 720 px, so the capture (capture.mjs, a taller viewport) shows the lane's square under the team's
+const graphWin = Object.entries(GRAPHS).map(([v, m]) => `<div class="ov gr" data-v="${v}" role="dialog" aria-label="Graph"${v === "graph-lanes" ? ' style="height:calc(100% - 96px)"' : ""}>
   ${deskTabs("graph", true)}
   <div class="vt" role="tablist">${m.tabs.map((t) => `<button role="tab" class="${t.id === m.id ? "on" : ""}" title="Show the ${esc(t.name)} graph">${esc(t.name)}</button>`).join("")}</div>
   ${crumbOf(m.crumb)}<div class="ovb reg">${graphBody(m, false)}</div>${graphScrub(m.scrub)}
@@ -545,9 +571,6 @@ const modes = (m) => `<div class="vt gmd" role="tablist" aria-label="Graph layou
 const flowHead = (m) => `<div class="fhd"><div class="vt" role="tablist">${m.tabs.map((t) => `<button role="tab" class="${t.id === m.id ? "on" : ""}" title="Show the ${esc(t.name)} graph">${esc(t.name)}</button>`).join("")}</div>${modes(m)}</div>`;
 // The Desk window's graph body: 620 − 2 border − 32 padding across; 720 less the Desk's tab row (44), the header (34), padding and chip.
 const ROOM = { w: 586, h: 720 - 2 - 44 - 34 - 12 - 12 - 8 };
-// The fixture's member slices carry no column (the daemon serves one); here each takes the column the mock gives its role, so the
-// cards spread over the four columns as they do live.
-const flowSlices = new Map([...slices].map(([id, sl]) => [id, id.startsWith("member:") ? { ...sl, body: { ...sl.body, column: FLOW_COLUMN[sl.body.role] ?? 2 } } : sl]));
 // The team in the user's screenshot of 2026-11-17 (spec herdr-graph-polish): an orchestrator in Agent, three implementors (one idle),
 // three reviewers (one reviewing), briefs from the orchestrator to two implementors and one sent for review. `?view=graph-shot`.
 const SHOT = "a1b2c3d4/ah2-shot";
@@ -628,12 +651,13 @@ const FLOWS = {
   "graph-shot-blocked": flowModel(shotOf("implementor-3"), SHOT, "horizontal", 1, { w: 1000, h: 560 }),
   "graph-flow": flowModel(flowSlices, team, "horizontal", 1, ROOM, NOW),
   "graph-flow-v": flowModel(flowSlices, team, "vertical", 1, ROOM, NOW),
+  "graph-lanes-flow": flowModel(laneSlices, team, "horizontal", 1, { w: 1000, h: 560 }, NOW),
 };
 const goneShot = shotOf(null, "reviewer-3");
 const SHEETS = { "graph-sheet": [shotSlices, `member:${SHOT}/implementor-2`, "t2"], "graph-sheet-gone": [goneShot, `member:${SHOT}/reviewer-3`, null] };
 for (const [v, [sl]] of Object.entries(SHEETS)) FLOWS[v] = flowModel(sl, SHOT, "horizontal", 1, { w: 700, h: 560 });
 const sheetOf = (v, full) => (SHEETS[v] ? sheetHtml(SHEETS[v][0], SHOT, SHEETS[v][1], FLOWS[v].dots.length > 0, SHEETS[v][2], full) : "");
-const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" data-v="${v}" role="dialog" aria-label="Graph"${v.startsWith("graph-shot") || v === "graph-idle" || v === "graph-active" || SHEETS[v] ? ' style="width:1034px"' : ""}>
+const flowWin = Object.entries(FLOWS).map(([v, m]) => `<div class="ov gr gfw" data-v="${v}" role="dialog" aria-label="Graph"${v.startsWith("graph-shot") || v === "graph-lanes-flow" || v === "graph-idle" || v === "graph-active" || SHEETS[v] ? ' style="width:1034px"' : ""}>
   ${deskTabs("graph", true)}
   ${flowHead(m)}${SHEETS[v] ? `<div class="shrow"><div class="ovb reg">${flowStage(m)}</div>${sheetOf(v, false)}</div>` : `<div class="ovb reg">${flowStage(m)}</div>`}
  </div>`).join("");
@@ -682,7 +706,7 @@ const setWin = `<div class="scrim"></div><div class="ov set" role="dialog" aria-
   <div class="ovb">
    <section class="ss"><h2>Sidebar</h2>${srow("Opens on", seg("Tab shown when the Wrangl layout opens", [["agents-list", "Agents"], ["ah2", "Wrangl"]], SET.tab), "The tab shown each time you switch to the ah2 layout.")}</section>
    <section class="ss"><h2>Tab strip</h2>${STRIP.map(([k, l]) => srow(esc(l), sw(SET.strip[k], `Show ${l} in the tab strip`))).join("")}</section>
-   <section class="ss"><h2>Teams and lanes</h2>${srow("Lanes", seg("Lanes", [["nested", "Nested"], ["collapsed", "Collapsed"]], SET.lanes), "Collapsed keeps a lane's header row and hides its members.")}<div class="sub">Shown in the sidebar</div>${side.teams.map((t) => teamSet(t, false)).join("")}<div class="sfoot">A hidden team's questions still count in Needs you and Q&amp;A.</div></section>
+   <section class="ss"><h2>Teams and lanes</h2>${srow("Lanes", seg("Lanes", [["nested", "Nested"], ["collapsed", "Collapsed"]], SET.lanes), "Collapsed keeps a lane's header row and hides its members.")}${srow("Motion", seg("Motion", [["full", "Full"], ["reduced", "Reduced"]], SET.motion), "Reduced stops the Graph's moving dots, easing and spinners.")}<div class="sub">Shown in the sidebar</div>${side.teams.map((t) => teamSet(t, false)).join("")}<div class="sfoot">A hidden team's questions still count in Needs you and Q&amp;A.</div></section>
    <section class="ss"><h2>Refresh and alerts</h2>${srow("Refresh", seg("Refresh", INTERVALS, SET.interval), "Live updates as soon as anything changes; the others refresh at most that often.")}${srow("Alarms as herdr notices", sw(SET.notify, "Alarms as herdr notices"), "When a team raises an alarm, also post a herdr notice.")}</section>
    <section class="ss"><h2>Updates</h2>${srow("Installed", `<span class="sv">v${UPD.installed}</span>`)}${srow("In the Wrangl plugin", `<span class="sv">v${UPD.bundled}</span>`)}<div class="sst"><i class="udot" aria-hidden="true"></i><span>v${UPD.bundled} is ready to install</span></div>${srow("Auto-update", sw(SET.autoUpdate, "Auto-update"), "Installs a newer plugin's mod as soon as a check finds it. A check runs when the Wrangl layout opens, then hourly.")}
     <div class="sact"><button class="sb pri">Update to v${UPD.bundled}</button><button class="sb">Check now</button><span class="fill"></span><button class="sb gh" aria-label="Hide what's new">Hide what's new</button></div>
@@ -794,7 +818,7 @@ html[data-view=dock-sheet] .dock.dsh[data-v=dock-sheet],html[data-view=dock-shee
 .lead.fly{position:relative}.lead.fly .re,.lead.fly .rh,.lead.fly .rl{background:var(--dh-l);opacity:.75}:root[data-theme=dark] .lead.fly .re,:root[data-theme=dark] .lead.fly .rh,:root[data-theme=dark] .lead.fly .rl{background:var(--dh-d);opacity:.6}.dt{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;background:var(--dh-l);offset-rotate:0deg;animation:dt linear infinite}:root[data-theme=dark] .dt{background:var(--dh-d)}@keyframes dt{from{offset-distance:0%}to{offset-distance:100%}}.dt.bk{background:var(--bh-l);animation-direction:reverse}:root[data-theme=dark] .dt.bk{background:var(--bh-d)}.ri.off{opacity:.4}@media (prefers-reduced-motion:reduce){.dt{animation:none;offset-distance:50%}}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh,.trow.dsh .tc2 .re{background:none;border:0 dashed var(--border)}.trow.dsh .tc2 .rl,.trow.dsh .tc2 .rh{border-top-width:1px}.trow.dsh .tc2 .re{border-left-width:1px}.row.tun{font-size:12px}.rg.ju{color:var(--muted)}.stg{height:16px;padding:0 5px;flex:none;display:flex;align-items:center;border:1px dashed var(--muted);border-radius:4px;font-size:10.5px;color:var(--muted)}.odu{flex:none;font-size:11px;font-weight:600;color:var(--blocked)}.wt.rt{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px}.gu{box-sizing:border-box;border-radius:50%;background:var(--surface);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.gu.sub{border-style:dashed}.gu.over{border:2px solid var(--blocked)}.gus{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gul path{stroke:var(--muted);stroke-width:1;stroke-dasharray:5 4;fill:none}.fc.fu{background:var(--raised);border-color:var(--border)}.fc.fu.sub{border-style:dashed;border-color:var(--muted)}.fn.fnq{color:var(--muted)}.fu .ri{color:var(--hu-l)}:root[data-theme=dark] .fu .ri{color:var(--hu-d)}.fu .ri svg{width:100%;height:100%}.flk path.subagent{stroke:var(--muted);stroke-dasharray:5 4}.flg svg path.ks{stroke:var(--muted);stroke-width:1}
 .gm{border-radius:50%;background:var(--surface);border:1px solid var(--border);box-sizing:border-box}.gm.gone{opacity:.4}.gm>svg{position:absolute;left:-1px;top:-1px}.gm>svg path{fill:none}.gm .trk{stroke:var(--border)}.gm .busy{stroke:currentColor}
 .gls{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.gl{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gl b{font-size:9px;font-weight:400}.gl.sub{font-size:11px;color:var(--muted)}.gl.val{font:600 11px "Geist Mono",ui-monospace,monospace}
-.gfl{width:8px;height:8px;border-radius:50%;background:var(--accent);border:1px solid var(--surface);box-sizing:border-box}.gcl{height:16px;display:flex;justify-content:center}.gcl span{height:16px;padding:0 4px;display:flex;align-items:center;border-radius:4px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gfl{width:8px;height:8px;border-radius:50%;background:var(--accent);border:1px solid var(--surface);box-sizing:border-box}.gfl.rb{background:var(--surface);border:2px solid var(--accent)}.gcl{height:16px;display:flex;justify-content:center}.gcl span{height:16px;padding:0 4px;display:flex;align-items:center;border-radius:4px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dock{display:none;width:420px;flex:none;margin:42px 8px 36px 0;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}html[data-view=dock] .dock{display:flex}.dock .gn{width:80px}.dock .ovh{gap:4px}.dock .ovh h1{margin-right:6px}
 .dtabs{height:40px;flex:none;padding:0 8px;display:flex;align-items:center;gap:2px;border-bottom:1px solid var(--border)}.dtabs.dwin{height:44px}.dtabs .fill{flex:1}.dtabs [role=tab]{height:26px;padding:0 10px;display:flex;align-items:center;gap:6px;border:1px solid var(--surface);border-radius:6px;background:var(--surface);color:var(--muted);font:12px Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.dtabs [role=tab]:hover{background:var(--hover);color:var(--foreground)}.dtabs .on{background:var(--raised);border-color:var(--border);color:var(--foreground)}.dtabs .x{width:24px;height:24px}
 .srow2{position:absolute;left:268px;right:0;bottom:0;height:28px;display:flex;background:var(--chrome);border-top:1px solid var(--border);font-size:11.5px;color:var(--muted)}.srow2 .ws{flex:1;min-width:0;padding:0 14px;display:flex;align-items:center}

@@ -3,7 +3,7 @@
 // are the web's own: select.js (members, briefs in flight) and graph-world.js (the tree, the flow head's whole-run totals, short
 // names, arc widths), both byte-identical copies of web/ui's, kept honest by a test; graph-layout.js is d3's pack and curveBundle.
 import "./intl-shim.js"; // before graph-world.js, which needs Intl when it loads
-import { DUTY, DUTY_TITLE, laneChildren, memberIds, memberOf, sparksOf, stateWord, teamLabel } from "./select.js";
+import { DUTY, DUTY_TITLE, laneChildren, memberIds, memberOf, reportsBack, sparksOf, stateWord, teamLabel } from "./select.js";
 import { LABEL_AT, MAX_SPARKS, STEP_MS, TIERS, WINDOWS, airOf, radiusOf, eventsOf, fadeOf, fitPack, flowId, glyphOf, hhmm, neededPages, nowOf, pageId, pagesOf, pairsOfTotals, planId, readout, scrubOf, scrubbed,
   shortName, sideways, streamOf, treeOf, usesTotals, widthOf } from "./graph-world.js";
 import { hierarchy, pack, bundle } from "./graph-layout.js";
@@ -223,10 +223,19 @@ function group(slices, t, depth, size, o = {}) {
   }
   const sparks = live ? sparksOf(slices, team) : [];
   for (const s of sparks) link(s.from, s.to).flight.push(s);
+  // ah2-690: the lane fold, a lane member (and its child team's own orchestrator) → its lead here; one level only (ah2-367)
+  const fold = new Map();
+  const childTeams = new Set();
+  for (const c of laneChildren(slices, team, memberIds(team))) {
+    fold.set(c.id, c.lane);
+    fold.set(`${c.team.replace(/^team:/, "member:")}/@orchestrator`, c.lane);
+    childTeams.add(c.team);
+  }
+  const reports = live ? [...reportsBack(slices, team), ...[...childTeams].flatMap((k) => reportsBack(slices, slices.get(k)))] : [];
   const overflow = windowed ? 0 : (head?.totals ?? []).filter(([a]) => a < 0).reduce((n, r) => n + r[2] + r[3], 0);
   // ah2-225: this team's share of the shown teams' jobs and subagents (o.under, graphModel's): its members' and its header's
   const mine = new Map([...members.map((m) => m.id), `team:${t.id}`].filter((k) => o.under?.has(k)).map((k) => [k, o.under.get(k)]));
-  const map = mapOf(slices, team, t.id, members, head, size, { pairs: view.pairs, sc, sparks, zoom: o.zoom ?? null, under: mine.size ? mine : null, clock: o.clock });
+  const map = mapOf(slices, team, t.id, members, head, size, { pairs: view.pairs, sc, sparks, reports, fold, zoom: o.zoom ?? null, under: mine.size ? mine : null, clock: o.clock });
   // zoomed into a circle, only the links between the members inside it
   const inside = o.zoom && map ? new Set(map.leaves.map((n) => n.id)) : null;
 
@@ -296,14 +305,26 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
     const fade = !q ? FAINT : o.sc ? fadeOf(o.sc.cursor, q.last, o.sc.win) : null;
     arcs.push({ key, kind: p.k, width: widthOf(q?.n ?? p.n), fade, cmds: path(a, b, p.k) });
   }
+  // a lane member's end lands on its lead (o.fold, ah2-690); arcs keep nodeAt
+  const lookup = (id) => byId.get(id) ?? byId.get(o.fold?.get(id));
   const flights = [];
   for (const s of (o.sparks ?? sparksOf(slices, team)).slice(0, MAX_SPARKS)) {
-    const a = byId.get(s.from);
-    const b = byId.get(s.to);
+    const a = lookup(s.from);
+    const b = lookup(s.to);
     if (!a || !b || a === b) continue;
     const c = path(a, b, 0);
     const at = c[Math.floor(c.length / 2)];
     flights.push({ key: s.id, x: at.at(-2), y: at.at(-1), title: `in flight: ${s.slug} (${shortName(s.from)} → ${shortName(s.to)})${s.review ? ", review" : ""}` });
+  }
+  // a mark per report waiting to be read, on the report side of the bundle (a flight's is path(a, b, 0))
+  const reports = [];
+  for (const s of (o.reports ?? []).slice(0, MAX_SPARKS)) {
+    const a = lookup(s.to);
+    const b = lookup(s.from);
+    if (!a || !b || a === b) continue;
+    const c = path(a, b, 1);
+    const at = c[Math.floor(c.length / 2)];
+    reports.push({ key: `back|${s.id}`, x: at.at(-2), y: at.at(-1), title: `report back: ${s.slug} (${shortName(s.from)} → ${shortName(s.to)})` });
   }
 
   // the focus's own circle draws too when it is a stream (it fills the square); a stream inside it can be zoomed into
@@ -327,7 +348,7 @@ export function mapOf(slices, team, id, members, head, size = MAP_PX, o = {}) {
     return { key: x.key, kind: x.kind, x: n.x, y: n.y, r: n.r, overdue: x.overdue, run: runText(x, now), tip: underTip(x, g ? g.data.m.name : null, now),
       link: x.kind === "subagent" && g ? { x: g.x, y: g.y } : null };
   });
-  return { size, containers, arcs, flights, leaves, unders, focus: top === root ? null : { id: top.data.id, name: top.data.name, zoomed: top !== only } };
+  return { size, containers, arcs, flights, reports, leaves, unders, focus: top === root ? null : { id: top.data.id, name: top.data.name, zoomed: top !== only } };
 }
 
 // The scrubber under the maps, over every shown team's flow: the span from the oldest run start to now in whole minutes, the

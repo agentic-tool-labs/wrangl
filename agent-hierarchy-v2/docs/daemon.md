@@ -71,7 +71,7 @@ ahd restart    # stop, then start
 Add `--plain` to any of these to get text instead of JSON. Example (`ahd status --plain` with a daemon up):
 
 ```
-up  version 2.0.68  pid 49124  uptime 0s  requests 0
+up  version 2.0.69  pid 49124  uptime 0s  requests 0
 root /path/to/the/plugin
 owns mailbox=true status=false timers=
 errors 0 (5xx)

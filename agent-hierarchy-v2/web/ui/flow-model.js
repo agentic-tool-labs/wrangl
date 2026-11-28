@@ -206,7 +206,8 @@ function roundedCmds(pts, at) {
 //   card's trunk inside a farther one's, so they nest and never cross; in any later column in the gutter just before it;
 // - otherwise straight when its ports can line up clear of the cards, else two right-angle bends through the gap between two columns,
 //   the nearest gap to the earlier card that is clear, the ports moved along the card edges if that is what clears it; only when no
-//   such route exists, the rail round the cards in the way (four bends);
+//   such route exists, the rail round the cards in the way (four bends). Four is the fewest: both ends meet their cards along the
+//   columns, so bends come in pairs, and when no straight or one-riser route is clear the next is four;
 // - the links on one card edge leave from ports spread along it, and risers sharing a gutter are stepped apart, so no two lines lie on one run.
 // A link between two cards of one lane runs at their own ports' heights and in a gap between them, so it stays inside the lane's block.
 function laneRoutes(pairs, rects, orient) {

@@ -4,6 +4,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions are the plugin's `version` in `.claude-plugin/plugin.json`. Feature
 detail lives in the README and in [docs/](./docs/).
 
+## [2.0.69] - 2026-11-27
+
+The herdr Graph gains a motion setting and report-back marks on the Map, and a quit no longer sits out its window after a stop.
+
+### Added
+
+- Wrangl setting **Motion: Full | Reduced** (default Full) in the herdr mod. Reduced stills the Flow and tree dots and the spinners, places settles at once, and makes zoom jump instead of ease. herdr gives a mod no system motion signal, so this is a setting (adr-48).
+- The herdr Graph's Map view draws a hollow report-back mark for each report in flight, and an exchange that crosses between a lane and its parent is drawn once, in the parent's square at the lane lead.
+- `herdr-desktop/preview/capture.mjs` writes PNG captures of the Graph preview (Map and Flow, dark and light) from fixture data in headless Chrome. `DEVELOPING.md` says how to run it.
+
+### Changed
+
+- `ah roster quit`: a stop that lands during the wind-down ends the quit's wait at once. The stop still wins and the quit still exits non-zero with `team_stopped`; it no longer waits out the rest of `--wait`.
+
+### Notes
+
+- A top-team Flow line blocked at every port height keeps its four-bend route: four is the fewest possible there, and the code now says so.
+
 ## [2.0.68] - 2026-11-26
 
 Installing a role pack is now the whole trust decision. This release finishes the change 2.0.67 began.

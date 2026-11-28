@@ -16,6 +16,7 @@ import { openUpdate } from "./update.js";
 
 export const openSettings = () => openOverlay({ mod: "ah2", props: { view: "settings" }, kind: "dialog", key: "ah2-settings", width: 480, height: 640 });
 export const settings = () => settingsOf(shared(SETTINGS_KEY));
+export const reducedMotion = () => settings().motion === "reduced";
 export const setSetting = (patch, cx) => {
   setShared(SETTINGS_KEY, { ...settings(), ...patch });
   cx?.notify();
@@ -299,6 +300,8 @@ export function settingsView(self, t, close) {
       .child(section("Teams and lanes",
         row("Lanes", seg("set-lanes", "Lanes", [["nested", "Nested"], ["collapsed", "Collapsed"]], s.lanes, (v, cx) => setSetting({ lanes: v }, cx)),
           "Collapsed keeps a lane's header row and hides its members."),
+        row("Motion", seg("set-motion", "Motion", [["full", "Full"], ["reduced", "Reduced"]], s.motion, (v, cx) => setSetting({ motion: v }, cx)),
+          "Reduced stops the Graph's moving dots, easing and spinners."),
         div().mt(12).h(20).flex().items_center().text_size(11).text_color(t.muted).child("Shown in the sidebar"),
         ...teamRows,
         div().mt(4).text_size(11).text_color(t.muted).child("A hidden team's questions still count in Needs you and Q&A.")))

@@ -16,6 +16,7 @@ import { div, svg, PathBuilder, Background } from "gpui-kit";
 import { shared, setShared, run, terminals } from "herdr";
 import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
 import { isDocked } from "./dock.js";
+import { reducedMotion } from "./settings.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
   flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, flowClamp, wheelAct, easedScale, dragAct, wasDrag, dragDrawn,
   cardStyle, edgeStyle, dotColor, ageText, flowCardText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
@@ -52,6 +53,16 @@ export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
       v.graphPan = {};
       cx.notify();
     }
+    return;
+  }
+  if (reducedMotion()) { // Reduced motion: the target at once, as the loop's last frame applies it
+    const m = v.graphMemo?.m;
+    if (!m) return; // no layout to zoom
+    if (v.graphMode === "flow") flowRescale(v, m, target, at?.x ?? null, at?.y ?? null);
+    else rescaleTo(v, m.groups, target, at);
+    if (to !== null) v.graphPan = {};
+    v.graphEase = null;
+    cx.notify();
     return;
   }
   v.graphEase = { from: clamp(v.graphScale), to: target, t0: Date.now(), at, fit: to !== null, wheel };
@@ -533,6 +544,9 @@ function map(t, g, zoomTo, v) {
   (m.unders ?? []).forEach((u, i) => els.push(underDot(t, g, u, i)));
   m.flights.forEach((f, i) => els.push(div().id(`gf-${g.id}-${i}`).absolute().left(f.x - 4).top(f.y - 4).size(8).rounded(4)
     .bg(t.accent).border(1).border_color(t.surface).tooltip(f.title).accessibility_label(f.title)));
+  // a report waiting to be read: a hollow ring where a flight is a filled dot (ah2-690)
+  (m.reports ?? []).forEach((r, i) => els.push(div().id(`gb-${g.id}-${i}`).absolute().left(r.x - 4).top(r.y - 4).size(8).rounded(4)
+    .bg(t.surface).border(2).border_color(t.accent).tooltip(r.title).accessibility_label(r.title)));
   // container names sit on the circle's top edge, on a surface chip that stands in for the web's label halo
   m.containers.forEach((c, i) => c.label && els.push(h_flex().absolute().left(c.x - c.r).top(c.y - c.r - 8).w(c.r * 2).h(16).justify_center()
     .child(div().id(`gcl-${g.id}-${i}`).max_w(c.r * 1.6).h(16).px(4).flex().items_center().rounded(4).bg(t.surface)
@@ -646,10 +660,11 @@ function flowBody(t, m, v, cx) {
   const gr = grip(v, "flow");
   const now = Date.now();
   // ah2-373 Amendment 8: a layout change settles (graph-model.js settle) on the dots' clock, which runs only while a dot is drawn or
-  // a settle is under way. No motion signal reaches the mod yet: v.reducedMotion, when something sets it, places everything at once.
-  const S = settle(v, m, now, v.reducedMotion === true);
+  // a settle is under way. Under Reduced motion (settings.js reducedMotion) everything is placed at once and the dots stand still.
+  const reduced = reducedMotion();
+  const S = settle(v, m, now, reduced);
   const travel = travelsOf(v, m.dots, now);
-  if (cx) travelClock(v, cx, travel || S.active);
+  if (cx) travelClock(v, cx, (travel && !reduced) || S.active);
   const P = (r) => ({ x: (r.x - m.box.x) * k, y: (r.y - m.box.y) * k, w: r.w * k, h: r.h * k, o: r.o });
   const placed = (key, r) => (S.at(key) ? P(S.at(key)) : { ...r, o: 1 });
   const faded = (el, o) => (o < 0.999 ? el.opacity(Math.max(0, o)) : el);
@@ -696,7 +711,7 @@ function flowBody(t, m, v, cx) {
     els.push(el.id(`gfg-${i}`).opacity(Math.max(0, a.o)));
   });
   m.dots.forEach((d, i) => {
-    const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review);
+    const p = dotAt(d.pts, v.graphTravels?.get(d.key) ?? now, now, d.review, reduced);
     els.push(div().id(`gfd-${i}`).absolute().left(p.x - 3).top(p.y - 3).size(6).rounded(3) // the web's 6 px (graph.js .dot r=3)
       .bg(dotColor(d.review, lt)).border(1).border_color(t.surface).tooltip(d.title).accessibility_label(d.title));
   });

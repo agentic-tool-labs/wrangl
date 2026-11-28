@@ -25,6 +25,9 @@ internal static partial class QuitVerb
         internal List<Answered> Answers { get; set; } = [];
 
         internal bool Sealed { get; set; }
+
+        /// <summary>Its own hold was removed, or replaced by one not a quit's, during the wait: the quit no longer waits on its members.</summary>
+        internal bool Overtaken { get; set; }
     }
 
     /// <summary>One top team and its lanes, parents first, under one window.</summary>
@@ -54,7 +57,7 @@ internal static partial class QuitVerb
 
         internal JsonObject Drained { get; set; } = new() { ["entries"] = 0, ["wake_files"] = 0 };
 
-        internal IEnumerable<Answered> Waiting => Teams.Where(static t => !t.Sealed).SelectMany(static t => t.Answers).Where(static a => a.Answer == "none");
+        internal IEnumerable<Answered> Waiting => Teams.Where(static t => !t.Sealed && !t.Overtaken).SelectMany(static t => t.Answers).Where(static a => a.Answer == "none");
 
         internal bool AnyUnanswered => Teams.SelectMany(static t => t.Answers).Any(static a => a.Answer == "none");
 
@@ -334,7 +337,9 @@ internal static partial class QuitVerb
             {
                 InTeam(c, quit.Team, () =>
                 {
-                    quit.Sealed = HoldStore.ReadOwn(c, quit.Team) is { } own && HoldStore.Field(own, "phase") == "held";
+                    var own = HoldStore.ReadOwn(c, quit.Team);
+                    quit.Sealed = own is not null && HoldStore.Field(own, "phase") == "held";
+                    quit.Overtaken |= !quit.Sealed && (own is null ? !HoldStore.OwnUnreadable(c, quit.Team) : HoldStore.Field(own, "kind") != "quit");
                     quit.Answers = quit.Sealed ? [] : Collect(c, c.Dir, quit.Recorded);
                 });
             }
