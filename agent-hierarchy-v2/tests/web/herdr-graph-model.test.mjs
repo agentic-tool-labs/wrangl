@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { graphModel, graphSubs, KNOB, FAINT, cursorAt, stepCursor, SCALE_MIN, SCALE_MAX, SCALE_STEP, clampScale, clampPan, panAround, drillTo, fitView, rescaleTo, frameOf, wheelAct, easedScale, EASE_MS, WHEEL_EASE_MS, spring, dragAct, DRAG_PX, wasDrag, dragDrawn, CLICK_MS, PAN_KEEP_PX, flowClamp, flowRescale } from "../../herdr-desktop/mods/ah2/graph-model.js";
 import { hierarchy, pack, bundle } from "../../herdr-desktop/mods/ah2/graph-layout.js";
+import { MAX_SPARKS } from "../../herdr-desktop/mods/ah2/graph-world.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const mod = join(root, "herdr-desktop", "mods", "ah2");
@@ -68,6 +69,27 @@ test("the Map marks a lane's report waiting in the lane's square and a lane-cros
   assert.ok(flown.includes(cross) && !flown.includes("exchange:a1b2c3d4/20261108-171400-g191"));
   const ids = [top, lane].flatMap((g) => [...g.map.flights.map((f) => f.key), ...g.map.reports.map((r) => r.key.replace(/^back\|/, ""))]);
   assert.equal(new Set(ids).size, ids.length, "no exchange in more than one group");
+});
+
+test("ah2-718: over MAX_SPARKS the Map keeps the team's own reports first, then its lanes', and drops the rest", () => {
+  const top = (own) => {
+    const laned = new Map(slices);
+    const t = laned.get("team:a1b2c3d4/ah2-tm4");
+    laned.set(t.id, { ...t, body: { ...t.body, streams: [{ state: "open", child_team: "lane-herdr", sub_orchestrator: "architect" }] } });
+    const edge = (id, from, to) => ({ id, from_member: from, to_member: to });
+    const mine = Array.from({ length: own }, (_, i) => edge(`exchange:a1b2c3d4/20261108-18${String(i).padStart(4, "0")}-own`, "member:a1b2c3d4/ah2-tm4/implementor", "member:a1b2c3d4/ah2-tm4/@orchestrator"));
+    for (const [k, report] of [["topology:a1b2c3d4/ah2-tm4", mine], ["topology:a1b2c3d4/lane-herdr", [edge("exchange:a1b2c3d4/20261108-000000-lane", "member:a1b2c3d4/lane-herdr/ux-engineer", "member:a1b2c3d4/ah2-tm4/implementor")]]]) {
+      const topo = laned.get(k);
+      laned.set(k, { ...topo, body: { ...topo.body, edges: { ...topo.body.edges, report } } });
+    }
+    return { keys: graphModel(laned, "a1b2c3d4/ah2-tm4").groups[0].map.reports.map((r) => r.key), mine: mine.map((e) => `back|${e.id}`) };
+  };
+  const lane = "back|exchange:a1b2c3d4/20261108-000000-lane";
+  const over = top(MAX_SPARKS);
+  assert.deepEqual(over.keys, over.mine, "own reports survive in their order; the lane's is the one dropped");
+  // at the cap: nothing dropped, the lane's after the team's own (its id sorts first)
+  const at = top(MAX_SPARKS - 1);
+  assert.deepEqual(at.keys, [...at.mine, lane]);
 });
 
 test("with no team named the first tab shows; a team that stopped running reads closed", () => {
@@ -616,6 +638,121 @@ test("ah2-398 F2: Flow's scale stops where its drawing stops, and zooms back in 
   // a team that fits at the minimum or above zooms as before: the plain clamp
   assert.equal(flowClamp(SCALE_MIN, { ...m, fit: 1.2 }), SCALE_MIN);
   assert.equal(flowClamp(0.1, null), SCALE_MIN);
+});
+
+test("ah2-718: under Reduced, a burst of wheel ticks with no frame between them keeps the world point under the cursor there", () => {
+  const draw = (s) => FM.flowModel(slices, TM4, "horizontal", s, WIDE);
+  const v = { graphMode: "flow", graphScale: 1, graphPan: {}, graphRoom: WIDE };
+  const redraw = () => { v.graphMemo = { key: [0, 0, 0, 0, 0, v.graphScale, 0, 0, "flow"], m: draw(v.graphScale) }; }; // graph-view.js graphOf: key[5] is the scale, [8] the mode
+  const at = { x: 300, y: 200 };
+  const world = () => {
+    const m = draw(v.graphScale);
+    const p = FM.flowPan(v.graphPan.flow, m.size, m.stage);
+    return { x: (at.x - p.x) / m.k, y: (at.y - p.y) / m.k, k: m.k };
+  };
+  const drift = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) * b.k;
+  const tick = () => FM.jumpTo(v, flowClamp(v.graphScale * 1.1, v.graphMemo.m), at);
+  redraw();
+  const w0 = world();
+  for (let i = 0; i < 4; i++) tick();
+  assert.ok(v.graphScale > 1, "the burst zoomed");
+  assert.ok(drift(w0, world()) <= 0.5, `drift ${drift(w0, world())} px`);
+  // the nearest case that must still zoom: a tick on a fresh drawing (after the redraw) rescales, about the same point
+  redraw();
+  const s = v.graphScale;
+  assert.equal(tick(), true);
+  assert.ok(v.graphScale > s);
+  assert.ok(drift(w0, world()) <= 0.5, `drift ${drift(w0, world())} px`);
+});
+
+// ah2-722: graph-view.js easeTo under Reduced (zoomFrom, reducedJump) and graphOf's redraw (applyPending), Flow and Map. A Map tick's
+// point is in the box drawn when it arrived (a box sits centred in the room: graph-view.js group()).
+function reducedStage(mode) {
+  const room = { w: 800, h: 700 };
+  const flow = mode === "flow";
+  const v = { graphMode: mode, graphScale: 1, graphPan: {}, graphRoom: flow ? WIDE : room };
+  const draw = (s) => (flow ? FM.flowModel(slices, TM4, "horizontal", s, WIDE) : FM.graphModel(slices, TM4, FM.MAP_PX * s, v));
+  const redraw = () => {
+    v.graphMemo = { key: [0, 0, 0, 0, 0, v.graphScale, 0, 0, v.graphMode], m: draw(v.graphScale) }; // graphOf's key: [5] scale, [8] mode
+    if (FM.applyPending(v, true)) redraw();
+  };
+  const SX = 330, SY = 260; // the cursor, in the room (Map) or on the stage (Flow)
+  const left = (s) => (room.w - FM.frameOf(FM.MAP_PX, s, room).w) / 2;
+  const id = () => draw(1).groups[0].id;
+  const at = () => (flow ? { x: SX, y: SY } : { id: id(), x: SX - left(v.graphMemo.key[5]), y: SY });
+  const world = () => {
+    const s = v.graphScale;
+    if (flow) {
+      const m = draw(s);
+      const p = FM.flowPan(v.graphPan.flow, m.size, m.stage);
+      return { x: (SX - p.x) / m.k, y: (SY - p.y) / m.k, k: m.k };
+    }
+    const p = clampPan(v.graphPan[id()], FM.MAP_PX, s, FM.frameOf(FM.MAP_PX, s, room));
+    return { x: (SX - left(s) - p.x) / s, y: (SY - p.y) / s, k: s };
+  };
+  const clamp = (x) => flowClamp(x, flow ? v.graphMemo.m : null);
+  const tick = () => FM.reducedJump(v, clamp(clamp(FM.zoomFrom(v)) * 1.1), at());
+  const fit = () => FM.reducedJump(v, 1, null, true);
+  return { v, redraw, world, tick, fit, drift: (a, b) => Math.hypot(a.x - b.x, a.y - b.y) * b.k };
+}
+
+for (const mode of ["flow", "map"]) {
+  test(`ah2-722 (${mode}): under Reduced a burst of N ticks with no redraw ends at ×1.1^N after one redraw, the cursor's point kept`, () => {
+    const { v, redraw, world, tick, drift } = reducedStage(mode);
+    redraw();
+    const w0 = world();
+    const N = 4;
+    assert.equal(tick(), true, "a tick on a fresh drawing jumps at once");
+    assert.equal(v.graphPending, null, "and leaves nothing pending");
+    for (let i = 1; i < N; i++) assert.equal(tick(), false, "a tick on the stale drawing is kept");
+    assert.ok(Math.abs(v.graphPending.target - 1.1 ** N) < 1e-9, "the kept ticks compound");
+    redraw();
+    assert.ok(Math.abs(v.graphScale - 1.1 ** N) < 1e-9, `scale ${v.graphScale}`);
+    assert.equal(v.graphPending, null, "cleared when applied");
+    assert.ok(drift(w0, world()) <= 0.5, `drift ${drift(w0, world())} px`);
+  });
+}
+
+test("ah2-722: a Fit on a stale drawing lands after the redraw; a Fit replaces kept ticks and a tick replaces a kept Fit; Full clears", () => {
+  const { v, redraw, tick, fit } = reducedStage("flow");
+  redraw();
+  tick();
+  tick(); // kept
+  assert.equal(fit(), false);
+  assert.deepEqual(v.graphPending, { target: 1, at: null, fit: true, drawn: 1 }, "the Fit replaced the kept tick");
+  redraw();
+  assert.deepEqual([v.graphScale, v.graphPan, v.graphPending], [1, {}, null], "the Fit landed, centred");
+  // the nearest case that must not be a Fit: a tick after a kept Fit replaces it, compounding from the Fit's scale
+  tick();
+  fit();
+  tick();
+  assert.deepEqual([v.graphPending.target, v.graphPending.fit], [1.1, false]);
+  // Motion set to Full: the slot is cleared, never applied
+  v.graphMemo = { ...v.graphMemo, key: [...v.graphMemo.key.slice(0, 5), v.graphScale, 0, 0, "flow"] };
+  const s = v.graphScale;
+  assert.equal(FM.applyPending(v, false), false);
+  assert.deepEqual([v.graphPending, v.graphScale], [null, s]);
+});
+
+test("ah2-722: a drill or a mode switch (fitView) clears a kept Reduced jump; a redraw still due keeps it", () => {
+  const { v, redraw, tick } = reducedStage("map");
+  redraw();
+  tick();
+  tick(); // kept
+  assert.equal(FM.applyPending(v, true), false, "the nearest case that must keep it: the drawing is still due");
+  assert.ok(v.graphPending);
+  drillTo(v, null);
+  assert.equal(v.graphPending, null);
+});
+
+test("ah2-722 nit 3: a drawing made in the other mode is not fresh, so a zoom right after Flow | Map never rescales from it", () => {
+  const v = { graphMode: "flow", graphScale: 1, graphPan: {}, graphRoom: WIDE };
+  v.graphMemo = { key: [0, 0, 0, 0, 0, 1, 0, 0, "flow"], m: FM.flowModel(slices, TM4, "horizontal", 1, WIDE) };
+  assert.ok(FM.freshDrawing(v), "the nearest case that must stay fresh: the same mode at the same scale");
+  v.graphMode = "map"; // graph-view.js choose: the mode switched, the scale back at 1, the Flow drawing still memoised
+  assert.equal(FM.freshDrawing(v), null);
+  assert.equal(FM.reducedJump(v, 1.1, { id: "x", x: 10, y: 10 }), false, "kept until the Map is drawn");
+  assert.equal(v.graphScale, 1);
 });
 
 test("b93: a held drag lives while its stage was drawn this render or the last, and ends once it missed one", () => {

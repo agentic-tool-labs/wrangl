@@ -18,7 +18,7 @@ import { v_flex, h_flex, Tabs, Tab, Button, Slider, SliderState, SliderTrack, Sl
 import { isDocked } from "./dock.js";
 import { reducedMotion } from "./settings.js";
 import { graphModel, MAP_PX, KNOB, cursorAt, stepCursor, SCALE_STEP, clampPan, drillTo, rescaleTo, frameOf, LANE_PAD,
-  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, flowClamp, wheelAct, easedScale, dragAct, wasDrag, dragDrawn,
+  flowModel, graphChoice, flowPan, flowRescale, LEGEND_H, flowClamp, wheelAct, easedScale, freshDrawing, zoomFrom, reducedJump, applyPending, dragAct, wasDrag, dragDrawn,
   cardStyle, edgeStyle, dotColor, ageText, flowCardText, travelsOf, travelClock, dotAt, settle, WEB, webGraphLink, sheetUi, sheetClick, laneStyle, paneOfMember, roleHue, roleIcon } from "./graph-model.js";
 import { GRAPH_KEY } from "./settings-model.js";
 import { FLOW, WORK_MIN_K } from "./flow-model.js";
@@ -46,7 +46,9 @@ const FRAME_MS = 16; // an eased zoom's frame
 // clears graphEase, or a second after a frame nobody drew (a closed pane), and the view's close() cancels it.
 export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
   const clamp = (x) => flowClamp(x, v.graphMode === "flow" ? v.graphMemo?.m : null); // Flow stops where its drawing does
-  const from = clamp(v.graphEase?.to ?? v.graphScale);
+  const reduced = reducedMotion();
+  if (!reduced) v.graphPending = null; // Full keeps no Reduced jump (graph-model.js reducedJump)
+  const from = clamp(zoomFrom(v));
   const target = clamp(to ?? from * by);
   if (target === from) {
     if (to !== null && !v.graphEase) { // Fit at scale 1 still recentres (fitView's pan reset)
@@ -55,14 +57,8 @@ export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
     }
     return;
   }
-  if (reducedMotion()) { // Reduced motion: the target at once, as the loop's last frame applies it
-    const m = v.graphMemo?.m;
-    if (!m) return; // no layout to zoom
-    if (v.graphMode === "flow") flowRescale(v, m, target, at?.x ?? null, at?.y ?? null);
-    else rescaleTo(v, m.groups, target, at);
-    if (to !== null) v.graphPan = {};
-    v.graphEase = null;
-    cx.notify();
+  if (reduced) { // Reduced motion: the target at once (jumpTo), as the loop's last frame applies it; on a stale drawing kept for graphOf
+    if (reducedJump(v, target, at, to !== null)) cx.notify();
     return;
   }
   v.graphEase = { from: clamp(v.graphScale), to: target, t0: Date.now(), at, fit: to !== null, wheel };
@@ -72,17 +68,17 @@ export function easeTo(v, cx, { by = 1, to = null, at = null, wheel = false }) {
     while (v.graphEase) {
       await cx.sleep(FRAME_MS);
       const e = v.graphEase;
-      const memo = v.graphMemo;
       if (!e) break;
-      if (memo?.key[5] !== v.graphScale || !memo.m) {
+      const m = freshDrawing(v);
+      if (!m) {
         if (Date.now() - drawn > 1000) v.graphEase = null;
         continue;
       }
       drawn = Date.now();
       const s2 = easedScale(e.from, e.to, e.t0, drawn, e.wheel);
       if (s2 === e.to) v.graphEase = null;
-      if (v.graphMode === "flow") flowRescale(v, memo.m, s2, e.at?.x ?? null, e.at?.y ?? null);
-      else rescaleTo(v, memo.m.groups, s2, e.at);
+      if (v.graphMode === "flow") flowRescale(v, m, s2, e.at?.x ?? null, e.at?.y ?? null);
+      else rescaleTo(v, m.groups, s2, e.at);
       if (s2 === e.to && e.fit) v.graphPan = {}; // Fit lands centred, as fitView does
       cx.notify();
     }
@@ -215,7 +211,9 @@ function graphOf(v, docked) {
   }
   // the stage's shape picked the orientation: it holds for this pane from now on
   if (m?.picked && !orientOf(v)) v.graphPicked = m.picked;
-  return (v.graphMemo = { key, m, error });
+  v.graphMemo = { key, m, error };
+  // a Reduced jump kept while this drawing was due lands on it, then is drawn at once (the slot is empty on the second pass)
+  return applyPending(v, reducedMotion()) ? graphOf(v, docked) : v.graphMemo;
 }
 
 // Map | Flow, or Flow's other orientation: back at fit (Map's drill and Flow's pan never carry across), and remembered.
