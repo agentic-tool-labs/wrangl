@@ -26,7 +26,7 @@ import { openView, closeOf, shownIn, isDocked, deskWindow, teamDesk, setTeamDesk
 import { teamLabel, realNameNote } from "./select.js";
 import { markCell } from "./marks.js";
 import { shownTeams, displayOrder, teamMove, newAlerts, DESK_KEY, DESK_WINDOW_KEY, TEAM_DESKS_KEY, DOCKABLE, peekDismissed, peekClosed, peekPressOutside, unionSubs, qaShowing, isInstallCommand, listen } from "./settings-model.js";
-import { settings, setSetting, settingsView, checkUpdate, installClick, readRebuild } from "./settings.js";
+import { settings, reducedMotion, setSetting, settingsView, checkUpdate, installClick, readRebuild } from "./settings.js";
 import { openDismiss, dismissInit, dismissView } from "./dismiss.js";
 import { openRename, renameInit, renameView } from "./rename.js";
 import { openUpdate, updateOpen, updateInit, updateClose, updateView } from "./update.js";
@@ -505,6 +505,7 @@ export default class Ah2 extends View {
     // ah2-239: the briefs in flight to the drawn rows, each a dot on its row's elbow; the Graph's clock function on the tree's own state
     const travel = (this.treeTravel ??= {});
     const dots = [];
+    const reduced = reducedMotion(); // the dots stand at their midpoints and no clock runs
     const shown = (list) => list.reduce((n, x) => n + 1 + shown(x.lanes), 0);
     const hiddenN = m.count - shown(teams);
     const terminalOf = terminalFinder(terminals(), target());
@@ -644,8 +645,8 @@ export default class Ah2 extends View {
         // ah2-265: the brief coming in (D9: the receiver's lane colour), then the report going back up the same track at the review pace
         // in the member's lane colour, started half a period on (D4) so the two never ride at one phase
         const marks = [
-          d && { hue: d.review ? dotColor(true, lt) : laneHue(d.role, d.column, lt) ?? t.foreground, at: dotAt(pts, travel.graphTravels?.get(d.key) ?? now, now, d.review) },
-          b && { hue: laneHue(b.role, b.column, lt) ?? t.foreground, at: dotAt(bpts, (travel.graphTravels?.get(b.key) ?? now) - DOT_MS.review / 2, now, true) },
+          d && { hue: d.review ? dotColor(true, lt) : laneHue(d.role, d.column, lt) ?? t.foreground, at: dotAt(pts, travel.graphTravels?.get(d.key) ?? now, now, d.review, reduced) },
+          b && { hue: laneHue(b.role, b.column, lt) ?? t.foreground, at: dotAt(bpts, (travel.graphTravels?.get(b.key) ?? now) - DOT_MS.review / 2, now, true, reduced) },
         ].filter(Boolean);
         const lead = this.treeLead(t, r, `${tm.id}|${n.key}`, n.kind === "lane" ? n.team.name : n.label, marks);
         if (n.kind === "lane") {
@@ -672,7 +673,7 @@ export default class Ah2 extends View {
     }
 
     // the clock runs only while a drawn row has a dot (graph-model.js travelClock: and ends a second after the pane stops drawing)
-    travelClock(travel, cx, travelsOf(travel, dots, now), 33);
+    travelClock(travel, cx, travelsOf(travel, dots, now) && !reduced, 33);
 
     // A hidden team's or collapsed lane's members are ah2's too: hiding them must not move them under Other agents.
     const claim = (list) => list.forEach((tm) => { tm.members.forEach((mb) => terminalOf(mb) && linked.add(terminalOf(mb))); claim(tm.lanes); });

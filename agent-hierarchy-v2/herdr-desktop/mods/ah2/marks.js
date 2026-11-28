@@ -6,11 +6,16 @@
 
 import { div, svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
+import { shared } from "herdr";
+import { SETTINGS_KEY, settingsOf } from "./settings-model.js";
 
 export function stateMark(t, state) {
   switch (state) {
-    case "working":
-      return svg("mods/ah2/spinner.svg").size(12).flex_none().text_color(t.working).spin(900);
+    case "working": {
+      // settings.js reducedMotion()'s rule, read here: settings.js imports update.js, which imports this file
+      const spinner = svg("mods/ah2/spinner.svg").size(12).flex_none().text_color(t.working);
+      return settingsOf(shared(SETTINGS_KEY)).motion === "reduced" ? spinner : spinner.spin(900);
+    }
     case "running":
       return div().size(7).flex_none().rounded(4).bg(t.working);
     case "blocked":

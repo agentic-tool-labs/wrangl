@@ -79,6 +79,7 @@ export function settingsOf(raw) {
     strip: Object.fromEntries(STRIP.map(([k]) => [k, r.strip?.[k] !== false])),
     hidden: Array.isArray(r.hidden) ? r.hidden.filter((s) => typeof s === "string") : [],
     lanes: r.lanes === "collapsed" ? "collapsed" : "nested",
+    motion: r.motion === "reduced" ? "reduced" : "full",
     interval: INTERVALS.some(([s]) => s === r.interval) ? r.interval : 0,
     notify: r.notify === true,
     autoUpdate: r.autoUpdate === true,

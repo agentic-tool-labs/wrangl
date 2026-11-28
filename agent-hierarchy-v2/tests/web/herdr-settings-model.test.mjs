@@ -61,7 +61,7 @@ test("Q&A shows in the column or as the open Desk window's tab; a closed window'
 test("stored settings read back whole: odd or missing fields take their defaults", () => {
   const s = settingsOf({ tab: "agents-list", strip: { desk: false, feed: false }, hidden: ["d/x", 3], lanes: "sideways", interval: 7, notify: "yes", docked: ["graph", "files", "qa"] });
   // an old per-view `docked` list is not read: the whole Desk sits in the column until moved (atp-1728)
-  assert.deepEqual(s, { tab: "agents-list", strip: { desk: false }, hidden: ["d/x"], lanes: "nested", interval: 0, notify: false, autoUpdate: false, autoQa: false, placement: "column", ahOn: "auto", pinned: [], order: [] });
+  assert.deepEqual(s, { tab: "agents-list", strip: { desk: false }, hidden: ["d/x"], lanes: "nested", motion: "full", interval: 0, notify: false, autoUpdate: false, autoQa: false, placement: "column", ahOn: "auto", pinned: [], order: [] });
   assert.equal(settingsOf({ placement: "window" }).placement, "window");
   assert.equal(settingsOf({ placement: "floating" }).placement, "column", "an odd placement is the column");
   assert.equal(settingsOf({ ahOn: "machine:wsl" }).ahOn, "machine:wsl");
@@ -71,6 +71,12 @@ test("stored settings read back whole: odd or missing fields take their defaults
   assert.equal(settingsOf(null).placement, "column", "the Desk opens in the column until moved to a window");
   const lane = { id: "d/l", lanes: [] };
   assert.deepEqual(shownTeams([{ id: "d/a", lanes: [lane] }, { id: "d/x", lanes: [] }], settingsOf({ hidden: ["d/l", "d/x"] })), [{ id: "d/a", lanes: [] }]);
+});
+
+test("motion is full unless stored exactly as reduced", () => {
+  assert.equal(settingsOf({}).motion, "full");
+  assert.equal(settingsOf({ motion: "reduced" }).motion, "reduced");
+  assert.equal(settingsOf({ motion: "Reduced" }).motion, "full");
 });
 
 test("versions order as semver, a release after its pre-releases", () => {

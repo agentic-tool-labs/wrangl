@@ -225,7 +225,9 @@ check "(T4) the assessment file exists and is named in the hold" 'A=$(ls "$HIER"
 # 8. a stop that lands during a quit's wind-down survives the quit's seal
 ah_test_team "$HIER" tm2 implementor:n1
 team_js "$HIER/teams/tm2.json" 't.orchestrator = o.orchestrator; t.members.forEach((m) => { m.session_id = "s-" + m.name; m.paste = false; m.transport_id = "%7"; })'
-( QOUT=$(orch timeout 60 bash -c 'cd "$0" && "$1/bin/ah" "${@:2}"' "$PROJ" "$PLUGIN" roster quit --team tm2 --wait 8 --cwd "$PROJ" 2>"$T/qerr"); echo "$?" > "$T/q.rc"; printf %s "$QOUT$(cat "$T/qerr")" > "$T/q.out" ) &
+# --wait 20: the quit's window runs from its since, and the stop lands only after the test's two gates below; under load that passed
+# an 8 s window (2.0.67 QA: seal at since+8.15 s, stop at since+8.97 s)
+( QS=$SECONDS; QOUT=$(orch timeout 60 bash -c 'cd "$0" && "$1/bin/ah" "${@:2}"' "$PROJ" "$PLUGIN" roster quit --team tm2 --wait 20 --cwd "$PROJ" 2>"$T/qerr"); echo "$?" > "$T/q.rc"; echo "$((SECONDS - QS))" > "$T/q.secs"; printf %s "$QOUT$(cat "$T/qerr")" > "$T/q.out" ) &
 QPID=$!
 # wait (deadline 30 s) until the quit has written its winding-down hold, so the stop lands during the wind-down
 END=$((SECONDS + 30)); until hold_of tm2 | grep -q '"phase": "winding-down"' || [ "$SECONDS" -ge "$END" ]; do sleep 0.2; done
@@ -242,8 +244,22 @@ ah_forget_sessions orch
 # the stop's proof is seeded bound, so a bound registration the quit writes after the forget cannot refuse it
 AH_TEST_PROVE_BOUND=1 ah_run roster stop --now --team tm2 --confirm --grace 0 --cwd "$PROJ"
 wait "$QPID"
-OUT="stop: rc=$RC $OUT $(head -c 600 "$T/err") :: quit: rc=$(cat "$T/q.rc") $(cat "$T/q.out") :: hold: $(hold_of tm2)"
-check "(F4) a stop that lands during the wind-down is not overwritten by the quit's seal" 'hold_of tm2 | grep -q "\"kind\": \"stop\"" &&[ "$(cat "$T/q.rc")" != 0 ] && grep -q team_stopped "$T/q.out"'
+# one cause line first: which command failed, its exit code, the hold's kind and the phase the stop found
+read -r HKIND HPREV <<EOF
+$(hold_of tm2 | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const h=JSON.parse(s);console.log(h.kind+" "+(h.previous?h.previous.phase:"none"))}catch{console.log("unreadable none")}})')
+EOF
+QRC=$(cat "$T/q.rc")
+echo "note: (F4) the quit took $(cat "$T/q.secs") s of its --wait 20 window"
+if [ "$RC" != 0 ]; then CAUSE="the stop failed rc=$RC; hold kind $HKIND"
+elif [ "$HKIND" != stop ]; then CAUSE="hold kind $HKIND: the quit's seal overwrote the stop (stop rc=0, quit rc=$QRC)"
+elif [ "$QRC" = 0 ]; then CAUSE="the quit exited 0 over the stop; hold kind stop"
+elif ! grep -q team_stopped "$T/q.out"; then CAUSE="the quit exited $QRC without team_stopped; hold kind stop over a quit in phase $HPREV (held = the stop landed after the quit's window)"
+elif [ "$(cat "$T/q.secs")" -ge 18 ]; then CAUSE="the quit waited $(cat "$T/q.secs") s of its --wait 20 window after the stop landed"
+else CAUSE="none"; fi
+OUT="cause: $CAUSE
+quit elapsed: $(cat "$T/q.secs") s
+stop: rc=$RC $OUT $(head -c 600 "$T/err") :: quit: rc=$(cat "$T/q.rc") $(cat "$T/q.out") :: hold: $(hold_of tm2)"
+check "(F4) a stop that lands during the wind-down is not overwritten by the quit's seal" 'hold_of tm2 | grep -q "\"kind\": \"stop\"" &&[ "$(cat "$T/q.rc")" != 0 ] && grep -q team_stopped "$T/q.out" && [ "$(cat "$T/q.secs")" -lt 18 ]'
 
 # 9. T1: STOP lands by pane when the member is still redrawing after the Esc, and falls back to mail with the reason when it never settles
 herdr_team() {
